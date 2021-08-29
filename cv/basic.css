@@ -1,0 +1,19 @@
+A:link      { text-decoration: none ; color:#FF0000}
+A:visited   { text-decoration: none ; color:#FF0000}
+A:active    { text-decoration: none ; color:#FF0000 }
+A:hover     { text-decoration: underline ; color:#FF0000}
+TD          { font-family:  Geneva, Arial, Helvetica, sans-serif; font-size: 9pt; }
+BODY        { font-family:  Geneva, Arial, Helvetica, sans-serif; font-size: 9pt; } 
+.heading    { font-family:  Geneva, Arial, Helvetica, sans-serif; font-size: 12pt; font-weight: bold; color: #000366; vertical-align: top }
+
+H1	{font-family: Verdana, Humanst521 BT, Arial;
+	font-style: bold;italic
+	color:#FF0000}
+
+H2	{font-family: Verdana, Humanst521 BT, Arial;
+	font-style: bold;
+	color:#FF0000}
+
+H3	{font-family: Tahoma, Arial;
+	font-style: Italic;
+	color:#FF0000}
