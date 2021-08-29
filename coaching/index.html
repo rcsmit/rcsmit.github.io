@@ -15,16 +15,24 @@
     <!-- Custom styles for this template -->
     <style>
       .bg-image {
-        margin-top:10px;margin-bottom: 20px;
+        margin-top:0px;margin-bottom: 0px;
       }
+      .container {
+       padding:20px;
+      }
+      .row{ padding:20px;}
       .fa{
         font-size: 3rem;
-        color: cornflowerblue;
+        color: #142F5e;
         margin:auto;
         text-align:center;
          }
-
-
+      h1,h2,h3 {
+        color: #142F5e;}
+      .lichtoranje{background-color: #fefed8;}
+      .contact{background-color: #fccf90; padding:20px;}
+        .btn-primary {background-color:#f47d1c;}
+        .btn-primary:hover {background-color:#142F5e;}
     </style>
 
   </head>
@@ -50,6 +58,9 @@
         <p>So I am here to share my skills and experiences with the world and assist you living the <b>life you dream of</b>.</p>
         <p>This is the moment to get closer to yourself and your dreams.</p>
         <p><em><strong>I will help you obtain your goals. Or if you don&#8217;t know them yet, discover them!&nbsp;</strong></em></p>
+        <div class="col text-center">
+          <a class="btn btn-primary" href="#contact" role="button"> Contact me  for a discovery call!</a>
+        </div>
 
 
       </div><!-- /.col-lg-5 -->
@@ -127,7 +138,7 @@
  height: 100vh;
  "></div>
  <!-- Background image -->
-
+<div class="lichtoranje">
  <div class="container">
     <div class="row">
       <div class="col-md-7">
@@ -160,6 +171,7 @@
     </div>
 
   </div><!-- /.container -->
+</div>
 
 
 
@@ -203,7 +215,7 @@
       </div>
       <div class="row">
         <div class="col text-center">
-        <a class="btn btn-primary" href="#" role="button"> Contact me quickly for a discovery call!</a>
+        <a class="btn btn-primary" href="#contact" role="button"> Contact me  for a discovery call!</a>
       </div>
 
       </div>
@@ -232,13 +244,18 @@
 
 
 </div><!-- /.container -->
+<a name="contact"></a>
 
-
-<div class="contact-form bg-dark">
+<div class="contact-form contact">
   <div class="container">
-  <form method="post">
+    <form
+    action="https://formspree.io/f/meqvvoee"
+    method="POST"
+    >
       <h3>Drop Us a Message</h3>
      <div class="row">
+
+
           <div class="col-md-6">
               <div class="form-group">
                   <input type="text" name="txtName" class="form-control" placeholder="Your Name *" value="" />

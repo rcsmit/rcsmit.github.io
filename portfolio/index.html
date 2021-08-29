@@ -14,6 +14,12 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.1/css/bootstrap.min.css" integrity="sha384-VCmXjywReHh4PwowAiWNagnWcLhlEJLA5buUprzK8rxFgeH0kww/aWY76TfkUoSX" crossorigin="anonymous">
 
     <style>
+        .contact{background-color: #fccf90; padding:20px;}
+        .bg-dark-orange{background-color: #f47d1c; margin-top:20px;padding:20px;}
+
+        .btn-primary {background-color:#f47d1c;}
+        .btn-primary:hover {background-color:#142F5e;}
+
       .bd-placeholder-img {
         font-size: 1.125rem;
         text-anchor: middle;
@@ -117,11 +123,8 @@
             <img src='img/6.png'>
           </div>
         </div>
-        <div class="col-md-4">
-          <div class="card mb-4 shadow-sm">
-            <img src='img/6.png'>
-          </div>
-        </div>
+
+
         <div class="col-md-4">
           <div class="card mb-4 shadow-sm">
             <img src='img/7.png'>
@@ -150,7 +153,43 @@
 <footer class="text-muted">
 
 
-  <div class="container bg-dark">
+
+
+  <div class="contact-form contact">
+    <div class="container">
+      <form
+      action="https://formspree.io/f/meqvvoee"
+      method="POST"
+      >
+        <h3>Drop Us a Message</h3>
+       <div class="row">
+
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <input type="text" name="txtName" class="form-control" placeholder="Your Name *" value="" />
+                </div>
+                <div class="form-group">
+                    <input type="text" name="txtEmail" class="form-control" placeholder="Your Email *" value="" />
+                </div>
+                <div class="form-group">
+                    <input type="text" name="txtPhone" class="form-control" placeholder="Your Phone Number *" value="" />
+                </div>
+                <div class="form-group">
+                    <input type="submit" name="btnSubmit" class="btnContact" value="Send Message" />
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <textarea name="txtMsg" class="form-control" placeholder="Your Message *" style="width: 100%; height: 150px;"></textarea>
+                </div>
+            </div>
+        </div>
+    </form>
+  </div>
+  </div>
+
+  <div class="container bg-dark-orange">
     <div class="row">
       <div class="col-sm-8 col-md-7 py-4">
 
@@ -165,7 +204,6 @@
       </div>
     </div>
   </div>
-
 
 
   <div class="container">
