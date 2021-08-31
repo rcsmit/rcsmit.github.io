@@ -1,157 +1,145 @@
+<!DOCTYPE html>
 <html>
-
 <head>
-	<title>CV van René Smit</title>
-	<meta http-equiv="Content-Type" content="text/html; Charset=utf-8" />
-<link href='http://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+  <title>CV van René Smit</title>
+  <meta content="text/html; charset=utf-8"
+        http-equiv="Content-Type">
+  <link href='http://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext'
+        rel='stylesheet'
+        type='text/css'>
+  <style type="text/css">
+        @font-face {
+                font-family : "'Lato'";
+                font-style : normal;
+                font-weight : 400;
+                src : local('Lato Regular'), local('Lato-Regular'), url(http://fonts.gstatic.com/s/lato/v16/S6uyw4BMUTPHjxAwWw.ttf) format('truetype');
+  }
+              body
+                  {
+                        font-family: 'Lato', Geneva, Arial, Helvetica, sans-serif; font-size: 12pt; margin: 0;}
 
-<style type="text/css">
-	@font-face {
-		font-family : "'Lato'";
-		font-style : normal;
-		font-weight : 400;
-		src : local('Lato Regular'), local('Lato-Regular'), url(http://fonts.gstatic.com/s/lato/v16/S6uyw4BMUTPHjxAwWw.ttf) format('truetype');
-}
-
-	      body
-		  {
-			font-family: 'Lato', Geneva, Arial, Helvetica, sans-serif; font-size: 12pt; margin: 0;}
-
-		h1
-			{text-align:center;}
-		h2
-			{text-align:center; margin: 25px 10px 5px 10px;}
+                h1
+                        {text-align:center;}
+                h2
+                        {text-align:center; margin: 25px 10px 5px 10px;}
             a:link {text-decoration: none;color: black;}
             a:visited {text-decoration: none;color: black;}
             a:active {text-decoration: none;color: black;}
             a:hover {text-decoration: underline; color: black;}
-		.regel
-	 		{clear:both; padding:5px;  }
-		.regel1
-	 		{clear:both; padding:5px;   }
+                .regel
+                        {clear:both; padding:5px;  }
+                .regel1
+                        {clear:both; padding:5px;   }
 
-		.label
-			{text-align: right; width:30% ;float:left; }
-		.content
-			{text-align: left;  width:70%; padding-left:30px;   margin-left:30%;  }
-		.content1  /* voor het gedeelte met de pasfoto */
-			{text-align: left;  width:50%; padding-left:30px;   margin-left:30%;  }
-		.pasfoto
-			{float:left; }
-.titel
-			{ font-weight:bold;}
-.subtitel
-			{ font-style:italic;}
-	.perso_infobox
-			{float:left;  width:80%;}
-	#nav {
-		width: 100%;
-		float: left;
-		margin: 0 0  30px   0 ;
-		padding: 0px;
-		background-color: #427AA1;
-		border-bottom: 1px solid #ccc;
-		position:fixed;
-		top:0;
-		left:0;
-		}
+                .label
+                        {text-align: right; width:30% ;float:left; }
+                .content
+                        {text-align: left;  width:70%; padding-left:30px;   margin-left:30%;  }
+                .content1  /* voor het gedeelte met de pasfoto */
+                        {text-align: left;  width:50%; padding-left:30px;   margin-left:30%;  }
+                .pasfoto
+                        {float:left; }
+  .titel
+                        { font-weight:bold;}
+  .subtitel
+                        { font-style:italic;}
+        .perso_infobox
+                        {float:left;  width:80%;}
+        #nav {
+                width: 100%;
+                float: left;
+                margin: 0 0  30px   0 ;
+                padding: 0px;
+                background-color: #427AA1;
+                border-bottom: 1px solid #ccc;
+                position:fixed;
+                top:0;
+                left:0;
+                }
 
-	#nav1 {width:480px;
-		border-right: 1px solid #ccc;
-		margin: 0 auto    0 ;
-		background-color: #427AA1;
+        #nav1 {width:480px;
+                border-right: 1px solid #ccc;
+                margin: 0 auto    0 ;
+                background-color: #427AA1;
 
-		}
+                }
 
+        #nav ul {
+                 list-style: none;  background-color: #427AA1;
+                padding: 0;  margin: 0 auto    0 ;
 
-	#nav ul {
-		 list-style: none;  background-color: #427AA1;
-		padding: 0;  margin: 0 auto    0 ;
+                border-right: 1px solid #ccc;
 
-		border-right: 1px solid #ccc;
+                }
+        #nav li {
+                float: left; }
+        #nav li a {
+                display: block;
+                padding: 8px 8px;
+                text-decoration: none;
+                font-weight: bold;
+                color: #069;
+                height:100%;
+                vertical-align:middle; }
 
-		}
-	#nav li {
-		float: left; }
-	#nav li a {
-		display: block;
-		padding: 8px 8px;
-		text-decoration: none;
-		font-weight: bold;
-		color: #069;
-		height:100%;
-		vertical-align:middle; }
+        #nav li:first-child a {
+                border-left: 1px solid #ccc; }
+        #nav li:last-child a {
+                border-right: 1px solid #ccc; }
 
+        #nav li a:hover {
+                color: #c00;
+                background-color: #fff; }
+        #nav li.active a {
+                        background-color: #fff;
+                        }
 
-	#nav li:first-child a {
-		border-left: 1px solid #ccc; }
-	#nav li:last-child a {
-		border-right: 1px solid #ccc; }
+  div.spacer {
+                clear: both;
+                height:0;
+                }
 
-	#nav li a:hover {
-		color: #c00;
-		background-color: #fff; }
-	#nav li.active a {
-			background-color: #fff;
-			}
+  #contact {min-height:500px;}
 
+                #wrapper
+                        {
+                        width: 100%; margin: 0px auto;}
+                .innerwrapper
+                        {
+                        width: 900px;
+                        margin: 0px auto;
+                        padding: 30px 0;
+                        }
+                /*
+                #nl     {background-color: #6BB9F0;}
+                #en     {background-color: #F9BF3B;}
 
-div.spacer {
-		clear: both;
-		height:0;
-		}
+                #fr     {background-color: #DCC6E0;}
+                #it     {background-color: #C8F7C5;}
+                */
+                /*http://www.flatuicolorpicker.com/gray*/
 
-#contact {min-height:500px;}
+                #nl     {background-color: #FDF5BF;}
+                #it     {background-color: #EBF2FA;}
 
-		#wrapper
-			{
-			width: 100%; margin: 0px auto;}
-		.innerwrapper
-			{
-			width: 900px;
-			margin: 0px auto;
-			padding: 30px 0;
-			}
-		/*
-		#nl	{background-color: #6BB9F0;}
-		#en	{background-color: #F9BF3B;}
+                #fr     {background-color: #F3D3BD;}
+                #en     {background-color: #ECF0F1;}
+                #contact        {background-color: #FAFF7F;}
 
-		#fr	{background-color: #DCC6E0;}
-		#it	{background-color: #C8F7C5;}
-		*/
-		/*http://www.flatuicolorpicker.com/gray*/
-
-
-		#nl	{background-color: #FDF5BF;}
-		#it	{background-color: #EBF2FA;}
-
-		#fr	{background-color: #F3D3BD;}
-		#en	{background-color: #ECF0F1;}
-		#contact	{background-color: #FAFF7F;}
-
-
-
-
-	</style>
-
-
+  </style>
 </head>
-
-
-
-
-
 <body>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"
+        type="text/javascript"></script> 
+  <script type="text/javascript">
 
 
-<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
-<script type="text/javascript">
-// JavaScript Document
-jQuery(document).ready(function() {
+  // JavaScript Document
+  jQuery(document).ready(function() {
 
   var device = navigator.userAgent.toLowerCase();
   var ios = device.match(/(iphone|ipod|ipad)/);
- //function that returns element's y position
+  //function that returns element's y position
 
     jQuery("a[href*=#]").on('click', function(e) {
       var scrollTarget = jQuery(this.hash).offset().top;
@@ -188,13 +176,14 @@ jQuery(document).ready(function() {
         }
       });
     }
-});
-</script>
-<script type='text/javascript'>
+  });
+  </script> 
+  <script type='text/javascript'>
+
+
       $(window).load(function(){
                 // http://stackoverflow.com/questions/9979827/change-active-menu-item-on-page-scroll
-      	    // also possibile with Srollspy http://getbootstrap.com/javascript/#scrollspy
-
+            // also possibile with Srollspy http://getbootstrap.com/javascript/#scrollspy
 
                 // Cache selectors
                 var lastId,
@@ -228,7 +217,7 @@ jQuery(document).ready(function() {
                 var cur = scrollItems.map(function(){
                   if ($(this).offset().top < fromTop)
                     return this;
-               	});
+                });
                 // Get the id of the current element
                 cur = cur[cur.length-1];
                 var id = cur && cur.length ? cur[0].id : "";
@@ -243,650 +232,1037 @@ jQuery(document).ready(function() {
       });
       });
 
-</script>
-
-<div id="wrapper">
-		<div id="nav">
-			<div id="nav1">
-					<div id="nav2a">
-						<ul>
-						<li><a href="#en"><img src="en.gif" /></a></li>
-      						<li><a href="#nl"><img src="nl.gif" /></a></li>
-      						<li><a href="#it"><img src="it.gif" /></a></li>
-
-      						<li><a href="#fr"><img src="fr.gif" /></a></li>
-					<li><a href="#contact"><img src="mail.png" height="12" /></a></li>
-					<!---</ul>
-					</div>
-					<div id="nav2b">
-						<ul>--->
-      						<!--- <li><a href="CV_Rene_Smit_NL_IT_EN.doc"><img src="word.gif" /></a></li>  --->
-      						<li><a href="http://www.linkedin.com/in/rcsmit" target="_blank"><img src="linkedin.gif" height="12"></a></li>
-      						<!---<li><a href="http://pinterest.com/rcsmit/it-s-me/" target="_blank"><img src="pinterest.gif" height="12"></a></li> --->
-      						<!---<li><a href="http://www.servendo.nl" target="_blank"><img src="servendo.gif" height="12"></a></li> --->
-                                  <li><a href="http://yepyoga.wordpress.com" target="_blank"><img src="yepyoga.png" height="12"></a></li>
-      						<li><a href="http://crazywaiter.wordpress.com/category/favorite-posts" target="_blank"><img src="crazywaiter.gif" height="12"></a></li>
-
-						</ul>
-					</div>
-			</div>
-		</div>
-
-
-
-
-
-
-
-
-
-		<a name="en"></a>
-				<div class="spacer"></div>
-	<div  id="en">
-		<div class="innerwrapper">
-
-			<h1>Personal data resume</h1>
-				<div class="perso_infobox">
-					<div class="regel"><div class="label">Name</div><div class="content1">René Coniah SMIT </div></div>
-					<div class="regel"><div class="label">Address</div><div class="content1">xxxxstraat X <br />
-						682x XX  ARNHEM<br />
-						the Netherlands </div></div>
-					<div class="regel"><div class="label">Phone number</div><div class="content1">0031(0)6 3914 xxxx	</div></div>
-					<div class="regel"><div class="label">E-mail</div><div class="content1"><a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a></div></div>
-					<div class="regel"><div class="label">Nationality</div><div class="content1">Dutch</div></div>
-					<div class="regel"><div class="label">Birth date</div><div class="content1">23rd of august 1977</div></div>
-					<div class="regel"><div class="label">Gender</div><div class="content1">Male</div></div>
-					<div class="regel"><div class="label">Drivers licence</div><div class="content1">B</div></div>
-				</div>
-				<div class="pasfoto">
-					<img src="pasf2020.jpg" class="pasfoto" width="100px" alt="photo of Rene Smit" />
-				</div>
-				<div class="regel"></div>
-
-			<h2>Education</h2>
-				<div class="perso_infobox">
-
-                <div class="regel"><div class="label">2016</div><div class="content"><span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br />
-						<span class="subtitel">Yoga Teacher Training - Hatha yoga 200 hours
- 						</div></div>
-
-					<div class="regel"><div class="label">1997 - 2001</div><div class="content"><span class="titel">Larenstein Velp (the Netherlands)</span> <br />
-						<span class="subtitel">Foodtechnology (quality management)<br />
-						(BSc, ISCED 5)</div></div>
-					<div class="regel"><div class="label">1989-1996</div><div class="content"><span class="titel">RSG Ter Apel</span><br />
-						<span class="subtitel">Pre-university education</div></div>
-				</div>
-				<div class="pasfoto">
-					</div>
-			<div class="regel"></div>
-
-			<h2>Employement</h2>
-			<center><img class="cvplaatje" src="cvrene.png" margin=10px><center>
-				<div class="perso_infobox">
-					<div class="regel"><div class="label">zomer 2020, 2021</div>
-					<div class="content"><span class="titel">Vacansoleil, Camping De Schatberg, Sevenum (L.), The Netherlands</span> <br />
-						<span class="subtitel">Camping host</span>
-
-
-						<ul>
-							<li>Cleaning and preparing accomodations</li>
-						<li>Checkin-/check out</li>
-						<li>Assisting and replacing the supervisor
-						</li></ul>
-						</div></div>
-
-					<div class="regel"><div class="label">Summer 2014, 2016, 2019</div>
-					<div class="content"><span class="titel">Camping Village Fabulous (EC Vacanze), Rome, Italy</span> <br />
-
-						<span class="subtitel">Staffmember Info-point</span>
-						<ul><li>Providing information about the campsite and Rome</li>
-						<li>Selling tickets and excursions</li>
-						<li>Finding information and assisting guests in unforeseen situations (stolen documents, need of medical accessories etc.)</li>
-						</ul></div></div>
-
-
-							<div class="regel"><div class="label">winter 2017, 2018, 2019</div>
-					<div class="content"><span class="titel">YepYoga</span> <br />
-						<span class="subtitel">Free lance yoga teacher</span>
-						<ul><li>Teaching hatha yoga lessen in ho(s)tels in Asia</li>
-						</ul>
-						</div></div>
-
-				<div class="regel"><div class="label">zomer 2016, 2017</div>
-					<div class="content"><span class="titel">Vacansoleil, Camping Village Fabulous, Rome, Italië</span> <br />
-						<span class="subtitel">Camping host</span>
-
-
-						<ul>
-							<li>Checking accomodations</li>
-						<li>Checkin-/check out</li>
-						<li>Assisting and replacing the supervisor
-						</li></ul>
-						</div></div>
-
-								<div class="regel"><div class="label">2006 - 2011, 2015</div><div class="content"><span class="titel">Disneyland Paris, France</span><br />
-					                <span class="subtitel">
-	                                Waiter in Restaurant Inventions, Disneyland Hotel (5*)<br />
-	                               	Waiter in Park Side Dinner,Hotel New York (4*)<br /> </span>
-							<ul><li>One of the circa 60 employees (out of 13.000) who has been most cited as "outstanding castmember" by the guests in 2009, 2010, 2011 and 2015</div></div>
-						</li></ul>
-
-
-
-					<div class="regel"><div class="label">summer 2012, 2013</div>
-					<div class="content"><span class="titel">Selectcamp</span> <br />
-					        <span class="subtitel">
-							Courier at Camping Ca'Savio, Cavallino-Treporti (VE), Italy<BR />
-							Courier at Prà delle Torri, Caorle (VE), Italy</span>
-							<ul><li>Being the central point for the guest in name of Selectcamp</li>
-							<li>Cleaning and preparing the mobilehomes and lodgetents before and at the end of the season and at arrival of the new guests</li></ul>
-							</div></div>
-
-<div class="regel"><div class="label">2004 - 2006</div><div class="content"><span class="titel">Various companies in the Netherlands</span><br />
-                        <span class="subtitel">
-						Temporary employee in the hospitality business, especially for banqueting and partycatering</span></div></div>
-
-				<div class="regel"><div class="label">2013</div>
-					<div class="content"><span class="titel">Hotel Papendal (Arnhem)</span> <br />
-					       <span class="subtitel">
-						Waiter restaurant, bar, banqueting</span></div></div>
-
-
-
-
-					<div class="regel"><div class="label">2001-2004</div><div class="content"><span class="titel">Koffiebranderij Peeze</span><br />
-					 <span class="subtitel">	Quality management, Environment, Safety and Health, hygiene and HACCP in a coffee roasting company (comparabile with Illy)</span></div></div>
-				</div>
-				<div class="pasfoto">
-					</div>
-				<div class="regel"></div>
-
-			<h2>Languages</h2>
-				<div class="perso_infobox">
-				<div class="regel"><div class="label"></div><div class="content">
-					<ul>
-					  <li>Dutch (mothertongue)</li>
-					  <li>English (B2/C1)</li>
-					  <li>French (B1/B2)</li>
-					  <li>Italian (B1/B2)</li>
-					  <li>German (A2/B1)</li>
-					  <li>Spanish (A1/A2)</li>
-					</ul>
-				</div></div></div>
-				<div class="pasfoto">
-					</div>
-				<div class="regel"></div>
-
-			<h2>Other skills and information</h2>
-				<div class="perso_infobox">
-				<div class="regel"><div class="label"></div><div class="content">
-					<ul>
-					  <li>Team spirit and welcoming</li>
-					 <li>Working and interaction with children</li>
-					  <li>Organisational skills</li>
-					  <li>Windows, Office, Photoshop, SPSS, VBScript/ASP, HTML</li>
-					 					</ul>
-				</div></div></div>
-				<div class="pasfoto">
-					</div>
-				<div class="regel"></div>
-
-		</div><!-- /innerwrapper -->
-</div><!-- /en -->
-
-
-
-<a name="nl"></a>
-			<div class="spacer"></div>
-	<div id="nl">
-		<div class="innerwrapper">
-
-			<h1>Curriculum Vitae</h1>
-				<div class="perso_infobox">
-					<div class="regel1"><div class="label">Naam</div><div class="content1">Smit</div></div>
-					<div class="regel1"><div class="label">Voornamen</div><div class="content1">René Coniah</div></div>
-					<div class="regel11"><div class="label">Geslacht</div><div class="content1">M</div></div>
-					<div class="regel"><div class="label">Adres</div><div class="content1">xxxxstraat X<br />
-						682x XX  ARNHEM<br />
-						Pays Bas<br />
-						+31 (0)6 3914 xxx   </div></div>
-					<div class="regel1"><div class="label">E-mail</div><div class="content1"><a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a></div></div>
-					<div class="regel1"><div class="label">Burgelijke staat</div><div class="content1">Ongehuwd</div></div>
-					<div class="regel1"><div class="label">Geboortedatum</div><div class="content1">23 augustus 1977</div></div>
-					<div class="regel1"><div class="label">Geboorteplaats</div><div class="content1">Taipei (Taiwan)</div></div>
-					<div class="regel1"><div class="label">Nationaliteit</div><div class="content1">Nederlandse</div></div>
-					<div class="regel1"><div class="label">Rijbewijs</div><div class="content1">B</div></div>
-				</div>
-				<div class="pasfoto">
-					<img src="pasf2020.jpg" class="pasfoto" width="100px" alt="photo of Rene Smit" />
-
-					</div>
-				<div class="regel"></div>
-
-
-
-				<h2>Opleiding</h2>
-				<div class="perso_infobox">
-
-                        <div class="regel"><div class="label">2016</div><div class="content"><span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br />
-					    <span class="subtitel">	Yoga Teacher Training - Hatha yoga 200 hours</span>
- 						</div></div>
-
-									<div class="regel"><div class="label">1997-2001</div><div class="content"><span class="titel">Larenstein Velp</span><br />
-						<span class="subtitel">Agroproductkunde (thans Voedingsmiddelentechnologie)<br /></span>
-						(Ing./ BSc., ISCED 5)
- 						</div></div>
-						<div class="regel"><div class="label">1989-1996</div><div class="content"><span class="titel">RSG Ter Apel</span><br />
-						VWO</div></div>
-
-				</div>
-				<div class="pasfoto">
-					</div>
-				<div class="regel"></div>
-
-			<h2>Werkervaring</h2>
-
-			<center><img class="cvplaatje" src="cvrene.png" margin=10px><center>
-				<div class="perso_infobox">
-					<div class="regel"><div class="label">zomer 2020, 2021</div>
-					<div class="content"><span class="titel">Vacansoleil, Camping De Schatberg, Sevenum (L.), Nederland</span> <br />
-						<span class="subtitel">Camping host</span>
-
-
-						<ul>
-							<li>Schoonmaken en prepareren van accomodaties</li>
-						<li>Checkin-/check out</li>
-						<li>Assisteren en vervangen van supervisor
-						</li></ul>
-						</div></div>
-
-				<div class="regel"><div class="label">zomer 2014, 2016, 2019</div>
-					<div class="content"><span class="titel">Camping Village Fabulous (EC Vacanze), Rome, Italië</span> <br />
-					    <span class="subtitel">	Medewerker info-point</span>
-						<ul><li>Informatie geven over de camping en Rome</li>
-						<li>Verkoop van tickets en excursies</li>
-						<li>Informatie zoeken en assisteren bij onvoorziene omstandigheden (gestolen documenten, medische accessoires etc.) </li></ul>
-						</div></div>
-
-						<div class="regel"><div class="label">winter 2017, 2018, 2019</div>
-					<div class="content"><span class="titel">YepYoga</span> <br />
-						<span class="subtitel">Free lance yoga leraar</span>
-						<ul><li>Het geven van hatha yoga lessen in ho(s)tels in Azie</li>
-						</ul>
-						</div></div>
-
-				<div class="regel"><div class="label">zomer 2016, 2017</div>
-					<div class="content"><span class="titel">Vacansoleil, Camping Village Fabulous, Rome, Italië</span> <br />
-						<span class="subtitel">Camping host</span>
-
-
-						<ul>
-							<li>Controleren accomodaties</li>
-						<li>Checkin-/check out</li>
-						<li>Assisteren en vervangen van supervisor
-						</li></ul>
-						</div></div>
-
-
-
-<div class="regel"><div class="label">2006 - 2011, 2015</div><div class="content"><span class="titel">Disneyland Paris</span><br />
-				<span class="subtitel">	Kelner in Inventions, Disneyland Hotel (5*)<br />
-					Kelner in Park Side Dinner,Hotel New York(4*)<br /></span>
-				<ul><li>	Eén van de circa 60 medewerkers (van de 13.000) die het meest is genoemd door de gasten als "uitzonderlijke castmember" in 2009 en 2010, 2011 en 2015
-						</li></ul></div></div>
-
-
-					<div class="regel"><div class="label">zomer 2012, 2013</div>
-					<div class="content"><span class="titel">Selectcamp</span> <br />
-						<span class="subtitel">Courier op Camping Ca'Savio, Cavallino-Treporti (VE), Italië</br>
-						Courier op Prà delle Torri, Caorle (VE), Italië</span>
-						<ul><li>Centraal aanspreekpunt voor de gasten waarbij service en kwaliteit voorop staat</li>
-						<li>Schoonmaken en gereedmaken van de accommodaties voor en na het seizoen en bij gastenwisseling </li></ul>
-						</div></div>
-
-					<div class="regel"><div class="label">2013</div>
-					<div class="content"><span class="titel">Hotel Papendal (Arnhem)</span> <br />
-							<span class="subtitel">Kelner restaurant, bar, banqueting</span></div></div>
-
-
-
-
-
-
-					<div class="regel"><div class="label">2004- 2006</div><div class="content"><span class="titel">JMW Horeca-uitzendbureau (interimair)</span><br />
-					<span class="subtitel">Kelner, met name banqueting en partycatering</span></div></div>
-					<div class="regel"><div class="label">2001-2004</div><div class="content"><span class="titel">Koffiebranderij G. Peeze B.V. Arnhem</span><br />
-					<span class="subtitel">Alle voorkomende werkzaamheden op het gebied van kwaliteitsmanagement, arbeidsomstandigheden, milieubeheer, HACCP, duurzaamheid en marketing</span>
-</div></div>
-				</div>
-								<div class="regel"></div>
-
-			<h2>Talenkennis</h2>
-				<div class="perso_infobox">
-       				<div class="regel">
-						<div class="label"></div>
-						<div class="content">
-       					<ul>
-       						<li>Nederlands (moedertaal)</li>
-       						<li>Engels (B2/C1)</li>
-       						<li>Frans (B1/B2)</li>
-       						<li>Italiaans (B1/B2)</li>
-       						<li>Duits (A2/B1)</li>
-       						<li>Spaans (A1/A2)</li>
-       					</ul>
-						</div>
-       				</div>
-				</div>
-
-			<div class="regel"></div>
-
-			<h2>Overige vaardigheden</h2>
-				<div class="perso_infobox">
-				<div class="regel"><div class="label"></div>
-				<div class="content">
-					<ul>
-
-					<li>Teamspirit, gastvrij</li>
-					<li>Organisatorische capaciteiten</li>
-					<li>Interactief met kinderen</li>
-					<li>Windows, Office, Photoshop, SPSS, VBScript/ASP, HTML</li>
-					</ul>
-				</div></div></div>
-								<div class="regel"></div>
-
-		</div><!-- /innerwrapper -->
-</div><!-- /nl -->
-
-		<a name="it"></a>
-	<div class="spacer"></div>
-
-	<div id="it">
-			<div class="innerwrapper">
-
-			<h1>Informazioni personali</h1>
-				<div class="perso_infobox">
-					<div class="regel"><div class="label">Nome / Cognome</div>	<div class="content1">René Coniah SMIT</div></div>
-
-					<div class="regel"><div class="label">Indirizzo</div><div class="content1">xxxxstraat X<br />
-									682x XX  ARNHEM<br />
-									Paessi Bassi</div></div>
-					<div class="regel"><div class="label">Telefono</div><div class="content1">0031(0)6 3914 xxxx</div></div>
-					<div class="regel"><div class="label">E-mail</div><div class="content1"><a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a></div></div>
-
-					<div class="regel"><div class="label">Cittadinanza</div><div class="content1">Olandese </div></div>
-					<div class="regel"><div class="label">Data di nascita</div><div class="content1">23 agosto 1977</div></div>
-					<div class="regel"><div class="label">Sesso</div><div class="content1">Maschile </div></div>
-					<div class="regel"><div class="label">Patente</div><div class="content1">B</div></div>
-				</div>
-				<div class="pasfoto">
-					<img src="pasf2020.jpg" class="pasfoto" width="100px" alt="photo of Rene Smit" />
-				</div>
-				<div class="regel"></div>
-			<h2>Istruzione e formazione</h2>
-				<div class="perso_infobox">
-<div class="regel"><div class="label">2016</div><div class="content"><span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br />
-						Yoga Teacher Training - Hatha yoga 200 hours
- 						</div></div>
-
-
-					<div class="regel"><div class="label">1997 - 2001</div>
-					<div class="content"><span class="titel">Larenstein (Hogeschool), Velp (Paesi Bassi)</span> <br />
-						Tecnologia degli alimenti (Management della qualità)<br />
-						(llivello bachelor, ISCED 5)</div></div>
-					<div class="regel"><div class="label">1989-1996</div>
-					<div class="content"><span class="titel">RSG Ter Apel</span><br />
-						Liceo scientifico</div></div>
-				</div>
-				<div class="pasfoto">
-				</div>
-				<div class="regel"></div>
-
-			<h2>Esperienza professionale</h2>
-			<center><img class="cvplaatje" src="cvrene.png" margin=10px><center>
-			<!---
-				<div class="perso_infobox">
-
-					<div class="regel"><div class="label">L'estate 2014</div>
-					<div class="content"><span class="titel">Camping Village Fabulous (EC Vacanze), Roma</span> <br />
-						Addetto info-point
-						<ul><li>Fornire il servizio di informazione sul campeggio e Roma</li>
-						<li>Vendere biglietti e gite</li>
-						<li>Ricerca di informazioni e assistere gli ospiti in situazioni impreviste (documenti rubati, bisogno di accessori medici ecc)</li>
-					</ul></div></div>
-
-
-					<div class="regel"><div class="label">l'Estate 2013</div>
-					<div class="content"><span class="titel">Selectcamp</span> <br />
-						Courier presso Camping Ca'Savio, Cavallino-Treporti (VE)<BR />
-						<ul><li>Essendo il principale punto di contatto per gli ospiti dando enfasi a servizio e qualità. L'ospitalità è fondamentale.</li>
-						<li>Pulendo, controllando e preparando gli alloggi prima e dopo la stagione e in mezzo a partenze e arrivi di differenti ospiti.</li></ul></div></div>
-
-
-					<div class="regel">
-						<div class="label">2013</div>
-						<div class="content"><span class="titel">Hotel Papendal (Arnhem)</span> <br />
-						Cameriere restaurant, bar, banqueting</div>
-					</div>
-
-
-
-					<div class="regel">
-						<div class="label">l'Estate 2012</div>
-						<div class="content"><span class="titel">Selectcamp</span> <br />
-						Courier presso Prà delle Torri, Caorle (VE)</div>
-					</div>
-
-
-						<div class="regel"><div class="label">2006 - 2011</div>
-					<div class="content"><span class="titel">Disneyland Paris, Francia</span> <br />
-						Cameriere in Inventions, Disneyland Hotel (5*)<br />
-						Uno dei circa 60 dipendenti (su 13.000) che sono i piu' citati come "castmember eccezionale" dai clienti nel 2009 e 2010</div></div>
-					<div class="regel"><div class="label">2004 - 2006</div><div class="content"><span class="titel">Varie aziende nei paesi bassi</span><br />
-						Cameriere interinale, sopratutto banqueting e partycatering</div></div>
-					<div class="regel"><div class="label">2001-2004</div><div class="content"><span class="titel">Koffiebranderij Peeze</span><br />
-						Gestione di Qualità, Ambiente, Sicurezza sul lavoro, Marketing, Sostenibilità, HACCP &amp; Igiene presso un'azienda di torrefazione di caffé (comparabile con Illy)</div></div>
-				</div>
-				<div class="regel"></div>
-
-				--->
-
-			<h2>Lingue</h2>
-				<div class="perso_infobox">
-				<div class="regel"><div class="label"></div>
-					<div class="content">
-						<ul>
-						<li>Olandese (madrelingua)</li>
-						<li>Inglese (B2/C1)</li>
-						<li>Francese (B1/B2)</li>
-						<li>Italiano (B1/B2)</li>
-						<li>Tedesco (A2/B1)</li>
-						<li>Spagnolo / Castigliano (A1/A2)</li>
-					</ul>
-				</div></div></div>
-				<div class="pasfoto">
-					</div>
-				<div class="regel"></div>
-
-			<h2>Capacità e competenze</h2>
-				<div class="perso_infobox">
-				<div class="regel"><div class="label"></div><div class="content">
-					<ul>
-						<li>Spirito di sqaudra, animato, accogliente</li>
-						<li>Capacità di interagire con i bambini</li>
-						<li>Capacità e competenze organizzative</li>
-						<li>Windows, Office, Photoshop, SPSS, VBSCRIPT/ASP, HTML</li>
-											</ul>
-				</div></div></div>
-				<div class="pasfoto">
-					</div>
-				<div class="regel"></div>
-
-
-		</div><!-- /innerwrapper -->
-</div><!-- /it -->
-<a name="fr"></a>
-			<div class="spacer"></div>
-	<div  id="fr">
-		<div class="innerwrapper">
-
-			<h1>Curriculum Vitae</h1>
-				<div class="perso_infobox">
-					<div class="regel"><div class="label">Nom</div><div class="content1">Smit</div></div>
-					<div class="regel"><div class="label">Prénoms</div><div class="content1">René Coniah</div></div>
-					<div class="regel"><div class="label">Sexe</div><div class="content1">homme</div></div>
-					<div class="regel"><div class="label">Adresse</div><div class="content1">xxxxstraat X<br />
-						682x XX  ARNHEM<br />
-						Pays Bas<br />
-						+31 (0)6 3914 xxx   </div></div>
-					<div class="regel"><div class="label">Adresse email</div><div class="content1"><a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a></div></div>
-					<div class="regel"><div class="label">Etat civil</div><div class="content1">Célibataire </div></div>
-					<div class="regel"><div class="label">La date de naissance</div><div class="content1">23 Août 1977</div></div>
-					<div class="regel"><div class="label">lieu de naissance</div><div class="content1">Taipei (Taiwan)</div></div>
-					<div class="regel"><div class="label">Nationalité</div><div class="content1">Néerlandais</div></div>
-					<div class="regel"><div class="label">Permis de conduire</div><div class="content1">B</div></div>
-				</div>
-				<div class="pasfoto">
-					<img src="pasf2020.jpg" class="pasfoto" width="100px" alt="photo of Rene Smit" />
-
-					</div>
-				<div class="regel"></div>
-
-			<h2>Formation</h2>
-				<div class="perso_infobox">
-
-<div class="regel"><div class="label">2016</div><div class="content"><span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br />
-						Yoga Teacher Training - Hatha yoga 200 hours
- 						</div></div>
-
-					<div class="regel"><div class="label">1997-2001</div><div class="content"><span class="titel">Larenstein Velp</span><br />
-						Etude agro-alimentaire - management de qualité<br />
-						(BTS, Licence, Bac+4)  </div></div>
-						<div class="regel"><div class="label">1989-1996</div><div class="content"><span class="titel">RSG Ter Apel</span><br />
-						VWO (Lycée)</div></div>
-
-				</div>
-				<div class="pasfoto">
-					</div>
-				<div class="regel"></div>
-
-			<h2>Expériences professionnelles</h2>
-
-			<center><img class="cvplaatje" src="cvrene.png" margin=10px><center>
-
-			<!---
-				<div class="perso_infobox">
-
-
-					<div class="regel"><div class="label">L'éte 2014</div>
-					<div class="content"><span class="titel">Camping Village Fabulous (EC Vacanze), Rome, l'Italie</span> <br />
-
-					Employé point info
-						<ul><li>Renseignements sur le camping et sur Rome</li>
-						<li>Vente de billets et excursions</li>
-						<li>Assistance des clients en cas d'urgences (documents volés etc.)</li></ul></div></div>
-
-					<div class="regel"><div class="label">l'été 2013</div>
-					<div class="content"><span class="titel">Selectcamp</span> <br />
-						Courier au Camping Ca'Savio, Cavallino-Treporti (VE), l'Italie<BR />
-						</div></div>
-
-					<div class="regel"><div class="label">2013</div>
-					<div class="content"><span class="titel">Hotel Papendal, Arnhem</span> <br />
-						Serveur restaurant, bar, banqueting</div></div>
-
-
-					<div class="regel"><div class="label">l'été 2012</div>
-					<div class="content"><span class="titel">Selectcamp</span> <br />
-						Courier au Prà delle Torri, Caorle (VE), l'Italie<BR />
-						</div></div>
-
-					<div class="regel"><div class="label">2006 - 2011</div><div class="content"><span class="titel">DisneylandParis</span><br />
-						Serveur au Restaurant Inventions, Hôtel Disneyland (5*)<br />
-						Un parmi 60 employees (de 13.000) qui sont cités comme 'castmember remarquable' par les guests en 2009 et 2010</div></div>
-
-					<div class="regel"><div class="label">2004- 2006</div><div class="content"><span class="titel">JMW Horeca-uitzendbureau (interimair)</span><br />
-						Barman, serveur
-						hotels, restaurants, cafés, banquets, traiteurs événementiels etc.</div></div>
-
-					<div class="regel"><div class="label">2001-2004</div><div class="content"><span class="titel">Koffiebranderij G. Peeze B.V. Arnhem</span><br />
-					management de qualité, conditions de travail, protection de l'environnement, sécurité alimentaire, plaintes et compte-rendu</div></div>
-				</div>
-				<div class="pasfoto">
-					</div>
-				<div class="regel"></div>
-
-				--->
-
-
-			<h2>Connaissance linguistiques</h2>
-				<div class="perso_infobox">
-				<div class="regel"><div class="label"></div><div class="content">
-					<ul>
-						<li>Néerlandais (langue maternelle)</li>
-						<li>Anglais	(B2/C1)</li>
-						<li>Français(B1/B2)</li>
-						<li>Italien (B1/B2)</li>
-						<li>Allemand (A2/B1)</li>
-						<li>Espagnol (A1/A2)</li>
-					</ul>
-				</div></div></div>
-				<div class="pasfoto">
-					</div>
-				<div class="regel"></div>
-
-			<h2>Divers</h2>
-				<div class="perso_infobox">
-				<div class="regel"><div class="label"></div><div class="content">
-					<ul>
-					  <li>L'esprit d'equipe et d'acceuil</li>
-					 <li>Fort en interaction avec les enfants</li>
-					  <li>Capacité d'organisation</li>
-					  <li>Windows, Office, Photoshop, SPSS, VBSCRIPT/ASP, HTML</li>
- 					  <li>Lecture, course à pied, jouer du piano</li>
-					</ul>
-				</div></div></div>
-				<div class="pasfoto">
-					</div>
-				<div class="regel"></div>
-
-		</div><!-- /innerwrapper -->
-</div><!-- /fr -->
-
-<a name="contact"></a>
-			<div class="spacer"></div>
-	<div  id="contact">
-		<div class="innerwrapper">
-
-
-		<h1>Contact</h1>
-		(disabled due to spam, please connect with me on <a href="http://www.twitter.com/rcsmit" target="_blank">twitter</a>,
-		<a href="http://www.instagram.com/rcsmit" target="_blank">instagram</a> or
-
-		<a href="http://www.facebook.com/rcsmit" target="_blank">facebook</a>). Looking forward to your message!
-		<!---
-		<Form Method="Post" Action="contact.asp">
-
-			<div class="perso_infobox">
-					<div class="regel1"><div class="label">Your e-mailaddress</div><div class="content1"><INPUT  size="30" type="text" name="mailfrom"></div></div>
+  </script>
+  <div id="wrapper">
+    <div id="nav">
+      <div id="nav1">
+        <div id="nav2a">
+          <ul>
+            <li>
+              <a href="#en"><img src="en.gif"></a>
+            </li>
+            <li>
+              <a href="#nl"><img src="nl.gif"></a>
+            </li>
+            <li>
+              <a href="#it"><img src="it.gif"></a>
+            </li>
+            <li>
+              <a href="#fr"><img src="fr.gif"></a>
+            </li>
+            <li>
+              <a href="#contact"><img height="12"
+                   src="mail.png"></a>
+            </li><!---</ul>
+                                        </div>
+                                        <div id="nav2b">
+                                                <ul>=-->
+            <!--- <li><a href="CV_Rene_Smit_NL_IT_EN.doc"><img src="word.gif" /></a></li>  =-->
+            <li>
+              <a href="http://www.linkedin.com/in/rcsmit"
+                  target="_blank"><img height="12"
+                   src="linkedin.gif"></a>
+            </li><!---<li><a href="http://pinterest.com/rcsmit/it-s-me/" target="_blank"><img src="pinterest.gif" height="12"></a></li> =-->
+            <!---<li><a href="http://www.servendo.nl" target="_blank"><img src="servendo.gif" height="12"></a></li> =-->
+            <li>
+              <a href="http://yepyoga.wordpress.com"
+                  target="_blank"><img height="12"
+                   src="yepyoga.png"></a>
+            </li>
+            <li>
+              <a href="http://crazywaiter.wordpress.com/category/favorite-posts"
+                  target="_blank"><img height="12"
+                   src="crazywaiter.gif"></a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div><a id="en"
+         name="en"></a>
+    <div class="spacer"></div>
+    <div id="en">
+      <div class="innerwrapper">
+        <h1>Personal data resume</h1>
+        <div class="perso_infobox">
+          <div class="regel">
+            <div class="label">
+              Name
+            </div>
+            <div class="content1">
+              René Coniah SMIT
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Address
+            </div>
+            <div class="content1">
+              xxxxstraat X<br>
+              682x XX ARNHEM<br>
+              the Netherlands
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Phone number
+            </div>
+            <div class="content1">
+              0031(0)6 3914 xxxx
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              E-mail
+            </div>
+            <div class="content1">
+              <a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a>
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Nationality
+            </div>
+            <div class="content1">
+              Dutch
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Birth date
+            </div>
+            <div class="content1">
+              23rd of august 1977
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Gender
+            </div>
+            <div class="content1">
+              Male
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Drivers licence
+            </div>
+            <div class="content1">
+              B
+            </div>
+          </div>
+        </div>
+        <div class="pasfoto"><img alt="photo of Rene Smit"
+             class="pasfoto"
+             src="pasf2020.jpg"
+             width="100px"></div>
+        <div class="regel"></div>
+        <h2>Education</h2>
+        <div class="perso_infobox">
+          <div class="regel">
+            <div class="label">
+              2016
+            </div>
+            <div class="content">
+              <span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br>
+              <span class="subtitel">Yoga Teacher Training - Hatha yoga 200 hours</span>
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              <span class="subtitel">1997 - 2001</span>
+            </div>
+            <div class="content">
+              <span class="subtitel"><span class="titel">Larenstein Velp (the Netherlands)</span><br>
+              <span class="subtitel">Foodtechnology (quality management)<br>
+              (BSc, ISCED 5)</span></span>
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              <span class="subtitel">1989-1996</span>
+            </div>
+            <div class="content">
+              <span class="subtitel"><span class="titel">RSG Ter Apel</span><br>
+              <span class="subtitel">Pre-university education</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="pasfoto"></div>
+        <div class="regel"></div>
+        <h2><span class="subtitel">Employement</span></h2>
+        <center>
+          <span class="subtitel"><img class="cvplaatje"
+               margin="10px"
+               src="cvrene.png"></span>
+          <center>
+            <div class="perso_infobox">
+              <div class="regel">
+                <div class="label">
+                  <span class="subtitel">zomer 2020, 2021</span>
+                </div>
+                <div class="content">
+                  <span class="subtitel"><span class="titel">Vacansoleil, Camping De Schatberg, Sevenum (L.), The Netherlands</span><br>
+                  <span class="subtitel">Camping host</span></span>
+                  <ul>
+                    <li>Cleaning and preparing accomodations</li>
+                    <li>Checkin-/check out</li>
+                    <li>Assisting and replacing the supervisor</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  Summer 2014, 2016, 2019
+                </div>
+                <div class="content">
+                  <span class="titel">Camping Village Fabulous (EC Vacanze), Rome, Italy</span><br>
+                  <span class="subtitel">Staffmember Info-point</span>
+                  <ul>
+                    <li>Providing information about the campsite and Rome</li>
+                    <li>Selling tickets and excursions</li>
+                    <li>Finding information and assisting guests in unforeseen situations (stolen documents, need of medical accessories etc.)</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  winter 2017, 2018, 2019
+                </div>
+                <div class="content">
+                  <span class="titel">YepYoga</span><br>
+                  <span class="subtitel">Free lance yoga teacher</span>
+                  <ul>
+                    <li>Teaching hatha yoga lessen in ho(s)tels in Asia</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  zomer 2016, 2017
+                </div>
+                <div class="content">
+                  <span class="titel">Vacansoleil, Camping Village Fabulous, Rome, Italië</span><br>
+                  <span class="subtitel">Camping host</span>
+                  <ul>
+                    <li>Checking accomodations</li>
+                    <li>Checkin-/check out</li>
+                    <li>Assisting and replacing the supervisor</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  2006 - 2011, 2015
+                </div>
+                <div class="content">
+                  <span class="titel">Disneyland Paris, France</span><br>
+                  <span class="subtitel">Waiter in Restaurant Inventions, Disneyland Hotel (5*)<br>
+                  Waiter in Park Side Dinner,Hotel New York (4*)<br></span>
+                  <ul>
+                    <li>One of the circa 60 employees (out of 13.000) who has been most cited as "outstanding castmember" by the guests in 2009, 2010, 2011 and 2015</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  summer 2012, 2013
+                </div>
+                <div class="content">
+                  <span class="titel">Selectcamp</span><br>
+                  <span class="subtitel">Courier at Camping Ca'Savio, Cavallino-Treporti (VE), Italy<br>
+                  Courier at Prà delle Torri, Caorle (VE), Italy</span>
+                  <ul>
+                    <li>Being the central point for the guest in name of Selectcamp</li>
+                    <li>Cleaning and preparing the mobilehomes and lodgetents before and at the end of the season and at arrival of the new guests</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  2004 - 2006
+                </div>
+                <div class="content">
+                  <span class="titel">Various companies in the Netherlands</span><br>
+                  <span class="subtitel">Temporary employee in the hospitality business, especially for banqueting and partycatering</span>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  2013
+                </div>
+                <div class="content">
+                  <span class="titel">Hotel Papendal (Arnhem)</span><br>
+                  <span class="subtitel">Waiter restaurant, bar, banqueting</span>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  2001-2004
+                </div>
+                <div class="content">
+                  <span class="titel">Koffiebranderij Peeze</span><br>
+                  <span class="subtitel">Quality management, Environment, Safety and Health, hygiene and HACCP in a coffee roasting company (comparabile with Illy)</span>
+                </div>
+              </div>
+            </div>
+            <div class="pasfoto"></div>
+            <div class="regel"></div>
+            <h2>Languages</h2>
+            <div class="perso_infobox">
+              <div class="regel">
+                <div class="label"></div>
+                <div class="content">
+                  <ul>
+                    <li>Dutch (mothertongue)</li>
+                    <li>English (B2/C1)</li>
+                    <li>French (B1/B2)</li>
+                    <li>Italian (B1/B2)</li>
+                    <li>German (A2/B1)</li>
+                    <li>Spanish (A1/A2)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="pasfoto"></div>
+            <div class="regel"></div>
+            <h2>Other skills and information</h2>
+            <div class="perso_infobox">
+              <div class="regel">
+                <div class="label"></div>
+                <div class="content">
+                  <ul>
+                    <li>Team spirit and welcoming</li>
+                    <li>Working and interaction with children</li>
+                    <li>Organisational skills</li>
+                    <li>Windows, Office, Photoshop, SPSS, VBScript/ASP, HTML</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="pasfoto"></div>
+            <div class="regel"></div>
+          </center>
+        </center>
+      </div><!-- /innerwrapper -->
+    </div><!-- /en -->
+    <a id="nl"
+         name="nl"></a>
+    <div class="spacer"></div>
+    <div id="nl">
+      <div class="innerwrapper">
+        <h1>Curriculum Vitae</h1>
+        <div class="perso_infobox">
+          <div class="regel1">
+            <div class="label">
+              Naam
+            </div>
+            <div class="content1">
+              Smit
+            </div>
+          </div>
+          <div class="regel1">
+            <div class="label">
+              Voornamen
+            </div>
+            <div class="content1">
+              René Coniah
+            </div>
+          </div>
+          <div class="regel11">
+            <div class="label">
+              Geslacht
+            </div>
+            <div class="content1">
+              M
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Adres
+            </div>
+            <div class="content1">
+              xxxxstraat X<br>
+              682x XX ARNHEM<br>
+              Pays Bas<br>
+              +31 (0)6 3914 xxx
+            </div>
+          </div>
+          <div class="regel1">
+            <div class="label">
+              E-mail
+            </div>
+            <div class="content1">
+              <a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a>
+            </div>
+          </div>
+          <div class="regel1">
+            <div class="label">
+              Burgelijke staat
+            </div>
+            <div class="content1">
+              Ongehuwd
+            </div>
+          </div>
+          <div class="regel1">
+            <div class="label">
+              Geboortedatum
+            </div>
+            <div class="content1">
+              23 augustus 1977
+            </div>
+          </div>
+          <div class="regel1">
+            <div class="label">
+              Geboorteplaats
+            </div>
+            <div class="content1">
+              Taipei (Taiwan)
+            </div>
+          </div>
+          <div class="regel1">
+            <div class="label">
+              Nationaliteit
+            </div>
+            <div class="content1">
+              Nederlandse
+            </div>
+          </div>
+          <div class="regel1">
+            <div class="label">
+              Rijbewijs
+            </div>
+            <div class="content1">
+              B
+            </div>
+          </div>
+        </div>
+        <div class="pasfoto"><img alt="photo of Rene Smit"
+             class="pasfoto"
+             src="pasf2020.jpg"
+             width="100px"></div>
+        <div class="regel"></div>
+        <h2>Opleiding</h2>
+        <div class="perso_infobox">
+          <div class="regel">
+            <div class="label">
+              2016
+            </div>
+            <div class="content">
+              <span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br>
+              <span class="subtitel">Yoga Teacher Training - Hatha yoga 200 hours</span>
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              1997-2001
+            </div>
+            <div class="content">
+              <span class="titel">Larenstein Velp</span><br>
+              <span class="subtitel">Agroproductkunde (thans Voedingsmiddelentechnologie)<br></span> (Ing./ BSc., ISCED 5)
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              1989-1996
+            </div>
+            <div class="content">
+              <span class="titel">RSG Ter Apel</span><br>
+              VWO
+            </div>
+          </div>
+        </div>
+        <div class="pasfoto"></div>
+        <div class="regel"></div>
+        <h2>Werkervaring</h2>
+        <center>
+          <img class="cvplaatje"
+                  margin="10px"
+                  src="cvrene.png">
+          <center>
+            <div class="perso_infobox">
+              <div class="regel">
+                <div class="label">
+                  zomer 2020, 2021
+                </div>
+                <div class="content">
+                  <span class="titel">Vacansoleil, Camping De Schatberg, Sevenum (L.), Nederland</span><br>
+                  <span class="subtitel">Camping host</span>
+                  <ul>
+                    <li>Schoonmaken en prepareren van accomodaties</li>
+                    <li>Checkin-/check out</li>
+                    <li>Assisteren en vervangen van supervisor</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  zomer 2014, 2016, 2019
+                </div>
+                <div class="content">
+                  <span class="titel">Camping Village Fabulous (EC Vacanze), Rome, Italië</span><br>
+                  <span class="subtitel">Medewerker info-point</span>
+                  <ul>
+                    <li>Informatie geven over de camping en Rome</li>
+                    <li>Verkoop van tickets en excursies</li>
+                    <li>Informatie zoeken en assisteren bij onvoorziene omstandigheden (gestolen documenten, medische accessoires etc.)</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  winter 2017, 2018, 2019
+                </div>
+                <div class="content">
+                  <span class="titel">YepYoga</span><br>
+                  <span class="subtitel">Free lance yoga leraar</span>
+                  <ul>
+                    <li>Het geven van hatha yoga lessen in ho(s)tels in Azie</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  zomer 2016, 2017
+                </div>
+                <div class="content">
+                  <span class="titel">Vacansoleil, Camping Village Fabulous, Rome, Italië</span><br>
+                  <span class="subtitel">Camping host</span>
+                  <ul>
+                    <li>Controleren accomodaties</li>
+                    <li>Checkin-/check out</li>
+                    <li>Assisteren en vervangen van supervisor</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  2006 - 2011, 2015
+                </div>
+                <div class="content">
+                  <span class="titel">Disneyland Paris</span><br>
+                  <span class="subtitel">Kelner in Inventions, Disneyland Hotel (5*)<br>
+                  Kelner in Park Side Dinner,Hotel New York(4*)<br></span>
+                  <ul>
+                    <li>Eén van de circa 60 medewerkers (van de 13.000) die het meest is genoemd door de gasten als "uitzonderlijke castmember" in 2009 en 2010, 2011 en 2015</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  zomer 2012, 2013
+                </div>
+                <div class="content">
+                  <span class="titel">Selectcamp</span><br>
+                  <span class="subtitel">Courier op Camping Ca'Savio, Cavallino-Treporti (VE), Italië<br>
+                  Courier op Prà delle Torri, Caorle (VE), Italië</span>
+                  <ul>
+                    <li>Centraal aanspreekpunt voor de gasten waarbij service en kwaliteit voorop staat</li>
+                    <li>Schoonmaken en gereedmaken van de accommodaties voor en na het seizoen en bij gastenwisseling</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  2013
+                </div>
+                <div class="content">
+                  <span class="titel">Hotel Papendal (Arnhem)</span><br>
+                  <span class="subtitel">Kelner restaurant, bar, banqueting</span>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  2004- 2006
+                </div>
+                <div class="content">
+                  <span class="titel">JMW Horeca-uitzendbureau (interimair)</span><br>
+                  <span class="subtitel">Kelner, met name banqueting en partycatering</span>
+                </div>
+              </div>
+              <div class="regel">
+                <div class="label">
+                  2001-2004
+                </div>
+                <div class="content">
+                  <span class="titel">Koffiebranderij G. Peeze B.V. Arnhem</span><br>
+                  <span class="subtitel">Alle voorkomende werkzaamheden op het gebied van kwaliteitsmanagement, arbeidsomstandigheden, milieubeheer, HACCP, duurzaamheid en marketing</span>
+                </div>
+              </div>
+            </div>
+            <div class="regel"></div>
+            <h2>Talenkennis</h2>
+            <div class="perso_infobox">
+              <div class="regel">
+                <div class="label"></div>
+                <div class="content">
+                  <ul>
+                    <li>Nederlands (moedertaal)</li>
+                    <li>Engels (B2/C1)</li>
+                    <li>Frans (B1/B2)</li>
+                    <li>Italiaans (B1/B2)</li>
+                    <li>Duits (A2/B1)</li>
+                    <li>Spaans (A1/A2)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="regel"></div>
+            <h2>Overige vaardigheden</h2>
+            <div class="perso_infobox">
+              <div class="regel">
+                <div class="label"></div>
+                <div class="content">
+                  <ul>
+                    <li>Teamspirit, gastvrij</li>
+                    <li>Organisatorische capaciteiten</li>
+                    <li>Interactief met kinderen</li>
+                    <li>Windows, Office, Photoshop, SPSS, VBScript/ASP, HTML</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="regel"></div>
+          </center>
+        </center>
+      </div><!-- /innerwrapper -->
+    </div><!-- /nl -->
+    <a id="it"
+         name="it"></a>
+    <div class="spacer"></div>
+    <div id="it">
+      <div class="innerwrapper">
+        <h1>Informazioni personali</h1>
+        <div class="perso_infobox">
+          <div class="regel">
+            <div class="label">
+              Nome / Cognome
+            </div>
+            <div class="content1">
+              René Coniah SMIT
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Indirizzo
+            </div>
+            <div class="content1">
+              xxxxstraat X<br>
+              682x XX ARNHEM<br>
+              Paessi Bassi
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Telefono
+            </div>
+            <div class="content1">
+              0031(0)6 3914 xxxx
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              E-mail
+            </div>
+            <div class="content1">
+              <a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a>
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Cittadinanza
+            </div>
+            <div class="content1">
+              Olandese
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Data di nascita
+            </div>
+            <div class="content1">
+              23 agosto 1977
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Sesso
+            </div>
+            <div class="content1">
+              Maschile
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Patente
+            </div>
+            <div class="content1">
+              B
+            </div>
+          </div>
+        </div>
+        <div class="pasfoto"><img alt="photo of Rene Smit"
+             class="pasfoto"
+             src="pasf2020.jpg"
+             width="100px"></div>
+        <div class="regel"></div>
+        <h2>Istruzione e formazione</h2>
+        <div class="perso_infobox">
+          <div class="regel">
+            <div class="label">
+              2016
+            </div>
+            <div class="content">
+              <span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br>
+              Yoga Teacher Training - Hatha yoga 200 hours
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              1997 - 2001
+            </div>
+            <div class="content">
+              <span class="titel">Larenstein (Hogeschool), Velp (Paesi Bassi)</span><br>
+              Tecnologia degli alimenti (Management della qualità)<br>
+              (llivello bachelor, ISCED 5)
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              1989-1996
+            </div>
+            <div class="content">
+              <span class="titel">RSG Ter Apel</span><br>
+              Liceo scientifico
+            </div>
+          </div>
+        </div>
+        <div class="pasfoto"></div>
+        <div class="regel"></div>
+        <h2>Esperienza professionale</h2>
+        <center>
+          <img class="cvplaatje"
+                  margin="10px"
+                  src="cvrene.png">
+          <center>
+            <!---
+                                <div class="perso_infobox">
+
+                                        <div class="regel"><div class="label">L'estate 2014</div>
+                                        <div class="content"><span class="titel">Camping Village Fabulous (EC Vacanze), Roma</span> <br />
+                                                Addetto info-point
+                                                <ul><li>Fornire il servizio di informazione sul campeggio e Roma</li>
+                                                <li>Vendere biglietti e gite</li>
+                                                <li>Ricerca di informazioni e assistere gli ospiti in situazioni impreviste (documenti rubati, bisogno di accessori medici ecc)</li>
+                                        </ul></div></div>
+
+                                        <div class="regel"><div class="label">l'Estate 2013</div>
+                                        <div class="content"><span class="titel">Selectcamp</span> <br />
+                                                Courier presso Camping Ca'Savio, Cavallino-Treporti (VE)<BR />
+                                                <ul><li>Essendo il principale punto di contatto per gli ospiti dando enfasi a servizio e qualità. L'ospitalità è fondamentale.</li>
+                                                <li>Pulendo, controllando e preparando gli alloggi prima e dopo la stagione e in mezzo a partenze e arrivi di differenti ospiti.</li></ul></div></div>
+
+                                        <div class="regel">
+                                                <div class="label">2013</div>
+                                                <div class="content"><span class="titel">Hotel Papendal (Arnhem)</span> <br />
+                                                Cameriere restaurant, bar, banqueting</div>
+                                        </div>
+
+                                        <div class="regel">
+                                                <div class="label">l'Estate 2012</div>
+                                                <div class="content"><span class="titel">Selectcamp</span> <br />
+                                                Courier presso Prà delle Torri, Caorle (VE)</div>
+                                        </div>
+
+                                                <div class="regel"><div class="label">2006 - 2011</div>
+                                        <div class="content"><span class="titel">Disneyland Paris, Francia</span> <br />
+                                                Cameriere in Inventions, Disneyland Hotel (5*)<br />
+                                                Uno dei circa 60 dipendenti (su 13.000) che sono i piu' citati come "castmember eccezionale" dai clienti nel 2009 e 2010</div></div>
+                                        <div class="regel"><div class="label">2004 - 2006</div><div class="content"><span class="titel">Varie aziende nei paesi bassi</span><br />
+                                                Cameriere interinale, sopratutto banqueting e partycatering</div></div>
+                                        <div class="regel"><div class="label">2001-2004</div><div class="content"><span class="titel">Koffiebranderij Peeze</span><br />
+                                                Gestione di Qualità, Ambiente, Sicurezza sul lavoro, Marketing, Sostenibilità, HACCP &amp; Igiene presso un'azienda di torrefazione di caffé (comparabile con Illy)</div></div>
+                                </div>
+                                <div class="regel"></div>
+
+                                =-->
+            <h2>Lingue</h2>
+            <div class="perso_infobox">
+              <div class="regel">
+                <div class="label"></div>
+                <div class="content">
+                  <ul>
+                    <li>Olandese (madrelingua)</li>
+                    <li>Inglese (B2/C1)</li>
+                    <li>Francese (B1/B2)</li>
+                    <li>Italiano (B1/B2)</li>
+                    <li>Tedesco (A2/B1)</li>
+                    <li>Spagnolo / Castigliano (A1/A2)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="pasfoto"></div>
+            <div class="regel"></div>
+            <h2>Capacità e competenze</h2>
+            <div class="perso_infobox">
+              <div class="regel">
+                <div class="label"></div>
+                <div class="content">
+                  <ul>
+                    <li>Spirito di sqaudra, animato, accogliente</li>
+                    <li>Capacità di interagire con i bambini</li>
+                    <li>Capacità e competenze organizzative</li>
+                    <li>Windows, Office, Photoshop, SPSS, VBSCRIPT/ASP, HTML</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="pasfoto"></div>
+            <div class="regel"></div>
+          </center>
+        </center>
+      </div><!-- /innerwrapper -->
+    </div><!-- /it -->
+    <a id="fr"
+         name="fr"></a>
+    <div class="spacer"></div>
+    <div id="fr">
+      <div class="innerwrapper">
+        <h1>Curriculum Vitae</h1>
+        <div class="perso_infobox">
+          <div class="regel">
+            <div class="label">
+              Nom
+            </div>
+            <div class="content1">
+              Smit
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Prénoms
+            </div>
+            <div class="content1">
+              René Coniah
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Sexe
+            </div>
+            <div class="content1">
+              homme
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Adresse
+            </div>
+            <div class="content1">
+              xxxxstraat X<br>
+              682x XX ARNHEM<br>
+              Pays Bas<br>
+              +31 (0)6 3914 xxx
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Adresse email
+            </div>
+            <div class="content1">
+              <a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a>
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Etat civil
+            </div>
+            <div class="content1">
+              Célibataire
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              La date de naissance
+            </div>
+            <div class="content1">
+              23 Août 1977
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              lieu de naissance
+            </div>
+            <div class="content1">
+              Taipei (Taiwan)
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Nationalité
+            </div>
+            <div class="content1">
+              Néerlandais
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              Permis de conduire
+            </div>
+            <div class="content1">
+              B
+            </div>
+          </div>
+        </div>
+        <div class="pasfoto"><img alt="photo of Rene Smit"
+             class="pasfoto"
+             src="pasf2020.jpg"
+             width="100px"></div>
+        <div class="regel"></div>
+        <h2>Formation</h2>
+        <div class="perso_infobox">
+          <div class="regel">
+            <div class="label">
+              2016
+            </div>
+            <div class="content">
+              <span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br>
+              Yoga Teacher Training - Hatha yoga 200 hours
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              1997-2001
+            </div>
+            <div class="content">
+              <span class="titel">Larenstein Velp</span><br>
+              Etude agro-alimentaire - management de qualité<br>
+              (BTS, Licence, Bac+4)
+            </div>
+          </div>
+          <div class="regel">
+            <div class="label">
+              1989-1996
+            </div>
+            <div class="content">
+              <span class="titel">RSG Ter Apel</span><br>
+              VWO (Lycée)
+            </div>
+          </div>
+        </div>
+        <div class="pasfoto"></div>
+        <div class="regel"></div>
+        <h2>Expériences professionnelles</h2>
+        <center>
+          <img class="cvplaatje"
+                  margin="10px"
+                  src="cvrene.png">
+          <center>
+            <!---
+                                <div class="perso_infobox">
+
+                                        <div class="regel"><div class="label">L'éte 2014</div>
+                                        <div class="content"><span class="titel">Camping Village Fabulous (EC Vacanze), Rome, l'Italie</span> <br />
+
+                                        Employé point info
+                                                <ul><li>Renseignements sur le camping et sur Rome</li>
+                                                <li>Vente de billets et excursions</li>
+                                                <li>Assistance des clients en cas d'urgences (documents volés etc.)</li></ul></div></div>
+
+                                        <div class="regel"><div class="label">l'été 2013</div>
+                                        <div class="content"><span class="titel">Selectcamp</span> <br />
+                                                Courier au Camping Ca'Savio, Cavallino-Treporti (VE), l'Italie<BR />
+                                                </div></div>
+
+                                        <div class="regel"><div class="label">2013</div>
+                                        <div class="content"><span class="titel">Hotel Papendal, Arnhem</span> <br />
+                                                Serveur restaurant, bar, banqueting</div></div>
+
+                                        <div class="regel"><div class="label">l'été 2012</div>
+                                        <div class="content"><span class="titel">Selectcamp</span> <br />
+                                                Courier au Prà delle Torri, Caorle (VE), l'Italie<BR />
+                                                </div></div>
+
+                                        <div class="regel"><div class="label">2006 - 2011</div><div class="content"><span class="titel">DisneylandParis</span><br />
+                                                Serveur au Restaurant Inventions, Hôtel Disneyland (5*)<br />
+                                                Un parmi 60 employees (de 13.000) qui sont cités comme 'castmember remarquable' par les guests en 2009 et 2010</div></div>
+
+                                        <div class="regel"><div class="label">2004- 2006</div><div class="content"><span class="titel">JMW Horeca-uitzendbureau (interimair)</span><br />
+                                                Barman, serveur
+                                                hotels, restaurants, cafés, banquets, traiteurs événementiels etc.</div></div>
+
+                                        <div class="regel"><div class="label">2001-2004</div><div class="content"><span class="titel">Koffiebranderij G. Peeze B.V. Arnhem</span><br />
+                                        management de qualité, conditions de travail, protection de l'environnement, sécurité alimentaire, plaintes et compte-rendu</div></div>
+                                </div>
+                                <div class="pasfoto">
+                                        </div>
+                                <div class="regel"></div>
+
+                                =-->
+            <h2>Connaissance linguistiques</h2>
+            <div class="perso_infobox">
+              <div class="regel">
+                <div class="label"></div>
+                <div class="content">
+                  <ul>
+                    <li>Néerlandais (langue maternelle)</li>
+                    <li>Anglais (B2/C1)</li>
+                    <li>Français(B1/B2)</li>
+                    <li>Italien (B1/B2)</li>
+                    <li>Allemand (A2/B1)</li>
+                    <li>Espagnol (A1/A2)</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="pasfoto"></div>
+            <div class="regel"></div>
+            <h2>Divers</h2>
+            <div class="perso_infobox">
+              <div class="regel">
+                <div class="label"></div>
+                <div class="content">
+                  <ul>
+                    <li>L'esprit d'equipe et d'acceuil</li>
+                    <li>Fort en interaction avec les enfants</li>
+                    <li>Capacité d'organisation</li>
+                    <li>Windows, Office, Photoshop, SPSS, VBSCRIPT/ASP, HTML</li>
+                    <li>Lecture, course à pied, jouer du piano</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <div class="pasfoto"></div>
+            <div class="regel"></div>
+          </center>
+        </center>
+      </div><!-- /innerwrapper -->
+    </div><!-- /fr -->
+    <a id="contact"
+         name="contact"></a>
+    <div class="spacer"></div>
+    <div id="contact">
+      <div class="innerwrapper">
+        <h1>Contact</h1>(disabled due to spam, please connect with me on <a href="http://www.twitter.com/rcsmit"
+             target="_blank">twitter</a>, <a href="http://www.instagram.com/rcsmit"
+             target="_blank">instagram</a> or <a href="http://www.facebook.com/rcsmit"
+             target="_blank">facebook</a>). Looking forward to your message! <!---
+                <Form Method="Post" Action="contact.asp">
+
+                        <div class="perso_infobox">
+                                        <div class="regel1"><div class="label">Your e-mailaddress</div><div class="content1"><INPUT  size="30" type="text" name="mailfrom"></div></div>
 
 <div class="regel1"><div class="label">Subject</div><div class="content1"><INPUT Type="text"   size="50" name="subject" value="Reply to the CV of René Smit"></div></div>
 <div class="regel1"><div class="label">Message</div><div class="content1"><TEXTAREA NAME="tekst" ROWS="5" COLS="30"></TEXTAREA></div></div>
 <div class="regel1"><div class="label"><Input type=checkbox name="mailing"></div><div class="content1">Send a copy to my own e-mail address</div></div>
 <div class="regel1"><div class="label">&nbsp;</div><div class="content1"><INPUT Type="submit" Value="Send" name="Submit"></div></div>
-				</div>
+                                </div>
 
-
-		    		</form>
+                                </form>
 
 -->
-
-		</div><!-- /innerwrapper -->
-</div><!-- /contact -->
-
-
-
-
-</div><!-- /wrapper -->
-
+      </div><!-- /innerwrapper -->
+    </div><!-- /contact -->
+  </div><!-- /wrapper -->
 </body>
 </html>
