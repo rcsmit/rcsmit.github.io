@@ -1,0 +1,286 @@
+<html>
+<head>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-147735325-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+ 
+  gtag('config', 'UA-147735325-1');
+</script>
+
+<link href="dead.css" rel="stylesheet" />
+<title>Aantal dieren dat in Nederland jaarlijks wordt geslacht</title>
+
+ <meta property="og:url"           content="http://www.yepcheck.com/geslacht/" />
+  <meta property="og:type"          content="website" />
+  <meta property="og:title"         content="Aantal dieren dat in Nederland jaarlijks wordt geslacht" />
+  <meta property="og:description"   content="Aantal dieren dat in Nederland jaarlijks wordt geslacht" />
+  <meta property="og:image"         content="https://www.your-domain.com/path/image.jpg" />
+  
+  
+<script>
+window.addEventListener('DOMContentLoaded',function(){
+  var updatesPerSecond = 20;
+  var animalsKilledPerYear = {
+	
+	
+	
+	
+	'Totaal-runderen': 2237700,
+'Totaal-volwassen-runderen': 607800,
+'Koeien': 522300,
+'Vaarzen': 14200,
+'Stieren': 71500,
+'Totaal-kalveren': 1629800,
+'Kalveren jonger dan 9 maanden': 1470900,
+'Kalveren van 9 tot en met 12 maanden': 158900,
+'Varkens': 15907000,
+'Schapen incl. lammeren': 519300,
+'Schapenlammeren': 380400,
+'Geiten': 171400,
+'Eenhoevigen': 2400,
+'Vleeskuikens': 605487800,
+'Overige kippen': 17951700,
+'eikuikens': 45000000,	
+	
+'Overig pluimvee': 4600,
+
+	
+	
+	
+ };
+
+  var secondsPerYear = 365 * 24 * 60 * 60;
+  var interval = 1000/ updatesPerSecond;
+  var count = 0, start = new Date().getTime();
+
+  function update(intervalCount) {
+    for (var subset in animalsKilledPerYear) {
+      var numKilled = animalsKilledPerYear[subset];
+      var countElement = document.getElementById("akc-" + subset);
+      if (countElement) {
+        countElement.innerHTML = Math.round(intervalCount * (numKilled/secondsPerYear) / updatesPerSecond).toLocaleString();
+      }
+    }
+  }
+
+  function selfCorrectingTimeoutInterval() {
+    update(++count);
+    window.setTimeout(selfCorrectingTimeoutInterval, interval - (new Date().getTime() - start - count * interval));
+  }
+  window.setTimeout(selfCorrectingTimeoutInterval, interval);
+});
+
+////
+// Timer
+////
+var sec =0, min=0, hour=0;
+setInterval(function(){
+	sec++;
+	if(sec==60){sec=0; min++;}
+	if(min==60){min=0; hour++;}
+	var str = 'Sinds';
+	str+= hour?' ' +hour + (hour==1?' uur':' uren') + ' en':'';
+	str+= min?' ' +min+ (min==1?' minuut':' minuten') + ' en':'';
+	str+= sec?' ' +sec+ (sec==1?' seconde':' seconden'):'';
+document.getElementById('passed').innerHTML=str;
+},1000);
+////
+// Timer Ends
+////
+</script>
+
+</head>
+<body class="animal-slaughter">
+<div class="counter-body">
+<h1>Dieren geslacht voor voedsel </h1>
+<h2>sinds je deze pagina hebt geopend</h2>
+
+	<p id="passed" class="time-so-far">Sinds 0 seconden</p>
+	
+	<ul class="slaughter-counter">
+		<li>
+			<div class="counter-inner-wrapper" id="x1">
+				<div class="counter-box" >
+					<!--- <img src="pig2.svg"   height="27px"/> --->
+				
+						<span id='akc-Varkens'>0</span> 
+						<p>Varkens</p>
+					</div>	
+				</div>		
+			
+		</li>
+		<li>
+			<div class="counter-inner-wrapper" id="x2">
+				
+					<div class="counter-box">
+							<!--- <img src="cow.svg"   height="27px"/> --->
+			
+						<span id='akc-Totaal-runderen'>0</span> <p>Totaal runderen</p>	</div>	
+					
+			</div></li>
+		<li>
+			<div class="counter-inner-wrapper" id="x3">
+				
+					<div class="counter-box">
+							<!--- <img src="sheep.svg"   height="27px"/> --->
+			
+						<span id='akc-Schapen incl. lammeren'>0</span> <p>Schapen incl. lammeren</p>	</div>	
+				</div>		
+			
+		</li>
+			
+		<li>
+			<div class="counter-inner-wrapper" id="x4">
+				
+					<div class="counter-box">
+							<!--- <img src="goat.svg"   height="27px"/> --->
+			
+					<span id='akc-Geiten'>0</span> <p>Geiten</p>	</div>	
+				</div>		
+			
+		</li>
+		<li>
+			<div class="counter-inner-wrapper" id="x5">
+				
+					<div class="counter-box">
+							<!--- <img src="horse.svg"   height="27px"/> --->
+			
+					<span id='akc-Eenhoevigen'>0</span> <p>Paarden</p>	</div>	
+						
+			</div>
+		</li>
+		<li>
+			<div class="counter-inner-wrapper" id="x6">
+				
+					<div class="counter-box">
+							<!--- <img src="chicken.svg"   height="27px"/> --->
+			
+					<span id='akc-Vleeskuikens'>0</span> <p>Vleeskuikens (kippen)</p>	</div>	
+						
+			</div>
+		</li>
+		<li>
+			<div class="counter-inner-wrapper" id="x7">
+				
+					<div class="counter-box">
+							<!--- <img src="chick.svg"   height="27px"/> --->
+			
+					<span id='akc-eikuikens'>0</span> <p>Kuikens (ei-productie)</p>	</div>	
+						
+			</div>
+		</li>
+		<li>
+			<div class="counter-inner-wrapper" id="x8">
+				
+					<div class="counter-box">
+							<!--- <img src="chicken2.svg"   height="27px"/> --->
+			
+					<span id='akc-Overige kippen'>0</span> <p>Overige kippen</p>	</div>	
+						
+			</div>
+		</li>
+</ul>	
+</div>
+<div class="counter-info">
+
+
+<p>Er wordt ervan uit gegaan dat er 7 dagen per week, 24 uur per dag wordt geslacht.<br><a href="index.htm">Deze teller</a> gaat uit van werkdagen tussen 7:00 en 17:00</p>
+<p>Veel dieren in Nederland (80% als ik me niet vergis) worden ook geslacht voor de export.</p>
+<div class="footer">
+<ul class="sources">
+
+
+<h3>Totaal aantal geslachte dieren in 2018</h3>
+
+<li>Totaal runderen: 2.237.700</li>
+<li>Totaal volwassen runderen: 607.800</li>
+<li>Koeien: 522.300</li>
+<li>Vaarzen: 14.200</li>
+<li>Stieren: 71.500</li>
+<li>Totaal kalveren: 1.629.800</li>
+<li>Kalveren jonger dan 9 maanden: 1.470.900</li>
+<li>Kalveren van 9 tot en met 12 maanden: 158.900</li>
+<li>Varkens: 15.907.000</li>
+<li>Schapen incl. lammeren: 519.300</li>
+<li>Schapenlammeren: 380.400</li>
+<li>Geiten: 171.400</li>
+<li>Eenhoevigen: 2.400</li>
+<li>Vleeskuikens: 605.487.800</li>
+<li>Kuikens in eierproductie: 45.000.000</li>
+
+<li>Overige kippen: 17.951.700</li>
+
+<li>Overig pluimvee (oa kalkoenen): 4.600</li>
+</ul>
+
+<ul>
+<h3>Bronnen</h3>
+<li><a href="https://opendata.cbs.nl/statline/#/CBS/nl/dataset/7123slac/table" target="_blank">CBS Statline</a> Vleesproductie; aantal slachtingen en geslacht gewicht per diersoort, 2018</li> 
+<li><a href="https://project.inovo.nl/" target="_blank">Aantal geslachte kuikens ivm ei-productie</a>
+</ul>
+<!---
+
+
+<li>Pig by Alena Artemova from the Noun Project</li>
+<li>Cow by Chris Pyper from the Noun Project</li>
+<li>Sheep by Georgiana Ionescu from the Noun Project</li>
+<li>Goat by Wahyuntitle from the Noun Project</li>
+<li>Horse by Semilla Solar from the Noun Project</li>
+<li>Chicken by Pariphat Sinma from the Noun Project</li>
+<li>chick by Abdo from the Noun Project</li>
+<li>Chicken by Matt Dean from the Noun Project</li>
+<li><a href="https://thenounproject.com">https://thenounproject.com</a></li>
+
+--->
+
+
+  <!-- Load Facebook SDK for JavaScript -->
+  <div id="fb-root"></div>
+  <script>(function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.0";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));</script>
+
+  
+  
+<ul><h3>Delen</h3> 
+<li>
+<a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</li>
+<li>&nbsp;</li>
+<li>
+ <div class="fb-share-button" 
+    data-href="http://www.yepcheck.com/geslacht/" 
+    data-layout="button_count">
+  </div>
+  </li>
+</ul>
+
+<ul><h3>Code / inspiration</h3> 
+<li><a href="https://considerveganism.com/counter/" target="_blank">Consider Veganism</a>  </li>
+<li> <a href="http://thevegancalculator.com/animal-slaughter/" target="_blank">The Vegan calculator</a></li>
+</ul>
+
+<ul><h3>Gemaakt door</h3> 
+<li><a href="https://instagram.com/vegan_rene" target="_blank">@vegan_rene</a>  </li>
+<li> <a href="http://www.yep-yoga.com/contact/" target="_blank">Contact</a></li>
+</ul>
+
+</div>
+
+</div>
+
+<center>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/Ju_71X4o0N4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</center>
+
+
+
+</body>
+</html>
