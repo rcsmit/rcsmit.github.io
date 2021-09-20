@@ -18,17 +18,17 @@
   <meta property="og:title"         content="Aantal dieren dat in Nederland jaarlijks wordt geslacht" />
   <meta property="og:description"   content="Aantal dieren dat in Nederland jaarlijks wordt geslacht" />
   <meta property="og:image"         content="https://www.your-domain.com/path/image.jpg" />
-  
-  
+
+
 <script>
   var today = new Date();
   //var uur = today.getHours()
   var uur = 11;
   var weekend = 0;
-  
+
   if(today.getDay() == 6 || today.getDay() == 0) weekend==1;
 
-  
+
 window.addEventListener('DOMContentLoaded',function(){
   var updatesPerSecond = 20;
   var today = new Date();
@@ -49,8 +49,8 @@ window.addEventListener('DOMContentLoaded',function(){
 			'Eenhoevigen': 2400,
 			'Vleeskuikens': 605487800,
 			'Overige kippen': 17951700,
-			'eikuikens': 45000000,	
-				
+			'eikuikens': 45000000,
+
 			'Overig pluimvee': 4600,
 
 			 };
@@ -72,12 +72,12 @@ window.addEventListener('DOMContentLoaded',function(){
 
   function selfCorrectingTimeoutInterval() {
   console.log (uur);
-  
+
   if (uur< 18 && uur > 6 && weekend == 0) {
-	
+
     update(++count);
 	}
-	
+
     window.setTimeout(selfCorrectingTimeoutInterval, interval - (new Date().getTime() - start - count * interval));
   }
   window.setTimeout(selfCorrectingTimeoutInterval, interval);
@@ -88,7 +88,7 @@ window.addEventListener('DOMContentLoaded',function(){
 ////
 var sec =0, min=0, hour=0;
 setInterval(function(){
- 
+
 if (uur< 18 && uur > 6 && weekend == 0) {
 
 	sec++;
@@ -123,95 +123,95 @@ document.getElementById('passed').innerHTML=str
 <h2>sinds je deze pagina hebt geopend</h2>
 
 	<p id="passed" class="time-so-far">Sinds 0 seconden</p>
-	
+
 	<ul class="slaughter-counter">
 		<li>
 			<div class="counter-inner-wrapper" id="x1">
 				<div class="counter-box" >
 					<!--- <img src="pig2.svg"   height="27px"/> --->
-				
-						<span id='akc-Varkens'>0</span> 
+
+						<span id='akc-Varkens'>0</span>
 						<p>Varkens</p>
-					</div>	
-				</div>		
-			
+					</div>
+				</div>
+
 		</li>
 		<li>
 			<div class="counter-inner-wrapper" id="x2">
-				
+
 					<div class="counter-box">
 							<!--- <img src="cow.svg"   height="27px"/> --->
-			
-						<span id='akc-Totaal-runderen'>0</span> <p>Totaal runderen</p>	</div>	
-					
+
+						<span id='akc-Totaal-runderen'>0</span> <p>Totaal runderen</p>	</div>
+
 			</div></li>
 		<li>
 			<div class="counter-inner-wrapper" id="x3">
-				
+
 					<div class="counter-box">
 							<!--- <img src="sheep.svg"   height="27px"/> --->
-			
-						<span id='akc-Schapen incl. lammeren'>0</span> <p>Schapen incl. lammeren</p>	</div>	
-				</div>		
-			
+
+						<span id='akc-Schapen incl. lammeren'>0</span> <p>Schapen incl. lammeren</p>	</div>
+				</div>
+
 		</li>
-			
+
 		<li>
 			<div class="counter-inner-wrapper" id="x4">
-				
+
 					<div class="counter-box">
 							<!--- <img src="goat.svg"   height="27px"/> --->
-			
-					<span id='akc-Geiten'>0</span> <p>Geiten</p>	</div>	
-				</div>		
-			
+
+					<span id='akc-Geiten'>0</span> <p>Geiten</p>	</div>
+				</div>
+
 		</li>
 		<li>
 			<div class="counter-inner-wrapper" id="x5">
-				
+
 					<div class="counter-box">
 							<!--- <img src="horse.svg"   height="27px"/> --->
-			
-					<span id='akc-Eenhoevigen'>0</span> <p>Paarden</p>	</div>	
-						
+
+					<span id='akc-Eenhoevigen'>0</span> <p>Paarden</p>	</div>
+
 			</div>
 		</li>
 		<li>
 			<div class="counter-inner-wrapper" id="x6">
-				
+
 					<div class="counter-box">
 							<!--- <img src="chicken.svg"   height="27px"/> --->
-			
-					<span id='akc-Vleeskuikens'>0</span> <p>Vleeskuikens (kippen)</p>	</div>	
-						
+
+					<span id='akc-Vleeskuikens'>0</span> <p>Vleeskuikens (kippen)</p>	</div>
+
 			</div>
 		</li>
 		<li>
 			<div class="counter-inner-wrapper" id="x7">
-				
+
 					<div class="counter-box">
 							<!--- <img src="chick.svg"   height="27px"/> --->
-			
-					<span id='akc-eikuikens'>0</span> <p>Kuikens (ei-productie)</p>	</div>	
-						
+
+					<span id='akc-eikuikens'>0</span> <p>Kuikens (ei-productie)</p>	</div>
+
 			</div>
 		</li>
 		<li>
 			<div class="counter-inner-wrapper" id="x8">
-				
+
 					<div class="counter-box">
 							<!--- <img src="chicken2.svg"   height="27px"/> --->
-			
-					<span id='akc-Overige kippen'>0</span> <p>Overige kippen</p>	</div>	
-						
+
+					<span id='akc-Overige kippen'>0</span> <p>Overige kippen</p>	</div>
+
 			</div>
 		</li>
-</ul>	
+</ul>
 </div>
 <div class="counter-info">
 
 
-<p>Er wordt ervan uit gegaan dat er 5 dagen per week tussen 7:00 en 17:00 wordt geslacht.<br><a href="index365.htm">Deze teller</a> gaat uit van 365 dagen, 24 uur per dag</p>
+<p>Er wordt ervan uit gegaan dat er 5 dagen per week tussen 7:00 en 17:00 wordt geslacht.<br><a href="index365.html">Deze teller</a> gaat uit van 365 dagen, 24 uur per dag</p>
 
 <p>Veel dieren in Nederland (80% als ik me niet vergis) worden ook geslacht voor de export.</p>
 <div class="footer">
@@ -243,7 +243,7 @@ document.getElementById('passed').innerHTML=str
 
 <ul>
 <h3>Bronnen</h3>
-<li><a href="https://opendata.cbs.nl/statline/#/CBS/nl/dataset/7123slac/table" target="_blank">CBS Statline</a> Vleesproductie; aantal slachtingen en geslacht gewicht per diersoort, 2018</li> 
+<li><a href="https://opendata.cbs.nl/statline/#/CBS/nl/dataset/7123slac/table" target="_blank">CBS Statline</a> Vleesproductie; aantal slachtingen en geslacht gewicht per diersoort, 2018</li>
 <li><a href="https://project.inovo.nl/" target="_blank">Aantal geslachte kuikens ivm ei-productie</a>
 </ul>
 <!---
@@ -272,27 +272,27 @@ document.getElementById('passed').innerHTML=str
     fjs.parentNode.insertBefore(js, fjs);
   }(document, 'script', 'facebook-jssdk'));</script>
 
-  
-  
-<ul><h3>Delen</h3> 
+
+
+<ul><h3>Delen</h3>
 <li>
 <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </li>
 <li>&nbsp;</li>
 <li>
- <div class="fb-share-button" 
-    data-href="http://www.yepcheck.com/geslacht/" 
+ <div class="fb-share-button"
+    data-href="http://www.yepcheck.com/geslacht/"
     data-layout="button_count">
   </div>
   </li>
 </ul>
 
-<ul><h3>Code / inspiration</h3> 
+<ul><h3>Code / inspiration</h3>
 <li><a href="https://considerveganism.com/counter/" target="_blank">Consider Veganism</a>  </li>
 <li> <a href="http://thevegancalculator.com/animal-slaughter/" target="_blank">The Vegan calculator</a></li>
 </ul>
 
-<ul><h3>Gemaakt door</h3> 
+<ul><h3>Gemaakt door</h3>
 <li><a href="https://instagram.com/vegan_rene" target="_blank">@vegan_rene</a>  </li>
 <li> <a href="http://www.yep-yoga.com/contact/" target="_blank">Contact</a></li>
 </ul>
