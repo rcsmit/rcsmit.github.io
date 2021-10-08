@@ -57,7 +57,7 @@
                     var css = `@import url('https://fonts.googleapis.com/css?family=${v.family}');`;
                     $('<style/>').append(css).appendTo(document.head);
                     //          $(`<h1 style="font-family: '${v.family}'"/>`).text(`${v.family} (${v.category}): - `).appendTo($('#preview'));
-                    $(`<font style="font-family: '${v.family}'"/>`).text(`${v.family} - `).appendTo($('#preview'));
+                    $(`<font style="font-size:2em;font-family: '${v.family}'"/>`).text(`${v.family} - `).appendTo($('#preview'));
 					n=n+1
                     temp = v.category
                 });
