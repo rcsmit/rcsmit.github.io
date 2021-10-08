@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Google Fonts Preview</title>
+    <style>
+        #preview {
+            margin: 0 auto;
+            text-align: center;
+            width: 95%;
+            column-count: 2;
+        }
+    </style>
+</head>
+
+<body>
+    <center>
+        <h1>Google fonts</h1>
+    </center>
+
+    <div id="preview"></div>
+<div id="nx"></div>
+    Thanks to: https://github.com/jonathantneal/google-fonts-complete / https://medium.com/@jmatix/quickly-generate-google-fonts-preview-954dc9974a62
+
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+    <script>
+        //  $(function() {
+
+        //      $.getJSON('https://raw.githubusercontent.com/jonathantneal/google-fonts-complete/master/google-fonts.json', function(fonts) {
+        //           $.each(fonts, function(k, v) {
+        //            //if (v.category!=='sans-serif') return; //filter only sans-serif fonts. replace with your filter condition(s)
+        //              //if (v.category!=='sans-serif') return; //filter only type
+        //
+        //           var css = `@import url('https://fonts.googleapis.com/css?family=${k}');`;
+        //          // https://www.googleapis.com/webfonts/v1/webfonts?key=AIzaSyBhw-vLvQLGskVxlDkdKZfsrvpOSXH35gE
+        //            $('<style/>').append(css).appendTo(document.head);
+        //           $(`<font size="large" style="font-family: '${k}'"/>`).text(`${k} - `).appendTo($('#preview'));
+        //      });
+        //    });
+        //   });
+
+
+        $(function() {
+            var temp = ""
+			var n=0
+            $.getJSON('https://raw.githubusercontent.com/jonathantneal/google-fonts-complete/master/google-fonts.json', function(fonts) {
+                // fonts = Object.keys(fonts).map(i => ({family: i, category: fonts[i].category})).sort((a,b)=>a.category.localeCompare(b.category));
+                fonts = Object.keys(fonts).map(i => ({
+                    family: i,
+                    category: fonts[i].category
+                })); //.sort((a, b) => (a.category + a.family).localeCompare(b.category + b.family));
+                fonts.forEach(function(v) {
+
+                    var css = `@import url('https://fonts.googleapis.com/css?family=${v.family}');`;
+                    $('<style/>').append(css).appendTo(document.head);
+                    //          $(`<h1 style="font-family: '${v.family}'"/>`).text(`${v.family} (${v.category}): - `).appendTo($('#preview'));
+                    $(`<font style="font-family: '${v.family}'"/>`).text(`${v.family} - `).appendTo($('#preview'));
+					n=n+1
+                    temp = v.category
+                });
+
+                //// $(`<p>Found : "+ n + "fonts.</p>`).appendTo($('#nx'));
+
+            });
+        });
+    </script>
+</body>
+
+</html>
