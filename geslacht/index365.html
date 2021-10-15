@@ -21,38 +21,43 @@
 
 
 <script>
+  var today = new Date();
+  //var uur = today.getHours()
+  var uur = 11;
+  var weekend = 0;
+
+  //if(today.getDay() == 6 || today.getDay() == 0) weekend==1;
+
+
 window.addEventListener('DOMContentLoaded',function(){
   var updatesPerSecond = 20;
+  var today = new Date();
+  var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
   var animalsKilledPerYear = {
 
+			'Totaal-runderen':2088600,
+			'Totaal-volwassen-runderen': 529800,
+			'Koeien': 461000,
+			'Vaarzen': 12300,
+			'Stieren': 56500,
+			'Totaal-kalveren': 1558700,
+			'Kalveren jonger dan 9 maanden': 1406700,
+			'Kalveren van 9 tot en met 12 maanden': 152000,
+			'Varkens': 16666100,
+			'Schapen incl. lammeren': 685300,
+			'Schapenlammeren': 509700,
+			'Geiten': 200900,
+			'Eenhoevigen': 1600,
+			'Vleeskuikens': 577878000,
+			'Overige kippen': 19651500,
+			'eikuikens': 45000000,
+			'Overig pluimvee': 4800
 
 
-
-	'Totaal-runderen': 2237700,
-'Totaal-volwassen-runderen': 607800,
-'Koeien': 522300,
-'Vaarzen': 14200,
-'Stieren': 71500,
-'Totaal-kalveren': 1629800,
-'Kalveren jonger dan 9 maanden': 1470900,
-'Kalveren van 9 tot en met 12 maanden': 158900,
-'Varkens': 15907000,
-'Schapen incl. lammeren': 519300,
-'Schapenlammeren': 380400,
-'Geiten': 171400,
-'Eenhoevigen': 2400,
-'Vleeskuikens': 605487800,
-'Overige kippen': 17951700,
-'eikuikens': 45000000,
-
-'Overig pluimvee': 4600,
-
-
-
-
- };
+			 };
 
   var secondsPerYear = 365 * 24 * 60 * 60;
+  //var secondsPerYear = 261 * 10 * 60 * 60;
   var interval = 1000/ updatesPerSecond;
   var count = 0, start = new Date().getTime();
 
@@ -67,7 +72,13 @@ window.addEventListener('DOMContentLoaded',function(){
   }
 
   function selfCorrectingTimeoutInterval() {
+  console.log (uur);
+
+  if (uur< 18 && uur > 6 && weekend == 0) {
+
     update(++count);
+	}
+
     window.setTimeout(selfCorrectingTimeoutInterval, interval - (new Date().getTime() - start - count * interval));
   }
   window.setTimeout(selfCorrectingTimeoutInterval, interval);
@@ -78,6 +89,9 @@ window.addEventListener('DOMContentLoaded',function(){
 ////
 var sec =0, min=0, hour=0;
 setInterval(function(){
+
+if (uur< 18 && uur > 6 && weekend == 0) {
+
 	sec++;
 	if(sec==60){sec=0; min++;}
 	if(min==60){min=0; hour++;}
@@ -85,8 +99,19 @@ setInterval(function(){
 	str+= hour?' ' +hour + (hour==1?' uur':' uren') + ' en':'';
 	str+= min?' ' +min+ (min==1?' minuut':' minuten') + ' en':'';
 	str+= sec?' ' +sec+ (sec==1?' seconde':' seconden'):'';
-document.getElementById('passed').innerHTML=str;
+document.getElementById('passed').innerHTML=str;}
+
+else
+{
+var str="Slachthuizen gesloten";
+document.getElementById('passed').innerHTML=str
+
+}
+
+
 },1000);
+
+
 ////
 // Timer Ends
 ////
@@ -187,38 +212,37 @@ document.getElementById('passed').innerHTML=str;
 <div class="counter-info">
 
 
-<p>Er wordt ervan uit gegaan dat er 7 dagen per week, 24 uur per dag wordt geslacht.<br><a href="index.html">Deze teller</a> gaat uit van werkdagen tussen 7:00 en 17:00</p>
-<p>Veel dieren in Nederland (80% als ik me niet vergis) worden ook geslacht voor de export.</p>
+	<p>Er wordt ervan uit gegaan dat er 7 dagen per week, 24 uur per dag wordt geslacht.<br><a href="index.html">
+		Deze teller</a> gaat uit van werkdagen tussen 7:00 en 17:00</p>
+	<p>Veel dieren in Nederland (80% als ik me niet vergis) worden ook geslacht voor de export.</p>
+
 <div class="footer">
 <ul class="sources">
 
 
-<h3>Totaal aantal geslachte dieren in 2018</h3>
-
-<li>Totaal runderen: 2.237.700</li>
-<li>Totaal volwassen runderen: 607.800</li>
-<li>Koeien: 522.300</li>
-<li>Vaarzen: 14.200</li>
-<li>Stieren: 71.500</li>
-<li>Totaal kalveren: 1.629.800</li>
-<li>Kalveren jonger dan 9 maanden: 1.470.900</li>
-<li>Kalveren van 9 tot en met 12 maanden: 158.900</li>
-<li>Varkens: 15.907.000</li>
-<li>Schapen incl. lammeren: 519.300</li>
-<li>Schapenlammeren: 380.400</li>
-<li>Geiten: 171.400</li>
-<li>Eenhoevigen: 2.400</li>
-<li>Vleeskuikens: 605.487.800</li>
-<li>Kuikens in eierproductie: 45.000.000</li>
-
-<li>Overige kippen: 17.951.700</li>
-
-<li>Overig pluimvee (oa kalkoenen): 4.600</li>
-</ul>
-
+	<h3>Totaal aantal geslachte dieren in 2020</h3>
 <ul>
+	<li>Rundvee (totaal) - 2088600</li>
+	<li>Totaal volwassen runderen - 529800</li>
+	<li>Koeien - 461000</li>
+	<li>Vaarzen - 12300</li>
+	<li>Stieren - 56500</li>
+	<li>Totaal kalveren - 1558700</li>
+	<li>Kalveren jonger dan 9 maanden - 1406700</li>
+	<li>Kalveren van 9 tot en met 12 maanden - 152000</li>
+	<li>Varkens (totaal) - 16666100</li>
+	<li>Schapen incl. lammeren - 685300</li>
+	<li>Schapenlammeren - 509700</li>
+	<li>Geiten (totaal) - 200900</li>
+	<li>Eenhoevigen - 1600</li>
+	<li>Vleeskuikens - 577878000</li>
+	<li>Overige kippen - 19651500</li>
+	<li>Overig pluimvee (oa. kalkoenen) - 4800</li>
+	<li>Kuikens in eierproductie: 45.000.000</li>
+
+</ul>
 <h3>Bronnen</h3>
-<li><a href="https://opendata.cbs.nl/statline/#/CBS/nl/dataset/7123slac/table" target="_blank">CBS Statline</a> Vleesproductie; aantal slachtingen en geslacht gewicht per diersoort, 2018</li>
+<li><a href="https://opendata.cbs.nl/statline/#/CBS/nl/dataset/7123slac/table" target="_blank">CBS Statline</a> Vleesproductie; aantal slachtingen en geslacht gewicht per diersoort, 2020 (voorlopige cijfers)</li>
 <li><a href="https://project.inovo.nl/" target="_blank">Aantal geslachte kuikens ivm ei-productie</a>
 </ul>
 <!---
@@ -256,7 +280,7 @@ document.getElementById('passed').innerHTML=str;
 <li>&nbsp;</li>
 <li>
  <div class="fb-share-button"
-    data-href="http://www.yepcheck.com/geslacht/"
+    data-href="https://rcsmit.github.io/geslacht/"
     data-layout="button_count">
   </div>
   </li>
@@ -269,7 +293,7 @@ document.getElementById('passed').innerHTML=str;
 
 <ul><h3>Gemaakt door</h3>
 <li><a href="https://instagram.com/vegan_rene" target="_blank">@vegan_rene</a>  </li>
-<li> <a href="http://www.yep-yoga.com/contact/" target="_blank">Contact</a></li>
+<li> <a href="http://linktr.ee/rcsmit" target="_blank">Contact</a></li>
 </ul>
 
 </div>

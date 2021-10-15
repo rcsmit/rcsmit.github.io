@@ -21,42 +21,41 @@
 
 
 <script>
-  var today = new Date();
-  //var uur = today.getHours()
-  var uur = 11;
-  var weekend = 0;
+
+var today = new Date();
+  var uur = today.getHours()
+  //var uur = 11;
+  //var weekend = 0;
 
   if(today.getDay() == 6 || today.getDay() == 0) weekend==1;
 
-
 window.addEventListener('DOMContentLoaded',function(){
   var updatesPerSecond = 20;
-  var today = new Date();
-  var time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
   var animalsKilledPerYear = {
-			'Totaal-runderen': 2237700,
-			'Totaal-volwassen-runderen': 607800,
-			'Koeien': 522300,
-			'Vaarzen': 14200,
-			'Stieren': 71500,
-			'Totaal-kalveren': 1629800,
-			'Kalveren jonger dan 9 maanden': 1470900,
-			'Kalveren van 9 tot en met 12 maanden': 158900,
-			'Varkens': 15907000,
-			'Schapen incl. lammeren': 519300,
-			'Schapenlammeren': 380400,
-			'Geiten': 171400,
-			'Eenhoevigen': 2400,
-			'Vleeskuikens': 605487800,
-			'Overige kippen': 17951700,
+
+	'Totaal-runderen':2088600,
+			'Totaal-volwassen-runderen': 529800,
+			'Koeien': 461000,
+			'Vaarzen': 12300,
+			'Stieren': 56500,
+			'Totaal-kalveren': 1558700,
+			'Kalveren jonger dan 9 maanden': 1406700,
+			'Kalveren van 9 tot en met 12 maanden': 152000,
+			'Varkens': 16666100,
+			'Schapen incl. lammeren': 685300,
+			'Schapenlammeren': 509700,
+			'Geiten': 200900,
+			'Eenhoevigen': 1600,
+			'Vleeskuikens': 577878000,
+			'Overige kippen': 19651500,
 			'eikuikens': 45000000,
+			'Overig pluimvee': 4800
 
-			'Overig pluimvee': 4600,
 
-			 };
 
-  //var secondsPerYear = 365 * 24 * 60 * 60;
-  var secondsPerYear = 261 * 10 * 60 * 60;
+ };
+
+  var secondsPerYear = 365 * 24 * 60 * 60;
   var interval = 1000/ updatesPerSecond;
   var count = 0, start = new Date().getTime();
 
@@ -71,13 +70,15 @@ window.addEventListener('DOMContentLoaded',function(){
   }
 
   function selfCorrectingTimeoutInterval() {
-  console.log (uur);
+	console.log (uur);
 
-  if (uur< 18 && uur > 6 && weekend == 0) {
+if (uur< 18 && uur > 6 && weekend == 0) {
+    update(++count);}
+	else{
+		header = document.querySelector("h2");
+		header.innerText = "Er wordt niet gewerkt momenteel";
 
-    update(++count);
-	}
-
+		console.log("Er wordt niet gewerkt")}
     window.setTimeout(selfCorrectingTimeoutInterval, interval - (new Date().getTime() - start - count * interval));
   }
   window.setTimeout(selfCorrectingTimeoutInterval, interval);
@@ -88,9 +89,6 @@ window.addEventListener('DOMContentLoaded',function(){
 ////
 var sec =0, min=0, hour=0;
 setInterval(function(){
-
-if (uur< 18 && uur > 6 && weekend == 0) {
-
 	sec++;
 	if(sec==60){sec=0; min++;}
 	if(min==60){min=0; hour++;}
@@ -98,19 +96,8 @@ if (uur< 18 && uur > 6 && weekend == 0) {
 	str+= hour?' ' +hour + (hour==1?' uur':' uren') + ' en':'';
 	str+= min?' ' +min+ (min==1?' minuut':' minuten') + ' en':'';
 	str+= sec?' ' +sec+ (sec==1?' seconde':' seconden'):'';
-document.getElementById('passed').innerHTML=str;}
-
-else
-{
-var str="Slachthuizen gesloten";
-document.getElementById('passed').innerHTML=str
-
-}
-
-
+document.getElementById('passed').innerHTML=str;
 },1000);
-
-
 ////
 // Timer Ends
 ////
@@ -211,101 +198,99 @@ document.getElementById('passed').innerHTML=str
 <div class="counter-info">
 
 
-<p>Er wordt ervan uit gegaan dat er 5 dagen per week tussen 7:00 en 17:00 wordt geslacht.<br><a href="index365.html">Deze teller</a> gaat uit van 365 dagen, 24 uur per dag</p>
+	<p>Er wordt ervan uit gegaan dat er 5 dagen per week tussen 7:00 en 17:00 wordt geslacht.<br><a href="index365.html">Deze teller</a> gaat uit van 365 dagen, 24 uur per dag</p>
 
-<p>Veel dieren in Nederland (80% als ik me niet vergis) worden ook geslacht voor de export.</p>
+	<p>Veel dieren in Nederland (80% als ik me niet vergis) worden ook geslacht voor de export.</p>
+
 <div class="footer">
-<ul class="sources">
+	<ul class="sources">
 
 
-<h3>Totaal aantal geslachte dieren in 2018</h3>
+		<h3>Totaal aantal geslachte dieren in 2020</h3>
+	<ul>
+		<li>Rundvee (totaal) - 2088600</li>
+		<li>Totaal volwassen runderen - 529800</li>
+		<li>Koeien - 461000</li>
+		<li>Vaarzen - 12300</li>
+		<li>Stieren - 56500</li>
+		<li>Totaal kalveren - 1558700</li>
+		<li>Kalveren jonger dan 9 maanden - 1406700</li>
+		<li>Kalveren van 9 tot en met 12 maanden - 152000</li>
+		<li>Varkens (totaal) - 16666100</li>
+		<li>Schapen incl. lammeren - 685300</li>
+		<li>Schapenlammeren - 509700</li>
+		<li>Geiten (totaal) - 200900</li>
+		<li>Eenhoevigen - 1600</li>
+		<li>Vleeskuikens - 577878000</li>
+		<li>Overige kippen - 19651500</li>
+		<li>Overig pluimvee (oa. kalkoenen) - 4800</li>
+		<li>Kuikens in eierproductie: 45.000.000</li>
 
-<li>Totaal runderen: 2.237.700</li>
-<li>Totaal volwassen runderen: 607.800</li>
-<li>Koeien: 522.300</li>
-<li>Vaarzen: 14.200</li>
-<li>Stieren: 71.500</li>
-<li>Totaal kalveren: 1.629.800</li>
-<li>Kalveren jonger dan 9 maanden: 1.470.900</li>
-<li>Kalveren van 9 tot en met 12 maanden: 158.900</li>
-<li>Varkens: 15.907.000</li>
-<li>Schapen incl. lammeren: 519.300</li>
-<li>Schapenlammeren: 380.400</li>
-<li>Geiten: 171.400</li>
-<li>Eenhoevigen: 2.400</li>
-<li>Vleeskuikens: 605.487.800</li>
-<li>Kuikens in eierproductie: 45.000.000</li>
-
-<li>Overige kippen: 17.951.700</li>
-
-<li>Overig pluimvee (oa kalkoenen): 4.600</li>
-</ul>
-
-<ul>
-<h3>Bronnen</h3>
-<li><a href="https://opendata.cbs.nl/statline/#/CBS/nl/dataset/7123slac/table" target="_blank">CBS Statline</a> Vleesproductie; aantal slachtingen en geslacht gewicht per diersoort, 2018</li>
-<li><a href="https://project.inovo.nl/" target="_blank">Aantal geslachte kuikens ivm ei-productie</a>
-</ul>
-<!---
+	</ul>
+	<h3>Bronnen</h3>
+	<li><a href="https://opendata.cbs.nl/statline/#/CBS/nl/dataset/7123slac/table" target="_blank">CBS Statline</a> Vleesproductie; aantal slachtingen en geslacht gewicht per diersoort, 2020 (voorlopige cijfers)</li>
+	<li><a href="https://project.inovo.nl/" target="_blank">Aantal geslachte kuikens ivm ei-productie</a>
+	</ul>
+	<!---
 
 
-<li>Pig by Alena Artemova from the Noun Project</li>
-<li>Cow by Chris Pyper from the Noun Project</li>
-<li>Sheep by Georgiana Ionescu from the Noun Project</li>
-<li>Goat by Wahyuntitle from the Noun Project</li>
-<li>Horse by Semilla Solar from the Noun Project</li>
-<li>Chicken by Pariphat Sinma from the Noun Project</li>
-<li>chick by Abdo from the Noun Project</li>
-<li>Chicken by Matt Dean from the Noun Project</li>
-<li><a href="https://thenounproject.com">https://thenounproject.com</a></li>
+	<li>Pig by Alena Artemova from the Noun Project</li>
+	<li>Cow by Chris Pyper from the Noun Project</li>
+	<li>Sheep by Georgiana Ionescu from the Noun Project</li>
+	<li>Goat by Wahyuntitle from the Noun Project</li>
+	<li>Horse by Semilla Solar from the Noun Project</li>
+	<li>Chicken by Pariphat Sinma from the Noun Project</li>
+	<li>chick by Abdo from the Noun Project</li>
+	<li>Chicken by Matt Dean from the Noun Project</li>
+	<li><a href="https://thenounproject.com">https://thenounproject.com</a></li>
 
---->
+	--->
 
 
-  <!-- Load Facebook SDK for JavaScript -->
-  <div id="fb-root"></div>
-  <script>(function(d, s, id) {
-    var js, fjs = d.getElementsByTagName(s)[0];
-    if (d.getElementById(id)) return;
-    js = d.createElement(s); js.id = id;
-    js.src = "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.0";
-    fjs.parentNode.insertBefore(js, fjs);
-  }(document, 'script', 'facebook-jssdk'));</script>
+	  <!-- Load Facebook SDK for JavaScript -->
+	  <div id="fb-root"></div>
+	  <script>(function(d, s, id) {
+		var js, fjs = d.getElementsByTagName(s)[0];
+		if (d.getElementById(id)) return;
+		js = d.createElement(s); js.id = id;
+		js.src = "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.0";
+		fjs.parentNode.insertBefore(js, fjs);
+	  }(document, 'script', 'facebook-jssdk'));</script>
 
 
 
-<ul><h3>Delen</h3>
-<li>
-<a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-</li>
-<li>&nbsp;</li>
-<li>
- <div class="fb-share-button"
-    data-href="http://www.yepcheck.com/geslacht/"
-    data-layout="button_count">
-  </div>
-  </li>
-</ul>
+	<ul><h3>Delen</h3>
+	<li>
+	<a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+	</li>
+	<li>&nbsp;</li>
+	<li>
+	 <div class="fb-share-button"
+		data-href="https://rcsmit.github.io/geslacht/"
+		data-layout="button_count">
+	  </div>
+	  </li>
+	</ul>
 
-<ul><h3>Code / inspiration</h3>
-<li><a href="https://considerveganism.com/counter/" target="_blank">Consider Veganism</a>  </li>
-<li> <a href="http://thevegancalculator.com/animal-slaughter/" target="_blank">The Vegan calculator</a></li>
-</ul>
+	<ul><h3>Code / inspiration</h3>
+	<li><a href="https://considerveganism.com/counter/" target="_blank">Consider Veganism</a>  </li>
+	<li> <a href="http://thevegancalculator.com/animal-slaughter/" target="_blank">The Vegan calculator</a></li>
+	</ul>
 
-<ul><h3>Gemaakt door</h3>
-<li><a href="https://instagram.com/vegan_rene" target="_blank">@vegan_rene</a>  </li>
-<li> <a href="http://www.yep-yoga.com/contact/" target="_blank">Contact</a></li>
-</ul>
+	<ul><h3>Gemaakt door</h3>
+	<li><a href="https://instagram.com/vegan_rene" target="_blank">@vegan_rene</a>  </li>
+	<li> <a href="http://linktr.ee/rcsmit" target="_blank">Contact</a></li>
+	</ul>
 
-</div>
+	</div>
 
-</div>
+	</div>
 
-<center>
-<iframe width="560" height="315" src="https://www.youtube.com/embed/Ju_71X4o0N4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</center>
+	<center>
+	<iframe width="560" height="315" src="https://www.youtube.com/embed/Ju_71X4o0N4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+	</center>
 
 
 
-</body>
-</html>
+	</body>
+	</html>
