@@ -4,7 +4,16 @@
 body {
   padding-top: 5rem;
   font-family:Lato;
+ 
 }
+
+
+h1, h2, h3, h4, h5, h6 {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.fixed-top {padding-top:50px;background-color: #0c3259;}
 
 h2{ font-family:Raleway;color:#F39105; margin-top: 40px;}
 h3{ font-family:Ropa+Sans;color:#0c3259;}
@@ -23,3 +32,16 @@ h3{ font-family:Ropa+Sans;color:#0c3259;}
 
 .fa-circle{color:#0c3259;}
 .fa-circle:hover{color:#F39105;}
+
+.bg-dark {
+  background-color: #0c3259 !important;
+}
+
+
+.border-dark {
+  border-color: #0c3259 !important;
+}
+
+.text-dark {
+  color: #0c3259!important;
+}
