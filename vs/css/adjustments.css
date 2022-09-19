@@ -10,23 +10,26 @@
 body {
   padding-top: 5rem;
   font-family:Lato;
+  color:#003366;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3 {
   margin-top: 0.5rem;
   margin-bottom: 0.5rem;
 }
 
-
-h4, .h4 {
-  font-size: 1.1rem;font-style:oblique;}
-
+h4, h5, h6
+{
+  margin-top: 0.5rem;
+  margin-bottom: 0.15rem;
+}
 /*Added padding on top to make space for the google translate bar*/
 .fixed-top {padding-top:50px;background-color: #0c3259;} 
 
 
 h1, h2 { font-family:Raleway;color:#F39105; margin-top: 40px;}
-h3{ font-family:'Ropa Sans';color:#0c3259;}
+h3 { font-family:'Ropa Sans';color:#0c3259;} /* VS-site gebruikt 006699 */
+h4 { font-family:'Ropa Sans';color:#0c3259; font-size: 1.1rem;font-style:oblique;} 
 
 .inlineimage{width:100%;margin-top: 40px;margin-bottom: 40px;}
 /* Anchorspacer is needed because the fixed navbar hides the top of the section*/
