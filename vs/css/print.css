@@ -6,8 +6,7 @@ body {
   height: 0px;}
 .inlineimage {
   display:none;}
-.header_logo {
-    display:none;}
+/* .header_logo {display:none;} Er vallen regels weg  */
 .social_media {
   display:none;}
 .noodgevallen{
