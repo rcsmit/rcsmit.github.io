@@ -1,0 +1,30 @@
+Even wat technische info:
+
+In principe kan het zip-bestand gewoon worden uitgepakt op een server.
+De assets directory hoeft niet geupload worden, het is het SVG bestand
+van het logo alsmede het lettertype waar de campingnaam in staat. De
+acco's-op-de-campingmap en inventarislijsten  (in /pdf) zijn uiteraard
+per camping verschillend.
+
+De site is gebaseerd op Bootstrap waardoor die automatisch schaalt op
+de verschillende apparaten. Ik heb zoveel mogelijk de site van de
+Vacansoleil aangehouden als referentie. Er zijn enkele aanpassingen
+gedaan die in adjustments.css staan. Voor de rest is de site zo simpel
+mogelijk gehouden, ook met het oog op het bijhouden. (zo zijn er bijv.
+zo weinig mogelijk externe links aangebracht). De teksten van de
+infomap zoals we die nu hebben zijn aangepast omdat ze wat mij betreft
+vrij wollig waren.
+
+De CSS voor de print-versie staat nog in index.html, die moet evt. nog
+in een apart bestand worden gezet. De genoemde kleuren worden niet
+gebruikt.
+
+Er is gekozen voor Google translate voor de vertalingen (zie het
+wereldbolletje in het menu). Tegenover de niet 100% kloppende
+vertaling staat het vele minder-werk om de verschillende versies bij
+te houden. Daarnaast is het handig om te weten dat je niet via het
+menu van talen kunt wisselen, dit moet via de navigatiebalk van Google
+Translate die verschijnt.
+
+Ik zal vast nog wel veranderen/verbeteren. De laatste versie zal te
+vinden zijn op https://github.com/rcsmit/rcsmit.github.io/tree/master/vs

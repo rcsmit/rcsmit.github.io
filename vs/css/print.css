@@ -1,0 +1,16 @@
+body {
+  padding-top: 0;}
+.anchorspacer {
+  content: "";
+  display: block;
+  height: 0px;}
+.inlineimage {
+  display:none;}
+.header_logo {
+    display:none;}
+.social_media {
+  display:none;}
+.noodgevallen{
+  border:1px;
+  background-color:#FFEED9; 
+  padding:20px;   }
