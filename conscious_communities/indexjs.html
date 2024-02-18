@@ -1,0 +1,89 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapbox CSV Example</title>
+  <script src='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.js'></script>
+  <link href='https://api.mapbox.com/mapbox-gl-js/v2.10.0/mapbox-gl.css' rel='stylesheet' />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  </style>
+</head>
+<body>
+
+<div id='map'></div>
+
+<script>
+  mapboxgl.accessToken = 'pk.eyJ1IjoicmNzbWl0IiwiYSI6Ii1IeExqOGcifQ.EB6Xcz9f-ZCzd5eQMwSKLQ';
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11', // Use your desired map style
+    center: [-37.8845813,-4.7760138], // Initial center of the map
+    zoom: 2 // Initial zoom level
+  });
+
+  // Replace with the path to your CSV file
+  const csvFilePath = 'C:\Users\rcxsm\Documents\rcsmit.github.io\rcsmit.github.io\conscious_communities\cctest.csv';
+
+  // Read the CSV file
+  fetch(csvFilePath)
+    .then(response => response.text())
+    .then(data => {
+      // Parse CSV data
+      const rows = data.split('\n');
+      const headers = rows[0].split(',');
+      const features = [];
+
+      // Iterate through rows and create features
+      for (let i = 1; i < rows.length; i++) {
+        const values = rows[i].split(',');
+        const feature = {
+          type: 'Feature',
+          geometry: {
+            type: 'Point',
+            coordinates: [parseFloat(values[3]), parseFloat(values[4])] // Assuming lat, lon order
+          },
+          properties: {}
+        };
+
+        // Assign properties from CSV headers
+        for (let j = 0; j < headers.length; j++) {
+          feature.properties[headers[j].trim()] = values[j].trim();
+        }
+
+        features.push(feature);
+      }
+
+      // Create a GeoJSON object
+      const geojson = {
+        type: 'FeatureCollection',
+        features: features
+      };
+
+      // Add GeoJSON data to the map
+      map.on('load', () => {
+        map.addSource('csvData', {
+          type: 'geojson',
+          data: geojson
+        });
+
+        map.addLayer({
+          id: 'csvDataLayer',
+          type: 'circle',
+          source: 'csvData',
+          paint: {
+            'circle-radius': 6,
+            'circle-color': '#FF0000' // Customize the color
+          }
+        });
+      });
+    })
+    .catch(error => console.error('Error fetching CSV file:', error));
+</script>
+
+</body>
+</html>
