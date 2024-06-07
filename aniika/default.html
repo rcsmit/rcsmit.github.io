@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timer</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      width: 100%;
+      color: white;
+      text-align: center;
+      transition: background-color 1s ease;
+      background-color: #C3423F;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      position: relative;
+    }
+        .menu {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100vh;
+    background-color: #333;
+    padding: 20px;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0.3s, opacity 0.3s;
+    }
+
+    .menu.open {
+    visibility: visible;
+    opacity: 1;
+    }
+
+    .content {
+      position: relative;
+    }
+    .timer {
+      font-size: 5em;
+    }
+    .menu-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: transparent;
+      border: none;
+      color: white;
+      font-size: 1.5em;
+      cursor: pointer;
+    }
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 10px 0;
+    }
+    .toggle-label-up,
+    .toggle-label-down {
+      position: relative;
+      //: 18px;
+    }
+   
+    .toggle {
+      appearance: none;
+      width: 40px;
+      height: 20px;
+      background-color: #c6c6c6;
+      border-radius: 10px;
+      outline: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .toggle-indicator {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: #fff;
+      top: 83px;
+      transition: left 0.3s;
+    }
+
+    #timeInput {
+  display: flex;
+  margin-bottom: 10px;
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 10px;
+}
+
+.input-container input {
+  width: 30px;
+}
+
+.input-container label {
+  margin-bottom: 5px;
+}
+
+
+#timeInput button {
+  margin-left: auto; /* Align the button to the right */
+}
+
+.logo {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 150px; /* Adjust the width as needed */
+  height: auto; /* Maintain aspect ratio */
+}
+
+  </style>
+</head>
+<body>
+    <img src="logo.jpg" alt="Logo" class="logo">
+  <div class="menu" id="menu">
+    <div style="padding-top: 50px;">
+      <div class="toggle-container">
+        <div class="toggle-label-up">Count Up</div>
+        <label class="toggle-switch">
+          <input type="checkbox" class="toggle" id="countingToggle">
+          <span class="toggle-indicator" id="toggleIndicator" style="left: 140px;"></span>
+        </label><div class="toggle-label-down">Count Down</div>
+      </div>
+      <div id="timeInput" style="display: none;">
+        <div class="input-container">
+          <label for="hourInput">Hours</label>
+          <input type="number" id="hourInput" value="00">
+        </div>
+        <div class="input-container">
+          <label for="minuteInput">Minutes</label>
+          <input type="number" id="minuteInput" value="05">
+        </div>
+        <div class="input-container">
+          <label for="secondInput">Seconds</label>
+          <input type="number" id="secondInput" value="00">
+        </div>
+        <button onclick="setStartTime()">Set Start Time</button>
+      </div>
+    </div>
+  </div>
+  <button class="menu-button" onclick="toggleMenu()">☰</button>
+  <div class="content">
+    <h1 class="timer" id="timerDisplay">00:00:00</h1>
+    <div id="controls">
+      <button onclick="startTimer()">Start</button>
+    </div>
+  </div>
+  <script>
+    let seconds = 0;
+    let running = false;
+    let countingUp = true;
+    let interval;
+    let startTime = 0;
+    const bgColorArray = ['#282c34', '#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#8E44AD', '#1ABC9C', '#E74C3C'];
+
+    const timerDisplay = document.getElementById('timerDisplay');
+    const countingToggle = document.getElementById('countingToggle');
+    const toggleIndicator = document.getElementById('toggleIndicator');
+    const timeInput = document.getElementById('timeInput');
+    const hourInput = document.getElementById('hourInput');
+    const minuteInput = document.getElementById('minuteInput');
+    const secondInput = document.getElementById('secondInput');
+    const controls = document.getElementById('controls');
+    const menu = document.getElementById('menu');
+
+    countingToggle.addEventListener('change', () => {
+      countingUp = !countingUp;
+      toggleIndicator.style.left = countingUp ? '140px' : '160px';
+      timeInput.style.display = countingUp ? 'none' : 'flex';
+    });
+
+    function toggleMenu() {
+      menu.classList.toggle('open');
+    }
+
+    function setStartTime() {
+      const totalSeconds = parseInt(hourInput.value, 10) * 3600 + parseInt(minuteInput.value, 10) * 60 + parseInt(secondInput.value, 10);
+      if (!isNaN(totalSeconds)) {
+        startTime = totalSeconds;
+        seconds = totalSeconds;
+        updateTimerDisplay();
+        //toggleMenu();
+      }
+    }
+
+    function startTimer() {
+      if (!running) {
+        running = true;
+        interval = setInterval(updateTimer, 1000);
+      }
+    }
+
+    function pauseTimer() {
+      running = false;
+      clearInterval(interval);
+      updateTimerDisplay();
+    }
+
+    function resetTimer() {
+      running = false;
+      clearInterval(interval);
+      if (countingUp) {
+        seconds = 0;
+      } else {
+        seconds = startTime;
+      }
+      updateTimerDisplay();
+    }
+
+    function updateTimer() {
+      if (countingUp) {
+        seconds++;
+      } else {
+        if (seconds === 0) {
+          pauseTimer();
+          return;
+        }
+        seconds--;
+      }
+      if (seconds % 10 === 0 || (!countingUp && seconds < 10)) {
+        screamNumber(seconds);
+        changeBackgroundColor();
+      }
+      updateTimerDisplay();
+    }
+
+
+    function screamNumber(number) {
+
+        const voices = window.speechSynthesis.getVoices();
+        const femaleVoice = voices.find(voice => voice.name === 'Karen');
+        if (femaleVoice) {
+            utterance.voice = femaleVoice;
+        }
+        
+        if (number >= 10) {
+            const hours = Math.floor(number / 3600);
+            const minutes = Math.floor((number % 3600) / 60);
+            const seconds = Math.floor(number % 60);
+
+            let timeString = '';
+
+            if (hours > 0) {
+            timeString += hours + ' hour' + (hours === 1 ? '' : 's') + ', ';
+            }
+            if (minutes > 0) {
+            timeString += minutes + ' minute' + (minutes === 1 ? '' : 's') + ', ';
+            }
+            timeString += seconds + ' second' + (seconds === 1 ? '' : 's');
+
+            const utterance = new SpeechSynthesisUtterance(timeString);
+            utterance.voice = femaleVoice;
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        } else {
+            const utterance = new SpeechSynthesisUtterance(number.toString());
+            utterance.voice = femaleVoice;
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+        }
+
+
+
+    function changeBackgroundColor() {
+      const randomColor = bgColorArray[Math.floor(Math.random() * bgColorArray.length)];
+      document.body.style.backgroundColor = randomColor;
+    }
+
+    function updateTimerDisplay() {
+      const hours = String(Math.floor(seconds / 3600)).padStart(2, '0');
+      const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(seconds % 60).padStart(2, '0');
+      timerDisplay.textContent = `${hours}:${minutes}:${secs}`;
+      updateControls();
+    }
+
+    function updateControls() {
+      controls.innerHTML = '';
+      if (running) {
+        if (countingUp) {
+          controls.innerHTML = '<button onclick="pauseTimer()">Pause</button>';
+        } else {
+          if (seconds > 0) {
+            controls.innerHTML = '<button onclick="pauseTimer()">Pause</button>';
+          } else {
+            controls.innerHTML = '<button onclick="resetTimer()">Reset to start time</button>';
+          }
+        }
+      } else {
+        if (countingUp) {
+          if (seconds === 0) {
+            controls.innerHTML = '<button onclick="startTimer()">Start</button>';
+          } else {
+            controls.innerHTML = '<button onclick="startTimer()">Start</button><button onclick="resetTimer()">Reset to zero</button>';
+          }
+        } else {
+          if (seconds === startTime) {
+            controls.innerHTML = '<button onclick="startTimer()">Start</button>';
+          } else if (seconds > 0) {
+            controls.innerHTML = '<button onclick="resetTimer()">Reset</button>';
+          } else {
+            controls.innerHTML = '<button onclick="startTimer()">Start</button><button onclick="resetTimer()">Reset</button>';
+          }
+        }
+      }
+    }
+
+    updateTimerDisplay();
+  </script>
+</body>
+</html>
