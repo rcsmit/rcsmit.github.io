@@ -261,7 +261,6 @@
             timeString += minutes + ' minute' + (minutes === 1 ? '' : 's') + ', ';
             }
             timeString += seconds + ' second' + (seconds === 1 ? '' : 's');
-
             const utterance = new SpeechSynthesisUtterance(timeString);
             utterance.volume = 10
             //utterance.voice = femaleVoice;
