@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -139,7 +140,7 @@
         </div>
         <div class="input-container">
           <label for="minuteInput">Minutes</label>
-          <input type="number" id="minuteInput" value="05">
+          <input type="number" id="minuteInput" value="01">
         </div>
         <div class="input-container">
           <label for="secondInput">Seconds</label>
@@ -238,11 +239,11 @@
 
     function screamNumber(number) {
 
-        const voices = window.speechSynthesis.getVoices();
-        const femaleVoice = voices.find(voice => voice.name === 'Karen');
-        if (femaleVoice) {
-            utterance.voice = femaleVoice;
-        }
+        // const voices = window.speechSynthesis.getVoices();
+        // const femaleVoice = voices.find(voice => voice.name === 'Karen');
+        // if (femaleVoice) {
+        //     utterance.voice = femaleVoice;
+        // }
         
         if (number >= 10) {
             const hours = Math.floor(number / 3600);
@@ -259,12 +260,12 @@
             }
             timeString += seconds + ' second' + (seconds === 1 ? '' : 's');
 
-            const utterance = new SpeechSynthesisUtterance(timeString);
+            //const utterance = new SpeechSynthesisUtterance(timeString);
             utterance.voice = femaleVoice;
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
         } else {
-            const utterance = new SpeechSynthesisUtterance(number.toString());
+            //const utterance = new SpeechSynthesisUtterance(number.toString());
             utterance.voice = femaleVoice;
             window.speechSynthesis.cancel();
             window.speechSynthesis.speak(utterance);
