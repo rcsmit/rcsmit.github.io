@@ -299,8 +299,10 @@ button:hover {
     function playword(word){
       filePath = `audio-numbers/${word}.wav`; 
       audio = new Audio(filePath);
+      audio.load()
       audio.play();
     }
+  
 
     function screamNumber(number) {
     // https://codersblock.com/blog/javascript-text-to-speech-and-its-many-quirks/
@@ -340,7 +342,6 @@ button:hover {
             
             if (seconds_ === 10) {
                 setTimeout(playword, 0, seconds_);
-                setTimeout(playword, 1100, "seconds");
             } else {
 
               if (countingDown) {
