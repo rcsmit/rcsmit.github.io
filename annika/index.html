@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Timer</title>
+  <title>Annika Timer</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
     body {
       display: flex;
@@ -17,9 +18,16 @@
       text-align: center;
       transition: background-color 1s ease;
       background-color: #C3423F;
+      /* Gradient overlay */
+      background: linear-gradient(to bottom right, black, white);
+
+      /* Ensures the gradient overlay covers the entire element */
+      background-blend-mode: overlay;
+
       margin: 0;
       font-family: Arial, sans-serif;
       position: relative;
+      
     }
   .menu {
     position: absolute;
