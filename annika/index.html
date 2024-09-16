@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Annika Timer</title>
+  <title>Annika Timer 2.0</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
     body {
@@ -11,42 +11,41 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      min-height: 100vh;
       width: 100%;
       color: white;
-      text-align: center;;
+      text-align: center;
       background-color: #C3423F;
       margin: 0;
       font-family: Arial, sans-serif;
       position: relative;
-      
     }
-  .menu {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 300px;
-    height: 100vh;
-    background-color: #d8d4d4;
-    padding: 20px;
-    visibility: hidden;
-    opacity: 0.6;
-    transition: visibility 0.3s, opacity 0.3s;
+    .menu {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 300px;
+      height: 100vh;
+      background-color: #d8d4d4;
+      padding: 20px;
+      visibility: hidden;
+      opacity: 0.6;
+      transition: visibility 0.3s, opacity 0.3s;
+      overflow-y: auto;
     }
-
     .menu.open {
-    visibility: visible;
-    opacity: 1;
+      visibility: visible;
+      opacity: 1;
     }
-
     .content {
       position: relative;
+      padding: 20px;
     }
     .timer {
       font-size: 5em;
     }
     .menu-button {
-      position: absolute;
+      position: fixed;
       top: 20px;
       right: 20px;
       background-color: #ffffff;
@@ -54,6 +53,7 @@
       color: rgb(0, 0, 0);
       font-size: 1.5em;
       cursor: pointer;
+      z-index: 1000;
     }
     .toggle-container {
       display: flex;
@@ -64,9 +64,7 @@
     .toggle-label-up,
     .toggle-label-down {
       position: relative;
-  
     }
-   
     .toggle {
       appearance: none;
       width: 40px;
@@ -86,87 +84,82 @@
       top: 83px;
       transition: left 0.3s;
     }
-
     #timeInput {
       display: flex;
       margin-bottom: 10px;
       justify-content: center;
     }
-
-.input-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-right: 10px;
-}
-
-.input-container input {
-  width: 30px;
-}
-
-.input-container label {
-  margin-bottom: 5px;
-}
-
-
-#timeInput button {
-  margin-left: auto; /* Align the button to the right */
-  
-}
-
-button {
-  /* https://getcssscan.com/css-buttons-examples - button35 */
-  align-items: center;
-  background-color: #fff;
-  border-radius: 12px;
-  box-shadow: transparent 0 0 0 3px,rgba(18, 18, 18, .1) 0 6px 20px;
-  box-sizing: border-box;
-  color: #121212;
-  cursor: pointer;
-  display: inline-flex;
-  flex: 1 1 auto;
-  font-family: Inter,sans-serif;
-  font-size: 1.2rem;
-  font-weight: 700;
-  justify-content: center;
-  line-height: 1;
-  margin: 0;
-  outline: none;
-  padding: 1rem 1.2rem;
-  text-align: center;
-  text-decoration: none;
-  transition: box-shadow .2s,-webkit-box-shadow .2s;
-  white-space: nowrap;
-  border: 0;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-}
-
-button:hover {
-  box-shadow: #121212 0 0 0 3px, transparent 0 0 0 0;
-}
-
-.logo {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 150px; /* Adjust the width as needed */
-  height: auto; /* Maintain aspect ratio */
-  border-radius: 50%; 
-}
-
-.copyright{bottom:10px;position: fixed;}
-.bgColorArray_x{
-  background-color: #86a4df;
-  background-color: #d84b2b;
-  background-color: #33FF57;
-  background-color: #3357FF;
-  background-color: #F1C40F;
-  background-color: #8E44AD;
-  background-color: #1ABC9C;
-  background-color: #E74C3C;
-}
+    .input-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-right: 10px;
+    }
+    .input-container input {
+      width: 50px;
+      height: 30px;
+      font-size: 16px;
+      text-align: center;
+    }
+    .input-container label {
+      margin-bottom: 5px;
+    }
+    button {
+      align-items: center;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: transparent 0 0 0 3px,rgba(18, 18, 18, .1) 0 6px 20px;
+      box-sizing: border-box;
+      color: #121212;
+      cursor: pointer;
+      display: inline-flex;
+      flex: 1 1 auto;
+      font-family: Inter,sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      justify-content: center;
+      line-height: 1;
+      margin: 5px;
+      outline: none;
+      padding: 1rem 1.2rem;
+      text-align: center;
+      text-decoration: none;
+      transition: box-shadow .2s,-webkit-box-shadow .2s;
+      white-space: nowrap;
+      border: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    button:hover {
+      box-shadow: #121212 0 0 0 3px, transparent 0 0 0 0;
+    }
+    button:active {
+      background-color: #e0e0e0;
+    }
+    .logo {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 150px;
+      height: auto;
+      border-radius: 50%; 
+    }
+    .copyright {
+      bottom: 10px;
+      position: fixed;
+    }
+    @media (max-width: 600px) {
+      .timer {
+        font-size: 3em;
+      }
+      .menu {
+        width: 100%;
+      }
+      .logo {
+        width: 100px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -183,39 +176,35 @@ button:hover {
       <div id="timeInput" style="display: visible;">
         <div class="input-container">
           <label for="hourInput">Hours</label>
-          <input type="number" id="hourInput" value="00">
+          <input type="number" id="hourInput" value="00" min="0" max="23">
         </div>
         <div class="input-container">
           <label for="minuteInput">Minutes</label>
-          <input type="number" id="minuteInput" value="01">
+          <input type="number" id="minuteInput" value="01" min="0" max="59">
         </div>
         <div class="input-container">
           <label for="secondInput">Seconds</label>
-          <input type="number" id="secondInput" value="05">
+          <input type="number" id="secondInput" value="05" min="0" max="59">
         </div>
         
       </div>
       <div class="input-container">
         <label for="intervalInput">Interval to scream (seconds)</label>
-        <input type="number" id="intervalInput_" value="10">
+        <input type="number" id="intervalInput" value="10">
       </div>
-      
-      <button onclick="setStartTime()">Set Start Time</button>
+      <button id="setStartTimeBtn">Set Start Time</button>
     </div>
     <div class="copyright">Made by Rene Smit for Marcel and Annika</div>
   </div>
-  <button class="menu-button" onclick="toggleMenu()">☰</button>
+  <button class="menu-button" id="menuToggleBtn">☰</button>
   <div class="content">
     <h1 class="timer" id="timerDisplay">00:01:00</h1>
     <div id="controls">
-      <button onclick="startTimer()">Start</button>
+      <button id="startBtn">Start</button>
     </div>
   </div>
   <script>
-    
-  
     const bgColorArray = ['#86a4df', '#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#8E44AD', '#1ABC9C', '#E74C3C'];
-   
     const timerDisplay = document.getElementById('timerDisplay');
     const countingToggle = document.getElementById('countingToggle');
     const toggleIndicator = document.getElementById('toggleIndicator');
@@ -223,23 +212,56 @@ button:hover {
     const hourInput = document.getElementById('hourInput');
     const minuteInput = document.getElementById('minuteInput');
     const secondInput = document.getElementById('secondInput');
-    const intervalInput =  document.getElementById('intervalInput_');
-    
     const controls = document.getElementById('controls');
     const menu = document.getElementById('menu');
+    const intervalInput =  document.getElementById('intervalInput');
     
     let running = false;
     let countingDown = true;
-    let interval;
-    setStartTime()
+    let interval = intervalInput.value;
+    let startTime = 65;
+    let seconds = startTime;
+    let audioContext;
+    let audioBuffers = {};
+
+    function initAudioContext() {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      loadAudioFiles();
+    }
+
+    function loadAudioFiles() {
+      const audioFiles = Array.from({length: 59}, (_, i) => (i + 1).toString()).concat(['hours', 'minutes', 'seconds']);
+      audioFiles.forEach(file => {
+        fetch(`audio-numbers/${file}.wav`)
+          .then(response => response.arrayBuffer())
+          .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+          .then(audioBuffer => {
+            audioBuffers[file] = audioBuffer;
+          })
+          .catch(error => console.error('Error loading audio file:', error));
+      });
+    }
+
+    function addTouchClickHandler(elementId, handler) {
+      const element = document.getElementById(elementId);
+      element.addEventListener('touchstart', function(e) {
+        e.preventDefault(); // Prevent default touch behavior
+      });
+      element.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        handler(e);
+      });
+      element.addEventListener('click', handler);
+    }
+
+    addTouchClickHandler('menuToggleBtn', toggleMenu);
+    addTouchClickHandler('setStartTimeBtn', setStartTime);
 
     countingToggle.addEventListener('change', () => {
       countingDown = !countingDown;
-      //running = false;
       toggleIndicator.style.left = countingDown ? '160px' : '180px';
-      timeInput.style.display = countingDown ?   'flex':'none';
-    
-      setStartTime() 
+      timeInput.style.display = countingDown ? 'flex' : 'none';
+      setStartTime();
     });
 
     function toggleMenu() {
@@ -248,25 +270,25 @@ button:hover {
 
     function setStartTime() {
       if (countingDown) {
-          const totalSeconds = parseInt(hourInput.value, 10) * 3600 + parseInt(minuteInput.value, 10) * 60 + parseInt(secondInput.value, 10);
-          if (!isNaN(totalSeconds)) {
-            startTime = totalSeconds;
-            seconds = totalSeconds;
-            //toggleMenu();
-          }
-      } else 
-          {startTime = 0;
-          seconds=0;
+        const totalSeconds = parseInt(hourInput.value, 10) * 3600 + parseInt(minuteInput.value, 10) * 60 + parseInt(secondInput.value, 10);
+        if (!isNaN(totalSeconds)) {
+          startTime = totalSeconds;
+          seconds = totalSeconds;
+        }
+      } else {
+        startTime = 0;
+        seconds = 0;
       }
-      
       updateTimerDisplay();
-      
     }
 
     function startTimer() {
       if (!running) {
         running = true;
         interval = setInterval(updateTimer, 1000);
+      }
+      if (!audioContext) {
+        initAudioContext();
       }
     }
 
@@ -297,7 +319,6 @@ button:hover {
         }
         seconds--;
       }
-      
       if (seconds % intervalInput.value === 0 || (countingDown && seconds < 10)) {
         screamNumber(seconds);
         changeBackgroundColor();
@@ -305,61 +326,46 @@ button:hover {
       updateTimerDisplay();
     }
 
-    function playword(word){
-      filePath = `audio-numbers/${word}.wav`; 
-      audio = new Audio(filePath);
-      audio.load()
-      audio.play();
-    }
-  
-
     function screamNumber(number) {
-    // https://codersblock.com/blog/javascript-text-to-speech-and-its-many-quirks/
-    // numbers : https://evolution.voxeo.com/library/audio/prompts/numbers/index.jsp
-    // 1-10 and words generated at (Beatrice)) : https://www.narakeet.com/app/text-to-audio/?projectId=657ec357-5259-4fc7-825e-b34f8e6e85b0
+      const hours = Math.floor(number / 3600);
+      const minutes = Math.floor((number % 3600) / 60);
+      const seconds_ = Math.floor(number % 60);
 
-    //const voices = window.speechSynthesis.getVoices();
-    // const femaleVoice = voices.find(voice => voice.name === 'Karen');
-    // if (femaleVoice) {
-    //     utterance.voice = femaleVoice;
-    // }
-    
-    const hours = Math.floor(number / 3600);
-    const minutes = Math.floor((number % 3600) / 60);
-    const seconds_ = Math.floor(number % 60);
+      let delay = 0;
+      const playWithDelay = (word) => {
+        setTimeout(() => playWord(word), delay);
+        delay += 1100; // Adjust this value if needed for proper timing
+      };
 
-   
-
-    if (hours > 0) {
-        setTimeout(playword, 0, hours);
-        setTimeout(playword, 1100, "hours");
-        setTimeout(playword, 2200, minutes);
-        setTimeout(playword, 3300, "minutes");
-        if (seconds_ != 0) {
-            setTimeout(playword, 4400, seconds_);
-            setTimeout(playword, 5500, "seconds");
-        }
-    } else {
-        if (minutes>0){
-        setTimeout(playword, 0, minutes);
-        setTimeout(playword, 1100, "minutes");
-            if (seconds_ != 0) {
-                setTimeout(playword, 2200, seconds_);
-                setTimeout(playword, 3300, "seconds");
-            }
-        } else{
-            
-            if (seconds_ === 10) {
-                setTimeout(playword, 0, seconds_);
-            } else {
-
-              if (countingDown) {
-                setTimeout(playword, 0, seconds_);
-              }  
-            }
-        }  
+      if (hours > 0) {
+        playWithDelay(hours.toString());
+        playWithDelay("hours");
+      }
+      
+      if (minutes > 0) {
+        playWithDelay(minutes.toString());
+        playWithDelay("minutes");
+      }
+      
+      if (seconds_ > 0 || (hours === 0 && minutes === 0)) {
+        playWithDelay(seconds_.toString());
+        playWithDelay("seconds");
+      }
     }
-}
+
+    function playWord(word) {
+      if (!audioContext) {
+        initAudioContext();
+      }
+      if (audioBuffers[word]) {
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffers[word];
+        source.connect(audioContext.destination);
+        source.start();
+      } else {
+        console.warn(`Audio not loaded for word: ${word}`);
+      }
+    }
     
     function changeBackgroundColor() {
       const randomColor = bgColorArray[Math.floor(Math.random() * bgColorArray.length)];
@@ -376,40 +382,58 @@ button:hover {
 
     function updateControls() {
       controls.innerHTML = '';
+      let buttonConfig;
+      
       if (running) {
-        if (!countingDown) {
-          controls.innerHTML = '<button onclick="pauseTimer()">Pause</button>';
+        if (!countingDown || seconds > 0) {
+          buttonConfig = { id: 'pauseBtn', text: 'Pause', handler: pauseTimer };
         } else {
-          if (seconds > 0) {
-            controls.innerHTML = '<button onclick="pauseTimer()">Pause</button>';
-          } else {
-            controls.innerHTML = '<button onclick="resetTimer()">Reset to start time</button>';
-          }
+          buttonConfig = { id: 'resetBtn', text: 'Reset to start time', handler: resetTimer };
         }
       } else {
         if (!countingDown) {
           if (seconds === 0) {
-            controls.innerHTML = '<button onclick="startTimer()">Start</button>';
+            buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
           } else {
-            controls.innerHTML = '<button onclick="startTimer()">Continue</button>'
-            controls.innerHTML +=  '<button onclick="resetTimer()">Reset to zero</button>';
+            controls.innerHTML += '<button id="continueBtn">Continue</button>';
+            controls.innerHTML += '<button id="resetZeroBtn">Reset to zero</button>';
+            addTouchClickHandler('continueBtn', startTimer);
+            addTouchClickHandler('resetZeroBtn', resetTimer);
+            return;
           }
         } else {
           if (seconds === startTime) {
-            controls.innerHTML = '<button onclick="startTimer()">Start</button>';
+            buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
           } else if (seconds > 0) {
-            controls.innerHTML = '<button onclick="startTimer()">Continue</button>';
-            controls.innerHTML += '<button onclick="resetTimer()">Reset</button>';
+            controls.innerHTML += '<button id="continueBtn">Continue</button>';
+            controls.innerHTML += '<button id="resetBtn">Reset</button>';
+            addTouchClickHandler('continueBtn', startTimer);
+            addTouchClickHandler('resetBtn', resetTimer);
+            return;
           } else {
-            controls.innerHTML = '<button onclick="startTimer()">Start</button><button onclick="resetTimer()">Reset</button>';
+            controls.innerHTML += '<button id="startBtn">Start</button>';
+            controls.innerHTML += '<button id="resetBtn">Reset</button>';
+            addTouchClickHandler('startBtn', startTimer);
+            addTouchClickHandler('resetBtn', resetTimer);
+            return;
           }
         }
       }
+      
+      if (buttonConfig) {
+        controls.innerHTML = `<button id="${buttonConfig.id}">${buttonConfig.text}</button>`;
+        addTouchClickHandler(buttonConfig.id, buttonConfig.handler);
+      }
     }
-    console.log(countingDown)
-   
+
     updateTimerDisplay();
+
+    // Initialize audio context on first user interaction
+    document.body.addEventListener('touchstart', function() {
+      if (!audioContext) {
+        initAudioContext();
+      }
+    }, { once: true });
   </script>
 </body>
 </html>
-    
