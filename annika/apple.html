@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>9946 Annika Timer</title>
+  <title>0051 Annika Timer</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
     body {
@@ -186,6 +186,10 @@
           <label for="secondInput">Seconds</label>
           <input type="number" id="secondInput" value="05" min="0" max="59">
         </div>
+        <div class="input-container">
+          <label for="intervalInput">Interval to scream (seconds)</label>
+          <input type="number" id="intervalInput_" value="10">
+        </div>
       </div>
       <button id="setStartTimeBtn">Set Start Time</button>
     </div>
@@ -209,10 +213,11 @@
     const secondInput = document.getElementById('secondInput');
     const controls = document.getElementById('controls');
     const menu = document.getElementById('menu');
+    const intervalInput =  document.getElementById('intervalInput_');
     
     let running = false;
     let countingDown = true;
-    let interval;
+    let interval = intervalInput.value;
     let startTime = 65;
     let seconds = startTime;
     let audioContext;
@@ -313,7 +318,7 @@
         }
         seconds--;
       }
-      if (seconds % 10 === 0 || (countingDown && seconds < 10)) {
+      if (seconds % intervalInput.value === 0 || (countingDown && seconds < 10)) {
         screamNumber(seconds);
         changeBackgroundColor();
       }
