@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- (Head content remains the same) -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Annika Timer</title>
@@ -164,42 +163,41 @@
   </style>
 </head>
 <body>
-  
-    <img src="logo.png" alt="Logo" class="logo">
-    <div class="menu" id="menu">
-      <div style="padding-top: 50px;">
-        <div class="toggle-container">
-          <div class="toggle-label-up">Count Down</div>
-          <label class="toggle-switch">
-            <input type="checkbox" class="toggle" id="countingToggle">
-            <span class="toggle-indicator" id="toggleIndicator" style="left: 160px;"></span>
-          </label><div class="toggle-label-down">Count Up</div>
-        </div>
-        <div id="timeInput" style="display: visible;">
-          <div class="input-container">
-            <label for="hourInput">Hours</label>
-            <input type="number" id="hourInput" value="00" min="0" max="23">
-          </div>
-          <div class="input-container">
-            <label for="minuteInput">Minutes</label>
-            <input type="number" id="minuteInput" value="01" min="0" max="59">
-          </div>
-          <div class="input-container">
-            <label for="secondInput">Seconds</label>
-            <input type="number" id="secondInput" value="05" min="0" max="59">
-          </div>
-        </div>
-        <button id="setStartTimeBtn">Set Start Time</button>
+  <img src="logo.png" alt="Logo" class="logo">
+  <div class="menu" id="menu">
+    <div style="padding-top: 50px;">
+      <div class="toggle-container">
+        <div class="toggle-label-up">Count Down</div>
+        <label class="toggle-switch">
+          <input type="checkbox" class="toggle" id="countingToggle">
+          <span class="toggle-indicator" id="toggleIndicator" style="left: 160px;"></span>
+        </label><div class="toggle-label-down">Count Up</div>
       </div>
-      <div class="copyright">Made by Rene Smit for Marcel and Annika</div>
-    </div>
-    <button class="menu-button" id="menuToggleBtn">☰</button>
-    <div class="content">
-      <h1 class="timer" id="timerDisplay">00:01:00</h1>
-      <div id="controls">
-        <button id="startBtn">Start</button>
+      <div id="timeInput" style="display: visible;">
+        <div class="input-container">
+          <label for="hourInput">Hours</label>
+          <input type="number" id="hourInput" value="00" min="0" max="23">
+        </div>
+        <div class="input-container">
+          <label for="minuteInput">Minutes</label>
+          <input type="number" id="minuteInput" value="01" min="0" max="59">
+        </div>
+        <div class="input-container">
+          <label for="secondInput">Seconds</label>
+          <input type="number" id="secondInput" value="05" min="0" max="59">
+        </div>
       </div>
+      <button id="setStartTimeBtn">Set Start Time</button>
     </div>
+    <div class="copyright">Made by Rene Smit for Marcel and Annika</div>
+  </div>
+  <button class="menu-button" id="menuToggleBtn">☰</button>
+  <div class="content">
+    <h1 class="timer" id="timerDisplay">00:01:00</h1>
+    <div id="controls">
+      <button id="startBtn">Start</button>
+    </div>
+  </div>
   <script>
     const bgColorArray = ['#86a4df', '#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#8E44AD', '#1ABC9C', '#E74C3C'];
     const timerDisplay = document.getElementById('timerDisplay');
@@ -209,7 +207,6 @@
     const hourInput = document.getElementById('hourInput');
     const minuteInput = document.getElementById('minuteInput');
     const secondInput = document.getElementById('secondInput');
-    const intervalInput =  document.getElementById('intervalInput_');
     const controls = document.getElementById('controls');
     const menu = document.getElementById('menu');
     
@@ -220,6 +217,24 @@
     let seconds = startTime;
     let audioContext;
     let audioBuffers = {};
+
+    function initAudioContext() {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      loadAudioFiles();
+    }
+
+    function loadAudioFiles() {
+      const audioFiles = Array.from({length: 59}, (_, i) => (i + 1).toString()).concat(['hours', 'minutes', 'seconds']);
+      audioFiles.forEach(file => {
+        fetch(`audio-numbers/${file}.wav`)
+          .then(response => response.arrayBuffer())
+          .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+          .then(audioBuffer => {
+            audioBuffers[file] = audioBuffer;
+          })
+          .catch(error => console.error('Error loading audio file:', error));
+      });
+    }
 
     function addTouchClickHandler(elementId, handler) {
       const element = document.getElementById(elementId);
@@ -233,74 +248,8 @@
       element.addEventListener('click', handler);
     }
 
-    // Replace onclick attributes with event listeners
     addTouchClickHandler('menuToggleBtn', toggleMenu);
     addTouchClickHandler('setStartTimeBtn', setStartTime);
-    
-    function updateControls() {
-      controls.innerHTML = '';
-      let buttonConfig;
-      
-      if (running) {
-        if (!countingDown || seconds > 0) {
-          buttonConfig = { id: 'pauseBtn', text: 'Pause', handler: pauseTimer };
-        } else {
-          buttonConfig = { id: 'resetBtn', text: 'Reset to start time', handler: resetTimer };
-        }
-      } else {
-        if (!countingDown) {
-          if (seconds === 0) {
-            buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
-          } else {
-            controls.innerHTML += '<button id="continueBtn">Continue</button>';
-            controls.innerHTML += '<button id="resetZeroBtn">Reset to zero</button>';
-            addTouchClickHandler('continueBtn', startTimer);
-            addTouchClickHandler('resetZeroBtn', resetTimer);
-            return;
-          }
-        } else {
-          if (seconds === startTime) {
-            buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
-          } else if (seconds > 0) {
-            controls.innerHTML += '<button id="continueBtn">Continue</button>';
-            controls.innerHTML += '<button id="resetBtn">Reset</button>';
-            addTouchClickHandler('continueBtn', startTimer);
-            addTouchClickHandler('resetBtn', resetTimer);
-            return;
-          } else {
-            controls.innerHTML += '<button id="startBtn">Start</button>';
-            controls.innerHTML += '<button id="resetBtn">Reset</button>';
-            addTouchClickHandler('startBtn', startTimer);
-            addTouchClickHandler('resetBtn', resetTimer);
-            return;
-          }
-        }
-      }
-      
-      if (buttonConfig) {
-        controls.innerHTML = `<button id="${buttonConfig.id}">${buttonConfig.text}</button>`;
-        addTouchClickHandler(buttonConfig.id, buttonConfig.handler);
-      }
-    }
-    function initAudioContext() {
-      audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      loadAudioFiles();
-    }
-
-
-    function loadAudioFiles() {
-      const audioFiles = Array.from({length: 59}, (_, i) => (i + 1).toString()).concat(['hours', 'minutes', 'seconds']);
-     
-      audioFiles.forEach(file => {
-        fetch(`audio-numbers/${file}.wav`)
-          .then(response => response.arrayBuffer())
-          .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
-          .then(audioBuffer => {
-            audioBuffers[file] = audioBuffer;
-          })
-          .catch(error => console.error('Error loading audio file:', error));
-      });
-    }
 
     countingToggle.addEventListener('change', () => {
       countingDown = !countingDown;
@@ -330,7 +279,7 @@
     function startTimer() {
       if (!running) {
         running = true;
-        interval = intervalInput.value // setInterval(updateTimer, 1000);
+        interval = setInterval(updateTimer, 1000);
       }
       if (!audioContext) {
         initAudioContext();
@@ -364,14 +313,13 @@
         }
         seconds--;
       }
-      if (seconds % intervalInput.value === 0 || (countingDown && seconds < 10)) {
+      if (seconds % 10 === 0 || (countingDown && seconds < 10)) {
         screamNumber(seconds);
         changeBackgroundColor();
       }
       updateTimerDisplay();
     }
 
- 
     function screamNumber(number) {
       const hours = Math.floor(number / 3600);
       const minutes = Math.floor((number % 3600) / 60);
@@ -428,41 +376,54 @@
 
     function updateControls() {
       controls.innerHTML = '';
+      let buttonConfig;
+      
       if (running) {
-        if (!countingDown) {
-          controls.innerHTML = '<button onclick="pauseTimer()">Pause</button>';
+        if (!countingDown || seconds > 0) {
+          buttonConfig = { id: 'pauseBtn', text: 'Pause', handler: pauseTimer };
         } else {
-          if (seconds > 0) {
-            controls.innerHTML = '<button onclick="pauseTimer()">Pause</button>';
-          } else {
-            controls.innerHTML = '<button onclick="resetTimer()">Reset to start time</button>';
-          }
+          buttonConfig = { id: 'resetBtn', text: 'Reset to start time', handler: resetTimer };
         }
       } else {
         if (!countingDown) {
           if (seconds === 0) {
-            controls.innerHTML = '<button onclick="startTimer()">Start</button>';
+            buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
           } else {
-            controls.innerHTML = '<button onclick="startTimer()">Continue</button>'
-            controls.innerHTML +=  '<button onclick="resetTimer()">Reset to zero</button>';
+            controls.innerHTML += '<button id="continueBtn">Continue</button>';
+            controls.innerHTML += '<button id="resetZeroBtn">Reset to zero</button>';
+            addTouchClickHandler('continueBtn', startTimer);
+            addTouchClickHandler('resetZeroBtn', resetTimer);
+            return;
           }
         } else {
           if (seconds === startTime) {
-            controls.innerHTML = '<button onclick="startTimer()">Start</button>';
+            buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
           } else if (seconds > 0) {
-            controls.innerHTML = '<button onclick="startTimer()">Continue</button>';
-            controls.innerHTML += '<button onclick="resetTimer()">Reset</button>';
+            controls.innerHTML += '<button id="continueBtn">Continue</button>';
+            controls.innerHTML += '<button id="resetBtn">Reset</button>';
+            addTouchClickHandler('continueBtn', startTimer);
+            addTouchClickHandler('resetBtn', resetTimer);
+            return;
           } else {
-            controls.innerHTML = '<button onclick="startTimer()">Start</button><button onclick="resetTimer()">Reset</button>';
+            controls.innerHTML += '<button id="startBtn">Start</button>';
+            controls.innerHTML += '<button id="resetBtn">Reset</button>';
+            addTouchClickHandler('startBtn', startTimer);
+            addTouchClickHandler('resetBtn', resetTimer);
+            return;
           }
         }
+      }
+      
+      if (buttonConfig) {
+        controls.innerHTML = `<button id="${buttonConfig.id}">${buttonConfig.text}</button>`;
+        addTouchClickHandler(buttonConfig.id, buttonConfig.handler);
       }
     }
 
     updateTimerDisplay();
 
-     // Initialize audio context on first user interaction
-     document.body.addEventListener('touchstart', function() {
+    // Initialize audio context on first user interaction
+    document.body.addEventListener('touchstart', function() {
       if (!audioContext) {
         initAudioContext();
       }
