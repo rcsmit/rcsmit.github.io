@@ -269,7 +269,7 @@
     function startTimer() {
       if (!running) {
         running = true;
-        interval = setInterval(updateTimer, 1000);
+        interval = intervalInput.value // setInterval(updateTimer, 1000);
       }
       if (!audioContext) {
         initAudioContext();
