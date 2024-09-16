@@ -185,6 +185,10 @@
           <input type="number" id="secondInput" value="05" min="0" max="59">
         </div>
       </div>
+      <div class="input-container">
+        <label for="intervalInput">Interval to scream (seconds)</label>
+        <input type="number" id="intervalInput_" value="10">
+      </div>
       <button onclick="setStartTime()">Set Start Time</button>
     </div>
     <div class="copyright">Made by Rene Smit for Marcel and Annika</div>
@@ -205,6 +209,7 @@
     const hourInput = document.getElementById('hourInput');
     const minuteInput = document.getElementById('minuteInput');
     const secondInput = document.getElementById('secondInput');
+    const intervalInput =  document.getElementById('intervalInput_');
     const controls = document.getElementById('controls');
     const menu = document.getElementById('menu');
     
@@ -221,9 +226,10 @@
       loadAudioFiles();
     }
 
-    
+
     function loadAudioFiles() {
-      const audioFiles = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10','20','30','40','50','60', 'hours', 'minutes', 'seconds'];
+      const audioFiles = Array.from({length: 59}, (_, i) => (i + 1).toString()).concat(['hours', 'minutes', 'seconds']);
+     
       audioFiles.forEach(file => {
         fetch(`audio-numbers/${file}.wav`)
           .then(response => response.arrayBuffer())
@@ -297,11 +303,40 @@
         }
         seconds--;
       }
-      if (seconds % 10 === 0 || (countingDown && seconds < 10)) {
+      if (seconds % intervalInput.value === 0 || (countingDown && seconds < 10)) {
         screamNumber(seconds);
         changeBackgroundColor();
       }
       updateTimerDisplay();
+    }
+
+ 
+
+    function screamNumber(number) {
+      const hours = Math.floor(number / 3600);
+      const minutes = Math.floor((number % 3600) / 60);
+      const seconds_ = Math.floor(number % 60);
+
+      let delay = 0;
+      const playWithDelay = (word) => {
+        setTimeout(() => playWord(word), delay);
+        delay += 1100; // Adjust this value if needed for proper timing
+      };
+
+      if (hours > 0) {
+        playWithDelay(hours.toString());
+        playWithDelay("hours");
+      }
+      
+      if (minutes > 0) {
+        playWithDelay(minutes.toString());
+        playWithDelay("minutes");
+      }
+      
+      if (seconds_ > 0 || (hours === 0 && minutes === 0)) {
+        playWithDelay(seconds_.toString());
+        playWithDelay("seconds");
+      }
     }
 
     function playWord(word) {
@@ -315,40 +350,6 @@
         source.start();
       } else {
         console.warn(`Audio not loaded for word: ${word}`);
-      }
-    }
-
-    function screamNumber(number) {
-      const hours = Math.floor(number / 3600);
-      const minutes = Math.floor((number % 3600) / 60);
-      const seconds_ = Math.floor(number % 60);
-
-      if (hours > 0) {
-        setTimeout(() => playWord(hours.toString()), 0);
-        setTimeout(() => playWord("hours"), 1100);
-        setTimeout(() => playWord(minutes.toString()), 2200);
-        setTimeout(() => playWord("minutes"), 3300);
-        if (seconds_ != 0) {
-          setTimeout(() => playWord(seconds_.toString()), 4400);
-          setTimeout(() => playWord("seconds"), 5500);
-        }
-      } else {
-        if (minutes > 0) {
-          setTimeout(() => playWord(minutes.toString()), 0);
-          setTimeout(() => playWord("minutes"), 1100);
-          if (seconds_ != 0) {
-            setTimeout(() => playWord(seconds_.toString()), 2200);
-            setTimeout(() => playWord("seconds"), 3300);
-          }
-        } else {
-          if (seconds_ === 10) {
-            setTimeout(() => playWord(seconds_.toString()), 0);
-          } else {
-            if (countingDown) {
-              setTimeout(() => playWord(seconds_.toString()), 0);
-            }
-          }
-        }
       }
     }
     
