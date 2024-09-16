@@ -135,6 +135,9 @@
     button:hover {
       box-shadow: #121212 0 0 0 3px, transparent 0 0 0 0;
     }
+    button:active {
+      background-color: #e0e0e0;
+    }
     .logo {
       position: absolute;
       top: 10px;
@@ -161,45 +164,42 @@
   </style>
 </head>
 <body>
-  <img src="logo.png" alt="Logo" class="logo">
-  <div class="menu" id="menu">
-    <div style="padding-top: 50px;">
-      <div class="toggle-container">
-        <div class="toggle-label-up">Count Down</div>
-        <label class="toggle-switch">
-          <input type="checkbox" class="toggle" id="countingToggle">
-          <span class="toggle-indicator" id="toggleIndicator" style="left: 160px;"></span>
-        </label><div class="toggle-label-down">Count Up</div>
-      </div>
-      <div id="timeInput" style="display: visible;">
-        <div class="input-container">
-          <label for="hourInput">Hours</label>
-          <input type="number" id="hourInput" value="00" min="0" max="23">
+  
+    <img src="logo.png" alt="Logo" class="logo">
+    <div class="menu" id="menu">
+      <div style="padding-top: 50px;">
+        <div class="toggle-container">
+          <div class="toggle-label-up">Count Down</div>
+          <label class="toggle-switch">
+            <input type="checkbox" class="toggle" id="countingToggle">
+            <span class="toggle-indicator" id="toggleIndicator" style="left: 160px;"></span>
+          </label><div class="toggle-label-down">Count Up</div>
         </div>
-        <div class="input-container">
-          <label for="minuteInput">Minutes</label>
-          <input type="number" id="minuteInput" value="01" min="0" max="59">
+        <div id="timeInput" style="display: visible;">
+          <div class="input-container">
+            <label for="hourInput">Hours</label>
+            <input type="number" id="hourInput" value="00" min="0" max="23">
+          </div>
+          <div class="input-container">
+            <label for="minuteInput">Minutes</label>
+            <input type="number" id="minuteInput" value="01" min="0" max="59">
+          </div>
+          <div class="input-container">
+            <label for="secondInput">Seconds</label>
+            <input type="number" id="secondInput" value="05" min="0" max="59">
+          </div>
         </div>
-        <div class="input-container">
-          <label for="secondInput">Seconds</label>
-          <input type="number" id="secondInput" value="05" min="0" max="59">
-        </div>
+        <button id="setStartTimeBtn">Set Start Time</button>
       </div>
-      <div class="input-container">
-        <label for="intervalInput">Interval to scream (seconds)</label>
-        <input type="number" id="intervalInput_" value="10">
-      </div>
-      <button onclick="setStartTime()">Set Start Time</button>
+      <div class="copyright">Made by Rene Smit for Marcel and Annika</div>
     </div>
-    <div class="copyright">Made by Rene Smit for Marcel and Annika</div>
-  </div>
-  <button class="menu-button" onclick="toggleMenu()">☰</button>
-  <div class="content">
-    <h1 class="timer" id="timerDisplay">00:01:00</h1>
-    <div id="controls">
-      <button onclick="startTimer()">Start</button>
+    <button class="menu-button" id="menuToggleBtn">☰</button>
+    <div class="content">
+      <h1 class="timer" id="timerDisplay">00:01:00</h1>
+      <div id="controls">
+        <button id="startBtn">Start</button>
+      </div>
     </div>
-  </div>
   <script>
     const bgColorArray = ['#86a4df', '#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#8E44AD', '#1ABC9C', '#E74C3C'];
     const timerDisplay = document.getElementById('timerDisplay');
@@ -221,6 +221,67 @@
     let audioContext;
     let audioBuffers = {};
 
+    function addTouchClickHandler(elementId, handler) {
+      const element = document.getElementById(elementId);
+      element.addEventListener('touchstart', function(e) {
+        e.preventDefault(); // Prevent default touch behavior
+      });
+      element.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        handler(e);
+      });
+      element.addEventListener('click', handler);
+    }
+
+    // Replace onclick attributes with event listeners
+    addTouchClickHandler('menuToggleBtn', toggleMenu);
+    addTouchClickHandler('setStartTimeBtn', setStartTime);
+    
+    function updateControls() {
+      controls.innerHTML = '';
+      let buttonConfig;
+      
+      if (running) {
+        if (!countingDown || seconds > 0) {
+          buttonConfig = { id: 'pauseBtn', text: 'Pause', handler: pauseTimer };
+        } else {
+          buttonConfig = { id: 'resetBtn', text: 'Reset to start time', handler: resetTimer };
+        }
+      } else {
+        if (!countingDown) {
+          if (seconds === 0) {
+            buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
+          } else {
+            controls.innerHTML += '<button id="continueBtn">Continue</button>';
+            controls.innerHTML += '<button id="resetZeroBtn">Reset to zero</button>';
+            addTouchClickHandler('continueBtn', startTimer);
+            addTouchClickHandler('resetZeroBtn', resetTimer);
+            return;
+          }
+        } else {
+          if (seconds === startTime) {
+            buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
+          } else if (seconds > 0) {
+            controls.innerHTML += '<button id="continueBtn">Continue</button>';
+            controls.innerHTML += '<button id="resetBtn">Reset</button>';
+            addTouchClickHandler('continueBtn', startTimer);
+            addTouchClickHandler('resetBtn', resetTimer);
+            return;
+          } else {
+            controls.innerHTML += '<button id="startBtn">Start</button>';
+            controls.innerHTML += '<button id="resetBtn">Reset</button>';
+            addTouchClickHandler('startBtn', startTimer);
+            addTouchClickHandler('resetBtn', resetTimer);
+            return;
+          }
+        }
+      }
+      
+      if (buttonConfig) {
+        controls.innerHTML = `<button id="${buttonConfig.id}">${buttonConfig.text}</button>`;
+        addTouchClickHandler(buttonConfig.id, buttonConfig.handler);
+      }
+    }
     function initAudioContext() {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       loadAudioFiles();
@@ -399,6 +460,13 @@
     }
 
     updateTimerDisplay();
+
+     // Initialize audio context on first user interaction
+     document.body.addEventListener('touchstart', function() {
+      if (!audioContext) {
+        initAudioContext();
+      }
+    }, { once: true });
   </script>
 </body>
 </html>
