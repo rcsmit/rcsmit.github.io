@@ -195,6 +195,11 @@ button:hover {
         </div>
         
       </div>
+      <div class="input-container">
+        <label for="intervalInput">Interval to scream (seconds)</label>
+        <input type="number" id="intervalInput_" value="10">
+      </div>
+      
       <button onclick="setStartTime()">Set Start Time</button>
     </div>
     <div class="copyright">Made by Rene Smit for Marcel and Annika</div>
@@ -218,6 +223,8 @@ button:hover {
     const hourInput = document.getElementById('hourInput');
     const minuteInput = document.getElementById('minuteInput');
     const secondInput = document.getElementById('secondInput');
+    const intervalInput =  document.getElementById('intervalInput_');
+    console.log (intervalInput)
     const controls = document.getElementById('controls');
     const menu = document.getElementById('menu');
     
@@ -251,6 +258,7 @@ button:hover {
           {startTime = 0;
           seconds=0;
       }
+      
       updateTimerDisplay();
       
     }
@@ -289,7 +297,8 @@ button:hover {
         }
         seconds--;
       }
-      if (seconds % 10 === 0 || (countingDown && seconds < 10)) {
+      
+      if (seconds % intervalInput.value === 0 || (countingDown && seconds < 10)) {
         screamNumber(seconds);
         changeBackgroundColor();
       }
@@ -398,6 +407,7 @@ button:hover {
       }
     }
     console.log(countingDown)
+   
     updateTimerDisplay();
   </script>
 </body>
