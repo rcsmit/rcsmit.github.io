@@ -393,17 +393,17 @@
 
 
     function updateTimer() {
-      const playWithoutDelay = (word) => {
-        delay = 0; // Adjust this value if needed for proper timing
-        setTimeout(() => playWord(word), delay);
+      // const playWithoutDelay = (word) => {
+      //   delay = 0; // Adjust this value if needed for proper timing
+      //   setTimeout(() => playWord(word), delay);
         
-      };
+      // };
 
       if (!countingDown) {
         seconds++;
       } else {
         if (seconds === 0) {
-          playWithoutDelay(seconds.toString());
+          //playWithoutDelay(seconds.toString());
           pauseTimer();
           return;
         }
