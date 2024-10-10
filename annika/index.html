@@ -296,13 +296,14 @@
 
   function loadAudioFiles() {
       const audioFiles = Array.from({length: 60}, (_, i) => (i + 1).toString()).concat(['hours', 'minutes', 'seconds']);
+      console.log(audioFiles);
       let loadedCount = 0;
       const totalFiles = audioFiles.length;
       const progressBar = document.getElementById('progressBar');
       const progressText = document.getElementById('progressText');
       
       audioFiles.forEach(file => {
-        console.log(file);
+        
         fetch(`audio-numbers/${file}.wav`)
           .then(response => response.arrayBuffer())
           .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
