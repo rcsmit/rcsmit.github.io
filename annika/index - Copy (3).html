@@ -160,57 +160,6 @@
         width: 100px;
       }
     }
-
-    .overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-
-    .overlay-content {
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
-      text-align: center;
-    }
-
-    .spinner {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #3498db;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 10px;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .progress-bar {
-      width: 200px;
-      height: 20px;
-      background-color: #f3f3f3;
-      border-radius: 10px;
-      margin: 10px auto;
-      overflow: hidden;
-    }
-
-    .progress {
-      width: 0%;
-      height: 100%;
-      background-color: #3498db;
-      transition: width 0.3s ease;
-    }
   </style>
 </head>
 <body>
@@ -254,18 +203,6 @@
       <button id="startBtn">Start</button>
     </div>
   </div>
-
-  <div id="loadingOverlay" class="overlay">
-    <div class="overlay-content">
-      <div class="spinner"></div>
-      <p>Loading audio files. Please wait...</p>
-      <div class="progress-bar">
-        <div id="progressBar" class="progress"></div>
-      </div>
-      <p id="progressText">0 / 62 files loaded</p>
-    </div>
-  </div>
-
   <script>
     const bgColorArray = ['#86a4df', '#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#8E44AD', '#1ABC9C', '#E74C3C'];
     const timerDisplay = document.getElementById('timerDisplay');
@@ -287,35 +224,19 @@
     let audioContext;
     let audioBuffers = {};
 
-    let audioLoaded = false;
+    function initAudioContext() {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      loadAudioFiles();
+    }
 
-  function initAudioContext() {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    loadAudioFiles();
-  }
-
-  function loadAudioFiles() {
+    function loadAudioFiles() {
       const audioFiles = Array.from({length: 59}, (_, i) => (i + 1).toString()).concat(['hours', 'minutes', 'seconds']);
-      let loadedCount = 0;
-      const totalFiles = audioFiles.length;
-      const progressBar = document.getElementById('progressBar');
-      const progressText = document.getElementById('progressText');
-      
       audioFiles.forEach(file => {
         fetch(`audio-numbers/${file}.wav`)
           .then(response => response.arrayBuffer())
           .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
           .then(audioBuffer => {
             audioBuffers[file] = audioBuffer;
-            loadedCount++;
-            updateLoadingProgress(loadedCount, totalFiles);
-            if (loadedCount === totalFiles) {
-              audioLoaded = true;
-              setTimeout(() => {
-                document.getElementById('loadingOverlay').style.display = 'none';
-                updateControls(); // Enable the start button
-              }, 500); // Short delay to show 100% completion
-            }
           })
           .catch(error => console.error('Error loading audio file:', error));
       });
@@ -459,25 +380,11 @@
       updateControls();
     }
 
-
-
-  function updateLoadingProgress(loaded, total) {
-      const progressBar = document.getElementById('progressBar');
-      const progressText = document.getElementById('progressText');
-      const percentage = (loaded / total) * 100;
-      
-      progressBar.style.width = `${percentage}%`;
-      progressText.textContent = `${loaded} / ${total} files loaded`;
-    }
-
     function updateControls() {
       controls.innerHTML = '';
       let buttonConfig;
       
-      if (!audioLoaded) {
-        buttonConfig = { id: 'startBtn', text: 'Loading...', handler: null };
-      } else if (running) {
-        
+      if (running) {
         if (!countingDown || seconds > 0) {
           buttonConfig = { id: 'pauseBtn', text: 'Pause', handler: pauseTimer };
         } else {
@@ -514,20 +421,13 @@
       }
       
       if (buttonConfig) {
-        controls.innerHTML = `<button id="${buttonConfig.id}" ${!audioLoaded ? 'disabled' : ''}>${buttonConfig.text}</button>`;
-        if (buttonConfig.handler) {
-          addTouchClickHandler(buttonConfig.id, buttonConfig.handler);
-        }
+        controls.innerHTML = `<button id="${buttonConfig.id}">${buttonConfig.text}</button>`;
+        addTouchClickHandler(buttonConfig.id, buttonConfig.handler);
       }
     }
 
     updateTimerDisplay();
 
-    // Initialize audio context and show overlay on page load
-    window.addEventListener('load', function() {
-      initAudioContext();
-    });
-    
     // Initialize audio context on first user interaction
     document.body.addEventListener('touchstart', function() {
       if (!audioContext) {
