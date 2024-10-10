@@ -388,7 +388,7 @@
       updateTimerDisplay();
     }
 
-    
+
     function updateTimer() {
       if (!countingDown) {
         seconds++;
@@ -411,7 +411,7 @@
       const minutes = Math.floor((number % 3600) / 60);
       const seconds_ = Math.floor(number % 60);
 
-      let delay = 0;
+      let delay = 1100;
       const playWithDelay = (word) => {
         setTimeout(() => playWord(word), delay);
         delay += 1100; // Adjust this value if needed for proper timing
@@ -427,7 +427,7 @@
         playWithDelay("minutes");
       }
       
-      if (seconds_ > 10 || (hours === 0 && minutes === 0)) {
+      if (seconds_ > 10 && (hours === 0 && minutes === 0)) {
         playWithDelay(seconds_.toString());
         playWithDelay("seconds");
       }
