@@ -295,7 +295,7 @@
   }
 
   function loadAudioFiles() {
-      const audioFiles = Array.from({length: 59}, (_, i) => (i + 1).toString()).concat(['hours', 'minutes', 'seconds']);
+      const audioFiles = Array.from({length: 60}, (_, i) => (i + 1).toString()).concat(['hours', 'minutes', 'seconds']);
       let loadedCount = 0;
       const totalFiles = audioFiles.length;
       const progressBar = document.getElementById('progressBar');
@@ -395,7 +395,7 @@
         setTimeout(() => playWord(word), delay);
         
       };
-      
+
       if (!countingDown) {
         seconds++;
       } else {
