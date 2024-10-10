@@ -314,7 +314,7 @@
               setTimeout(() => {
                 document.getElementById('loadingOverlay').style.display = 'none';
                 updateControls(); // Enable the start button
-              }, 500); // Short delay to show 100% completion
+              }, 100); // Short delay to show 100% completion
             }
           })
           .catch(error => console.error('Error loading audio file:', error));
@@ -388,6 +388,7 @@
       updateTimerDisplay();
     }
 
+    
     function updateTimer() {
       if (!countingDown) {
         seconds++;
@@ -426,7 +427,7 @@
         playWithDelay("minutes");
       }
       
-      if (seconds_ > 0 || (hours === 0 && minutes === 0)) {
+      if (seconds_ > 10 || (hours === 0 && minutes === 0)) {
         playWithDelay(seconds_.toString());
         playWithDelay("seconds");
       }
