@@ -302,6 +302,7 @@
       const progressText = document.getElementById('progressText');
       
       audioFiles.forEach(file => {
+        console.log(file);
         fetch(`audio-numbers/${file}.wav`)
           .then(response => response.arrayBuffer())
           .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
