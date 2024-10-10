@@ -427,9 +427,12 @@
         playWithDelay("minutes");
       }
       
-      if (seconds_ > 10 && (hours === 0 && minutes === 0)) {
+      if (seconds_ > 10 && hours === 0 && minutes === 0) {
         playWithDelay(seconds_.toString());
         playWithDelay("seconds");
+      }
+      else{
+        playWithDelay(seconds_.toString());
       }
     }
 
