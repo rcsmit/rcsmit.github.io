@@ -411,28 +411,32 @@
       const minutes = Math.floor((number % 3600) / 60);
       const seconds_ = Math.floor(number % 60);
 
-      let delay = 1100;
+      let delay = 0;
       const playWithDelay = (word) => {
-        setTimeout(() => playWord(word), delay);
         delay += 1100; // Adjust this value if needed for proper timing
+        setTimeout(() => playWord(word), delay);
+        
+      };
+
+      const playWithoutDelay = (word) => {
+        delay = 0; // Adjust this value if needed for proper timing
+        setTimeout(() => playWord(word), delay);
+        
       };
 
       if (hours > 0) {
-        playWithDelay(hours.toString());
+        playWithoutDelay(hours.toString());
         playWithDelay("hours");
       }
       
       if (minutes > 0) {
-        playWithDelay(minutes.toString());
+        playWithoutDelay(minutes.toString());
         playWithDelay("minutes");
       }
       
-      if (seconds_ > 10 && hours === 0 && minutes === 0) {
-        playWithDelay(seconds_.toString());
-        playWithDelay("seconds");
-      }
-      else{
-        playWithDelay(seconds_.toString());
+      if (seconds_ > 10 || (hours === 0 && minutes === 0)) {
+        playWithoutDelay(seconds_.toString());
+        // playWithDelay("seconds");
       }
     }
 
