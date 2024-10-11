@@ -435,23 +435,24 @@
       };
 
       if (hours > 0) {
-        playWithDelay(hours.toString());
+        playWithoutDelay(hours.toString());
         playWithDelay("hours");
       }
       
-      if (minutes > 0) {
+      if (minutes > 0 & hours ===0 ) {
         playWithDelay(minutes.toString());
         playWithDelay("minutes");
+      } else {
+        playWithoutDelay(minutes.toString());
+        playWithDelay("minutes");
+
       }
 
-      if (seconds_ > 10 || (hours != 0 || minutes != 0)) {
+      if (seconds_ > 10 || (hours !== 0 || minutes !== 0)) {
         playWithDelay(seconds_.toString());
         playWithDelay("seconds");
-      }
-      
-      if (seconds_ > 10 || (hours === 0 && minutes === 0)) {
-        playWithoutDelay(seconds_.toString());
-        // playWithDelay("seconds");
+      } else {
+        playWithoutDelay(seconds_.toString()); 
       }
     }
 
@@ -548,7 +549,7 @@
 
     // Initialize audio context and show overlay on page load
     window.addEventListener('load', function() {
-      console.log("11102024_1836")
+      console.log("11102024_1846")
       initAudioContext();
     });
     
