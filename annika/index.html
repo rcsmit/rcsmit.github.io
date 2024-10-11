@@ -245,7 +245,7 @@
       </div>
       <button id="setStartTimeBtn">Set Start Time</button>
     </div>
-    <div class="copyright">1853 Made by Rene Smit for Marcel and Annika</div>
+    <div class="copyright">1857 Made by Rene Smit for Marcel and Annika</div>
   </div>
   <button class="menu-button" id="menuToggleBtn">☰</button>
   <div class="content">
@@ -442,7 +442,11 @@
       if (minutes > 0 && hours !== 0) {
         playWithDelay(minutes.toString());
         playWithDelay("minutes");
-      } else if (minutes > 0 && hours === 0) {
+      } else if (minutes === 0 && hours !== 0) {
+        playWithDelay(minutes.toString());
+        playWithDelay("minutes");
+      }
+      } else if (minutes === 0 && hours === 0) {
         playWithoutDelay(minutes.toString());
         playWithDelay("minutes");
       }
@@ -536,7 +540,7 @@
         }
       }
       
-      
+
       if (buttonConfig) {
         controls.innerHTML = `<button id="${buttonConfig.id}" ${!audioLoaded ? 'disabled' : ''}>${buttonConfig.text}</button>`;
         if (buttonConfig.handler) {
