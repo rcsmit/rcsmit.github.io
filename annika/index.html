@@ -215,7 +215,7 @@
 </head>
 <body>
   <img src="logo.png" alt="Logo" class="logo">
-  <div class="menu" id="menu">1848
+  <div class="menu" id="menu">
     <div style="padding-top: 50px;">
       <div class="toggle-container">
         <div class="toggle-label-up">Count Down</div>
@@ -245,7 +245,7 @@
       </div>
       <button id="setStartTimeBtn">Set Start Time</button>
     </div>
-    <div class="copyright">Made by Rene Smit for Marcel and Annika</div>
+    <div class="copyright">1853 Made by Rene Smit for Marcel and Annika</div>
   </div>
   <button class="menu-button" id="menuToggleBtn">☰</button>
   <div class="content">
@@ -439,13 +439,12 @@
         playWithDelay("hours");
       }
       
-      if (minutes > 0 & hours ===0 ) {
+      if (minutes > 0 && hours !== 0) {
         playWithDelay(minutes.toString());
         playWithDelay("minutes");
-      } else {
+      } else if (minutes > 0 && hours === 0) {
         playWithoutDelay(minutes.toString());
         playWithDelay("minutes");
-
       }
 
       if (seconds_ > 10 || (hours !== 0 || minutes !== 0)) {
