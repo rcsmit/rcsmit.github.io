@@ -179,6 +179,7 @@
       padding: 20px;
       border-radius: 10px;
       text-align: center;
+      color: #121212;
     }
 
     .spinner {
@@ -260,8 +261,9 @@
 
   <div id="loadingOverlay" class="overlay">
     <div class="overlay-content">
-      <div class="spinner"></div>
       <p>Loading audio files. Please wait...</p>
+      
+      <div class="spinner"></div>
       <div class="progress-bar">
         <div id="progressBar" class="progress"></div>
       </div>
@@ -395,18 +397,11 @@
 
 
     function updateTimer() {
-      // const playWithoutDelay = (word) => {
-      //   delay = 0; // Adjust this value if needed for proper timing
-      //   setTimeout(() => playWord(word), delay);
-        
-      // };
-
-
+      
       if (!countingDown) {
         seconds++;
       } else {
         if (seconds === 0) {
-          //playWithoutDelay(seconds.toString());
           pauseTimer();
           return;
         }
