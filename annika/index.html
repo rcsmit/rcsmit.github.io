@@ -424,7 +424,7 @@
 
       let delay = 0;
       const playWithDelay = (word) => {
-        delay += 0; // Adjust this value if needed for proper timing
+        delay += 1100; // Adjust this value if needed for proper timing
         setTimeout(() => playWord(word), delay);
         
       };
@@ -446,7 +446,7 @@
       }
       
       if (seconds_ > 10 || (hours === 0 && minutes === 0)) {
-        //playWithoutDelay(seconds_.toString());
+        playWithoutDelay(seconds_.toString());
         // playWithDelay("seconds");
       }
     }
@@ -544,6 +544,7 @@
 
     // Initialize audio context and show overlay on page load
     window.addEventListener('load', function() {
+      console.log("11102024_1823")
       initAudioContext();
     });
     
