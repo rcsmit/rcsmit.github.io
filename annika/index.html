@@ -182,7 +182,7 @@
       color:#121212;
     }
 
-    
+
     .spinner {
       border: 4px solid #f3f3f3;
       border-top: 4px solid #3498db;
@@ -247,7 +247,7 @@
       </div>
       <button id="setStartTimeBtn">Set Start Time</button>
     </div>
-    <div class="copyright">2121 Made by Rene Smit for Marcel and Annika</div>
+    <div class="copyright">2126 Made by Rene Smit for Marcel and Annika</div>
   </div>
 
 
@@ -450,11 +450,12 @@
         playWithoutDelay(minutes.toString());
         playWithDelay("minutes");
       }
-      else if (hours !== 0 && minutes > 0 ) {
+      if (hours !== 0 && minutes > 0 ) {
         // 1:01:xx
         playWithDelay(minutes.toString());
         playWithDelay("minutes");
-      } else if (hours !== 0 && minutes === 0 ) {
+      }
+      if (hours !== 0 && minutes === 0 ) {
         // 1:00:xx
         playWithDelay(minutes.toString());
         playWithDelay("minutes");
@@ -463,14 +464,14 @@
 
       // seconds
 
-      if (hours === 0 && minutes == 0 && seconds_ > 10) {
+      f (hours === 0 && minutes == 0 && seconds_ > 10) {
         //0:00:20
         playWithoutDelay(seconds_.toString());
-        playWithDelay("seconds");
+        playWithDelay("seconds");}
       if (hours !== 0 && minutes == 0 && seconds_ > 10) {
         //1:00:20
         playWithDelay(seconds_.toString());
-        playWithDelay("seconds");
+        playWithDelay("seconds");}
       if (hours === 0 && minutes !== 0 && seconds_ > 10) {
         //0:01:20
         playWithDelay(seconds_.toString());
