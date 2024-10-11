@@ -245,7 +245,7 @@
       </div>
       <button id="setStartTimeBtn">Set Start Time</button>
     </div>
-    <div class="copyright">1857 Made by Rene Smit for Marcel and Annika</div>
+    <div class="copyright">2058 Made by Rene Smit for Marcel and Annika</div>
   </div>
 
 
@@ -442,28 +442,67 @@
         playWithDelay("hours");
       }
       
-      if (minutes > 0 && hours !== 0) {
-        playWithDelay(minutes.toString());
-        playWithDelay("minutes");
-      } else if (minutes === 0 && hours !== 0) {
-        playWithDelay(minutes.toString());
-        playWithDelay("minutes");
-
-      } else if (minutes === 0 && hours === 0) {
+      // minutes 
+      if (hours === 0 && minutes > 0 ) {
+        // 0:01:xx
         playWithoutDelay(minutes.toString());
         playWithDelay("minutes");
       }
+      else if (hours !== 0 && minutes > 0 ) {
+        // 1:01:xx
+        playWithDelay(minutes.toString());
+        playWithDelay("minutes");
+      } else if (hours !== 0 && minutes === 0 ) {
+        // 1:00:xx
+        playWithDelay(minutes.toString());
+        playWithDelay("minutes");
 
-      if (seconds_ > 10 || (hours !== 0 || minutes !== 0)) {
+      } 
+
+      // seconds
+
+      if (hours === 0 && minutes == 0 && seconds_ > 10) {
+        //0:00:20
+        playWithoutDelay(seconds_.toString());
+        playWithDelay("seconds");
+      if (hours !== 0 && minutes == 0 && seconds_ > 10) {
+        //1:00:20
         playWithDelay(seconds_.toString());
         playWithDelay("seconds");
-      } else {
-        playWithoutDelay(seconds_.toString()); 
-      }
+      if (hours === 0 && minutes !== 0 && seconds_ > 10) {
+        //0:01:20
+        playWithDelay(seconds_.toString());
+        playWithDelay("seconds");}
+      if (hours !== 0 && minutes !== 0 && seconds_ > 10) {
+        //1:01:20
+        playWithDelay(seconds_.toString());
+        playWithDelay("seconds");}
+
+      
+      if (hours !== 0 && minutes !== 0 && seconds_ <= 10) {
+        //10:01:08
+        playWithDelay(seconds_.toString());
+        playWithDelay("seconds");}
+
+      if (hours !== 0 && minutes === 0 && seconds_ <= 10) {
+        //01:00:08
+        playWithDelay(seconds_.toString());
+        playWithDelay("seconds");}
+
+      if (hours === 0 && minutes !== 0 && seconds_ <= 10) {
+        //00:01:08
+        playWithDelay(seconds_.toString());
+        playWithDelay("seconds");}
+      if (hours === 0 && minutes == 0 && seconds_ <= 10) {
+        //0:00:08
+        playWithoutDelay(seconds_.toString());}
+        
+
+      
     }
 
 
-    
+
     function playWord(word) {
       if (!audioContext) {
         initAudioContext();
