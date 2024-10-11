@@ -245,7 +245,7 @@
       </div>
       <button id="setStartTimeBtn">Set Start Time</button>
     </div>
-    <div class="copyright">2058 Made by Rene Smit for Marcel and Annika</div>
+    <div class="copyright">2103 Made by Rene Smit for Marcel and Annika</div>
   </div>
 
 
@@ -425,81 +425,46 @@
       const seconds_ = Math.floor(number % 60);
 
       let delay = 0;
+      
       const playWithDelay = (word) => {
         delay += 1100; // Adjust this value if needed for proper timing
         setTimeout(() => playWord(word), delay);
-        
       };
 
       const playWithoutDelay = (word) => {
-        delay = 0; // Adjust this value if needed for proper timing
-        setTimeout(() => playWord(word), delay);
-        
+        setTimeout(() => playWord(word), 0); // Immediate play without delay
       };
 
+      // Handle hours
       if (hours > 0) {
         playWithoutDelay(hours.toString());
         playWithDelay("hours");
       }
-      
-      // minutes 
-      if (hours === 0 && minutes > 0 ) {
+
+      // Handle minutes
+      if (hours === 0 && minutes > 0) {
         // 0:01:xx
         playWithoutDelay(minutes.toString());
         playWithDelay("minutes");
+      } else if (hours > 0 && minutes >= 0) {
+        // Handles both cases: 1:01:xx and 1:00:xx
+        playWithDelay(minutes.toString());
+        playWithDelay("minutes");
       }
-      else if (hours !== 0 && minutes > 0 ) {
-        // 1:01:xx
-        playWithDelay(minutes.toString());
-        playWithDelay("minutes");
-      } else if (hours !== 0 && minutes === 0 ) {
-        // 1:00:xx
-        playWithDelay(minutes.toString());
-        playWithDelay("minutes");
 
-      } 
-
-      // seconds
-
-      if (hours === 0 && minutes == 0 && seconds_ > 10) {
-        //0:00:20
+      // Handle seconds
+      if (seconds_ > 10) {
+        playWithDelay(seconds_.toString());
+        playWithDelay("seconds");
+      } else if (hours === 0 && minutes === 0 && seconds_ <= 10) {
+        // For 0:00:xx where seconds are <= 10
         playWithoutDelay(seconds_.toString());
-        playWithDelay("seconds");
-      if (hours !== 0 && minutes == 0 && seconds_ > 10) {
-        //1:00:20
+      } else {
         playWithDelay(seconds_.toString());
         playWithDelay("seconds");
-      if (hours === 0 && minutes !== 0 && seconds_ > 10) {
-        //0:01:20
-        playWithDelay(seconds_.toString());
-        playWithDelay("seconds");}
-      if (hours !== 0 && minutes !== 0 && seconds_ > 10) {
-        //1:01:20
-        playWithDelay(seconds_.toString());
-        playWithDelay("seconds");}
-
-      
-      if (hours !== 0 && minutes !== 0 && seconds_ <= 10) {
-        //10:01:08
-        playWithDelay(seconds_.toString());
-        playWithDelay("seconds");}
-
-      if (hours !== 0 && minutes === 0 && seconds_ <= 10) {
-        //01:00:08
-        playWithDelay(seconds_.toString());
-        playWithDelay("seconds");}
-
-      if (hours === 0 && minutes !== 0 && seconds_ <= 10) {
-        //00:01:08
-        playWithDelay(seconds_.toString());
-        playWithDelay("seconds");}
-      if (hours === 0 && minutes == 0 && seconds_ <= 10) {
-        //0:00:08
-        playWithoutDelay(seconds_.toString());}
-        
-
-      
+      }
     }
+
 
 
 
