@@ -55,6 +55,18 @@
       cursor: pointer;
       z-index: 1000;
     }
+
+    .general-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background-color: #ffffff;
+      border: none;
+      color: rgb(0, 0, 0);
+      font-size: 1.5em;
+      cursor: pointer;
+      z-index: 1000;
+    }
     .toggle-container {
       display: flex;
       align-items: center;
@@ -255,7 +267,7 @@
   <div class="content">
     <h1 class="timer" id="timerDisplay">00:01:00</h1>
     <div id="controls">
-      <button id="startBtn">Start</button>
+      <button class="general-button" id="startBtn">Start</button>
     </div>
   </div>
 
@@ -368,13 +380,14 @@
     }
 
     function startTimer() {
+      if (!audioContext) {
+        initAudioContext();
+      }
       if (!running) {
         running = true;
         interval = setInterval(updateTimer, 1000);
       }
-      if (!audioContext) {
-        initAudioContext();
-      }
+      
     }
 
     function pauseTimer() {
@@ -497,12 +510,7 @@
       if (hours === 0 && minutes == 0 && seconds_ <= 10) {
         //0:00:08
         playWithoutDelay(seconds_.toString());}
-        
-
-      
     }
-
-
 
     function playWord(word) {
       if (!audioContext) {
@@ -560,8 +568,8 @@
           if (seconds === 0) {
             buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
           } else {
-            controls.innerHTML += '<button id="continueBtn">Continue</button>';
-            controls.innerHTML += '<button id="resetZeroBtn">Reset to zero</button>';
+            controls.innerHTML += '<button class="general-button" id="continueBtn">Continue</button>';
+            controls.innerHTML += '<button class="general-button" id="resetZeroBtn">Reset to zero</button>';
             addTouchClickHandler('continueBtn', startTimer);
             addTouchClickHandler('resetZeroBtn', resetTimer);
             return;
@@ -570,14 +578,14 @@
           if (seconds === startTime) {
             buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
           } else if (seconds > 0) {
-            controls.innerHTML += '<button id="continueBtn">Continue</button>';
-            controls.innerHTML += '<button id="resetBtn">Reset</button>';
+            controls.innerHTML += '<button class="general-button" id="continueBtn">Continue</button>';
+            controls.innerHTML += '<button class="general-button" id="resetBtn">Reset</button>';
             addTouchClickHandler('continueBtn', startTimer);
             addTouchClickHandler('resetBtn', resetTimer);
             return;
           } else {
-            controls.innerHTML += '<button id="startBtn">Start</button>';
-            controls.innerHTML += '<button id="resetBtn">Reset</button>';
+            controls.innerHTML += '<button class="general-button" id="startBtn">Start</button>';
+            controls.innerHTML += '<button class="general-button" id="resetBtn">Reset</button>';
             addTouchClickHandler('startBtn', startTimer);
             addTouchClickHandler('resetBtn', resetTimer);
             return;
