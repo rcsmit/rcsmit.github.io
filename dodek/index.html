@@ -10,7 +10,7 @@
         .flashcard {
             border: 2px solid #333;
             padding: 5%; /* Use relative padding */
-            height: auto; /* Adjust height to let content flow */
+            height: 90%; /* Adjust height to let content flow */
             width: 90%; /* Adjust width for mobile */
             max-width: 600px; /* Limit the width for larger screens */
             margin: auto; /* Center the flashcard */
@@ -35,25 +35,10 @@
 
         #answer {
             font-size: 6vw;
-            min-height: 3rem; /* Adjust this value as needed */
+            height: 30%; /* Adjust this value as needed */
         }
 
-        /* Media query for larger screens */
-        @media (min-width: 768px) {
-            #question {
-                font-size: 2rem; /* Fixed size for larger screens */
-            }
-
-            #answer {
-                font-size: 1rem;
-                min-height: 3rem; /* Adjust this value as needed */
-            }
-
-            .flashcard {
-                padding: 10px;
-                width: 80%; /* Adjust width for larger screens */
-            }
-        }
+        
          /* Hamburger Menu */
          .hamburger {
             position: absolute;
