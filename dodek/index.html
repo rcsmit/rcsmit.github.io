@@ -22,6 +22,13 @@
             justify-content: space-between; /* Space elements appropriately */
         }
 
+        .logo {
+            position: absolute;
+            top: 10px; /* Adjust for desired padding */
+            left: 10px; /* Adjust for desired padding */
+            width: 50px; /* Adjust the size of the logo */
+            height: auto; /* Maintain aspect ratio */
+        }
         button {
             margin-top: 10px;
             padding: 10px 15px; /* Increase padding for touch-friendly buttons */
@@ -121,6 +128,7 @@
         <div></div>
     </div>
     <div id="flashcard" class="flashcard">
+        <img src="logo.png" alt="Logo" class="logo">
         <p id="question">Loading...</p>
         <button id="toggleBtn">Show Answer</button>
         <p id="answer" style="display: none;"></p>
