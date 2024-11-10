@@ -10,8 +10,9 @@
         .flashcard {
             border: 2px solid #333;
             padding: 5%; /* Use relative padding */
-            height: 70%; /* Adjust height to let content flow */
-            width: 80%; /* Adjust width for mobile */
+            height: auto; /* Adjust height to let content flow */
+            width: 90%; /* Adjust width for mobile */
+            max-width: 600px; /* Limit the width for larger screens */
             margin: auto; /* Center the flashcard */
             text-align: center;
             border-radius: 10px;
@@ -29,15 +30,28 @@
         }
 
         #question {
-            font-size: 8vw; /* Responsive font size */
+            font-size: 4vw; /* Responsive font size */
         }
 
         #answer {
-            font-size: 6vw;
-            height: 30%; /* Adjust this value as needed */
+            font-size: 3vw;
         }
 
-        
+        /* Media query for larger screens */
+        @media (min-width: 768px) {
+            #question {
+                font-size: 3rem; /* Fixed size for larger screens */
+            }
+
+            #answer {
+                font-size: 2rem;
+            }
+
+            .flashcard {
+                padding: 20px;
+                width: 80%; /* Adjust width for larger screens */
+            }
+        }
          /* Hamburger Menu */
          .hamburger {
             position: absolute;
