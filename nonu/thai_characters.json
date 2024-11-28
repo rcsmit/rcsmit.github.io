@@ -1,4 +1,4 @@
-{"id":1,
+[{"id":1,
  "Letter":"ก",
  "Sample word":"ไก่",
  "RTGS":"ko kai",
@@ -1591,6 +1591,4 @@
  "UNICODE":"U+0E2F",
  "mid\/low\/heigh":"-",
  "remarks":"The abbreviation indicates that the remainder of a sentence was omitted. It is similar to our ellipsis (…). Example: The full name of Thailand's capital is"
-    }
-
- 
+}]
