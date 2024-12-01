@@ -44,6 +44,9 @@
             font-size: 3vw;
             min-height: 3em; /* Adjust this value as needed */
         }
+        #remaining {
+            font-size: 2vw; /* Responsive font size */
+        }
 
         /* Media query for larger screens */
         @media (min-width: 768px) {
@@ -136,6 +139,7 @@
         <p id="answer" style="display: none;"></p>
         <button id="nextBtn" style="display: none;">Next</button>
         <button id="forgetBtn" style="display: none;">Forget</button>
+        <p id="remaining">x</p>
     </div>
 
      <!-- Overlay -->
@@ -210,7 +214,7 @@
             const percentRemaining = ((flashcards.length / totalOriginalCards) * 100).toFixed(1);
             //const totalFreq = flashcards.reduce((sum, card) => sum + card.FREQ, 0);
  
-            console.log(`Cards remaining: ${flashcards.length}/${totalOriginalCards} (${percentRemaining}%)`);
+            remaining = `Cards remaining: ${flashcards.length}/${totalOriginalCards}<br>(${percentRemaining}%)`;
         
             if (flashcards.length === 0) {
                     document.getElementById('question').innerText = "No more flashcards available. Refresh to start again.";
@@ -232,6 +236,8 @@
             document.getElementById('toggleBtn').style.display = 'inline-block';
             document.getElementById('nextBtn').style.display = 'none'; // Hide the next button initially
             document.getElementById('forgetBtn').style.display = 'none'; // Show the "Forget" button
+            document.getElementById('remaining').innerHTML = remaining; // Show the "Forget" button
+            
             answerRevealed = false; // Reset the answer visibility status
         }
 
