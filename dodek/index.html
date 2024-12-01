@@ -174,10 +174,10 @@
        
         fetch('thai_characters.json')
             .then(response => response.json())
-            .then(data => {
-                thaiCharacters = data.filter(character => !lettersToExclude.includes(character.Letter));
+            .then(flashcards => {
+                thaiCharacters = flashcards.filter(character => !lettersToExclude.includes(character.Letter));
                 console.log(thaiCharacters);
-                console.log("23:35")
+                console.log("23:37")
                 // Your code to use the thaiCharacters data
             })
             .catch(error => console.error('Error loading JSON:', error));
