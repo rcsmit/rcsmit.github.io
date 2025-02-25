@@ -733,11 +733,11 @@
       }
     }
 
-    
+
 
     // Initialize app - called once when page loads
     function initializeApp() {
-      console.log("Initializing app, version 26_02_0030");
+      console.log("Initializing app, version 26_02_0032");
       
       // Set up event handlers
       setupEventHandlers();
@@ -755,7 +755,7 @@
         const progressBar = document.querySelector('.progress-bar');
 
         if (overlayContent && progressText) {
-          progressText.textContent = "Click to Start";
+          progressText.textContent = "Loading files";
           // Hide progress elements initially
           document.querySelector('.progress-bar').style.display = 'none';
           progressText.style.display = 'none';
