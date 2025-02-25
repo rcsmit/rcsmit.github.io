@@ -761,6 +761,8 @@
 
         // Update the overlay click handler
         overlay.addEventListener('click', function() {
+          console.log("iOS detected - userclick detected");
+        
           // Show the loading elements
           progressBar.style.display = 'block';
           progressText.style.display = 'block';
@@ -774,20 +776,7 @@
           // Initialize audio context and start loading
           initAudioContext();
         }, { once: true });
-        // // Add a notice for iOS users that they need to tap to enable audio
-        // const overlay = document.getElementById('loadingOverlay');
-        // const overlayContent = document.querySelector('.overlay-content');
-        // const progressText = document.getElementById('progressText');
         
-        // if (overlayContent && progressText) {
-        //   progressText.textContent = "Tap anywhere to enable audio (required on iOS)";
-        // }
-        
-        // // Try to initialize on overlay click
-        // overlay.addEventListener('click', function() {
-        //   initAudioContext();
-        //}
-        //{ once: true });
       } else {
         // For non-iOS, we can initialize right away
         initAudioContext();
