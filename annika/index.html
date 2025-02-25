@@ -280,7 +280,10 @@
       </div>
       <p id="progressText">0 / 62 files loaded</p>
     </div>
+  </div>
+  <div id="loadingOverlay-no-spinner" class="overlay-no-spinner"></div>
     <div class="overlay-content-no-spinner">
+      <p id="progressText-no-spinner">___</p>
       
     </div>
   </div>
@@ -737,7 +740,7 @@
 
     // Initialize app - called once when page loads
     function initializeApp() {
-      console.log("Initializing app, version 26022025_0008");
+      console.log("Initializing app, version 26022025_0012");
       
 
       // Set up event handlers
@@ -750,15 +753,15 @@
         console.log("iOS detected - waiting for user interaction to initialize audio");
         
         // Add a notice for iOS users that they need to tap to enable audio
-        const overlay = document.getElementById('loadingOverlay');
+        const overlay = document.getElementById('loadingOverlay-no-spinner');
         const overlayContent = document.querySelector('.overlay-content-no-spinner');
-        const progressText = '_'  //document.getElementById('progressText');
+        const progressText = document.getElementById('progressText-no-spinner');
         
         if (overlayContent && progressText) {
           progressText.textContent = "Tap anywhere to enable audio (required on iOS)";
         }
         
-        
+
         // Try to initialize on overlay click
         overlay.addEventListener('click', function() {
           initAudioContext();
