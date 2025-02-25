@@ -283,6 +283,10 @@
   </div>
 
   <script>
+      // iOS detection
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    console.log("iOS detected:", isIOS);
+
     const bgColorArray = ['#86a4df', '#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#8E44AD', '#1ABC9C', '#E74C3C'];
     const timerDisplay = document.getElementById('timerDisplay');
     const countingToggle = document.getElementById('countingToggle');
@@ -293,35 +297,64 @@
     const secondInput = document.getElementById('secondInput');
     const controls = document.getElementById('controls');
     const menu = document.getElementById('menu');
-    const intervalInput =  document.getElementById('intervalInput');
-    
+    const intervalInput = document.getElementById('intervalInput');
+
     let running = false;
     let countingDown = true;
-    let interval = intervalInput.value;
+    let interval;
     let startTime = 65;
     let seconds = startTime;
     let audioContext;
     let audioBuffers = {};
-
     let audioLoaded = false;
+    let timerInterval;
 
-  function initAudioContext() {
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    loadAudioFiles();
-  }
+    // Improved audio context initialization for iOS
+    function initAudioContext() {
+      // iOS requires AudioContext to be created or resumed within a user gesture
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!audioContext) {
+        audioContext = new AudioContext();
+      }
+      
+      // iOS Safari requires this for audio to work
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          console.log("AudioContext resumed successfully");
+        }).catch(err => {
+          console.warn("Could not resume AudioContext:", err);
+        });
+      }
+      
+      loadAudioFiles();
+    }
 
+    // Function to resume audio context (important for iOS)
+    function resumeAudioContext() {
+      if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          console.log("AudioContext resumed from user interaction");
+        }).catch(err => {
+          console.warn("Failed to resume AudioContext:", err);
+        });
+      }
+    }
 
-  function loadAudioFiles() {
+    // Improved audio file loading with retry logic
+    function loadAudioFiles() {
       const audioFiles = Array.from({length: 60}, (_, i) => (i + 1).toString()).concat(['0','hours', 'minutes', 'seconds']);
       let loadedCount = 0;
       const totalFiles = audioFiles.length;
       const progressBar = document.getElementById('progressBar');
       const progressText = document.getElementById('progressText');
       
-      audioFiles.forEach(file => {
-        
+      // Add error retry logic for iOS
+      const loadFile = (file, retryCount = 0) => {
         fetch(`audio-numbers/${file}.wav`)
-          .then(response => response.arrayBuffer())
+          .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.arrayBuffer();
+          })
           .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
           .then(audioBuffer => {
             audioBuffers[file] = audioBuffer;
@@ -335,31 +368,75 @@
               }, 100); // Short delay to show 100% completion
             }
           })
-          .catch(error => console.error('Error loading audio file:', error));
-      });
+          .catch(error => {
+            console.error(`Error loading audio file ${file}:`, error);
+            // Retry logic - useful for iOS which can sometimes fail the first attempt
+            if (retryCount < 3) {
+              console.log(`Retrying ${file}, attempt ${retryCount + 1}`);
+              setTimeout(() => loadFile(file, retryCount + 1), 500);
+            }
+          });
+      };
+      
+      audioFiles.forEach(file => loadFile(file));
     }
 
+    // Improved touch event handling for iOS
     function addTouchClickHandler(elementId, handler) {
       const element = document.getElementById(elementId);
+      if (!element) {
+        console.warn(`Element with id ${elementId} not found`);
+        return;
+      }
+      
+      // For iOS, we need to be careful about preventDefault
       element.addEventListener('touchstart', function(e) {
-        e.preventDefault(); // Prevent default touch behavior
-      });
+        // Don't call preventDefault here as it can cause issues on iOS
+        resumeAudioContext(); // Try to resume audio context on touch
+      }, { passive: true });
+      
       element.addEventListener('touchend', function(e) {
-        e.preventDefault();
+        // Only prevent default if needed - this helps with iOS compatibility
+        if (e.cancelable) {
+          e.preventDefault();
+        }
+        
+        // Important for iOS: resume audio context on any user interaction
+        resumeAudioContext();
+        
         handler(e);
       });
-      element.addEventListener('click', handler);
+      
+      element.addEventListener('click', function(e) {
+        resumeAudioContext();
+        handler(e);
+      });
     }
 
-    addTouchClickHandler('menuToggleBtn', toggleMenu);
-    addTouchClickHandler('setStartTimeBtn', setStartTime);
-
-    countingToggle.addEventListener('change', () => {
-      countingDown = !countingDown;
-      toggleIndicator.style.left = countingDown ? '160px' : '180px';
-      timeInput.style.display = countingDown ? 'flex' : 'none';
-      setStartTime();
-    });
+    // Set up event handlers
+    function setupEventHandlers() {
+      addTouchClickHandler('menuToggleBtn', toggleMenu);
+      addTouchClickHandler('setStartTimeBtn', setStartTime);
+      
+      // Special handling for the overlay on iOS
+      if (isIOS) {
+        document.getElementById('loadingOverlay').addEventListener('click', function() {
+          resumeAudioContext();
+        });
+      }
+      
+      countingToggle.addEventListener('change', () => {
+        countingDown = !countingDown;
+        toggleIndicator.style.left = countingDown ? '160px' : '180px';
+        timeInput.style.display = countingDown ? 'flex' : 'none';
+        setStartTime();
+      });
+      
+      // Add body-level event listener for iOS audio
+      document.body.addEventListener('touchstart', function() {
+        resumeAudioContext();
+      }, { passive: true });
+    }
 
     function toggleMenu() {
       menu.classList.toggle('open');
@@ -380,25 +457,40 @@
     }
 
     function startTimer() {
+      // Make sure audio is initialized
       if (!audioContext) {
         initAudioContext();
-      }
-      if (!running) {
-        running = true;
-        interval = setInterval(updateTimer, 1000);
+      } else {
+        resumeAudioContext();
       }
       
+      if (!running) {
+        running = true;
+        // Clear any existing interval to avoid duplicates
+        if (timerInterval) {
+          clearInterval(timerInterval);
+        }
+        timerInterval = setInterval(updateTimer, 1000);
+      }
+      
+      updateControls();
     }
 
     function pauseTimer() {
       running = false;
-      clearInterval(interval);
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
       updateTimerDisplay();
     }
 
     function resetTimer() {
       running = false;
-      clearInterval(interval);
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
       if (!countingDown) {
         seconds = 0;
       } else {
@@ -407,29 +499,22 @@
       updateTimerDisplay();
     }
 
-
     function updateTimer() {
-      // const playWithoutDelay = (word) => {
-      //   delay = 0; // Adjust this value if needed for proper timing
-      //   setTimeout(() => playWord(word), delay);
-        
-      // };
-
-
       if (!countingDown) {
         seconds++;
       } else {
         if (seconds === 0) {
-          //playWithoutDelay(seconds.toString());
           pauseTimer();
           return;
         }
         seconds--;
       }
-      if (seconds % intervalInput.value === 0 || (countingDown && seconds < 10)) {
+      
+      if (seconds % parseInt(intervalInput.value, 10) === 0 || (countingDown && seconds < 10)) {
         screamNumber(seconds);
         changeBackgroundColor();
       }
+      
       updateTimerDisplay();
     }
 
@@ -442,13 +527,11 @@
       const playWithDelay = (word) => {
         delay += 1100; // Adjust this value if needed for proper timing
         setTimeout(() => playWord(word), delay);
-        
       };
 
       const playWithoutDelay = (word) => {
-        delay = 0; // Adjust this value if needed for proper timing
+        delay = 0; // Reset delay
         setTimeout(() => playWord(word), delay);
-        
       };
 
       if (hours > 0) {
@@ -456,76 +539,115 @@
         playWithDelay("hours");
       }
       
-      // minutes 
-      if (hours === 0 && minutes > 0 ) {
+      // Minutes
+      if (hours === 0 && minutes > 0) {
         // 0:01:xx
         playWithoutDelay(minutes.toString());
         playWithDelay("minutes");
       }
-      if (hours !== 0 && minutes > 0 ) {
+      if (hours !== 0 && minutes > 0) {
         // 1:01:xx
         playWithDelay(minutes.toString());
         playWithDelay("minutes");
       }
-      if (hours !== 0 && minutes === 0 ) {
+      if (hours !== 0 && minutes === 0) {
         // 1:00:xx
         playWithDelay(minutes.toString());
         playWithDelay("minutes");
-
       } 
-      // seconds
- 
+      
+      // Seconds
       if (hours === 0 && minutes == 0 && seconds_ > 10) {
         //0:00:20
         playWithoutDelay(seconds_.toString());
-        playWithDelay("seconds");}
+        playWithDelay("seconds");
+      }
       if (hours !== 0 && minutes == 0 && seconds_ > 10) {
         //1:00:20
         playWithDelay(seconds_.toString());
-        playWithDelay("seconds");}
+        playWithDelay("seconds");
+      }
       if (hours === 0 && minutes !== 0 && seconds_ > 10) {
         //0:01:20
         playWithDelay(seconds_.toString());
-        playWithDelay("seconds");}
+        playWithDelay("seconds");
+      }
       if (hours !== 0 && minutes !== 0 && seconds_ > 10) {
         //1:01:20
         playWithDelay(seconds_.toString());
-        playWithDelay("seconds");}
-
+        playWithDelay("seconds");
+      }
       
       if (hours !== 0 && minutes !== 0 && seconds_ <= 10) {
         //10:01:08
         playWithDelay(seconds_.toString());
-        playWithDelay("seconds");}
-
+        playWithDelay("seconds");
+      }
       if (hours !== 0 && minutes === 0 && seconds_ <= 10) {
         //01:00:08
         playWithDelay(seconds_.toString());
-        playWithDelay("seconds");}
-
+        playWithDelay("seconds");
+      }
       if (hours === 0 && minutes !== 0 && seconds_ <= 10) {
         //00:01:08
         playWithDelay(seconds_.toString());
-        playWithDelay("seconds");}
+        playWithDelay("seconds");
+      }
       if (hours === 0 && minutes == 0 && seconds_ <= 10) {
         //0:00:08
-        playWithoutDelay(seconds_.toString());}
+        playWithoutDelay(seconds_.toString());
+      }
     }
 
+    // Improved playWord function for iOS compatibility
     function playWord(word) {
       if (!audioContext) {
         initAudioContext();
+        return; // Wait for audio context to initialize
       }
+      
+      // For iOS, always ensure the context is running
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().then(() => {
+          playWordWithContext(word);
+        }).catch(err => {
+          console.warn("Could not resume audio context:", err);
+        });
+      } else {
+        playWordWithContext(word);
+      }
+    }
+
+    function playWordWithContext(word) {
       if (audioBuffers[word]) {
         const source = audioContext.createBufferSource();
         source.buffer = audioBuffers[word];
         source.connect(audioContext.destination);
-        source.start();
+        
+        // Try-catch to handle potential iOS errors
+        try {
+          source.start(0);
+        } catch (e) {
+          console.error('Error playing audio:', e);
+          // Try one more time after ensuring the context is resumed
+          audioContext.resume().then(() => {
+            try {
+              const retrySource = audioContext.createBufferSource();
+              retrySource.buffer = audioBuffers[word];
+              retrySource.connect(audioContext.destination);
+              retrySource.start(0);
+            } catch (retryError) {
+              console.error('Failed retry playing audio:', retryError);
+            }
+          }).catch(err => {
+            console.warn("Could not resume audio context for retry:", err);
+          });
+        }
       } else {
         console.warn(`Audio not loaded for word: ${word}`);
       }
     }
-    
+
     function changeBackgroundColor() {
       const randomColor = bgColorArray[Math.floor(Math.random() * bgColorArray.length)];
       document.body.style.backgroundColor = randomColor;
@@ -539,9 +661,7 @@
       updateControls();
     }
 
-
-
-  function updateLoadingProgress(loaded, total) {
+    function updateLoadingProgress(loaded, total) {
       const progressBar = document.getElementById('progressBar');
       const progressText = document.getElementById('progressText');
       const percentage = (loaded / total) * 100;
@@ -557,7 +677,6 @@
       if (!audioLoaded) {
         buttonConfig = { id: 'startBtn', text: 'Loading...', handler: null };
       } else if (running) {
-        
         if (!countingDown || seconds > 0) {
           buttonConfig = { id: 'pauseBtn', text: 'Pause', handler: pauseTimer };
         } else {
@@ -570,8 +689,11 @@
           } else {
             controls.innerHTML += '<button class="general-button" id="continueBtn">Continue</button>';
             controls.innerHTML += '<button class="general-button" id="resetZeroBtn">Reset to zero</button>';
-            addTouchClickHandler('continueBtn', startTimer);
-            addTouchClickHandler('resetZeroBtn', resetTimer);
+            // Defer adding handlers until after elements are created
+            setTimeout(() => {
+              addTouchClickHandler('continueBtn', startTimer);
+              addTouchClickHandler('resetZeroBtn', resetTimer);
+            }, 0);
             return;
           }
         } else {
@@ -580,48 +702,88 @@
           } else if (seconds > 0) {
             controls.innerHTML += '<button class="general-button" id="continueBtn">Continue</button>';
             controls.innerHTML += '<button class="general-button" id="resetBtn">Reset</button>';
-            addTouchClickHandler('continueBtn', startTimer);
-            addTouchClickHandler('resetBtn', resetTimer);
+            // Defer adding handlers until after elements are created
+            setTimeout(() => {
+              addTouchClickHandler('continueBtn', startTimer);
+              addTouchClickHandler('resetBtn', resetTimer);
+            }, 0);
             return;
           } else {
             controls.innerHTML += '<button class="general-button" id="startBtn">Start</button>';
-            controls.innerHTML += '<button class="general-button"id="resetBtn">Reset</button>';
-            addTouchClickHandler('startBtn', startTimer);
-            addTouchClickHandler('resetBtn', resetTimer);
+            controls.innerHTML += '<button class="general-button" id="resetBtn">Reset</button>';
+            // Defer adding handlers until after elements are created
+            setTimeout(() => {
+              addTouchClickHandler('startBtn', startTimer);
+              addTouchClickHandler('resetBtn', resetTimer);
+            }, 0);
             return;
           }
         }
       }
       
-
       if (buttonConfig) {
-        controls.innerHTML = `<button id="${buttonConfig.id}" ${!audioLoaded ? 'disabled' : ''}>${buttonConfig.text}</button>`;
+        controls.innerHTML = `<button class="general-button" id="${buttonConfig.id}" ${!audioLoaded ? 'disabled' : ''}>${buttonConfig.text}</button>`;
         if (buttonConfig.handler) {
-          addTouchClickHandler(buttonConfig.id, buttonConfig.handler);
+          // Defer adding handler until after element is created
+          setTimeout(() => {
+            addTouchClickHandler(buttonConfig.id, buttonConfig.handler);
+          }, 0);
         }
       }
     }
 
-    updateTimerDisplay();
-
-    // Initialize audio context and show overlay on page load
-    window.addEventListener('load', function() {
-      console.log("11102024_1846")
-      initAudioContext();
-    });
-    
-    
-
-
-
-
-
-    // Initialize audio context on first user interaction
-    document.body.addEventListener('touchstart', function() {
-      if (!audioContext) {
+    // Initialize app - called once when page loads
+    function initializeApp() {
+      console.log("Initializing app, version 11102024_1916");
+      
+      // Set up event handlers
+      setupEventHandlers();
+      
+      // Initialize the audio with iOS-specific considerations
+      if (isIOS) {
+        // For iOS, we'll wait for user interaction before initializing audio
+        console.log("iOS detected - waiting for user interaction to initialize audio");
+        
+        // Add a notice for iOS users that they need to tap to enable audio
+        const overlay = document.getElementById('loadingOverlay');
+        const overlayContent = document.querySelector('.overlay-content');
+        const progressText = document.getElementById('progressText');
+        
+        if (overlayContent && progressText) {
+          progressText.textContent = "Tap anywhere to enable audio (required on iOS)";
+        }
+        
+        // Try to initialize on overlay click
+        overlay.addEventListener('click', function() {
+          initAudioContext();
+        }, { once: true });
+      } else {
+        // For non-iOS, we can initialize right away
         initAudioContext();
       }
-    }, { once: true });
+      
+      updateTimerDisplay();
+    }
+
+    // Call initialization on page load
+    window.addEventListener('load', initializeApp);
+
+    // Additional listener to handle back navigation on iOS
+    window.addEventListener('pageshow', function(event) {
+      // If page is loaded from cache (common in iOS Safari)
+      if (event.persisted) {
+        console.log("Page restored from cache - reinitializing");
+        initializeApp();
+      }
+    });
+
+    // Handle visibility changes (when app goes to background on iOS)
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        console.log("Page became visible again - checking audio context");
+        resumeAudioContext();
+      }
+    });
   </script>
 </body>
 </html>

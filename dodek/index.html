@@ -175,6 +175,7 @@
 
        
         const lettersToExclude = ["ก", "ง", "ม","ร","น","ล","ส"];
+        //const lettersToExclude = ["ก"];
         const flashcards = flashcards_.filter(card => !lettersToExclude.includes(card.Letter));
   
         // fetch('thai_characters.json')
@@ -213,10 +214,10 @@
         function showFlashcard() {
             const totalOriginalCards = 44; // Total number of Thai consonants
             const percentRemaining = ((flashcards.length / totalOriginalCards) * 100).toFixed(1);
-            //const totalFreq = flashcards.reduce((sum, card) => sum + card.FREQ, 0);
- 
-            remaining = `Cards remaining: ${flashcards.length}/${totalOriginalCards}<br>(${percentRemaining}%)`;
-        
+            const totalFreq = 4626 // flashcards.reduce((sum, card) => sum + card.FREQ, 0);
+            const currFreq = ((flashcards.reduce((sum, card) => sum + card.FREQ, 0))/4626*100).toFixed(1);
+            remaining = `Cards remaining: ${flashcards.length}/${totalOriginalCards}<br>(${percentRemaining}%)<br>Freq: [${currFreq}%]`;
+         
             if (flashcards.length === 0) {
                     document.getElementById('question').innerText = "No more flashcards available. Refresh to start again.";
                     document.getElementById('answer').innerText = "";
