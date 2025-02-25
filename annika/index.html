@@ -273,12 +273,13 @@
 
   <div id="loadingOverlay" class="overlay">
     <div class="overlay-content">
-      <div class="spinner"></div>
-      <p>Loading audio files. Please wait...</p>
-      <div class="progress-bar">
+      <!-- Remove the spinner div -->
+      <p>Click to Start</p>
+      <!-- Remove or hide the progress bar -->
+      <div class="progress-bar" style="display: none;">
         <div id="progressBar" class="progress"></div>
       </div>
-      <p id="progressText">0 / 62 files loaded</p>
+      <p id="progressText" style="display: none;">0 / 62 files loaded</p>
     </div>
   </div>
 
@@ -675,7 +676,7 @@
       let buttonConfig;
       
       if (!audioLoaded) {
-        buttonConfig = { id: 'startBtn', text: 'Loading...', handler: null };
+        buttonConfig = { id: 'startBtn', text: '...', handler: null };
       } else if (running) {
         if (!countingDown || seconds > 0) {
           buttonConfig = { id: 'pauseBtn', text: 'Pause', handler: pauseTimer };
@@ -734,7 +735,7 @@
 
     // Initialize app - called once when page loads
     function initializeApp() {
-      console.log("Initializing app, version 26_02_0016");
+      console.log("Initializing app, version 26_02_0024");
       
 
       // Set up event handlers
@@ -746,19 +747,48 @@
         // For iOS, we'll wait for user interaction before initializing audio
         console.log("iOS detected - waiting for user interaction to initialize audio");
         
-        // Add a notice for iOS users that they need to tap to enable audio
+        // In the initializeApp function, update this section:
         const overlay = document.getElementById('loadingOverlay');
         const overlayContent = document.querySelector('.overlay-content');
         const progressText = document.getElementById('progressText');
-        
+        const progressBar = document.querySelector('.progress-bar');
+
         if (overlayContent && progressText) {
-          progressText.textContent = "Tap anywhere to enable audio (required on iOS)";
+          progressText.textContent = "Click to Start";
+          // Hide progress elements initially
+          document.querySelector('.progress-bar').style.display = 'none';
+          progressText.style.display = 'none';
         }
-        
-        // Try to initialize on overlay click
+
+        // Update the overlay click handler
         overlay.addEventListener('click', function() {
+          // Show the loading elements
+          progressBar.style.display = 'block';
+          progressText.style.display = 'block';
+          progressText.textContent = "Loading audio files...";
+          
+          // Add a spinner programmatically
+          const spinner = document.createElement('div');
+          spinner.className = 'spinner';
+          overlayContent.insertBefore(spinner, overlayContent.firstChild);
+          
+          // Initialize audio context and start loading
           initAudioContext();
         }, { once: true });
+        // // Add a notice for iOS users that they need to tap to enable audio
+        // const overlay = document.getElementById('loadingOverlay');
+        // const overlayContent = document.querySelector('.overlay-content');
+        // const progressText = document.getElementById('progressText');
+        
+        // if (overlayContent && progressText) {
+        //   progressText.textContent = "Tap anywhere to enable audio (required on iOS)";
+        // }
+        
+        // // Try to initialize on overlay click
+        // overlay.addEventListener('click', function() {
+        //   initAudioContext();
+        //}
+        //{ once: true });
       } else {
         // For non-iOS, we can initialize right away
         initAudioContext();
