@@ -274,7 +274,9 @@
   <div id="loadingOverlay" class="overlay">
     <div class="overlay-content">
       <!-- Remove the spinner div -->
-      <p>Click to load audiofiles</p>
+      <div id='message' class="message"><p>Click to load audiofiles</p></div>
+
+      
       <!-- Remove or hide the progress bar -->
       <div class="progress-bar" style="display: none;">
         <div id="progressBar" class="progress"></div>
@@ -737,7 +739,7 @@
 
     // Initialize app - called once when page loads
     function initializeApp() {
-      console.log("Initializing app, version 26_02_0046");
+      console.log("Initializing app, version 26_02_0051");
       
 
       
@@ -768,6 +770,7 @@
           console.log("iOS detected - userclick detected");
         
           // Show the loading elements
+          message.style.display = 'none';
           progressBar.style.display = 'block';
           progressText.style.display = 'block';
           progressText.textContent = "Loading audio files...";
