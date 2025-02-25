@@ -737,7 +737,7 @@
 
     // Initialize app - called once when page loads
     function initializeApp() {
-      console.log("Initializing app, version 26_02_0035");
+      console.log("Initializing app, version 26_02_0043");
       
       
       // Set up event handlers
@@ -769,7 +769,7 @@
           // Show the loading elements
           progressBar.style.display = 'block';
           progressText.style.display = 'block';
-          progressText.textContent = "Loading audio files...";
+          overlayContent.textContent = "Loading audio files...";
           
           // Add a spinner programmatically
           const spinner = document.createElement('div');
