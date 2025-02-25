@@ -734,14 +734,15 @@
 
     // Initialize app - called once when page loads
     function initializeApp() {
-      console.log("Initializing app, version 25022025_1648");
+      console.log("Initializing app, version 25022025_2351");
       
 
       // Set up event handlers
       setupEventHandlers();
       
       // Initialize the audio with iOS-specific considerations
-      if (isIOS) {
+      //if (isIOS) {
+      if (1==1) {
         // For iOS, we'll wait for user interaction before initializing audio
         console.log("iOS detected - waiting for user interaction to initialize audio");
         
