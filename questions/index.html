@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Question App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Logo in the top left -->
+    <div class="logo">
+      <img src="logo.png" alt="Logo" id="logo">
+    </div>
+
+    <!-- Dropdown menu in the top right -->
+    <div class="dropdown">
+      <select id="categorySelect" onchange="filterQuestions()">
+        <option value="All">All Categories</option>
+        <option value="General">General</option>
+        <option value="Superpower">Superpower</option>
+      </select>
+    </div>
+
+    <!-- Display Question -->
+    <div class="question-container">
+      <p id="questionText">WELCOME !</p>
+    </div>
+
+    <!-- Next Button -->
+    <button id="nextButton" onclick="nextQuestion()">Next</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
