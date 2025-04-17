@@ -42,6 +42,7 @@ body {
   padding: 5%; /* Use relative padding */
   height: auto; /* Adjust height to let content flow */
   width: 80%; /* Adjust width for mobile */
+  
   // max-width: 600px; /* Limit the width for larger screens */
   margin: auto; /* Center the flashcard */
   text-align: center;
