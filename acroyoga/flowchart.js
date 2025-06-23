@@ -5,12 +5,12 @@ const popup = document.getElementById("popup");
 
 const categoryColors = {
   static: "#e0f7fa",
-  transition: "#fff3e0",
-  washing_machine: "#fce4ec",
+  transition: "#d8e8f9",
+  washing_machine: "#fff1c6",
   default: "#eeeeee",
   pose: "#eeeeee",
   start: "#00ff00",
-  entry_exit: "#00dddd"
+  entry_exit: "#e5d8ef"
 };
 
 const categoryShapes = {
@@ -874,6 +874,10 @@ edges : [
   {
       "source": "acroyoga_pose_x_2",
       "target": "acroyoga_pose_y_33"
+    },
+    {
+      "source": "acroyoga_pose_x_2",
+      "target": "acroyoga_pose_y_27"
     },
     {
       "source": "acroyoga_pose_x_31",
