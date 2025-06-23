@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Acroyoga Flowchart</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    #chart {
+      width: 100vw;
+      height: 100vh;
+      background: #fff;
+    }
+
+   #controls {
+  position: absolute;
+  top: 10px;
+  right: 10px; /* instead of left */
+  z-index: 10;
+}
+
+    #controls button {
+      font-size: 18px;
+      margin-right: 5px;
+      padding: 5px 10px;
+    }
+
+    .tooltip {
+      position: absolute;
+      background: #333;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      pointer-events: none;
+      visibility: hidden;
+      z-index: 10;
+    }
+
+    #popup {
+      position: absolute;
+      background: #fff;
+      border: 1px solid #aaa;
+      padding: 10px;
+      box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+      z-index: 20;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div><h1>Acroyoga L-basing beginners/intermediates</h1></H1><b>Latest version / PDF / high quality file</b><a href="https://rene-smit.com/acroyoga-flowchart/" target="_blank">https://rene-smit.com/acroyoga-flowchart/</a></b></div>
+   <div id="controls" style="right: 10px; left: auto;">
+    <button id="zoom-in">+</button>
+    <button id="zoom-out">-</button>
+    <button id="home">home</button>
+  </div>
+  <svg id="chart" viewBox="0 0 1200 800">
+    <g id="viewGroup"></g>
+  </svg>
+  <div id="tooltip" class="tooltip"></div>
+  <div id="popup"></div>
+
+  <script src="flowchart.js"></script>
+
+  
+</body>
+</html>
