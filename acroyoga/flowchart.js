@@ -263,7 +263,7 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "inside side star <br> ",
+      "label": "inside side star",
       "category":"pose",
       "x": 1201,
       "y": 410
@@ -273,7 +273,7 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "inside side star <br> ",
+      "label": "inside side star",
       "category":"pose",
       "x": 1348,
       "y": 490
@@ -283,7 +283,7 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "reverse bird <br> ",
+      "label": "reverse bird",
       "category":"pose",
       "x": 1488,
       "y": 490
