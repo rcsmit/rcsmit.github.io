@@ -1305,7 +1305,6 @@ function drawFlowchart(nodes, links) {
       tooltip.style.visibility = "hidden";
     });
 
-
     g.addEventListener("click", (e) => {
         popup.innerHTML = `
         <h3>${node.label.replace(/#/g, ' ')}</h3>
