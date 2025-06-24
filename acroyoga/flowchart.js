@@ -1,101 +1,17 @@
-const svg = document.getElementById("chart");
-const viewGroup = document.getElementById("viewGroup");
-const tooltip = document.getElementById("tooltip");
-const popup = document.getElementById("popup");
-
-const categoryColors = {
-  static: "#e0f7fa",
-  transition: "#d8e8f9",
-  washing_machine: "#fff1c6",
-  default: "#eeeeee",
-  pose: "#eeeeee",
-  start: "#00ff00",
-  entry_exit: "#e5d8ef"
-};
-
-const categoryShapes = {
-  static: "rect",
-  transition: "circle",
-  washing_machine: "diamond",
-  default: "rect",
-  pose: "rect",
-  start: "circle",
-  entry_exit: "circle",
-};
-
-document.getElementById("zoom-in").onclick = () => zoom(0.9);
-document.getElementById("zoom-out").onclick = () => zoom(1.1);
-document.getElementById("home").onclick = () => {
-  viewBox = { x: 0, y: 0, w: 1200, h: 800 };
-  updateViewBox();
-};
-
-let viewBox = { x: 0, y: 0, w: 1200, h: 800 };
-function updateViewBox() {
-  svg.setAttribute("viewBox", `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
-}
-function zoom(factor) {
-  viewBox.w *= factor;
-  viewBox.h *= factor;
-  updateViewBox();
-}
-updateViewBox();
-
-let isDragging = false;
-let start = null;
-svg.addEventListener("mousedown", (e) => {
-  isDragging = true;
-  start = { x: e.clientX, y: e.clientY };
-});
-svg.addEventListener("mousemove", (e) => {
-  if (!isDragging) return;
-  const dx = (e.clientX - start.x) * viewBox.w / svg.clientWidth;
-  const dy = (e.clientY - start.y) * viewBox.h / svg.clientHeight;
-  viewBox.x -= dx;
-  viewBox.y -= dy;
-  updateViewBox();
-  start = { x: e.clientX, y: e.clientY };
-});
-svg.addEventListener("mouseup", () => isDragging = false);
 
 const data = {
   nodes: [
-  //  {
-  //     "id": "PljVGr8iR2YL2gw-_0Ea-7" ,
-  //     "info":"loremp ipsum",
-  //     "video":"dQw4w9WgXcQ",
-  //     "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-  //     "label": "",
-  //     "x": 1150,
-  //     "y": 1110
-  //   },
-  //   {
-  //     "id": "acroyoga_pose_108" ,
-  //     "info":"loremp ipsum",
-  //     "video":"dQw4w9WgXcQ",
-  //     "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-  //     "label": "",
-  //     "x": 34,
-  //     "y": 1058
-  //   },
-  //   {
-  //     "id": "acroyoga_pose_104" ,
-  //     "info":"loremp ipsum",
-  //     "video":"dQw4w9WgXcQ",
-  //     "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-  //     "label": "",
-  //     "x": 189,
-  //     "y": 1080
-  //   },
-  //   {
-  //     "id": "acroyoga_pose_101" ,
-  //     "info":"loremp ipsum",
-  //     "video":"dQw4w9WgXcQ",
-  //     "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-  //     "label": "<b><font style=\"font-size: 14px;\">LEGENDA</font></b>",
-  //     "x": 1496,
-  //     "y": 780
-  //   },
+  
+    {
+      "id": "acroyoga_pose_101" ,
+      "info":"loremp ipsum",
+      "video":"dQw4w9WgXcQ",
+      "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
+      "label": "LEGENDA",
+      "category":"no_box",
+      "x": 1510,
+      "y": 780
+    },
     {
       "id": "acroyoga_pose_x_1" ,
       "info":"loremp ipsum",
@@ -171,7 +87,7 @@ const data = {
       "info":"loremp ipsum",
       "video":"qTaM5V8o03M",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "reverse straddle throne",
+      "label": "reverse#straddle throne",
       "category":"pose",
       "x": 890,
       "y": 715
@@ -211,7 +127,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_31" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"4WMAZ67brUc",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "high flying whale",
       "category":"pose",
@@ -221,9 +137,9 @@ const data = {
     {
       "id": "acroyoga_pose_x_33" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"3Y_Ojvvgn3g",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "candle stick / shoulder stand",
+      "label": "candle stick/#shoulder stand",
       "category":"pose",
       "x": 345,
       "y": 370
@@ -231,7 +147,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_35" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"wPz777LU01Y",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "free shoulder stand",
       "category":"pose",
@@ -241,7 +157,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_40" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"d_lto3XbRgY",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "side star",
       "category":"pose",
@@ -251,7 +167,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_42" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"PZ0oq-SHHnE",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "straddle bat",
       "category":"pose",
@@ -261,7 +177,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_44" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"_erVFJvQi8g",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "inside side star",
       "category":"pose",
@@ -271,7 +187,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_46" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"_erVFJvQi8g",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "inside side star",
       "category":"pose",
@@ -281,7 +197,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_48" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"nZk8rZ1cG8c",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "reverse bird",
       "category":"pose",
@@ -291,7 +207,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_51" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"WCcijC9PyCI",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "floating paschi",
       "category":"pose",
@@ -301,7 +217,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_55" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"PLyfrobh9f4",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "backbird",
       "category":"pose",
@@ -311,7 +227,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_57" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"Vv7wtCZcoaI",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "back leaf",
       "category":"pose",
@@ -321,7 +237,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_59" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"NnzCvcTfTJg",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "boat",
       "category":"pose",
@@ -331,7 +247,7 @@ const data = {
     {
       "id": "acroyoga_pose_x_63" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"AaiXojb-LSA",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "star",
       "category":"pose",
@@ -343,7 +259,7 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "handstand in/out (head side) ",
+      "label": "handstand in/out#(head side)_",
       "category":"entry_exit",
       "x": 1152,
       "y": 870
@@ -351,7 +267,7 @@ const data = {
     {
       "id": "acroyoga_pose_y_8" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"W9oA6iLEeMs",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "four step",
       "category":"washing_machine",
@@ -363,18 +279,18 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "cartwheel in",
-      "category":"pose",
+      "label": "cartwheel in_",
+      "category":"entry_exit",
       "x": 1201,
       "y": 290
     },
     {
       "id": "acroyoga_pose_y_17" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"row_0nk_X4w",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "low barrel rol",
-      "category":"pose",
+      "label": "low barrel roll",
+      "category":"transition",
       "x": 809,
       "y": 480
     },
@@ -383,7 +299,7 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "helicopter",
+      "label": "helicopter_",
       "category":"transition",
       "x": 720,
       "y": 370
@@ -391,7 +307,7 @@ const data = {
     {
       "id": "acroyoga_pose_y_27" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"Xk8uuOm2uwU",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "catherinas wheel",
       "category":"washing_machine",
@@ -401,33 +317,24 @@ const data = {
     {
       "id": "acroyoga_pose_y_30" ,
       "info":"loremp ipsum",
-      "video":"aO9-OqnAeDk",
+      "video":"u5eglkm1jv0",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "monkey frog",
-      "category":"pose",
+      "category":"washing_machine",
       "x": 980,
       "y": 850
     },
     {
       "id": "acroyoga_pose_y_33" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"T-jwcZI1WbI",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "corkscrew",
       "category":"transition",
       "x": 719,
       "y": 290
     },
-    {
-      "id": "acroyoga_pose_y_37" ,
-      "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
-      "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "ACROYOGA L-BASING",
-      "category":"pose",
-      "x": 367,
-      "y": 55
-    },
+ 
     {
       "id": "acroyoga_pose_y_39" ,
       "info":"loremp ipsum",
@@ -461,7 +368,7 @@ const data = {
     {
       "id": "acroyoga_pose_3" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"phsbUzEv_us",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "bed / couch",
       "category":"pose",
@@ -471,9 +378,9 @@ const data = {
     {
       "id": "acroyoga_pose_8" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"StZQFy3EykI",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "reverse foot to hand",
+      "label": "reverse#foot to hand",
       "category":"pose",
       "x": 265,
       "y": 950
@@ -481,7 +388,7 @@ const data = {
     {
       "id": "acroyoga_pose_10" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"8wimvXZDvSA",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "reverse star",
       "category":"pose",
@@ -491,7 +398,7 @@ const data = {
     {
       "id": "acroyoga_pose_11" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"qLP9E_mpmFs",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "bird on hand",
       "category":"pose",
@@ -501,7 +408,7 @@ const data = {
     {
       "id": "acroyoga_pose_17" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"NIlGbKM06R8",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "reverse shoulderstand",
       "category":"pose",
@@ -511,9 +418,9 @@ const data = {
     {
       "id": "acroyoga_pose_19" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"ZoUtn_Z_ULI",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "thinker",
+      "label": "thinker#secretary",
       "category":"pose",
       "x": 700,
       "y": 850
@@ -521,17 +428,17 @@ const data = {
     {
       "id": "acroyoga_pose_28" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"OWtMYyY6KwA",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "around the world",
-      "category":"pose",
+      "category":"transition",
       "x": 721,
       "y": 720
     },
     {
       "id": "acroyoga_pose_36" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"docOE4QT0ec",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "biceps stand",
       "category":"pose",
@@ -543,7 +450,7 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "crocodile",
+      "label": "crocodile_",
       "category":"pose",
       "x": 552,
       "y": 170
@@ -551,7 +458,7 @@ const data = {
     {
       "id": "acroyoga_pose_38" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"c-eHZmKy3ro",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "foot to hand",
       "category":"pose",
@@ -561,17 +468,17 @@ const data = {
     {
       "id": "acroyoga_pose_45" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"xdsnsqIZaCQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "bow",
       "category":"pose",
-      "x": 390,
+      "x": 350,
       "y": 640
     },
     {
       "id": "acroyoga_pose_49" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"c-eHZmKy3ro",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "foot to hand",
       "category":"pose",
@@ -581,7 +488,7 @@ const data = {
     {
       "id": "acroyoga_pose_50" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"nZk8rZ1cG8c",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "reverse bird",
       "category":"pose",
@@ -593,18 +500,18 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "handstand in/out (legs side)",
-      "category":"pose",
+      "label": "handstand in/out#(legs side)_",
+      "category":"entry_exit",
       "x": 340,
       "y": 840
     },
     {
       "id": "acroyoga_pose_61" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"NZR0OfbYKA",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "trapdoor",
-      "category":"pose",
+      "category":"transition",
       "x": 1252,
       "y": 770
     },
@@ -613,7 +520,7 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "reverse foot to shin",
+      "label": "reverse#foot to shin_",
       "category":"pose",
       "x": 527,
       "y": 1090
@@ -621,7 +528,7 @@ const data = {
     {
       "id": "acroyoga_pose_66" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"4UAfHgjbvxY",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "tuck sit",
       "category":"pose",
@@ -633,7 +540,7 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "revese shin to foot",
+      "label": "revese shin#to foot_",
       "category":"pose",
       "x": 396,
       "y": 1090
@@ -641,7 +548,7 @@ const data = {
     {
       "id": "acroyoga_pose_68" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"8wimvXZDvSA",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "reverse star",
       "category":"pose",
@@ -651,9 +558,9 @@ const data = {
     {
       "id": "acroyoga_pose_69" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"kC4daUVQEoY",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "reverse back plank",
+      "label": "reverse#back plank",
       "category":"pose",
       "x": 530,
       "y": 950
@@ -663,58 +570,59 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "(reverse) foot to foot ",
+      "label": "(reverse)#foot to foot_",
       "category":"pose",
-      "x": 659,
+      "x": 700,
       "y": 1090
     },
     {
       "id": "acroyoga_pose_73" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"diA5w1-L2L8",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "(baby) (reverse)&nbsp; hand to hand ",
+      "label": "(baby) (reverse)#hand to hand ",
       "category":"pose",
-      "x": 791,
+      "x": 900,
       "y": 1090
     },
     {
       "id": "acroyoga_pose_82" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"93v90kJcGlE",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": " waterfall to chair&nbsp;  or  rev. feet to hand ",
+      "label": "rev. feet to hand ",
       "category":"pose",
       "x": 200,
       "y": 260
     },
+
     {
       "id": "acroyoga_pose_85" ,
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "Rene Smit @rcsmit  CC BY-NC 4.0 ",
-      "category":"pose",
+      "label": "Rene Smit @rcsmit#CC BY-NC 4.0 ",
+      "category":"no_box",
       "x": 41,
-      "y": 1105
+      "y": 1090
     },
     {
       "id": "acroyoga_pose_87" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"iHtotyrqt1s",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "koala queen",
-      "category":"pose",
+      "category":"washing_machine",
       "x": 1060,
       "y": 190
     },
     {
       "id": "acroyoga_pose_88" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"6vi2AYwAmqw",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "spider roll",
-      "category":"pose",
+      "category":"washing_machine",
       "x": 1040,
       "y": 290
     },
@@ -738,40 +646,31 @@ const data = {
       "x": 1510,
       "y": 997
     },
-    {
-      "id": "acroyoga_pose_97" ,
-      "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
-      "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "Extra poses:",
-      "category":"pose",
-      "x": 204,
-      "y": 1105
-    },
+   
     {
       "id": "acroyoga_pose_99" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"a8fCNt2Qi2E",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "crunch roll",
-      "category":"pose",
+      "category":"washing_machine",
       "x": 1111,
       "y": 770
     },
     {
       "id": "acroyoga_pose_106" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"eFRgbbsVxNk",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "rotisserie",
-      "category":"pose",
+      "category":"washing_machine",
       "x": 1356,
       "y": 380
     },
     {
       "id": "acroyoga_pose_110" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"qLP9E_mpmFs",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "bird on hands",
       "category":"pose",
@@ -781,10 +680,10 @@ const data = {
     {
       "id": "acroyoga_pose_z_2" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"p1oeyEVgRfM",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "ballerina",
-      "category":"pose",
+      "category":"washing_machine",
       "x": 180,
       "y": 611
     },
@@ -794,27 +693,27 @@ const data = {
       "video":"jbtQWzQ3v7g",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "big le moi",
-      "category":"pose",
+      "category":"washing_machine",
       "x": 174,
       "y": 691
     },
     {
       "id": "acroyoga_pose_117" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"yyOFOv-whjs",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "mermaid",
-      "category":"pose",
+      "category":"transition",
       "x": 791,
       "y": 950
     },
     {
       "id": "acroyoga_pose_119" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"yO7kJogH8cA",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "high barrel roll",
-      "category":"pose",
+      "category":"washing_machine",
       "x": 1201,
       "y": 190
     },
@@ -823,35 +722,35 @@ const data = {
       "info":"loremp ipsum",
       "video":"dQw4w9WgXcQ",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "jump in",
-      "category":"pose",
+      "label": "jump in_",
+      "category":"entry_exit",
       "x": 345,
       "y": 160
     },
     {
       "id": "acroyoga_pose_121" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"row_0nk_X4w",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "barrel roll",
-      "category":"pose",
+      "category":"washing_machine",
       "x": 1348,
       "y": 570
     },
     {
       "id": "acroyoga_pose_123" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"kyks9JyPPv8",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "buddha roll",
-      "category":"pose",
+      "category":"transition",
       "x": 1040,
       "y": 610
     },
     {
       "id": "PljVGr8iR2YL2gw-_0Ea-3" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"iy_eJDDMXYI",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "table top",
       "category":"pose",
@@ -861,10 +760,10 @@ const data = {
     {
       "id": "acroyoga_pose_z_1" ,
       "info":"loremp ipsum",
-      "video":"dQw4w9WgXcQ",
+      "video":"YKj4G0J-6Xs",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "prasarita twist",
-      "category":"pose",
+      "category":"transition",
       "x": 810,
       "y": 549
     },
@@ -1011,9 +910,17 @@ edges : [
       "source": "acroyoga_pose_x_44",
       "target": "acroyoga_pose_x_42"
     },
+     {
+      "source": "acroyoga_pose_x_2",
+      "target": "acroyoga_pose_45"
+    },
     {
       "source": "acroyoga_pose_x_42",
       "target": "acroyoga_pose_x_46"
+    },
+     {
+      "source": "acroyoga_pose_x_40",
+      "target": "acroyoga_pose_z_2"
     },
     {
       "source": "acroyoga_pose_x_42",
@@ -1177,8 +1084,104 @@ edges : [
     }]
 };
 
+
+  // Add this function after your data definition
+  function calculateViewBox(nodes) {
+    const padding = 100; // Add some padding around the content
+    
+    const xCoords = nodes.map(n => n.x);
+    const yCoords = nodes.map(n => n.y);
+    
+    const minX = Math.min(...xCoords) - padding;
+    const maxX = Math.max(...xCoords) + padding;
+    const minY = Math.min(...yCoords) - padding;
+    const maxY = Math.max(...yCoords) + padding;
+    
+    return {
+      x: minX,
+      y: minY,
+      w: maxX - minX,
+      h: maxY - minY
+    };
+  }
+
+  // Replace your viewBox initialization with:
+  let viewBox = calculateViewBox(data.nodes);
+
+
+const svg = document.getElementById("chart");
+const viewGroup = document.getElementById("viewGroup");
+const tooltip = document.getElementById("tooltip");
+const popup = document.getElementById("popup");
+
+const categoryColors = {
+  static: "#e0f7fa",
+  transition: "#d8e8f9",
+  washing_machine: "#fff1c6",
+  default: "#eeeeee",
+  pose: "#eeeeee",
+  start: "#ffff00",
+  entry_exit: "#e5d8ef",
+  no_box:"#ffffff"
+};
+
+const categoryShapes = {
+  static: "rect",
+  transition: "hexagon",
+  washing_machine: "parallelogram",
+  default: "rect",
+  pose: "rect",
+  start: "circle",
+  entry_exit: "ellipse",
+  no_box:"none"
+};
+
+document.getElementById("zoom-in").onclick = () => zoom(0.9);
+document.getElementById("zoom-out").onclick = () => zoom(1.1);
+// document.getElementById("home").onclick = () => {
+//   viewBox = { x: 0, y: 0, w: 1200, h: 800 };
+//   updateViewBox();
+// };
+
+ // Update the home button to use the calculated bounds:
+  document.getElementById("home").onclick = () => {
+    viewBox = calculateViewBox(data.nodes);
+    updateViewBox();
+  };
+// let viewBox = { x: 0, y: 0, w: 1200, h: 800 };
+function updateViewBox() {
+  svg.setAttribute("viewBox", `${viewBox.x} ${viewBox.y} ${viewBox.w} ${viewBox.h}`);
+}
+function zoom(factor) {
+  viewBox.w *= factor;
+  viewBox.h *= factor;
+  updateViewBox();
+}
+updateViewBox();
+
+let isDragging = false;
+let start = null;
+svg.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  start = { x: e.clientX, y: e.clientY };
+});
+svg.addEventListener("mousemove", (e) => {
+  if (!isDragging) return;
+  const dx = (e.clientX - start.x) * viewBox.w / svg.clientWidth;
+  const dy = (e.clientY - start.y) * viewBox.h / svg.clientHeight;
+  viewBox.x -= dx;
+  viewBox.y -= dy;
+  updateViewBox();
+  start = { x: e.clientX, y: e.clientY };
+});
+svg.addEventListener("mouseup", () => isDragging = false);
+
+
 // =======================
 
+
+
+ 
 drawFlowchart(data.nodes, data.edges);
 
 function drawFlowchart(nodes, links) {
@@ -1210,45 +1213,80 @@ function drawFlowchart(nodes, links) {
     g.setAttribute("transform", `translate(${node.x}, ${node.y})`);
     g.classList.add("node");
 
-    // const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    // rect.setAttribute("x", -50);
-    // rect.setAttribute("y", -15);
-    // rect.setAttribute("width", 100);
-    // rect.setAttribute("height", 30);
-    // const fillColor = categoryColors[node.category] || categoryColors.default;
-    // rect.setAttribute("fill", fillColor);
-
-    // rect.setAttribute("stroke", "#333");
-    // g.appendChild(rect);
+   
     const shapeType = categoryShapes[node.category] || categoryShapes.default;
     const fillColor = categoryColors[node.category] || categoryColors.default;
 
-    let shape;
+    SVG_NS = "http://www.w3.org/2000/svg";
 
-    if (shapeType === "circle") {
+    let shape;
+    if (shapeType === "ellipse") {
+      shape = document.createElementNS(SVG_NS, "ellipse");
+      shape.setAttribute("cx", 0);
+      shape.setAttribute("cy", 0);
+      shape.setAttribute("rx", 50);
+      shape.setAttribute("ry", 20);
+
+    } else if (shapeType === "rect") {
+      shape = document.createElementNS(SVG_NS, "rect");
+      shape.setAttribute("x", -50);
+      shape.setAttribute("y", -20);
+      shape.setAttribute("width", 100);
+      shape.setAttribute("height", 40);
+
+    } else if (shapeType === "hexagon") {
+      shape = document.createElementNS(SVG_NS, "polygon");
+      // shape.setAttribute("points", "-30,0 -15,-25 15,-25 30,0 15,25 -15,25");
+      shape.setAttribute("points", "-60,0 -40,-25 40,-25 60,0 40,25 -40,25");
+    } else if (shapeType === "parallelogram") {
+      shape = document.createElementNS(SVG_NS, "polygon");
+      //shape.setAttribute("points", "10,-20 0,-20 50,20 0,20");
+      shape.setAttribute("points", "-40,-20 60,-20 40,20 -60,20");
+    }
+      else if (shapeType === "circle") {
       shape = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       shape.setAttribute("cx", 0);
       shape.setAttribute("cy", 0);
-      shape.setAttribute("r", 20);
+      shape.setAttribute("r", 30);
     } else if (shapeType === "diamond") {
       shape = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
       shape.setAttribute("points", "0,-20 20,0 0,20 -20,0");
+     } else if (shapeType === "no_box") {
+      // shape = document.createElementNS("http://www.w3.org/2000/svg", "none");
+      // shape.setAttribute("points", "0,-20 20,0 0,20 -20,0");
+      shape.setAttribute("stroke", "#fff");
     } else {
       shape = document.createElementNS("http://www.w3.org/2000/svg", "rect");
       shape.setAttribute("x", -50);
       shape.setAttribute("y", -15);
       shape.setAttribute("width", 100);
       shape.setAttribute("height", 30);
+      //shape.setAttribute("stroke", "#333");
     }
 
     shape.setAttribute("fill", fillColor);
-    shape.setAttribute("stroke", "#333");
+  
     g.appendChild(shape);
 
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("text-anchor", "middle");
-    text.setAttribute("dy", "5");
-    text.textContent = node.label;
+    // const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+    // text.setAttribute("text-anchor", "middle");
+    // text.setAttribute("dy", "5");
+    // text.textContent = node.label;
+
+
+      const parts = node.label.split("#");
+  const text = document.createElementNS(SVG_NS, "text");
+  text.setAttribute("text-anchor", "middle");
+  text.setAttribute("dy", `${-7 * (parts.length - 1)}`); // center vertically
+  text.setAttribute("font-family", "Arial, sans-serif");
+  parts.forEach((line, i) => {
+    const tspan = document.createElementNS(SVG_NS, "tspan");
+    tspan.setAttribute("x", 0);
+    tspan.setAttribute("dy", i === 0 ? 0 : "15");
+    tspan.textContent = line;
+    text.appendChild(tspan);
+  });
+
     g.appendChild(text);
 
     g.addEventListener("mouseover", (e) => {
@@ -1270,8 +1308,8 @@ function drawFlowchart(nodes, links) {
 
     g.addEventListener("click", (e) => {
         popup.innerHTML = `
-        <h3>${node.label}</h3>
-        ${node.id}<br>
+        <h3>${node.label.replace(/#/g, ' ')}</h3>
+       
         <iframe width="280" height="157" src="https://www.youtube.com/embed/${node.video}?si=EJNPiLa76TiQBHXK" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
       `;
         
@@ -1295,7 +1333,7 @@ function drawFlowchart(nodes, links) {
         if (top + popupHeight > window.innerHeight) {
           top = e.pageY - popupHeight - margin;
         }
-
+        popup.style.fontFamily = "Arial, sans-serif";
         // Set position
         popup.style.left = `${left}px`;
         popup.style.top = `${top}px`;
@@ -1325,3 +1363,216 @@ svg.addEventListener("click", (e) => {
   }
 });
 
+// SEARCH
+
+// Add this CSS for search highlighting (add to your existing styles)
+const searchStyles = `
+  .search-container {
+    position: absolute;
+    top: 60px;
+    right: 10px;
+    z-index: 1000;
+    background: white;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    font-family:Arial, sans-serif;
+  }
+  
+  .search-input {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    width: 200px;
+    font-size: 14px;
+    font-family:Arial, sans-serif;
+  }
+  
+  .search-results {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    border-top: none;
+    background: white;
+    display: none;
+    font-family:Arial, sans-serif;
+  }
+  
+  .search-result-item {
+    padding: 8px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    font-family:Arial, sans-serif;
+  }
+  
+  .search-result-item:hover {
+    background-color: #f0f0f0;
+  }
+  
+  .highlighted-node {
+    stroke: #ff6b6b !important;
+    stroke-width: 4px !important;
+    animation: pulse 1.5s ease-in-out 3;
+  }
+  
+  @keyframes pulse {
+    0%, 100% { stroke-width: 4px; }
+    50% { stroke-width: 6px; }
+  }
+`;
+
+// Add styles to document
+const styleSheet = document.createElement('style');
+styleSheet.textContent = searchStyles;
+document.head.appendChild(styleSheet);
+
+// Create search container HTML
+const searchHTML = `
+  <div class="search-container">
+    <input type="text" class="search-input" placeholder="Search poses..." id="searchInput">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+`;
+
+// Add search container to the page (assuming you have a container div)
+document.body.insertAdjacentHTML('afterbegin', searchHTML);
+
+// Search functionality
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+let currentHighlightedNode = null;
+
+function searchPoses(query) {
+  if (!query.trim()) {
+    searchResults.style.display = 'none';
+    return [];
+  }
+  
+  const results = data.nodes.filter(node => 
+    node.label.toLowerCase().includes(query.toLowerCase()) ||
+    node.id.toLowerCase().includes(query.toLowerCase())
+  );
+  
+  return results;
+}
+
+function displaySearchResults(results) {
+  if (results.length === 0) {
+    searchResults.innerHTML = '<div class="search-result-item">No results found</div>';
+  } else {
+    searchResults.innerHTML = results.map(node => 
+      `<div class="search-result-item" data-node-id="${node.id}">
+        ${node.label} <small>(${node.category})</small>
+      </div>`
+    ).join('');
+  }
+  
+  searchResults.style.display = 'block';
+}
+
+function highlightNode(nodeId) {
+  // Remove previous highlight
+  if (currentHighlightedNode) {
+    currentHighlightedNode.classList.remove('highlighted-node');
+  }
+  
+  // Find and highlight the new node
+  const nodeElements = document.querySelectorAll('.node');
+  nodeElements.forEach(nodeElement => {
+    const nodeData = data.nodes.find(n => 
+      nodeElement.getAttribute('transform').includes(`translate(${n.x}, ${n.y})`)
+    );
+    
+    if (nodeData && nodeData.id === nodeId) {
+      const shape = nodeElement.querySelector('rect, circle, ellipse, polygon');
+      if (shape) {
+        shape.classList.add('highlighted-node');
+        currentHighlightedNode = shape;
+        
+        // Pan to the node
+        panToNode(nodeData);
+        
+        // Show popup after a short delay
+        setTimeout(() => showNodePopup(nodeData), 500);
+      }
+    }
+  });
+}
+
+function panToNode(node) {
+  // Center the view on the selected node
+  viewBox.x = node.x - viewBox.w / 2;
+  viewBox.y = node.y - viewBox.h / 2;
+  updateViewBox();
+}
+
+function showNodePopup(node) {
+  // Create popup content
+  popup.innerHTML = `
+   
+    <h3>${node.label.replace(/#/g, ' ')}</h3>
+   
+    <iframe width="280" height="157" src="https://www.youtube.com/embed/${node.video}?si=EJNPiLa76TiQBHXK" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  `;
+  
+  // Position popup in center of screen
+  popup.style.display = "block";
+  // popup.style.left = "50%";
+  // popup.style.top = "50%";
+  // popup.style.transform = "translate(-50%, -50%)";
+  popup.style.left = "20%";
+  popup.style.top = "50%";
+  popup.style.transform = "translate(-50%, -50%)";
+  popup.style.position = "fixed";
+  popup.style.visibility = "visible";
+  popup.style.fontFamily = "Arial, sans-serif";
+}
+
+// Event listeners
+searchInput.addEventListener('input', (e) => {
+  const query = e.target.value;
+  const results = searchPoses(query);
+  displaySearchResults(results);
+});
+
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const results = searchPoses(e.target.value);
+    if (results.length > 0) {
+      highlightNode(results[0].id);
+      searchResults.style.display = 'none';
+    }
+  }
+  
+  if (e.key === 'Escape') {
+    searchResults.style.display = 'none';
+    searchInput.blur();
+  }
+});
+
+searchResults.addEventListener('click', (e) => {
+  const resultItem = e.target.closest('.search-result-item');
+  if (resultItem && resultItem.dataset.nodeId) {
+    highlightNode(resultItem.dataset.nodeId);
+    searchResults.style.display = 'none';
+    searchInput.value = '';
+  }
+});
+
+// Hide search results when clicking outside
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.search-container')) {
+    searchResults.style.display = 'none';
+  }
+});
+
+// Clear highlight when clicking on SVG background
+svg.addEventListener("click", (e) => {
+  if (!e.target.closest("g")) {
+    popup.style.display = "none";
+    if (currentHighlightedNode) {
+      currentHighlightedNode.classList.remove('highlighted-node');
+      currentHighlightedNode = null;
+    }
+  }
+});
