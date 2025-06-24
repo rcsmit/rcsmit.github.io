@@ -309,9 +309,9 @@ const data = {
       "info":"loremp ipsum",
       "video":"Xk8uuOm2uwU",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
-      "label": "catherinas wheel",
+      "label": "catherinas#wheel",
       "category":"washing_machine",
-      "x": 433,
+      "x": 413,
       "y": 460
     },
     {
@@ -472,7 +472,7 @@ const data = {
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "bow",
       "category":"pose",
-      "x": 350,
+      "x": 290,
       "y": 640
     },
     {
@@ -985,6 +985,10 @@ edges : [
     {
       "source": "acroyoga_pose_y_5",
       "target": "acroyoga_pose_x_55"
+    },
+      {
+      "source": "acroyoga_pose_x_9",
+      "target": "acroyoga_pose_x_2"
     },
     {
       "source": "acroyoga_pose_y_17",
