@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Select Mode</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .half {
+      position: absolute;
+      width: 50%;
+      height: 100%;
+      top: 0;
+      cursor: pointer;
+    }
+
+    .left {
+        left: 0;
+        width: 50%;
+        height: 100%;
+        position: absolute;
+        background: url('images/background_light.jpg') no-repeat left center;
+        background-size: 100% 100%; /* zoom in op linkerhelft */
+        background-position: left center;
+        transform: scaleX(-1); /* spiegel horizontaal */
+        }
+
+    .right {
+      right: 0;
+      background: url('images/background_dark.jpg') no-repeat right center;
+      background-size: 100% 100%;
+    }
+
+     .center-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 2;
+      color: white;
+      text-shadow: 1px 1px 5px black;
+    }
+
+    .center-content img {
+      width: 150px;
+      height: auto;
+      margin-bottom: 1rem;
+    }
+
+    .center-content h1 {
+      font-size: 2rem;
+      margin: 0;
+    }
+    .button-container {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1rem;
+      z-index: 2;
+    }
+
+    .mode-btn {
+      padding: 1rem 2rem;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .sunsets-btn {
+      background: #ffd700;
+    }
+
+    .afterdark-btn {
+      background: #444;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="half left" onclick="goTo('light')"></div>
+  <div class="half right" onclick="goTo('dark')"></div>
+    
+  <div class="center-content">
+    <img src="images/logo.jpg" alt="Disar Logo">
+    <h1>Welcome to Disar</h1>
+  </div>
+  <div class="button-container">
+    <button class="mode-btn sunsets-btn" onclick="goTo('light')">SUNSETS</button>
+    <button class="mode-btn afterdark-btn" onclick="goTo('dark')">AFTER DARK</button>
+  </div>
+
+  <script>
+    function goTo(mode) {
+      localStorage.setItem('theme', mode);
+      window.location.href = 'index2.html';
+    }
+  </script>
+</body>
+</html>

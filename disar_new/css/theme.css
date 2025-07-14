@@ -1,0 +1,41 @@
+/* Algemene stijl */
+body {
+  background: url('../images/background_light.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: black;
+  transition: background 0.3s, color 0.3s;
+}
+
+body.dark-mode {
+  background: url('../images/background_dark.jpg') no-repeat center center fixed;
+  background-size: cover;
+  color: white;
+}
+
+/* Zichtbaarheid van content */
+/* Toon SUNSETS standaard */
+.light-text {
+  display: block;
+}
+.dark-text {
+  display: none;
+}
+
+/* In dark-mode tonen we AFTER DARK */
+body.dark-mode .light-text {
+  display: none;
+}
+body.dark-mode .dark-text {
+  display: block;
+}
+
+/* Eventueel: styling voor de knop */
+#theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.5rem 1rem;
+  background: orange;
+  border: 2px solid currentColor;
+  cursor: pointer;
+}

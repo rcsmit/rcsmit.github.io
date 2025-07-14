@@ -1,0 +1,102 @@
+    body {
+      margin: 0;
+      padding: 0;
+      
+      font-family: 'Roboto', sans-serif;
+      line-height: 2;
+      font-size: 1.5em;
+    }
+    header, footer {
+      text-align: center;
+      padding: 2rem 0;
+      background: rgba(0, 0, 0, 0.4);
+      height: 115px;
+    }
+    nav {
+      text-align: center;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 1rem 0;
+    }
+    .quote {
+      color: #fff;
+      font-style:italic;
+      font-family: 'Dosis', sans-serif;
+      font-weight: bold;
+      margin: 0 15px;
+      padding: 0.5rem 1rem;
+    
+      font-size: 5rem;
+    }
+    .tagline {
+      min-height: 1024px; /* Pas deze waarde aan de gewenste hoogte */
+      color: #fff;
+      font-style:italic;
+      font-family: 'Dosis', sans-serif;
+      //font-weight: bold;
+      margin: 0 15px;
+      padding: 0.5rem 1rem;
+      font-size: 3rem;
+    }
+    nav a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      margin: 0 15px;
+      padding: 0.5rem 1rem;
+      background: #000000;
+      font-size: 1.5rem;
+    }
+    .logo {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #fff;
+    }
+    .social-icons {
+      margin-top: 1rem;
+    }
+    .social-icons a {
+      color: #fff;
+      margin: 0 10px;
+      font-size: 2rem;
+    }
+    .container {
+      background: rgba(0, 0, 0, 0.01);
+      padding: 2rem;
+      border-radius: 10px;
+      margin-top: 2rem;
+    }
+    .photos img {
+      width: 100%;
+      height: auto;
+      margin-bottom: 1rem;
+    }
+    iframe {
+      width: 100%;
+      height: 400px;
+      border: none;
+    }
+    .instagram-feed {
+      margin-top: 2rem;
+    }
+    .dosis-<uniquifier> {
+        font-family: "Dosis", sans-serif;
+        font-optical-sizing: auto;
+        font-weight: <weight>;
+        font-style: normal;
+        }
+  
+  @media screen and (max-width: 768px) {
+      body {
+        font-size: 18px;
+      }
+      .logo {
+        font-size: 1.5rem;
+      }
+      nav a {
+        display: block;
+        margin: 10px 0;
+      }
+      .social-icons a {
+        font-size: 1.8rem;
+      }
+    }
