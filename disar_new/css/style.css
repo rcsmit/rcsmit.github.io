@@ -29,7 +29,7 @@
     }
     .tagline {
       min-height: 1024px; /* Pas deze waarde aan de gewenste hoogte */
-      color: #fff;
+      
       font-style:italic;
       font-family: 'Dosis', sans-serif;
       //font-weight: bold;
