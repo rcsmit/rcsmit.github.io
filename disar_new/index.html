@@ -1,8 +1,12 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Select Mode</title>
+  <title>Disar Marxin</title>
+  <meta name="description" content="DJ since 1995 / From Sunset House to Peak Time Techno / United Baseline, Club Fuel, Club Sequence, Zenith, Beetlejuice and CrazyFM">
+  <meta name="author" content="Didier Salembier">
+
   <style>
     html, body {
       margin: 0;
@@ -23,16 +27,16 @@
         width: 50%;
         height: 100%;
         position: absolute;
-        background: url('images/background_light.jpg') no-repeat left center;
-        background-size: 100% 100%; /* zoom in op linkerhelft */
-        background-position: left center;
+        background: url('images/background_light.jpg') no-repeat center center;
+        background-size: cover; /* zoom in op linkerhelft */
+        background-position: center center;
         transform: scaleX(-1); /* spiegel horizontaal */
         }
 
     .right {
       right: 0;
-      background: url('images/background_dark.jpg') no-repeat right center;
-      background-size: 100% 100%;
+      background: url('images/background_dark.jpg') no-repeat center center;
+      background-size: cover;
     }
 
      .center-content {
@@ -56,21 +60,24 @@
       font-size: 2rem;
       margin: 0;
     }
-    .button-container {
-      position: absolute;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 1rem;
-      z-index: 2;
-    }
+ .button-container {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
 
     .mode-btn {
+        margin: 0 0.5rem;
       padding: 1rem 2rem;
       border: none;
       font-size: 1.2rem;
       cursor: pointer;
+      font-family: 'Courier New', Courier, monospace;
     }
 
     .sunsets-btn {
@@ -89,13 +96,14 @@
   <div class="half right" onclick="goTo('dark')"></div>
     
   <div class="center-content">
-    <img src="images/logo.jpg" alt="Disar Logo">
-    <h1>Welcome to Disar</h1>
+    <img src="images/logoborder.jpg" alt="Disar Logo">
+    <h1>Disar Marxin</h1>
+    <h3>From Sunset House to Peak Time Techno</h3>
   </div>
-  <div class="button-container">
-    <button class="mode-btn sunsets-btn" onclick="goTo('light')">SUNSETS</button>
-    <button class="mode-btn afterdark-btn" onclick="goTo('dark')">AFTER DARK</button>
-  </div>
+<div class="button-container">
+  <button  class="mode-btn sunsets-btn" onclick="goTo('light')">&nbsp;&nbsp;SUNSETS (house)&nbsp;&nbsp;</button>
+  <button class="mode-btn afterdark-btn" onclick="goTo('dark')">AFTER DARK (techno)</button>
+</div>
 
   <script>
     function goTo(mode) {
