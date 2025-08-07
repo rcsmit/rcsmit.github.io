@@ -25,17 +25,12 @@
   <button onclick="redirectToArchive()">Bekijk in Archive.is</button>
 
   <script>
-    async function tryPasteAndRedirect() {
+    async function tryPasteFromClipboard() {
       try {
         const text = await navigator.clipboard.readText();
         const input = document.getElementById('urlInput');
-
         if (text.startsWith("http")) {
           input.value = text;
-
-          const baseUrl = text.split('?')[0];
-          const archiveUrl = "https://archive.is/" + baseUrl;
-          window.location.href = archiveUrl;
         }
       } catch (err) {
         console.log("Clipboard toegang geweigerd of mislukt:", err);
@@ -53,8 +48,8 @@
       window.location.href = archiveUrl;
     }
 
-    // Probeer automatisch te plakken en door te sturen bij laden
-    window.onload = tryPasteAndRedirect;
+    // Probeer clipboard te lezen bij laden
+    window.onload = tryPasteFromClipboard;
   </script>
 </body>
 </html>
