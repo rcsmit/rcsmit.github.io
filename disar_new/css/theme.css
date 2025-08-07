@@ -1,6 +1,6 @@
 /* Algemene stijl */
 body {
-  background: url('../images/background_light.jpg') no-repeat center center fixed;
+  background: url('../images/background_gradient3.jpg') no-repeat center center fixed;
   background-size: cover;
   color: black;
   transition: background 0.3s, color 0.3s;
