@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Archive Redirect</title>
-   <link rel="icon" type="image/x-icon" href="icon.ico">
   <style>
     body {
       font-family: sans-serif;
@@ -24,44 +23,18 @@
   <button onclick="redirectToArchive()">Bekijk in Archive.is</button>
 
   <script>
-    function redirectToArchive() {
-      const input = document.getElementById('urlInput').value.trim();
-      if (!input.startsWith("http")) {
-        alert("Voer een geldige URL in die begint met http of https");
-        return;
+    async function tryPasteFromClipboard() {
+      try {
+        const text = await navigator.clipboard.readText();
+        const input = document.getElementById('urlInput');
+        if (text.startsWith("http")) {
+          input.value = text;
+        }
+      } catch (err) {
+        console.log("Clipboard toegang geweigerd of mislukt:", err);
       }
-      const baseUrl = input.split('?')[0];
-      const archiveUrl = "https://archive.is/" + baseUrl;
-      window.location.href = archiveUrl;
     }
-  </script>
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="UTF-8">
-  <title>Archive Redirect</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin-top: 100px;
-    }
-    input, button {
-      font-size: 1.2em;
-      padding: 0.5em;
-      width: 60%;
-    }
-  </style>
-</head>
-<body>
-  <h1>Archive.is Redirect</h1>
-  <input type="text" id="urlInput" placeholder="Plak hier een URL">
-  <br><br>
-  <button onclick="redirectToArchive()">Bekijk in Archive.is</button>
 
-  <script>
     function redirectToArchive() {
       const input = document.getElementById('urlInput').value.trim();
       if (!input.startsWith("http")) {
@@ -72,7 +45,9 @@
       const archiveUrl = "https://archive.is/" + baseUrl;
       window.location.href = archiveUrl;
     }
-    
+
+    // Probeer clipboard te lezen bij laden
+    window.onload = tryPasteFromClipboard;
   </script>
 </body>
 </html>
