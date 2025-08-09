@@ -21,7 +21,7 @@
     <h1>Archive.is URL</h1>
     <input id="urlInput" type="text" placeholder="Resultaat verschijnt hier" spellcheck="false" />
     <br>
-    <button onclick="openInNewTab()">Open in nieuw tabblad</button>
+    <button onclick="openInNewTab()">Open</button>
   </div>
 
   <script>
@@ -50,6 +50,7 @@
     function openInNewTab() {
       const val = document.getElementById("urlInput").value.trim();
       if (val) {
+        //window.open(val, "_blank");
         window.open(val);
       } else {
         alert("Geen geldige URL");
