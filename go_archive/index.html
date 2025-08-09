@@ -3,53 +3,60 @@
 
 <head>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+
   <meta charset="UTF-8">
-  <title>Archive Redirect</title>
+  <title>Archive.is URL schoonmaken</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      margin-top: 100px;
-    }
-    input, button {
-      font-size: 1.2em;
-      padding: 0.5em;
-      width: 60%;
-    }
+    body { font-family: system-ui, sans-serif; display: grid; place-items: center; min-height: 100svh; margin: 0; padding: 24px; }
+    .card { width: 100%; max-width: 720px; text-align: center; }
+    input { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 10px; }
+    h1 { font-size: 20px; margin-bottom: 12px; }
+    button { margin-top: 12px; padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px; background: #111; color: white; cursor: pointer; }
+    button:hover { background: #333; }
   </style>
 </head>
 <body>
-  <h1>Archive.is Redirect</h1>
-  <input type="text" id="urlInput" placeholder="Plak hier een URL">
-  <br><br>
-  <button onclick="redirectToArchive()">Bekijk in Archive.is</button>
+  <div class="card">
+    <h1>Archive.is URL</h1>
+    <input id="urlInput" type="text" placeholder="Resultaat verschijnt hier" spellcheck="false" />
+    <br>
+    <button onclick="openInNewTab()">Open in nieuw tabblad</button>
+  </div>
 
   <script>
-    async function tryPasteFromClipboard() {
+    function cleanUrl(raw) {
+      if (!raw) return "";
+      const start = raw.indexOf("https");
+      if (start < 0) return "";
+      let s = raw.slice(start);
+      s = s.split("?")[0].trim();
+      if (!/^https?:\/\//i.test(s)) return "";
+      return s;
+    }
+
+    async function fillFromClipboard() {
       try {
-        const text = await navigator.clipboard.readText();
-        const input = document.getElementById('urlInput');
-        if (text.startsWith("http")) {
-          input.value = text;
-        }
-      } catch (err) {
-        console.log("Clipboard toegang geweigerd of mislukt:", err);
+        const txt = await navigator.clipboard.readText();
+        const cleaned = cleanUrl(txt);
+        document.getElementById("urlInput").value = cleaned
+          ? "https://archive.is/" + cleaned
+          : "";
+      } catch (_) {
+        document.getElementById("urlInput").value = "";
       }
     }
 
-    function redirectToArchive() {
-      const input = document.getElementById('urlInput').value.trim();
-      if (!input.startsWith("http")) {
-        alert("Voer een geldige URL in die begint met http of https");
-        return;
+    function openInNewTab() {
+      const val = document.getElementById("urlInput").value.trim();
+      if (val) {
+        window.open(val, "_blank");
+      } else {
+        alert("Geen geldige URL");
       }
-      const baseUrl = input.split('?')[0];
-      const archiveUrl = "https://archive.is/" + baseUrl;
-      window.location.href = archiveUrl;
     }
 
-    // Probeer clipboard te lezen bij laden
-    window.onload = tryPasteFromClipboard;
+    window.addEventListener("load", fillFromClipboard);
   </script>
 </body>
 </html>
