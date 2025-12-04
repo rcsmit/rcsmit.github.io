@@ -582,7 +582,12 @@
       });
     }
 
-    function toggleMenu() {
+    // function toggleMenu() {
+    //   menu.classList.toggle('open');
+    // }
+
+    function toggleMenu(event) {
+      if (event) event.stopPropagation();
       menu.classList.toggle('open');
     }
 
@@ -870,6 +875,13 @@
 
       toggleIndicator.style.left = '2px';
       updateTimerDisplay();
+
+      document.addEventListener('click', function (e) {
+        if (!menu.classList.contains('open')) return;
+        if (menu.contains(e.target)) return;
+        if (e.target.id === 'menuToggleBtn') return;
+        menu.classList.remove('open');
+      });
     }
 
     window.addEventListener('load', initializeApp);
