@@ -371,12 +371,28 @@
         width: 90px;
       }
     }
+
+    .menu-close-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        border: none;
+        background: #333;
+        color: #fff;
+        font-size: 1rem;
+        cursor: pointer;
+      }
+
   </style>
 </head>
 <body>
   <img src="logo.png" alt="Logo" class="logo">
 
   <div class="menu" id="menu">
+     
     <h2>Timer settings</h2>
     <div class="toggle-container">
       <div class="toggle-label-up">Count Down</div>
@@ -407,6 +423,7 @@
       <input type="number" id="intervalInput" value="10">
     </div>
     <button id="setStartTimeBtn">Set Start Time</button>
+    <button class="menu-close-btn" id="menuCloseBtn">✕</button>
 
     <div class="copyright">2126 Made by Rene Smit for Marcel and Annika</div>
   </div>
@@ -825,7 +842,10 @@
       addTouchClickHandler('setStartTimeBtn', setStartTime);
       addTouchClickHandler('mainControlBtn', handleMainControl);
       addTouchClickHandler('resetMainBtn', resetTimer);
-
+      addTouchClickHandler('menuCloseBtn', function (e) {
+        if (e) e.stopPropagation();
+        menu.classList.remove('open');
+      });
       if (isIOS) {
         document.getElementById('loadingOverlay').addEventListener('click', function () {
           resumeAudioContext();
