@@ -6,20 +6,176 @@
   <title>Annika Timer 2.0</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
+    :root {
+      --bg-main: #050509;
+      --card-bg: #14151c;
+      --card-bg-top: #1e1f2a;
+      --accent: #7a63ff;
+      --accent-muted: #2b2c3b;
+      --accent-warning: #f5a623;
+      --text-main: #ffffff;
+      --text-sub: #8c8fa8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
+      margin: 0;
+      min-height: 100vh;
+      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
-      width: 100%;
-      color: white;
+      background: radial-gradient(circle at top, #232437 0, var(--bg-main) 55%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text-main);
       text-align: center;
-      background-color: #C3423F;
-      margin: 0;
-      font-family: Arial, sans-serif;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      width: 120px;
+      height: auto;
+      border-radius: 50%;
+      z-index: 10;
+    }
+
+    .timer-shell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 24px 16px;
+    }
+
+    .timer-card {
+      width: 320px;
+      max-width: 90vw;
+      background: linear-gradient(180deg, var(--card-bg-top), var(--card-bg));
+      border-radius: 28px;
+      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.7);
+      padding: 28px 16px 32px;
       position: relative;
     }
+
+    .timer-card-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .progress-ring-wrapper {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-ring-svg {
+      position: absolute;
+      inset: 0;
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-bg {
+      stroke: #242533;
+      opacity: 0.85;
+    }
+
+    .progress-ring-value {
+      stroke: var(--accent);
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.25s ease;
+      filter: drop-shadow(0 0 12px rgba(122, 99, 255, 0.7));
+    }
+
+    .time-content {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    #timerDisplay {
+      font-size: 2.8rem;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    #timerSubtitle {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-sub);
+    }
+
+    .controls-row {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+    }
+
+    .control-button {
+      width: 68px;
+      height: 68px;
+      border-radius: 999px;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      background-color: var(--accent-muted);
+      color: var(--text-main);
+      box-shadow: 0 12px 26px rgba(0, 0, 0, 0.6);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.12s ease, opacity 0.12s ease;
+    }
+
+    .control-button.primary {
+      background-color: var(--accent-warning);
+      color: #151515;
+    }
+
+    .control-button:active {
+      transform: translateY(2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+    }
+
+    .control-button:disabled {
+      opacity: 0.4;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .copyright {
+      position: fixed;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.65rem;
+      color: var(--text-sub);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    /* Side menu (settings) */
+
     .menu {
       position: fixed;
       top: 0;
@@ -29,149 +185,113 @@
       background-color: #d8d4d4;
       padding: 20px;
       visibility: hidden;
-      opacity: 0.6;
-      transition: visibility 0.3s, opacity 0.3s;
+      opacity: 0;
+      transition: visibility 0.25s ease, opacity 0.25s ease;
       overflow-y: auto;
+      color: #111;
+      z-index: 40;
     }
+
     .menu.open {
       visibility: visible;
       opacity: 1;
     }
-    .content {
-      position: relative;
-      padding: 20px;
-    }
-    .timer {
-      font-size: 5em;
-    }
-    .menu-button {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background-color: #ffffff;
-      border: none;
-      color: rgb(0, 0, 0);
-      font-size: 1.5em;
-      cursor: pointer;
-      z-index: 1000;
+
+    .menu h2 {
+      margin-top: 32px;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
     }
 
-    .general-button {
-      /* position: fixed;
-      top: 100px;
-      right: 20px; */
-      background-color: #ffffff;
-      border: none;
-      color: rgb(0, 0, 0);
-      font-size: 1.5em;
-      cursor: pointer;
-      z-index: 1000;
-    }
     .toggle-container {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin: 10px 0;
+      gap: 8px;
+      font-size: 0.9rem;
     }
+
     .toggle-label-up,
     .toggle-label-down {
-      position: relative;
+      min-width: 70px;
+      text-align: center;
     }
+
+    .toggle-switch {
+      position: relative;
+      width: 56px;
+      height: 30px;
+    }
+
     .toggle {
       appearance: none;
-      width: 40px;
-      height: 20px;
+      width: 100%;
+      height: 100%;
       background-color: #c6c6c6;
-      border-radius: 10px;
+      border-radius: 16px;
       outline: none;
       cursor: pointer;
       transition: background-color 0.3s;
+      position: relative;
     }
+
     .toggle-indicator {
       position: absolute;
-      width: 20px;
-      height: 20px;
+      width: 26px;
+      height: 26px;
       border-radius: 50%;
       background-color: #fff;
-      top: 83px;
+      top: 2px;
+      left: 2px;
       transition: left 0.3s;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     }
+
     #timeInput {
       display: flex;
-      margin-bottom: 10px;
+      margin: 16px 0 10px;
       justify-content: center;
+      gap: 10px;
     }
+
     .input-container {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      margin-right: 10px;
+      align-items: flex-start;
+      font-size: 0.8rem;
     }
-    .input-container input {
-      width: 50px;
-      height: 30px;
-      font-size: 16px;
-      text-align: center;
-    }
+
     .input-container label {
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
-    button {
-      align-items: center;
-      background-color: #fff;
-      border-radius: 12px;
-      box-shadow: transparent 0 0 0 3px,rgba(18, 18, 18, .1) 0 6px 20px;
-      box-sizing: border-box;
-      color: #121212;
-      cursor: pointer;
-      display: inline-flex;
-      flex: 1 1 auto;
-      font-family: Inter,sans-serif;
-      font-size: 1.2rem;
-      font-weight: 700;
-      justify-content: center;
-      line-height: 1;
-      margin: 5px;
-      outline: none;
-      padding: 1rem 1.2rem;
+
+    .input-container input {
+      width: 64px;
+      height: 32px;
+      font-size: 0.9rem;
       text-align: center;
-      text-decoration: none;
-      transition: box-shadow .2s,-webkit-box-shadow .2s;
-      white-space: nowrap;
+      border-radius: 8px;
+      border: 1px solid #b0b0b0;
+    }
+
+    .menu button {
+      margin-top: 10px;
+      width: 100%;
+      border-radius: 12px;
+      padding: 10px 12px;
       border: 0;
-      user-select: none;
-      -webkit-user-select: none;
-      touch-action: manipulation;
+      background-color: #333;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
     }
-    button:hover {
-      box-shadow: #121212 0 0 0 3px, transparent 0 0 0 0;
+
+    .menu button:active {
+      background-color: #555;
     }
-    button:active {
-      background-color: #e0e0e0;
-    }
-    .logo {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      width: 150px;
-      height: auto;
-      border-radius: 50%; 
-    }
-    .copyright {
-      bottom: 10px;
-      position: fixed;
-    }
-    @media (max-width: 600px) {
-      .timer {
-        font-size: 3em;
-      }
-      .menu {
-        width: 100%;
-      }
-      .logo {
-        width: 100px;
-      }
-    }
+
+    /* Loading overlay */
 
     .overlay {
       position: fixed;
@@ -189,11 +309,11 @@
     .overlay-content {
       background-color: white;
       padding: 20px;
-      border-radius: 10px;
+      border-radius: 12px;
       text-align: center;
-      color:#121212;
+      color: #121212;
+      min-width: 220px;
     }
-
 
     .spinner {
       border: 4px solid #f3f3f3;
@@ -225,59 +345,119 @@
       background-color: #3498db;
       transition: width 0.3s ease;
     }
+
+    @media (max-width: 480px) {
+      .timer-card {
+        width: 280px;
+        padding: 22px 12px 26px;
+      }
+
+      .progress-ring-wrapper {
+        width: 200px;
+        height: 200px;
+      }
+
+      #timerDisplay {
+        font-size: 2.4rem;
+      }
+
+      .control-button {
+        width: 60px;
+        height: 60px;
+        font-size: 1.4rem;
+      }
+
+      .logo {
+        width: 90px;
+      }
+    }
   </style>
 </head>
 <body>
   <img src="logo.png" alt="Logo" class="logo">
+
   <div class="menu" id="menu">
-    <div style="padding-top: 50px;">
-      <div class="toggle-container">
-        <div class="toggle-label-up">Count Down</div>
-        <label class="toggle-switch">
-          <input type="checkbox" class="toggle" id="countingToggle">
-          <span class="toggle-indicator" id="toggleIndicator" style="left: 160px;"></span>
-        </label><div class="toggle-label-down">Count Up</div>
-      </div>
-      <div id="timeInput" style="display: visible;">
-        <div class="input-container">
-          <label for="hourInput">Hours</label>
-          <input type="number" id="hourInput" value="00" min="0" max="23">
-        </div>
-        <div class="input-container">
-          <label for="minuteInput">Minutes</label>
-          <input type="number" id="minuteInput" value="01" min="0" max="59">
-        </div>
-        <div class="input-container">
-          <label for="secondInput">Seconds</label>
-          <input type="number" id="secondInput" value="05" min="0" max="59">
-        </div>
-        
+    <h2>Timer settings</h2>
+    <div class="toggle-container">
+      <div class="toggle-label-up">Count Down</div>
+      <label class="toggle-switch">
+        <input type="checkbox" class="toggle" id="countingToggle">
+        <span class="toggle-indicator" id="toggleIndicator"></span>
+      </label>
+      <div class="toggle-label-down">Count Up</div>
+    </div>
+
+    <div id="timeInput">
+      <div class="input-container">
+        <label for="hourInput">Hours</label>
+        <input type="number" id="hourInput" value="0" min="0" max="23">
       </div>
       <div class="input-container">
-        <label for="intervalInput">Interval to scream (seconds)</label>
-        <input type="number" id="intervalInput" value="10">
+        <label for="minuteInput">Minutes</label>
+        <input type="number" id="minuteInput" value="1" min="0" max="59">
       </div>
-      <button id="setStartTimeBtn">Set Start Time</button>
+      <div class="input-container">
+        <label for="secondInput">Seconds</label>
+        <input type="number" id="secondInput" value="5" min="0" max="59">
+      </div>
     </div>
+
+    <div class="input-container">
+      <label for="intervalInput">Interval to scream (seconds)</label>
+      <input type="number" id="intervalInput" value="10">
+    </div>
+    <button id="setStartTimeBtn">Set Start Time</button>
+
     <div class="copyright">2126 Made by Rene Smit for Marcel and Annika</div>
   </div>
 
+  <div class="timer-shell">
+    <div class="timer-card">
+      <div class="timer-card-inner">
+        <div class="progress-ring-wrapper">
+          <svg class="progress-ring-svg" width="220" height="220">
+            <circle
+              class="progress-ring-bg"
+              stroke-width="14"
+              fill="transparent"
+              r="96"
+              cx="110"
+              cy="110"
+            />
+            <circle
+              id="progressRing"
+              class="progress-ring-value"
+              stroke-width="14"
+              fill="transparent"
+              r="96"
+              cx="110"
+              cy="110"
+            />
+          </svg>
+          <div class="time-content">
+            <div id="timerDisplay">00:01:00</div>
+            <div id="timerSubtitle">REMAINING</div>
+          </div>
+        </div>
 
-  <button class="menu-button" id="menuToggleBtn">☰</button>
-  <div class="content">
-    <h1 class="timer" id="timerDisplay">00:01:00</h1>
-    <div id="controls">
-      <button class="general-button" id="startBtn">Start</button>
+        <div class="controls-row" id="controls">
+          <button class="control-button" id="resetMainBtn" title="Reset">
+            ⟳
+          </button>
+          <button class="control-button primary" id="mainControlBtn" title="Start">
+            ▶
+          </button>
+          <button class="control-button" id="menuToggleBtn" title="Settings">
+            ⚙
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
   <div id="loadingOverlay" class="overlay">
     <div class="overlay-content">
-      <!-- Remove the spinner div -->
-      <div id='message' class="message"><p>Click to load audiofiles</p></div>
-
-      
-      <!-- Remove or hide the progress bar -->
+      <div id="message" class="message"><p>Click to load audiofiles</p></div>
       <div class="progress-bar" style="display: none;">
         <div id="progressBar" class="progress"></div>
       </div>
@@ -286,76 +466,77 @@
   </div>
 
   <script>
-      // iOS detection
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    console.log("iOS detected:", isIOS);
 
-    const bgColorArray = ['#86a4df', '#FF5733', '#33FF57', '#3357FF', '#F1C40F', '#8E44AD', '#1ABC9C', '#E74C3C'];
+    const bgColorArray = ['#181822', '#202336', '#14161f', '#1e2538', '#181b2c'];
     const timerDisplay = document.getElementById('timerDisplay');
+    const timerSubtitle = document.getElementById('timerSubtitle');
     const countingToggle = document.getElementById('countingToggle');
     const toggleIndicator = document.getElementById('toggleIndicator');
     const timeInput = document.getElementById('timeInput');
     const hourInput = document.getElementById('hourInput');
     const minuteInput = document.getElementById('minuteInput');
     const secondInput = document.getElementById('secondInput');
-    const controls = document.getElementById('controls');
-    const menu = document.getElementById('menu');
     const intervalInput = document.getElementById('intervalInput');
+    const menu = document.getElementById('menu');
+    const controls = document.getElementById('controls');
+    const mainControlBtn = document.getElementById('mainControlBtn');
+    const resetMainBtn = document.getElementById('resetMainBtn');
+    const progressRing = document.getElementById('progressRing');
 
     let running = false;
     let countingDown = true;
-    let interval;
     let startTime = 65;
     let seconds = startTime;
     let audioContext;
     let audioBuffers = {};
     let audioLoaded = false;
     let timerInterval;
+    let ringRadius;
+    let ringCircumference;
 
-    // Improved audio context initialization for iOS
+    function initProgressRing() {
+      ringRadius = progressRing.r.baseVal.value;
+      ringCircumference = 2 * Math.PI * ringRadius;
+      progressRing.style.strokeDasharray = `${ringCircumference} ${ringCircumference}`;
+      progressRing.style.strokeDashoffset = ringCircumference;
+    }
+
+    function setRingProgress(fraction) {
+      if (!ringCircumference) return;
+      const clamped = Math.min(Math.max(fraction, 0), 1);
+      const offset = ringCircumference - clamped * ringCircumference;
+      progressRing.style.strokeDashoffset = offset;
+    }
+
     function initAudioContext() {
-      // iOS requires AudioContext to be created or resumed within a user gesture
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
       if (!audioContext) {
-        audioContext = new AudioContext();
+        audioContext = new AudioContextConstructor();
       }
-      
-      // iOS Safari requires this for audio to work
       if (audioContext.state === 'suspended') {
-        audioContext.resume().then(() => {
-          console.log("AudioContext resumed successfully");
-        }).catch(err => {
-          console.warn("Could not resume AudioContext:", err);
-        });
+        audioContext.resume().catch(() => {});
       }
-      
       loadAudioFiles();
     }
 
-    // Function to resume audio context (important for iOS)
     function resumeAudioContext() {
       if (audioContext && audioContext.state === 'suspended') {
-        audioContext.resume().then(() => {
-          console.log("AudioContext resumed from user interaction");
-        }).catch(err => {
-          console.warn("Failed to resume AudioContext:", err);
-        });
+        audioContext.resume().catch(() => {});
       }
     }
 
-    // Improved audio file loading with retry logic
     function loadAudioFiles() {
-      const audioFiles = Array.from({length: 60}, (_, i) => (i + 1).toString()).concat(['0','hours', 'minutes', 'seconds']);
+      const audioFiles = Array.from({ length: 60 }, (_, i) => (i + 1).toString()).concat(['0', 'hours', 'minutes', 'seconds']);
       let loadedCount = 0;
       const totalFiles = audioFiles.length;
       const progressBar = document.getElementById('progressBar');
       const progressText = document.getElementById('progressText');
-      
-      // Add error retry logic for iOS
+
       const loadFile = (file, retryCount = 0) => {
         fetch(`audio-numbers/${file}.wav`)
           .then(response => {
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) throw new Error(`HTTP error ${response.status}`);
             return response.arrayBuffer();
           })
           .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
@@ -367,78 +548,38 @@
               audioLoaded = true;
               setTimeout(() => {
                 document.getElementById('loadingOverlay').style.display = 'none';
-                updateControls(); // Enable the start button
-              }, 100); // Short delay to show 100% completion
+                updateControls();
+              }, 100);
             }
           })
-          .catch(error => {
-            console.error(`Error loading audio file ${file}:`, error);
-            // Retry logic - useful for iOS which can sometimes fail the first attempt
+          .catch(() => {
             if (retryCount < 3) {
-              console.log(`Retrying ${file}, attempt ${retryCount + 1}`);
               setTimeout(() => loadFile(file, retryCount + 1), 500);
             }
           });
       };
-      
+
       audioFiles.forEach(file => loadFile(file));
     }
 
-    // Improved touch event handling for iOS
     function addTouchClickHandler(elementId, handler) {
       const element = document.getElementById(elementId);
-      if (!element) {
-        console.warn(`Element with id ${elementId} not found`);
-        return;
-      }
-      
-      // For iOS, we need to be careful about preventDefault
-      element.addEventListener('touchstart', function(e) {
-        // Don't call preventDefault here as it can cause issues on iOS
-        resumeAudioContext(); // Try to resume audio context on touch
-      }, { passive: true });
-      
-      element.addEventListener('touchend', function(e) {
-        // Only prevent default if needed - this helps with iOS compatibility
-        if (e.cancelable) {
-          e.preventDefault();
-        }
-        
-        // Important for iOS: resume audio context on any user interaction
-        resumeAudioContext();
-        
-        handler(e);
-      });
-      
-      element.addEventListener('click', function(e) {
-        resumeAudioContext();
-        handler(e);
-      });
-    }
+      if (!element) return;
 
-    // Set up event handlers
-    function setupEventHandlers() {
-      addTouchClickHandler('menuToggleBtn', toggleMenu);
-      addTouchClickHandler('setStartTimeBtn', setStartTime);
-      
-      // Special handling for the overlay on iOS
-      if (isIOS) {
-        document.getElementById('loadingOverlay').addEventListener('click', function() {
-          resumeAudioContext();
-        });
-      }
-      
-      countingToggle.addEventListener('change', () => {
-        countingDown = !countingDown;
-        toggleIndicator.style.left = countingDown ? '160px' : '180px';
-        timeInput.style.display = countingDown ? 'flex' : 'none';
-        setStartTime();
-      });
-      
-      // Add body-level event listener for iOS audio
-      document.body.addEventListener('touchstart', function() {
+      element.addEventListener('touchstart', function () {
         resumeAudioContext();
       }, { passive: true });
+
+      element.addEventListener('touchend', function (e) {
+        if (e.cancelable) e.preventDefault();
+        resumeAudioContext();
+        handler(e);
+      });
+
+      element.addEventListener('click', function (e) {
+        resumeAudioContext();
+        handler(e);
+      });
     }
 
     function toggleMenu() {
@@ -446,36 +587,38 @@
     }
 
     function setStartTime() {
+      const totalSeconds = parseInt(hourInput.value || '0', 10) * 3600
+        + parseInt(minuteInput.value || '0', 10) * 60
+        + parseInt(secondInput.value || '0', 10);
+
       if (countingDown) {
-        const totalSeconds = parseInt(hourInput.value, 10) * 3600 + parseInt(minuteInput.value, 10) * 60 + parseInt(secondInput.value, 10);
-        if (!isNaN(totalSeconds)) {
-          startTime = totalSeconds;
-          seconds = totalSeconds;
+        if (!isNaN(totalSeconds) && totalSeconds >= 0) {
+          startTime = totalSeconds || 0;
+          seconds = startTime;
         }
       } else {
-        startTime = 0;
+        if (!isNaN(totalSeconds) && totalSeconds >= 0) {
+          startTime = totalSeconds;
+        } else {
+          startTime = 0;
+        }
         seconds = 0;
       }
       updateTimerDisplay();
     }
 
     function startTimer() {
-      // Make sure audio is initialized
       if (!audioContext) {
         initAudioContext();
       } else {
         resumeAudioContext();
       }
-      
+
       if (!running) {
         running = true;
-        // Clear any existing interval to avoid duplicates
-        if (timerInterval) {
-          clearInterval(timerInterval);
-        }
+        if (timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(updateTimer, 1000);
       }
-      
       updateControls();
     }
 
@@ -494,10 +637,10 @@
         clearInterval(timerInterval);
         timerInterval = null;
       }
-      if (!countingDown) {
-        seconds = 0;
-      } else {
+      if (countingDown) {
         seconds = startTime;
+      } else {
+        seconds = 0;
       }
       updateTimerDisplay();
     }
@@ -512,12 +655,13 @@
         }
         seconds--;
       }
-      
-      if (seconds % parseInt(intervalInput.value, 10) === 0 || (countingDown && seconds < 10)) {
+
+      const intervalVal = parseInt(intervalInput.value || '0', 10);
+      if ((intervalVal > 0 && seconds % intervalVal === 0) || (countingDown && seconds < 10)) {
         screamNumber(seconds);
         changeBackgroundColor();
       }
-      
+
       updateTimerDisplay();
     }
 
@@ -527,127 +671,89 @@
       const seconds_ = Math.floor(number % 60);
 
       let delay = 0;
-      const playWithDelay = (word) => {
-        delay += 1100; // Adjust this value if needed for proper timing
+      const playWithDelay = word => {
+        delay += 1100;
         setTimeout(() => playWord(word), delay);
       };
-
-      const playWithoutDelay = (word) => {
-        delay = 0; // Reset delay
+      const playWithoutDelay = word => {
+        delay = 0;
         setTimeout(() => playWord(word), delay);
       };
 
       if (hours > 0) {
         playWithoutDelay(hours.toString());
-        playWithDelay("hours");
+        playWithDelay('hours');
       }
-      
-      // Minutes
+
       if (hours === 0 && minutes > 0) {
-        // 0:01:xx
         playWithoutDelay(minutes.toString());
-        playWithDelay("minutes");
+        playWithDelay('minutes');
       }
       if (hours !== 0 && minutes > 0) {
-        // 1:01:xx
         playWithDelay(minutes.toString());
-        playWithDelay("minutes");
+        playWithDelay('minutes');
       }
       if (hours !== 0 && minutes === 0) {
-        // 1:00:xx
         playWithDelay(minutes.toString());
-        playWithDelay("minutes");
-      } 
-      
-      // Seconds
-      if (hours === 0 && minutes == 0 && seconds_ > 10) {
-        //0:00:20
-        playWithoutDelay(seconds_.toString());
-        playWithDelay("seconds");
+        playWithDelay('minutes');
       }
-      if (hours !== 0 && minutes == 0 && seconds_ > 10) {
-        //1:00:20
+
+      if (hours === 0 && minutes === 0 && seconds_ > 10) {
+        playWithoutDelay(seconds_.toString());
+        playWithDelay('seconds');
+      }
+      if (hours !== 0 && minutes === 0 && seconds_ > 10) {
         playWithDelay(seconds_.toString());
-        playWithDelay("seconds");
+        playWithDelay('seconds');
       }
       if (hours === 0 && minutes !== 0 && seconds_ > 10) {
-        //0:01:20
         playWithDelay(seconds_.toString());
-        playWithDelay("seconds");
+        playWithDelay('seconds');
       }
       if (hours !== 0 && minutes !== 0 && seconds_ > 10) {
-        //1:01:20
         playWithDelay(seconds_.toString());
-        playWithDelay("seconds");
+        playWithDelay('seconds');
       }
-      
-      if (hours !== 0 && minutes !== 0 && seconds_ <= 10) {
-        //10:01:08
-        playWithDelay(seconds_.toString());
-        playWithDelay("seconds");
-      }
-      if (hours !== 0 && minutes === 0 && seconds_ <= 10) {
-        //01:00:08
-        playWithDelay(seconds_.toString());
-        playWithDelay("seconds");
-      }
-      if (hours === 0 && minutes !== 0 && seconds_ <= 10) {
-        //00:01:08
-        playWithDelay(seconds_.toString());
-        playWithDelay("seconds");
-      }
-      if (hours === 0 && minutes == 0 && seconds_ <= 10) {
-        //0:00:08
-        playWithoutDelay(seconds_.toString());
+
+      if (seconds_ <= 10) {
+        if (hours === 0 && minutes === 0) {
+          playWithoutDelay(seconds_.toString());
+        } else {
+          playWithDelay(seconds_.toString());
+          playWithDelay('seconds');
+        }
       }
     }
 
-    // Improved playWord function for iOS compatibility
     function playWord(word) {
       if (!audioContext) {
         initAudioContext();
-        return; // Wait for audio context to initialize
+        return;
       }
-      
-      // For iOS, always ensure the context is running
       if (audioContext.state === 'suspended') {
-        audioContext.resume().then(() => {
-          playWordWithContext(word);
-        }).catch(err => {
-          console.warn("Could not resume audio context:", err);
-        });
+        audioContext.resume().then(() => playWordWithContext(word)).catch(() => {});
       } else {
         playWordWithContext(word);
       }
     }
 
     function playWordWithContext(word) {
-      if (audioBuffers[word]) {
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffers[word];
-        source.connect(audioContext.destination);
-        
-        // Try-catch to handle potential iOS errors
-        try {
-          source.start(0);
-        } catch (e) {
-          console.error('Error playing audio:', e);
-          // Try one more time after ensuring the context is resumed
-          audioContext.resume().then(() => {
-            try {
-              const retrySource = audioContext.createBufferSource();
-              retrySource.buffer = audioBuffers[word];
-              retrySource.connect(audioContext.destination);
-              retrySource.start(0);
-            } catch (retryError) {
-              console.error('Failed retry playing audio:', retryError);
-            }
-          }).catch(err => {
-            console.warn("Could not resume audio context for retry:", err);
-          });
-        }
-      } else {
-        console.warn(`Audio not loaded for word: ${word}`);
+      if (!audioBuffers[word]) return;
+      const source = audioContext.createBufferSource();
+      source.buffer = audioBuffers[word];
+      source.connect(audioContext.destination);
+      try {
+        source.start(0);
+      } catch {
+        audioContext.resume().then(() => {
+          try {
+            const retrySource = audioContext.createBufferSource();
+            retrySource.buffer = audioBuffers[word];
+            retrySource.connect(audioContext.destination);
+            retrySource.start(0);
+          } catch {
+          }
+        }).catch(() => {});
       }
     }
 
@@ -661,6 +767,15 @@
       const minutes = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
       const secs = String(seconds % 60).padStart(2, '0');
       timerDisplay.textContent = `${hours}:${minutes}:${secs}`;
+      timerSubtitle.textContent = countingDown ? 'REMAINING' : 'ELAPSED';
+
+      let fraction = 0;
+      if (countingDown && startTime > 0) {
+        fraction = 1 - seconds / startTime;
+      } else if (!countingDown && startTime > 0) {
+        fraction = seconds / startTime;
+      }
+      setRingProgress(fraction);
       updateControls();
     }
 
@@ -668,144 +783,105 @@
       const progressBar = document.getElementById('progressBar');
       const progressText = document.getElementById('progressText');
       const percentage = (loaded / total) * 100;
-      
       progressBar.style.width = `${percentage}%`;
       progressText.textContent = `${loaded} / ${total} files loaded`;
     }
 
     function updateControls() {
-      controls.innerHTML = '';
-      let buttonConfig;
-      
       if (!audioLoaded) {
-        buttonConfig = { id: 'startBtn', text: '...', handler: null };
-      } else if (running) {
-        if (!countingDown || seconds > 0) {
-          buttonConfig = { id: 'pauseBtn', text: 'Pause', handler: pauseTimer };
-        } else {
-          buttonConfig = { id: 'resetBtn', text: 'Reset to start time', handler: resetTimer };
-        }
-      } else {
-        if (!countingDown) {
-          if (seconds === 0) {
-            buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
-          } else {
-            controls.innerHTML += '<button class="general-button" id="continueBtn">Continue</button>';
-            controls.innerHTML += '<button class="general-button" id="resetZeroBtn">Reset to zero</button>';
-            // Defer adding handlers until after elements are created
-            setTimeout(() => {
-              addTouchClickHandler('continueBtn', startTimer);
-              addTouchClickHandler('resetZeroBtn', resetTimer);
-            }, 0);
-            return;
-          }
-        } else {
-          if (seconds === startTime) {
-            buttonConfig = { id: 'startBtn', text: 'Start', handler: startTimer };
-          } else if (seconds > 0) {
-            controls.innerHTML += '<button class="general-button" id="continueBtn">Continue</button>';
-            controls.innerHTML += '<button class="general-button" id="resetBtn">Reset</button>';
-            // Defer adding handlers until after elements are created
-            setTimeout(() => {
-              addTouchClickHandler('continueBtn', startTimer);
-              addTouchClickHandler('resetBtn', resetTimer);
-            }, 0);
-            return;
-          } else {
-            controls.innerHTML += '<button class="general-button" id="startBtn">Start</button>';
-            controls.innerHTML += '<button class="general-button" id="resetBtn">Reset</button>';
-            // Defer adding handlers until after elements are created
-            setTimeout(() => {
-              addTouchClickHandler('startBtn', startTimer);
-              addTouchClickHandler('resetBtn', resetTimer);
-            }, 0);
-            return;
-          }
-        }
+        mainControlBtn.disabled = true;
+        mainControlBtn.textContent = '...';
+        return;
       }
-      
-      if (buttonConfig) {
-        controls.innerHTML = `<button class="general-button" id="${buttonConfig.id}" ${!audioLoaded ? 'disabled' : ''}>${buttonConfig.text}</button>`;
-        if (buttonConfig.handler) {
-          // Defer adding handler until after element is created
-          setTimeout(() => {
-            addTouchClickHandler(buttonConfig.id, buttonConfig.handler);
-          }, 0);
-        }
+      mainControlBtn.disabled = false;
+
+      if (running) {
+        mainControlBtn.textContent = '⏸';
+      } else {
+        const showStart =
+          (countingDown && (seconds === startTime || startTime === 0 && seconds === 0)) ||
+          (!countingDown && seconds === 0);
+        mainControlBtn.textContent = showStart ? '▶' : '⏯';
       }
     }
 
-
-
-    // Initialize app - called once when page loads
-    function initializeApp() {
-      console.log("Initializing app, version 26_02_0051");
-           
-      // Set up event handlers
-      setupEventHandlers();
-      
-      // Initialize the audio with iOS-specific considerations
-      //if (isIOS) {
-      if (1==1) {
-        // For iOS, we'll wait for user interaction before initializing audio
-        console.log("iOS detected - waiting for user interaction to initialize audio");
-        
-        // In the initializeApp function, update this section:
-        const overlay = document.getElementById('loadingOverlay');
-        const overlayContent = document.querySelector('.overlay-content');
-        const progressText = document.getElementById('progressText');
-        const progressBar = document.querySelector('.progress-bar');
-
-        if (overlayContent && progressText) {
-          progressText.textContent = "Loading files";
-          // Hide progress elements initially
-          document.querySelector('.progress-bar').style.display = 'none';
-          progressText.style.display = 'none';
-        }
-
-        // Update the overlay click handler
-        overlay.addEventListener('click', function() {
-          console.log("iOS detected - userclick detected");
-        
-          // Show the loading elements
-          message.style.display = 'none';
-          progressBar.style.display = 'block';
-          progressText.style.display = 'block';
-          progressText.textContent = "Loading audio files...";
-          
-          // Add a spinner programmatically
-          const spinner = document.createElement('div');
-          spinner.className = 'spinner';
-          overlayContent.insertBefore(spinner, overlayContent.firstChild);
-          
-          // Initialize audio context and start loading
-          initAudioContext();
-        }, { once: true });
-        
+    function handleMainControl() {
+      if (!audioLoaded) return;
+      if (running) {
+        pauseTimer();
       } else {
-        // For non-iOS, we can initialize right away
-        initAudioContext();
+        startTimer();
       }
-      
+      updateControls();
+    }
+
+    function setupEventHandlers() {
+      addTouchClickHandler('menuToggleBtn', toggleMenu);
+      addTouchClickHandler('setStartTimeBtn', setStartTime);
+      addTouchClickHandler('mainControlBtn', handleMainControl);
+      addTouchClickHandler('resetMainBtn', resetTimer);
+
+      if (isIOS) {
+        document.getElementById('loadingOverlay').addEventListener('click', function () {
+          resumeAudioContext();
+        });
+      }
+
+      countingToggle.addEventListener('change', () => {
+        countingDown = !countingDown;
+        toggleIndicator.style.left = countingDown ? '2px' : '28px';
+        timeInput.style.display = 'flex';
+        setStartTime();
+      });
+
+      document.body.addEventListener('touchstart', function () {
+        resumeAudioContext();
+      }, { passive: true });
+    }
+
+    function initializeApp() {
+      initProgressRing();
+      setupEventHandlers();
+
+      const overlay = document.getElementById('loadingOverlay');
+      const overlayContent = document.querySelector('.overlay-content');
+      const progressText = document.getElementById('progressText');
+      const progressBar = document.querySelector('.progress-bar');
+      const message = document.getElementById('message');
+
+      if (overlayContent && progressText) {
+        progressText.textContent = 'Loading files';
+        progressBar.style.display = 'none';
+        progressText.style.display = 'none';
+      }
+
+      overlay.addEventListener('click', function () {
+        if (message) message.style.display = 'none';
+        progressBar.style.display = 'block';
+        progressText.style.display = 'block';
+        progressText.textContent = 'Loading audio files...';
+
+        const spinner = document.createElement('div');
+        spinner.className = 'spinner';
+        overlayContent.insertBefore(spinner, overlayContent.firstChild);
+
+        initAudioContext();
+      }, { once: true });
+
+      toggleIndicator.style.left = '2px';
       updateTimerDisplay();
     }
 
-    // Call initialization on page load
     window.addEventListener('load', initializeApp);
 
-    // Additional listener to handle back navigation on iOS
-    window.addEventListener('pageshow', function(event) {
-      // If page is loaded from cache (common in iOS Safari)
+    window.addEventListener('pageshow', function (event) {
       if (event.persisted) {
-        console.log("Page restored from cache - reinitializing");
         initializeApp();
       }
     });
 
-    // Handle visibility changes (when app goes to background on iOS)
-    document.addEventListener('visibilitychange', function() {
+    document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible') {
-        console.log("Page became visible again - checking audio context");
         resumeAudioContext();
       }
     });
