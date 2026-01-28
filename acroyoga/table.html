@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acroyoga Poses - Dynamic</title>
+    <title>Acroyoga Poses - Dynamic - v1</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -29,7 +29,7 @@
         }
         .search-box {
             flex: 1;
-            min-width: 200px;
+            min-width: 250px;
         }
         .search-box input {
             width: 100%;
@@ -218,6 +218,8 @@
             ]
         };
 
+  
+
         // Function to create iframe HTML
         function createIframe(videoId) {
             return `<iframe width="280" height="157" src="https://www.youtube.com/embed/${videoId}?si=EJNPiLa76TiQBHXK" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
@@ -284,19 +286,33 @@
             return 4;
         }
 
+        // Store current state to avoid unnecessary rebuilds
+        let lastFilteredNodesJSON = '';
+        let lastColumnsPerRow = getColumnsPerRow();
+
         // Function to generate the table
         function generateTable() {
             const table = document.getElementById('posesTable');
-            table.innerHTML = ''; // Clear existing content
             
             // Get filtered nodes
             const filteredNodes = filterNodes();
             const totalNodes = data.nodes.filter(node => node.video !== 'dQw4w9WgXcQ').length;
+            const columnsPerRow = getColumnsPerRow();
+            
+            // Check if we actually need to rebuild
+            const currentFilteredNodesJSON = JSON.stringify(filteredNodes.map(n => n.id));
+            if (lastFilteredNodesJSON === currentFilteredNodesJSON && lastColumnsPerRow === columnsPerRow) {
+                return; // No changes, skip rebuild
+            }
+            
+            lastFilteredNodesJSON = currentFilteredNodesJSON;
+            lastColumnsPerRow = columnsPerRow;
             
             // Update results count
             updateResultsCount(filteredNodes.length, totalNodes);
             
-            const columnsPerRow = getColumnsPerRow();
+            // Clear existing content
+            table.innerHTML = '';
             
             // Calculate number of rows needed
             const totalRows = Math.ceil(filteredNodes.length / columnsPerRow);
@@ -343,17 +359,24 @@
             }
         }
 
+        // Debounce function for search
+        let searchTimeout;
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(generateTable, 300);
+        }
+
         // Initialize the page
         window.addEventListener('DOMContentLoaded', function() {
             populateCategoryFilter();
             generateTable();
             
             // Add event listeners for search and filter
-            document.getElementById('searchInput').addEventListener('input', generateTable);
+            document.getElementById('searchInput').addEventListener('input', debounceSearch);
             document.getElementById('categoryFilter').addEventListener('change', generateTable);
         });
         
-        // Regenerate table when window is resized
+        // Regenerate table when window is resized (with debounce and state checking)
         let resizeTimer;
         window.addEventListener('resize', function() {
             clearTimeout(resizeTimer);
