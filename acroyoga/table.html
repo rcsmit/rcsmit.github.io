@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acroyoga Poses - Dynamic</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        td {
+            padding: 15px;
+            text-align: center;
+            vertical-align: top;
+            border: 1px solid #ddd;
+            width: 25%; /* Default 4 columns */
+        }
+        .label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        iframe {
+            border: none;
+            border-radius: 4px;
+        }
+
+        /* Responsive columns */
+        @media screen and (max-width: 1400px) {
+            td {
+                width: 33.33%; /* 3 columns */
+            }
+        }
+        @media screen and (max-width: 1024px) {
+            td {
+                width: 50%; /* 2 columns */
+            }
+        }
+        @media screen and (max-width: 640px) {
+            td {
+                width: 100%; /* 1 column */
+            }
+            iframe {
+                width: 100%;
+                max-width: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Acroyoga Poses Video Gallery</h1>
+    <table id="posesTable"></table>
+
+    <script>
+        const data = {
+            nodes: [
+                { "id": "acroyoga_pose_101" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "LEGENDA", "category":"no_box", "x": 1510, "y": 780 },
+                { "id": "acroyoga_pose_x_1" , "info":"loremp ipsum", "video":"l2IFcLpEpMY", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "front plank", "category":"pose", "x": 36, "y": 550 },
+                { "id": "acroyoga_pose_x_2" , "info":"loremp ipsum", "video":"l2IFcLpEpMY", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "front bird", "category":"pose", "x": 350, "y": 550 },
+                { "id": "acroyoga_pose_x_5" , "info":"loremp ipsum", "video":"2ONOnNAHT4A", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "folded leaf", "category":"pose", "x": 650, "y": 550 },
+                { "id": "acroyoga_pose_x_7" , "info":"loremp ipsum", "video":"BqUpzbc2uxM", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "straddle throne", "category":"pose", "x": 530, "y": 640 },
+                { "id": "acroyoga_pose_x_8" , "info":"loremp ipsum", "video":"dollsSxNWzg", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "chair", "category":"pose", "x": 530, "y": 750 },
+                { "id": "acroyoga_pose_x_9" , "info":"loremp ipsum", "video":"gixLd-6i9ko", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "foot to shin", "category":"pose", "x": 350, "y": 750 },
+                { "id": "acroyoga_pose_x_17" , "info":"loremp ipsum", "video":"_f7S0rtE0zI", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "couch", "category":"pose", "x": 720, "y": 640 },
+                { "id": "acroyoga_pose_x_21" , "info":"loremp ipsum", "video":"qTaM5V8o03M", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "reverse#straddle throne", "category":"pose", "x": 890, "y": 715 },
+                { "id": "acroyoga_pose_x_24" , "info":"loremp ipsum", "video":"nn5NCMujhV8", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "shin to foot", "category":"pose", "x": 36, "y": 848 },
+                { "id": "acroyoga_pose_x_26" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "flamingo", "category":"pose", "x": 36, "y": 758 },
+                { "id": "acroyoga_pose_x_29" , "info":"loremp ipsum", "video":"dxY9NK9yMYw", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "maria pose", "category":"pose", "x": 36, "y": 948 },
+                { "id": "acroyoga_pose_x_31" , "info":"loremp ipsum", "video":"4WMAZ67brUc", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "high flying whale", "category":"pose", "x": 530, "y": 850 },
+                { "id": "acroyoga_pose_x_33" , "info":"loremp ipsum", "video":"3Y_Ojvvgn3g", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "candle stick/#shoulder stand", "category":"pose", "x": 345, "y": 370 },
+                { "id": "acroyoga_pose_x_35" , "info":"loremp ipsum", "video":"wPz777LU01Y", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "free shoulder stand", "category":"pose", "x": 553, "y": 370 },
+                { "id": "acroyoga_pose_x_40" , "info":"loremp ipsum", "video":"d_lto3XbRgY", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "side star", "category":"pose", "x": 36, "y": 655 },
+                { "id": "acroyoga_pose_x_42" , "info":"loremp ipsum", "video":"PZ0oq-SHHnE", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "straddle bat", "category":"pose", "x": 1201, "y": 550 },
+                { "id": "acroyoga_pose_x_44" , "info":"loremp ipsum", "video":"_erVFJvQi8g", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "inside side star", "category":"pose", "x": 1201, "y": 410 },
+                { "id": "acroyoga_pose_x_46" , "info":"loremp ipsum", "video":"_erVFJvQi8g", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "inside side star", "category":"pose", "x": 1348, "y": 490 },
+                { "id": "acroyoga_pose_x_48" , "info":"loremp ipsum", "video":"nZk8rZ1cG8c", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "reverse bird", "category":"pose", "x": 1488, "y": 490 },
+                { "id": "acroyoga_pose_x_51" , "info":"loremp ipsum", "video":"WCcijC9PyCI", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "floating paschi", "category":"pose", "x": 1348, "y": 680 },
+                { "id": "acroyoga_pose_x_55" , "info":"loremp ipsum", "video":"PLyfrobh9f4", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "backbird", "category":"pose", "x": 1302, "y": 880 },
+                { "id": "acroyoga_pose_x_57" , "info":"loremp ipsum", "video":"Vv7wtCZcoaI", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "back leaf", "category":"pose", "x": 1202, "y": 970 },
+                { "id": "acroyoga_pose_x_59" , "info":"loremp ipsum", "video":"NnzCvcTfTJg", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "boat", "category":"pose", "x": 1342, "y": 970 },
+                { "id": "acroyoga_pose_x_63" , "info":"loremp ipsum", "video":"AaiXojb-LSA", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "star", "category":"pose", "x": 900, "y": 290 },
+                { "id": "acroyoga_pose_y_5" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "handstand in/out#(head side)_", "category":"entry_exit", "x": 1152, "y": 870 },
+                { "id": "acroyoga_pose_y_8" , "info":"loremp ipsum", "video":"W9oA6iLEeMs", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "four step", "category":"washing_machine", "x": 900, "y": 190 },
+                { "id": "acroyoga_pose_y_15" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "cartwheel in_", "category":"entry_exit", "x": 1201, "y": 290 },
+                { "id": "acroyoga_pose_y_17" , "info":"loremp ipsum", "video":"row_0nk_X4w", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "low barrel roll", "category":"transition", "x": 809, "y": 480 },
+                { "id": "acroyoga_pose_y_23" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "helicopter_", "category":"transition", "x": 720, "y": 370 },
+                { "id": "acroyoga_pose_y_27" , "info":"loremp ipsum", "video":"Xk8uuOm2uwU", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "catherinas#wheel", "category":"washing_machine", "x": 413, "y": 460 },
+                { "id": "acroyoga_pose_y_30" , "info":"loremp ipsum", "video":"u5eglkm1jv0", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "monkey frog", "category":"washing_machine", "x": 980, "y": 850 },
+                { "id": "acroyoga_pose_y_33" , "info":"loremp ipsum", "video":"T-jwcZI1WbI", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "corkscrew", "category":"transition", "x": 719, "y": 290 },
+                { "id": "acroyoga_pose_y_39" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "entry / exit", "category":"entry_exit", "x": 1510, "y": 820 },
+                { "id": "acroyoga_pose_y_40" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "pose", "category":"pose", "x": 1510, "y": 913 },
+                { "id": "acroyoga_pose_y_41" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "washing machine", "category":"washing_machine", "x": 1510, "y": 1080 },
+                { "id": "acroyoga_pose_3" , "info":"loremp ipsum", "video":"phsbUzEv_us", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "bed / couch", "category":"pose", "x": 396, "y": 950 },
+                { "id": "acroyoga_pose_8" , "info":"loremp ipsum", "video":"StZQFy3EykI", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "reverse#foot to hand", "category":"pose", "x": 265, "y": 950 },
+                { "id": "acroyoga_pose_10" , "info":"loremp ipsum", "video":"8wimvXZDvSA", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "reverse star", "category":"pose", "x": 659, "y": 950 },
+                { "id": "acroyoga_pose_11" , "info":"loremp ipsum", "video":"qLP9E_mpmFs", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "bird on hand", "category":"pose", "x": 940, "y": 950 },
+                { "id": "acroyoga_pose_17" , "info":"loremp ipsum", "video":"NIlGbKM06R8", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "reverse shoulderstand", "category":"pose", "x": 839, "y": 850 },
+                { "id": "acroyoga_pose_19" , "info":"loremp ipsum", "video":"ZoUtn_Z_ULI", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "thinker#secretary", "category":"pose", "x": 700, "y": 850 },
+                { "id": "acroyoga_pose_28" , "info":"loremp ipsum", "video":"OWtMYyY6KwA", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "around the world", "category":"transition", "x": 721, "y": 720 },
+                { "id": "acroyoga_pose_36" , "info":"loremp ipsum", "video":"docOE4QT0ec", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "biceps stand", "category":"pose", "x": 552, "y": 260 },
+                { "id": "acroyoga_pose_37" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "crocodile_", "category":"pose", "x": 552, "y": 170 },
+                { "id": "acroyoga_pose_38" , "info":"loremp ipsum", "video":"c-eHZmKy3ro", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "foot to hand", "category":"pose", "x": 720, "y": 170 },
+                { "id": "acroyoga_pose_45" , "info":"loremp ipsum", "video":"xdsnsqIZaCQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "bow", "category":"pose", "x": 290, "y": 640 },
+                { "id": "acroyoga_pose_49" , "info":"loremp ipsum", "video":"c-eHZmKy3ro", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "foot to hand", "category":"pose", "x": 1020, "y": 680 },
+                { "id": "acroyoga_pose_50" , "info":"loremp ipsum", "video":"nZk8rZ1cG8c", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "reverse bird", "category":"pose", "x": 1160, "y": 680 },
+                { "id": "acroyoga_pose_60" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "handstand in/out#(legs side)_", "category":"entry_exit", "x": 340, "y": 840 },
+                { "id": "acroyoga_pose_61" , "info":"loremp ipsum", "video":"NZR0OfbYKA", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "trapdoor", "category":"transition", "x": 1252, "y": 770 },
+                { "id": "acroyoga_pose_64" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "reverse#foot to shin_", "category":"pose", "x": 527, "y": 1090 },
+                { "id": "acroyoga_pose_66" , "info":"loremp ipsum", "video":"4UAfHgjbvxY", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "tuck sit", "category":"pose", "x": 264, "y": 1090 },
+                { "id": "acroyoga_pose_67" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "revese shin#to foot_", "category":"pose", "x": 396, "y": 1090 },
+                { "id": "acroyoga_pose_68" , "info":"loremp ipsum", "video":"8wimvXZDvSA", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "reverse star", "category":"pose", "x": 345, "y": 260 },
+                { "id": "acroyoga_pose_69" , "info":"loremp ipsum", "video":"kC4daUVQEoY", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "reverse#back plank", "category":"pose", "x": 530, "y": 950 },
+                { "id": "acroyoga_pose_72" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "(reverse)#foot to foot_", "category":"pose", "x": 700, "y": 1090 },
+                { "id": "acroyoga_pose_73" , "info":"loremp ipsum", "video":"diA5w1-L2L8", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "(baby) (reverse)#hand to hand ", "category":"pose", "x": 900, "y": 1090 },
+                { "id": "acroyoga_pose_82" , "info":"loremp ipsum", "video":"93v90kJcGlE", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "rev. feet to hand ", "category":"pose", "x": 200, "y": 260 },
+                { "id": "acroyoga_pose_85" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "Rene Smit @rcsmit#CC BY-NC 4.0 ", "category":"no_box", "x": 41, "y": 1090 },
+                { "id": "acroyoga_pose_87" , "info":"loremp ipsum", "video":"iHtotyrqt1s", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "koala queen", "category":"washing_machine", "x": 1060, "y": 190 },
+                { "id": "acroyoga_pose_88" , "info":"loremp ipsum", "video":"6vi2AYwAmqw", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "spider roll", "category":"washing_machine", "x": 1040, "y": 290 },
+                { "id": "acroyoga_pose_93" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "START", "category":"start", "x": 36, "y": 430 },
+                { "id": "acroyoga_pose_96" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "transition", "category":"transition", "x": 1510, "y": 997 },
+                { "id": "acroyoga_pose_99" , "info":"loremp ipsum", "video":"a8fCNt2Qi2E", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "crunch roll", "category":"washing_machine", "x": 1111, "y": 770 },
+                { "id": "acroyoga_pose_106" , "info":"loremp ipsum", "video":"eFRgbbsVxNk", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "rotisserie", "category":"washing_machine", "x": 1356, "y": 380 },
+                { "id": "acroyoga_pose_110" , "info":"loremp ipsum", "video":"qLP9E_mpmFs", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "bird on hands", "category":"pose", "x": 210, "y": 460 },
+                { "id": "acroyoga_pose_z_2" , "info":"loremp ipsum", "video":"p1oeyEVgRfM", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "ballerina", "category":"washing_machine", "x": 180, "y": 611 },
+                { "id": "acroyoga_pose_z_5" , "info":"loremp ipsum", "video":"jbtQWzQ3v7g", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "big le moi", "category":"washing_machine", "x": 174, "y": 691 },
+                { "id": "acroyoga_pose_117" , "info":"loremp ipsum", "video":"yyOFOv-whjs", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "mermaid", "category":"transition", "x": 791, "y": 950 },
+                { "id": "acroyoga_pose_119" , "info":"loremp ipsum", "video":"yO7kJogH8cA", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "high barrel roll", "category":"washing_machine", "x": 1201, "y": 190 },
+                { "id": "acroyoga_pose_z_8" , "info":"loremp ipsum", "video":"dQw4w9WgXcQ", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "jump in_", "category":"entry_exit", "x": 345, "y": 160 },
+                { "id": "acroyoga_pose_121" , "info":"loremp ipsum", "video":"row_0nk_X4w", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "barrel roll", "category":"washing_machine", "x": 1348, "y": 570 },
+                { "id": "acroyoga_pose_123" , "info":"loremp ipsum", "video":"kyks9JyPPv8", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "buddha roll", "category":"transition", "x": 1040, "y": 610 },
+                { "id": "PljVGr8iR2YL2gw-_0Ea-3" , "info":"loremp ipsum", "video":"iy_eJDDMXYI", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "table top", "category":"pose", "x": 952, "y": 561 },
+                { "id": "acroyoga_pose_z_1" , "info":"loremp ipsum", "video":"YKj4G0J-6Xs", "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg", "label": "prasarita twist", "category":"transition", "x": 810, "y": 549 }
+            ]
+        };
+
+        // Function to create iframe HTML
+        function createIframe(videoId) {
+            return `<iframe width="280" height="157" src="https://www.youtube.com/embed/${videoId}?si=EJNPiLa76TiQBHXK" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+        }
+
+        // Function to get number of columns based on screen width
+        function getColumnsPerRow() {
+            const width = window.innerWidth;
+            if (width <= 640) return 1;
+            if (width <= 1024) return 2;
+            if (width <= 1400) return 3;
+            return 4;
+        }
+
+        // Function to generate the table
+        function generateTable() {
+            const table = document.getElementById('posesTable');
+            table.innerHTML = ''; // Clear existing content
+            
+            // Filter out nodes with video ID "dQw4w9WgXcQ"
+            const filteredNodes = data.nodes.filter(node => node.video !== 'dQw4w9WgXcQ');
+            const columnsPerRow = getColumnsPerRow();
+            
+            // Calculate number of rows needed
+            const totalRows = Math.ceil(filteredNodes.length / columnsPerRow);
+            
+            // Generate rows
+            for (let i = 0; i < totalRows; i++) {
+                const row = document.createElement('tr');
+                
+                // Generate columns for this row
+                for (let j = 0; j < columnsPerRow; j++) {
+                    const index = i * columnsPerRow + j;
+                    
+                    if (index < filteredNodes.length) {
+                        const node = filteredNodes[index];
+                        const cell = document.createElement('td');
+                        
+                        cell.innerHTML = `
+                            <div class="label">${node.label}</div>
+                            ${createIframe(node.video)}
+                        `;
+                        
+                        row.appendChild(cell);
+                    } else {
+                        // Add empty cell if we've run out of data
+                        const emptyCell = document.createElement('td');
+                        row.appendChild(emptyCell);
+                    }
+                }
+                
+                table.appendChild(row);
+            }
+        }
+
+        // Generate the table when the page loads
+        window.addEventListener('DOMContentLoaded', generateTable);
+        
+        // Regenerate table when window is resized
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(generateTable, 250);
+        });
+    </script>
+</body>
+</html>
