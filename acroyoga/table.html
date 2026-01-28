@@ -13,6 +13,61 @@
         h1 {
             text-align: center;
             color: #333;
+            margin-bottom: 30px;
+        }
+        .controls {
+            max-width: 1200px;
+            margin: 0 auto 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #2c3e50;
+        }
+        .filter-box {
+            flex: 0 0 auto;
+        }
+        .filter-box label {
+            margin-right: 10px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .filter-box select {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        .filter-box select:focus {
+            outline: none;
+            border-color: #2c3e50;
+        }
+        .results-count {
+            flex: 0 0 auto;
+            color: #666;
+            font-size: 14px;
         }
         table {
             width: 100%;
@@ -65,6 +120,20 @@
 </head>
 <body>
     <h1>Acroyoga Poses Video Gallery</h1>
+    
+    <div class="controls">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search poses by name...">
+        </div>
+        <div class="filter-box">
+            <label for="categoryFilter">Category:</label>
+            <select id="categoryFilter">
+                <option value="all">All Categories</option>
+            </select>
+        </div>
+        <div class="results-count" id="resultsCount"></div>
+    </div>
+    
     <table id="posesTable"></table>
 
     <script>
@@ -154,6 +223,58 @@
             return `<iframe width="280" height="157" src="https://www.youtube.com/embed/${videoId}?si=EJNPiLa76TiQBHXK" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
         }
 
+        // Function to get unique categories
+        function getCategories() {
+            const categories = new Set();
+            data.nodes.forEach(node => {
+                if (node.video !== 'dQw4w9WgXcQ') {
+                    categories.add(node.category);
+                }
+            });
+            return Array.from(categories).sort();
+        }
+
+        // Function to populate category dropdown
+        function populateCategoryFilter() {
+            const categoryFilter = document.getElementById('categoryFilter');
+            const categories = getCategories();
+            
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category.replace(/_/g, ' ');
+                categoryFilter.appendChild(option);
+            });
+        }
+
+        // Function to filter nodes based on search and category
+        function filterNodes() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedCategory = document.getElementById('categoryFilter').value;
+            
+            let filtered = data.nodes.filter(node => node.video !== 'dQw4w9WgXcQ');
+            
+            // Filter by search term
+            if (searchTerm) {
+                filtered = filtered.filter(node => 
+                    node.label.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Filter by category
+            if (selectedCategory !== 'all') {
+                filtered = filtered.filter(node => node.category === selectedCategory);
+            }
+            
+            return filtered;
+        }
+
+        // Function to update results count
+        function updateResultsCount(count, total) {
+            const resultsCount = document.getElementById('resultsCount');
+            resultsCount.textContent = `Showing ${count} of ${total} poses`;
+        }
+
         // Function to get number of columns based on screen width
         function getColumnsPerRow() {
             const width = window.innerWidth;
@@ -168,8 +289,13 @@
             const table = document.getElementById('posesTable');
             table.innerHTML = ''; // Clear existing content
             
-            // Filter out nodes with video ID "dQw4w9WgXcQ"
-            const filteredNodes = data.nodes.filter(node => node.video !== 'dQw4w9WgXcQ');
+            // Get filtered nodes
+            const filteredNodes = filterNodes();
+            const totalNodes = data.nodes.filter(node => node.video !== 'dQw4w9WgXcQ').length;
+            
+            // Update results count
+            updateResultsCount(filteredNodes.length, totalNodes);
+            
             const columnsPerRow = getColumnsPerRow();
             
             // Calculate number of rows needed
@@ -202,10 +328,30 @@
                 
                 table.appendChild(row);
             }
+            
+            // Show message if no results
+            if (filteredNodes.length === 0) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.setAttribute('colspan', columnsPerRow);
+                cell.style.textAlign = 'center';
+                cell.style.padding = '40px';
+                cell.style.color = '#666';
+                cell.innerHTML = '<h3>No poses found</h3><p>Try adjusting your search or filter.</p>';
+                row.appendChild(cell);
+                table.appendChild(row);
+            }
         }
 
-        // Generate the table when the page loads
-        window.addEventListener('DOMContentLoaded', generateTable);
+        // Initialize the page
+        window.addEventListener('DOMContentLoaded', function() {
+            populateCategoryFilter();
+            generateTable();
+            
+            // Add event listeners for search and filter
+            document.getElementById('searchInput').addEventListener('input', generateTable);
+            document.getElementById('categoryFilter').addEventListener('change', generateTable);
+        });
         
         // Regenerate table when window is resized
         let resizeTimer;
