@@ -365,6 +365,39 @@
       transition: width 0.3s ease;
     }
 
+    .pre-countdown-display {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      animation: preCountPulse 0.25s ease-out;
+    }
+
+    .pre-countdown-display.visible {
+      display: flex;
+    }
+
+    .pre-countdown-number {
+      font-size: 5rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--accent-warning);
+      text-shadow: 0 0 32px rgba(245, 166, 35, 0.7);
+      letter-spacing: -0.02em;
+    }
+
+    .pre-countdown-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-sub);
+    }
+
+    @keyframes preCountPulse {
+      0%   { transform: scale(1.5); opacity: 0; }
+      100% { transform: scale(1);   opacity: 1; }
+    }
+
     @media (max-width: 480px) {
       .timer-card {
         width: 280px;
@@ -420,7 +453,7 @@
       </div>
       <div class="input-container">
         <label for="secondInput">Seconds</label>
-        <input type="number" id="secondInput" value="5" min="0" max="59">
+        <input type="number" id="secondInput" value="0" min="0" max="59">
       </div>
     </div>
 
@@ -472,6 +505,10 @@
             />
           </svg>
           <div class="time-content">
+            <div class="pre-countdown-display" id="preCountdownDisplay">
+              <div class="pre-countdown-number" id="preCountdownNumber">5</div>
+              <div class="pre-countdown-label">Get Ready</div>
+            </div>
             <div id="timerDisplay">00:01:00</div>
             <div id="timerSubtitle">REMAINING</div>
           </div>
@@ -523,7 +560,7 @@
 
     let running = false;
     let countingDown = true;
-    let startTime = 65;
+    let startTime = 60;
     let seconds = startTime;
     let audioContext;
     let audioBuffers = {};
@@ -655,7 +692,7 @@
     }
 
     function loadBeepSound() {
-      fetch('beep.wav')
+      fetch('audio-numbers/beep.wav')
         .then(r => r.arrayBuffer())
         .then(buf => audioContext.decodeAudioData(buf))
         .then(decoded => { beepBuffer = decoded; })
@@ -717,16 +754,22 @@
 
     function showPreCountNumber(n) {
       flashWhite();
-      playBeep();
       screamNumber(n);
-      const pad = String(n).padStart(2, '0');
-      timerDisplay.textContent = '00:00:' + pad;
-      timerSubtitle.textContent = 'GET READY';
-      setRingProgress(0);
+      const display = document.getElementById('preCountdownDisplay');
+      const number  = document.getElementById('preCountdownNumber');
+      number.textContent = n;
+      // Re-trigger the pulse animation
+      display.classList.remove('visible');
+      void display.offsetWidth; // reflow
+      display.classList.add('visible');
     }
 
     function beginActualTimer() {
       preCountdownActive = false;
+      const display = document.getElementById('preCountdownDisplay');
+      if (display) display.classList.remove('visible');
+      playBeep();
+      setTimeout(() => screamNumber(seconds), 600);
       running = true;
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(updateTimer, 1000);
@@ -765,6 +808,8 @@
       if (preCountdownActive) {
         preCountdownActive = false;
         document.body.style.backgroundColor = '';
+        const d = document.getElementById('preCountdownDisplay');
+        if (d) d.classList.remove('visible');
       }
       updateTimerDisplay();
     }
@@ -782,6 +827,8 @@
       if (preCountdownActive) {
         preCountdownActive = false;
         document.body.style.backgroundColor = '';
+        const d = document.getElementById('preCountdownDisplay');
+        if (d) d.classList.remove('visible');
       }
       if (countingDown) {
         seconds = startTime;
