@@ -428,20 +428,6 @@
       <label for="intervalInput">Interval to scream (seconds)</label>
       <input type="number" id="intervalInput" value="10">
     </div>
-
-    <h2>Pre-countdown</h2>
-    <div class="toggle-container">
-      <span style="font-size:0.9rem;">Enable pre-countdown</span>
-      <label class="toggle-switch" style="margin-left:auto;">
-        <input type="checkbox" class="toggle" id="preCountdownToggle" checked>
-        <span class="toggle-indicator" id="preCountdownIndicator"></span>
-      </label>
-    </div>
-    <div class="input-container" style="margin-top:8px;">
-      <label for="preCountdownInput">Pre-countdown seconds</label>
-      <input type="number" id="preCountdownInput" value="5" min="1" max="30" style="width:64px;">
-    </div>
-
     <button id="setStartTimeBtn">Set Start Time</button>
     <button class="menu-close-btn" id="menuCloseBtn">✕</button>
 
@@ -531,10 +517,6 @@
     let timerInterval;
     let ringRadius;
     let ringCircumference;
-    let preCountdownActive = false;
-    let preCountdownSeconds = 0;
-    let preCountdownInterval = null;
-    let beepBuffer = null;
 
     function initProgressRing() {
       ringRadius = progressRing.r.baseVal.value;
@@ -559,7 +541,6 @@
         audioContext.resume().catch(() => {});
       }
       loadAudioFiles();
-      loadBeepSound();
     }
 
     function resumeAudioContext() {
@@ -654,86 +635,6 @@
       updateTimerDisplay();
     }
 
-    function loadBeepSound() {
-      fetch('beep.wav')
-        .then(r => r.arrayBuffer())
-        .then(buf => audioContext.decodeAudioData(buf))
-        .then(decoded => { beepBuffer = decoded; })
-        .catch(() => {});
-    }
-
-    function playBeep() {
-      if (!beepBuffer || !audioContext) return;
-      const src = audioContext.createBufferSource();
-      src.buffer = beepBuffer;
-      src.connect(audioContext.destination);
-      src.start(0);
-    }
-
-    function flashWhite() {
-      document.body.style.backgroundColor = '#ffffff';
-      setTimeout(() => {
-        document.body.style.backgroundColor = '';
-      }, 250);
-    }
-
-    function startPreCountdown() {
-      const preToggle = document.getElementById('preCountdownToggle');
-      const preInput = document.getElementById('preCountdownInput');
-
-      if (!preToggle.checked) {
-        beginActualTimer();
-        return;
-      }
-
-      const preSeconds = parseInt(preInput.value || '5', 10);
-      if (isNaN(preSeconds) || preSeconds < 1) {
-        beginActualTimer();
-        return;
-      }
-
-      preCountdownActive = true;
-      preCountdownSeconds = preSeconds;
-      running = true;
-
-      showPreCountNumber(preCountdownSeconds);
-
-      if (preCountdownInterval) clearInterval(preCountdownInterval);
-      preCountdownInterval = setInterval(() => {
-        preCountdownSeconds--;
-        if (preCountdownSeconds <= 0) {
-          clearInterval(preCountdownInterval);
-          preCountdownInterval = null;
-          preCountdownActive = false;
-          document.body.style.backgroundColor = '';
-          timerSubtitle.textContent = countingDown ? 'REMAINING' : 'ELAPSED';
-          beginActualTimer();
-        } else {
-          showPreCountNumber(preCountdownSeconds);
-        }
-      }, 1000);
-      updateControls();
-    }
-
-    function showPreCountNumber(n) {
-      flashWhite();
-      playBeep();
-      screamNumber(n);
-      const pad = String(n).padStart(2, '0');
-      timerDisplay.textContent = '00:00:' + pad;
-      timerSubtitle.textContent = 'GET READY';
-      setRingProgress(0);
-    }
-
-    function beginActualTimer() {
-      preCountdownActive = false;
-      running = true;
-      if (timerInterval) clearInterval(timerInterval);
-      timerInterval = setInterval(updateTimer, 1000);
-      updateTimerDisplay();
-      updateControls();
-    }
-
     function startTimer() {
       if (!audioContext) {
         initAudioContext();
@@ -742,12 +643,9 @@
       }
 
       if (!running) {
-        const atStart = (countingDown && seconds === startTime) || (!countingDown && seconds === 0);
-        if (atStart) {
-          startPreCountdown();
-        } else {
-          beginActualTimer();
-        }
+        running = true;
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(updateTimer, 1000);
       }
       updateControls();
     }
@@ -758,14 +656,6 @@
         clearInterval(timerInterval);
         timerInterval = null;
       }
-      if (preCountdownInterval) {
-        clearInterval(preCountdownInterval);
-        preCountdownInterval = null;
-      }
-      if (preCountdownActive) {
-        preCountdownActive = false;
-        document.body.style.backgroundColor = '';
-      }
       updateTimerDisplay();
     }
 
@@ -774,14 +664,6 @@
       if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
-      }
-      if (preCountdownInterval) {
-        clearInterval(preCountdownInterval);
-        preCountdownInterval = null;
-      }
-      if (preCountdownActive) {
-        preCountdownActive = false;
-        document.body.style.backgroundColor = '';
       }
       if (countingDown) {
         seconds = startTime;
@@ -941,7 +823,7 @@
       }
       mainControlBtn.disabled = false;
 
-      if (running || preCountdownActive) {
+      if (running) {
         mainControlBtn.textContent = '⏸';
       } else {
         const showStart =
@@ -982,13 +864,6 @@
         toggleIndicator.style.left = countingDown ? '2px' : '28px';
         timeInput.style.display = 'flex';
         setStartTime();
-      });
-
-      const preToggle = document.getElementById('preCountdownToggle');
-      const preIndicator = document.getElementById('preCountdownIndicator');
-      preIndicator.style.left = preToggle.checked ? '28px' : '2px';
-      preToggle.addEventListener('change', () => {
-        preIndicator.style.left = preToggle.checked ? '28px' : '2px';
       });
 
       document.body.addEventListener('touchstart', function () {
