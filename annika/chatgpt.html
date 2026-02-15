@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Countdown Trainer</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    body { margin: 0; background: #0b0d12; color: #f5f7ff; }
+    .wrap { max-width: 520px; margin: 0 auto; padding: 16px; }
+    .card { background: #121626; border: 1px solid #1d2440; border-radius: 16px; padding: 14px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .row1 { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    label { font-size: 12px; opacity: 0.9; display: block; margin-bottom: 6px; }
+    input, select, button {
+      width: 100%;
+      font-size: 16px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid #2a3358;
+      background: #0f1322;
+      color: #f5f7ff;
+      outline: none;
+    }
+    input:focus, select:focus { border-color: #4b63ff; }
+    button { cursor: pointer; border-color: #3a4cff; background: #1a2cff; }
+    button.secondary { border-color: #2a3358; background: #0f1322; }
+    button.danger { border-color: #ff3a5c; background: #3a0f1a; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .timeBox { text-align: center; padding: 18px 10px; border-radius: 16px; background: #0f1322; border: 1px solid #1d2440; }
+    .phase { font-size: 12px; opacity: 0.85; letter-spacing: 0.08em; text-transform: uppercase; }
+    .big { font-size: 72px; font-weight: 800; line-height: 1; margin: 10px 0 6px; }
+    .small { font-size: 14px; opacity: 0.9; }
+    .hint { font-size: 12px; opacity: 0.75; line-height: 1.4; }
+    .divider { height: 12px; }
+    @media (max-width: 380px) {
+      .big { font-size: 62px; }
+      .row { grid-template-columns: 1fr; }
+      .buttons { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="timeBox" aria-live="polite">
+        <div class="phase" id="phase">Ready</div>
+        <div class="big" id="display">--</div>
+        <div class="small" id="sub">Tap Enable audio, then Start</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="buttons">
+        <button id="enableAudioBtn" class="secondary">Enable audio</button>
+        <button id="startBtn">Start</button>
+        <button id="pauseBtn" class="secondary" disabled>Pause</button>
+        <button id="stopBtn" class="danger" disabled>Stop</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row">
+        <div>
+          <label for="preSeconds">Pre countdown seconds</label>
+          <input id="preSeconds" type="number" min="0" max="600" step="1" value="5" inputmode="numeric" />
+        </div>
+        <div>
+          <label for="mainSeconds">Countdown seconds</label>
+          <input id="mainSeconds" type="number" min="1" max="7200" step="1" value="60" inputmode="numeric" />
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row">
+        <div>
+          <label for="mode">Mode</label>
+          <select id="mode">
+            <option value="down" selected>Count down</option>
+            <option value="up">Count up</option>
+          </select>
+        </div>
+        <div>
+          <label for="audioExt">Audio file type</label>
+          <select id="audioExt">
+            <option value="mp3" selected>mp3</option>
+            <option value="wav">wav</option>
+            <option value="m4a">m4a</option>
+            <option value="aac">aac</option>
+            <option value="ogg">ogg</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="row1">
+        <div class="hint">
+          Folder needed: <b>audio-numbers/</b> with files like <b>0.mp3</b>, <b>1.mp3</b>, ... <b>60.mp3</b>.
+          If a file is missing, it falls back to your device voice.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---------- DOM ----------
+    const display = document.getElementById("display");
+    const phaseEl = document.getElementById("phase");
+    const sub = document.getElementById("sub");
+
+    const preSecondsEl = document.getElementById("preSeconds");
+    const mainSecondsEl = document.getElementById("mainSeconds");
+    const modeEl = document.getElementById("mode");
+    const audioExtEl = document.getElementById("audioExt");
+
+    const enableAudioBtn = document.getElementById("enableAudioBtn");
+    const startBtn = document.getElementById("startBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const stopBtn = document.getElementById("stopBtn");
+
+    // ---------- State ----------
+    let audioReady = false;
+    let audioCtx = null;
+
+    let timer = null;
+    let running = false;
+    let paused = false;
+
+    let preTotal = 5;
+    let mainTotal = 60;
+    let mode = "down";
+
+    let stage = "idle"; // idle | pre | main | done
+    let t = 0;          // ticks in current stage
+    let lastSpokenValue = null;
+
+    // cache loaded audio elements (simple, iOS-friendly)
+    const audioCache = new Map();
+
+    // ---------- Helpers ----------
+    function clampInt(v, min, max, fallback) {
+      const n = Number.parseInt(v, 10);
+      if (Number.isNaN(n)) return fallback;
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function setUIState() {
+      pauseBtn.disabled = !running;
+      stopBtn.disabled = !running;
+      startBtn.disabled = running && !paused; // allow start to resume when paused? we use Pause button for that
+      pauseBtn.textContent = paused ? "Resume" : "Pause";
+    }
+
+    function setDisplay(value, phase, subtitle) {
+      display.textContent = value;
+      phaseEl.textContent = phase;
+      sub.textContent = subtitle;
+    }
+
+    // iOS: audio must start after a user gesture
+    async function ensureAudioUnlocked() {
+      if (audioReady) return true;
+
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) {
+        audioReady = false;
+        sub.textContent = "No AudioContext. Audio may be limited on this device.";
+        return false;
+      }
+
+      audioCtx = new AudioContext();
+
+      // play a tiny silent buffer to unlock
+      const buffer = audioCtx.createBuffer(1, 1, 22050);
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.connect(audioCtx.destination);
+      source.start(0);
+
+      // also try resume
+      if (audioCtx.state === "suspended") {
+        try { await audioCtx.resume(); } catch (e) {}
+      }
+
+      audioReady = true;
+      sub.textContent = "Audio enabled";
+      return true;
+    }
+
+    function toneBeep(durationMs = 180, freq = 880) {
+      if (!audioCtx) return;
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = "sine";
+      o.frequency.value = freq;
+
+      g.gain.value = 0.0001;
+      o.connect(g);
+      g.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + durationMs / 1000);
+
+      o.start(now);
+      o.stop(now + durationMs / 1000 + 0.02);
+    }
+
+    function speakFallbackNumber(n) {
+      if (!("speechSynthesis" in window)) return;
+      const u = new SpeechSynthesisUtterance(String(n));
+      u.rate = 1.0;
+      u.pitch = 1.0;
+      u.volume = 1.0;
+      window.speechSynthesis.cancel();
+      window.speechSynthesis.speak(u);
+    }
+
+    function getAudioPath(n) {
+      const ext = audioExtEl.value || "mp3";
+      return `audio-numbers/${n}.${ext}`;
+    }
+
+    async function playNumberAudio(n) {
+      // prefer files, fallback to speech
+      const key = `${n}.${audioExtEl.value || "mp3"}`;
+
+      try {
+        let a = audioCache.get(key);
+        if (!a) {
+          a = new Audio(getAudioPath(n));
+          a.preload = "auto";
+          a.playsInline = true;
+          a.crossOrigin = "anonymous";
+          audioCache.set(key, a);
+        }
+
+        // reset and play
+        a.pause();
+        a.currentTime = 0;
+
+        const p = a.play();
+        if (p && typeof p.then === "function") await p;
+      } catch (e) {
+        speakFallbackNumber(n);
+      }
+    }
+
+    function shouldSpeakMain(valueRemainingOrElapsed, secondsLeftIfDown) {
+      // Speak every 10 seconds
+      // For last 10 seconds of countdown, speak every second
+      if (mode === "down") {
+        if (secondsLeftIfDown <= 10) return true;
+        return (secondsLeftIfDown % 10 === 0);
+      } else {
+        // count up: speak on 10s marks, and in the last 10 seconds of total time speak each second
+        const secondsElapsed = valueRemainingOrElapsed;
+        const secondsLeft = Math.max(0, mainTotal - secondsElapsed);
+        if (secondsLeft <= 10) return true;
+        return (secondsElapsed % 10 === 0);
+      }
+    }
+
+    async function speakIfNeededMain() {
+      let shown = 0;
+      let secondsLeft = 0;
+
+      if (mode === "down") {
+        secondsLeft = Math.max(0, mainTotal - t);
+        shown = secondsLeft;
+      } else {
+        const elapsed = Math.min(mainTotal, t);
+        shown = elapsed;
+        secondsLeft = Math.max(0, mainTotal - elapsed);
+      }
+
+      if (!shouldSpeakMain(shown, secondsLeft)) return;
+      if (lastSpokenValue === shown) return;
+
+      lastSpokenValue = shown;
+      await playNumberAudio(shown);
+    }
+
+    async function speakIfNeededPre() {
+      const preLeft = Math.max(0, preTotal - t);
+      if (preTotal <= 0) return;
+
+      // show and speak 5..1 style
+      if (preLeft > 0 && preLeft <= preTotal) {
+        if (lastSpokenValue !== preLeft) {
+          lastSpokenValue = preLeft;
+          await playNumberAudio(preLeft);
+        }
+      }
+    }
+
+    function readSettings() {
+      preTotal = clampInt(preSecondsEl.value, 0, 600, 5);
+      mainTotal = clampInt(mainSecondsEl.value, 1, 7200, 60);
+      mode = modeEl.value === "up" ? "up" : "down";
+    }
+
+    function resetState() {
+      stage = "idle";
+      t = 0;
+      lastSpokenValue = null;
+      running = false;
+      paused = false;
+      if (timer) clearInterval(timer);
+      timer = null;
+      setUIState();
+      setDisplay("--", "Ready", "Tap Enable audio, then Start");
+    }
+
+    // ---------- Main loop ----------
+    async function tick() {
+      if (!running || paused) return;
+
+      if (stage === "pre") {
+        const preLeft = Math.max(0, preTotal - t);
+        setDisplay(String(preLeft), "Pre countdown", "Get ready");
+
+        await speakIfNeededPre();
+
+        if (preLeft === 0) {
+          // transition to main
+          toneBeep(260, 988);
+          stage = "main";
+          t = 0;
+          lastSpokenValue = null;
+          return;
+        }
+
+        t += 1;
+        return;
+      }
+
+      if (stage === "main") {
+        let shown = 0;
+        if (mode === "down") {
+          const left = Math.max(0, mainTotal - t);
+          shown = left;
+          setDisplay(String(shown), "Countdown", "Speak each 10s, last 10s each second");
+        } else {
+          const elapsed = Math.min(mainTotal, t);
+          shown = elapsed;
+          setDisplay(String(shown), "Countup", "Speak each 10s, last 10s each second");
+        }
+
+        await speakIfNeededMain();
+
+        const done = (t >= mainTotal);
+        if (done) {
+          toneBeep(420, 660);
+          stage = "done";
+          running = false;
+          paused = false;
+          setUIState();
+          setDisplay("0", "Done", "Finished");
+          return;
+        }
+
+        t += 1;
+        return;
+      }
+    }
+
+    async function start() {
+      readSettings();
+
+      // iOS: best results if audio is enabled first, but we still try here
+      await ensureAudioUnlocked();
+
+      if (!running) {
+        running = true;
+        paused = false;
+        lastSpokenValue = null;
+
+        stage = (preTotal > 0) ? "pre" : "main";
+        t = 0;
+
+        if (stage === "main") {
+          toneBeep(260, 988);
+        }
+
+        setUIState();
+        if (timer) clearInterval(timer);
+        timer = setInterval(() => { tick(); }, 1000);
+        tick();
+      }
+    }
+
+    function pauseToggle() {
+      if (!running) return;
+      paused = !paused;
+      setUIState();
+      sub.textContent = paused ? "Paused" : "Running";
+    }
+
+    function stop() {
+      if (timer) clearInterval(timer);
+      timer = null;
+      running = false;
+      paused = false;
+      stage = "idle";
+      t = 0;
+      lastSpokenValue = null;
+      setUIState();
+      setDisplay("--", "Stopped", "Tap Start to run again");
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+    }
+
+    // ---------- Events ----------
+    enableAudioBtn.addEventListener("click", async () => {
+      await ensureAudioUnlocked();
+      toneBeep(140, 880);
+    });
+
+    startBtn.addEventListener("click", start);
+    pauseBtn.addEventListener("click", pauseToggle);
+    stopBtn.addEventListener("click", stop);
+
+    // Auto stop on background to avoid iOS weird audio states
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && running && !paused) {
+        paused = true;
+        setUIState();
+        sub.textContent = "Paused";
+      }
+    });
+
+    resetState();
+  </script>
+</body>
+</html>
