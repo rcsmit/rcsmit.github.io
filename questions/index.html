@@ -1,37 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Question App</title>
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b1220" />
+  <title>Question Cards</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-
-  <div class="container">
-    <!-- Logo in the top left -->
-    <div class="logo">
-      <img src="logo.png" alt="Logo" id="logo">
+  <header class="app-header" role="banner">
+    <div class="brand">
+      <img src="logo.png" alt="App logo" class="brand-logo" />
+      <div class="brand-text">
+        <div class="brand-title">Question Cards</div>
+        <div class="brand-subtitle" id="subtitle">Pick a category and tap Next</div>
+      </div>
     </div>
 
-    <!-- Dropdown menu in the top right -->
-    <div class="dropdown">
-      <select id="categorySelect" onchange="filterQuestions()">
-        <option value="All">All Categories</option>
-        <!-- <option value="General">General</option>
-        <option value="Superpower">Superpower</option> -->
-      </select>
-    </div>
+    <div class="controls">
+      <label class="select-wrap" aria-label="Category">
+        <span class="select-label">Category</span>
+        <select id="categorySelect"></select>
+      </label>
 
-    <!-- Display Question -->
-    <div class="question-container">
-      <p id="questionText" class="questionText">WELCOME !</p>
+      <button class="btn btn-ghost" id="shuffleButton" type="button" title="Shuffle">
+        Shuffle
+      </button>
     </div>
+  </header>
 
-    <!-- Next Button -->
-    <button id="nextButton" onclick="nextQuestion()">Next</button>
-  </div>
+  <main class="app-main" role="main">
+    <section class="card" aria-live="polite">
+      <div class="card-top">
+        <span class="pill" id="categoryPill">All</span>
+        <span class="counter" id="counter">0/0</span>
+      </div>
+
+      <div class="question" id="questionText">Welcome</div>
+
+      <div class="card-actions">
+        <button class="btn btn-ghost" id="copyButton" type="button">Copy</button>
+        <button class="btn btn-primary" id="nextButton" type="button">Next</button>
+      </div>
+    </section>
+
+    <p class="hint" id="hint">Tip: press Space or Enter for Next</p>
+  </main>
 
   <script src="script.js"></script>
 </body>
