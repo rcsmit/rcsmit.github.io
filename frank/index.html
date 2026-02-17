@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frank The Ropeman – Flow Rope Artist</title>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Kanit:ital,wght@0,300;0,400;0,600;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --sand: #F5E6C8;
+      --ocean: #0A7EA4;
+      --deep: #003F5C;
+      --coral: #FF5733;
+      --gold: #F4A923;
+      --palm: #2C6E49;
+      --white: #FAFAF5;
+      --rope: #C8944A;
+    }
+/* 
+  :root{
+    --sand:#F7F1E6;
+    --paper:#FFFDF8;
+    --ink:#0B2233;
+    --ocean:#0A7EA4;
+    --deep:#EAF2F7;
+    --coral:#FF5733;
+    --gold:#F4A923;
+    --palm:#2C6E49;
+    --rope:#C8944A;
+    --panel: rgba(255,255,255,.72);
+    --line: rgba(11,34,51,.12);
+  } */
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--deep);
+      color: var(--white);
+      font-family: 'Kanit', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* CUSTOM CURSOR */
+    .cursor {
+      position: fixed;
+      width: 20px; height: 20px;
+      border: 2px solid var(--gold);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: width .2s, height .2s, background .2s;
+      mix-blend-mode: screen;
+    }
+    .cursor.hovered {
+      width: 40px; height: 40px;
+      background: rgba(244,169,35,.15);
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 3rem;
+      background: linear-gradient(to bottom, rgba(0,30,50,.9) 0%, transparent 100%);
+      backdrop-filter: blur(2px);
+    }
+    .nav-logo {
+      font-family: 'Black Ops One', cursive;
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+      color: var(--gold);
+      text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a {
+      color: var(--sand);
+      text-decoration: none;
+      font-family: 'Space Mono', monospace;
+      font-size: .75rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      position: relative;
+      transition: color .3s;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute; bottom: -4px; left: 0; width: 0; height: 1px;
+      background: var(--gold);
+      transition: width .3s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-links a:hover::after { width: 100%; }
+
+    /* ─── HERO ─── */
+    .hero {
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* Animated rope rings background */
+    .rope-bg {
+      position: absolute; inset: 0;
+      overflow: hidden;
+    }
+    .rope-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid;
+      opacity: 0;
+      animation: expand 8s ease-out infinite;
+    }
+    .rope-ring:nth-child(1) { width: 200px; height: 200px; top: 20%; left: 60%; border-color: rgba(200,148,74,.3); animation-delay: 0s; }
+    .rope-ring:nth-child(2) { width: 350px; height: 350px; top: 15%; left: 55%; border-color: rgba(200,148,74,.2); animation-delay: 1.5s; }
+    .rope-ring:nth-child(3) { width: 500px; height: 500px; top: 10%; left: 50%; border-color: rgba(244,169,35,.15); animation-delay: 3s; }
+    .rope-ring:nth-child(4) { width: 700px; height: 700px; top: 3%; left: 44%; border-color: rgba(244,169,35,.08); animation-delay: 4.5s; }
+    .rope-ring:nth-child(5) { width: 100px; height: 100px; top: 60%; left: 25%; border-color: rgba(255,87,51,.2); animation-delay: 2s; }
+    .rope-ring:nth-child(6) { width: 200px; height: 200px; top: 57%; left: 21%; border-color: rgba(255,87,51,.12); animation-delay: 3.5s; }
+
+    @keyframes expand {
+      0% { opacity: 0; transform: scale(.6) rotate(0deg); }
+      20% { opacity: 1; }
+      100% { opacity: 0; transform: scale(1.4) rotate(15deg); }
+    }
+
+    /* Diagonal divider stripe */
+    .hero::after {
+      content: '';
+      position: absolute;
+      top: -10%; right: -5%;
+      width: 50%; height: 130%;
+      background: linear-gradient(135deg, rgba(10,126,164,.15), rgba(0,63,92,.4));
+      clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);
+      border-left: 1px solid rgba(200,148,74,.3);
+    }
+
+    .hero-content {
+      position: relative; z-index: 2;
+      padding: 0 3rem;
+      max-width: 700px;
+      animation: heroIn 1.2s cubic-bezier(.16,1,.3,1) both;
+    }
+    @keyframes heroIn {
+      from { opacity: 0; transform: translateY(60px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-label {
+      font-family: 'Space Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.5rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .hero-label::before {
+      content: '';
+      display: inline-block;
+      width: 40px; height: 1px;
+      background: var(--gold);
+    }
+
+    .hero h1 {
+      font-family: 'Black Ops One', cursive;
+      font-size: clamp(3.5rem, 9vw, 7.5rem);
+      line-height: .95;
+      color: var(--white);
+      text-shadow: 0 0 80px rgba(200,148,74,.3);
+    }
+    .hero h1 span {
+      color: var(--gold);
+      display: block;
+    }
+    .hero h1 em {
+      font-style: normal;
+      color: var(--coral);
+    }
+
+    .hero-sub {
+      margin-top: 2rem;
+      font-size: 1.15rem;
+      font-weight: 300;
+      color: rgba(245,230,200,.8);
+      line-height: 1.7;
+      max-width: 440px;
+    }
+
+    .hero-ctas {
+      margin-top: 3rem;
+      display: flex; gap: 1.2rem; flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: .6rem;
+      padding: .85rem 2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: .75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: none;
+      cursor: none;
+      transition: all .3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,.1);
+      transform: translateX(-101%);
+      transition: transform .3s ease;
+    }
+    .btn:hover::before { transform: translateX(0); }
+
+    .btn-primary {
+      background: var(--coral);
+      color: var(--white);
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--gold);
+      border: 1px solid var(--gold);
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,.3); }
+
+    /* scroll hint */
+    .scroll-hint {
+      position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: .5rem;
+      color: rgba(245,230,200,.4);
+      font-family: 'Space Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: 3px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+    .scroll-hint svg { opacity: .5; }
+    @keyframes bounce {
+      0%,100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(8px); }
+    }
+
+    /* ─── SECTION STYLES ─── */
+    section { padding: 6rem 3rem; }
+
+    .section-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+    h2 {
+      font-family: 'Black Ops One', cursive;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ─── ABOUT ─── */
+    .about {
+      background: linear-gradient(135deg, #001A2C 0%, #003F5C 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .about::before {
+      content: 'FLOW';
+      position: absolute;
+      font-family: 'Black Ops One', cursive;
+      font-size: 20rem;
+      color: rgba(255,255,255,.02);
+      top: -3rem; right: -3rem;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: center;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .about-photo {
+      position: relative;
+    }
+    .about-photo img {
+      width: 100%;
+      height: 550px;
+      object-fit: cover;
+      object-position: top;
+      clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+      filter: saturate(1.1);
+    }
+    .about-photo::after {
+      content: '';
+      position: absolute;
+      bottom: -15px; right: -15px;
+      width: 100%; height: 100%;
+      border: 2px solid var(--gold);
+      clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+      z-index: -1;
+    }
+    .about-photo::before {
+      content: '';
+      position: absolute;
+      top: -15px; left: -15px;
+      width: 100%; height: 100%;
+      border: 1px solid var(--coral);
+      clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%);
+      z-index: -1;
+    }
+    .about-text { }
+    .about-text p {
+      color: rgba(245,230,200,.8);
+      line-height: 1.9;
+      font-size: 1.05rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-row {
+      display: flex; gap: 3rem;
+      margin-top: 2.5rem;
+      padding-top: 2.5rem;
+      border-top: 1px solid rgba(200,148,74,.2);
+    }
+    .stat { }
+    .stat-num {
+      font-family: 'Black Ops One', cursive;
+      font-size: 2.5rem;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .stat-label {
+      font-family: 'Space Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: 2px;
+      color: rgba(245,230,200,.5);
+      text-transform: uppercase;
+      margin-top: .3rem;
+    }
+
+    /* ─── SERVICES ─── */
+    .services {
+      background: var(--deep);
+      position: relative;
+    }
+    .services-header {
+      max-width: 1100px;
+      margin: 0 auto 4rem;
+    }
+    .services-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5px;
+      background: rgba(200,148,74,.15);
+    }
+    .service-card {
+      background: #001828;
+      padding: 3rem 2.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: background .3s;
+    }
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--coral), var(--gold));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .4s ease;
+    }
+    .service-card:hover { background: #001e32; }
+    .service-card:hover::before { transform: scaleX(1); }
+
+    .service-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      display: block;
+    }
+    .service-card h3 {
+      font-family: 'Black Ops One', cursive;
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+      color: var(--white);
+    }
+    .service-card p {
+      color: rgba(245,230,200,.65);
+      line-height: 1.8;
+      font-size: .95rem;
+    }
+    .service-price {
+      margin-top: 2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: .75rem;
+      color: var(--gold);
+      letter-spacing: 1px;
+    }
+    .service-cta {
+      display: inline-block;
+      margin-top: 1.5rem;
+      color: var(--coral);
+      font-family: 'Space Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255,87,51,.3);
+      padding-bottom: 2px;
+      transition: border-color .3s, color .3s;
+      cursor: none;
+    }
+    .service-cta:hover { color: var(--gold); border-color: var(--gold); }
+
+    /* ─── FLOW ROPE SCIENCE ─── */
+    .flowrope {
+      background: linear-gradient(160deg, #001A2C 0%, #002235 60%, #003050 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .flowrope-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 5rem;
+      align-items: center;
+    }
+    .flowrope-content h2 { }
+    .flowrope-content p {
+      color: rgba(245,230,200,.75);
+      line-height: 1.9;
+      font-size: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .benefit-list {
+      list-style: none;
+      margin-top: 2rem;
+      display: grid;
+      gap: .8rem;
+    }
+    .benefit-list li {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      color: rgba(245,230,200,.8);
+      font-size: .95rem;
+    }
+    .benefit-list li::before {
+      content: '→';
+      color: var(--gold);
+      font-family: 'Space Mono', monospace;
+      flex-shrink: 0;
+    }
+
+    /* Animated rope visual */
+    .rope-visual {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .rope-art {
+      position: relative;
+      width: 320px;
+      height: 320px;
+    }
+    .rope-art svg {
+      width: 100%;
+      height: 100%;
+    }
+    .orbit-text {
+      position: absolute;
+      inset: 0;
+      animation: rotate-slow 15s linear infinite;
+    }
+
+    @keyframes rotate-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* ─── GALLERY ─── */
+    .gallery {
+      background: #000F1A;
+    }
+    .gallery-inner { max-width: 1100px; margin: 0 auto; }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: auto auto;
+      gap: 1rem;
+      margin-top: 3rem;
+    }
+    .gallery-item {
+      overflow: hidden;
+      position: relative;
+    }
+    .gallery-item:first-child {
+      grid-column: 1 / 3;
+      grid-row: 1 / 3;
+    }
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+      min-height: 280px;
+      transition: transform .6s ease, filter .3s;
+      filter: saturate(.9);
+    }
+    .gallery-item:hover img {
+      transform: scale(1.05);
+      filter: saturate(1.2);
+    }
+    .gallery-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,15,26,.8) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity .4s;
+      display: flex;
+      align-items: flex-end;
+      padding: 1.5rem;
+    }
+    .gallery-item:hover .gallery-overlay { opacity: 1; }
+    .gallery-overlay span {
+      font-family: 'Space Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    /* ─── SHOP ─── */
+    .shop {
+      background: linear-gradient(180deg, #001828 0%, #002A40 100%);
+    }
+    .shop-inner { max-width: 1100px; margin: 0 auto; }
+    .shop-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-top: 3.5rem;
+    }
+    .product-card {
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(200,148,74,.15);
+      position: relative;
+      transition: border-color .3s, transform .3s;
+    }
+    .product-card:hover {
+      border-color: rgba(200,148,74,.5);
+      transform: translateY(-5px);
+    }
+    .product-badge {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: var(--coral);
+      color: white;
+      font-family: 'Space Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: 2px;
+      padding: .25rem .7rem;
+      text-transform: uppercase;
+    }
+    .product-img {
+      width: 100%;
+      height: 200px;
+      background: linear-gradient(135deg, #002A3F, #003D5C);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .product-img::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 20px,
+        rgba(200,148,74,.04) 20px,
+        rgba(200,148,74,.04) 21px
+      );
+    }
+    .product-info {
+      padding: 1.5rem;
+    }
+    .product-info h3 {
+      font-family: 'Black Ops One', cursive;
+      font-size: 1.1rem;
+      margin-bottom: .5rem;
+    }
+    .product-info p {
+      color: rgba(245,230,200,.6);
+      font-size: .85rem;
+      line-height: 1.6;
+      margin-bottom: 1.2rem;
+    }
+    .product-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(200,148,74,.1);
+    }
+    .product-price {
+      font-family: 'Black Ops One', cursive;
+      font-size: 1.3rem;
+      color: var(--gold);
+    }
+    .add-to-cart {
+      background: var(--ocean);
+      color: white;
+      border: none;
+      padding: .5rem 1.2rem;
+      font-family: 'Space Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: none;
+      transition: background .3s, transform .2s;
+    }
+    .add-to-cart:hover {
+      background: var(--coral);
+      transform: scale(1.05);
+    }
+
+    /* Cart notification */
+    #cart-note {
+      position: fixed;
+      top: 5rem; right: 2rem;
+      background: var(--palm);
+      color: white;
+      font-family: 'Space Mono', monospace;
+      font-size: .7rem;
+      letter-spacing: 2px;
+      padding: .8rem 1.5rem;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all .4s;
+      z-index: 200;
+    }
+    #cart-note.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── BOOKING ─── */
+    .booking {
+      background: linear-gradient(135deg, #003F5C 0%, #0A7EA4 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .booking::before {
+      content: 'BOOK';
+      position: absolute;
+      font-family: 'Black Ops One', cursive;
+      font-size: 18rem;
+      color: rgba(0,0,0,.1);
+      right: -4rem;
+      top: -3rem;
+      pointer-events: none;
+    }
+    .booking-inner {
+      max-width: 700px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    .booking-inner h2 { color: var(--white); }
+    .booking-inner p {
+      color: rgba(245,230,200,.8);
+      margin-bottom: 3rem;
+      font-size: 1.05rem;
+      line-height: 1.8;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      margin-bottom: 1rem;
+    }
+    .form-group.full { grid-column: 1 / -1; }
+    label {
+      font-family: 'Space Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    input, select, textarea {
+      background: rgba(0,0,0,.3);
+      border: 1px solid rgba(245,230,200,.2);
+      color: var(--white);
+      padding: .85rem 1rem;
+      font-family: 'Kanit', sans-serif;
+      font-size: .95rem;
+      width: 100%;
+      transition: border-color .3s;
+      outline: none;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--gold);
+    }
+    input::placeholder, textarea::placeholder {
+      color: rgba(245,230,200,.3);
+    }
+    select option { background: var(--deep); }
+    textarea { resize: vertical; min-height: 100px; }
+
+    .submit-btn {
+      background: var(--gold);
+      color: var(--deep);
+      border: none;
+      padding: 1rem 3rem;
+      font-family: 'Black Ops One', cursive;
+      font-size: 1rem;
+      letter-spacing: 2px;
+      cursor: none;
+      width: 100%;
+      margin-top: .5rem;
+      clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px));
+      transition: background .3s, transform .2s;
+    }
+    .submit-btn:hover {
+      background: var(--coral);
+      color: white;
+      transform: scale(1.01);
+    }
+
+    /* ─── FOOTER ─── */
+    footer {
+      background: #000A12;
+      padding: 4rem 3rem 2rem;
+    }
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 4rem;
+      padding-bottom: 3rem;
+      border-bottom: 1px solid rgba(200,148,74,.1);
+    }
+    .footer-brand .nav-logo { font-size: 1.8rem; display: block; margin-bottom: 1rem; }
+    .footer-brand p {
+      color: rgba(245,230,200,.5);
+      font-size: .9rem;
+      line-height: 1.8;
+    }
+    .footer-col h4 {
+      font-family: 'Space Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.5rem;
+    }
+    .footer-col ul { list-style: none; display: grid; gap: .7rem; }
+    .footer-col ul a {
+      color: rgba(245,230,200,.5);
+      text-decoration: none;
+      font-size: .9rem;
+      transition: color .3s;
+      cursor: none;
+    }
+    .footer-col ul a:hover { color: var(--sand); }
+
+    .footer-bottom {
+      max-width: 1100px;
+      margin: 2rem auto 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer-bottom p {
+      color: rgba(245,230,200,.25);
+      font-family: 'Space Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: 2px;
+    }
+
+    .social-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+    .social-links a {
+      color: rgba(245,230,200,.3);
+      font-size: 1.2rem;
+      transition: color .3s;
+      text-decoration: none;
+      cursor: none;
+    }
+    .social-links a:hover { color: var(--gold); }
+
+    /* ─── WAVE DIVIDER ─── */
+    .wave-divider { line-height: 0; }
+    .wave-divider svg { display: block; width: 100%; }
+
+    /* ─── FLOATING ROPE ANIMATE ─── */
+    @keyframes swing {
+      0%, 100% { transform: rotate(-8deg); }
+      50% { transform: rotate(8deg); }
+    }
+
+    /* scroll animations */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity .8s ease, transform .8s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      section { padding: 4rem 1.5rem; }
+      .hero-content { padding: 0 1.5rem; }
+      .hero h1 { font-size: 3rem; }
+      .about-grid,
+      .flowrope-inner,
+      .services-grid,
+      .shop-grid,
+      .form-row,
+      .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+      .gallery-grid { grid-template-columns: 1fr; }
+      .gallery-item:first-child { grid-column: 1; grid-row: auto; }
+      .stat-row { gap: 1.5rem; }
+      footer { padding: 3rem 1.5rem 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor" id="cursor"></div>
+
+<!-- Cart notification -->
+<div id="cart-note">✓ ADDED TO CART</div>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <a href="#" class="nav-logo">ROPEMAN</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#flowrope">Flow Rope</a></li>
+    <li><a href="#gallery">Gallery</a></li>
+    <li><a href="#shop">Shop</a></li>
+    <li><a href="#booking">Book Frank</a></li>
+  </ul>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section class="hero" id="home">
+  <div class="rope-bg">
+    <div class="rope-ring"></div>
+    <div class="rope-ring"></div>
+    <div class="rope-ring"></div>
+    <div class="rope-ring"></div>
+    <div class="rope-ring"></div>
+    <div class="rope-ring"></div>
+  </div>
+
+  <div class="hero-content">
+    <div class="hero-label">Flow Rope Artist &amp; Coach</div>
+    <h1>FRANK<span>THE</span><em>ROPE&shy;MAN</em></h1>
+    <p class="hero-sub">Where movement meets art. Experience the flow, feel the rhythm, master the rope.</p>
+    <div class="hero-ctas">
+      <a href="#booking" class="btn btn-primary">⟶ Book a Workshop</a>
+      <a href="#shop" class="btn btn-outline">Shop Flow Ropes</a>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <svg width="16" height="24" viewBox="0 0 16 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="14" height="22" rx="7" stroke="currentColor" stroke-width="1.5"/>
+      <circle cx="8" cy="8" r="2" fill="currentColor">
+        <animate attributeName="cy" from="7" to="15" dur="1.5s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" from="1" to="0" dur="1.5s" repeatCount="indefinite"/>
+      </circle>
+    </svg>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- ─── ABOUT ─── -->
+<section class="about" id="about">
+  <div class="about-grid">
+    <div class="about-photo reveal">
+      <img src="images/frank1.jpg" alt="Frank The Ropeman – outdoor training" />
+    </div>
+    <div class="about-text reveal">
+      <div class="section-tag">// The Man Behind The Rope</div>
+      <h2>Meet<br>Frank</h2>
+      <p>Frank is a flow rope artist, coach, and movement enthusiast who has dedicated years to mastering the art of rope flow — a dynamic discipline that blends athleticism, coordination, and rhythmic expression into something truly captivating.</p>
+      <p>From beachside demos to packed workshops, Frank brings infectious energy and genuine passion to every session. His mission is simple: to share the joy of flow rope with anyone willing to pick up a rope and move.</p>
+      <div class="stat-row">
+        <div class="stat">
+          <div class="stat-num">5+</div>
+          <div class="stat-label">Years of Flow</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">500+</div>
+          <div class="stat-label">Students Coached</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num">30+</div>
+          <div class="stat-label">Live Demos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SERVICES ─── -->
+<section class="services" id="services">
+  <div class="services-header reveal">
+    <div class="section-tag">// What Frank Offers</div>
+    <h2>Demonstrations,<br>Workshops & More</h2>
+  </div>
+  <div class="services-grid reveal">
+    <div class="service-card">
+      <span class="service-icon">🎪</span>
+      <h3>Live Demonstrations</h3>
+      <p>Watch Frank perform breathtaking rope flow routines at your event. From festivals to beach parties, his demos are a crowd-stopper guaranteed to wow your audience.</p>
+      <div class="service-price">From €150 / event</div>
+      <a href="#booking" class="service-cta">→ Enquire</a>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">🧠</span>
+      <h3>Flow Rope Workshops</h3>
+      <p>Hands-on workshops for beginners through to intermediate movers. Learn the foundations, core techniques, and creative sequences in a fun, supportive environment.</p>
+      <div class="service-price">From €40 / person</div>
+      <a href="#booking" class="service-cta">→ Book Workshop</a>
+    </div>
+    <div class="service-card">
+      <span class="service-icon">🎯</span>
+      <h3>Private Coaching</h3>
+      <p>One-on-one sessions tailored entirely to your goals. Whether you want to nail your first trick or unlock advanced combinations, Frank coaches at your pace.</p>
+      <div class="service-price">From €60 / session</div>
+      <a href="#booking" class="service-cta">→ Get Started</a>
+    </div>
+  </div>
+</section>
+
+<!-- ─── FLOW ROPE EXPLAINED ─── -->
+<section class="flowrope" id="flowrope">
+  <div class="flowrope-inner">
+    <div class="flowrope-content reveal">
+      <div class="section-tag">// The Discipline</div>
+      <h2>What Is<br>Flow Rope?</h2>
+      <p>Flow rope is a movement art form using a weighted rope — typically 2–4 metres long — to create continuous, flowing patterns around the body. It's part dance, part martial art, part meditation.</p>
+      <p>Unlike jump rope, flow rope is about expression, coordination, and entering a state of focused calm often called "the flow state" — where body and rope become one.</p>
+      <ul class="benefit-list">
+        <li>Improves coordination and body awareness</li>
+        <li>Burns calories and builds endurance</li>
+        <li>Develops rhythm and musicality</li>
+        <li>Reduces stress and sharpens focus</li>
+        <li>Suitable for all ages and fitness levels</li>
+        <li>Minimal equipment needed — max fun guaranteed</li>
+      </ul>
+    </div>
+
+    <div class="rope-visual reveal">
+      <div class="rope-art">
+        <svg viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer glow ring -->
+          <circle cx="160" cy="160" r="140" stroke="rgba(200,148,74,.08)" stroke-width="1"/>
+          <!-- Animated rope path -->
+          <g opacity=".9">
+            <path d="M 160 40 C 240 40 280 120 280 160 C 280 240 200 280 160 280 C 80 280 40 200 40 160 C 40 80 120 40 160 40 Z"
+              stroke="url(#ropeGrad)" stroke-width="2.5" fill="none" stroke-linecap="round">
+              <animateTransform attributeName="transform" type="rotate" from="0 160 160" to="360 160 160" dur="12s" repeatCount="indefinite"/>
+            </path>
+            <path d="M 160 80 C 220 80 250 130 250 160 C 250 220 200 240 160 240 C 100 240 70 190 70 160 C 70 100 120 80 160 80 Z"
+              stroke="url(#ropeGrad2)" stroke-width="2" fill="none" opacity=".7">
+              <animateTransform attributeName="transform" type="rotate" from="360 160 160" to="0 160 160" dur="8s" repeatCount="indefinite"/>
+            </path>
+          </g>
+          <!-- Center dot -->
+          <circle cx="160" cy="160" r="8" fill="var(--gold)" opacity=".8"/>
+          <circle cx="160" cy="160" r="20" stroke="var(--gold)" stroke-width="1" opacity=".2"/>
+
+          <!-- Orbit label path -->
+          <path id="orbitPath" d="M 160 30 A 130 130 0 1 1 159.99 30" fill="none"/>
+          <text font-family="Space Mono, monospace" font-size="10" letter-spacing="5" fill="rgba(200,148,74,.4)" text-anchor="middle">
+            <textPath href="#orbitPath" startOffset="0%">
+              FLOW ROPE · FRANK THE ROPEMAN · FLOW ROPE · FRANK THE ROPEMAN ·
+            </textPath>
+          </text>
+
+          <defs>
+            <linearGradient id="ropeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#C8944A"/>
+              <stop offset="100%" stop-color="#F4A923"/>
+            </linearGradient>
+            <linearGradient id="ropeGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#FF5733"/>
+              <stop offset="100%" stop-color="#C8944A"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── GALLERY ─── -->
+<section class="gallery" id="gallery">
+  <div class="gallery-inner">
+    <div class="section-tag reveal">// Frank In Action</div>
+    <h2 class="reveal">The Ropeman<br>At Work</h2>
+    <div class="gallery-grid reveal">
+      <div class="gallery-item">
+        <img src="images/frank2.jpg" alt="Frank rope training at the beach" />
+        <div class="gallery-overlay"><span>Beach Session</span></div>
+      </div>
+      <div class="gallery-item">
+        <img src="images/frank3.jpg" alt="Frank rope workshop demo" />
+        <div class="gallery-overlay"><span>Workshop Demo</span></div>
+      </div>
+      <div class="gallery-item">
+
+        <!-- <div style="background: linear-gradient(135deg, #001828, #003F5C); height: 100%; min-height: 280px; display: flex; align-items: center; justify-content: center; font-size: 5rem;">🌊</div> -->
+         <img src="images/frank1.jpg" alt="Frank rope workshop demo" />
+        <div class="gallery-overlay"><span>Flow State</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SHOP ─── -->
+<section class="shop" id="shop">
+  <div class="shop-inner">
+    <div class="section-tag reveal">// The Webshop</div>
+    <h2 class="reveal">Get Your<br>Flow Rope</h2>
+    <div class="shop-grid reveal">
+      <div class="product-card">
+        <div class="product-img">🪢</div>
+        <div class="product-info">
+          <h3>Starter Flow Rope</h3>
+          <p>Perfect for beginners. 3-metre weighted rope with comfortable grip handles and introductory guide.</p>
+        </div>
+        <div class="product-footer">
+          <div class="product-price">€34</div>
+          <button class="add-to-cart" onclick="addToCart()">Add to Cart</button>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-badge">Best Seller</div>
+        <div class="product-img">🔥</div>
+        <div class="product-info">
+          <h3>Pro Flow Rope</h3>
+          <p>Frank's personal pick. 3.5m competition-grade rope with ergonomic grips and premium braided core.</p>
+        </div>
+        <div class="product-footer">
+          <div class="product-price">€59</div>
+          <button class="add-to-cart" onclick="addToCart()">Add to Cart</button>
+        </div>
+      </div>
+      <div class="product-card">
+        <div class="product-img">🎒</div>
+        <div class="product-info">
+          <h3>Full Starter Kit</h3>
+          <p>Everything you need: 2 ropes (3m &amp; 4m), carry bag, grip wax, and Frank's exclusive tutorial video series.</p>
+        </div>
+        <div class="product-footer">
+          <div class="product-price">€99</div>
+          <button class="add-to-cart" onclick="addToCart()">Add to Cart</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── BOOKING ─── -->
+<section class="booking" id="booking">
+  <div class="booking-inner">
+    <div class="section-tag">// Get In Touch</div>
+    <h2>Book Frank</h2>
+    <p>Ready to experience the flow? Fill in the form and Frank will get back to you within 24 hours to discuss your event, workshop, or private session.</p>
+    <form onsubmit="handleSubmit(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="name">Your Name</label>
+          <input type="text" id="name" placeholder="e.g. Sarah Johnson" required />
+        </div>
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="sarah@example.com" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="service">I'm Interested In</label>
+          <select id="service">
+            <option value="">Select a service…</option>
+            <option>Live Demonstration</option>
+            <option>Flow Rope Workshop</option>
+            <option>Private Coaching</option>
+            <option>Product Question</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="date">Preferred Date</label>
+          <input type="date" id="date" />
+        </div>
+      </div>
+      <div class="form-group full">
+        <label for="message">Tell Frank More</label>
+        <textarea id="message" placeholder="Location, group size, what you're hoping to achieve…"></textarea>
+      </div>
+      <button type="submit" class="submit-btn">Send It ⟶</button>
+    </form>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <a href="#" class="nav-logo">ROPEMAN</a>
+      <p>Frank brings the art of flow rope to stages, beaches, and studios worldwide. Get in touch to bring the flow to your world.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="#about">About Frank</a></li>
+        <li><a href="#services">Services</a></li>
+        <li><a href="#flowrope">What is Flow Rope?</a></li>
+        <li><a href="#gallery">Gallery</a></li>
+        <li><a href="#shop">Shop</a></li>
+        <li><a href="#booking">Book Frank</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="mailto:frank@theropeman.com">frank@theropeman.com</a></li>
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">YouTube</a></li>
+        <li><a href="#">TikTok</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 Frank The Ropeman · All rights reserved</p>
+    <div class="social-links">
+      <a href="#">IG</a>
+      <a href="#">YT</a>
+      <a href="#">TK</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+  });
+  document.querySelectorAll('a, button, .service-card, .product-card').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('hovered'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('hovered'));
+  });
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 100);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Cart notification
+  function addToCart() {
+    const note = document.getElementById('cart-note');
+    note.classList.add('show');
+    setTimeout(() => note.classList.remove('show'), 2000);
+  }
+
+  // Form submit
+  function handleSubmit(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('.submit-btn');
+    btn.textContent = '✓ Message Sent!';
+    btn.style.background = '#2C6E49';
+    btn.style.color = 'white';
+    setTimeout(() => {
+      btn.textContent = 'Send It ⟶';
+      btn.style.background = '';
+      btn.style.color = '';
+      e.target.reset();
+    }, 3000);
+  }
+
+  // Smooth nav scroll
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  });
+</script>
+</body>
+</html>
