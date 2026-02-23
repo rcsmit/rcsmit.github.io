@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YepCheck — Checklists die werken</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #d6eef5;
+    --bg2: #c2e4ef;
+    --surface: #e8f5fa;
+    --card: #ffffff;
+    --navy: #003366;
+    --navy2: #004488;
+    --navy-light: #1a5599;
+    --accent: #cc0000;
+    --accent2: #e63300;
+    --border: #a8cfe0;
+    --border-dark: #7aaec5;
+    --text: #002244;
+    --muted: #4a6a80;
+    --light-text: #6b8fa0;
+    --tag-bg: #b8dcea;
+    --highlight: #ffd700;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px;
+    background: var(--navy);
+    border-bottom: 3px solid var(--accent);
+    height: 64px;
+  }
+  .logo {
+    font-family: 'DM Serif Display', serif;
+    font-size: 26px; letter-spacing: -0.5px;
+    color: #fff; text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .logo-mark {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; background: #fff; border-radius: 6px; flex-shrink: 0;
+  }
+  .logo-mark svg { width: 20px; height: 20px; }
+  .logo span { color: var(--highlight); }
+  .nav-links { display: flex; gap: 4px; list-style: none; }
+  .nav-links a {
+    color: rgba(255,255,255,0.8); text-decoration: none;
+    font-size: 14px; font-weight: 500; padding: 8px 14px; border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+  }
+  .nav-links a:hover { background: rgba(255,255,255,0.15); color: #fff; }
+  .nav-cta {
+    background: var(--accent); color: #fff;
+    padding: 8px 20px; border-radius: 8px;
+    font-weight: 600; font-size: 14px; text-decoration: none;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .nav-cta:hover { background: var(--accent2); transform: translateY(-1px); }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, var(--navy) 0%, #004a8c 60%, #005fa0 100%);
+    padding: 80px 48px 90px;
+    position: relative; overflow: hidden;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center;
+  }
+  .hero-dots {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0.12;
+    background-image: radial-gradient(circle, #7ab8d4 1.5px, transparent 1.5px);
+    background-size: 36px 36px;
+  }
+  .hero-glow {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 50% 60% at 85% 40%, rgba(180,220,255,0.12) 0%, transparent 60%);
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,215,0,0.15); border: 1px solid rgba(255,215,0,0.4);
+    color: var(--highlight); padding: 5px 14px; border-radius: 100px;
+    font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 24px; width: fit-content;
+    animation: fadeUp 0.5s ease both;
+  }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(44px, 5vw, 68px);
+    line-height: 1.05; letter-spacing: -1.5px; color: #fff;
+    animation: fadeUp 0.5s ease 0.1s both;
+  }
+  .hero h1 em { font-style: italic; color: var(--highlight); }
+  .hero-desc {
+    margin-top: 20px; font-size: 17px;
+    color: rgba(255,255,255,0.7); max-width: 440px;
+    font-weight: 300; line-height: 1.75;
+    animation: fadeUp 0.5s ease 0.2s both;
+  }
+  .hero-actions {
+    display: flex; gap: 12px; margin-top: 36px; flex-wrap: wrap;
+    animation: fadeUp 0.5s ease 0.3s both;
+  }
+  .btn-primary {
+    background: var(--accent); color: #fff;
+    padding: 14px 28px; border-radius: 10px;
+    font-weight: 600; font-size: 15px; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    border: 2px solid transparent;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(204,0,0,0.35); }
+  .btn-secondary {
+    border: 2px solid rgba(255,255,255,0.3); color: #fff;
+    padding: 14px 28px; border-radius: 10px;
+    font-weight: 500; font-size: 15px; text-decoration: none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn-secondary:hover { border-color: rgba(255,255,255,0.6); background: rgba(255,255,255,0.1); }
+
+  .hero-stats {
+    display: flex; margin-top: 48px;
+    animation: fadeUp 0.5s ease 0.4s both;
+    border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; overflow: hidden;
+    width: fit-content;
+  }
+  .hero-stat { padding: 16px 28px; border-right: 1px solid rgba(255,255,255,0.15); }
+  .hero-stat:last-child { border-right: none; }
+  .stat-num { font-family: 'DM Serif Display', serif; font-size: 30px; color: #fff; letter-spacing: -1px; line-height: 1; }
+  .stat-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; font-weight: 500; }
+
+  /* Hero right — demo card */
+  .hero-card {
+    background: var(--card); border-radius: 20px; padding: 28px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+    animation: fadeUp 0.5s ease 0.2s both; position: relative; z-index: 1;
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;
+  }
+  .card-title { font-weight: 700; font-size: 17px; color: var(--text); }
+  .card-badge {
+    background: var(--navy); color: #fff;
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 100px;
+  }
+
+  /* Checklist items (shared) */
+  .progress-bar { height: 5px; background: var(--tag-bg); border-radius: 5px; margin-bottom: 20px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--navy), var(--navy-light)); border-radius: 5px; transition: width 0.5s ease; }
+  .cl-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid #edf2f5;
+    cursor: pointer; user-select: none;
+  }
+  .cl-item:last-child { border-bottom: none; }
+  .cl-box {
+    width: 20px; height: 20px; border-radius: 5px;
+    border: 2px solid var(--border-dark); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; background: #fff;
+  }
+  .cl-item.checked .cl-box { background: var(--navy); border-color: var(--navy); }
+  .cl-item.checked .cl-box::after { content: '✓'; color: #fff; font-size: 12px; font-weight: 700; }
+  .cl-text { font-size: 14px; color: var(--text); transition: color 0.2s; font-weight: 400; }
+  .cl-item.checked .cl-text { color: var(--light-text); text-decoration: line-through; }
+  .cl-tag { margin-left: auto; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; flex-shrink: 0; }
+  .tag-req { background: rgba(204,0,0,0.1); color: var(--accent); }
+  .tag-opt { background: var(--tag-bg); color: var(--muted); }
+
+  /* SECTIONS */
+  .section { padding: 80px 48px; }
+  .section-inner { max-width: 1200px; margin: 0 auto; }
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::before { content: ''; width: 24px; height: 2px; background: var(--accent); border-radius: 2px; }
+  .section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(32px, 4vw, 48px);
+    letter-spacing: -1px; line-height: 1.1; color: var(--navy); margin-bottom: 48px;
+  }
+  .section-title em { font-style: italic; color: var(--muted); }
+
+  /* CATEGORIES */
+  .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .cat-card {
+    background: var(--card); border: 2px solid var(--border); border-radius: 16px; padding: 22px;
+    cursor: pointer; transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    text-decoration: none; color: var(--text);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .cat-card:hover { transform: translateY(-4px); border-color: var(--navy); box-shadow: 0 12px 40px rgba(0,50,100,0.12); }
+  .cat-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .cat-name { font-weight: 700; font-size: 16px; color: var(--navy); }
+  .cat-count { font-size: 13px; color: var(--muted); }
+  .cat-arrow { margin-top: auto; color: var(--border-dark); font-size: 18px; transition: transform 0.2s, color 0.2s; }
+  .cat-card:hover .cat-arrow { transform: translate(3px,-3px); color: var(--navy); }
+
+  /* DEMO SECTION */
+  .demo-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+  .demo-desc { color: var(--muted); font-size: 16px; font-weight: 300; line-height: 1.8; margin-top: 16px; }
+  .demo-card { background: var(--card); border: 2px solid var(--border); border-radius: 20px; padding: 28px; box-shadow: 0 8px 40px rgba(0,50,100,0.1); }
+
+  /* HOW IT WORKS */
+  .steps-section { background: var(--navy); }
+  .steps-section .section-label { color: var(--highlight); }
+  .steps-section .section-label::before { background: var(--highlight); }
+  .steps-section .section-title { color: #fff; }
+  .steps-section .section-title em { color: rgba(255,255,255,0.35); }
+  .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .step-card {
+    padding: 32px; background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 16px;
+    position: relative; overflow: hidden;
+  }
+  .step-num {
+    font-family: 'DM Serif Display', serif; font-size: 72px;
+    color: rgba(255,255,255,0.05); position: absolute; top: -8px; right: 16px; line-height: 1;
+  }
+  .step-icon {
+    font-size: 24px; width: 50px; height: 50px; border-radius: 14px;
+    background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+  }
+  .step-title { font-weight: 600; font-size: 18px; color: #fff; margin-bottom: 10px; }
+  .step-desc { color: rgba(255,255,255,0.5); font-size: 14px; line-height: 1.75; font-weight: 300; }
+
+  /* FOOTER */
+  footer { background: var(--navy); border-top: 3px solid var(--accent); padding: 0 48px; }
+  .footer-main {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 32px 0; border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-wrap: wrap; gap: 20px;
+  }
+  .footer-logo { font-family: 'DM Serif Display', serif; font-size: 22px; color: #fff; }
+  .footer-logo span { color: var(--highlight); }
+  .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+  .footer-links a { color: rgba(255,255,255,0.55); font-size: 14px; text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: #fff; }
+  .footer-bottom { padding: 18px 0; text-align: center; color: rgba(255,255,255,0.3); font-size: 13px; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,20,60,0.55); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s; padding: 24px;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--card); border: 2px solid var(--border);
+    border-radius: 24px; padding: 36px; max-width: 580px; width: 100%;
+    max-height: 82vh; overflow-y: auto;
+    transform: translateY(20px); transition: transform 0.3s;
+    box-shadow: 0 32px 80px rgba(0,30,80,0.3);
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .modal-title { font-family: 'DM Serif Display', serif; font-size: 26px; color: var(--navy); }
+  .modal-close {
+    background: var(--surface); border: 2px solid var(--border); color: var(--muted);
+    width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+    font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; font-weight: 600;
+  }
+  .modal-close:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+  .modal-prog-text { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .modal-bar { height: 5px; background: var(--tag-bg); border-radius: 5px; overflow: hidden; margin-bottom: 24px; }
+  .modal-fill { height: 100%; background: linear-gradient(90deg, var(--navy), var(--navy-light)); border-radius: 5px; transition: width 0.4s ease; }
+  .modal-list { display: flex; flex-direction: column; }
+  .m-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-bottom: 1px solid #edf2f5;
+    cursor: pointer; user-select: none;
+  }
+  .m-item:last-child { border-bottom: none; }
+  .m-box {
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 2px solid var(--border-dark); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s; background: #fff;
+  }
+  .m-item.checked .m-box { background: var(--navy); border-color: var(--navy); }
+  .m-item.checked .m-box::after { content: '✓'; color: #fff; font-size: 13px; font-weight: 700; }
+  .m-text { font-size: 15px; color: var(--text); transition: color 0.2s; }
+  .m-item.checked .m-text { color: var(--light-text); text-decoration: line-through; }
+  .modal-done {
+    display: none; text-align: center;
+    background: rgba(0,51,102,0.07); border: 1px solid rgba(0,51,102,0.15);
+    border-radius: 10px; padding: 16px; margin-top: 16px;
+    color: var(--navy); font-weight: 700; font-size: 15px;
+  }
+  .modal-done.visible { display: block; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-reset {
+    background: transparent; border: 2px solid var(--border); color: var(--muted);
+    padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-reset:hover { border-color: var(--navy); color: var(--navy); }
+  .btn-close {
+    background: var(--navy); color: #fff; border: none;
+    padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .btn-close:hover { background: var(--navy2); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 900px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    .hero { grid-template-columns: 1fr; padding: 56px 24px 60px; gap: 40px; }
+    .section { padding: 60px 24px; }
+    .demo-grid { grid-template-columns: 1fr; gap: 40px; }
+    .steps-grid { grid-template-columns: 1fr; }
+    footer { padding: 0 24px; }
+    .footer-main { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <span class="logo-mark">
+      <svg viewBox="0 0 20 20" fill="none">
+        <path d="M4 10.5L8 14.5L16 6.5" stroke="#003366" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
+    Yep<span>Check</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#categorieen">Categorieën</a></li>
+    <li><a href="#hoe">Hoe het werkt</a></li>
+    <li><a href="#">Contact</a></li>
+    <li><a href="#">Over ons</a></li>
+  </ul>
+  <a href="#categorieen" class="nav-cta">Start checklist →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-dots"></div>
+  <div class="hero-glow"></div>
+  <div>
+    <div class="hero-tag">✓ Altijd voorbereid</div>
+    <h1>Vergeet nooit<br>meer <em>iets</em></h1>
+    <p class="hero-desc">YepCheck geeft je slimme, interactieve checklists voor alles wat je organiseert — van feesten en BBQ's tot verhuizingen en bruiloften.</p>
+    <div class="hero-actions">
+      <a href="#categorieen" class="btn-primary">Kies een checklist ↓</a>
+      <a href="#hoe" class="btn-secondary">Hoe het werkt</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="stat-num">12+</div><div class="stat-label">Categorieën</div></div>
+      <div class="hero-stat"><div class="stat-num">200+</div><div class="stat-label">Items</div></div>
+      <div class="hero-stat"><div class="stat-num">100%</div><div class="stat-label">Gratis</div></div>
+    </div>
+  </div>
+  <div class="hero-card">
+    <div class="card-header">
+      <div class="card-title">🎉 Party checklist</div>
+      <div class="card-badge" id="demo-badge">2 / 5</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="demo-prog" style="width:40%"></div></div>
+    <div id="demo-list">
+      <div class="cl-item checked" onclick="toggleDemo(this,'demo')">
+        <div class="cl-box"></div><span class="cl-text">Alcoholhoudende dranken</span><span class="cl-tag tag-req">Vereist</span>
+      </div>
+      <div class="cl-item checked" onclick="toggleDemo(this,'demo')">
+        <div class="cl-box"></div><span class="cl-text">Muziek / DJ</span><span class="cl-tag tag-req">Vereist</span>
+      </div>
+      <div class="cl-item" onclick="toggleDemo(this,'demo')">
+        <div class="cl-box"></div><span class="cl-text">Glaswerk & plastic bekers</span><span class="cl-tag tag-opt">Optioneel</span>
+      </div>
+      <div class="cl-item" onclick="toggleDemo(this,'demo')">
+        <div class="cl-box"></div><span class="cl-text">Decoratie & verlichting</span><span class="cl-tag tag-opt">Optioneel</span>
+      </div>
+      <div class="cl-item" onclick="toggleDemo(this,'demo')">
+        <div class="cl-box"></div><span class="cl-text">EHBO-doos aanwezig</span><span class="cl-tag tag-req">Vereist</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="section" id="categorieen" style="background:var(--bg)">
+  <div class="section-inner">
+    <div class="section-label">YepChecks</div>
+    <h2 class="section-title">Kies jouw <em>categorie</em></h2>
+    <div class="cat-grid">
+      <div class="cat-card" onclick="openModal('party')"><div class="cat-icon">🎉</div><div><div class="cat-name">Party</div><div class="cat-count">24 items</div></div><div class="cat-arrow">↗</div></div>
+      <div class="cat-card" onclick="openModal('bbq')"><div class="cat-icon">🔥</div><div><div class="cat-name">BBQ</div><div class="cat-count">18 items</div></div><div class="cat-arrow">↗</div></div>
+      <div class="cat-card" onclick="openModal('verhuizen')"><div class="cat-icon">📦</div><div><div class="cat-name">Verhuizen</div><div class="cat-count">32 items</div></div><div class="cat-arrow">↗</div></div>
+      <div class="cat-card" onclick="openModal('vakantie')"><div class="cat-icon">✈️</div><div><div class="cat-name">Vakantie</div><div class="cat-count">28 items</div></div><div class="cat-arrow">↗</div></div>
+      <div class="cat-card" onclick="openModal('trouwen')"><div class="cat-icon">💍</div><div><div class="cat-name">Trouwen</div><div class="cat-count">40 items</div></div><div class="cat-arrow">↗</div></div>
+      <div class="cat-card" onclick="openModal('ehbo')"><div class="cat-icon">🩺</div><div><div class="cat-name">EHBO-kist</div><div class="cat-count">22 items</div></div><div class="cat-arrow">↗</div></div>
+      <div class="cat-card" onclick="openModal('kantoor')"><div class="cat-icon">💼</div><div><div class="cat-name">Kantoor</div><div class="cat-count">16 items</div></div><div class="cat-arrow">↗</div></div>
+      <div class="cat-card" onclick="openModal('keuken')"><div class="cat-icon">🍳</div><div><div class="cat-name">Keuken</div><div class="cat-count">20 items</div></div><div class="cat-arrow">↗</div></div>
+      <div class="cat-card" onclick="openModal('haccp')"><div class="cat-icon">🧼</div><div><div class="cat-name">HACCP</div><div class="cat-count">15 items</div></div><div class="cat-arrow">↗</div></div>
+      <div class="cat-card" onclick="openModal('brainstorm')"><div class="cat-icon">💡</div><div><div class="cat-name">Brainstormen</div><div class="cat-count">12 items</div></div><div class="cat-arrow">↗</div></div>
+      <div class="cat-card" onclick="openModal('mtb')"><div class="cat-icon">🚵</div><div><div class="cat-name">MTB / ATB</div><div class="cat-count">14 items</div></div><div class="cat-arrow">↗</div></div>
+      <div class="cat-card" onclick="openModal('servendo')"><div class="cat-icon">🍽️</div><div><div class="cat-name">Servendo</div><div class="cat-count">19 items</div></div><div class="cat-arrow">↗</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="section demo-section">
+  <div class="section-inner">
+    <div class="demo-grid">
+      <div>
+        <div class="section-label">Interactief</div>
+        <h2 class="section-title">Vink af,<br><em>in real-time</em></h2>
+        <p class="demo-desc">Werk je checklist eenvoudig af met een klik. Zie je voortgang live bijhouden en vergeet nooit meer een essentieel item.</p>
+        <p class="demo-desc" style="margin-top:12px;">Als u alle vakjes open laat, worden alle categorieën weergegeven.</p>
+        <a href="#categorieen" class="btn-primary" style="margin-top:32px">Open een checklist →</a>
+      </div>
+      <div class="demo-card">
+        <div class="card-header">
+          <div class="card-title">📦 Verhuizen</div>
+          <div class="card-badge" id="demo2-badge">1 / 5</div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" id="demo2-prog" style="width:20%"></div></div>
+        <div id="demo2-list">
+          <div class="cl-item checked" onclick="toggleDemo(this,'demo2')"><div class="cl-box"></div><span class="cl-text">Verhuisbedrijf geboekt</span><span class="cl-tag tag-req">Vereist</span></div>
+          <div class="cl-item" onclick="toggleDemo(this,'demo2')"><div class="cl-box"></div><span class="cl-text">Adreswijziging doorgegeven</span><span class="cl-tag tag-req">Vereist</span></div>
+          <div class="cl-item" onclick="toggleDemo(this,'demo2')"><div class="cl-box"></div><span class="cl-text">Verhuisdozen besteld</span><span class="cl-tag tag-opt">Optioneel</span></div>
+          <div class="cl-item" onclick="toggleDemo(this,'demo2')"><div class="cl-box"></div><span class="cl-text">Internet & TV geregeld</span><span class="cl-tag tag-opt">Optioneel</span></div>
+          <div class="cl-item" onclick="toggleDemo(this,'demo2')"><div class="cl-box"></div><span class="cl-text">Meterstanden opgenomen</span><span class="cl-tag tag-req">Vereist</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section steps-section" id="hoe">
+  <div class="section-inner">
+    <div class="section-label">Werkwijze</div>
+    <h2 class="section-title">Simpel als <em>één, twee, drie</em></h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-icon">📋</div>
+        <div class="step-title">Kies je categorie</div>
+        <div class="step-desc">Selecteer het type evenement of taak. Van BBQ tot bruiloft — we hebben een checklist voor alles.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-icon">✅</div>
+        <div class="step-title">Vink items af</div>
+        <div class="step-desc">Werk je lijst punt voor punt af. Zie je voortgang live en weet precies wat er nog moet.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-icon">🎉</div>
+        <div class="step-title">Yep! Klaar</div>
+        <div class="step-desc">Alles afgevinkt? Geniet van je evenement met de zekerheid dat je niets vergeten bent.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-main">
+    <div class="footer-logo">Yep<span>Check</span>.com</div>
+    <div class="footer-links">
+      <a href="#">Home</a>
+      <a href="#">Mailinglist</a>
+      <a href="#">Guestbook</a>
+      <a href="#">Tell-a-friend</a>
+      <a href="#">Contact</a>
+      <a href="#">Over deze site</a>
+    </div>
+  </div>
+  <div class="footer-bottom">A YepCheck can make the difference! &nbsp;·&nbsp; © 2025 YepCheck.com</div>
+</footer>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-title">Checklist</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-prog-text" id="modal-prog-text">0 van 0 afgevinkt</div>
+    <div class="modal-bar"><div class="modal-fill" id="modal-fill" style="width:0%"></div></div>
+    <div class="modal-list" id="modal-list"></div>
+    <div class="modal-done" id="modal-done">🎉 Yep! Alles afgevinkt — je bent er klaar voor!</div>
+    <div class="modal-actions">
+      <button class="btn-reset" onclick="resetModal()">↺ Alles wissen</button>
+      <button class="btn-close" onclick="closeModal()">Verder →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = {
+  party:{ title:'Party 🎉', items:['Alcoholhoudende dranken (binnenlands assortiment)','Alcoholvrije dranken','Audio-visuele hulpmiddelen','Bediening / personeel','Behuizing / tent','Bestek & keukenbestek','Bar / (dranken)buffet','Entree & incheckbalie','Glaswerk / plastic bekers','Hapjes & snacks','Inrichting & decoratie','Kassa & garderobe','Koffie & thee','Onvoorziene omstandigheden','Schoonmaken achteraf','Serviesgoed & mastiek','Toiletten beschikbaar','Kantoorartikelen & communicatie (perskamer/management)','Danceparty-hulpmiddelen','EHBO-doos aanwezig','Muziek / DJ / playlist','Verlichting & sfeer','Parkeerruimte geregeld','Alcoholhoudende dranken (buitenlands assortiment)']},
+  bbq:{ title:'BBQ 🔥', items:['BBQ / grill aanwezig en schoon','Aanmaakhout & aansteker','Houtskool of briketten','Vlees & vis assortiment','Vegetarische opties','Marinades & sauzen','Brood & broodjes','Salade & bijgerechten','Borden, bestek & servetten','Tafelkleden','IJsemmer & koelbox','Dranken (koud & warm)','Grillhandschoenen','Spatel & BBQ gereedschap','Vuurkorf / buitenhaard','Prullenbakken & vuilniszakken','Insectenwerende middelen','EHBO bij verbranding']},
+  verhuizen:{ title:'Verhuizen 📦', items:['Verhuisbedrijf ingehuurd','Verhuisdozen besteld','Inpaktape & bubbeltjesfolie','Stiften voor labeling','Adreswijziging doorgegeven','Gemeente & overheid informeren','Bank & verzekering informeren','Abonnementen omzetten','Internet & TV aansluiting regelen','Sleutels nieuwe woning','Schoonmaken nieuwe woning','Schilderwerken afgerond','Vloeren gelegd','Meubels gedemonteerd','Waardevolle spullen apart inpakken','Planten & huisdieren geregeld','Buren informeren','Verzekeringen overzetten','Meterstanden opnemen (oud adres)','Meterstanden opnemen (nieuw adres)','Parkeerplek verhuiswagen reserveren','Sleutels oud adres inleveren','Eindcontrole oud adres','Opruimen & kringloop','Nieuwe sloten installeren','Rookmelders controleren','Thermostaat & verwarming instellen','Wifi instellen','Huisartsenpraktijk wijzigen','School / kinderopvang informeren','Viering nieuwe woning plannen','Huisdierenregistratie bijwerken']},
+  vakantie:{ title:'Vakantie ✈️', items:['Paspoort geldig','Visum aangevraagd','Vluchten geboekt','Accommodatie geboekt','Reisverzekering afgesloten','Ziektekostenverzekering controleren','Valuta / pinpas geregeld','Reisschema opgesteld','Kleding ingepakt (weersomstandigheden)','Medicijnen & EHBO-set','Zonnebrand','Adapter / stekker','Laadkabels & powerbank','Camera / smartphone geladen','Reisdocumenten gekopieerd','Noodcontact achtergelaten','Planten water geven geregeld','Post doorsturen geregeld','Huis goed afgesloten','Buren ingelicht','Taxi / transfer naar vliegveld','Online inchecken gedaan','Handbagage voldoet aan regels','Toiletartikelen in 100ml flesjes','Entertainment voor de reis','Reisgids gedownload','Terugrit / transfer geregeld','Restauranttips verzameld']},
+  trouwen:{ title:'Trouwen 💍', items:['Trouwdatum bepaald','Trouwlocatie geboekt','Gemeente afspraak voor huwelijk','Budget vastgesteld','Trouwambtenaar of dominee','Gastenlijst opgesteld','Uitnodigingen verstuurd','RSVP bijhouden','Trouwjurk / pak','Bruidsmeisjes & getuigen','Trouwringen besteld','Fotograaf geboekt','Videograaf geboekt','Bloemen & decoratie','Catering geregeld','Bruidstaart besteld','Muziek & DJ of band','Vervoer bruidspaar','Vervoer gasten','Hotelkamers voor gasten','Huwelijksreis geboekt','Huwelijksnacht accommodatie','Naamswijziging regelen','Bedankkaartjes','Trouwdag draaiboek','Back-up plan slecht weer','Bruidsboeket','Make-up & haar stylist','Alternatief menu (allergieën)','Geloften voorbereiden','Trouwdagcoördinator aanwijzen','Decoratie afvoer regelen','Surprises & speeches coördineren','Social media plan','Eindfacturen betalen','Kindvriendelijke activiteiten','Muziekwensen gasten verzamelen','Trouwfoto momenten plannen','Folieversiering','Huwelijkscertificaat ophalen']},
+  ehbo:{ title:'EHBO-kist 🩺', items:['Pleister (diverse maten)','Gaas & verbandwatten','Zwachtels & verband','Driehoekig verband','Schaar & pincet','Ontsmettingsmiddel','Handschoenen (latex)','Koelspray of ijspack','Thermometer','Pijnstillers (paracetamol)','Antiallergicum (antihistamine)','Maagmiddelen','Zalf bij brandwonden','Oogdruppels / oogspoelflacon','Tang voor splinters','Veiligheidsspelden','Nooddeken (folie)','Mondmasker (reanimatie)','Instructiekaartje EHBO','Noodnummers op kaartje','Houdbaarheidsdatum gecontroleerd','Kist goed bereikbaar']},
+  kantoor:{ title:'Kantoor 💼', items:['Bureau & stoel ergonomisch','Computer / laptop','Beeldscherm(en)','Toetsenbord & muis','Internet aansluiting','Printer & inkt','Scanner beschikbaar','Opbergmappen & archief','Pennen, potloden & markers','Notitieblokken','Post-it notes','Papier & enveloppen','Perforator & nietermachine','Agenda of digitale kalender','Webcam & headset','Cloud backup / externe schijf']},
+  keuken:{ title:'Keuken 🍳', items:['Koelkast & vriezer werken','Oven & magnetron','Kookplaat / fornuis','Afzuigkap','Pannen (diverse maten)','Koekenpan','Messen geslepen','Snijplanken','Mengkom & maatbeker','Vergiet / zeef','Mixer of keukenmachine','Waterkoker & koffiezetapparaat','Opener (blik & wijn)','Keukentimer','Ovenwanten','Aluminium folie & bakpapier','Kruidenrek & basiskruiden','Olie, azijn & sauzen','Afwasmiddel & spons','Keukenpapier & theedoeken']},
+  haccp:{ title:'HACCP 🧼', items:['Temperatuurregistratie bijgehouden','Koelkasten op juiste temperatuur','Kruisbesmetting voorkomen','Persoonlijke hygiëne gecontroleerd','Handwasinstructies aanwezig','Reinigingsschema bijgewerkt','Voedselveiligheidsplan aanwezig','Houdbaarheidsdatums gecontroleerd','Gevaarlijke stoffen opgeslagen','Ongediertebestrijding gecontroleerd','Leveranciersregistratie bijgewerkt','Klachtenregistratie bijgehouden','Training medewerkers uitgevoerd','Allergeneninformatie beschikbaar','Noodprocedures beschikbaar']},
+  brainstorm:{ title:'Brainstormen 💡', items:['Doel van sessie bepaald','Deelnemers uitgenodigd','Locatie & ruimte geregeld','Whiteboard / flip-over aanwezig','Stiften & post-its','Tijdschema opgesteld','Facilitator aangewezen','Warm-up activiteit klaar','Regels uitgelegd (geen kritiek)','Ideeën geregistreerd','Prioritering uitgevoerd','Actiepunten vastgelegd','Vervolgafspraak gemaakt','Verslag verspreid']},
+  mtb:{ title:'MTB / ATB 🚵', items:['Fiets technisch gecontroleerd','Banden opgepompt','Remmen gecontroleerd','Versnellingen afgesteld','Helm aanwezig','Kniebeschermers','Handschoenen','Waterfles / hydratatiepak','Energiesnacks','Kaart / GPS route','EHBO-set (kleine)','Gereedschap & bandenplakset','Mobieltje opgeladen','Iemand op de hoogte van route','Weerbericht gecheckt']},
+  servendo:{ title:'Servendo 🍽️', items:['Menukaarten klaar','Tafels gedekt','Bestek gepoetst','Glazen gepoetst','Servetten gevouwen','Borden voorverwarmd','Drankenlijst bijgewerkt','Dagschotel bepaald','Personeel geïnformeerd','Reserveringen bevestigd','Kassa / betaalmogelijkheid klaar','Allergenenlijst beschikbaar','Koelkast temperatuur gecontroleerd','Mise-en-place klaar','Schoonmaakschema bijgewerkt','Muziek / sfeer ingesteld','Openingstijd gecommuniceerd','Sluitingstijd gecommuniceerd','Kassabon / bonnetjes']}
+};
+
+function openModal(key) {
+  const d = DATA[key]; if (!d) return;
+  document.getElementById('modal-title').textContent = d.title;
+  const list = document.getElementById('modal-list');
+  list.innerHTML = '';
+  d.items.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'm-item';
+    el.innerHTML = `<div class="m-box"></div><span class="m-text">${item}</span>`;
+    el.onclick = () => { el.classList.toggle('checked'); updateModal(); };
+    list.appendChild(el);
+  });
+  updateModal();
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function updateModal() {
+  const items = document.querySelectorAll('.m-item');
+  const checked = document.querySelectorAll('.m-item.checked').length;
+  const total = items.length;
+  const pct = total ? Math.round(checked/total*100) : 0;
+  document.getElementById('modal-fill').style.width = pct + '%';
+  document.getElementById('modal-prog-text').textContent = `${checked} van ${total} afgevinkt`;
+  document.getElementById('modal-done').classList.toggle('visible', checked === total && total > 0);
+}
+
+function resetModal() {
+  document.querySelectorAll('.m-item').forEach(el => el.classList.remove('checked'));
+  updateModal();
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+function toggleDemo(el, id) {
+  el.classList.toggle('checked');
+  const items = document.querySelectorAll(`#${id}-list .cl-item`);
+  const checked = document.querySelectorAll(`#${id}-list .cl-item.checked`).length;
+  document.getElementById(`${id}-prog`).style.width = Math.round(checked/items.length*100)+'%';
+  document.getElementById(`${id}-badge`).textContent = `${checked} / ${items.length}`;
+}
+</script>
+</body>
+</html>

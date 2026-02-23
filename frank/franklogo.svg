@@ -1,0 +1,67 @@
+<svg viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+<!-- <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Kanit:ital,wght@0,300;0,400;0,600;1,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" /> -->
+<!--  
+        <defs>
+               <style>
+                @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Dosis:wght@200..800&display=swap')
+                </style>
+
+            </defs>
+             Apply the font-family to the text element -->
+            <!-- <text x="10" y="50" font-size="200" style="font-family: 'Black Ops One';">
+                Hello, Google Fonts!
+            </text> --> -->
+       
+       <style>
+    /* Define the font family using web fonts */
+    @font-face {
+      font-family: "FiraSans";
+      src:
+        url("https://github.com/SorkinType/Black-Ops/raw/refs/heads/main/fonts/webfonts/BlackOpsOne-Regular.woff2")
+          format("woff2"),
+       
+    }
+
+    /* Style the text */
+    text {
+      /* Specify the system or custom font to use */
+      font-family: "FiraSans", sans-serif;
+
+      /* Add other styling */
+      font-size: 24px;
+      font-weight: bold;
+      font-style: italic;
+    }
+  </style>
+  <text x="10" y="20">Text styled with custom font</text>
+
+          <circle cx="160" cy="160" r="140" stroke="rgba(200,148,74,.1)" stroke-width="1"/>
+          <g opacity=".9">
+            <path d="M 160 40 C 240 40 280 120 280 160 C 280 240 200 280 160 280 C 80 280 40 200 40 160 C 40 80 120 40 160 40 Z"
+              stroke="url(#ropeGrad)" stroke-width="2.5" fill="none" stroke-linecap="round">
+              <!-- <animateTransform attributeName="transform" type="rotate" from="0 160 160" to="360 160 160" dur="12s" repeatCount="indefinite"/> -->
+            </path>
+            <path d="M 160 80 C 220 80 250 130 250 160 C 250 220 200 240 160 240 C 100 240 70 190 70 160 C 70 100 120 80 160 80 Z"
+              stroke="url(#ropeGrad2)" stroke-width="2" fill="none" opacity=".7">
+              <!-- <animateTransform attributeName="transform" type="rotate" from="360 160 160" to="0 160 160" dur="8s" repeatCount="indefinite"/> -->
+            </path>
+          </g>
+          <circle cx="160" cy="160" r="8" fill="var(--gold)" opacity=".8"/>
+          <circle cx="160" cy="160" r="20" stroke="var(--gold)" stroke-width="1" opacity=".2"/>
+          <path id="orbitPath" d="M 160 30 A 130 130 0 1 1 159.99 30" fill="none"/>
+          <text font-family="FiraSans,Space Mono, monospace" font-size="10" letter-spacing="5" fill="rgba(200,148,74,.4)" text-anchor="middle">
+            <textPath href="#orbitPath" startOffset="0%">
+              FLOW ROPE · FRANK THE ROPEMAN · FLOW ROPE · FRANK THE ROPEMAN ·
+            </textPath>
+          </text>
+          <defs>
+            <linearGradient id="ropeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#C8944A"/>
+              <stop offset="100%" stop-color="#F4A923"/>
+            </linearGradient>
+            <linearGradient id="ropeGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#FF5733"/>
+              <stop offset="100%" stop-color="#C8944A"/>
+            </linearGradient>
+          </defs>
+        </svg>

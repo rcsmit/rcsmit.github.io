@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evgeny Panov — Yoga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f2ee;
+    --cream: #e8e2d9;
+    --gold: #b8975a;
+    --dark: #141414;
+    --mid: #2a2a2a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s;
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid rgba(184,151,90,0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: all 0.25s ease;
+  }
+
+  /* Lang switch */
+  .lang-switcher {
+    position: fixed;
+    top: 32px; right: 40px;
+    z-index: 1000;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+  .lang-btn {
+    background: none;
+    border: none;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: rgba(245,242,238,0.4);
+    cursor: none;
+    padding: 6px 8px;
+    transition: color 0.3s;
+    text-transform: uppercase;
+  }
+  .lang-btn.active { color: var(--gold); }
+  .lang-btn:hover { color: var(--white); }
+  .lang-sep { color: rgba(245,242,238,0.2); font-size: 10px; }
+
+  /* Nav */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    padding: 28px 40px;
+    mix-blend-mode: difference;
+  }
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--white);
+    text-decoration: none;
+  }
+  .logo span { color: var(--gold); }
+
+  nav ul {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+    margin-left: auto;
+    margin-right: 120px;
+  }
+  nav ul a {
+    text-decoration: none;
+    color: rgba(245,242,238,0.6);
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+  nav ul a:hover { color: var(--white); }
+
+  /* Hero */
+  .hero {
+    position: relative;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.55;
+  }
+
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(10,10,10,0.3) 0%, rgba(10,10,10,0) 40%, rgba(10,10,10,0.8) 100%);
+  }
+
+  .hero-content {
+    position: relative;
+    text-align: center;
+    z-index: 2;
+    animation: heroFade 1.8s ease forwards;
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  @keyframes heroFade {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-eyebrow {
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 24px;
+  }
+
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(64px, 10vw, 130px);
+    font-weight: 300;
+    line-height: 0.9;
+    letter-spacing: -1px;
+    margin-bottom: 32px;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-sub {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(245,242,238,0.6);
+    margin-bottom: 56px;
+  }
+
+  .scroll-indicator {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    z-index: 2;
+  }
+  .scroll-line {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, transparent, var(--gold));
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+  @keyframes scrollPulse {
+    0%, 100% { opacity: 0; transform: scaleY(0); transform-origin: top; }
+    50% { opacity: 1; transform: scaleY(1); transform-origin: top; }
+  }
+
+  /* CTA button */
+  .btn {
+    display: inline-block;
+    padding: 14px 40px;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    text-decoration: none;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+  }
+  .btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: translateX(-101%);
+    transition: transform 0.4s ease;
+    z-index: -1;
+  }
+  .btn:hover { color: var(--black); }
+  .btn:hover::before { transform: translateX(0); }
+
+  /* Sections */
+  section { padding: 120px 40px; }
+
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+    opacity: 0.8;
+  }
+
+  /* About */
+  .about {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+    align-items: center;
+  }
+
+  .about-text h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(42px, 5vw, 72px);
+    font-weight: 300;
+    line-height: 1.05;
+    margin-bottom: 32px;
+  }
+  .about-text h2 em { font-style: italic; color: var(--gold); }
+
+  .about-text p {
+    font-size: 13px;
+    line-height: 2;
+    color: rgba(245,242,238,0.65);
+    margin-bottom: 20px;
+  }
+
+  .about-image {
+    position: relative;
+  }
+  .about-image img {
+    width: 100%;
+    height: 580px;
+    object-fit: cover;
+    object-position: top;
+    filter: grayscale(20%);
+  }
+  .about-image::before {
+    content: '';
+    position: absolute;
+    top: -20px; left: -20px;
+    right: 20px; bottom: 20px;
+    border: 1px solid rgba(184,151,90,0.25);
+    z-index: -1;
+  }
+
+  /* Stats */
+  .stats {
+    display: flex;
+    gap: 60px;
+    margin-top: 48px;
+    padding-top: 40px;
+    border-top: 1px solid rgba(245,242,238,0.1);
+  }
+  .stat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 48px;
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(245,242,238,0.4);
+    margin-top: 6px;
+  }
+
+  /* Services */
+  .services-section {
+    background: var(--dark);
+    border-top: 1px solid rgba(245,242,238,0.06);
+  }
+  .services-header {
+    max-width: 1200px;
+    margin: 0 auto 80px;
+  }
+  .services-header h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(40px, 5vw, 68px);
+    font-weight: 300;
+    line-height: 1.05;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    max-width: 1200px;
+    margin: 0 auto;
+    background: rgba(245,242,238,0.06);
+  }
+  .service-card {
+    background: var(--dark);
+    padding: 56px 40px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.4s;
+  }
+  .service-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 0; height: 1px;
+    background: var(--gold);
+    transition: width 0.5s ease;
+  }
+  .service-card:hover::after { width: 100%; }
+  .service-card:hover { background: #1a1a1a; }
+
+  .service-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 80px;
+    color: rgba(184,151,90,0.08);
+    line-height: 1;
+    margin-bottom: -20px;
+    font-weight: 300;
+  }
+  .service-card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    margin-bottom: 16px;
+    color: var(--white);
+  }
+  .service-card p {
+    font-size: 12px;
+    line-height: 1.9;
+    color: rgba(245,242,238,0.5);
+  }
+
+  /* Gallery */
+  .gallery-section { background: var(--black); }
+  .gallery-section h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(40px, 5vw, 68px);
+    font-weight: 300;
+    text-align: center;
+    margin-bottom: 64px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: 300px 300px;
+    gap: 4px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .gallery-item {
+    overflow: hidden;
+    position: relative;
+  }
+  .gallery-item:first-child { grid-row: 1 / 3; }
+  .gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s ease, filter 0.8s ease;
+    filter: grayscale(30%);
+  }
+  .gallery-item:hover img { transform: scale(1.06); filter: grayscale(0%); }
+
+  /* Team / Join */
+  .team-section {
+    background: linear-gradient(135deg, #0f0f0f 0%, #1a150a 100%);
+    border-top: 1px solid rgba(184,151,90,0.15);
+  }
+  .team-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  .team-inner h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(42px, 6vw, 80px);
+    font-weight: 300;
+    line-height: 1.05;
+    margin-bottom: 32px;
+  }
+  .team-inner h2 em { color: var(--gold); font-style: italic; }
+  .team-inner p {
+    font-size: 13px;
+    line-height: 2;
+    color: rgba(245,242,238,0.6);
+    margin-bottom: 48px;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 56px;
+  }
+  .tag {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: 1px solid rgba(184,151,90,0.35);
+    padding: 8px 20px;
+    color: var(--gold);
+  }
+
+  /* Testimonials / benefits */
+  .benefits-section { background: var(--dark); }
+  .benefits-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .benefits-inner h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(38px, 4vw, 60px);
+    font-weight: 300;
+    margin-bottom: 64px;
+  }
+
+  .benefits-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  .benefit-item {
+    padding: 36px 0;
+    border-bottom: 1px solid rgba(245,242,238,0.07);
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .benefit-item:nth-child(odd) { padding-right: 60px; }
+  .benefit-item:nth-child(even) { padding-left: 60px; border-left: 1px solid rgba(245,242,238,0.07); }
+  .benefit-icon {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    color: var(--gold);
+    font-weight: 300;
+    line-height: 1;
+  }
+  .benefit-text h4 {
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    color: var(--white);
+  }
+  .benefit-text p {
+    font-size: 11px;
+    line-height: 1.8;
+    color: rgba(245,242,238,0.45);
+  }
+
+  /* Contact / CTA */
+  .cta-section {
+    background: var(--black);
+    text-align: center;
+    border-top: 1px solid rgba(245,242,238,0.06);
+  }
+  .cta-section h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(48px, 8vw, 110px);
+    font-weight: 300;
+    line-height: 0.95;
+    margin-bottom: 48px;
+  }
+  .cta-section h2 em { color: var(--gold); font-style: italic; }
+
+  /* Footer */
+  footer {
+    background: var(--dark);
+    padding: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(245,242,238,0.06);
+  }
+  footer p { font-size: 10px; letter-spacing: 1px; color: rgba(245,242,238,0.25); }
+  .social-links { display: flex; gap: 24px; }
+  .social-links a {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(245,242,238,0.35);
+    text-decoration: none;
+    transition: color 0.3s;
+    cursor: none;
+  }
+  .social-links a:hover { color: var(--gold); }
+
+  /* Reveal animation */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Hidden language content */
+  [data-lang] { display: none; }
+  [data-lang].active { display: block; }
+  [data-lang-inline] { display: none; }
+  [data-lang-inline].active { display: inline; }
+
+  @media (max-width: 768px) {
+    nav ul { display: none; }
+    .about { grid-template-columns: 1fr; }
+    .about-image { order: -1; }
+    .services-grid { grid-template-columns: 1fr; }
+    .gallery-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+    .gallery-item:first-child { grid-row: auto; }
+    .benefits-list { grid-template-columns: 1fr; }
+    .benefit-item:nth-child(even) { padding-left: 0; border-left: none; }
+    .benefit-item:nth-child(odd) { padding-right: 0; }
+    section { padding: 80px 24px; }
+    nav { padding: 20px 24px; }
+    .lang-switcher { top: 20px; right: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Language switcher -->
+<div class="lang-switcher">
+  <button class="lang-btn active" onclick="setLang('en')" id="btn-en">EN</button>
+  <span class="lang-sep">|</span>
+  <button class="lang-btn" onclick="setLang('ru')" id="btn-ru">RU</button>
+</div>
+
+<!-- Navigation -->
+<nav>
+  <a href="#" class="logo">Evgeny <span>Panov</span></a>
+  <ul>
+    <li><a href="#about" data-lang="en">About</a><a href="#about" data-lang="ru" style="display:none">Обо мне</a></li>
+    <li><a href="#services" data-lang="en">Practice</a><a href="#services" data-lang="ru" style="display:none">Практика</a></li>
+    <li><a href="#team" data-lang="en">Team</a><a href="#team" data-lang="ru" style="display:none">Команда</a></li>
+    <li><a href="#contact" data-lang="en">Contact</a><a href="#contact" data-lang="ru" style="display:none">Контакт</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <video autoplay muted loop playsinline>
+    <source src="videos/video.mp4" type="video/mp4">
+  </video>
+  <div class="hero-overlay"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">
+      <span data-lang="en" class="active">International Yoga Teacher · Moscow</span>
+      <span data-lang="ru">Международный тренер по йоге · Москва</span>
+    </p>
+    <h1 class="hero-title">
+      Evgeny<br><em>Panov</em>
+    </h1>
+    <p class="hero-sub">
+      <span data-lang="en" class="active">Healthy Body &amp; Mind · Yoga of Your Dreams</span>
+      <span data-lang="ru">Здоровое тело и ум · Йога Твоей Мечты</span>
+    </p>
+    <a href="#about" class="btn">
+      <span data-lang="en" class="active">Begin Your Journey</span>
+      <span data-lang="ru">Начать путь</span>
+    </a>
+  </div>
+  <div class="scroll-indicator">
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- About -->
+<section id="about">
+  <div class="about">
+    <div class="about-image reveal">
+      <img src="images/1.png" alt="Evgeny Panov">
+    </div>
+    <div class="about-text reveal">
+      <p class="section-label">
+        <span data-lang="en" class="active">About</span>
+        <span data-lang="ru">Обо мне</span>
+      </p>
+      <h2>
+        <span data-lang="en" class="active">Making <em>cyborgs</em> out of ordinary people</span>
+        <span data-lang="ru">Делаю <em>киборгов</em> из обычных людей</span>
+      </h2>
+      <p data-lang="en" class="active">
+        I believe the body is capable of far more than we imagine. Through dedicated yoga practice and personalized training, I help people unlock extraordinary strength, flexibility, and mental clarity — regardless of their starting point.
+      </p>
+      <p data-lang="ru">
+        Я верю, что тело способно на гораздо большее, чем мы можем представить. Через целенаправленную практику йоги и персональные тренировки я помогаю людям раскрыть необычную силу, гибкость и ясность ума — независимо от начального уровня подготовки.
+      </p>
+      <p data-lang="en" class="active">
+        From stadiums of 550 people to intimate one-on-one online sessions, my approach is precision-driven and results-oriented — for beginners and advanced practitioners alike.
+      </p>
+      <p data-lang="ru">
+        От стадионов на 550 человек до личных онлайн-сессий — мой подход точен и ориентирован на результат: для начинающих и опытных практиков.
+      </p>
+      <div class="stats">
+        <div>
+          <div class="stat-num">550+</div>
+          <div class="stat-label" data-lang="en">Students at once</div>
+          <div class="stat-label" data-lang="ru" style="display:none">Студентов за раз</div>
+        </div>
+        <div>
+          <div class="stat-num">∞</div>
+          <div class="stat-label" data-lang="en">Online worldwide</div>
+          <div class="stat-label" data-lang="ru" style="display:none">Онлайн по всему миру</div>
+        </div>
+        <div>
+          <div class="stat-num">▵</div>
+          <div class="stat-label" data-lang="en">Moscow & global</div>
+          <div class="stat-label" data-lang="ru" style="display:none">Москва и весь мир</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Services -->
+<section class="services-section" id="services">
+  <div class="services-header reveal">
+    <p class="section-label">
+      <span data-lang="en" class="active">Practice</span>
+      <span data-lang="ru">Практика</span>
+    </p>
+    <h2>
+      <span data-lang="en" class="active">What we work <em>on</em></span>
+      <span data-lang="ru">Над чем мы <em>работаем</em></span>
+    </h2>
+  </div>
+  <div class="services-grid">
+    <div class="service-card reveal">
+      <div class="service-num">01</div>
+      <h3 data-lang="en" class="active">Back & Neck Pain</h3>
+      <h3 data-lang="ru">Боли в спине и шее</h3>
+      <p data-lang="en" class="active">Targeted practice to relieve hernias, protrusions, and chronic tension. Science-backed methods adapted to your unique anatomy.</p>
+      <p data-lang="ru">Целенаправленная практика для устранения грыж, протрузий и хронического напряжения. Методы, основанные на науке и адаптированные к вашей анатомии.</p>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-num">02</div>
+      <h3 data-lang="en" class="active">Energy & Nervous System</h3>
+      <h3 data-lang="ru">Энергия и нервная система</h3>
+      <p data-lang="en" class="active">Increase your body's energy levels, calm the mind, and strengthen the nervous system through breathwork and mindful movement.</p>
+      <p data-lang="ru">Увеличить уровень энергии в теле, успокоить ум и укрепить нервную систему с помощью пранаямы и осознанного движения.</p>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-num">03</div>
+      <h3 data-lang="en" class="active">Strength & Flexibility</h3>
+      <h3 data-lang="ru">Сила и гибкость</h3>
+      <p data-lang="en" class="active">Build a body that is simultaneously strong, flexible, and enduring. Transform your physical potential from the inside out.</p>
+      <p data-lang="ru">Сделать тело сильным, гибким и выносливым. Преобразуйте свой физический потенциал изнутри наружу.</p>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-num">04</div>
+      <h3 data-lang="en" class="active">Joint Health</h3>
+      <h3 data-lang="ru">Здоровье суставов</h3>
+      <p data-lang="en" class="active">Restore mobility and eliminate pain in joints through therapeutic yoga sequences designed for long-term health.</p>
+      <p data-lang="ru">Восстановить подвижность и устранить боль в суставах с помощью терапевтических последовательностей йоги для долгосрочного здоровья.</p>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-num">05</div>
+      <h3 data-lang="en" class="active">Focus & Concentration</h3>
+      <h3 data-lang="ru">Внимание и концентрация</h3>
+      <p data-lang="en" class="active">Sharpen mental clarity and develop laser focus through meditation, pranayama, and mindful practice techniques.</p>
+      <p data-lang="ru">Заострить ясность ума и развить концентрацию через медитацию, пранаяму и техники осознанной практики.</p>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-num">06</div>
+      <h3 data-lang="en" class="active">Online Personal Training</h3>
+      <h3 data-lang="ru">Персональные онлайн-тренировки</h3>
+      <p data-lang="en" class="active">Individual online training for any level. Train from anywhere in the world with personalized programs built around your goals.</p>
+      <p data-lang="ru">Индивидуальные онлайн-тренировки для любого уровня подготовки. Занимайтесь из любой точки мира по программе, созданной под ваши цели.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Gallery -->
+<section class="gallery-section">
+  <p class="section-label" style="text-align:center; margin-bottom:16px;">
+    <span data-lang="en" class="active">Gallery</span>
+    <span data-lang="ru">Галерея</span>
+  </p>
+  <h2 class="reveal">
+    <span data-lang="en" class="active">Practice in <em>motion</em></span>
+    <span data-lang="ru">Практика в <em>движении</em></span>
+  </h2>
+  <div class="gallery-grid">
+    <div class="gallery-item reveal"><img src="images/1.png" alt="Yoga practice"></div>
+    <div class="gallery-item reveal"><img src="images/2.png" alt="Yoga practice"></div>
+    <div class="gallery-item reveal"><img src="images/3.png" alt="Yoga practice"></div>
+    <div class="gallery-item reveal"><img src="images/4.png" alt="Yoga practice"></div>
+    <div class="gallery-item reveal"><img src="images/5.png" alt="Yoga practice"></div>
+  </div>
+</section>
+
+<!-- Benefits -->
+<section class="benefits-section" id="benefits">
+  <div class="benefits-inner">
+    <p class="section-label reveal">
+      <span data-lang="en" class="active">For You</span>
+      <span data-lang="ru">Для вас</span>
+    </p>
+    <h2 class="reveal">
+      <span data-lang="en" class="active">Individual training for <em>any level</em></span>
+      <span data-lang="ru">Индивидуальные тренировки для <em>любого уровня</em></span>
+    </h2>
+    <div class="benefits-list">
+      <div class="benefit-item reveal">
+        <div class="benefit-icon">◈</div>
+        <div class="benefit-text">
+          <h4 data-lang="en" class="active">Back & Neck Relief</h4>
+          <h4 data-lang="ru">Боли в спине и шее</h4>
+          <p data-lang="en" class="active">Targeted sequences for hernias and protrusions</p>
+          <p data-lang="ru">Специальные последовательности при грыжах и протрузиях</p>
+        </div>
+      </div>
+      <div class="benefit-item reveal">
+        <div class="benefit-icon">◈</div>
+        <div class="benefit-text">
+          <h4 data-lang="en" class="active">Energy Boost</h4>
+          <h4 data-lang="ru">Увеличение энергии</h4>
+          <p data-lang="en" class="active">Unlock your body's natural energy potential</p>
+          <p data-lang="ru">Раскрыть природный энергетический потенциал тела</p>
+        </div>
+      </div>
+      <div class="benefit-item reveal">
+        <div class="benefit-icon">◈</div>
+        <div class="benefit-text">
+          <h4 data-lang="en" class="active">Mental Calm</h4>
+          <h4 data-lang="ru">Успокоение ума</h4>
+          <p data-lang="en" class="active">Calm the mind and fortify the nervous system</p>
+          <p data-lang="ru">Успокоить ум и укрепить нервную систему</p>
+        </div>
+      </div>
+      <div class="benefit-item reveal">
+        <div class="benefit-icon">◈</div>
+        <div class="benefit-text">
+          <h4 data-lang="en" class="active">Strong & Flexible Body</h4>
+          <h4 data-lang="ru">Сильное и гибкое тело</h4>
+          <p data-lang="en" class="active">Build lasting strength, flexibility, and endurance</p>
+          <p data-lang="ru">Построить устойчивую силу, гибкость и выносливость</p>
+        </div>
+      </div>
+      <div class="benefit-item reveal">
+        <div class="benefit-icon">◈</div>
+        <div class="benefit-text">
+          <h4 data-lang="en" class="active">Joint Health</h4>
+          <h4 data-lang="ru">Здоровье суставов</h4>
+          <p data-lang="en" class="active">Restore and maintain healthy, pain-free joints</p>
+          <p data-lang="ru">Восстановить и сохранить здоровые суставы без боли</p>
+        </div>
+      </div>
+      <div class="benefit-item reveal">
+        <div class="benefit-icon">◈</div>
+        <div class="benefit-text">
+          <h4 data-lang="en" class="active">Focus & Attention</h4>
+          <h4 data-lang="ru">Внимание и концентрация</h4>
+          <p data-lang="en" class="active">Develop sharp focus and sustained concentration</p>
+          <p data-lang="ru">Развить острый фокус и устойчивую концентрацию</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Team -->
+<section class="team-section" id="team">
+  <div class="team-inner">
+    <p class="section-label reveal">
+      <span data-lang="en" class="active">The Team</span>
+      <span data-lang="ru">Команда</span>
+    </p>
+    <h2 class="reveal">
+      <span data-lang="en" class="active">Success through <em>unity</em></span>
+      <span data-lang="ru">Успех через <em>единство</em></span>
+    </h2>
+    <p class="reveal" data-lang="en">
+      Success lies in unity, partnership, and teamwork. Our team organizes large-scale events — stadium workouts for 550 people, yoga retreats, intensives. Our coaches work in premium fitness clubs and studios. We manage social media and support your growth. Whether you're an experienced trainer or just starting your path — we have a place for you.
+    </p>
+    <p class="reveal" data-lang="ru">
+      Успех в объединении, партнерстве и командной работе. Наша команда организовывает крупные мероприятия такие как тренировка на стадионе на 550 человек, йога выезды, ретриты, интенсивы, наши тренеры работают в премиальных фитнес клубах и студиях. Мы ведем соц сети и помогаем с продвижением. Если ты тренер, то можешь присоединиться к нам, а если ты только хочешь начать этот путь, то тогда тебе точно к нам.
+    </p>
+    <div class="tag-list reveal">
+      <span class="tag" data-lang="en">Stadium Events</span>
+      <span class="tag" data-lang="ru">Стадионные события</span>
+      <span class="tag" data-lang="en">Retreats</span>
+      <span class="tag" data-lang="ru">Ретриты</span>
+      <span class="tag" data-lang="en">Intensives</span>
+      <span class="tag" data-lang="ru">Интенсивы</span>
+      <span class="tag" data-lang="en">Premium Studios</span>
+      <span class="tag" data-lang="ru">Премиум студии</span>
+      <span class="tag" data-lang="en">Teacher School</span>
+      <span class="tag" data-lang="ru">Школа тренеров</span>
+    </div>
+    <div class="reveal">
+      <a href="#contact" class="btn">
+        <span data-lang="en" class="active">Write "TEAM" in DM</span>
+        <span data-lang="ru">Напиши КОМАНДА в директ</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="contact">
+  <div class="reveal">
+    <p class="section-label" style="margin-bottom:40px;">
+      <span data-lang="en" class="active">Start Today</span>
+      <span data-lang="ru">Начать сегодня</span>
+    </p>
+    <h2>
+      <span data-lang="en" class="active">Yoga of your<br><em>dreams</em></span>
+      <span data-lang="ru">Йога твоей<br><em>мечты</em></span>
+    </h2>
+    <a href="https://instagram.com" class="btn" target="_blank">
+      <span data-lang="en" class="active">Get in Touch</span>
+      <span data-lang="ru">Связаться</span>
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <p>© 2024 Evgeny Panov ▵ Yoga</p>
+  <div class="social-links">
+    <a href="#">Instagram</a>
+    <a href="#">Telegram</a>
+    <a href="#">YouTube</a>
+  </div>
+</footer>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursorRing');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+    setTimeout(() => {
+      ring.style.left = e.clientX + 'px';
+      ring.style.top = e.clientY + 'px';
+    }, 80);
+  });
+
+  // Language
+  let currentLang = 'en';
+  function setLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('btn-' + lang).classList.add('active');
+
+    document.querySelectorAll('[data-lang]').forEach(el => {
+      if (el.dataset.lang === lang) {
+        el.classList.add('active');
+        el.style.display = '';
+      } else {
+        el.classList.remove('active');
+        el.style.display = 'none';
+      }
+    });
+
+    // nav links special handling
+    document.querySelectorAll('nav ul li a').forEach(a => {
+      const l = a.dataset.lang;
+      if (l) a.style.display = (l === lang) ? '' : 'none';
+    });
+
+    // tags
+    document.querySelectorAll('.tag').forEach(t => {
+      t.style.display = (t.dataset.lang === lang) ? '' : 'none';
+    });
+
+    // stat labels
+    document.querySelectorAll('.stat-label').forEach(s => {
+      if (s.dataset.lang) s.style.display = (s.dataset.lang === lang) ? '' : 'none';
+    });
+  }
+
+  // Init
+  setLang('en');
+
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(r => observer.observe(r));
+</script>
+</body>
+</html>
