@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luiza Paixão</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Cinzel:wght@400;500;600&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #f7f3ed;
+    --parchment: #ede6d8;
+    --earth: #7c5c40;
+    --terracotta: #a85438;
+    --deep: #1e1510;
+    --sage: #6b7d64;
+    --gold: #b8883a;
+    --muted: #9a8878;
+    --light-muted: #c8b9ad;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--cream);
+    color: var(--deep);
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* Custom cursor */
+  .cursor {
+    width: 8px; height: 8px;
+    background: var(--terracotta);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transition: transform 0.15s ease;
+    mix-blend-mode: multiply;
+  }
+  .cursor-ring {
+    width: 36px; height: 36px;
+    border: 1px solid var(--terracotta);
+    border-radius: 50%;
+    position: fixed; top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9998;
+    transition: transform 0.4s ease, width 0.3s, height 0.3s, opacity 0.3s;
+    opacity: 0.5;
+  }
+
+  /* Language toggle */
+  .lang-toggle {
+    position: fixed;
+    top: 28px; right: 32px;
+    z-index: 100;
+    display: flex;
+    gap: 4px;
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+  .lang-btn {
+    background: none;
+    border: none;
+    cursor: none;
+    padding: 6px 10px;
+    color: var(--muted);
+    transition: color 0.3s;
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+  }
+  .lang-btn.active { color: var(--deep); border-bottom: 1px solid var(--terracotta); }
+  .lang-btn:hover { color: var(--deep); }
+
+  /* Nav */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 99;
+    padding: 28px 48px;
+    display: flex;
+    align-items: center;
+    mix-blend-mode: multiply;
+  }
+  .nav-logo {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--deep);
+    text-decoration: none;
+    font-weight: 400;
+  }
+  .nav-links {
+    margin-left: auto;
+    display: flex;
+    gap: 36px;
+    align-items: center;
+    margin-right: 80px;
+  }
+  .nav-links a {
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  .nav-links a:hover { color: var(--deep); }
+
+  /* Hero */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: relative;
+  }
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 140px 64px 80px 64px;
+    position: relative;
+    z-index: 2;
+  }
+  .hero-tag {
+    font-family: 'Jost', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    margin-bottom: 28px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.3s forwards;
+  }
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(56px, 7vw, 92px);
+    font-weight: 300;
+    line-height: 1.0;
+    color: var(--deep);
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.5s forwards;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--terracotta);
+  }
+  .hero-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 380px;
+    margin-bottom: 56px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.7s forwards;
+  }
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 16px;
+    opacity: 0;
+    animation: fadeUp 1s ease 0.9s forwards;
+  }
+  .btn-primary {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cream);
+    background: var(--terracotta);
+    padding: 16px 36px;
+    text-decoration: none;
+    transition: background 0.3s, transform 0.3s;
+    cursor: none;
+  }
+  .btn-primary:hover { background: var(--earth); transform: translateY(-2px); }
+  .btn-secondary {
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+    text-decoration: none;
+    border-bottom: 1px solid var(--light-muted);
+    padding-bottom: 2px;
+    transition: color 0.3s, border-color 0.3s;
+    cursor: none;
+  }
+  .btn-secondary:hover { color: var(--deep); border-color: var(--deep); }
+
+  .hero-right {
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-right::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to right, var(--cream) 0%, transparent 30%);
+    z-index: 1;
+  }
+  .hero-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    opacity: 0;
+    animation: fadeIn 1.5s ease 0.2s forwards;
+    filter: sepia(15%) contrast(1.05);
+  }
+  .hero-scroll {
+    position: absolute;
+    bottom: 48px; left: 64px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    animation: fadeUp 1s ease 1.2s forwards;
+  }
+  .hero-scroll span {
+    font-family: 'Jost', sans-serif;
+    font-size: 9px;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--light-muted);
+    writing-mode: vertical-rl;
+  }
+  .scroll-line {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, var(--light-muted), transparent);
+    animation: scrollLine 2s ease-in-out infinite;
+  }
+  @keyframes scrollLine {
+    0%, 100% { transform: scaleY(1); opacity: 1; }
+    50% { transform: scaleY(0.5); opacity: 0.3; }
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 0 64px;
+    margin: 0 auto;
+  }
+  .divider-line { flex: 1; height: 1px; background: var(--parchment); }
+  .divider-symbol {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px;
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  /* About section */
+  .about {
+    padding: 120px 64px;
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 80px;
+    align-items: center;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+  .about-images {
+    position: relative;
+    height: 580px;
+  }
+  .about-img-main {
+    position: absolute;
+    top: 0; left: 0;
+    width: 70%; height: 80%;
+    object-fit: cover;
+    filter: sepia(10%) contrast(1.05);
+  }
+  .about-img-accent {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 55%; height: 55%;
+    object-fit: cover;
+    filter: sepia(10%) contrast(1.05);
+    border: 8px solid var(--cream);
+  }
+  .about-number {
+    position: absolute;
+    bottom: 40px; left: 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 140px;
+    font-weight: 300;
+    color: var(--parchment);
+    line-height: 1;
+    z-index: -1;
+  }
+  .about-content {}
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    margin-bottom: 24px;
+    display: block;
+  }
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 4vw, 54px);
+    font-weight: 300;
+    line-height: 1.15;
+    color: var(--deep);
+    margin-bottom: 32px;
+  }
+  .section-title em {
+    font-style: italic;
+    color: var(--earth);
+  }
+  .body-text {
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    line-height: 1.9;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+  .pillars {
+    display: flex;
+    gap: 32px;
+    margin-top: 48px;
+    padding-top: 40px;
+    border-top: 1px solid var(--parchment);
+  }
+  .pillar {}
+  .pillar-icon {
+    font-size: 22px;
+    margin-bottom: 12px;
+  }
+  .pillar-title {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--deep);
+    margin-bottom: 6px;
+  }
+  .pillar-text {
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* Services */
+  .services-section {
+    background: var(--deep);
+    padding: 120px 64px;
+    position: relative;
+    overflow: hidden;
+  }
+  .services-section::before {
+    content: 'ASTROS';
+    position: absolute;
+    top: -20px; right: -20px;
+    font-family: 'Cinzel', serif;
+    font-size: 200px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.02);
+    letter-spacing: 0.1em;
+    pointer-events: none;
+  }
+  .services-header {
+    max-width: 1200px;
+    margin: 0 auto 80px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .services-header .section-title { color: var(--cream); margin-bottom: 0; }
+  .services-header .section-title em { color: var(--gold); }
+  .services-header .section-label { color: var(--gold); }
+  .book-link {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(184,136,58,0.4);
+    padding-bottom: 2px;
+    transition: border-color 0.3s;
+    cursor: none;
+  }
+  .book-link:hover { border-color: var(--gold); }
+
+  .services-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+  }
+  .service-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 48px 40px;
+    position: relative;
+    transition: background 0.4s;
+    cursor: none;
+  }
+  .service-card:hover { background: rgba(255,255,255,0.06); }
+  .service-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 40px; right: 40px;
+    height: 1px;
+    background: var(--terracotta);
+    transform: scaleX(0);
+    transition: transform 0.4s;
+    transform-origin: left;
+  }
+  .service-card:hover::after { transform: scaleX(1); }
+  .service-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    font-weight: 300;
+    color: var(--terracotta);
+    margin-bottom: 28px;
+    opacity: 0.7;
+  }
+  .service-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--cream);
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+  .service-sub {
+    font-family: 'Jost', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+  .service-detail {
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.35);
+    line-height: 1.7;
+    margin-bottom: 32px;
+  }
+  .service-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--cream);
+  }
+  .service-price small {
+    font-size: 14px;
+    color: rgba(255,255,255,0.4);
+    margin-left: 4px;
+  }
+
+  /* Combos */
+  .combos-section {
+    padding: 120px 64px;
+    background: var(--parchment);
+  }
+  .combos-header {
+    max-width: 1200px;
+    margin: 0 auto 64px;
+  }
+  .combos-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .combo-card {
+    background: var(--cream);
+    padding: 48px;
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+  }
+  .combo-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--terracotta);
+  }
+  .combo-label {
+    font-family: 'Jost', sans-serif;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .combo-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--deep);
+    line-height: 1.3;
+    margin-bottom: 12px;
+  }
+  .combo-detail {
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    color: var(--muted);
+    margin-bottom: 32px;
+    line-height: 1.7;
+  }
+  .combo-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+  .combo-price {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px;
+    font-weight: 300;
+    color: var(--deep);
+    line-height: 1;
+  }
+  .combo-price small {
+    font-size: 13px;
+    color: var(--muted);
+    display: block;
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+  }
+  .combo-btn {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cream);
+    background: var(--deep);
+    padding: 14px 28px;
+    text-decoration: none;
+    transition: background 0.3s;
+    cursor: none;
+  }
+  .combo-btn:hover { background: var(--terracotta); }
+
+  /* Movement / Yoga section */
+  .movement-section {
+    padding: 120px 64px;
+    max-width: 1300px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 80px;
+    align-items: center;
+  }
+  .movement-content {}
+  .movement-images {
+    position: relative;
+    height: 520px;
+  }
+  .movement-img-main {
+    position: absolute;
+    top: 0; right: 0;
+    width: 75%; height: 85%;
+    object-fit: cover;
+    filter: sepia(8%) contrast(1.05);
+  }
+  .movement-img-accent {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 50%; height: 50%;
+    object-fit: cover;
+    filter: sepia(8%) contrast(1.05);
+    border: 8px solid var(--cream);
+  }
+
+  /* Quote */
+  .quote-section {
+    background: var(--cream);
+    padding: 100px 64px;
+    text-align: center;
+    position: relative;
+  }
+  .quote-section::before {
+    content: '"';
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 300px;
+    color: var(--parchment);
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    line-height: 1;
+    pointer-events: none;
+  }
+  .quote-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(24px, 3.5vw, 46px);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--deep);
+    line-height: 1.5;
+    max-width: 860px;
+    margin: 0 auto 32px;
+    position: relative;
+    z-index: 1;
+  }
+  .quote-attr {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+  }
+
+  /* Links / Connect */
+  .connect-section {
+    background: var(--deep);
+    padding: 100px 64px;
+    text-align: center;
+  }
+  .connect-section .section-label { color: var(--gold); margin-bottom: 16px; display: block; }
+  .connect-section .section-title { color: var(--cream); margin-bottom: 16px; }
+  .connect-section .section-title em { color: var(--gold); }
+  .connect-desc {
+    font-family: 'Jost', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 56px;
+    line-height: 1.8;
+  }
+  .connect-links {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .connect-link {
+    font-family: 'Cinzel', serif;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cream);
+    text-decoration: none;
+    padding: 18px 40px;
+    border: 1px solid rgba(255,255,255,0.15);
+    transition: border-color 0.3s, color 0.3s, background 0.3s;
+    cursor: none;
+  }
+  .connect-link:hover { border-color: var(--gold); color: var(--gold); }
+  .connect-link.primary { background: var(--terracotta); border-color: var(--terracotta); }
+  .connect-link.primary:hover { background: var(--earth); border-color: var(--earth); color: var(--cream); }
+
+  /* Footer */
+  footer {
+    background: var(--deep);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 48px 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-name {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.3);
+  }
+  .footer-loc {
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.2);
+    text-align: center;
+  }
+  .footer-pay {
+    font-family: 'Jost', sans-serif;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    opacity: 0.6;
+  }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Mobile */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; }
+    .hero-right { display: none; }
+    .hero-left { padding: 120px 32px 80px; }
+    .about, .movement-section { grid-template-columns: 1fr; padding: 80px 32px; gap: 48px; }
+    .about-images, .movement-images { height: 360px; }
+    .services-grid { grid-template-columns: 1fr; }
+    .combos-grid { grid-template-columns: 1fr; }
+    .services-section, .combos-section, .connect-section { padding: 80px 32px; }
+    .services-header { flex-direction: column; align-items: flex-start; gap: 24px; }
+    footer { flex-direction: column; gap: 16px; text-align: center; padding: 40px 32px; }
+    nav { padding: 24px 32px; }
+    .nav-links { display: none; }
+    .lang-toggle { top: 24px; right: 24px; }
+    .quote-section { padding: 80px 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- Language toggle -->
+<div class="lang-toggle">
+  <button class="lang-btn active" id="btn-pt" onclick="setLang('pt')">PT</button>
+  <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+</div>
+
+<!-- Nav -->
+<nav>
+  <a href="#" class="nav-logo">LUIZA PAIXÃO</a>
+  <div class="nav-links">
+    <a href="#sobre" data-i18n="nav.about">Sobre</a>
+    <a href="#servicos" data-i18n="nav.services">Serviços</a>
+    <a href="#movimento" data-i18n="nav.movement">Movimento</a>
+    <a href="#contato" data-i18n="nav.contact">Contato</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-left">
+    <p class="hero-tag" data-i18n="hero.tag">Astrologia · Yoga · Movimento</p>
+    <h1 class="hero-title">
+      Luiza<br><em>Paixão</em>
+    </h1>
+    <p class="hero-subtitle" data-i18n="hero.subtitle">
+      Astrologia, escrita, corpo em movimento e um bocado de outras paixões.
+    </p>
+    <div class="hero-cta">
+      <a href="https://pro.quaddro.co/paixaolluiza" class="btn-primary" data-i18n="hero.cta">Agendar agora</a>
+      <a href="#sobre" class="btn-secondary" data-i18n="hero.learn">Saber mais</a>
+    </div>
+
+    <div class="hero-scroll">
+      <div class="scroll-line"></div>
+      <span data-i18n="hero.scroll">Explorar</span>
+    </div>
+  </div>
+  <div class="hero-right">
+    <img src="images/1.png" alt="Luiza Paixão" class="hero-img">
+  </div>
+</section>
+
+<!-- About -->
+<section class="about" id="sobre">
+  <div class="about-images reveal">
+    <img src="images/2.png" alt="Yoga ao ar livre" class="about-img-main">
+    <img src="images/3.png" alt="Performance" class="about-img-accent">
+    <div class="about-number">01</div>
+  </div>
+  <div class="about-content reveal">
+    <span class="section-label" data-i18n="about.label">Quem sou</span>
+    <h2 class="section-title" data-i18n="about.title">Um encontro entre <em>astros e corpo</em></h2>
+    <p class="body-text" data-i18n="about.p1">
+      Consulta astrológica comigo é uma conversa de amigas, onde nos aprofundamos nos temas de interesse com cuidado e carinho. Um momento de encontro e dedicação em que tecemos juntas perguntas e usamos os mapas para guiar o processo de autoconhecimento de forma amorosa e presente.
+    </p>
+    <p class="body-text" data-i18n="about.p2">
+      Além dos astros, pesquiso e ensino o movimento natural do corpo — aquela sabedoria que já habita em nós, antes dos padrões impostos. Yoga, expressão, presença.
+    </p>
+    <div class="pillars">
+      <div class="pillar">
+        <div class="pillar-icon">✦</div>
+        <div class="pillar-title" data-i18n="pillar1.title">Astrologia</div>
+        <div class="pillar-text" data-i18n="pillar1.text">Mapas como espelhos de autoconhecimento</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">◯</div>
+        <div class="pillar-title" data-i18n="pillar2.title">Yoga</div>
+        <div class="pillar-text" data-i18n="pillar2.text">Presença, respiração e movimento consciente</div>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">∿</div>
+        <div class="pillar-title" data-i18n="pillar3.title">Pesquisa</div>
+        <div class="pillar-text" data-i18n="pillar3.text">Movimento natural e expressão corporal</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider reveal" style="max-width:1300px; margin: 0 auto;">
+  <div class="divider-line"></div>
+  <div class="divider-symbol">✦</div>
+  <div class="divider-line"></div>
+</div>
+
+<!-- Services -->
+<section class="services-section" id="servicos">
+  <div class="services-header">
+    <div>
+      <span class="section-label" data-i18n="services.label">Astros por Luiza Paixão</span>
+      <h2 class="section-title" data-i18n="services.title">Serviços de<br><em>Astrologia</em></h2>
+    </div>
+    <a href="https://pro.quaddro.co/paixaolluiza" class="book-link" data-i18n="services.all">Ver todos →</a>
+  </div>
+  <div class="services-grid">
+    <div class="service-card reveal">
+      <div class="service-num">01</div>
+      <div class="service-name" data-i18n="s1.name">mapa momento atual</div>
+      <div class="service-sub" data-i18n="s1.sub">direções</div>
+      <div class="service-detail" data-i18n="s1.detail">Online · 1h 30min</div>
+      <div class="service-price">R$ 350<small data-i18n="s1.action"><a href="https://pro.quaddro.co/paixaolluiza" style="color:var(--terracotta);text-decoration:none;font-size:12px;font-family:'Cinzel',serif;letter-spacing:0.12em;">→ Agendar</a></small></div>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-num">02</div>
+      <div class="service-name" data-i18n="s2.name">revolução solar</div>
+      <div class="service-sub" data-i18n="s2.sub">mapa ritual</div>
+      <div class="service-detail" data-i18n="s2.detail">Online · 1h 30min</div>
+      <div class="service-price">R$ 332<small><a href="https://pro.quaddro.co/paixaolluiza" style="color:var(--terracotta);text-decoration:none;font-size:12px;font-family:'Cinzel',serif;letter-spacing:0.12em;">→ Agendar</a></small></div>
+    </div>
+    <div class="service-card reveal">
+      <div class="service-num">03</div>
+      <div class="service-name" data-i18n="s3.name">leitura de mapa natal</div>
+      <div class="service-sub" data-i18n="s3.sub">mapa raiz</div>
+      <div class="service-detail" data-i18n="s3.detail">Online · 1h 15min</div>
+      <div class="service-price">R$ 278<small><a href="https://pro.quaddro.co/paixaolluiza" style="color:var(--terracotta);text-decoration:none;font-size:12px;font-family:'Cinzel',serif;letter-spacing:0.12em;">→ Agendar</a></small></div>
+    </div>
+  </div>
+</section>
+
+<!-- Combos -->
+<section class="combos-section">
+  <div class="combos-header reveal">
+    <span class="section-label" data-i18n="combos.label">Pacotes</span>
+    <h2 class="section-title" data-i18n="combos.title">Combos & <em>Acompanhamento</em></h2>
+  </div>
+  <div class="combos-grid">
+    <div class="combo-card reveal">
+      <div class="combo-label" data-i18n="combo1.label">1 serviço · 1 atendimento · /ano</div>
+      <div class="combo-name" data-i18n="combo1.name">leitura astrológica via @Tita, Amiga do Céu</div>
+      <div class="combo-detail" data-i18n="combo1.detail">Uma leitura acolhedora, guiada com cuidado e carinho para você encontrar as respostas que busca.</div>
+      <div class="combo-footer">
+        <div class="combo-price">
+          R$ 315
+          <small data-i18n="combo.year">/ ano</small>
+        </div>
+        <a href="https://pro.quaddro.co/paixaolluiza" class="combo-btn" data-i18n="combo.buy">Comprar</a>
+      </div>
+    </div>
+    <div class="combo-card reveal">
+      <div class="combo-label" data-i18n="combo2.label">1 serviço · 3 atendimentos · /ano</div>
+      <div class="combo-name" data-i18n="combo2.name">acompanhamento estação</div>
+      <div class="combo-detail" data-i18n="combo2.detail">Três encontros ao longo da estação para acompanhar seu ciclo com profundidade e presença.</div>
+      <div class="combo-footer">
+        <div class="combo-price">
+          R$ 827
+          <small data-i18n="combo.year">/ ano</small>
+        </div>
+        <a href="https://pro.quaddro.co/paixaolluiza" class="combo-btn" data-i18n="combo.buy">Comprar</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Movement / Yoga -->
+<section style="padding: 80px 0;" id="movimento">
+  <div class="movement-section">
+    <div class="movement-content reveal">
+      <span class="section-label" data-i18n="movement.label">Yoga & Movimento</span>
+      <h2 class="section-title" data-i18n="movement.title">O corpo já <em>sabe</em> o caminho</h2>
+      <p class="body-text" data-i18n="movement.p1">
+        Pesquisadora do movimento natural do corpo, Luiza acredita que a sabedoria corporal precede qualquer técnica. Suas aulas e práticas partem desse lugar: de escuta, de presença, de retorno ao que é essencial.
+      </p>
+      <p class="body-text" data-i18n="movement.p2">
+        Seja no yoga, na expressão corporal ou na investigação do gesto cotidiano — o corpo é sempre o ponto de partida e de chegada.
+      </p>
+      <a href="https://www.instagram.com/luizapaixoes" class="btn-primary" style="margin-top:32px; display:inline-block;" data-i18n="movement.cta">Ver no Instagram</a>
+    </div>
+    <div class="movement-images reveal">
+      <img src="images/4.png" alt="Movimento corporal" class="movement-img-main">
+      <img src="images/5.png" alt="Yoga" class="movement-img-accent">
+    </div>
+  </div>
+</section>
+
+<!-- Quote -->
+<section class="quote-section">
+  <p class="quote-text reveal" data-i18n="quote.text">
+    "Usamos os mapas para guiar o processo de autoconhecimento de forma amorosa e presente."
+  </p>
+  <span class="quote-attr reveal">— Luiza Paixão</span>
+</section>
+
+<!-- Connect -->
+<section class="connect-section" id="contato">
+  <span class="section-label" data-i18n="connect.label">Conexões</span>
+  <h2 class="section-title reveal" data-i18n="connect.title">Encontre-me por <em>aqui</em></h2>
+  <p class="connect-desc reveal" data-i18n="connect.desc">São Paulo, SP · Atendimentos online · Aceitamos Pix</p>
+  <div class="connect-links reveal">
+    <a href="https://pro.quaddro.co/paixaolluiza" class="connect-link primary" data-i18n="connect.book">Agendar consulta</a>
+    <a href="https://www.instagram.com/luizapaixoes" class="connect-link" target="_blank" data-i18n="connect.instagram">Instagram</a>
+    <a href="https://substack.com/@luizapaixao" class="connect-link" target="_blank" data-i18n="connect.substack">Substack</a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-name">LUIZA PAIXÃO</div>
+  <div class="footer-loc" data-i18n="footer.loc">São Paulo, SP · Brasil</div>
+  <div class="footer-pay" data-i18n="footer.pay">✦ Aceitamos Pix</div>
+</footer>
+
+<script>
+// ============================================================
+// CENTRALIZED CONTENT — EDIT ALL TEXT HERE
+// ============================================================
+const CONTENT = {
+  pt: {
+    "nav.about": "Sobre",
+    "nav.services": "Serviços",
+    "nav.movement": "Movimento",
+    "nav.contact": "Contato",
+    "hero.tag": "Astrologia · Yoga · Movimento",
+    "hero.subtitle": "Astrologia, escrita, corpo em movimento e um bocado de outras paixões.",
+    "hero.cta": "Agendar agora",
+    "hero.learn": "Saber mais",
+    "hero.scroll": "Explorar",
+    "about.label": "Quem sou",
+    "about.title": "Um encontro entre astros e corpo",
+    "about.p1": "Consulta astrológica comigo é uma conversa de amigas, onde nos aprofundamos nos temas de interesse com cuidado e carinho. Um momento de encontro e dedicação em que tecemos juntas perguntas e usamos os mapas para guiar o processo de autoconhecimento de forma amorosa e presente.",
+    "about.p2": "Além dos astros, pesquiso e ensino o movimento natural do corpo — aquela sabedoria que já habita em nós, antes dos padrões impostos. Yoga, expressão, presença.",
+    "pillar1.title": "Astrologia",
+    "pillar1.text": "Mapas como espelhos de autoconhecimento",
+    "pillar2.title": "Yoga",
+    "pillar2.text": "Presença, respiração e movimento consciente",
+    "pillar3.title": "Pesquisa",
+    "pillar3.text": "Movimento natural e expressão corporal",
+    "services.label": "Astros por Luiza Paixão",
+    "services.title": "Serviços de Astrologia",
+    "services.all": "Ver todos →",
+    "s1.name": "mapa momento atual",
+    "s1.sub": "direções",
+    "s1.detail": "Online · 1h 30min",
+    "s2.name": "revolução solar",
+    "s2.sub": "mapa ritual",
+    "s2.detail": "Online · 1h 30min",
+    "s3.name": "leitura de mapa natal",
+    "s3.sub": "mapa raiz",
+    "s3.detail": "Online · 1h 15min",
+    "combos.label": "Pacotes",
+    "combos.title": "Combos & Acompanhamento",
+    "combo1.label": "1 serviço · 1 atendimento · /ano",
+    "combo1.name": "leitura astrológica via @Tita, Amiga do Céu",
+    "combo1.detail": "Uma leitura acolhedora, guiada com cuidado e carinho para você encontrar as respostas que busca.",
+    "combo2.label": "1 serviço · 3 atendimentos · /ano",
+    "combo2.name": "acompanhamento estação",
+    "combo2.detail": "Três encontros ao longo da estação para acompanhar seu ciclo com profundidade e presença.",
+    "combo.year": "/ ano",
+    "combo.buy": "Comprar",
+    "movement.label": "Yoga & Movimento",
+    "movement.title": "O corpo já sabe o caminho",
+    "movement.p1": "Pesquisadora do movimento natural do corpo, Luiza acredita que a sabedoria corporal precede qualquer técnica. Suas aulas e práticas partem desse lugar: de escuta, de presença, de retorno ao que é essencial.",
+    "movement.p2": "Seja no yoga, na expressão corporal ou na investigação do gesto cotidiano — o corpo é sempre o ponto de partida e de chegada.",
+    "movement.cta": "Ver no Instagram",
+    "quote.text": '"Usamos os mapas para guiar o processo de autoconhecimento de forma amorosa e presente."',
+    "connect.label": "Conexões",
+    "connect.title": "Encontre-me por aqui",
+    "connect.desc": "São Paulo, SP · Atendimentos online · Aceitamos Pix",
+    "connect.book": "Agendar consulta",
+    "connect.instagram": "Instagram",
+    "connect.substack": "Substack",
+    "footer.loc": "São Paulo, SP · Brasil",
+    "footer.pay": "✦ Aceitamos Pix",
+  },
+  en: {
+    "nav.about": "About",
+    "nav.services": "Services",
+    "nav.movement": "Movement",
+    "nav.contact": "Contact",
+    "hero.tag": "Astrology · Yoga · Movement",
+    "hero.subtitle": "Astrology, writing, body in movement, and a whole lot of other passions.",
+    "hero.cta": "Book now",
+    "hero.learn": "Learn more",
+    "hero.scroll": "Explore",
+    "about.label": "Who I am",
+    "about.title": "A meeting between stars and body",
+    "about.p1": "An astrological consultation with me is a conversation between friends, where we go deep into topics of interest with care and tenderness. A moment of meeting and dedication where we weave questions together and use the charts to guide the process of self-knowledge in a loving and present way.",
+    "about.p2": "Beyond the stars, I research and teach the natural movement of the body — that wisdom that already lives in us, before imposed patterns. Yoga, expression, presence.",
+    "pillar1.title": "Astrology",
+    "pillar1.text": "Charts as mirrors of self-knowledge",
+    "pillar2.title": "Yoga",
+    "pillar2.text": "Presence, breath and conscious movement",
+    "pillar3.title": "Research",
+    "pillar3.text": "Natural movement and bodily expression",
+    "services.label": "Astros by Luiza Paixão",
+    "services.title": "Astrology Services",
+    "services.all": "View all →",
+    "s1.name": "current moment chart",
+    "s1.sub": "directions",
+    "s1.detail": "Online · 1h 30min",
+    "s2.name": "solar return",
+    "s2.sub": "ritual chart",
+    "s2.detail": "Online · 1h 30min",
+    "s3.name": "natal chart reading",
+    "s3.sub": "root chart",
+    "s3.detail": "Online · 1h 15min",
+    "combos.label": "Packages",
+    "combos.title": "Combos & Accompaniment",
+    "combo1.label": "1 service · 1 session · /year",
+    "combo1.name": "astrological reading via @Tita, Friend of the Sky",
+    "combo1.detail": "A welcoming reading, guided with care and affection to help you find the answers you seek.",
+    "combo2.label": "1 service · 3 sessions · /year",
+    "combo2.name": "seasonal accompaniment",
+    "combo2.detail": "Three encounters throughout the season to follow your cycle with depth and presence.",
+    "combo.year": "/ year",
+    "combo.buy": "Buy",
+    "movement.label": "Yoga & Movement",
+    "movement.title": "The body already knows the way",
+    "movement.p1": "As a researcher of natural body movement, Luiza believes that bodily wisdom precedes any technique. Her classes and practices come from this place: of listening, of presence, of returning to what is essential.",
+    "movement.p2": "Whether in yoga, bodily expression or the investigation of everyday gesture — the body is always the starting point and the destination.",
+    "movement.cta": "See on Instagram",
+    "quote.text": '"We use the charts to guide the process of self-knowledge in a loving and present way."',
+    "connect.label": "Connect",
+    "connect.title": "Find me here",
+    "connect.desc": "São Paulo, SP · Online sessions · We accept Pix",
+    "connect.book": "Book a session",
+    "connect.instagram": "Instagram",
+    "connect.substack": "Substack",
+    "footer.loc": "São Paulo, SP · Brazil",
+    "footer.pay": "✦ We accept Pix",
+  }
+};
+
+// ============================================================
+// Language switcher
+// ============================================================
+let currentLang = 'pt';
+
+function setLang(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en';
+  document.getElementById('btn-pt').classList.toggle('active', lang === 'pt');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (CONTENT[lang][key] !== undefined) {
+      // Preserve inner links if any
+      if (!el.querySelector('a')) {
+        el.innerHTML = CONTENT[lang][key];
+      } else {
+        // For about.title and movement.title with <em>, handle carefully
+        el.innerHTML = CONTENT[lang][key]
+          .replace(/astros e corpo/, '<em>astros e corpo</em>')
+          .replace(/sabe/, '<em>sabe</em>')
+          .replace(/stars and body/, '<em>stars and body</em>')
+          .replace(/already knows/, '<em>already knows</em>')
+          .replace(/Astrologia/, 'Serviços de<br><em>Astrologia</em>')
+          .replace(/Astrology Services/, 'Astrology<br><em>Services</em>');
+      }
+    }
+  });
+
+  // Special handling for titles with em tags
+  const aboutTitle = document.querySelector('[data-i18n="about.title"]');
+  if (aboutTitle) {
+    aboutTitle.innerHTML = lang === 'pt'
+      ? 'Um encontro entre <em>astros e corpo</em>'
+      : 'A meeting between <em>stars and body</em>';
+  }
+  const movTitle = document.querySelector('[data-i18n="movement.title"]');
+  if (movTitle) {
+    movTitle.innerHTML = lang === 'pt'
+      ? 'O corpo já <em>sabe</em> o caminho'
+      : 'The body already <em>knows</em> the way';
+  }
+  const servTitle = document.querySelector('[data-i18n="services.title"]');
+  if (servTitle) {
+    servTitle.innerHTML = lang === 'pt'
+      ? 'Serviços de<br><em>Astrologia</em>'
+      : 'Astrology<br><em>Services</em>';
+  }
+  const comboTitle = document.querySelector('[data-i18n="combos.title"]');
+  if (comboTitle) {
+    comboTitle.innerHTML = lang === 'pt'
+      ? 'Combos & <em>Acompanhamento</em>'
+      : 'Combos & <em>Accompaniment</em>';
+  }
+  const connTitle = document.querySelector('[data-i18n="connect.title"]');
+  if (connTitle) {
+    connTitle.innerHTML = lang === 'pt'
+      ? 'Encontre-me por <em>aqui</em>'
+      : 'Find me <em>here</em>';
+  }
+}
+
+// ============================================================
+// Scroll reveal
+// ============================================================
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 80);
+    }
+  });
+}, { threshold: 0.12 });
+
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ============================================================
+// Custom cursor
+// ============================================================
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.transform = `translate(${mx - 4}px, ${my - 4}px)`;
+});
+
+function animateRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  ring.style.transform = `translate(${rx - 18}px, ${ry - 18}px)`;
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+document.querySelectorAll('a, button').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.transform += ' scale(2)';
+    ring.style.opacity = '0.2';
+    ring.style.width = '60px';
+    ring.style.height = '60px';
+  });
+  el.addEventListener('mouseleave', () => {
+    ring.style.opacity = '0.5';
+    ring.style.width = '36px';
+    ring.style.height = '36px';
+  });
+});
+</script>
+</body>
+</html>
