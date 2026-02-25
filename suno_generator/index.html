@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suno AI Prompt Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Unbounded:wght@300;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f0f7;
+    --surface: #ffffff;
+    --border: #dcdce8;
+    --accent: #e8003d;
+    --accent2: #7c00e3;
+    --accent3: #0096c7;
+    --text: #0e0e22;
+    --muted: #8888aa;
+    --card-bg: #ffffff;
+    --shadow: 0 2px 14px rgba(0,0,0,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 5% 10%, rgba(232,0,61,0.08) 0%, transparent 45%),
+      radial-gradient(ellipse at 95% 85%, rgba(124,0,227,0.08) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 50%, rgba(0,150,199,0.05) 0%, transparent 55%);
+  }
+
+  .container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 44px 28px 40px;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(20px, 3.5vw, 38px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    background: linear-gradient(130deg, var(--text) 15%, var(--accent2) 55%, var(--accent) 95%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Blocks single row ── */
+  .blocks-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .blocks-row::-webkit-scrollbar { height: 4px; }
+  .blocks-row::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .block {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    padding: 13px 13px 11px;
+    flex: 1 1 0;
+    min-width: 136px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s, background 0.18s;
+  }
+
+  /* Top colour bar */
+  .block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--block-color, var(--accent));
+    border-radius: 14px 14px 0 0;
+    transition: height 0.18s;
+  }
+
+  .block:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.11); }
+
+  /* Locked */
+  .block.locked {
+    border-color: var(--block-color, var(--accent));
+    background: color-mix(in srgb, var(--block-color, var(--accent)) 7%, white);
+  }
+  .block.locked::before { height: 4px; }
+  .block.locked .block-value { color: var(--block-color, var(--accent)) !important; }
+
+  /* Animate on new value */
+  .block.animating .block-value {
+    animation: flipIn 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes flipIn {
+    0%   { opacity: 0; transform: translateY(7px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .block-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 7px;
+  }
+
+  .block-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--block-color, var(--accent));
+    letter-spacing: 0.1em;
+    opacity: 0.85;
+  }
+
+  /* Lock/unlock button */
+  .lock-btn {
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: var(--muted);
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .lock-btn:hover {
+    border-color: var(--block-color, var(--accent));
+    color: var(--block-color, var(--accent));
+    background: color-mix(in srgb, var(--block-color, var(--accent)) 9%, white);
+  }
+
+  .block.locked .lock-btn {
+    border-color: var(--block-color, var(--accent));
+    color: var(--block-color, var(--accent));
+    background: color-mix(in srgb, var(--block-color, var(--accent)) 14%, white);
+  }
+
+  .block-label {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 7px;
+  }
+
+  .block-value {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.45;
+    min-height: 30px;
+    word-break: break-word;
+  }
+
+  .block-value.empty {
+    color: #c0c0d4;
+    font-weight: 400;
+    font-size: 10px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Block colour per type */
+  .block[data-type="genre"]      { --block-color: #e8003d; }
+  .block[data-type="bpm"]        { --block-color: #d97706; }
+  .block[data-type="mood"]       { --block-color: #7c00e3; }
+  .block[data-type="instrument"] { --block-color: #0096c7; }
+  .block[data-type="vocal"]      { --block-color: #ea580c; }
+  .block[data-type="era"]        { --block-color: #16a34a; }
+  .block[data-type="reference"]  { --block-color: #db2777; }
+
+  /* ── Hint ── */
+  .lock-hint {
+    text-align: center;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin-bottom: 18px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Generate button ── */
+  .generate-btn {
+    display: block;
+    width: 100%;
+    padding: 17px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 22px;
+    box-shadow: 0 4px 20px rgba(232,0,61,0.28);
+  }
+
+  .generate-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.18) 100%);
+  }
+
+  .generate-btn:hover {
+    background: #c90034;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(232,0,61,0.38);
+  }
+
+  .generate-btn:active { transform: translateY(0); }
+
+  .generate-btn.spinning .btn-icon { animation: spin 0.45s linear; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .btn-inner { display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; z-index: 1; }
+  .btn-icon  { font-size: 17px; display: inline-block; }
+
+  /* ── Prompt output ── */
+  .prompt-section {
+    background: var(--card-bg);
+    border: 2px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.38s, transform 0.38s;
+    box-shadow: var(--shadow);
+    margin-bottom: 28px;
+  }
+
+  .prompt-section.visible { opacity: 1; transform: translateY(0); }
+
+  .prompt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border);
+    background: #f5f5fc;
+  }
+
+  .prompt-header-label {
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--accent3);
+    font-weight: 700;
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 13px;
+    border-radius: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.18s;
+    letter-spacing: 0.05em;
+  }
+
+  .copy-btn:hover   { border-color: var(--accent3); color: var(--accent3); }
+  .copy-btn.copied  { border-color: #16a34a; color: #16a34a; }
+
+  .prompt-text {
+    padding: 20px 18px;
+    font-size: 14px;
+    line-height: 2.1;
+    color: var(--text);
+  }
+
+  .prompt-text .tag-genre      { color: #e8003d; font-weight: 700; }
+  .prompt-text .tag-bpm        { color: #d97706; font-weight: 700; }
+  .prompt-text .tag-mood       { color: #7c00e3; font-weight: 700; }
+  .prompt-text .tag-instrument { color: #0096c7; font-weight: 700; }
+  .prompt-text .tag-vocal      { color: #ea580c; font-weight: 700; }
+  .prompt-text .tag-era        { color: #16a34a; font-weight: 700; }
+  .prompt-text .tag-reference  { color: #db2777; font-weight: 700; }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 16px 0 4px;
+    font-size: 10.5px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    line-height: 1.8;
+  }
+
+  footer a {
+    color: var(--accent2);
+    text-decoration: none;
+  }
+
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <p class="eyebrow">✦ AI Music Tool</p>
+    <h1>SUNO PROMPT GENERATOR</h1>
+    <p class="subtitle">Randomize 7 magic blocks — lock the ones you love, then generate again</p>
+  </header>
+
+  <div class="blocks-row" id="blocksGrid"></div>
+
+  <p class="lock-hint">🔒 Click the lock icon on any block to keep its value when regenerating</p>
+
+  <button class="generate-btn" id="generateBtn" onclick="generate()">
+    <span class="btn-inner">
+      <span class="btn-icon" id="btnIcon">⚡</span>
+      GENERATE PROMPT
+    </span>
+  </button>
+
+  <div class="prompt-section" id="promptSection">
+    <div class="prompt-header">
+      <span class="prompt-header-label">✦ Your Suno Prompt</span>
+      <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">Copy</button>
+    </div>
+    <div class="prompt-text" id="promptText"></div>
+  </div>
+
+  <footer>
+    Inspired by <a href="https://medium.com/@kvxxpb/i-fed-these-7-words-to-suno-ai-and-it-made-a-song-with-2m-streams-heres-the-exact-prompt-8e27402e2d80" target="_blank" rel="noopener">
+      "I Fed These 7 Words to Suno AI and It Made a Song With 2M Streams — Here's the Exact Prompt"
+    </a>
+  </footer>
+</div>
+
+<script>
+// ============================================================
+//  OPTIONS — easy to maintain JSON
+// ============================================================
+const OPTIONS = {
+  genre: [
+    "Indie Folk", "Synthwave", "Dream Pop", "Post-Rock", "Neo-Soul",
+    "Lo-Fi Hip Hop", "Chamber Pop", "Dark Ambient", "Shoegaze", "Afrobeats",
+    "Progressive Metal", "Jazz Fusion", "Bossa Nova", "Bedroom Pop",
+    "Alternative R&B", "Psychedelic Rock", "Trap Soul", "Math Rock",
+    "New Wave", "Hyperpop", "Slowcore", "Electronic Soul", "Reggaeton",
+    "Indie Electronic", "Folk Noir", "Art Pop", "Glitch Hop", "Classic Soul",
+  "Indie Rock",
+  "Alternative Rock",
+  "Garage Rock",
+  "Punk Rock",
+  "Post-Punk",
+  "Pop Punk",
+  "Emo",
+  "Hardcore Punk",
+  "Metalcore",
+  "Post-Metal",
+  "Black Metal",
+  "Death Metal",
+  "Doom Metal",
+  "Sludge Metal",
+  "Stoner Rock",
+  "Grunge",
+  "Britpop",
+  "Noise Rock",
+  "Industrial Rock",
+  "Industrial Metal",
+  "Trip Hop",
+  "Downtempo",
+  "Ambient",
+  "Electronica",
+  "IDM",
+  "Drum and Bass",
+  "Jungle",
+  "Breakbeat",
+  "UK Garage",
+  "Future Garage",
+  "Dubstep",
+  "Future Bass",
+  "Chillwave",
+  "Vaporwave",
+  "Electropop",
+  "Disco",
+  "Nu Disco",
+  "House",
+  "Deep House",
+  "Tech House",
+  "Techno",
+  "Minimal Techno",
+  "Trance",
+  "Progressive House",
+  "Synthpop",
+  "Electro",
+  "Funk",
+  "Contemporary R&B",
+  "Indie Jazz",
+  "Acid Jazz"
+  ],
+  bpm: [
+    "60 BPM", "72 BPM", "80 BPM", "85 BPM", "90 BPM", "92 BPM",
+    "95 BPM", "100 BPM", "105 BPM", "110 BPM", "120 BPM", "125 BPM",
+    "128 BPM", "135 BPM", "140 BPM", "150 BPM", "160 BPM", "170 BPM"
+  ],
+  mood: [
+    "melancholic", "euphoric", "nostalgic", "haunting", "triumphant",
+    "bittersweet", "ominous", "serene", "urgent", "dreamy", "tense",
+    "hopeful", "wistful", "ethereal", "brooding", "uplifting",
+    "lonely", "transcendent", "anxious", "blissful", "defiant", "tender"
+  ],
+  instrument: [
+    "fingerstyle acoustic guitar", "analog synthesizer", "grand piano",
+    "trap hi-hats", "vintage Rhodes", "electric violin", "lap steel guitar",
+    "modular synth", "upright bass", "nylon string guitar", "Fender Rhodes",
+    "prepared piano", "banjo", "cello", "Mellotron", "808 bass",
+    "hammered dulcimer", "pedal steel guitar", "harpsichord", "marimba"
+  ],
+  vocal: [
+    "whispered vocals", "raspy belting", "smooth falsetto", "spoken word delivery",
+    "layered harmonies", "ethereal soprano", "deep baritone", "breathy intimate",
+    "gospel choir", "rap flow", "melismatic runs", "deadpan monotone",
+    "operatic tenor", "lo-fi distorted vocals", "call and response",
+    "pitch-shifted harmonics", "raw unpolished delivery", "silk-smooth R&B", 
+    "gritty blues style", "airy vocal chops"
+  ],
+  era: [
+    "1960s", "1970s", "1980s", "1990s", "2000s", "2010s", "2020s"
+  ],
+  reference: [
+    "Bon Iver style", "Daft Punk influence", "Fleetwood Mac vibes",
+    "Tyler the Creator energy", "Frank Ocean aesthetic", "Radiohead atmosphere",
+    "Burial-inspired", "Beach House dreamy", "Kendrick Lamar intensity",
+    "Portishead mood", "Nick Drake spirit", "LCD Soundsystem drive",
+    "Cocteau Twins haze", "James Blake minimalism", "Tame Impala psychedelia",
+    "Grouper ambience", "Sufjan Stevens tenderness", "Aphex Twin texture",
+    "Phoebe Bridgers intimacy", "Massive Attack tension", "Mitski rawness",
+    "Arthur Russell eclecticism", "Taylor Swift style",
+    "The Weeknd vibe",
+    "Billie Eilish whisper",
+    "Adele power",
+    "Beyoncé energy",
+    "Rihanna attitude",
+    "Lady Gaga drama",
+    "Dua Lipa groove",
+    "Bruno Mars funk",
+    "Ed Sheeran acoustic",
+    "Harry Styles warmth",
+    "Coldplay uplift",
+    "Imagine Dragons punch",
+    "The Beatles classic",
+    "Queen arena",
+    "David Bowie edge",
+    "Prince funk",
+    "Michael Jackson pop",
+    "Madonna pop",
+    "Elton John piano",
+    "Bob Dylan storytelling",
+    "Johnny Cash grit",
+    "Bruce Springsteen drive",
+    "U2 anthems",
+    "The Cure mood",
+    "Depeche Mode dark",
+    "The Smiths jangle",
+    "Arctic Monkeys swagger",
+    "Nirvana raw",
+    "Foo Fighters rock",
+    "Red Hot Chili Peppers funk rock",
+    "Linkin Park intensity",
+    "Metallica heavy",
+    "Pink Floyd space",
+    "The Rolling Stones riff",
+    "Eminem flow",
+    "Drake smooth",
+    "Jay-Z confidence",
+    "Kanye West bold",
+    "Travis Scott haze",
+    "SZA softness",
+    "Alicia Keys soul",
+    "Amy Winehouse grit",
+    "Whitney Houston power",
+    "Mariah Carey melisma",
+    "Justin Bieber pop",
+    "Shakira rhythm",
+    "Bad Bunny reggaeton",
+    "Daddy Yankee reggaeton",
+    "Calvin Harris club",
+    "Avicii festival"
+
+  ]
+};
+
+const BLOCK_META = [
+  { key: "genre",      label: "Genre",      num: "01", icon: "🎵" },
+  { key: "bpm",        label: "Tempo",      num: "02", icon: "🥁" },
+  { key: "mood",       label: "Mood",       num: "03", icon: "🌙" },
+  { key: "instrument", label: "Instrument", num: "04", icon: "🎸" },
+  { key: "vocal",      label: "Vocals",     num: "05", icon: "🎤" },
+  { key: "era",        label: "Era",        num: "06", icon: "📡" },
+  { key: "reference",  label: "Reference",  num: "07", icon: "✨" }
+];
+
+// ============================================================
+//  State
+// ============================================================
+let current = {};
+let locked  = {};
+
+// ============================================================
+//  Init
+// ============================================================
+function initBlocks() {
+  const grid = document.getElementById('blocksGrid');
+  grid.innerHTML = '';
+  BLOCK_META.forEach(meta => {
+    locked[meta.key] = false;
+    const div = document.createElement('div');
+    div.className = 'block';
+    div.id = 'block-' + meta.key;
+    div.setAttribute('data-type', meta.key);
+    div.innerHTML = `
+      <div class="block-top">
+        <div class="block-num">${meta.icon} ${meta.num}</div>
+        <button class="lock-btn" id="lock-${meta.key}" onclick="toggleLock('${meta.key}')" title="Lock this block">🔓</button>
+      </div>
+      <div class="block-label">${meta.label}</div>
+      <div class="block-value empty" id="val-${meta.key}">—</div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+// ============================================================
+//  Toggle lock
+// ============================================================
+function toggleLock(key) {
+  // Can only lock if a value exists
+  if (!current[key]) return;
+
+  locked[key] = !locked[key];
+  const block   = document.getElementById('block-' + key);
+  const lockBtn = document.getElementById('lock-' + key);
+
+  if (locked[key]) {
+    block.classList.add('locked');
+    lockBtn.textContent = '🔒';
+    lockBtn.title = 'Unlock this block';
+  } else {
+    block.classList.remove('locked');
+    lockBtn.textContent = '🔓';
+    lockBtn.title = 'Lock this block';
+  }
+}
+
+// ============================================================
+//  Helpers
+// ============================================================
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// ============================================================
+//  Generate
+// ============================================================
+function generate() {
+  const btn  = document.getElementById('generateBtn');
+  btn.classList.add('spinning');
+
+  BLOCK_META.forEach((meta, i) => {
+    if (locked[meta.key]) return;
+    setTimeout(() => {
+      current[meta.key] = pick(OPTIONS[meta.key]);
+      const el    = document.getElementById('val-' + meta.key);
+      const block = document.getElementById('block-' + meta.key);
+      el.textContent = meta.key === 'genre' ? `[${current[meta.key]}]` : current[meta.key];
+      el.classList.remove('empty');
+      block.classList.remove('animating');
+      void block.offsetWidth;
+      block.classList.add('animating');
+    }, i * 55);
+  });
+
+  setTimeout(() => {
+    btn.classList.remove('spinning');
+    buildPrompt();
+  }, BLOCK_META.length * 55 + 160);
+}
+
+// ============================================================
+//  Build prompt
+// ============================================================
+function buildPrompt() {
+  const c = current;
+  if (!Object.keys(c).length) return;
+  const g = k => c[k] || '…';
+
+  document.getElementById('promptText').innerHTML = `
+    <span class="tag-genre">[${g('genre')}]</span>,
+    <span class="tag-bpm">${g('bpm')}</span>,
+    <span class="tag-mood">${g('mood')}</span>,
+    <span class="tag-instrument">${g('instrument')}</span>,
+    <span class="tag-vocal">${g('vocal')}</span>,
+    <span class="tag-era">${g('era')}</span>,
+    <span class="tag-reference">${g('reference')}</span>
+  `.trim();
+
+  document.getElementById('promptSection').classList.add('visible');
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.textContent = 'Copy';
+  copyBtn.classList.remove('copied');
+}
+
+// ============================================================
+//  Copy
+// ============================================================
+function copyPrompt() {
+  const c = current;
+  if (!c.genre) return;
+  const text = `[${c.genre}], ${c.bpm}, ${c.mood}, ${c.instrument}, ${c.vocal}, ${c.era}, ${c.reference}`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied ✓';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ============================================================
+//  Boot
+// ============================================================
+initBlocks();
+</script>
+</body>
+</html>

@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Suno Prompt Randomizer</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --card: #121a23;
+      --text: #e8eef7;
+      --muted: #9fb0c3;
+      --line: #223041;
+      --btn: #1f6feb;
+      --btn2: #2ea043;
+      --warn: #f0883e;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    h1 { font-size: 20px; margin: 0 0 12px; }
+    p { margin: 0 0 16px; color: var(--muted); line-height: 1.35; }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 900px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 140px 1fr 90px;
+      gap: 10px;
+      align-items: center;
+      margin: 10px 0;
+    }
+    .label { font-weight: 650; }
+    .value {
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #0e141c;
+      color: var(--text);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .lock {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      color: var(--muted);
+      user-select: none;
+      font-size: 14px;
+    }
+    .btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 650;
+      cursor: pointer;
+      color: white;
+      background: var(--btn);
+    }
+    button.secondary { background: #30363d; }
+    button.good { background: var(--btn2); }
+    button.warn { background: var(--warn); color: #10151b; }
+    .out {
+      width: 100%;
+      min-height: 110px;
+      resize: vertical;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #0e141c;
+      color: var(--text);
+      box-sizing: border-box;
+      line-height: 1.35;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: 14px;
+    }
+    .mini {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    code.inline {
+      background: #0e141c;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 2px 8px;
+      color: var(--text);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Suno Prompt Randomizer</h1>
+    <p>Edit the JSON options in this file, then click <b>Generate</b>.</p>
+
+    <div class="grid">
+      <div class="card" id="controls">
+        <div class="row">
+          <div class="label">Genre</div>
+          <input class="value" id="genre" readonly />
+          <label class="lock"><input type="checkbox" id="lock_genre" /> Lock</label>
+        </div>
+
+        <div class="row">
+          <div class="label">Tempo</div>
+          <input class="value" id="tempo" readonly />
+          <label class="lock"><input type="checkbox" id="lock_tempo" /> Lock</label>
+        </div>
+
+        <div class="row">
+          <div class="label">Mood</div>
+          <input class="value" id="mood" readonly />
+          <label class="lock"><input type="checkbox" id="lock_mood" /> Lock</label>
+        </div>
+
+        <div class="row">
+          <div class="label">Instrument</div>
+          <input class="value" id="instrument" readonly />
+          <label class="lock"><input type="checkbox" id="lock_instrument" /> Lock</label>
+        </div>
+
+        <div class="row">
+          <div class="label">Vocal style</div>
+          <input class="value" id="vocal" readonly />
+          <label class="lock"><input type="checkbox" id="lock_vocal" /> Lock</label>
+        </div>
+
+        <div class="row">
+          <div class="label">Era</div>
+          <input class="value" id="era" readonly />
+          <label class="lock"><input type="checkbox" id="lock_era" /> Lock</label>
+        </div>
+
+        <div class="row">
+          <div class="label">Reference</div>
+          <input class="value" id="ref" readonly />
+          <label class="lock"><input type="checkbox" id="lock_ref" /> Lock</label>
+        </div>
+
+        <div class="btns">
+          <button class="good" id="btnGenerate">Generate</button>
+          <button class="secondary" id="btnClearLocks">Clear locks</button>
+          <button class="secondary" id="btnRandomize7">Randomize 7 blocks</button>
+        </div>
+
+        <div class="mini">
+          Tip: keep your arrays updated inside <code class="inline">&lt;script id="promptOptions" type="application/json"&gt;</code>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div class="label">Prompt</div>
+          <div class="btns" style="margin:0;">
+            <button class="secondary" id="btnCopy">Copy</button>
+            <button class="warn" id="btnReset">Reset</button>
+          </div>
+        </div>
+
+        <textarea class="out" id="output" readonly></textarea>
+
+        <div class="mini" id="status"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EASY TO MAINTAIN OPTIONS (edit only this JSON) -->
+  <script id="promptOptions" type="application/json">
+  {
+    "genre": [
+      "[Indie Folk]",
+      "[Indie Rock]",
+      "[Lo-fi Folk]",
+      "[Dream Pop]",
+      "[Alt R&B]",
+      "[Ambient Folk]",
+      "[Neo Soul]",
+      "[Synthwave]",
+      "[Post Rock]",
+      "[Acoustic Pop]"
+    ],
+    "tempo_bpm": [72, 78, 82, 85, 90, 92, 95, 100, 110, 120, 140],
+    "mood": [
+      "melancholic",
+      "nostalgic",
+      "bittersweet",
+      "haunting",
+      "euphoric",
+      "warm",
+      "intimate",
+      "cinematic",
+      "triumphant",
+      "restless"
+    ],
+    "instrument": [
+      "fingerstyle acoustic guitar",
+      "grand piano",
+      "analog synthesizer",
+      "vintage Rhodes",
+      "nylon string guitar",
+      "bowed strings",
+      "soft pads",
+      "upright bass",
+      "brush drums",
+      "banjo"
+    ],
+    "vocal_style": [
+      "whispered vocals",
+      "soft breathy vocals",
+      "smooth falsetto",
+      "spoken word delivery",
+      "layered harmonies",
+      "raspy male vocals",
+      "airy female vocals",
+      "call and response vocals",
+      "close mic vocals",
+      "choir like backing vocals"
+    ],
+    "era": [
+      "1970s",
+      "1980s",
+      "1990s",
+      "2000s",
+      "2010s",
+      "2020s"
+    ],
+    "reference": [
+      "Bon Iver style",
+      "Drive soundtrack style",
+      "Fleetwood Mac vibes",
+      "Daft Punk influence",
+      "Tyler the Creator energy",
+      "Sufjan Stevens inspired",
+      "Phoebe Bridgers vibes",
+      "Radiohead mood",
+      "The xx minimal feel",
+      "James Blake influence"
+    ]
+  }
+  </script>
+
+  <script>
+    const $ = (id) => document.getElementById(id)
+
+    function readOptions() {
+      const raw = $("promptOptions").textContent.trim()
+      return JSON.parse(raw)
+    }
+
+    function pick(arr) {
+      if (!Array.isArray(arr) || arr.length === 0) return ""
+      const i = Math.floor(Math.random() * arr.length)
+      return arr[i]
+    }
+
+    function setIfUnlocked(fieldId, lockId, value) {
+      const locked = $(lockId).checked
+      if (!locked) $(fieldId).value = value
+    }
+
+    function buildPrompt() {
+      const genre = $("genre").value
+      const tempo = $("tempo").value
+      const mood = $("mood").value
+      const instrument = $("instrument").value
+      const vocal = $("vocal").value
+      const era = $("era").value
+      const ref = $("ref").value
+
+      return `${genre}, ${tempo}, ${mood}, ${instrument}, ${vocal}, ${era}, ${ref}`
+    }
+
+    function generate() {
+      const opt = readOptions()
+
+      setIfUnlocked("genre", "lock_genre", pick(opt.genre))
+
+      const bpm = pick(opt.tempo_bpm)
+      setIfUnlocked("tempo", "lock_tempo", bpm ? `${bpm} BPM` : "")
+
+      setIfUnlocked("mood", "lock_mood", pick(opt.mood))
+      setIfUnlocked("instrument", "lock_instrument", pick(opt.instrument))
+      setIfUnlocked("vocal", "lock_vocal", pick(opt.vocal_style))
+      setIfUnlocked("era", "lock_era", pick(opt.era))
+      setIfUnlocked("ref", "lock_ref", pick(opt.reference))
+
+      $("output").value = buildPrompt()
+      $("status").textContent = "Generated"
+    }
+
+    function randomize7Blocks() {
+      const opt = readOptions()
+      $("genre").value = pick(opt.genre)
+
+      const bpm = pick(opt.tempo_bpm)
+      $("tempo").value = bpm ? `${bpm} BPM` : ""
+
+      $("mood").value = pick(opt.mood)
+      $("instrument").value = pick(opt.instrument)
+      $("vocal").value = pick(opt.vocal_style)
+      $("era").value = pick(opt.era)
+      $("ref").value = pick(opt.reference)
+
+      $("output").value = buildPrompt()
+      $("status").textContent = "Randomized 7 blocks"
+    }
+
+    function clearLocks() {
+      const ids = ["genre","tempo","mood","instrument","vocal","era","ref"]
+      ids.forEach(k => {
+        const lock = $(`lock_${k}`)
+        if (lock) lock.checked = false
+      })
+      $("status").textContent = "Locks cleared"
+    }
+
+    async function copyPrompt() {
+      const text = $("output").value.trim()
+      if (!text) return
+      try {
+        await navigator.clipboard.writeText(text)
+        $("status").textContent = "Copied"
+      } catch (e) {
+        $("status").textContent = "Copy failed"
+      }
+    }
+
+    function resetAll() {
+      ;["genre","tempo","mood","instrument","vocal","era","ref","output"].forEach(id => $(id).value = "")
+      clearLocks()
+      $("status").textContent = "Reset"
+    }
+
+    $("btnGenerate").addEventListener("click", generate)
+    $("btnRandomize7").addEventListener("click", randomize7Blocks)
+    $("btnClearLocks").addEventListener("click", clearLocks)
+    $("btnCopy").addEventListener("click", copyPrompt)
+    $("btnReset").addEventListener("click", resetAll)
+
+    randomize7Blocks()
+  </script>
+</body>
+</html>

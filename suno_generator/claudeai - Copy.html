@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Suno AI Prompt Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Unbounded:wght@300;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #222230;
+    --accent: #ff4d6d;
+    --accent2: #c77dff;
+    --accent3: #48cae4;
+    --text: #e8e8f0;
+    --muted: #666680;
+    --card-bg: #14141e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(28px, 6vw, 52px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 30%, var(--accent2) 70%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  /* Grid of blocks */
+  .blocks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .block {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--block-color, var(--accent));
+    border-radius: 12px 12px 0 0;
+  }
+
+  .block:hover {
+    border-color: #333346;
+    transform: translateY(-2px);
+  }
+
+  .block.animating .block-value {
+    animation: flipIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes flipIn {
+    0% { opacity: 0; transform: translateY(8px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .block-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--block-color, var(--accent));
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    opacity: 0.8;
+  }
+
+  .block-label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .block-value {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+  }
+
+  .block-value.empty {
+    color: var(--muted);
+    font-weight: 300;
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* Generate button */
+  .generate-btn {
+    display: block;
+    width: 100%;
+    padding: 20px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  .generate-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15) 100%);
+  }
+
+  .generate-btn:hover {
+    background: #ff2d50;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(255, 77, 109, 0.4);
+  }
+
+  .generate-btn:active {
+    transform: translateY(0);
+  }
+
+  .generate-btn.spinning .btn-icon {
+    animation: spin 0.5s linear;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .btn-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .btn-icon {
+    font-size: 20px;
+    display: inline-block;
+  }
+
+  /* Prompt output */
+  .prompt-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s, transform 0.4s;
+  }
+
+  .prompt-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .prompt-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    background: #0f0f18;
+  }
+
+  .prompt-header-label {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent3);
+  }
+
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .copy-btn:hover {
+    border-color: var(--accent3);
+    color: var(--accent3);
+  }
+
+  .copy-btn.copied {
+    border-color: #4ade80;
+    color: #4ade80;
+  }
+
+  .prompt-text {
+    padding: 24px 20px;
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .prompt-text .tag-genre { color: var(--accent); font-weight: 700; }
+  .prompt-text .tag-bpm { color: #facc15; font-weight: 700; }
+  .prompt-text .tag-mood { color: var(--accent2); font-weight: 700; }
+  .prompt-text .tag-instrument { color: var(--accent3); font-weight: 700; }
+  .prompt-text .tag-vocal { color: #fb923c; font-weight: 700; }
+  .prompt-text .tag-era { color: #a3e635; font-weight: 700; }
+  .prompt-text .tag-reference { color: #f472b6; font-weight: 700; }
+
+  /* Color coding for blocks */
+  .block[data-type="genre"] { --block-color: #ff4d6d; }
+  .block[data-type="bpm"] { --block-color: #facc15; }
+  .block[data-type="mood"] { --block-color: #c77dff; }
+  .block[data-type="instrument"] { --block-color: #48cae4; }
+  .block[data-type="vocal"] { --block-color: #fb923c; }
+  .block[data-type="era"] { --block-color: #a3e635; }
+  .block[data-type="reference"] { --block-color: #f472b6; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+    justify-content: center;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--dot-color);
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <p class="eyebrow">✦ AI Music Tool</p>
+    <h1>SUNO PROMPT<br>GENERATOR</h1>
+    <p class="subtitle">Randomize the 7 magic blocks to craft the perfect music prompt</p>
+  </header>
+
+  <div class="blocks-grid" id="blocksGrid">
+    <!-- Blocks injected by JS -->
+  </div>
+
+  <button class="generate-btn" id="generateBtn" onclick="generate()">
+    <span class="btn-inner">
+      <span class="btn-icon" id="btnIcon">⚡</span>
+      GENERATE PROMPT
+    </span>
+  </button>
+
+  <div class="prompt-section" id="promptSection">
+    <div class="prompt-header">
+      <span class="prompt-header-label">✦ Your Suno Prompt</span>
+      <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">Copy</button>
+    </div>
+    <div class="prompt-text" id="promptText"></div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="--dot-color:#ff4d6d"></div> Genre</div>
+    <div class="legend-item"><div class="legend-dot" style="--dot-color:#facc15"></div> BPM</div>
+    <div class="legend-item"><div class="legend-dot" style="--dot-color:#c77dff"></div> Mood</div>
+    <div class="legend-item"><div class="legend-dot" style="--dot-color:#48cae4"></div> Instrument</div>
+    <div class="legend-item"><div class="legend-dot" style="--dot-color:#fb923c"></div> Vocals</div>
+    <div class="legend-item"><div class="legend-dot" style="--dot-color:#a3e635"></div> Era</div>
+    <div class="legend-item"><div class="legend-dot" style="--dot-color:#f472b6"></div> Reference</div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  OPTIONS — easy to maintain JSON
+// ============================================================
+const OPTIONS = {
+  genre: [
+    "Indie Folk", "Synthwave", "Dream Pop", "Post-Rock", "Neo-Soul",
+    "Lo-Fi Hip Hop", "Chamber Pop", "Dark Ambient", "Shoegaze", "Afrobeats",
+    "Progressive Metal", "Jazz Fusion", "Bossa Nova", "Bedroom Pop",
+    "Alternative R&B", "Psychedelic Rock", "Trap Soul", "Math Rock",
+    "New Wave", "Hyperpop", "Slowcore", "Electronic Soul", "Reggaeton",
+    "Indie Electronic", "Folk Noir", "Art Pop", "Glitch Hop", "Classic Soul",
+       "Indie Folk",
+      "Indie Rock",
+      "Lo-fi Folk",
+      "Dream Pop",
+      "Alt R&B",
+      "Ambient Folk",
+      "Neo Soul",
+      "Synthwave",
+      "Post Rock",
+      "Acoustic Pop"
+  ],
+  bpm: [
+    "60 BPM", "72 BPM", "80 BPM", "85 BPM", "90 BPM", "92 BPM",
+    "95 BPM", "100 BPM", "105 BPM", "110 BPM", "120 BPM", "125 BPM",
+    "128 BPM", "135 BPM", "140 BPM", "150 BPM", "160 BPM", "170 BPM"
+  ],
+  mood: [
+    "melancholic", "euphoric", "nostalgic", "haunting", "triumphant",
+    "bittersweet", "ominous", "serene", "urgent", "dreamy", "tense",
+    "hopeful", "wistful", "ethereal", "brooding", "uplifting",
+    "lonely", "transcendent", "anxious", "blissful", "defiant", "tender",
+     "melancholic",
+      "nostalgic",
+      "bittersweet",
+      "haunting",
+      "euphoric",
+      "warm",
+      "intimate",
+      "cinematic",
+      "triumphant",
+      "restless"
+  ],
+  instrument: [
+    "fingerstyle acoustic guitar", "analog synthesizer", "grand piano",
+    "trap hi-hats", "vintage Rhodes", "electric violin", "lap steel guitar",
+    "modular synth", "upright bass", "nylon string guitar", "Fender Rhodes",
+    "prepared piano", "banjo", "cello", "Mellotron", "808 bass",
+    "hammered dulcimer", "pedal steel guitar", "harpsichord", "marimba",
+    "fingerstyle acoustic guitar",
+      "grand piano",
+      "analog synthesizer",
+      "vintage Rhodes",
+      "nylon string guitar",
+      "bowed strings",
+      "soft pads",
+      "upright bass",
+      "brush drums",
+      "banjo"
+  ],
+  vocal: [
+    "whispered vocals", "raspy belting", "smooth falsetto", "spoken word delivery",
+    "layered harmonies", "ethereal soprano", "deep baritone", "breathy intimate",
+    "gospel choir", "rap flow", "melismatic runs", "deadpan monotone",
+    "operatic tenor", "lo-fi distorted vocals", "call and response",
+    "pitch-shifted harmonics", "raw unpolished delivery", "silk-smooth R&B",
+     "whispered vocals",
+      "soft breathy vocals",
+      "smooth falsetto",
+      "spoken word delivery",
+      "layered harmonies",
+      "raspy male vocals",
+      "airy female vocals",
+      "call and response vocals",
+      "close mic vocals",
+      "choir like backing vocals"
+  ],
+  era: [
+    "1960s", "1970s", "1980s", "1990s", "2000s", "2010s", "2020s"
+  ],
+  reference: [
+    "Bon Iver style", "Daft Punk influence", "Fleetwood Mac vibes",
+    "Tyler the Creator energy", "Frank Ocean aesthetic", "Radiohead atmosphere",
+    "Burial-inspired", "Beach House dreamy", "Kendrick Lamar intensity",
+    "Portishead mood", "Nick Drake spirit", "LCD Soundsystem drive",
+    "Cocteau Twins haze", "James Blake minimalism", "Tame Impala psychedelia",
+    "Grouper ambience", "Sufjan Stevens tenderness", "Aphex Twin texture",
+    "Phoebe Bridgers intimacy", "Massive Attack tension", "Mitski rawness",
+    "Arthur Russell eclecticism",
+      "Tyler the Creator energy",
+      "Sufjan Stevens inspired",
+      "Phoebe Bridgers vibes",
+      "Radiohead mood",
+      "The xx minimal feel",
+      "James Blake influence"
+  ]
+};
+
+const BLOCK_META = [
+  { key: "genre",      label: "Genre",      num: "01", icon: "🎵" },
+  { key: "bpm",        label: "Tempo",      num: "02", icon: "🥁" },
+  { key: "mood",       label: "Mood",       num: "03", icon: "🌙" },
+  { key: "instrument", label: "Instrument", num: "04", icon: "🎸" },
+  { key: "vocal",      label: "Vocals",     num: "05", icon: "🎤" },
+  { key: "era",        label: "Era",        num: "06", icon: "📡" },
+  { key: "reference",  label: "Reference",  num: "07", icon: "✨" }
+];
+
+// ============================================================
+//  State
+// ============================================================
+let current = {};
+
+// ============================================================
+//  Init blocks
+// ============================================================
+function initBlocks() {
+  const grid = document.getElementById('blocksGrid');
+  grid.innerHTML = '';
+  BLOCK_META.forEach(meta => {
+    const div = document.createElement('div');
+    div.className = 'block';
+    div.id = 'block-' + meta.key;
+    div.setAttribute('data-type', meta.key);
+    div.innerHTML = `
+      <div class="block-num">${meta.icon} ${meta.num}</div>
+      <div class="block-label">${meta.label}</div>
+      <div class="block-value empty" id="val-${meta.key}">— not generated —</div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+// ============================================================
+//  Random pick
+// ============================================================
+function pick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// ============================================================
+//  Generate
+// ============================================================
+function generate() {
+  const btn = document.getElementById('generateBtn');
+  const icon = document.getElementById('btnIcon');
+  btn.classList.add('spinning');
+  icon.textContent = '⚡';
+
+  BLOCK_META.forEach((meta, i) => {
+    setTimeout(() => {
+      current[meta.key] = pick(OPTIONS[meta.key]);
+      const el = document.getElementById('val-' + meta.key);
+      const block = document.getElementById('block-' + meta.key);
+      el.textContent = meta.key === 'genre' ? `[${current[meta.key]}]` : current[meta.key];
+      el.classList.remove('empty');
+      block.classList.remove('animating');
+      void block.offsetWidth; // reflow
+      block.classList.add('animating');
+    }, i * 60);
+  });
+
+  setTimeout(() => {
+    btn.classList.remove('spinning');
+    icon.textContent = '⚡';
+    buildPrompt();
+  }, BLOCK_META.length * 60 + 200);
+}
+
+// ============================================================
+//  Build & display prompt
+// ============================================================
+function buildPrompt() {
+  const c = current;
+  const genre = c.genre || '…';
+  const bpm   = c.bpm   || '…';
+  const mood  = c.mood  || '…';
+  const inst  = c.instrument || '…';
+  const vocal = c.vocal || '…';
+  const era   = c.era   || '…';
+  const ref   = c.reference || '…';
+
+  const html = `
+    <span class="tag-genre">[${genre}]</span>,
+    <span class="tag-bpm">${bpm}</span>,
+    <span class="tag-mood">${mood}</span>,
+    <span class="tag-instrument">${inst}</span>,
+    <span class="tag-vocal">${vocal}</span>,
+    <span class="tag-era">${era}</span>,
+    <span class="tag-reference">${ref}</span>
+  `.trim();
+
+  document.getElementById('promptText').innerHTML = html;
+
+  const section = document.getElementById('promptSection');
+  section.classList.add('visible');
+
+  // Reset copy button
+  const copyBtn = document.getElementById('copyBtn');
+  copyBtn.textContent = 'Copy';
+  copyBtn.classList.remove('copied');
+}
+
+// ============================================================
+//  Copy prompt
+// ============================================================
+function copyPrompt() {
+  const c = current;
+  if (!c.genre) return;
+  const text = `[${c.genre}], ${c.bpm}, ${c.mood}, ${c.instrument}, ${c.vocal}, ${c.era}, ${c.reference}`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = 'Copied ✓';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// ============================================================
+//  Boot
+// ============================================================
+initBlocks();
+</script>
+</body>
+</html>
