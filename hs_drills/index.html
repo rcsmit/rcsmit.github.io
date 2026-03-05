@@ -523,13 +523,13 @@ function render() {
     })).length} categories`;
 
   // Stats bar
-  const levels = ['Beginner','All levels','Intermediate','Advanced','Elite'];
+  const levels = ['All levels','Beginner','Intermediate','Advanced','Elite'];
   const counts = {};
   levels.forEach(l => counts[l] = 0);
   DRILLS.forEach(c => c.drills.forEach(([,,l]) => { if(counts[l] !== undefined) counts[l]++; }));
   document.getElementById('stats-bar').innerHTML =
-    `<div class="stat"><strong>${totalChecked}</strong>done</div>` +
-    `<div class="stat"><strong>${totalVisible - totalChecked}</strong>remaining</div>` +
+    // `<div class="stat"><strong>${totalChecked}</strong>done</div>` +
+    // `<div class="stat"><strong>${totalVisible - totalChecked}</strong>remaining</div>` +
     levels.map(l => `<div class="stat"><strong>${counts[l]}</strong>${l}</div>`).join('');
 }
 
