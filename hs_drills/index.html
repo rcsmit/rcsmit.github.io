@@ -86,7 +86,7 @@
     <option value="Advanced">Advanced</option>
     <option value="Elite">Elite</option>
   </select>
-  <button class="reset-btn" onclick="resetChecked()">Reset ✓</button>
+  <!--<button class="reset-btn" onclick="resetChecked()">Reset ✓</button>-->
 </div>
 
 <div class="stats" id="stats-bar"></div>
@@ -96,19 +96,6 @@
 
 <script>
 const DRILLS = [
-  { cat: "Foundation & Body Shape", color: "#1E3A5F", drills: [
-    ["Hollow body floor hold","4 × 20–30 sec","Beginner","Lower back pressed flat, arms by ears, chin neutral. The core shape of every handstand."],
-    ["Hollow body rocks","3 × 10 rocks","Beginner","Rock front to back WITHOUT losing hollow shape. Trains active core under movement."],
-    ["Hollow body breathing","3 × 30 sec","Beginner","Hold hollow and breathe normally. Trains maintaining shape while breathing in HS."],
-    ["Hollow body with band","3 × 20 sec","Beginner","Band around ankles adds tactile feedback — feel the shape more clearly."],
-    ["Hollow body on stability ball","3 × 20 sec","Intermediate","Harder to maintain — ball adds instability and requires more precise core tension."],
-    ["Arch-to-hollow switch on floor","3 × 10 reps","Beginner","Controlled oscillation between arch and hollow. Builds body shape awareness."],
-    ["Straight-arm plank hold","4 × 30 sec","Beginner","Straight arms, shoulders elevated (scapular protraction). Directly trains HS shoulder position."],
-    ["RTO plank (rings turned out)","3 × 20 sec","Intermediate","Rings turned out in plank. Requires and builds rotator cuff stability."],
-    ["Plank shoulder shrugs","3 × 10 reps","Beginner","In plank: protract and retract scapula. Isolates scapular control — essential for active HS."],
-    ["Pike hold on floor","3 × 30 sec","Beginner","Hamstring + hip flexor prep. Straight legs, fold as deep as possible."],
-    ["L-sit hold","4 × 10–20 sec","Intermediate","On parallettes or floor. Builds compression strength needed for press handstand."],
-  ]},
   { cat: "Wrist & Shoulder Prep", color: "#2E6DA4", drills: [
     ["Wrist circles","2 × 10 each direction","Beginner","Forward + backward. Never skip — wrists are the most loaded joint in HS."],
     ["Wrist flexion/extension stretch","2 × 30 sec","Beginner","On floor, fingers forward then backward. Full range of motion each direction."],
@@ -128,6 +115,20 @@ const DRILLS = [
     ["Bottom-up KB hold overhead","3 × 20 sec","Intermediate","Just hold the inverted KB overhead. Pure shoulder micro-stability endurance."],
     ["Banded overhead distraction","2 × 30 sec","Intermediate","Band around wrist overhead, let it pull. Opens shoulder capsule."],
   ]},
+  { cat: "Foundation & Body Shape", color: "#1E3A5F", drills: [
+    ["Hollow body floor hold","4 × 20–30 sec","Beginner","Lower back pressed flat, arms by ears, chin neutral. The core shape of every handstand."],
+    ["Hollow body rocks","3 × 10 rocks","Beginner","Rock front to back WITHOUT losing hollow shape. Trains active core under movement."],
+    ["Hollow body breathing","3 × 30 sec","Beginner","Hold hollow and breathe normally. Trains maintaining shape while breathing in HS."],
+    ["Hollow body with band","3 × 20 sec","Beginner","Band around ankles adds tactile feedback — feel the shape more clearly."],
+    ["Hollow body on stability ball","3 × 20 sec","Intermediate","Harder to maintain — ball adds instability and requires more precise core tension."],
+    ["Arch-to-hollow switch on floor","3 × 10 reps","Beginner","Controlled oscillation between arch and hollow. Builds body shape awareness."],
+    ["Straight-arm plank hold","4 × 30 sec","Beginner","Straight arms, shoulders elevated (scapular protraction). Directly trains HS shoulder position."],
+    ["RTO plank (rings turned out)","3 × 20 sec","Intermediate","Rings turned out in plank. Requires and builds rotator cuff stability."],
+    ["Plank shoulder shrugs","3 × 10 reps","Beginner","In plank: protract and retract scapula. Isolates scapular control — essential for active HS."],
+    ["Pike hold on floor","3 × 30 sec","Beginner","Hamstring + hip flexor prep. Straight legs, fold as deep as possible."],
+    ["L-sit hold","4 × 10–20 sec","Intermediate","On parallettes or floor. Builds compression strength needed for press handstand."],
+  ]},
+  
   { cat: "Wall Drills", color: "#1A2E45", drills: [
     ["Wall HS hold — chest to wall","5 × 45 sec","Beginner","Hips above shoulders, ribs in, no arch. Focus on stacking: wrists → elbows → shoulders → hips → heels."],
     ["Wall HS hold — back to wall","5 × 45 sec","Beginner","Easier entry, good for beginners finding the vertical feeling. Check arch tendency."],
