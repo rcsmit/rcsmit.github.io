@@ -443,13 +443,32 @@ function render() {
   let html = '';
   let totalVisible = 0;
   let totalChecked = 0;
-
+  
   DRILLS.forEach((cat, ci) => {
-    const visibleDrills = cat.drills.filter(([name, sets, level, cue]) => {
-      if (levelFilter && level !== levelFilter) return false;
-      if (search && !name.toLowerCase().includes(search) && !cue.toLowerCase().includes(search) && !cat.cat.toLowerCase().includes(search)) return false;
-      return true;
-    });
+    // const visibleDrills = cat.drills.filter(([name, sets, level, cue]) => {
+    //   if (levelFilter && level !== levelFilter) return false;
+    //   if (search && !name.toLowerCase().includes(search) && !cue.toLowerCase().includes(search) && !cat.cat.toLowerCase().includes(search)) return false;
+    //   return true;
+    // });
+    // const visibleDrills = cat.drills.filter(([name, sets, level, cue]) => {
+    //   if (levelFilter && level !== levelFilter) return false;
+    //   if (search && !name.toLowerCase().includes(search) && !cue.toLowerCase().includes(search) && !cat.cat.toLowerCase().includes(search)) return false;
+    //   return true;
+    // }).sort((a, b) => {
+    //   const order = ['All levels', 'Beginner', 'Intermediate', 'Advanced', 'Elite'];
+    //   return order.indexOf(a[2]) - order.indexOf(b[2]);
+    // });
+    const order = {'All levels': 0, 'Beginner': 1, 'Intermediate': 2, 'Advanced': 3, 'Elite': 4};
+    const visibleDrills = cat.drills
+      .filter(([name, sets, level, cue]) => {
+        if (levelFilter && level !== levelFilter) return false;
+        if (search && !name.toLowerCase().includes(search) && !cue.toLowerCase().includes(search) && !cat.cat.toLowerCase().includes(search)) return false;
+        return true;
+      })
+      .slice() // force new array
+      .sort((a, b) => (order[a[2]] ?? 99) - (order[b[2]] ?? 99));
+    // console.log(cat);
+    // console.log(visibleDrills.map(d => d[2])); // Check order in browser console
     if (visibleDrills.length === 0) return;
 
     totalVisible += visibleDrills.length;
