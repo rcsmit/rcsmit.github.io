@@ -244,11 +244,12 @@ html, body {
 </head>
 <body>
 
-<!-- Swipe flash indicators -->
-<div class="swipe-flash" id="flash-right" style="color:#4caf50"><span class="flash-icon">→</span></div>
+<!-- Swipe flash indicators 
+ <div class="swipe-flash" id="flash-right" style="color:#4caf50"><span class="flash-icon">→</span></div>
 <div class="swipe-flash" id="flash-left"  style="color:#ef5350"><span class="flash-icon">←</span></div>
 <div class="swipe-flash" id="flash-down"  style="color:#2E6DA4"><span class="flash-icon">↓</span></div>
 <div class="swipe-flash" id="flash-up"    style="color:#FFA726"><span class="flash-icon">↑</span></div>
+-->
 
 <!-- Category Menu -->
 <div id="cat-overlay" style="position:fixed;inset:0;z-index:200;background:rgba(10,16,24,0.92);backdrop-filter:blur(12px);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .3s;">
@@ -859,15 +860,15 @@ document.addEventListener('touchend', e => {
   const absDx = Math.abs(dx), absDy = Math.abs(dy);
   if (absDx < 30 && absDy < 30) return;
 
-  if (absDx > absDy) {
-    if (absDx < 40) return;
-    if (dx > 0) { flash('flash-right'); prevCat(); }
-    else { flash('flash-left'); nextCat(); }
-  } else {
-    if (absDy < 40) return;
-    if (dy > 0) { flash('flash-down'); newDrill(); }
-    else { flash('flash-up'); goBack(); }
-  }
+  // if (absDx > absDy) {
+  //   if (absDx < 40) return;
+  //   if (dx > 0) { flash('flash-right'); prevCat(); }
+  //   else { flash('flash-left'); nextCat(); }
+  // } else {
+  //   if (absDy < 40) return;
+  //   if (dy > 0) { flash('flash-down'); newDrill(); }
+  //   else { flash('flash-up'); goBack(); }
+  // }
 }, { passive: true });
 
 // Keyboard
@@ -878,11 +879,11 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowUp') { e.preventDefault(); goBack(); }
 });
 
-function flash(id) {
-  const el = document.getElementById(id);
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 300);
-}
+// function flash(id) {
+//   const el = document.getElementById(id);
+//   el.classList.add('show');
+//   setTimeout(() => el.classList.remove('show'), 300);
+// }
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
 function openSettings() {
