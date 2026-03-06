@@ -860,15 +860,15 @@ document.addEventListener('touchend', e => {
   const absDx = Math.abs(dx), absDy = Math.abs(dy);
   if (absDx < 30 && absDy < 30) return;
 
-  // if (absDx > absDy) {
-  //   if (absDx < 40) return;
-  //   if (dx > 0) { flash('flash-right'); prevCat(); }
-  //   else { flash('flash-left'); nextCat(); }
-  // } else {
-  //   if (absDy < 40) return;
-  //   if (dy > 0) { flash('flash-down'); newDrill(); }
-  //   else { flash('flash-up'); goBack(); }
-  // }
+  if (absDx > absDy) {
+    if (absDx < 40) return;
+    if (dx > 0) {  prevCat(); }
+    else {  nextCat(); }
+  } else {
+    if (absDy < 40) return;
+    if (dy > 0) {  newDrill(); }
+    else {  goBack(); }
+  }
 }, { passive: true });
 
 // Keyboard
@@ -879,11 +879,11 @@ document.addEventListener('keydown', e => {
   else if (e.key === 'ArrowUp') { e.preventDefault(); goBack(); }
 });
 
-// function flash(id) {
-//   const el = document.getElementById(id);
-//   el.classList.add('show');
-//   setTimeout(() => el.classList.remove('show'), 300);
-// }
+function flash(id) {
+  const el = document.getElementById(id);
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 300);
+}
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
 function openSettings() {
