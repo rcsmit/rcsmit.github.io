@@ -532,6 +532,11 @@ function render() {
     // `<div class="stat"><strong>${totalChecked}</strong>done</div>` +
     // `<div class="stat"><strong>${totalVisible - totalChecked}</strong>remaining</div>` +
     levels.map(l => `<div class="stat"><strong>${counts[l]}</strong>${l}</div>`).join('');
+
+document.querySelectorAll('.cat-header').forEach(h => {
+  h.classList.add('collapsed');
+  h.nextElementSibling.style.display = 'none';
+});
 }
 
 function toggleCheck(key, cb) {
@@ -551,6 +556,7 @@ function toggleCat(header) {
   const list = header.nextElementSibling;
   list.style.display = list.style.display === 'none' ? '' : 'none';
 }
+
 
 function filterDrills() { render(); }
 
