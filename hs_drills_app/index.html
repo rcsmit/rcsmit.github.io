@@ -351,13 +351,13 @@ function incrementDrill(drillName) {
 function getFilteredCats() {
   return DRILLS.map(c => ({
     ...c,
-    drills: c.drills.filter(d => selectedLevels.includes(d[2]))
+    drills: c.drills.filter(d => selectedLevels.includes(d[3]))
   })).filter(c => c.drills.length > 0);
 }
 
 // ── RANDOM DRILL ─────────────────────────────────────────────────────────────
 function randomDrill(catDrills, exclude) {
-  const options = catDrills.filter(d => d[0] !== (exclude && exclude[0]));
+  const options = catDrills.filter(d => d[1] !== (exclude && exclude[1]));
   const pool = options.length > 0 ? options : catDrills;
   return pool[Math.floor(Math.random() * pool.length)];
 }
@@ -366,7 +366,7 @@ function randomDrill(catDrills, exclude) {
 function renderCatStrip() {} // no-op, strip removed
 
 function renderCard(drill, catColor, catName, animate, dir) {
-  const count = getDrillCount(drill[0]);
+  const count = getDrillCount(drill[1]);
   const wrapper = document.getElementById('card-wrapper');
   const card = document.getElementById('main-card');
   console.log(drillHistory)
@@ -377,12 +377,12 @@ function renderCard(drill, catColor, catName, animate, dir) {
       <span class="card-cat-dot" style="background:${catColor}"></span>
       ${catName}
     </div>
-    <div class="card-drill-name">${drill[0]}</div>
-    <div class="card-sets">⏱ ${drill[1]}</div>
-    <div class="card-cue">${drill[3]}</div>
+    <div class="card-drill-name">${drill[1]}</div>
+    <div class="card-sets">⏱ ${drill[2]}</div>
+    <div class="card-cue">${drill[4]}</div>
     <div class="card-bottom">
       <div>
-        <span class="card-level" style="${LEVEL_BADGE_STYLE[drill[2]]}">${drill[2]}</span>
+        <span class="card-level" style="${LEVEL_BADGE_STYLE[drill[3]]}">${drill[3]}</span>
         ${count > 0 ? `<div class="card-count-info" style="margin-top:6px">Done <strong>${count}×</strong> by ${currentUser}</div>` : ''}
       </div>
       <button class="done-btn" id="done-btn" onclick="markDone()">
@@ -445,7 +445,7 @@ function newDrill() {
 
 function markDone() {
   if (!currentDrill) return;
-  incrementDrill(currentDrill[0]);
+  incrementDrill(currentDrill[1]);
   const cat = filteredCats[catIndex];
   renderCard(currentDrill, cat.color, cat.cat, false, null);
   const b = document.getElementById('done-btn');

@@ -86,6 +86,10 @@
     <option value="Advanced">Advanced</option>
     <option value="Elite">Elite</option>
   </select>
+  <label style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:white;border:1px solid #ccc;border-radius:20px;font-size:13px;">
+    <input type="checkbox" id="essential-filter" onchange="filterDrills()">
+    Essential only
+  </label>
   <!--<button class="reset-btn" onclick="resetChecked()">Reset ✓</button>-->
 </div>
 
@@ -93,6 +97,8 @@
 <div id="app"></div>
 
 <footer>Use search to filter - <a href="handstand_drills.pdf">PDF version</a> - <a href="../hs_drills_app/index.html">Flashcards app</a></footer>
+<!-- <script src="data.js"></script> -->
+
 <script src="../hs_drills_app/data.js"></script>
 <script>
 
@@ -115,36 +121,28 @@ function levelClass(level) {
 }
 
 function render() {
+
   const search = document.getElementById('search').value.toLowerCase();
   const levelFilter = document.getElementById('level-filter').value;
+  const essentialFilter = document.getElementById('essential-filter').checked;
   const app = document.getElementById('app');
+
   let html = '';
   let totalVisible = 0;
   let totalChecked = 0;
   
   DRILLS.forEach((cat, ci) => {
-    // const visibleDrills = cat.drills.filter(([name, sets, level, cue]) => {
-    //   if (levelFilter && level !== levelFilter) return false;
-    //   if (search && !name.toLowerCase().includes(search) && !cue.toLowerCase().includes(search) && !cat.cat.toLowerCase().includes(search)) return false;
-    //   return true;
-    // });
-    // const visibleDrills = cat.drills.filter(([name, sets, level, cue]) => {
-    //   if (levelFilter && level !== levelFilter) return false;
-    //   if (search && !name.toLowerCase().includes(search) && !cue.toLowerCase().includes(search) && !cat.cat.toLowerCase().includes(search)) return false;
-    //   return true;
-    // }).sort((a, b) => {
-    //   const order = ['All levels', 'Beginner', 'Intermediate', 'Advanced', 'Elite'];
-    //   return order.indexOf(a[2]) - order.indexOf(b[2]);
-    // });
+  
     const order = {'All levels': 0, 'Beginner': 1, 'Intermediate': 2, 'Advanced': 3, 'Elite': 4};
     const visibleDrills = cat.drills
-      .filter(([name, sets, level, cue]) => {
+     .filter(([id, name, sets, level, cue, essential]) => {
         if (levelFilter && level !== levelFilter) return false;
+        if (essentialFilter && essential !== true) return false;
         if (search && !name.toLowerCase().includes(search) && !cue.toLowerCase().includes(search) && !cat.cat.toLowerCase().includes(search)) return false;
         return true;
       })
       .slice() // force new array
-      .sort((a, b) => (order[a[2]] ?? 99) - (order[b[2]] ?? 99));
+      .sort((a, b) => (order[a[3]] ?? 99) - (order[b[3]] ?? 99));
     // console.log(cat);
     // console.log(visibleDrills.map(d => d[2])); // Check order in browser console
     if (visibleDrills.length === 0) return;
@@ -168,7 +166,7 @@ function render() {
           <div class="progress-bar-wrap"><div class="progress-bar" style="width:${pct}%"></div></div>
         </div>`;
 
-    visibleDrills.forEach(([name, sets, level, cue]) => {
+    visibleDrills.forEach(([id, name, sets, level, cue, essential, goal, equipment, risk]) => {
       const key = `${ci}-${name}`;
       const isChecked = !!checked[key];
       html += `<div class="drill${isChecked ? ' checked' : ''}" id="drill-${key.replace(/[^a-z0-9]/gi,'_')}">
@@ -194,17 +192,32 @@ function render() {
 
   app.innerHTML = html;
 
-  document.getElementById('total-counter').textContent =
-    `${totalVisible} drills across ${DRILLS.filter(c => c.drills.some(([name,,level,cue]) => {
-      const lf = levelFilter; const s = search;
-      return (!lf || level === lf) && (!s || name.toLowerCase().includes(s) || cue.toLowerCase().includes(s));
-    })).length} categories`;
+//   document.getElementById('total-counter').textContent =
+//     `${totalVisible} drills across ${DRILLS.filter(c => c.drills.some(([id, name, sets, level, cue, essential]) => {
+//   const lf = levelFilter;
+//   const s = search;
+//   return (!lf || level === lf) &&
+//          (!essentialFilter || essential === true) &&
+//          (!s || name.toLowerCase().includes(s) || cue.toLowerCase().includes(s) || c.cat.toLowerCase().includes(s));
+// })).length} categories`;
+
+document.getElementById('total-counter').textContent =
+  `${totalVisible} drills across ${DRILLS.filter(c =>
+    c.drills.some(([id, name, sets, level, cue, essential, goal, equipment, risk]) => {
+      return (!levelFilter || level === levelFilter) &&
+             (!essentialFilter || essential === true) &&
+             (!search ||
+               name.toLowerCase().includes(search) ||
+               cue.toLowerCase().includes(search) ||
+               c.cat.toLowerCase().includes(search));
+    })
+  ).length} categories`;
 
   // Stats bar
   const levels = ['All levels','Beginner','Intermediate','Advanced','Elite'];
   const counts = {};
   levels.forEach(l => counts[l] = 0);
-  DRILLS.forEach(c => c.drills.forEach(([,,l]) => { if(counts[l] !== undefined) counts[l]++; }));
+  DRILLS.forEach(c => c.drills.forEach(([,,,l]) => { if(counts[l] !== undefined) counts[l]++; }));
   document.getElementById('stats-bar').innerHTML =
     // `<div class="stat"><strong>${totalChecked}</strong>done</div>` +
     // `<div class="stat"><strong>${totalVisible - totalChecked}</strong>remaining</div>` +
