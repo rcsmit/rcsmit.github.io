@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Handstand Drills Table</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f4f7fb;
+      color: #1a1a1a;
+      font-size: 14px;
+    }
+    header {
+      background: #1E3A5F;
+      color: white;
+      padding: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    h1 { margin: 0 0 6px; font-size: 20px; }
+    .sub { font-size: 13px; opacity: 0.9; }
+    .sub a {color: #fff; text-decoration: underline;}
+    .wrap {
+      padding: 12px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      align-items: center;
+    }
+    .toolbar input, .toolbar select, .toolbar button {
+      padding: 8px 10px;
+      border: 1px solid #cfd8e3;
+      border-radius: 8px;
+      background: white;
+      font-size: 13px;
+    }
+    .toolbar button {
+      background: #1E3A5F;
+      color: white;
+      cursor: pointer;
+    }
+
+   .table-wrap {
+        overflow-x: hidden;
+        width: 100%;
+        background: white;
+        border: 1px solid #dce3ec;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        table {
+        border-collapse: collapse;
+        width: 100%;
+        table-layout: fixed;
+        }
+
+        th, td {
+        border-bottom: 1px solid #edf1f5;
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: top;
+        word-wrap: break-word;
+        overflow-wrap: anywhere;
+        }
+    thead th {
+      position: sticky;
+      top: 0;
+      background: #f8fbff;
+      z-index: 5;
+    }
+
+    th.sortable {
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    th.sortable:hover {
+      background: #eef5fc;
+    }
+
+    .sort-indicator {
+      margin-left: 4px;
+      color: #58708a;
+      font-size: 12px;
+    }
+
+    .filter-row input, .filter-row select {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 12px;
+      border: 1px solid #d4dde7;
+      border-radius: 6px;
+      background: white;
+    }
+
+    tr:hover td {
+      background: #fafcff;
+    }
+
+    .stats {
+      margin: 10px 0 12px;
+      font-size: 13px;
+      color: #40556b;
+    }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .Beginner { background: #D4EDDA; color: #1A6B3A; }
+    .Intermediate { background: #FFF3CD; color: #856404; }
+    .Advanced { background: #FDECEA; color: #8B1A1A; }
+    .Elite { background: #EDE0F7; color: #5B2A8C; }
+    .Alllevels { background: #E8F4FD; color: #2E6DA4; }
+
+    .bool-true { color: #1A6B3A; font-weight: bold; }
+    .bool-false { color: #888; }
+
+    .small { font-size: 12px; color: #667; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Handstand Drill Database</h1>
+    <div class="sub"><a href="handstand_drills.pdf">PDF version</a> - <a href="../hs_drills_app/index.html">Flashcards app</a></div>
+  </header>
+
+  <div class="wrap">
+    <div class="toolbar">
+      <input id="globalSearch" type="text" placeholder="Global search">
+      <button onclick="resetFilters()">Reset filters</button>
+    </div>
+
+    <div class="stats" id="stats">Loading...</div>
+
+    <div class="table-wrap">
+      <table id="drillTable">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+<!-- <script src="data.js"></script> -->
+
+<script src="../hs_drills_app/data.js"></script>
+
+<script src="data.js"></script>
+<script>
+  const columns = [
+    { key: "category",  label: "Category",  type: "select" },
+   
+    { key: "name",      label: "Name",      type: "text" },
+    { key: "sets",      label: "Sets",      type: "text" },
+    { key: "level",     label: "Level",     type: "select" },
+    { key: "cue",       label: "Cue",       type: "text" },
+    { key: "essential", label: "Essential", type: "boolean" },
+    { key: "goal",      label: "Goal",      type: "select" },
+    { key: "equipment", label: "Equipment", type: "text" },
+    { key: "risk",      label: "Risk",      type: "select" }
+  ];
+
+  const rows = DRILLS.flatMap(cat =>
+    cat.drills.map(([id, name, sets, level, cue, essential, goal, equipment, risk]) => ({
+      category: cat.cat ?? "",
+      color: cat.color ?? "#1E3A5F",
+      id: id ?? "",
+      name: name ?? "",
+      sets: sets ?? "",
+      level: level ?? "",
+      cue: cue ?? "",
+      essential: essential === true,
+      goal: goal ?? "",
+      equipment: equipment ?? "",
+      risk: risk ?? ""
+    }))
+  );
+
+  let sortKey = "category";
+  let sortDir = "asc";
+
+  const filters = {};
+  columns.forEach(c => filters[c.key] = "");
+
+  function normalize(v) {
+    return String(v ?? "").toLowerCase().trim();
+  }
+
+  function uniqueValues(key) {
+    return [...new Set(
+      rows.map(r => String(r[key] ?? "").trim()).filter(v => v !== "")
+    )].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base", numeric: true }));
+  }
+
+  const selectOptions = {
+    category: uniqueValues("category"),
+    level: uniqueValues("level"),
+    goal: uniqueValues("goal"),
+    risk: uniqueValues("risk")
+  };
+
+  function compareValues(a, b, key) {
+    const av = a[key];
+    const bv = b[key];
+
+    if (typeof av === "boolean" || typeof bv === "boolean") {
+      return Number(av) - Number(bv);
+    }
+
+    return String(av).localeCompare(String(bv), undefined, { numeric: true, sensitivity: "base" });
+  }
+
+  function passesColumnFilter(row, col) {
+    const filterValue = filters[col.key];
+    if (!filterValue) return true;
+
+    if (col.type === "boolean") {
+      if (filterValue === "true") return row[col.key] === true;
+      if (filterValue === "false") return row[col.key] === false;
+      return true;
+    }
+
+    if (col.type === "select") {
+      return String(row[col.key] ?? "") === filterValue;
+    }
+
+    return normalize(row[col.key]).includes(normalize(filterValue));
+  }
+
+  function passesGlobalFilter(row, q) {
+    if (!q) return true;
+    return columns.some(col => normalize(row[col.key]).includes(q));
+  }
+
+  function getFilteredRows() {
+    const globalQ = normalize(document.getElementById("globalSearch").value);
+
+    return rows
+      .filter(row => columns.every(col => passesColumnFilter(row, col)))
+      .filter(row => passesGlobalFilter(row, globalQ))
+      .sort((a, b) => {
+        const cmp = compareValues(a, b, sortKey);
+        return sortDir === "asc" ? cmp : -cmp;
+      });
+  }
+
+  function renderFilterCell(col) {
+    if (col.type === "boolean") {
+      return `
+        <th>
+          <select data-filter-key="${col.key}">
+            <option value="">All</option>
+            <option value="true" ${filters[col.key] === "true" ? "selected" : ""}>True</option>
+            <option value="false" ${filters[col.key] === "false" ? "selected" : ""}>False</option>
+          </select>
+        </th>
+      `;
+    }
+
+    if (col.type === "select") {
+      return `
+        <th>
+          <select data-filter-key="${col.key}">
+            <option value="">All</option>
+            ${selectOptions[col.key].map(v =>
+              `<option value="${escapeHtml(v)}" ${filters[col.key] === v ? "selected" : ""}>${escapeHtml(v)}</option>`
+            ).join("")}
+          </select>
+        </th>
+      `;
+    }
+
+    return `
+      <th>
+        <input
+          type="text"
+          placeholder="Filter"
+          data-filter-key="${col.key}"
+          value="${escapeHtml(filters[col.key])}"
+        >
+      </th>
+    `;
+  }
+
+  function renderTable() {
+    const thead = document.getElementById("thead");
+    const tbody = document.getElementById("tbody");
+    const stats = document.getElementById("stats");
+
+    thead.innerHTML = `
+      <tr>
+        ${columns.map(col => `
+          <th class="sortable" data-key="${col.key}">
+            ${col.label}
+            <span class="sort-indicator">${sortKey === col.key ? (sortDir === "asc" ? "▲" : "▼") : ""}</span>
+          </th>
+        `).join("")}
+      </tr>
+      <tr class="filter-row">
+        ${columns.map(renderFilterCell).join("")}
+      </tr>
+    `;
+
+    const filtered = getFilteredRows();
+
+    tbody.innerHTML = filtered.map(row => `
+      <tr>
+        <td>${escapeHtml(row.category)}</td>
+ 
+        <td>${escapeHtml(row.name)}</td>
+        <td>${escapeHtml(row.sets)}</td>
+        <td>${renderLevel(row.level)}</td>
+        <td>${escapeHtml(row.cue)}</td>
+        <td>${row.essential ? '<span class="bool-true">True</span>' : '<span class="bool-false">False</span>'}</td>
+        <td>${escapeHtml(row.goal)}</td>
+        <td>${escapeHtml(row.equipment)}</td>
+        <td>${escapeHtml(row.risk)}</td>
+      </tr>
+    `).join("");
+
+    stats.innerHTML = `<strong>${filtered.length}</strong> of <strong>${rows.length}</strong> drills shown`;
+
+    bindEvents();
+  }
+
+  function renderLevel(level) {
+    const cls = String(level).replace(/\s+/g, "");
+    return `<span class="pill ${cls}">${escapeHtml(level)}</span>`;
+  }
+
+  function escapeHtml(str) {
+    return String(str ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function bindEvents() {
+    document.querySelectorAll("th.sortable").forEach(th => {
+      th.onclick = () => {
+        const key = th.dataset.key;
+        if (sortKey === key) {
+          sortDir = sortDir === "asc" ? "desc" : "asc";
+        } else {
+          sortKey = key;
+          sortDir = "asc";
+        }
+        renderTable();
+      };
+    });
+
+    document.querySelectorAll("[data-filter-key]").forEach(el => {
+      el.oninput = el.onchange = () => {
+        filters[el.dataset.filterKey] = el.value;
+        renderTable();
+      };
+    });
+  }
+
+  function resetFilters() {
+    document.getElementById("globalSearch").value = "";
+    columns.forEach(c => filters[c.key] = "");
+    sortKey = "category";
+    sortDir = "asc";
+    renderTable();
+  }
+
+  document.getElementById("globalSearch").addEventListener("input", renderTable);
+
+  renderTable();
+</script>
+</body>
+</html>
