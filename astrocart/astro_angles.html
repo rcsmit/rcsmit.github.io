@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planets & Angles — Celestial Chart</title>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --parchment:     #f2e8d0;
+    --parchment-dk:  #e0cf9e;
+    --ink:           #2b1d0e;
+    --ink-faded:     #5c4425;
+    --ink-light:     #8a6a3a;
+    --gold:          #b8860b;
+    --gold-lt:       #d4a843;
+    --red-seal:      #8b2020;
+    --compass-blue:  #1a3a5c;
+    --rule:          rgba(90,60,20,0.35);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #1a110a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 64px;
+    font-family: 'IM Fell English', Georgia, serif;
+    min-height: 100vh;
+  }
+
+  /* ── parchment sheet ── */
+  .sheet {
+    background: var(--parchment);
+    background-image:
+      radial-gradient(ellipse at 15% 10%, rgba(255,245,210,0.6) 0%, transparent 50%),
+      radial-gradient(ellipse at 85% 90%, rgba(160,120,60,0.25) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+    max-width: 1160px;
+    width: 100%;
+    padding: 48px 56px 56px;
+    border: 3px solid var(--gold);
+    box-shadow:
+      0 0 0 8px var(--parchment),
+      0 0 0 11px var(--gold),
+      0 0 0 14px var(--parchment-dk),
+      0 8px 60px rgba(0,0,0,0.7);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* corner ornaments */
+  .sheet::before, .sheet::after {
+    content: '✦';
+    font-size: 28px;
+    color: var(--gold);
+    position: absolute;
+    opacity: 0.55;
+  }
+  .sheet::before { top: 16px; left: 20px; }
+  .sheet::after  { bottom: 16px; right: 20px; }
+
+  /* ── header ── */
+  .masthead {
+    text-align: center;
+    margin-bottom: 36px;
+    position: relative;
+  }
+
+  .subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 10.5px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    margin-bottom: 10px;
+  }
+
+  .title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(22px, 3vw, 34px);
+    color: var(--ink);
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .rule-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: center;
+    margin: 14px 0 8px;
+    color: var(--gold);
+    font-size: 18px;
+    opacity: 0.7;
+  }
+  .rule-line hr {
+    border: none;
+    border-top: 1px solid var(--gold);
+    flex: 1;
+    max-width: 180px;
+    opacity: 0.5;
+  }
+
+  .tagline {
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-faded);
+    letter-spacing: 0.5px;
+  }
+
+  /* ── compass rose watermark ── */
+  .watermark {
+    position: absolute;
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 320px;
+    height: 320px;
+    opacity: 0.045;
+    pointer-events: none;
+  }
+
+  /* ── table ── */
+  .scroll-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    color: var(--ink);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* column headers */
+  thead tr th {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--ink);
+    padding: 10px 14px 12px;
+    text-align: center;
+    border-bottom: 2px solid var(--gold);
+    background: rgba(180,140,60,0.10);
+    vertical-align: bottom;
+  }
+
+  thead tr th:first-child { text-align: left; }
+
+  /* angle sub-labels */
+  .angle-label {
+    display: block;
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    color: var(--ink-light);
+    text-transform: none;
+    margin-top: 3px;
+  }
+
+  /* group separator rows */
+  tr.group-sep td {
+    padding: 0;
+    height: 6px;
+    background: rgba(180,140,60,0.08);
+    border-top: 1px dashed rgba(90,60,20,0.2);
+    border-bottom: 1px dashed rgba(90,60,20,0.2);
+  }
+
+  /* data rows */
+  tbody tr:not(.group-sep) td {
+    padding: 9px 14px;
+    vertical-align: top;
+    line-height: 1.5;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  tbody tr:not(.group-sep):hover td {
+    background: rgba(184,134,11,0.07);
+  }
+
+  /* planet cell */
+  .planet-cell {
+    white-space: nowrap;
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 12.5px;
+    color: var(--ink);
+    min-width: 100px;
+  }
+
+  .planet-glyph {
+    display: inline-block;
+    font-size: 17px;
+    margin-right: 6px;
+    vertical-align: middle;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  /* angle cells */
+  td.mc  { border-left: 2px solid rgba(139,32,32,0.3); }
+  td.ic  { border-left: 2px solid rgba(26,58,92,0.3);  }
+  td.asc { border-left: 2px solid rgba(60,100,40,0.3); }
+  td.dsc { border-left: 2px solid rgba(100,60,120,0.3); }
+
+  /* colour-coded angle headers */
+  th.mc  { border-top: 3px solid var(--red-seal); }
+  th.ic  { border-top: 3px solid var(--compass-blue); }
+  th.asc { border-top: 3px solid #3c6428; }
+  th.dsc { border-top: 3px solid #6a3c78; }
+
+  /* ── angles legend ── */
+  .angles-legend {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .angle-card {
+    border: 1px solid var(--rule);
+    padding: 12px 14px;
+    position: relative;
+    background: rgba(255,248,230,0.5);
+  }
+
+  .angle-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .angle-card.asc::before { background: #3c6428; }
+  .angle-card.mc::before  { background: var(--red-seal); }
+  .angle-card.dsc::before { background: #6a3c78; }
+  .angle-card.ic::before  { background: var(--compass-blue); }
+
+  .angle-card-name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1.5px;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+
+  .angle-card-full {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: 11px;
+    color: var(--ink-light);
+    margin-bottom: 6px;
+  }
+
+  .angle-card-theme {
+    font-size: 12px;
+    color: var(--ink-faded);
+    line-height: 1.4;
+  }
+
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 9.5px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--ink-light);
+    text-align: center;
+    margin-bottom: 14px;
+    opacity: 0.75;
+  }
+
+  /* ── footer ── */
+  .footer {
+    margin-top: 32px;
+    text-align: center;
+    font-style: italic;
+    font-size: 11.5px;
+    color: var(--ink-light);
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+  }
+
+  .seal {
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+    border: 2px solid var(--gold);
+    border-radius: 50%;
+    line-height: 44px;
+    font-size: 22px;
+    color: var(--gold);
+    margin: 14px auto 8px;
+    opacity: 0.6;
+  }
+  @media (max-width: 700px) {
+    .angles-legend { grid-template-columns: 1fr 1fr; }
+    .sheet { padding: 28px 20px 36px; }
+  }
+  @media (max-width: 420px) {
+    .angles-legend { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <!-- watermark compass rose SVG -->
+  <svg class="watermark" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+    <g transform="translate(100,100)" fill="#5c4010" stroke="#5c4010">
+      <polygon points="0,-90 6,-12 0,-6 -6,-12" />
+      <polygon points="0,90 6,12 0,6 -6,12" />
+      <polygon points="-90,0 -12,6 -6,0 -12,-6" />
+      <polygon points="90,0 12,6 6,0 12,-6" />
+      <polygon points="0,-90 4,-50 0,-40 -4,-50" opacity=".4" transform="rotate(45)"/>
+      <polygon points="0,90 4,50 0,40 -4,50" opacity=".4" transform="rotate(45)"/>
+      <polygon points="-90,0 -50,4 -40,0 -50,-4" opacity=".4" transform="rotate(45)"/>
+      <polygon points="90,0 50,4 40,0 50,-4" opacity=".4" transform="rotate(45)"/>
+      <circle cx="0" cy="0" r="10" fill="none" stroke-width="1.5"/>
+      <circle cx="0" cy="0" r="22" fill="none" stroke-width="0.8" stroke-dasharray="3,4"/>
+      <circle cx="0" cy="0" r="55" fill="none" stroke-width="0.6"/>
+      <text y="-95" text-anchor="middle" font-size="14" font-family="serif" font-weight="bold">N</text>
+      <text y="108" text-anchor="middle" font-size="14" font-family="serif" font-weight="bold">S</text>
+      <text x="95" y="5" text-anchor="start" font-size="14" font-family="serif" font-weight="bold">E</text>
+      <text x="-95" y="5" text-anchor="end" font-size="14" font-family="serif" font-weight="bold">W</text>
+    </g>
+  </svg>
+
+  <!-- masthead -->
+  <div class="masthead">
+    <div class="subtitle">Tabula Caelestis · A Celestial Reference</div>
+    <div class="title">Planets & the Four Angles</div>
+    <div class="rule-line">
+      <hr>☽ ✦ ☉ ✦ ☿<hr>
+    </div>
+    <div class="tagline">
+      Shewing the Influence of each Wandering Star upon the Horizon, Meridian, and their Oppositions
+    </div>
+  </div>
+
+  <!-- angles legend -->
+  <div class="section-label">The Four Angles of the Figure</div>
+  <div class="angles-legend">
+    <div class="angle-card asc">
+      <div class="angle-card-name">ASC — Ascendant</div>
+      <div class="angle-card-full">Rising Sign · Eastern Horizon</div>
+      <div class="angle-card-theme">Self, body &amp; identity. The mask worn at first meeting. How others perceive you before they know you.</div>
+    </div>
+    <div class="angle-card mc">
+      <div class="angle-card-name">MC — Midheaven</div>
+      <div class="angle-card-full">Medium Coeli · Highest Point</div>
+      <div class="angle-card-theme">Career, reputation &amp; public role. Ambitions and the image projected into the world.</div>
+    </div>
+    <div class="angle-card dsc">
+      <div class="angle-card-name">DSC — Descendant</div>
+      <div class="angle-card-full">Setting Sign · Western Horizon</div>
+      <div class="angle-card-theme">Partnerships, marriage &amp; others. What we seek in — and project onto — close companions.</div>
+    </div>
+    <div class="angle-card ic">
+      <div class="angle-card-name">IC — Imum Coeli</div>
+      <div class="angle-card-full">Nadir · Lowest Point</div>
+      <div class="angle-card-theme">Home, roots &amp; private life. Family origins, inner foundations, and the place of retreat.</div>
+    </div>
+  </div>
+
+  <div class="section-label" style="margin-top:8px;">Planetary Influences by Angle</div>
+
+  <!-- table -->
+  <div class="scroll-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th class="mc">MC<span class="angle-label">Midheaven · Career &amp; Public</span></th>
+        <th class="ic">IC<span class="angle-label">Imum Coeli · Home &amp; Roots</span></th>
+        <th class="asc">ASC<span class="angle-label">Ascendant · Identity</span></th>
+        <th class="dsc">DSC<span class="angle-label">Descendant · Relationships</span></th>
+      </tr>
+    </thead>
+    <tbody>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">☉</span>Sun</td>
+      <td class="mc">Recognition. Leadership. Public visibility.</td>
+      <td class="ic">Strong family focus. Feeling at home.</td>
+      <td class="asc">Confidence. Strong presence.</td>
+      <td class="dsc">Partners highlight your identity.</td>
+    </tr>
+    <tr class="group-sep"><td colspan="5"></td></tr>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">☽</span>Moon</td>
+      <td class="mc">Public caretaker role. Emotional work.</td>
+      <td class="ic">Deep emotional roots. Need for security.</td>
+      <td class="asc">Sensitive persona. Strong intuition.</td>
+      <td class="dsc">Emotional partners. Bonding focus.</td>
+    </tr>
+    <tr class="group-sep"><td colspan="5"></td></tr>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">☿</span>Mercury</td>
+      <td class="mc">Communication career. Teaching, media, writing.</td>
+      <td class="ic">Busy home life. Learning from family.</td>
+      <td class="asc">Curious, talkative identity.</td>
+      <td class="dsc">Intellectual partners.</td>
+    </tr>
+    <tr class="group-sep"><td colspan="5"></td></tr>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">♀</span>Venus</td>
+      <td class="mc">Popularity. Arts, diplomacy, beauty work.</td>
+      <td class="ic">Pleasant home. Harmony &amp; comfort.</td>
+      <td class="asc">Charming, attractive style.</td>
+      <td class="dsc">Love, romance, harmony.</td>
+    </tr>
+    <tr class="group-sep"><td colspan="5"></td></tr>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">♂</span>Mars</td>
+      <td class="mc">Ambition, competition, leadership drive.</td>
+      <td class="ic">Restless home. Conflict possible.</td>
+      <td class="asc">Strong physical energy. Assertive.</td>
+      <td class="dsc">Passionate but conflict-prone.</td>
+    </tr>
+    <tr class="group-sep"><td colspan="5"></td></tr>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">♃</span>Jupiter</td>
+      <td class="mc">Success, growth, opportunities, career luck.</td>
+      <td class="ic">Big family, expansion, optimism.</td>
+      <td class="asc">Confidence, optimism. Teacher vibe.</td>
+      <td class="dsc">Helpful, supportive partners.</td>
+    </tr>
+    <tr class="group-sep"><td colspan="5"></td></tr>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">♄</span>Saturn</td>
+      <td class="mc">Responsibility, authority, slow career growth.</td>
+      <td class="ic">Heavy family duties. Strong roots.</td>
+      <td class="asc">Serious, disciplined identity.</td>
+      <td class="dsc">Committed, karmic partnerships.</td>
+    </tr>
+    <tr class="group-sep"><td colspan="5"></td></tr>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">♅</span>Uranus</td>
+      <td class="mc">Innovative, unusual career. Sudden change.</td>
+      <td class="ic">Unstable home. Need for freedom.</td>
+      <td class="asc">Unique, rebellious identity.</td>
+      <td class="dsc">Unpredictable partners.</td>
+    </tr>
+    <tr class="group-sep"><td colspan="5"></td></tr>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">♆</span>Neptune</td>
+      <td class="mc">Spiritual, artistic career — film, music, photography. Inspiration high; boundaries &amp; direction need guarding.</td>
+      <td class="ic">Dreamy private life. Escapism risk.</td>
+      <td class="asc">Mystical, sensitive aura.</td>
+      <td class="dsc">Idealized, unclear relationships.</td>
+    </tr>
+    <tr class="group-sep"><td colspan="5"></td></tr>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">♇</span>Pluto</td>
+      <td class="mc">Power, transformation, career influence.</td>
+      <td class="ic">Deep psychological family shifts.</td>
+      <td class="asc">Intense, magnetic presence.</td>
+      <td class="dsc">Transformational relationships.</td>
+    </tr>
+    <tr class="group-sep"><td colspan="5"></td></tr>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">⚷</span>Chiron</td>
+      <td class="mc">Public healer, teacher role.</td>
+      <td class="ic">Healing family wounds.</td>
+      <td class="asc">Wounded healer identity.</td>
+      <td class="dsc">Healing through partnerships.</td>
+    </tr>
+    <tr class="group-sep"><td colspan="5"></td></tr>
+
+    <tr>
+      <td class="planet-cell"><span class="planet-glyph">☊</span>North Node</td>
+      <td class="mc">Destiny career direction.</td>
+      <td class="ic">Life path tied to family roots.</td>
+      <td class="asc">Personal growth through identity.</td>
+      <td class="dsc">Fated relationships.</td>
+    </tr>
+
+    </tbody>
+  </table>
+  </div>
+
+  <!-- footer -->
+  <div class="footer">
+    <div class="seal">✦</div><br>
+    <em>These be the natures of the Planets as they fall upon the Four Angles of the Figure.<br>
+    Interpretations vary with aspect, dignity, and the whole of the nativity.</em>
+  </div>
+
+</div>
+
+</body>
+</html>
