@@ -156,6 +156,7 @@ body.has-cursor #cursor { display: block; }
 .portal-name .marxin {
   display: block;
   font-family: 'Playfair Display', serif;
+  
   font-style: italic;
   font-weight: 700;
   -webkit-text-stroke: 1px rgba(240,236,228,0.55);
@@ -262,6 +263,7 @@ body.has-cursor #cursor { display: block; }
 .topbar {
   position: sticky;
   top: 0;
+  margin: 0;
   z-index: 100;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -348,11 +350,12 @@ body.has-cursor #cursor { display: block; }
 /* hero */
 .hero {
   position: relative;
-  height: clamp(420px, 70vh, 780px);
+  height: clamp(420px, 100vh, 780px);
   overflow: hidden;
   display: flex;
   align-items: flex-end;
-  padding: clamp(2rem, 6vw, 5rem) clamp(1.5rem, 5vw, 4rem);
+  padding: clamp(2rem, 6vw, 5rem)   /* top & bottom */
+         clamp(1.5rem, 5vw, 4rem); /* left & right */
 }
 .hero video {
   position: absolute;
@@ -361,7 +364,7 @@ body.has-cursor #cursor { display: block; }
   object-fit: cover;
 }
 .hero-overlay { position: absolute; inset: 0; }
-.hero-content { position: relative; z-index: 2; }
+.hero-content { position: relative; z-index: 2; padding-top:200px }
 
 .hero-tag {
   font-family: 'Unbounded', sans-serif;
@@ -695,10 +698,10 @@ body.has-cursor #cursor { display: block; }
 .booking-field input,
 .booking-field textarea,
 .booking-field select {
-  background: rgba(255,255,255,0.04);
+  /* background: rgba(255,255,255,0.04); */
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 4px;
-  color: inherit;
+  /* color: inherit; */
   font-family: 'Crimson Pro', serif;
   font-size: 1rem;
   padding: 0.6rem 0.8rem;
@@ -708,7 +711,7 @@ body.has-cursor #cursor { display: block; }
 }
 .booking-field input:focus,
 .booking-field textarea:focus,
-.booking-field select:focus { border-color: rgba(255,255,255,0.3); }
+/* .booking-field select:focus { border-color: rgba(255,255,255,0.3); } */
 .booking-field textarea { resize: vertical; min-height: 80px; grid-column: span 2; }
 .booking-field.full { grid-column: span 2; }
 
@@ -818,12 +821,12 @@ body.has-cursor #cursor { display: block; }
   <div class="portal-split" id="portalSplit">
     <div class="split-half split-left">
       <video autoplay muted loop playsinline preload="auto">
-        <source src="https://github.com/rcsmit/rcsmit.github.io/raw/refs/heads/master/disar2/hero.mp4" type="video/mp4">
+        <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
       </video>
     </div>
     <div class="split-half split-right">
       <video autoplay muted loop playsinline preload="auto">
-        <source src="https://github.com/rcsmit/rcsmit.github.io/raw/refs/heads/master/disar2/hero.mp4" type="video/mp4">
+        <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
       </video>
     </div>
   </div>
@@ -892,7 +895,7 @@ body.has-cursor #cursor { display: block; }
 
   <div class="hero">
     <video autoplay muted loop playsinline preload="none">
-      <source src="https://github.com/rcsmit/rcsmit.github.io/raw/refs/heads/master/disar2/sunset.mp4" type="video/mp4">
+      <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
     </video>
     <div class="hero-overlay"></div>
     <div class="hero-content">
@@ -965,7 +968,7 @@ body.has-cursor #cursor { display: block; }
 
   <div class="hero">
     <video autoplay muted loop playsinline preload="none">
-      <source src="https://github.com/rcsmit/rcsmit.github.io/raw/refs/heads/master/disar2/dark.mp4" type="video/mp4">
+      <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
     </video>
     <div class="hero-overlay"></div>
     <div class="hero-content">
@@ -1028,7 +1031,8 @@ body.has-cursor #cursor { display: block; }
     <!-- BOOKING -->
     <div class="drawer-panel" id="panel-booking">
       <h2>// Booking</h2>
-      <p>For bookings, collaborations and inquiries, fill in the form below or reach out directly at <a href="/cdn-cgi/l/email-protection#6e0c0101050700092e0a071d0f1c400c0b"><span class="__cf_email__" data-cfemail="ec8e83838785828bac88859f8d9ec28e89">[email&#160;protected]</span></a></p>
+      <!-- <p>For bookings, collaborations and inquiries, fill in the form below or reach out directly at <a href="/cdn-cgi/l/email-protection#6e0c0101050700092e0a071d0f1c400c0b"><span class="__cf_email__" data-cfemail="ec8e83838785828bac88859f8d9ec28e89">[email&#160;protected]</span></a></p> -->
+       <p>For bookings, collaborations and inquiries, fill in the form below or reach out directly at <a href="mailto:nospam@nospam.com"><span class="__cf_email__" data-cfemail="ec8e83838785828bac88859f8d9ec28e89">[email&#160;protected]</span></a></p>
       <div class="booking-grid">
         <div class="booking-field">
           <label>Name</label>
@@ -1099,11 +1103,12 @@ body.has-cursor #cursor { display: block; }
     <!-- PRIVACY -->
     <div class="drawer-panel" id="panel-privacy">
       <h2>// Privacy Policy</h2>
-      <p><strong>Who we are.</strong> This website is operated by Didier Salembier, trading as Disar Marxin. BTW BE 0864.181.512 · Veurne, Belgium.</p>
-      <p><strong>Data we collect.</strong> This site does not use cookies or tracking scripts. If you use the booking form, your submitted data (name, email, message) is used solely to respond to your inquiry and is not shared with third parties.</p>
-      <p><strong>Embedded content.</strong> Pages on this site include embedded content from Mixcloud, YouTube, SoundCloud and social platforms. Embedded content from other websites behaves in the same way as if the visitor had visited those websites directly and may collect data about you.</p>
-      <p><strong>Your rights.</strong> Under GDPR you have the right to request access to, correction of, or deletion of your personal data. Contact: <a href="/cdn-cgi/l/email-protection#8ee7e0e8e1ceeae7fdeffca0eceb"><span class="__cf_email__" data-cfemail="264f48404966424f554754084443">[email&#160;protected]</span></a></p>
-      <p><strong>Last updated:</strong> 2025.</p>
+      <p><b>Who we are.</b> This website is operated by Didier Salembier, trading as Disar Marxin. BTW BE 0864.181.512 · Veurne, Belgium.</p>
+      <p><b>Data we collect.</b> This site does not use cookies or tracking scripts. If you use the booking form, your submitted data (name, email, message) is used solely to respond to your inquiry and is not shared with third parties.</p>
+      <p><b>Embedded content.</b> Pages on this site include embedded content from Mixcloud, YouTube, SoundCloud and social platforms. Embedded content from other websites behaves in the same way as if the visitor had visited those websites directly and may collect data about you.</p>
+      <!-- <p><b>Your rights.</b> Under GDPR you have the right to request access to, correction of, or deletion of your personal data. Contact: <a href="/cdn-cgi/l/email-protection#8ee7e0e8e1ceeae7fdeffca0eceb"><span class="__cf_email__" data-cfemail="264f48404966424f554754084443">[email&#160;protected]</span></a></p> -->
+       <p><b>Your rights.</b> Under GDPR you have the right to request access to, correction of, or deletion of your personal data. Contact: <a href="mailto:nospam@nospam.com"><span class="__cf_email__" data-cfemail="264f48404966424f554754084443">[email&#160;protected]</span></a></p> 
+      <p><b>Last updated:</b> 2025.</p>
     </div>
 
     <!-- THANKS -->
@@ -1204,18 +1209,18 @@ const pages = {
 let current = 'portal';
 
 function goTo(target) {
-  if (target === current) return;
+  //if (target === current) return;
   pages[current].classList.remove('active');
   current = target;
   const el = pages[target];
   el.style.opacity = '0';
   el.classList.add('active');
-  window.scrollTo(0, 520);
+  window.scrollTo(0,  window.innerHeight);
   // Fade in
   requestAnimationFrame(() => {
     el.style.transition = 'opacity 0.5s ease';
     el.style.opacity = '1';
-    setTimeout(() => { el.style.transition = ''; el.style.opacity = ''; }, 520);
+    setTimeout(() => { el.style.transition = ''; el.style.opacity = ''; }, window.innerHeight);
   });
 }
 
