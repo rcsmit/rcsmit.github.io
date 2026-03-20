@@ -1189,7 +1189,7 @@ function animateSplit() {
 portal.addEventListener('mousemove', e => {
   const pct = (e.clientX / portal.offsetWidth) * 100;
   // Snap toward 85% on the side the mouse is on
-  splitTarget = pct < 50
+  splitTarget = pct > 50
     ? 15 + (pct / 50) * 35          // left side: range 15–50
     : 50 + ((pct - 50) / 50) * 35;  // right side: range 50–85
   if (!rafId) rafId = requestAnimationFrame(animateSplit);
