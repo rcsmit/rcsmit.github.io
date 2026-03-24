@@ -153,7 +153,7 @@ body.has-cursor #cursor { display: block; }
 }
 
 .portal-name .disar  { display: block; }
-.portal-name .marxin {
+/* .portal-name .marxin {
   display: block;
   font-family: 'Playfair Display', serif;
   
@@ -163,6 +163,22 @@ body.has-cursor #cursor { display: block; }
   color: transparent;
   letter-spacing: 0.04em;
   font-size: 1.08em;
+}
+*/
+  .portal-name .marxin {
+  display: block;
+  /* Wijziging naar Unbounded, zoals de andere titels */
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 700;
+  
+  /* Verwijder de italic en de stroke als je exact dezelfde look wilt */
+  font-style: normal;
+  -webkit-text-stroke: 0; 
+  
+  /* Kleur en spacing aanpassen voor consistentie */
+  color: #f0ece4; 
+  letter-spacing: -0.02em;
+  font-size: 1em; /* Iets kleiner maken omdat Unbounded breder is dan Playfair */
 }
 
 .portal-since {
