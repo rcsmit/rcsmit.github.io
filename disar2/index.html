@@ -1078,7 +1078,9 @@ body.has-cursor #cursor { display: block; }
           <textarea placeholder="Tell me about the event..."></textarea>
         </div>
       </div>
-      <button class="booking-submit">Send inquiry</button>
+     
+      <button class="booking-submit" id="booking-submit-btn">Send inquiry</button>
+      <p id="booking-feedback" style="display:none; margin-top:1rem; font-family:'Crimson Pro',serif; font-size:1rem; opacity:0.7;"></p>
     </div>
 
     <!-- PRESS -->
@@ -1301,6 +1303,48 @@ document.querySelectorAll('[data-drawer]').forEach(el =>
 document.querySelectorAll('video').forEach(v =>
   v.play().catch(() => { v.style.display = 'none'; })
 );
+
+// ─── BOOKING MAILTO ───
+document.getElementById('booking-submit-btn').addEventListener('click', async () => {
+  const name    = document.querySelector('#panel-booking input[type="text"]').value.trim();
+  const email   = document.querySelector('#panel-booking input[type="email"]').value.trim();
+  const date    = document.querySelector('#panel-booking input[type="date"]').value;
+  const venue   = document.querySelectorAll('#panel-booking input[type="text"]')[1].value.trim();
+  const series  = document.querySelector('#panel-booking select').value;
+  const message = document.querySelector('#panel-booking textarea').value.trim();
+  const feedback = document.getElementById('booking-feedback');
+
+  if (!name || !email) {
+    feedback.textContent = 'Please fill in at least your name and email.';
+    feedback.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('booking-submit-btn');
+  btn.textContent = 'Sending…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('https://formspree.io/f/JOUW_ID_HIER', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ name, email, date, venue, series, message })
+    });
+
+    if (res.ok) {
+      feedback.textContent = '✓ Message sent. I\'ll get back to you soon.';
+      feedback.style.display = 'block';
+      btn.textContent = 'Sent';
+    } else {
+      throw new Error();
+    }
+  } catch {
+    feedback.textContent = 'Something went wrong. Try again or email booking@disar.be directly.';
+    feedback.style.display = 'block';
+    btn.textContent = 'Send inquiry';
+    btn.disabled = false;
+  }
+});
 </script>
 </body>
 </html>
