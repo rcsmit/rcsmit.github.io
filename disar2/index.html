@@ -456,6 +456,107 @@ body.has-cursor #cursor { display: block; }
 .mixes { display: flex; flex-direction: column; gap: 0.45rem; }
 .mixes iframe { width: 100%; height: 60px; border: none; display: block; }
 
+/* BEGIN LATEST MIXES CSS */
+
+/* Container styling */
+.mix-grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+/* Algemene kaart styling */
+.mix-card {
+  position: relative;
+  overflow: hidden;
+  background: #111;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.mix-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.mix-card:hover {
+  transform: scale(1.02);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.mix-card:hover img {
+  opacity: 1;
+}
+
+/* Grote mix */
+.mix-featured {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.mix-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+}
+
+.mix-title {
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Het grid van 3 */
+.mix-subgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.mix-subgrid .mix-card {
+  aspect-ratio: 1 / 1; /* Maakt de kleine foto's vierkant */
+}
+
+/* Playlist link onderaan */
+.playlist-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: rgba(255,255,255,0.03);
+  border: 1px border rgba(255,255,255,0.1);
+  text-decoration: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.playlist-link:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+/* Mobiele optimalisatie */
+@media (max-width: 768px) {
+  .mix-subgrid {
+    grid-template-columns: 1fr; /* Alles onder elkaar op gsm */
+  }
+}
+  
+/* EINDE LATEST MIXES CSS */
+  
 /* footer */
 .sub-footer-bar {
   display: flex;
@@ -932,6 +1033,7 @@ body.has-cursor #cursor { display: block; }
         <p>It's all about the vibe, not the genre.</p>
       </div>
     </div>
+    <!--
     <div class="sub-col">
       <span class="col-label">Latest Mixes</span>
       <div class="mixes">
@@ -943,6 +1045,41 @@ body.has-cursor #cursor { display: block; }
         <iframe src="https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=1&feed=%2FDisarMarxin%2Fsunsets-202501-ibiza-house%2F" allow="encrypted-media; fullscreen; autoplay; idle-detection; speaker-selection; web-share;"></iframe>
       </div>
     </div>
+    -->
+    
+<div class="sub-col">
+  <span class="col-label">Latest Mixes</span>
+  
+  <div class="mix-grid-container">
+    <a href="https://youtube.com/playlist?list=PLbel-BcTV-rI96PHmds6WSbwqw-O_WYSk&si=xFFPg8g3GKFkan_U" target="_blank" class="mix-featured">
+      <div class="mix-card large">
+        <img src="ad202603.jpg" alt="Latest Mix">
+        <div class="mix-overlay">
+          <span class="mix-title">Latest: After Dark 2026.03</span>
+        </div>
+      </div>
+    </a>
+
+    <div class="mix-subgrid">
+      <a href="https://youtu.be/tV1v5Fw45aw?si=kklNvYW_BSCU0RVo" target="_blank" class="mix-card small">
+        <img src="ad202602.jpg" alt="After Dark 2026.02">
+      </a>
+      <a href="https://youtu.be/exRsmhZ5jLs?si=btxfv6cPJLCwf6VF" target="_blank" class="mix-card small">
+        <img src="ad202601.jpg" alt="After Dark 2026.01">
+      </a>
+      <a href="https://youtu.be/kYCc8V4H9Xg?si=oOiWXQ4tGrBc7tOy" target="_blank" class="mix-card small">
+        <img src="ad202509.jpg" alt="After Dark 2025.09">
+      </a>
+    </div>
+
+    <a href="https://youtube.com/playlist?list=PLbel-BcTV-rI96PHmds6WSbwqw-O_WYSk&si=JUrnvenH0a8lZb0V" target="_blank" class="playlist-link">
+      <span>Discover the full playlist on YouTube</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 15.065V8.935L15 12L10 15.065ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"/></svg>
+    </a>
+  </div>
+</div>
+<!-- END OF LATEST MIXES -->
+    
   </div>
 
   <div class="sub-footer-bar">
