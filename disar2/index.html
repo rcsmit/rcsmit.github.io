@@ -556,6 +556,63 @@ body.has-cursor #cursor { display: block; }
 }
   
 /* EINDE LATEST MIXES CSS */
+
+/* BEGIN BOOKING RIDER */
+ /* ─── BOOKING RIDER THUMBNAIL ─── */
+.rider-thumbnail-link {
+  display: inline-block; /* Zorgt dat de link de grootte van de foto aanneemt */
+  position: relative;
+  width: min(280px, 100%); /* Beperkt de breedte op desktop, past zich aan op gsm */
+  margin-top: 0.8rem;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+  cursor: inherit; /* Houdt je custom cursor stijl aan */
+}
+
+.rider-thumb {
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0.8; /* Iets donkerder in rusttoestand */
+  transition: opacity 0.3s ease;
+}
+
+/* De overlay met het icoon */
+.rider-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.5); /* Donkere waas */
+  opacity: 0; /* Verzekerd onzichtbaar */
+  transition: opacity 0.3s ease;
+}
+
+.rider-overlay svg {
+  color: #fff;
+  opacity: 0.8;
+  width: 44px; height: 44px;
+}
+
+/* Hover-effecten */
+.rider-thumbnail-link:hover {
+  border-color: rgba(255,255,255,0.2);
+  transform: translateY(-2px); /* Subtiele beweging */
+}
+
+.rider-thumbnail-link:hover .rider-thumb {
+  opacity: 1; /* Volledige helderheid foto */
+}
+
+.rider-thumbnail-link:hover .rider-overlay {
+  opacity: 1; /* Toon de overlay met het icoon */
+}
+
+/* END BOOKING RIDER */
+
   
 /* footer */
 .sub-footer-bar {
@@ -1225,7 +1282,12 @@ body.has-cursor #cursor { display: block; }
       <p><b><u>Riders</u></b><br>
       My technical and hospitality requirements are straightforward and tailored to the specific event. To keep things transparent, you can find my basic rider below as a starting point.
       </p>
-      <img src="rider.jpg" alt="basic rider">
+      <a href="rider.jpg" target="_blank" class="rider-thumbnail-link">
+        <img src="rider.jpg" alt="Basic technical rider" class="rider-thumb">
+        <div class="rider-overlay">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 15.065V8.935L15 12L10 15.065ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"/></svg>
+        </div>
+      </a>
 <!--      <div class="booking-grid">
         <div class="booking-field">
           <label>Name</label>
