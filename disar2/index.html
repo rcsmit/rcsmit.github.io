@@ -59,6 +59,18 @@ body.has-cursor #cursor { display: block; }
 /* ══════════════════════════════════════
    PORTAL
 ══════════════════════════════════════ */
+
+/* Logo */
+#portal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('favicon.svg') center center / 35% auto no-repeat;
+  opacity: 0.04;
+  pointer-events: none;
+  z-index: 1;
+}
+
 #portal {
   position: relative;
   min-height: 100vh;
@@ -991,6 +1003,32 @@ body.has-cursor #cursor { display: block; }
 .drawer-dark .drawer-title { color: #4af0ff; }
 .drawer-dark .booking-field input:focus,
 .drawer-dark .booking-field textarea:focus { border-color: rgba(74,240,255,0.4); }
+
+
+/* Voeg toe aan de bestaande .sub-col styling (of specifiek voor de bio-col) */
+#sunset .sub-col:first-child,
+#dark .sub-col:first-child {
+  position: relative;
+}
+
+#sunset .sub-col:first-child::before,
+#dark .sub-col:first-child::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('favicon.svg') center center / 70% auto no-repeat;
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#sunset .sub-col:first-child .col-label,
+#sunset .sub-col:first-child .bio-text,
+#dark .sub-col:first-child .col-label,
+#dark .sub-col:first-child .bio-text {
+  position: relative;
+  z-index: 1;
+}
 </style>
 </head>
 <body>
