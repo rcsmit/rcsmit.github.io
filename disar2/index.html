@@ -6,6 +6,12 @@
 <meta name="description" content="DJ since 1995 · From Sunset House to Peak Time Techno">
 <meta name="author" content="Didier Salembier">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+<link rel="icon" type="image/png" href="favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="shortcut icon" href="favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200;400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&family=Playfair+Display:ital,wght@1,400;1,700&display=swap" rel="stylesheet">
 <style>
@@ -456,6 +462,164 @@ body.has-cursor #cursor { display: block; }
 .mixes { display: flex; flex-direction: column; gap: 0.45rem; }
 .mixes iframe { width: 100%; height: 60px; border: none; display: block; }
 
+/* BEGIN LATEST MIXES CSS */
+
+/* Container styling */
+.mix-grid-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+/* Algemene kaart styling */
+.mix-card {
+  position: relative;
+  overflow: hidden;
+  background: #111;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.mix-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
+}
+
+.mix-card:hover {
+  transform: scale(1.02);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.mix-card:hover img {
+  opacity: 1;
+}
+
+/* Grote mix */
+.mix-featured {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.mix-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+}
+
+.mix-title {
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Het grid van 3 */
+.mix-subgrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.mix-subgrid .mix-card {
+  aspect-ratio: 16 / 9; /* Maakt de kleine foto's ook breedbeeld */
+}
+
+/* Playlist link onderaan */
+.playlist-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: rgba(255,255,255,0.03);
+  border: 1px border rgba(255,255,255,0.1);
+  text-decoration: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.playlist-link:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+}
+
+/* Mobiele optimalisatie */
+@media (max-width: 768px) {
+  .mix-subgrid {
+    grid-template-columns: 1fr; /* Alles onder elkaar op gsm */
+  }
+}
+  
+/* EINDE LATEST MIXES CSS */
+
+/* BEGIN BOOKING RIDER */
+ /* ─── BOOKING RIDER THUMBNAIL ─── */
+.rider-thumbnail-link {
+  display: inline-block; /* Zorgt dat de link de grootte van de foto aanneemt */
+  position: relative;
+  width: min(280px, 100%); /* Beperkt de breedte op desktop, past zich aan op gsm */
+  margin-top: 0.8rem;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+  cursor: inherit; /* Houdt je custom cursor stijl aan */
+}
+
+.rider-thumb {
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0.8; /* Iets donkerder in rusttoestand */
+  transition: opacity 0.3s ease;
+}
+
+/* De overlay met het icoon */
+.rider-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.5); /* Donkere waas */
+  opacity: 0; /* Verzekerd onzichtbaar */
+  transition: opacity 0.3s ease;
+}
+
+.rider-overlay svg {
+  color: #fff;
+  opacity: 0.8;
+  width: 44px; height: 44px;
+}
+
+/* Hover-effecten */
+.rider-thumbnail-link:hover {
+  border-color: rgba(255,255,255,0.2);
+  transform: translateY(-2px); /* Subtiele beweging */
+}
+
+.rider-thumbnail-link:hover .rider-thumb {
+  opacity: 1; /* Volledige helderheid foto */
+}
+
+.rider-thumbnail-link:hover .rider-overlay {
+  opacity: 1; /* Toon de overlay met het icoon */
+}
+
+/* END BOOKING RIDER */
+
+  
 /* footer */
 .sub-footer-bar {
   display: flex;
@@ -860,7 +1024,7 @@ body.has-cursor #cursor { display: block; }
 
   <!-- SUNSET side -->
   <div class="split-label split-label-left" id="label-sunset">
-    <span class="label-series">Sunsets Series</span>
+    <span class="label-series">Daylight Warmth</span>
     <span class="label-title sunset-title">SUNSETS</span>
     <span class="label-sub">house &middot; funky &middot; golden</span>
     <span class="label-enter">Enter &rarr;</span>
@@ -868,7 +1032,7 @@ body.has-cursor #cursor { display: block; }
 
   <!-- DARK side -->
   <div class="split-label split-label-right" id="label-dark">
-    <span class="label-series">After Dark Series</span>
+    <span class="label-series">Nightfall Intensity</span>
     <span class="label-title dark-title">AFTER DARK</span>
     <span class="label-sub">techno &middot; raw &middot; midnight</span>
     <span class="label-enter">&larr; Enter</span>
@@ -892,8 +1056,8 @@ body.has-cursor #cursor { display: block; }
     <span class="topbar-name">Disar Marxin</span>
     <div class="topbar-nav">
       <button data-drawer="booking">Booking</button>
-      <button data-drawer="press">Press</button>
-      <button data-drawer="privacy">Privacy</button>
+<!--      <button data-drawer="press">Press</button>
+-->      <button data-drawer="privacy">Privacy</button>
       <button data-drawer="thanks">Thanks</button>
     </div>
     <div class="topbar-right">
@@ -905,7 +1069,7 @@ body.has-cursor #cursor { display: block; }
         <a href="https://www.mixcloud.com/DisarMarxin/" target="_blank"><svg class="ico" viewBox="0 0 24 24"><path d="M20.396 8.515c-.676 0-1.307.222-1.818.596C17.936 6.865 15.89 5.5 13.5 5.5c-2.01 0-3.815.973-4.94 2.474A3.377 3.377 0 0 0 6.75 7.25C4.955 7.25 3.5 8.705 3.5 10.5c0 .11.008.217.02.324A2.751 2.751 0 0 0 1.25 13.5c0 1.52 1.23 2.75 2.75 2.75h16.396C22.425 16.25 24 14.675 24 12.75c0-1.925-1.575-3.5-3.5-3.5-.034 0-.068.001-.102.002A3.487 3.487 0 0 0 20.396 8.515z"/></svg></a>
         <a href="https://soundcloud.com/disarmarxin" target="_blank"><svg class="ico" viewBox="0 0 24 24"><path d="M0 13.915c0 1.476 1.197 2.67 2.674 2.67.42 0 .812-.1 1.16-.272v.001l.012-.006c.145-.07.25-.213.25-.38 0-.234-.19-.424-.424-.424a.424.424 0 0 0-.224.064 1.826 1.826 0 0 1-.774.17c-1.008 0-1.826-.817-1.826-1.823 0-1.007.818-1.824 1.826-1.824.31 0 .599.077.853.213a.432.432 0 0 0 .198.048c.234 0 .424-.19.424-.424 0-.165-.095-.307-.234-.38a2.66 2.66 0 0 0-1.24-.305C1.197 11.243 0 12.439 0 13.915zm4.893 2.388a.424.424 0 0 0 .424.425h.001a.424.424 0 0 0 .424-.425V11.67a.424.424 0 0 0-.424-.424.424.424 0 0 0-.425.424v4.633zm1.63.14c0 .234.19.423.424.423a.424.424 0 0 0 .424-.424v-5.552a.424.424 0 0 0-.424-.424.424.424 0 0 0-.424.424v5.553zm1.631-.14a.424.424 0 0 0 .424.425.424.424 0 0 0 .424-.425V10.98a.424.424 0 0 0-.424-.423.424.424 0 0 0-.424.423v5.323zm1.626.154c0 .234.19.424.424.424a.424.424 0 0 0 .423-.424v-5.15a.424.424 0 0 0-.423-.424.424.424 0 0 0-.424.424v5.15zm1.626-.012c0 .234.19.424.424.424a.424.424 0 0 0 .424-.424v-4.9a.424.424 0 0 0-.424-.424.424.424 0 0 0-.424.424v4.9zm2.03.012c0 .234.19.424.424.424a.424.424 0 0 0 .424-.424v-4.643c-.273-.043-.552-.067-.836-.067-.004 0-.008 0-.012.001v4.709zm1.668 0c0 .234.19.424.424.424a.424.424 0 0 0 .424-.424v-4.47a4.115 4.115 0 0 0-.848-.09v4.56zm1.659.001c0 .234.19.424.424.424a.424.424 0 0 0 .424-.424v-4.22c-.266-.082-.543-.136-.828-.157l-.02-.001v4.378zm2.903-2.165c0-2.14-1.735-3.875-3.875-3.875a3.87 3.87 0 0 0-.776.079c-.234.047-.39.274-.343.508l.001.006a.424.424 0 0 0 .495.337 3.03 3.03 0 0 1 .623-.082c1.672 0 3.027 1.355 3.027 3.027 0 1.671-1.355 3.027-3.027 3.027a3.027 3.027 0 0 1-3.027-3.027v-.035l-.002-.097a.424.424 0 0 0-.848.024v.108a3.875 3.875 0 0 0 3.877 3.875c2.14 0 3.875-1.735 3.875-3.875z"/></svg></a>
       </div>
-      <button class="topbar-back" data-goto="portal">Portal</button>
+      <button class="topbar-back" data-goto="portal">HOME</button>
     </div>
   </nav>
 
@@ -915,8 +1079,8 @@ body.has-cursor #cursor { display: block; }
     </video>
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <span class="hero-tag">Sunsets Series &nbsp;&middot;&nbsp; House Music</span>
-      <h1>SUNSETS<br><span>SERIES</span></h1>
+      <span class="hero-tag">Warm grooves & Golden hours</span>
+      <h1>SUNSETS<br><span>HOUSE</span></h1>
       <p class="hero-quote">House music was founded on the idea that the clubbers<br>are the stars, not the guy who fiddles with the records.</p>
     </div>
   </div>
@@ -932,6 +1096,7 @@ body.has-cursor #cursor { display: block; }
         <p>It's all about the vibe, not the genre.</p>
       </div>
     </div>
+    <!--
     <div class="sub-col">
       <span class="col-label">Latest Mixes</span>
       <div class="mixes">
@@ -943,13 +1108,48 @@ body.has-cursor #cursor { display: block; }
         <iframe src="https://player-widget.mixcloud.com/widget/iframe/?hide_cover=1&mini=1&light=1&feed=%2FDisarMarxin%2Fsunsets-202501-ibiza-house%2F" allow="encrypted-media; fullscreen; autoplay; idle-detection; speaker-selection; web-share;"></iframe>
       </div>
     </div>
+    -->
+    
+<div class="sub-col">
+  <span class="col-label">Latest Mixes</span>
+  
+  <div class="mix-grid-container">
+    <a href="https://youtu.be/3crhVwKqLWI?si=ARXOhAEIygQ7E1w_" target="_blank" class="mix-featured">
+      <div class="mix-card large">
+        <img src="https://img.youtube.com/vi/3crhVwKqLWI/maxresdefault.jpg" alt="Latest Mix">
+        <div class="mix-overlay">
+          <span class="mix-title">Latest: Sunsets 2026.01</span>
+        </div>
+      </div>
+    </a>
+
+    <div class="mix-subgrid">
+      <a href="https://youtu.be/OgqBiHRUiGw?si=2mkvHQDbK9oy5Irl" target="_blank" class="mix-card small">
+        <img src="https://img.youtube.com/vi/OgqBiHRUiGw/hqdefault.jpg" alt="Sunsets 2025.06">
+      </a>
+      <a href="https://youtu.be/vpNIBckaf9o?si=SfuohlbWjC4xVgLn" target="_blank" class="mix-card small">
+        <img src="https://img.youtube.com/vi/vpNIBckaf9o/hqdefault.jpg" alt="Sunsets 2025.05">
+      </a>
+      <a href="https://youtu.be/QHNrPketTUw?si=a4V9u0YnklDwHcx8" target="_blank" class="mix-card small">
+        <img src="https://img.youtube.com/vi/QHNrPketTUw/hqdefault.jpg" alt="Sunsets 2025.04">
+      </a>
+    </div>
+
+    <a href="https://youtube.com/playlist?list=PLbel-BcTV-rIe-vSDzvnnM4rRNf1qmFYY&si=GcxZUMfZLa7tMGEJ" target="_blank" class="playlist-link">
+      <span>Discover the full playlist on YouTube</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 15.065V8.935L15 12L10 15.065ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"/></svg>
+    </a>
+  </div>
+</div>
+<!-- END OF LATEST MIXES -->
+    
   </div>
 
   <div class="sub-footer-bar">
     <div class="footer-links">
       <a href="#" data-drawer="booking">Booking</a>
-      <a href="#" data-drawer="press">Press</a>
-      <a href="#" data-drawer="privacy">Privacy</a>
+<!--      <a href="#" data-drawer="press">Press</a>
+-->      <a href="#" data-drawer="privacy">Privacy</a>
       <a href="#" data-drawer="thanks">Thanks</a>
     </div>
     <span class="footer-copy">&copy; 2003&ndash;2026 Didier Salembier &middot; BTW BE 0864.181.512 &middot; Veurne</span>
@@ -964,8 +1164,8 @@ body.has-cursor #cursor { display: block; }
     <span class="topbar-name">Disar Marxin</span>
     <div class="topbar-nav">
       <button data-drawer="booking">Booking</button>
-      <button data-drawer="press">Press</button>
-      <button data-drawer="privacy">Privacy</button>
+<!--      <button data-drawer="press">Press</button>
+-->      <button data-drawer="privacy">Privacy</button>
       <button data-drawer="thanks">Thanks</button>
     </div>
     <div class="topbar-right">
@@ -977,7 +1177,7 @@ body.has-cursor #cursor { display: block; }
         <a href="https://soundcloud.com/disarmarxin" target="_blank"><svg class="ico" viewBox="0 0 24 24"><path d="M0 13.915c0 1.476 1.197 2.67 2.674 2.67.42 0 .812-.1 1.16-.272v.001l.012-.006c.145-.07.25-.213.25-.38 0-.234-.19-.424-.424-.424a.424.424 0 0 0-.224.064 1.826 1.826 0 0 1-.774.17c-1.008 0-1.826-.817-1.826-1.823 0-1.007.818-1.824 1.826-1.824.31 0 .599.077.853.213a.432.432 0 0 0 .198.048c.234 0 .424-.19.424-.424 0-.165-.095-.307-.234-.38a2.66 2.66 0 0 0-1.24-.305C1.197 11.243 0 12.439 0 13.915zm4.893 2.388a.424.424 0 0 0 .424.425h.001a.424.424 0 0 0 .424-.425V11.67a.424.424 0 0 0-.424-.424.424.424 0 0 0-.425.424v4.633zm1.63.14c0 .234.19.423.424.423a.424.424 0 0 0 .424-.424v-5.552a.424.424 0 0 0-.424-.424.424.424 0 0 0-.424.424v5.553zm1.631-.14a.424.424 0 0 0 .424.425.424.424 0 0 0 .424-.425V10.98a.424.424 0 0 0-.424-.423.424.424 0 0 0-.424.423v5.323zm1.626.154c0 .234.19.424.424.424a.424.424 0 0 0 .423-.424v-5.15a.424.424 0 0 0-.423-.424.424.424 0 0 0-.424.424v5.15zm1.626-.012c0 .234.19.424.424.424a.424.424 0 0 0 .424-.424v-4.9a.424.424 0 0 0-.424-.424.424.424 0 0 0-.424.424v4.9zm2.03.012c0 .234.19.424.424.424a.424.424 0 0 0 .424-.424v-4.643c-.273-.043-.552-.067-.836-.067-.004 0-.008 0-.012.001v4.709zm1.668 0c0 .234.19.424.424.424a.424.424 0 0 0 .424-.424v-4.47a4.115 4.115 0 0 0-.848-.09v4.56zm1.659.001c0 .234.19.424.424.424a.424.424 0 0 0 .424-.424v-4.22c-.266-.082-.543-.136-.828-.157l-.02-.001v4.378zm2.903-2.165c0-2.14-1.735-3.875-3.875-3.875a3.87 3.87 0 0 0-.776.079c-.234.047-.39.274-.343.508l.001.006a.424.424 0 0 0 .495.337 3.03 3.03 0 0 1 .623-.082c1.672 0 3.027 1.355 3.027 3.027 0 1.671-1.355 3.027-3.027 3.027a3.027 3.027 0 0 1-3.027-3.027v-.035l-.002-.097a.424.424 0 0 0-.848.024v.108a3.875 3.875 0 0 0 3.877 3.875c2.14 0 3.875-1.735 3.875-3.875z"/></svg></a>
         <a href="https://www.facebook.com/DISARMARXIN" target="_blank"><svg class="ico" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg></a>
       </div>
-      <button class="topbar-back" data-goto="portal">Portal</button>
+      <button class="topbar-back" data-goto="portal">HOME</button>
     </div>
   </nav>
 
@@ -987,8 +1187,8 @@ body.has-cursor #cursor { display: block; }
     </video>
     <div class="hero-overlay"></div>
     <div class="hero-content">
-      <span class="hero-tag">After Dark Series &nbsp;&middot;&nbsp; Techno</span>
-      <h1>AFTER<br><span>DARK</span></h1>
+      <span class="hero-tag">Linear drive & Pure intensity</span>
+      <h1>AFTER DARK<br><span>TECHNO</span></h1>
       <p class="hero-quote">Techno is not about being seen,<br>It's about being lost in the sound.</p>
     </div>
   </div>
@@ -1004,6 +1204,7 @@ body.has-cursor #cursor { display: block; }
         <p>It's all about the vibe, not the genre.</p>
       </div>
     </div>
+    <!--
     <div class="sub-col">
       <span class="col-label">Latest Mixes</span>
       <div class="mixes">
@@ -1019,19 +1220,54 @@ body.has-cursor #cursor { display: block; }
       </div>
     </div>
   </div>
+  -->
+    
+  <div class="sub-col">
+  <span class="col-label">Latest Mixes</span>
+  
+  <div class="mix-grid-container">
+    <a href="https://youtu.be/MYxmO5MUgmY?si=RYOtOi0-kDYfTnwa" target="_blank" class="mix-featured">
+      <div class="mix-card large">
+        <img src="https://img.youtube.com/vi/MYxmO5MUgmY/maxresdefault.jpg" alt="Latest Mix">
+        <div class="mix-overlay">
+          <span class="mix-title">Latest: After Dark 2026.03</span>
+        </div>
+      </div>
+    </a>
 
+    <div class="mix-subgrid">
+      <a href="https://youtu.be/tV1v5Fw45aw?si=kklNvYW_BSCU0RVo" target="_blank" class="mix-card small">
+        <img src="https://img.youtube.com/vi/tV1v5Fw45aw/hqdefault.jpg" alt="After Dark 2026.02">
+      </a>
+      <a href="https://youtu.be/exRsmhZ5jLs?si=btxfv6cPJLCwf6VF" target="_blank" class="mix-card small">
+        <img src="https://img.youtube.com/vi/exRsmhZ5jLs/hqdefault.jpg" alt="After Dark 2026.01">
+      </a>
+      <a href="https://youtu.be/kYCc8V4H9Xg?si=oOiWXQ4tGrBc7tOy" target="_blank" class="mix-card small">
+        <img src="https://img.youtube.com/vi/kYCc8V4H9Xg/hqdefault.jpg" alt="After Dark 2025.09">
+      </a>
+    </div>
+
+    <a href="https://youtube.com/playlist?list=PLbel-BcTV-rI96PHmds6WSbwqw-O_WYSk&si=JUrnvenH0a8lZb0V" target="_blank" class="playlist-link">
+      <span>Discover the full playlist on YouTube</span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M10 15.065V8.935L15 12L10 15.065ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"/></svg>
+    </a>
+  </div>
+</div>
+<!-- END OF LATEST MIXES -->
+
+  
   <div class="sub-footer-bar">
     <div class="footer-links">
       <a href="#" data-drawer="booking">Booking</a>
-      <a href="#" data-drawer="press">Press</a>
-      <a href="#" data-drawer="privacy">Privacy</a>
+<!--      <a href="#" data-drawer="press">Press</a>
+-->      <a href="#" data-drawer="privacy">Privacy</a>
       <a href="#" data-drawer="thanks">Thanks</a>
     </div>
     <span class="footer-copy">&copy; 2003&ndash;2026 Didier Salembier &middot; BTW BE 0864.181.512 &middot; Veurne</span>
   </div>
 
 </div>
-
+</div>
 <!-- ═══════════════════ DRAWER ═══════════════════ -->
 <div id="drawer-backdrop"></div>
 <div id="drawer" class="drawer-portal">
@@ -1045,9 +1281,20 @@ body.has-cursor #cursor { display: block; }
     <!-- BOOKING -->
     <div class="drawer-panel" id="panel-booking">
       <h2>// Booking</h2>
-      <!-- <p>For bookings, collaborations and inquiries, fill in the form below or reach out directly at <a href="/cdn-cgi/l/email-protection#6e0c0101050700092e0a071d0f1c400c0b"><span class="__cf_email__" data-cfemail="ec8e83838785828bac88859f8d9ec28e89">[email&#160;protected]</span></a></p> -->
-       <p>For bookings, collaborations and inquiries, fill in the form below or reach out directly at <a href="booking@disar.be">booking@disar.be</a></p>
-      <div class="booking-grid">
+       <p>For bookings, collaborations and inquiries, reach out directly at <a href="booking@disar.be">booking@disar.be</a> or call me: +32 486 32 55 59</p>
+      <p><b><u>Technical & Setup</u></b><br>
+        As a performance-focused DJ, I provide the musical experience and artistry. Please note that I do not supply sound or lighting equipment. If your venue isn't fully equipped, I’m happy to advise or connect you with professional rental partners to ensure the technical setup matches the quality of the event.
+      </p>
+      <p><b><u>Riders</u></b><br>
+      My technical and hospitality requirements are straightforward and tailored to the specific event. To keep things transparent, you can find my basic rider below as a starting point.
+      </p>
+      <a href="rider.jpg" target="_blank" class="rider-thumbnail-link">
+        <img src="rider.jpg" alt="Basic technical rider" class="rider-thumb">
+        <div class="rider-overlay">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M10 15.065V8.935L15 12L10 15.065ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"/></svg>
+        </div>
+      </a>
+<!--      <div class="booking-grid">
         <div class="booking-field">
           <label>Name</label>
           <input type="text" placeholder="Your name">
@@ -1080,7 +1327,7 @@ body.has-cursor #cursor { display: block; }
       </div>
      
       <button class="booking-submit" id="booking-submit-btn">Send inquiry</button>
-      <p id="booking-feedback" style="display:none; margin-top:1rem; font-family:'Crimson Pro',serif; font-size:1rem; opacity:0.7;"></p>
+      <p id="booking-feedback" style="display:none; margin-top:1rem; font-family:'Crimson Pro',serif; font-size:1rem; opacity:0.7;"></p> -->
     </div>
 
     <!-- PRESS -->
@@ -1121,19 +1368,19 @@ body.has-cursor #cursor { display: block; }
       <h2>// Privacy Policy</h2>
       <p><b><u>1. Information I Collect</u></b></p>
 <p>If you reach out, I collect your name, email address and/or phone-number, and your message. I adore self-deleting messages so please contact me on Signal!</p>
-<p>I don't do website analytics so I don't use tools like Google Analytics to understand how you use the site. If you do find something hidden on my site, PLEASE tell me so I can delete it because I don't like those things either.</p>
+<p>I don't do website analytics so I don't use tools to understand how you use the site. If you do find something hidden on my site, PLEASE tell me so I can delete it because I don't like those things either.</p>
 <p>Of course I have to collect your name, VAT-number, address and so on to make a contract and to invoice you.</p>
 <p><b><u>2. How I Use Your Information</u></b></p>
 <p>I use it to reply to your messages and I use it to make contracts and invoices, and to pay invoices. That's about it!</p>
 <p>Invoices are made with Accountable. Check <a href="https://www.accountable.eu/en-be/privacy/" target="_blank">their privacy-policy</a>. From legal obligation, invoices are primarily sent through Peppol.</a></p>
+<p>My bank account is with Hello Bank.. Check <a href="https://www.hellobank.be/nl/wettelijke-info/privacy" target="_blank">their privacy-policy</a>.</p>
 <p>My mailserver is hosted at Hetzner Online GmbH in Germany. Check <a href="https://www.hetzner.com/legal/privacy-policy/" target="_blank">their privacy-policy</a>.</p>
-<p>All my documents (and your information) is stored on premise on a server that is NOT accessible from the internet.</p>
-<p>If I have to share documents with you, I also use an on premise server. Of course that one is accessibel from the internet.</p>
+<p>All my documents (and your information) is stored only on premise on a server that is NOT accessible from the internet.</p>
+<p>If I need to share documents with you, I also use a local server. It is, of course, accessible via the internet, but only through a personal link that expires once the file no longer needs to be shared.</p>
 <p>I don't use so called big data service providers, not for file storage, not for office-suites, not for anything like that. Nothing but good news, right?</p>
 <p>I never sell or share your personal information with third parties unless required by law.</p>
 <p><b><u>3. Cookies</u></b></p>
 <p>I do not use cookies, other than <a href="https://www.julesdestrooper.com/producten/natuurboterwafels-lukken" target="_blank">Lukken by Jules Destrooper</a>. If I added them (by accident) somewhere, please let me know so I can destroy them!</p>
-<p>I have embedded some widgets and those bastards are sometimes adding trackers and cookies... Please BLOCK THEM! I use Brave as a browser and added Privacy Badger and all cookies are gone now! My website doesn't need them and you can listen to my mixtapes without them!</p>
 <p><b><u>4. Your Rights</u></b></p>
 <p>You can:<br>
 - Ask to see what personal data I have about you<br>
