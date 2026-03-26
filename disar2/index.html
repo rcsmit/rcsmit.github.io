@@ -436,8 +436,10 @@ body.has-cursor #cursor { display: block; }
 
 .col-label {
   font-family: 'Unbounded', sans-serif;
-  font-weight: 200;
-  font-size: clamp(0.42rem, 0.8vw, 0.58rem);
+  font-weight: 200%;
+  font-size: clamp(0.75rem, 1.4vw, 1rem);  /* was clamp(0.42rem, 0.8vw, 0.58rem) */
+  
+  /* font-size: clamp(0.42rem, 0.8vw, 0.58rem); */
   letter-spacing: 0.5em;
   text-transform: uppercase;
   opacity: 0.35;
