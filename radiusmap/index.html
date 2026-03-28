@@ -34,8 +34,9 @@
   header {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 14px 24px;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
     z-index: 1000;
@@ -45,39 +46,76 @@
   .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: 0.05em; color: var(--accent); }
   .logo span { color: var(--text); }
 
-  .hint { font-size: 0.72rem; color: var(--muted); border-left: 1px solid var(--border); padding-left: 16px; }
-  .hint b { color: var(--accent2); font-weight: 400; }
+  /* Compact stats shown in header on mobile */
+  .header-stats {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+  }
+  .hstat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .hstat-label { font-size: 0.52rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+  .hstat-value { font-size: 0.82rem; font-weight: 700; color: var(--accent); font-family: 'Syne', sans-serif; transition: color 0.2s; white-space: nowrap; }
+  .hstat-value.active { color: var(--accent2); }
 
-  .stats-bar { margin-left: auto; display: flex; gap: 20px; align-items: center; }
-  .stat { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-  .stat-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
-  .stat-value { font-size: 0.95rem; font-weight: 700; color: var(--accent); font-family: 'Syne', sans-serif; min-width: 110px; text-align: right; transition: color 0.2s; }
-  .stat-value.active { color: var(--accent2); }
+  /* Hamburger button */
+  .hamburger {
+    background: transparent; border: 1px solid var(--border); color: var(--text);
+    width: 36px; height: 36px; border-radius: 2px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 5px; transition: border-color 0.2s; flex-shrink: 0;
+  }
+  .hamburger:hover { border-color: var(--accent2); }
+  .hamburger span {
+    display: block; width: 16px; height: 1.5px;
+    background: var(--text); border-radius: 2px;
+    transition: all 0.25s;
+  }
+  .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+  .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
 
-  .map-toggle { display: flex; gap: 4px; border-left: 1px solid var(--border); padding-left: 16px; }
+  /* Drawer */
+  .drawer {
+    position: absolute; top: 61px; right: 0; left: 0;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    z-index: 999; padding: 0 16px;
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+  .drawer.open { max-height: 300px; padding: 16px; }
 
+  .drawer-section { margin-bottom: 14px; }
+  .drawer-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+
+  .map-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
   .map-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    font-family: 'Space Mono', monospace;
-    font-size: 0.62rem;
-    padding: 4px 10px;
-    cursor: pointer;
-    letter-spacing: 0.04em;
-    transition: all 0.2s;
-    border-radius: 2px;
-    white-space: nowrap;
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    font-family: 'Space Mono', monospace; font-size: 0.68rem; padding: 7px 14px;
+    cursor: pointer; letter-spacing: 0.04em; transition: all 0.2s; border-radius: 2px; white-space: nowrap;
   }
   .map-btn:hover { border-color: var(--accent2); color: var(--accent2); }
   .map-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(71,255,232,0.08); }
 
+  .drawer-actions { display: flex; gap: 8px; align-items: center; }
+
   .reset-btn {
     background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-family: 'Space Mono', monospace; font-size: 0.68rem; padding: 5px 12px;
+    font-family: 'Space Mono', monospace; font-size: 0.68rem; padding: 7px 14px;
     cursor: pointer; letter-spacing: 0.05em; transition: all 0.2s; border-radius: 2px;
   }
   .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .set-radius-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    font-family: 'Space Mono', monospace; font-size: 0.68rem; padding: 7px 14px;
+    cursor: pointer; letter-spacing: 0.05em; transition: all 0.2s; border-radius: 2px;
+  }
+  .set-radius-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+
+  .hint { font-size: 0.62rem; color: var(--muted); line-height: 1.5; }
+  .hint b { color: var(--accent2); font-weight: 400; }
 
   #map { flex: 1; width: 100%; cursor: crosshair; }
 
@@ -161,29 +199,46 @@
 
 <header>
   <div class="logo">RADIUS<span>MAP</span></div>
-  <div class="hint"><b>Double-click</b> map to set center · <b>Drag</b> edge or <b>double-click</b> circle to set radius</div>
-  <div class="stats-bar">
-    <div class="stat">
-      <div class="stat-label">Radius</div>
-      <div class="stat-value" id="stat-radius">— km</div>
+  <div class="header-stats">
+    <div class="hstat">
+      <div class="hstat-label">Radius</div>
+      <div class="hstat-value" id="stat-radius">—</div>
     </div>
-    <div class="stat">
-      <div class="stat-label">Area</div>
-      <div class="stat-value" id="stat-area">— km²</div>
+    <div class="hstat">
+      <div class="hstat-label">Area</div>
+      <div class="hstat-value" id="stat-area">—</div>
     </div>
-    <div class="stat">
-      <div class="stat-label">Center</div>
-      <div class="stat-value" id="stat-center" style="font-size:0.75rem;color:var(--muted)">click map</div>
+    <div class="hstat">
+      <div class="hstat-label">Center</div>
+      <div class="hstat-value" id="stat-center" style="font-size:0.65rem;color:var(--muted)">tap map</div>
     </div>
+  </div>
+  <button class="hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+
+<div class="drawer" id="drawer">
+  <div class="drawer-section">
+    <div class="drawer-label">Map Style</div>
     <div class="map-toggle">
       <button class="map-btn" data-style="dark">◼ Dark</button>
       <button class="map-btn active" data-style="bright">◻ Bright</button>
       <button class="map-btn" data-style="ocean">〜 Ocean</button>
       <button class="map-btn" data-style="topo">⛰ Topo</button>
     </div>
-    <button class="reset-btn" id="reset-btn">✕ RESET</button>
   </div>
-</header>
+  <div class="drawer-section">
+    <div class="drawer-label">Actions</div>
+    <div class="drawer-actions">
+      <button class="set-radius-btn" id="set-radius-btn">⌀ Set Radius</button>
+      <button class="reset-btn" id="reset-btn">✕ Reset</button>
+    </div>
+  </div>
+  <div class="drawer-section">
+    <div class="hint"><b>Double-tap</b> map to set center · <b>Double-tap</b> circle edge to set radius</div>
+  </div>
+</div>
 
 <div id="map"></div>
 
@@ -367,19 +422,38 @@ map.on('mouseup', () => {
 
 // ── Double-click handled below in modal section ────────
 
+// ── Hamburger ──────────────────────────────────────────
+const hamburger = document.getElementById('hamburger');
+const drawer    = document.getElementById('drawer');
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  drawer.classList.toggle('open');
+});
+// Close drawer when clicking map
+document.getElementById('map').addEventListener('click', () => {
+  hamburger.classList.remove('open');
+  drawer.classList.remove('open');
+});
+
+// ── Set radius button in drawer ────────────────────────
+document.getElementById('set-radius-btn').addEventListener('click', () => {
+  hamburger.classList.remove('open');
+  drawer.classList.remove('open');
+  if (centerLatLng) openRadiusModal();
+});
+
 // ── Map style toggle ───────────────────────────────────
 document.querySelectorAll('.map-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     currentStyle = btn.dataset.style;
-
     map.removeLayer(tileLayer);
     tileLayer = L.tileLayer(TILES[currentStyle].url, TILES[currentStyle].opts).addTo(map);
-
     drawCircle();
     syncMarkerColor();
-
     document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
+    hamburger.classList.remove('open');
+    drawer.classList.remove('open');
   });
 });
 
@@ -443,10 +517,10 @@ map.on('dblclick', e => {
   }
 });
 
-// Also: double-click on the radius stat in the header opens modal
+// Tap/click radius value in header → open modal
 document.getElementById('stat-radius').style.cursor = 'pointer';
-document.getElementById('stat-radius').title = 'Double-click to set radius';
-document.getElementById('stat-radius').addEventListener('dblclick', () => {
+document.getElementById('stat-radius').title = 'Tap to set radius';
+document.getElementById('stat-radius').addEventListener('click', () => {
   if (centerLatLng) openRadiusModal();
 });
 </script>
