@@ -112,13 +112,56 @@
   .ic-label { color: var(--muted); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; }
   .ic-val { color: var(--accent); font-size: 1rem; font-family: 'Syne', sans-serif; font-weight: 700; }
   .ic-val.blue { color: var(--accent2); }
+
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55); z-index: 2000;
+    align-items: center; justify-content: center;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 28px 32px; border-radius: 4px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+    display: flex; flex-direction: column; gap: 16px; min-width: 280px;
+  }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--accent); letter-spacing: 0.05em; }
+  .modal-row { display: flex; gap: 8px; align-items: center; }
+  .modal-input {
+    flex: 1; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-family: 'Space Mono', monospace; font-size: 1.1rem;
+    padding: 8px 12px; border-radius: 2px; outline: none; transition: border-color 0.2s;
+    -moz-appearance: textfield;
+  }
+  .modal-input::-webkit-outer-spin-button,
+  .modal-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .modal-input:focus { border-color: var(--accent2); }
+  .modal-unit {
+    background: var(--bg); border: 1px solid var(--border); color: var(--muted);
+    font-family: 'Space Mono', monospace; font-size: 0.75rem; padding: 8px 10px;
+    border-radius: 2px; cursor: pointer; transition: all 0.2s; min-width: 44px; text-align: center;
+  }
+  .modal-unit.active { border-color: var(--accent2); color: var(--accent2); background: rgba(71,255,232,0.08); }
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  .modal-cancel {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    font-family: 'Space Mono', monospace; font-size: 0.7rem; padding: 7px 16px;
+    cursor: pointer; border-radius: 2px; transition: all 0.2s;
+  }
+  .modal-cancel:hover { border-color: var(--muted); color: var(--text); }
+  .modal-ok {
+    background: var(--accent); border: none; color: #0d0f14;
+    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem;
+    padding: 7px 20px; cursor: pointer; border-radius: 2px; transition: opacity 0.2s;
+  }
+  .modal-ok:hover { opacity: 0.85; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">RADIUS<span>MAP</span></div>
-  <div class="hint"><b>Double-click</b> to set center · <b>Drag</b> circle edge to resize</div>
+  <div class="hint"><b>Double-click</b> map to set center · <b>Drag</b> edge or <b>double-click</b> circle to set radius</div>
   <div class="stats-bar">
     <div class="stat">
       <div class="stat-label">Radius</div>
@@ -149,6 +192,22 @@
   <div class="ic-item"><div class="ic-label">Diameter</div><div class="ic-val blue" id="ic-diam">—</div></div>
   <div class="ic-item"><div class="ic-label">Circumference</div><div class="ic-val" id="ic-circ">—</div></div>
   <div class="ic-item"><div class="ic-label">Area</div><div class="ic-val blue" id="ic-area">—</div></div>
+</div>
+
+<div class="modal-backdrop" id="modal-backdrop">
+  <div class="modal">
+    <div class="modal-title">SET RADIUS</div>
+    <div class="modal-row">
+      <input class="modal-input" id="modal-input" type="number" min="0" step="any" placeholder="500">
+      <button class="modal-unit active" data-unit="km">km</button>
+      <button class="modal-unit" data-unit="mi">mi</button>
+      <button class="modal-unit" data-unit="m">m</button>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" id="modal-cancel">CANCEL</button>
+      <button class="modal-ok" id="modal-ok">APPLY</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -306,8 +365,7 @@ map.on('mouseup', () => {
   if (edgeDragActive) { edgeDragActive = false; map.dragging.enable(); map.getContainer().style.cursor = 'crosshair'; }
 });
 
-// ── Double-click → set center ──────────────────────────
-map.on('dblclick', e => { if (!edgeDragActive) placeCenter(e.latlng); });
+// ── Double-click handled below in modal section ────────
 
 // ── Map style toggle ───────────────────────────────────
 document.querySelectorAll('.map-btn').forEach(btn => {
@@ -334,6 +392,62 @@ document.getElementById('reset-btn').addEventListener('click', () => {
   elArea.textContent   = '— km²';
   elCenter.textContent = 'click map';
   infoCard.classList.remove('visible');
+});
+
+// ── Radius modal ───────────────────────────────────────
+const backdrop   = document.getElementById('modal-backdrop');
+const modalInput = document.getElementById('modal-input');
+let modalUnit    = 'km';
+
+document.querySelectorAll('.modal-unit').forEach(btn => {
+  btn.addEventListener('click', () => {
+    modalUnit = btn.dataset.unit;
+    document.querySelectorAll('.modal-unit').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  });
+});
+
+function openRadiusModal() {
+  // Pre-fill with current radius in km
+  modalInput.value = (radiusM / 1000).toFixed(1);
+  modalUnit = 'km';
+  document.querySelectorAll('.modal-unit').forEach(b => b.classList.toggle('active', b.dataset.unit === 'km'));
+  backdrop.classList.add('open');
+  setTimeout(() => { modalInput.focus(); modalInput.select(); }, 50);
+}
+
+function applyRadius() {
+  const val = parseFloat(modalInput.value);
+  if (!isNaN(val) && val > 0) {
+    const conversions = { km: 1000, mi: 1609.344, m: 1 };
+    radiusM = val * conversions[modalUnit];
+    drawCircle();
+    updateStats();
+  }
+  backdrop.classList.remove('open');
+}
+
+document.getElementById('modal-ok').addEventListener('click', applyRadius);
+document.getElementById('modal-cancel').addEventListener('click', () => backdrop.classList.remove('open'));
+backdrop.addEventListener('click', e => { if (e.target === backdrop) backdrop.classList.remove('open'); });
+modalInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyRadius(); if (e.key === 'Escape') backdrop.classList.remove('open'); });
+
+// ── Double-click on circle edge → open modal ───────────
+map.on('dblclick', e => {
+  if (edgeDragActive) return;
+  // If near circle edge, open modal; otherwise place center
+  if (centerLatLng && distToEdge(e.latlng) < radiusM * 0.12 + 20000) {
+    openRadiusModal();
+  } else {
+    placeCenter(e.latlng);
+  }
+});
+
+// Also: double-click on the radius stat in the header opens modal
+document.getElementById('stat-radius').style.cursor = 'pointer';
+document.getElementById('stat-radius').title = 'Double-click to set radius';
+document.getElementById('stat-radius').addEventListener('dblclick', () => {
+  if (centerLatLng) openRadiusModal();
 });
 </script>
 </body>
