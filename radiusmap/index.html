@@ -2,271 +2,315 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Radius Explorer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>RadiusMap</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap');
 
-  :root {
-    --bg: #0d0f14;
-    --surface: #161a24;
-    --border: #2a2f3d;
-    --accent: #e8ff47;
-    --accent2: #47ffe8;
-    --text: #f0f0f0;
-    --muted: #6b7280;
-  }
+:root {
+  --bg: #0d0f14;
+  --surface: #161a24;
+  --border: #2a2f3d;
+  --accent: #e8ff47;
+  --accent2: #47ffe8;
+  --text: #f0f0f0;
+  --muted: #6b7280;
+}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
 
-  body {
-    font-family: 'Space Mono', monospace;
-    background: var(--bg);
-    color: var(--text);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+body {
+  font-family: 'Space Mono', monospace;
+  background: var(--bg);
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
 
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 16px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    z-index: 1000;
-    flex-shrink: 0;
-  }
+/* ── Header: logo + hamburger only ── */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 1000;
+  flex-shrink: 0;
+}
 
-  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; letter-spacing: 0.05em; color: var(--accent); }
-  .logo span { color: var(--text); }
+.logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+}
+.logo span { color: var(--text); }
 
-  /* Compact stats shown in header on mobile */
-  .header-stats {
-    display: flex;
-    gap: 14px;
-    align-items: center;
-    flex: 1;
-    justify-content: center;
-  }
-  .hstat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
-  .hstat-label { font-size: 0.52rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-  .hstat-value { font-size: 0.82rem; font-weight: 700; color: var(--accent); font-family: 'Syne', sans-serif; transition: color 0.2s; white-space: nowrap; }
-  .hstat-value.active { color: var(--accent2); }
+.hamburger {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 38px; height: 38px;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+}
+.hamburger:hover, .hamburger.open { border-color: var(--accent2); }
+.hamburger span {
+  display: block; width: 18px; height: 2px;
+  background: var(--text); border-radius: 2px;
+  transition: all 0.25s ease;
+  transform-origin: center;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
-  /* Hamburger button */
-  .hamburger {
-    background: transparent; border: 1px solid var(--border); color: var(--text);
-    width: 36px; height: 36px; border-radius: 2px; cursor: pointer;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 5px; transition: border-color 0.2s; flex-shrink: 0;
-  }
-  .hamburger:hover { border-color: var(--accent2); }
-  .hamburger span {
-    display: block; width: 16px; height: 1.5px;
-    background: var(--text); border-radius: 2px;
-    transition: all 0.25s;
-  }
-  .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
-  .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-  .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+/* ── Drawer ── */
+.drawer {
+  position: absolute;
+  top: 59px; left: 0; right: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  z-index: 999;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.32s ease;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.drawer.open { max-height: 400px; }
 
-  /* Drawer */
-  .drawer {
-    position: absolute; top: 61px; right: 0; left: 0;
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    z-index: 999; padding: 0 16px;
-    max-height: 0; overflow: hidden;
-    transition: max-height 0.3s ease, padding 0.3s ease;
-  }
-  .drawer.open { max-height: 300px; padding: 16px; }
+.drawer-inner { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
 
-  .drawer-section { margin-bottom: 14px; }
-  .drawer-label { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+.drawer-section {}
+.drawer-label {
+  font-size: 0.58rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.12em;
+  margin-bottom: 8px;
+}
 
-  .map-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
-  .map-btn {
-    background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-family: 'Space Mono', monospace; font-size: 0.68rem; padding: 7px 14px;
-    cursor: pointer; letter-spacing: 0.04em; transition: all 0.2s; border-radius: 2px; white-space: nowrap;
-  }
-  .map-btn:hover { border-color: var(--accent2); color: var(--accent2); }
-  .map-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(71,255,232,0.08); }
+.map-toggle { display: flex; gap: 6px; flex-wrap: wrap; }
+.map-btn {
+  background: transparent; border: 1px solid var(--border); color: var(--muted);
+  font-family: 'Space Mono', monospace; font-size: 0.7rem;
+  padding: 8px 14px; cursor: pointer; border-radius: 3px;
+  transition: all 0.2s; white-space: nowrap;
+}
+.map-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.map-btn.active { border-color: var(--accent2); color: var(--accent2); background: rgba(71,255,232,0.1); }
 
-  .drawer-actions { display: flex; gap: 8px; align-items: center; }
+.action-row { display: flex; gap: 8px; }
+.action-btn {
+  flex: 1; background: transparent; border: 1px solid var(--border); color: var(--muted);
+  font-family: 'Space Mono', monospace; font-size: 0.7rem;
+  padding: 8px; cursor: pointer; border-radius: 3px;
+  transition: all 0.2s; text-align: center;
+}
+.action-btn:hover { border-color: var(--accent); color: var(--accent); }
+.action-btn.accent2:hover { border-color: var(--accent2); color: var(--accent2); }
 
-  .reset-btn {
-    background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-family: 'Space Mono', monospace; font-size: 0.68rem; padding: 7px 14px;
-    cursor: pointer; letter-spacing: 0.05em; transition: all 0.2s; border-radius: 2px;
-  }
-  .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+.drawer-hint { font-size: 0.62rem; color: var(--muted); line-height: 1.6; }
+.drawer-hint b { color: var(--accent2); font-weight: 400; }
 
-  .set-radius-btn {
-    background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-family: 'Space Mono', monospace; font-size: 0.68rem; padding: 7px 14px;
-    cursor: pointer; letter-spacing: 0.05em; transition: all 0.2s; border-radius: 2px;
-  }
-  .set-radius-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+/* ── Map ── */
+#map { flex: 1; width: 100%; }
 
-  .hint { font-size: 0.62rem; color: var(--muted); line-height: 1.5; }
-  .hint b { color: var(--accent2); font-weight: 400; }
+/* ── Stats overlay (bottom-left on map) ── */
+.stats-overlay {
+  position: absolute;
+  bottom: 24px; left: 12px;
+  background: rgba(22,26,36,0.92);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px 14px;
+  z-index: 800;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: auto;
+  backdrop-filter: blur(4px);
+  min-width: 140px;
+}
+.stats-overlay.visible { opacity: 1; }
 
-  #map { flex: 1; width: 100%; cursor: crosshair; }
+.srow { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+.slabel { font-size: 0.58rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.sval {
+  font-family: 'Syne', sans-serif; font-weight: 700;
+  font-size: 0.9rem; color: var(--accent);
+  cursor: pointer;
+}
+.sval:hover { color: var(--accent2); }
+.sval.dim { color: var(--muted); font-size: 0.72rem; font-family: 'Space Mono', monospace; font-weight: 400; }
+.sval-hint { font-size: 0.52rem; color: var(--muted); text-align: right; }
 
-  .leaflet-control-zoom a { background: var(--surface) !important; color: var(--text) !important; border-color: var(--border) !important; font-family: 'Space Mono', monospace !important; }
-  .leaflet-control-zoom a:hover { background: var(--border) !important; color: var(--accent) !important; }
-  .leaflet-control-attribution { background: rgba(13,15,20,0.7) !important; color: var(--muted) !important; font-size: 0.6rem !important; }
-  .leaflet-control-attribution a { color: var(--muted) !important; }
+/* ── Leaflet overrides ── */
+.leaflet-control-zoom a {
+  background: var(--surface) !important; color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+.leaflet-control-zoom a:hover { color: var(--accent) !important; }
+.leaflet-control-attribution {
+  background: rgba(13,15,20,0.7) !important;
+  color: var(--muted) !important; font-size: 0.55rem !important;
+}
+.leaflet-control-attribution a { color: var(--muted) !important; }
 
-  .center-marker {
-    width: 18px; height: 18px; border-radius: 50%; cursor: grab;
-    background: #e8ff47; border: 3px solid #0d0f14;
-    box-shadow: 0 0 0 2px #e8ff47, 0 0 20px rgba(232,255,71,0.5);
-    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
-  }
-  .center-marker.light {
-    background: #333333; border-color: #ffffff;
-    box-shadow: 0 0 0 2px #333333, 0 0 12px rgba(0,0,0,0.3);
-  }
+/* ── Marker ── */
+.center-marker {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #e8ff47; border: 3px solid #0d0f14;
+  box-shadow: 0 0 0 2px #e8ff47, 0 0 16px rgba(232,255,71,0.4);
+  cursor: grab;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.center-marker.light {
+  background: #333; border-color: #fff;
+  box-shadow: 0 0 0 2px #333, 0 0 12px rgba(0,0,0,0.3);
+}
 
-  @keyframes pulseRing { 0% { transform:scale(0.5); opacity:1; } 100% { transform:scale(3); opacity:0; } }
-  .pulse-ring { width:18px; height:18px; border-radius:50%; border:2px solid #e8ff47; animation:pulseRing 0.6s ease-out forwards; pointer-events:none; }
+@keyframes pulse { 0% { transform:scale(0.5); opacity:1; } 100% { transform:scale(3); opacity:0; } }
+.pulse-ring {
+  width:18px; height:18px; border-radius:50%;
+  border:2px solid #e8ff47;
+  animation: pulse 0.6s ease-out forwards;
+  pointer-events:none;
+}
 
-  .info-card {
-    position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
-    background: var(--surface); border: 1px solid var(--border);
-    padding: 14px 24px; display: flex; gap: 32px; align-items: center;
-    z-index: 800; opacity: 0; transition: opacity 0.3s; pointer-events: none;
-    border-radius: 2px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  }
-  .info-card.visible { opacity: 1; }
-  .ic-item { display: flex; flex-direction: column; gap: 3px; align-items: center; }
-  .ic-label { color: var(--muted); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; }
-  .ic-val { color: var(--accent); font-size: 1rem; font-family: 'Syne', sans-serif; font-weight: 700; }
-  .ic-val.blue { color: var(--accent2); }
-
-  .modal-backdrop {
-    display: none; position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55); z-index: 2000;
-    align-items: center; justify-content: center;
-  }
-  .modal-backdrop.open { display: flex; }
-  .modal {
-    background: var(--surface); border: 1px solid var(--border);
-    padding: 28px 32px; border-radius: 4px;
-    box-shadow: 0 16px 48px rgba(0,0,0,0.6);
-    display: flex; flex-direction: column; gap: 16px; min-width: 280px;
-  }
-  .modal-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: var(--accent); letter-spacing: 0.05em; }
-  .modal-row { display: flex; gap: 8px; align-items: center; }
-  .modal-input {
-    flex: 1; background: var(--bg); border: 1px solid var(--border);
-    color: var(--text); font-family: 'Space Mono', monospace; font-size: 1.1rem;
-    padding: 8px 12px; border-radius: 2px; outline: none; transition: border-color 0.2s;
-    -moz-appearance: textfield;
-  }
-  .modal-input::-webkit-outer-spin-button,
-  .modal-input::-webkit-inner-spin-button { -webkit-appearance: none; }
-  .modal-input:focus { border-color: var(--accent2); }
-  .modal-unit {
-    background: var(--bg); border: 1px solid var(--border); color: var(--muted);
-    font-family: 'Space Mono', monospace; font-size: 0.75rem; padding: 8px 10px;
-    border-radius: 2px; cursor: pointer; transition: all 0.2s; min-width: 44px; text-align: center;
-  }
-  .modal-unit.active { border-color: var(--accent2); color: var(--accent2); background: rgba(71,255,232,0.08); }
-  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
-  .modal-cancel {
-    background: transparent; border: 1px solid var(--border); color: var(--muted);
-    font-family: 'Space Mono', monospace; font-size: 0.7rem; padding: 7px 16px;
-    cursor: pointer; border-radius: 2px; transition: all 0.2s;
-  }
-  .modal-cancel:hover { border-color: var(--muted); color: var(--text); }
-  .modal-ok {
-    background: var(--accent); border: none; color: #0d0f14;
-    font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem;
-    padding: 7px 20px; cursor: pointer; border-radius: 2px; transition: opacity 0.2s;
-  }
-  .modal-ok:hover { opacity: 0.85; }
+/* ── Modal ── */
+.modal-backdrop {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.6); z-index:3000;
+  align-items:center; justify-content:center;
+  padding: 20px;
+}
+.modal-backdrop.open { display:flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  display: flex; flex-direction: column; gap: 16px;
+  width: 100%; max-width: 320px;
+}
+.modal-title { font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; color:var(--accent); }
+.modal-row { display:flex; gap:8px; align-items:stretch; }
+.modal-input {
+  flex:1; background:var(--bg); border:1px solid var(--border);
+  color:var(--text); font-family:'Space Mono',monospace; font-size:1.2rem;
+  padding:10px 12px; border-radius:3px; outline:none;
+  -moz-appearance:textfield; transition: border-color 0.2s;
+}
+.modal-input::-webkit-outer-spin-button,
+.modal-input::-webkit-inner-spin-button { -webkit-appearance:none; }
+.modal-input:focus { border-color: var(--accent2); }
+.modal-units { display:flex; gap:4px; }
+.modal-unit {
+  background:var(--bg); border:1px solid var(--border); color:var(--muted);
+  font-family:'Space Mono',monospace; font-size:0.72rem;
+  padding:0 10px; border-radius:3px; cursor:pointer; transition:all 0.2s;
+}
+.modal-unit.active { border-color:var(--accent2); color:var(--accent2); background:rgba(71,255,232,0.1); }
+.modal-btns { display:flex; gap:8px; }
+.modal-cancel {
+  flex:1; background:transparent; border:1px solid var(--border); color:var(--muted);
+  font-family:'Space Mono',monospace; font-size:0.72rem;
+  padding:10px; cursor:pointer; border-radius:3px; transition:all 0.2s;
+}
+.modal-cancel:hover { color:var(--text); border-color:var(--muted); }
+.modal-ok {
+  flex:2; background:var(--accent); border:none; color:#0d0f14;
+  font-family:'Syne',sans-serif; font-weight:700; font-size:0.82rem;
+  padding:10px; cursor:pointer; border-radius:3px; transition:opacity 0.2s;
+}
+.modal-ok:hover { opacity:0.85; }
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">RADIUS<span>MAP</span></div>
-  <div class="header-stats">
-    <div class="hstat">
-      <div class="hstat-label">Radius</div>
-      <div class="hstat-value" id="stat-radius">—</div>
-    </div>
-    <div class="hstat">
-      <div class="hstat-label">Area</div>
-      <div class="hstat-value" id="stat-area">—</div>
-    </div>
-    <div class="hstat">
-      <div class="hstat-label">Center</div>
-      <div class="hstat-value" id="stat-center" style="font-size:0.65rem;color:var(--muted)">tap map</div>
-    </div>
-  </div>
   <button class="hamburger" id="hamburger" aria-label="Menu">
     <span></span><span></span><span></span>
   </button>
 </header>
 
 <div class="drawer" id="drawer">
-  <div class="drawer-section">
-    <div class="drawer-label">Map Style</div>
-    <div class="map-toggle">
-      <button class="map-btn" data-style="dark">◼ Dark</button>
-      <button class="map-btn active" data-style="bright">◻ Bright</button>
-      <button class="map-btn" data-style="ocean">〜 Ocean</button>
-      <button class="map-btn" data-style="topo">⛰ Topo</button>
+  <div class="drawer-inner">
+    <div class="drawer-section">
+      <div class="drawer-label">Map Style</div>
+      <div class="map-toggle">
+        <button class="map-btn" data-style="dark">◼ Dark</button>
+        <button class="map-btn active" data-style="bright">◻ Bright</button>
+        <button class="map-btn" data-style="ocean">〜 Ocean</button>
+        <button class="map-btn" data-style="topo">⛰ Topo</button>
+      </div>
     </div>
-  </div>
-  <div class="drawer-section">
-    <div class="drawer-label">Actions</div>
-    <div class="drawer-actions">
-      <button class="set-radius-btn" id="set-radius-btn">⌀ Set Radius</button>
-      <button class="reset-btn" id="reset-btn">✕ Reset</button>
+    <div class="drawer-section">
+      <div class="drawer-label">Actions</div>
+      <div class="action-row">
+        <button class="action-btn accent2" id="set-radius-btn">⌀ Set Radius</button>
+        <button class="action-btn" id="reset-btn">✕ Reset</button>
+      </div>
     </div>
-  </div>
-  <div class="drawer-section">
-    <div class="hint"><b>Double-tap</b> map to set center · <b>Double-tap</b> circle edge to set radius</div>
+    <div class="drawer-hint">
+      <b>Double-tap</b> map to place center &middot; <b>Double-tap</b> circle edge to type radius &middot; <b>Tap radius</b> in panel to edit
+    </div>
   </div>
 </div>
 
 <div id="map"></div>
 
-<div class="info-card" id="info-card">
-  <div class="ic-item"><div class="ic-label">Radius</div><div class="ic-val" id="ic-radius">—</div></div>
-  <div class="ic-item"><div class="ic-label">Diameter</div><div class="ic-val blue" id="ic-diam">—</div></div>
-  <div class="ic-item"><div class="ic-label">Circumference</div><div class="ic-val" id="ic-circ">—</div></div>
-  <div class="ic-item"><div class="ic-label">Area</div><div class="ic-val blue" id="ic-area">—</div></div>
+<!-- Stats overlay -->
+<div class="stats-overlay" id="stats-overlay">
+  <div class="srow">
+    <div class="slabel">Radius</div>
+    <div class="sval" id="stat-radius" title="Tap to edit">—</div>
+  </div>
+  <div class="srow">
+    <div class="slabel">Area</div>
+    <div class="sval" id="stat-area">—</div>
+  </div>
+  <div class="srow">
+    <div class="slabel">Center</div>
+    <div class="sval dim" id="stat-center">—</div>
+  </div>
+  <div class="sval-hint">tap radius to edit</div>
 </div>
 
+<!-- Radius modal -->
 <div class="modal-backdrop" id="modal-backdrop">
   <div class="modal">
     <div class="modal-title">SET RADIUS</div>
     <div class="modal-row">
-      <input class="modal-input" id="modal-input" type="number" min="0" step="any" placeholder="500">
+      <input class="modal-input" id="modal-input" type="number" min="0" step="any" inputmode="decimal">
+    </div>
+    <div class="modal-units">
       <button class="modal-unit active" data-unit="km">km</button>
       <button class="modal-unit" data-unit="mi">mi</button>
       <button class="modal-unit" data-unit="m">m</button>
     </div>
     <div class="modal-btns">
-      <button class="modal-cancel" id="modal-cancel">CANCEL</button>
-      <button class="modal-ok" id="modal-ok">APPLY</button>
+      <button class="modal-cancel" id="modal-cancel">Cancel</button>
+      <button class="modal-ok" id="modal-ok">Apply</button>
     </div>
   </div>
 </div>
 
 <script>
-// ── State ──────────────────────────────────────────────
+// ── State ──────────────────────────────────
 let currentStyle   = 'bright';
 let centerLatLng   = null;
 let radiusM        = 500000;
@@ -274,254 +318,261 @@ let centerMarker   = null;
 let circleLayers   = [];
 let edgeDragActive = false;
 
-// ── Map ────────────────────────────────────────────────
-const map = L.map('map', { center: [48.5, 10], zoom: 4, zoomControl: true });
+// ── Map ────────────────────────────────────
+const map = L.map('map', { center:[48.5,10], zoom:4, zoomControl:true });
 map.doubleClickZoom.disable();
 
 const TILES = {
-  dark:   { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',   opts: { attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 19 } },
-  bright: { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',  opts: { attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 19 } },
-  ocean:  { url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', opts: { attribution: '© Esri, GEBCO, NOAA', maxZoom: 16 } },
-  topo:   { url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', opts: { attribution: '© OpenStreetMap © OpenTopoMap', subdomains: 'abc', maxZoom: 17 } },
+  dark:   { url:'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',   opts:{ attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19 } },
+  bright: { url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',  opts:{ attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:19 } },
+  ocean:  { url:'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', opts:{ attribution:'© Esri', maxZoom:16 } },
+  topo:   { url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', opts:{ attribution:'© OpenStreetMap © OpenTopoMap', subdomains:'abc', maxZoom:17 } },
 };
-
 let tileLayer = L.tileLayer(TILES.bright.url, TILES.bright.opts).addTo(map);
 
-// ── Helpers ────────────────────────────────────────────
-const isLight = () => currentStyle === 'bright' || currentStyle === 'ocean';
+// ── Helpers ────────────────────────────────
+const isLight  = () => currentStyle === 'bright' || currentStyle === 'ocean';
 const drawCol  = () => isLight() ? '#333333' : '#e8ff47';
-
-const elRadius = document.getElementById('stat-radius');
-const elArea   = document.getElementById('stat-area');
-const elCenter = document.getElementById('stat-center');
-const infoCard = document.getElementById('info-card');
-
-function fmtR(m) { return m >= 1000 ? (m/1000).toFixed(1)+' km' : Math.round(m)+' m'; }
-function fmtA(m) {
+const fmtR     = m => m >= 1000 ? (m/1000).toFixed(1)+' km' : Math.round(m)+' m';
+const fmtA     = m => {
   const k = Math.PI*m*m/1e6;
-  if (k >= 1e6) return (k/1e6).toFixed(2)+' M km²';
-  if (k >= 1e3) return (k/1e3).toFixed(1)+' k km²';
+  if (k>=1e6) return (k/1e6).toFixed(2)+' M km²';
+  if (k>=1e3) return (k/1e3).toFixed(1)+' k km²';
   return k.toFixed(1)+' km²';
-}
+};
+
+// ── Stats ──────────────────────────────────
+const overlay   = document.getElementById('stats-overlay');
+const elRadius  = document.getElementById('stat-radius');
+const elArea    = document.getElementById('stat-area');
+const elCenter  = document.getElementById('stat-center');
 
 function updateStats() {
   if (!centerLatLng) return;
   elRadius.textContent = fmtR(radiusM);
   elArea.textContent   = fmtA(radiusM);
-  elCenter.textContent = centerLatLng.lat.toFixed(4)+', '+centerLatLng.lng.toFixed(4);
-  document.getElementById('ic-radius').textContent = fmtR(radiusM);
-  document.getElementById('ic-diam').textContent   = fmtR(radiusM*2);
-  document.getElementById('ic-circ').textContent   = fmtR(2*Math.PI*radiusM);
-  document.getElementById('ic-area').textContent   = fmtA(radiusM);
-  infoCard.classList.add('visible');
+  elCenter.textContent = centerLatLng.lat.toFixed(3)+'°, '+centerLatLng.lng.toFixed(3)+'°';
+  overlay.classList.add('visible');
 }
 
-// ── Geodesic circle ────────────────────────────────────
+// ── Geodesic circle ────────────────────────
 function geodesicSegments(center, r) {
-  const R = 6371008.8, steps = 360;
-  const lat1 = center.lat * Math.PI/180;
-  const lng1 = center.lng * Math.PI/180;
-  const d = r / R;
-  const pts = [];
-
-  for (let i = 0; i <= steps; i++) {
-    const b    = (i/steps) * 2 * Math.PI;
-    const lat2 = Math.asin(Math.sin(lat1)*Math.cos(d) + Math.cos(lat1)*Math.sin(d)*Math.cos(b));
-    const lng2 = (lng1 + Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(lat1), Math.cos(d)-Math.sin(lat1)*Math.sin(lat2))) * 180/Math.PI;
+  const R=6371008.8, steps=360;
+  const lat1=center.lat*Math.PI/180, lng1=center.lng*Math.PI/180, d=r/R;
+  const pts=[];
+  for (let i=0;i<=steps;i++) {
+    const b=(i/steps)*2*Math.PI;
+    const lat2=Math.asin(Math.sin(lat1)*Math.cos(d)+Math.cos(lat1)*Math.sin(d)*Math.cos(b));
+    const lng2=(lng1+Math.atan2(Math.sin(b)*Math.sin(d)*Math.cos(lat1),Math.cos(d)-Math.sin(lat1)*Math.sin(lat2)))*180/Math.PI;
     pts.push([lat2*180/Math.PI, lng2]);
   }
-
-  // Unwrap
-  for (let i = 1; i < pts.length; i++) {
-    let diff = pts[i][1] - pts[i-1][1];
-    while (diff >  180) { pts[i][1] -= 360; diff -= 360; }
-    while (diff < -180) { pts[i][1] += 360; diff += 360; }
+  for (let i=1;i<pts.length;i++) {
+    let d=pts[i][1]-pts[i-1][1];
+    while(d>180){pts[i][1]-=360;d-=360;}
+    while(d<-180){pts[i][1]+=360;d+=360;}
   }
-
-  // Split at antimeridian
-  const segs = [[]];
-  for (let i = 0; i < pts.length; i++) {
-    const norm = ((pts[i][1]+180)%360+360)%360 - 180;
-    if (i > 0) {
-      const prev = ((pts[i-1][1]+180)%360+360)%360 - 180;
-      if (Math.abs(norm - prev) > 180) segs.push([]);
-    }
-    segs[segs.length-1].push([pts[i][0], norm]);
+  const segs=[[]];
+  for (let i=0;i<pts.length;i++) {
+    const n=((pts[i][1]+180)%360+360)%360-180;
+    if(i>0){const p=((pts[i-1][1]+180)%360+360)%360-180; if(Math.abs(n-p)>180)segs.push([]);}
+    segs[segs.length-1].push([pts[i][0],n]);
   }
-  return segs.filter(s => s.length > 1);
+  return segs.filter(s=>s.length>1);
 }
 
 function drawCircle() {
-  circleLayers.forEach(l => map.removeLayer(l));
-  circleLayers = [];
+  circleLayers.forEach(l=>map.removeLayer(l)); circleLayers=[];
   if (!centerLatLng) return;
-
-  const col  = drawCol();
-  const segs = geodesicSegments(centerLatLng, radiusM);
-  const base = { color: col, weight: 2.5, opacity: 0.95, dashArray: '6 4', interactive: false };
-
-  if (segs.length === 1) {
-    circleLayers.push(L.polygon(segs[0], { ...base, fillColor: col, fillOpacity: 0.08 }).addTo(map));
+  const col=drawCol(), segs=geodesicSegments(centerLatLng,radiusM);
+  const base={color:col,weight:2.5,opacity:0.95,dashArray:'6 4',interactive:false};
+  if (segs.length===1) {
+    circleLayers.push(L.polygon(segs[0],{...base,fillColor:col,fillOpacity:0.08}).addTo(map));
   } else {
-    segs.forEach(seg => circleLayers.push(L.polyline(seg, base).addTo(map)));
+    segs.forEach(s=>circleLayers.push(L.polyline(s,base).addTo(map)));
   }
 }
 
-// ── Marker ─────────────────────────────────────────────
-const centerIcon = L.divIcon({ className:'', html:'<div class="center-marker"></div>', iconSize:[18,18], iconAnchor:[9,9] });
-const pulseIcon  = L.divIcon({ className:'', html:'<div class="pulse-ring"></div>',    iconSize:[18,18], iconAnchor:[9,9] });
+// ── Marker ─────────────────────────────────
+const centerIcon=L.divIcon({className:'',html:'<div class="center-marker"></div>',iconSize:[18,18],iconAnchor:[9,9]});
+const pulseIcon =L.divIcon({className:'',html:'<div class="pulse-ring"></div>',iconSize:[18,18],iconAnchor:[9,9]});
 
 function syncMarkerColor() {
-  document.querySelectorAll('.center-marker').forEach(el => el.classList.toggle('light', isLight()));
+  document.querySelectorAll('.center-marker').forEach(el=>el.classList.toggle('light',isLight()));
 }
 
 function placeCenter(latlng) {
-  centerLatLng = latlng;
+  centerLatLng=latlng;
   if (centerMarker) map.removeLayer(centerMarker);
-
-  const pulse = L.marker(latlng, { icon: pulseIcon, interactive: false }).addTo(map);
-  setTimeout(() => map.removeLayer(pulse), 700);
-
-  centerMarker = L.marker(latlng, { icon: centerIcon, draggable: true, zIndexOffset: 1000 }).addTo(map);
-  centerMarker.on('drag', e => { centerLatLng = e.target.getLatLng(); drawCircle(); updateStats(); });
-
-  drawCircle();
-  updateStats();
-  setTimeout(syncMarkerColor, 0);
+  const pulse=L.marker(latlng,{icon:pulseIcon,interactive:false}).addTo(map);
+  setTimeout(()=>map.removeLayer(pulse),700);
+  centerMarker=L.marker(latlng,{icon:centerIcon,draggable:true,zIndexOffset:1000}).addTo(map);
+  centerMarker.on('drag',e=>{centerLatLng=e.target.getLatLng();drawCircle();updateStats();});
+  drawCircle(); updateStats(); setTimeout(syncMarkerColor,0);
 }
 
-// ── Edge drag ──────────────────────────────────────────
+// ── Edge detection ─────────────────────────
 function distToEdge(ll) {
-  if (!centerLatLng || !circleLayers.length) return Infinity;
-  return Math.abs(map.distance(ll, centerLatLng) - radiusM);
+  if (!centerLatLng||!circleLayers.length) return Infinity;
+  return Math.abs(map.distance(ll,centerLatLng)-radiusM);
 }
+function nearEdge(ll) { return distToEdge(ll) < Math.max(radiusM*0.08, 20000); }
 
-map.on('mousedown', e => {
+// ── Mouse drag (desktop) ───────────────────
+map.on('mousedown', e=>{
   if (!centerLatLng) return;
-  if (distToEdge(e.latlng) < radiusM * 0.06 + 5000) {
-    edgeDragActive = true;
-    map.dragging.disable();
-    map.getContainer().style.cursor = 'ew-resize';
+  if (nearEdge(e.latlng)) {
+    edgeDragActive=true; map.dragging.disable();
+    map.getContainer().style.cursor='ew-resize';
     e.originalEvent.preventDefault();
   }
 });
-
-map.on('mousemove', e => {
+map.on('mousemove', e=>{
   if (!centerLatLng) return;
   if (!edgeDragActive) {
-    map.getContainer().style.cursor = distToEdge(e.latlng) < radiusM * 0.06 + 5000 ? 'ew-resize' : 'crosshair';
+    map.getContainer().style.cursor=nearEdge(e.latlng)?'ew-resize':'crosshair';
     return;
   }
-  radiusM = Math.max(500, map.distance(e.latlng, centerLatLng));
+  radiusM=Math.max(500,map.distance(e.latlng,centerLatLng));
   drawCircle(); updateStats();
 });
-
-map.on('mouseup', () => {
-  if (edgeDragActive) { edgeDragActive = false; map.dragging.enable(); map.getContainer().style.cursor = 'crosshair'; }
+map.on('mouseup', ()=>{
+  if (edgeDragActive){edgeDragActive=false;map.dragging.enable();map.getContainer().style.cursor='crosshair';}
 });
 
-// ── Double-click handled below in modal section ────────
+// ── Touch drag (mobile edge resize) ────────
+let touchEdgeDrag=false, lastTouchTime=0, lastTouchPos=null;
 
-// ── Hamburger ──────────────────────────────────────────
-const hamburger = document.getElementById('hamburger');
-const drawer    = document.getElementById('drawer');
-hamburger.addEventListener('click', () => {
-  hamburger.classList.toggle('open');
-  drawer.classList.toggle('open');
-});
-// Close drawer when clicking map
-document.getElementById('map').addEventListener('click', () => {
-  hamburger.classList.remove('open');
-  drawer.classList.remove('open');
-});
+map.on('touchstart', e=>{
+  const now=Date.now();
+  const t=e.originalEvent.touches[0];
+  const ll=map.containerPointToLatLng([t.clientX,t.clientY]);
 
-// ── Set radius button in drawer ────────────────────────
-document.getElementById('set-radius-btn').addEventListener('click', () => {
-  hamburger.classList.remove('open');
-  drawer.classList.remove('open');
-  if (centerLatLng) openRadiusModal();
-});
+  // Double-tap detection
+  if (now-lastTouchTime < 350 && lastTouchPos) {
+    const moved=map.distance(ll,lastTouchPos);
+    if (moved < 50000) {
+      e.originalEvent.preventDefault();
+      // near edge = open modal, otherwise place center
+      if (centerLatLng && nearEdge(ll)) {
+        openRadiusModal();
+      } else {
+        placeCenter(ll);
+      }
+      lastTouchTime=0; lastTouchPos=null;
+      return;
+    }
+  }
+  lastTouchTime=now; lastTouchPos=ll;
 
-// ── Map style toggle ───────────────────────────────────
-document.querySelectorAll('.map-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    currentStyle = btn.dataset.style;
-    map.removeLayer(tileLayer);
-    tileLayer = L.tileLayer(TILES[currentStyle].url, TILES[currentStyle].opts).addTo(map);
-    drawCircle();
-    syncMarkerColor();
-    document.querySelectorAll('.map-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    hamburger.classList.remove('open');
-    drawer.classList.remove('open');
-  });
-});
+  // Edge drag start
+  if (centerLatLng && nearEdge(ll) && e.originalEvent.touches.length===1) {
+    touchEdgeDrag=true; map.dragging.disable();
+    e.originalEvent.preventDefault();
+  }
+},{passive:false});
 
-// ── Reset ──────────────────────────────────────────────
-document.getElementById('reset-btn').addEventListener('click', () => {
-  if (centerMarker) { map.removeLayer(centerMarker); centerMarker = null; }
-  circleLayers.forEach(l => map.removeLayer(l)); circleLayers = [];
-  centerLatLng = null; radiusM = 500000;
-  elRadius.textContent = '— km';
-  elArea.textContent   = '— km²';
-  elCenter.textContent = 'click map';
-  infoCard.classList.remove('visible');
+map.on('touchmove', e=>{
+  if (!touchEdgeDrag||!centerLatLng) return;
+  e.originalEvent.preventDefault();
+  const t=e.originalEvent.touches[0];
+  const ll=map.containerPointToLatLng([t.clientX,t.clientY]);
+  radiusM=Math.max(500,map.distance(ll,centerLatLng));
+  drawCircle(); updateStats();
+},{passive:false});
+
+map.on('touchend', ()=>{
+  if (touchEdgeDrag){touchEdgeDrag=false;map.dragging.enable();}
 });
 
-// ── Radius modal ───────────────────────────────────────
-const backdrop   = document.getElementById('modal-backdrop');
-const modalInput = document.getElementById('modal-input');
-let modalUnit    = 'km';
+// ── Double-click (desktop) ─────────────────
+map.on('dblclick', e=>{
+  if (edgeDragActive) return;
+  if (centerLatLng && nearEdge(e.latlng)) openRadiusModal();
+  else placeCenter(e.latlng);
+});
 
-document.querySelectorAll('.modal-unit').forEach(btn => {
-  btn.addEventListener('click', () => {
-    modalUnit = btn.dataset.unit;
-    document.querySelectorAll('.modal-unit').forEach(b => b.classList.remove('active'));
+// ── Radius modal ───────────────────────────
+const backdrop  =document.getElementById('modal-backdrop');
+const modalInput=document.getElementById('modal-input');
+let   modalUnit ='km';
+
+document.querySelectorAll('.modal-unit').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    modalUnit=btn.dataset.unit;
+    document.querySelectorAll('.modal-unit').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
   });
 });
 
 function openRadiusModal() {
-  // Pre-fill with current radius in km
-  modalInput.value = (radiusM / 1000).toFixed(1);
-  modalUnit = 'km';
-  document.querySelectorAll('.modal-unit').forEach(b => b.classList.toggle('active', b.dataset.unit === 'km'));
+  modalInput.value=(radiusM/1000).toFixed(1);
+  modalUnit='km';
+  document.querySelectorAll('.modal-unit').forEach(b=>b.classList.toggle('active',b.dataset.unit==='km'));
   backdrop.classList.add('open');
-  setTimeout(() => { modalInput.focus(); modalInput.select(); }, 50);
+  setTimeout(()=>{modalInput.focus();modalInput.select();},80);
 }
 
 function applyRadius() {
-  const val = parseFloat(modalInput.value);
-  if (!isNaN(val) && val > 0) {
-    const conversions = { km: 1000, mi: 1609.344, m: 1 };
-    radiusM = val * conversions[modalUnit];
-    drawCircle();
-    updateStats();
+  const val=parseFloat(modalInput.value);
+  if (!isNaN(val)&&val>0) {
+    const conv={km:1000,mi:1609.344,m:1};
+    radiusM=val*conv[modalUnit];
+    drawCircle(); updateStats();
   }
   backdrop.classList.remove('open');
 }
 
-document.getElementById('modal-ok').addEventListener('click', applyRadius);
-document.getElementById('modal-cancel').addEventListener('click', () => backdrop.classList.remove('open'));
-backdrop.addEventListener('click', e => { if (e.target === backdrop) backdrop.classList.remove('open'); });
-modalInput.addEventListener('keydown', e => { if (e.key === 'Enter') applyRadius(); if (e.key === 'Escape') backdrop.classList.remove('open'); });
+document.getElementById('modal-ok').addEventListener('click',applyRadius);
+document.getElementById('modal-cancel').addEventListener('click',()=>backdrop.classList.remove('open'));
+backdrop.addEventListener('click',e=>{if(e.target===backdrop)backdrop.classList.remove('open');});
+modalInput.addEventListener('keydown',e=>{if(e.key==='Enter')applyRadius();if(e.key==='Escape')backdrop.classList.remove('open');});
 
-// ── Double-click on circle edge → open modal ───────────
-map.on('dblclick', e => {
-  if (edgeDragActive) return;
-  // If near circle edge, open modal; otherwise place center
-  if (centerLatLng && distToEdge(e.latlng) < radiusM * 0.12 + 20000) {
-    openRadiusModal();
-  } else {
-    placeCenter(e.latlng);
-  }
+// Tap radius value → open modal
+elRadius.addEventListener('click',()=>{if(centerLatLng)openRadiusModal();});
+
+// ── Hamburger ──────────────────────────────
+const hamburger=document.getElementById('hamburger');
+const drawer   =document.getElementById('drawer');
+
+function closeDrawer(){hamburger.classList.remove('open');drawer.classList.remove('open');}
+
+hamburger.addEventListener('click',e=>{
+  e.stopPropagation();
+  hamburger.classList.toggle('open');
+  drawer.classList.toggle('open');
 });
 
-// Tap/click radius value in header → open modal
-document.getElementById('stat-radius').style.cursor = 'pointer';
-document.getElementById('stat-radius').title = 'Tap to set radius';
-document.getElementById('stat-radius').addEventListener('click', () => {
+// Close on map interaction
+map.getContainer().addEventListener('click',closeDrawer);
+map.getContainer().addEventListener('touchstart',closeDrawer,{passive:true});
+
+// ── Map style toggle ───────────────────────
+document.querySelectorAll('.map-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    currentStyle=btn.dataset.style;
+    map.removeLayer(tileLayer);
+    tileLayer=L.tileLayer(TILES[currentStyle].url,TILES[currentStyle].opts).addTo(map);
+    drawCircle(); syncMarkerColor();
+    document.querySelectorAll('.map-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    closeDrawer();
+  });
+});
+
+// ── Set radius from drawer ─────────────────
+document.getElementById('set-radius-btn').addEventListener('click',()=>{
+  closeDrawer();
   if (centerLatLng) openRadiusModal();
+});
+
+// ── Reset ──────────────────────────────────
+document.getElementById('reset-btn').addEventListener('click',()=>{
+  if(centerMarker){map.removeLayer(centerMarker);centerMarker=null;}
+  circleLayers.forEach(l=>map.removeLayer(l));circleLayers=[];
+  centerLatLng=null;radiusM=500000;
+  elRadius.textContent='—';elArea.textContent='—';elCenter.textContent='—';
+  overlay.classList.remove('visible');
+  closeDrawer();
 });
 </script>
 </body>
