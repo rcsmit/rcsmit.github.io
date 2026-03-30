@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -468,7 +468,7 @@ main{flex:1; display:grid; grid-template-columns:1fr 260px; overflow:hidden;}
   <!-- Theme -->
   <div class="theme-row">
     <span class="theme-row-label">Light mode</span>
-    <button class="toggle-switch" id="theme-toggle" onclick="toggleTheme()">
+    <button class="toggle-switch on" id="theme-toggle" onclick="toggleTheme()">
       <div class="toggle-knob"></div>
     </button>
   </div>
@@ -526,7 +526,7 @@ const ALL_COUNTRIES = [
   [470,"Malta","europe"],[498,"Moldova","europe"],[492,"Monaco","europe"],
   [499,"Montenegro","europe"],[528,"Netherlands","europe"],[807,"North Macedonia","europe"],
   [578,"Norway","europe"],[616,"Poland","europe"],[620,"Portugal","europe"],
-  [642,"Romania","europe"],[674,"San Marino","europe"],
+  [642,"Romania","europe"],[643,"Russia","europe"],[674,"San Marino","europe"],
   [688,"Serbia","europe"],[703,"Slovakia","europe"],[705,"Slovenia","europe"],
   [724,"Spain","europe"],[752,"Sweden","europe"],[756,"Switzerland","europe"],
   [804,"Ukraine","europe"],[826,"United Kingdom","europe"],[336,"Vatican City","europe"],
@@ -572,13 +572,6 @@ const CONT_META={
   oceania: {name:"Oceania",    icon:"🌏",color:"#30a8b0"},
 };
 
-
-function getRegionIds(cont){
-  let ids = cont==='world' ? [...validOnMap] : [...(BY_CONT[cont]||[])];
-  if(cont==='europe') ids = ids.filter(id => id !== 643); // exclude Russia
-  return ids.filter(id => validOnMap.has(id));
-}
-
 const EASY_IDS={
   world:   [840,124,76,32,484,826,250,276,380,724,752,578,356,156,392,36,710,566,818,682,643,792,804,616,170],
   africa:  [818,566,710,404,231,800,288,686,508,729,180,450,504,434,466,788,716,562],
@@ -596,7 +589,7 @@ let answered=false, logArr=[];
 let svg, g, projection, pathGen, zoomBeh, cPaths;
 let validOnMap=new Set();
 let tooltipOn=false;   // default OFF
-let isDark=true;
+let isDark=false;
 
 // ── Menu ──────────────────────────────────────────────────
 function toggleMenu(){ document.getElementById('menu-drawer').classList.contains('open')?closeMenu():openMenu(); }
@@ -634,7 +627,7 @@ async function initMap(){
   projection = d3.geoNaturalEarth1().scale(1).translate([0,0]);
   pathGen    = d3.geoPath().projection(projection);
 
-  zoomBeh = d3.zoom().scaleExtent([0.5,60])
+  zoomBeh = d3.zoom().scaleExtent([0.5,6000])
     .on('zoom', e=>{ g.attr('transform',e.transform); });
 
   svg = d3.select('#map-svg').attr('width',W()).attr('height',H()).call(zoomBeh);
@@ -688,16 +681,7 @@ async function initMap(){
 }
 
 // ── Zoom ──────────────────────────────────────────────────
-function zBy(k){
-  const t = d3.zoomTransform(svg.node());
-  const cx = W()/2, cy = H()/2;
-  const nextScale = Math.max(0.05, Math.min(6000, t.k * k));
-  const scaleFactor = nextScale / t.k;
-  const nextX = cx - (cx - t.x) * scaleFactor;
-  const nextY = cy - (cy - t.y) * scaleFactor;
-  const next = d3.zoomIdentity.translate(nextX, nextY).scale(nextScale);
-  svg.transition().duration(250).call(zoomBeh.transform, next);
-}
+function zBy(k){ svg.transition().duration(250).call(zoomBeh.scaleBy,k,[W()/2,H()/2]); }
 function zReset(){ zoomToContinent(continent,500); }
 
 // KEY FIX: projection scale=1, translate=[0,0]
@@ -716,7 +700,7 @@ function zoomToContinent(cont, dur=700){
     return;
   }
 
-  const ids=new Set(getRegionIds(cont));
+  const ids=new Set((BY_CONT[cont]||[]).filter(id=>validOnMap.has(id)));
   if(!ids.size) return;
 
   features=cPaths.data().filter(d=>ids.has(+d.id));
@@ -749,7 +733,7 @@ function fitBounds(x0,y0,x1,y1,dur){
 function buildContGrid(){
   document.getElementById('cont-grid').innerHTML=
     Object.entries(CONT_META).map(([key,meta])=>{
-      const n=getRegionIds(key).length;
+      const n=key==='world'?validOnMap.size:(BY_CONT[key]||[]).filter(id=>validOnMap.has(id)).length;
       return `<div class="cont-card ${key===continent?'active':''}" id="cc-${key}"
         style="${key===continent?`border-color:${meta.color};`:''}"
         onclick="selectContinent('${key}')">
@@ -810,13 +794,12 @@ function applyDim(cont){
   if(!cPaths) return;
   cPaths.classed('dimmed',d=>{
     if(cont==='world') return false;
-    if(cont==='europe' && +d.id===643) return true;
     return CONTS[+d.id]!==cont;
   });
 }
 
 function buildQuestions(){
-  let pool=getRegionIds(continent);
+  let pool=continent==='world'?[...validOnMap]:(BY_CONT[continent]||[]).filter(id=>validOnMap.has(id));
   if(difficulty==='easy'){
     const es=new Set(EASY_IDS[continent]||EASY_IDS.world);
     const e=pool.filter(id=>es.has(id));
@@ -871,7 +854,6 @@ function onCountryClick(cid){
   if(currentMode!=='point'||answered) return;
   if(!NAMES[cid]) return;
   if(continent!=='world'&&CONTS[cid]!==continent) return;
-  if(continent==='europe' && cid===643) return;
   const tid=questions[qIdx], tname=NAMES[tid];
   if(cid===tid){
     setClass(tid,'correct');
