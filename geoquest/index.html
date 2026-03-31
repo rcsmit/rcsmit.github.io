@@ -516,7 +516,7 @@ const ALL_COUNTRIES = [
   [792,"Turkey","asia"],[795,"Turkmenistan","asia"],[784,"UAE","asia"],
   [860,"Uzbekistan","asia"],[704,"Vietnam","asia"],[887,"Yemen","asia"],
   [48,"Bahrain","asia"],[702,"Singapore","asia"],[158,"Taiwan","asia"],
-  // EUROPE
+  // EUROPE - ,[643,"Russia","europe"] left out
   [8,"Albania","europe"],[20,"Andorra","europe"],[40,"Austria","europe"],
   [112,"Belarus","europe"],[56,"Belgium","europe"],[70,"Bosnia and Herzegovina","europe"],
   [100,"Bulgaria","europe"],[191,"Croatia","europe"],[196,"Cyprus","europe"],
@@ -528,7 +528,7 @@ const ALL_COUNTRIES = [
   [470,"Malta","europe"],[498,"Moldova","europe"],[492,"Monaco","europe"],
   [499,"Montenegro","europe"],[528,"Netherlands","europe"],[807,"North Macedonia","europe"],
   [578,"Norway","europe"],[616,"Poland","europe"],[620,"Portugal","europe"],
-  [642,"Romania","europe"],[643,"Russia","europe"],[674,"San Marino","europe"],
+  [642,"Romania","europe"],[674,"San Marino","europe"],
   [688,"Serbia","europe"],[703,"Slovakia","europe"],[705,"Slovenia","europe"],
   [724,"Spain","europe"],[752,"Sweden","europe"],[756,"Switzerland","europe"],
   [804,"Ukraine","europe"],[826,"United Kingdom","europe"],[336,"Vatican City","europe"],
@@ -719,11 +719,11 @@ function zoomToContinent(cont, dur=700){
 }
 
 function fitBounds(x0,y0,x1,y1,dur){
-  const pad=30;
+  const pad=50;
   const bw=x1-x0, bh=y1-y0;
   if(bw<=0||bh<=0) return;
   const mw=W(), mh=H();
-  const scale=Math.min((mw-pad*2)/bw,(mh-pad*2)/bh);
+  const scale=Math.min((mw-pad*2)/bw,(mh-pad*2)/bh, 2000);
   const tx=mw/2-scale*(x0+bw/2);
   const ty=mh/2-scale*(y0+bh/2);
   const t=d3.zoomIdentity.translate(tx,ty).scale(scale);
