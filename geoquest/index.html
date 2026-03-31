@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
+   <link rel="icon" type="image/x-icon" href="favicon.ico">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>GeoQuest</title>
@@ -356,6 +357,7 @@ main{flex:1; display:grid; grid-template-columns:1fr 260px; overflow:hidden;}
   <!-- MAP -->
   <div class="map-wrap">
     <svg id="map-svg"></svg>
+    <svg id="us-svg" style="display:none;position:absolute;inset:0;width:100%;height:100%;"></svg>
     <div class="map-controls">
       <button class="map-btn" onclick="zBy(1.5)" title="Zoom in">+</button>
       <button class="map-btn" onclick="zBy(0.67)" title="Zoom out">−</button>
@@ -417,7 +419,7 @@ main{flex:1; display:grid; grid-template-columns:1fr 260px; overflow:hidden;}
   </div>
   <div class="res-btns">
     <button class="rbtn" style="background:var(--gold);color:#fff"   onclick="startGame(currentMode)">Play Again</button>
-    <!-- DOESNT WORK> TODO <button class="rbtn" style="background:var(--card);border:1px solid var(--border);color:var(--text)" onclick="openMenu()">Change Settings</button> -->
+    <button class="rbtn" style="background:var(--card);border:1px solid var(--border);color:var(--text)" onclick="showMenu()">Change Settings</button>
   </div>
 </div>
 
@@ -516,7 +518,7 @@ const ALL_COUNTRIES = [
   [792,"Turkey","asia"],[795,"Turkmenistan","asia"],[784,"UAE","asia"],
   [860,"Uzbekistan","asia"],[704,"Vietnam","asia"],[887,"Yemen","asia"],
   [48,"Bahrain","asia"],[702,"Singapore","asia"],[158,"Taiwan","asia"],
-  // EUROPE - ,[643,"Russia","europe"] left out
+  // EUROPE [643,"Russia","europe"],
   [8,"Albania","europe"],[20,"Andorra","europe"],[40,"Austria","europe"],
   [112,"Belarus","europe"],[56,"Belgium","europe"],[70,"Bosnia and Herzegovina","europe"],
   [100,"Bulgaria","europe"],[191,"Croatia","europe"],[196,"Cyprus","europe"],
@@ -572,7 +574,24 @@ const CONT_META={
   namerica:{name:"N. America", icon:"🌎",color:"#30b880"},
   samerica:{name:"S. America", icon:"🌎",color:"#a040c8"},
   oceania: {name:"Oceania",    icon:"🌏",color:"#30a8b0"},
+  usa:     {name:"USA States", icon:"🇺🇸",color:"#3070c0"},
 };
+
+// US States FIPS → name (contiguous 48 + DC)
+const US_STATES={
+  1:"Alabama",4:"Arizona",5:"Arkansas",6:"California",8:"Colorado",
+  9:"Connecticut",10:"Delaware",11:"District of Columbia",12:"Florida",
+  13:"Georgia",16:"Idaho",17:"Illinois",18:"Indiana",19:"Iowa",
+  20:"Kansas",21:"Kentucky",22:"Louisiana",23:"Maine",24:"Maryland",
+  25:"Massachusetts",26:"Michigan",27:"Minnesota",28:"Mississippi",
+  29:"Missouri",30:"Montana",31:"Nebraska",32:"Nevada",33:"New Hampshire",
+  34:"New Jersey",35:"New Mexico",36:"New York",37:"North Carolina",
+  38:"North Dakota",39:"Ohio",40:"Oklahoma",41:"Oregon",42:"Pennsylvania",
+  44:"Rhode Island",45:"South Carolina",46:"South Dakota",47:"Tennessee",
+  48:"Texas",49:"Utah",50:"Vermont",51:"Virginia",53:"Washington",
+  54:"West Virginia",55:"Wisconsin",56:"Wyoming",
+};
+const US_EASY=[6,48,12,36,17,42,13,37,39,51,26,47,53,32,18];
 
 const EASY_IDS={
   world:   [840,124,76,32,484,826,250,276,380,724,752,578,356,156,392,36,710,566,818,682,643,792,804,616,170],
@@ -589,12 +608,20 @@ let currentMode='point', difficulty='medium', continent='world';
 let questions=[], qIdx=0, nOk=0, nNo=0, streak=0, best=0;
 let answered=false, logArr=[];
 let svg, g, projection, pathGen, zoomBeh, cPaths;
+let usSvg=null, usPaths=null, usPathGen=null, usNation=null;
+let usLoaded=false, usLoading=false;
 let validOnMap=new Set();
 let tooltipOn=false;   // default OFF
 let isDark=false;
 
 // ── Menu ──────────────────────────────────────────────────
 function toggleMenu(){ document.getElementById('menu-drawer').classList.contains('open')?closeMenu():openMenu(); }
+function showMenu(){
+  document.getElementById('res-ov').style.display='none';
+  document.getElementById('sb').style.display='none';
+  document.getElementById('mode-pills').style.display='none';
+  openMenu();
+}
 function openMenu(){
   document.getElementById('menu-drawer').classList.add('open');
   document.getElementById('menu-backdrop').classList.add('open');
@@ -638,6 +665,7 @@ async function initMap(){
   g.append('path').datum({type:'Sphere'}).attr('class','sphere').attr('d',pathGen);
   g.append('path').datum(d3.geoGraticule()()).attr('class','graticule').attr('d',pathGen);
 
+
   let world;
   try{
     const r=await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
@@ -671,8 +699,8 @@ async function initMap(){
 
   window.addEventListener('resize',()=>{
     svg.attr('width',W()).attr('height',H());
-    // Reapply zoom transform so map stays in place
-    zoomToContinent(continent,0);
+    if(continent!=='usa') zoomToContinent(continent,0);
+    resizeUSSvg();
   });
 
   document.getElementById('loading').style.display='none';
@@ -702,18 +730,31 @@ function zoomToContinent(cont, dur=700){
     return;
   }
 
+  if(cont==='usa'){
+    if(!usLoaded && !usLoading) loadUSMap();
+    else resizeUSSvg();
+    return;
+  }
+
   const ids=new Set((BY_CONT[cont]||[]).filter(id=>validOnMap.has(id)));
   if(!ids.size) return;
 
   features=cPaths.data().filter(d=>ids.has(+d.id));
   if(!features.length) return;
 
-  // Compute unified bounding box across all features
+  // Compute unified bounding box; for Europe, clip Russia to lon<60
   let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
   features.forEach(f=>{
-    const [[x0,y0],[x1,y1]]=pathGen.bounds(f);
-    minX=Math.min(minX,x0); minY=Math.min(minY,y0);
-    maxX=Math.max(maxX,x1); maxY=Math.max(maxY,y1);
+    let b;
+    if(cont==='europe' && +f.id===643){
+      // Use a GeoJSON box west of 60°E instead of full Russia
+      const euroBox={type:'Polygon',coordinates:[[[-30,34],[60,34],[60,72],[-30,72],[-30,34]]]};
+      b=pathGen.bounds({type:'Feature',geometry:euroBox});
+    } else {
+      b=pathGen.bounds(f);
+    }
+    minX=Math.min(minX,b[0][0]); minY=Math.min(minY,b[0][1]);
+    maxX=Math.max(maxX,b[1][0]); maxY=Math.max(maxY,b[1][1]);
   });
   fitBounds(minX,minY,maxX,maxY,dur);
 }
@@ -723,7 +764,7 @@ function fitBounds(x0,y0,x1,y1,dur){
   const bw=x1-x0, bh=y1-y0;
   if(bw<=0||bh<=0) return;
   const mw=W(), mh=H();
-  const scale=Math.min((mw-pad*2)/bw,(mh-pad*2)/bh, 2000);
+  const scale=Math.min((mw-pad*2)/bw,(mh-pad*2)/bh);
   const tx=mw/2-scale*(x0+bw/2);
   const ty=mh/2-scale*(y0+bh/2);
   const t=d3.zoomIdentity.translate(tx,ty).scale(scale);
@@ -731,11 +772,123 @@ function fitBounds(x0,y0,x1,y1,dur){
   else { svg.transition().duration(dur).ease(d3.easeCubicInOut).call(zoomBeh.transform,t); }
 }
 
+// ── US States standalone map ─────────────────────────────────
+async function loadUSMap(){
+  if(usLoaded||usLoading) return;
+  usLoading=true;
+  let us;
+  try{
+    const r=await fetch('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json');
+    us=await r.json();
+  }catch{
+    console.error('US map load failed'); usLoading=false; return;
+  }
+  const states  = topojson.feature(us, us.objects.states).features;
+  const borders = topojson.mesh(us, us.objects.states, (a,b)=>a!==b);
+  usNation = topojson.feature(us, us.objects.nation);
+
+  usSvg = d3.select('#us-svg').attr('width',W()).attr('height',H());
+  usSvg.append('rect').attr('width','100%').attr('height','100%').attr('fill','var(--water)');
+
+  usPathGen = d3.geoPath().projection(
+    d3.geoAlbersUsa().fitExtent([[50,50],[W()-50,H()-50]], usNation)
+  );
+
+  usSvg.append('path').datum(usNation)
+    .attr('fill','var(--land)').attr('stroke','none').attr('d',usPathGen);
+
+  usPaths = usSvg.selectAll('.us-state')
+    .data(states).enter().append('path')
+    .attr('class','country us-state').attr('d',usPathGen)
+    .on('mouseenter',(e,d)=>{
+      if(!tooltipOn) return;
+      const n=US_STATES[+d.id]; if(!n) return;
+      const tt=document.getElementById('tt');
+      tt.textContent=n; tt.classList.add('show');
+    })
+    .on('mousemove',e=>{
+      if(!tooltipOn) return;
+      const tt=document.getElementById('tt');
+      tt.style.left=(e.clientX+14)+'px'; tt.style.top=(e.clientY-10)+'px';
+    })
+    .on('mouseleave',()=>{ document.getElementById('tt').classList.remove('show'); })
+    .on('click',(e,d)=>onStateClick(+d.id));
+
+  usSvg.append('path').datum(borders)
+    .attr('fill','none').attr('stroke','var(--stroke)')
+    .attr('stroke-width','.5').attr('d',usPathGen);
+
+  usLoaded=true; usLoading=false;
+  if(continent==='usa'){
+    document.getElementById('us-svg').style.display='block';
+    document.getElementById('map-svg').style.display='none';
+  }
+}
+
+function resizeUSSvg(){
+  if(!usLoaded||!usSvg||!usNation) return;
+  usSvg.attr('width',W()).attr('height',H());
+  usSvg.select('rect').attr('width','100%').attr('height','100%');
+  usPathGen = d3.geoPath().projection(
+    d3.geoAlbersUsa().fitExtent([[50,50],[W()-50,H()-50]], usNation)
+  );
+  usSvg.selectAll('path').attr('d',usPathGen);
+}
+
+function onStateClick(fips){
+  if(currentMode!=='point'||answered) return;
+  if(!US_STATES[fips]) return;
+  const tid=questions[qIdx], tname=US_STATES[tid]||'';
+  if(fips===tid){
+    setClassUS(tid,'correct'); record(true,tname,US_STATES[fips]);
+    fb('pt-fb','ok','✓ Correct!');
+    document.getElementById('pt-skip').disabled=true;
+    answered=true; setTimeout(nextQ,1000);
+  } else {
+    setClassUS(fips,'wrong'); setClassUS(tid,'reveal'); showReveal(tname);
+    fb('pt-fb','err',`✗ That's ${US_STATES[fips]}`);
+    record(false,tname,US_STATES[fips]);
+    document.getElementById('pt-skip').disabled=true;
+    answered=true; setTimeout(nextQ,2200);
+  }
+}
+
+function setClassUS(fips,cls){
+  if(!usPaths) return;
+  usPaths.filter(d=>+d.id===fips)
+    .classed('target', cls==='target').classed('correct',cls==='correct')
+    .classed('wrong',  cls==='wrong') .classed('reveal', cls==='reveal');
+}
+
 // ── Continent grid ─────────────────────────────────────────
+function poolSize(cont, diff){
+  if(cont==='usa'){
+    let pool=Object.keys(US_STATES).map(Number);
+    if(diff==='easy') return US_EASY.length;
+    if(diff==='medium') return pool.filter(id=>id!==11).length;
+    return pool.length; // hard / expert
+  }
+  let pool = cont==='world' ? [...validOnMap]
+           : (BY_CONT[cont]||[]).filter(id=>validOnMap.has(id));
+  if(diff==='easy'){
+    const es=new Set(EASY_IDS[cont]||EASY_IDS.world);
+    const e=pool.filter(id=>es.has(id));
+    return e.length>=5 ? e.length : pool.length;
+  }
+  if(diff==='medium'){
+    const es=new Set(EASY_IDS[cont]||EASY_IDS.world);
+    const e=pool.filter(id=>es.has(id));
+    const r=pool.filter(id=>!es.has(id));
+    return Math.max(10, Math.floor(pool.length*.6));
+  }
+  if(diff==='hard') return Math.max(12, Math.floor(pool.length*.8));
+  return pool.length; // expert
+}
+
 function buildContGrid(){
   document.getElementById('cont-grid').innerHTML=
     Object.entries(CONT_META).map(([key,meta])=>{
-      const n=key==='world'?validOnMap.size:(BY_CONT[key]||[]).filter(id=>validOnMap.has(id)).length;
+      const n = poolSize(key, difficulty);
       return `<div class="cont-card ${key===continent?'active':''}" id="cc-${key}"
         style="${key===continent?`border-color:${meta.color};`:''}"
         onclick="selectContinent('${key}')">
@@ -761,7 +914,6 @@ function selectContinent(c){
 // ── Difficulty ────────────────────────────────────────────
 function setDiff(d){
   difficulty=d;
-  // Clear all active states first (don't rely on :hover)
   ['e','m','h','x'].forEach(x=>{
     const btn=document.getElementById('hd-'+x);
     if(btn) btn.classList.remove('active');
@@ -769,6 +921,8 @@ function setDiff(d){
   const map={easy:'e',medium:'m',hard:'h',expert:'x'};
   const btn=document.getElementById('hd-'+map[d]);
   if(btn) btn.classList.add('active');
+  // Rebuild grid so counts reflect the new difficulty
+  if(document.getElementById('cont-grid').children.length) buildContGrid();
 }
 
 // ── Game ──────────────────────────────────────────────────
@@ -794,13 +948,33 @@ function switchMode(m){ startGame(m); }
 
 function applyDim(cont){
   if(!cPaths) return;
-  cPaths.classed('dimmed',d=>{
+  const isUSA = cont==='usa';
+
+  // Show/hide the right map
+  document.getElementById('map-svg').style.display = isUSA ? 'none' : 'block';
+  document.getElementById('us-svg').style.display  = isUSA ? 'block' : 'none';
+
+  if(isUSA){
+    if(!usLoaded && !usLoading) loadUSMap(); else if(usLoaded) resizeUSSvg();
+    return;
+  }
+
+  // World map: dim countries outside continent
+  cPaths.classed('dimmed', d=>{
     if(cont==='world') return false;
-    return CONTS[+d.id]!==cont;
+    return CONTS[+d.id] !== cont;
   });
+
 }
 
 function buildQuestions(){
+  if(continent==='usa'){
+    let pool=Object.keys(US_STATES).map(Number);
+    if(difficulty==='easy') pool=US_EASY;
+    else if(difficulty==='medium') pool=pool.filter(id=>id!==11); // skip DC for medium
+    questions=shuffle(pool).slice(0,Math.min(difficulty==='expert'?49:25,pool.length));
+    return;
+  }
   let pool=continent==='world'?[...validOnMap]:(BY_CONT[continent]||[]).filter(id=>validOnMap.has(id));
   if(difficulty==='easy'){
     const es=new Set(EASY_IDS[continent]||EASY_IDS.world);
@@ -820,7 +994,7 @@ function buildQuestions(){
 function loadQ(){
   if(qIdx>=questions.length){showResults();return;}
   answered=false;
-  const id=questions[qIdx], name=NAMES[id];
+  const id=questions[qIdx], name=continent==='usa'?(US_STATES[id]||'?'):NAMES[id];
 
   clearStyles(); applyDim(continent);
   document.getElementById('rev-box').style.display='none';
@@ -854,6 +1028,7 @@ function loadQ(){
 
 function onCountryClick(cid){
   if(currentMode!=='point'||answered) return;
+  if(continent==='usa') return; // handled by onStateClick
   if(!NAMES[cid]) return;
   if(continent!=='world'&&CONTS[cid]!==continent) return;
   const tid=questions[qIdx], tname=NAMES[tid];
@@ -877,7 +1052,7 @@ function submitName(){
   if(answered) return;
   const inp=document.getElementById('name-input');
   const val=inp.value.trim(); if(!val) return;
-  const tid=questions[qIdx], tname=NAMES[tid];
+  const tid=questions[qIdx], tname=continent==='usa'?(US_STATES[tid]||'?'):NAMES[tid];
   const match=fuzzyMatch(val,tname);
   inp.disabled=true;
   document.getElementById('sub-btn').disabled=true;
@@ -896,7 +1071,7 @@ function submitName(){
 
 function skip(){
   if(answered) return;
-  const tid=questions[qIdx], tname=NAMES[tid];
+  const tid=questions[qIdx], tname=continent==='usa'?(US_STATES[tid]||'?'):NAMES[tid];
   setClass(tid,'reveal'); showReveal(tname);
   record(false,tname,'(skipped)'); answered=true;
   if(currentMode==='name'){
@@ -911,6 +1086,7 @@ function nextQ(){ qIdx++; loadQ(); }
 
 // ── Helpers ───────────────────────────────────────────────
 function setClass(id,cls){
+  if(continent==='usa'){ setClassUS(id,cls); return; }
   if(!cPaths) return;
   cPaths.filter(d=>+d.id===id)
     .classed('target', cls==='target')
@@ -919,8 +1095,8 @@ function setClass(id,cls){
     .classed('reveal', cls==='reveal');
 }
 function clearStyles(){
-  if(!cPaths) return;
-  cPaths.classed('target',false).classed('correct',false).classed('wrong',false).classed('reveal',false);
+  if(cPaths) cPaths.classed('target',false).classed('correct',false).classed('wrong',false).classed('reveal',false);
+  if(usPaths) usPaths.classed('target',false).classed('correct',false).classed('wrong',false).classed('reveal',false);
 }
 function showReveal(name){
   document.getElementById('rev-box').style.display='block';
