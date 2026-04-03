@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<title>Handstand Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #f4f2ee;
+    --panel:   #ffffff;
+    --border:  #ddd;
+    --accent:  #1a1a1a;
+    --text:    #1a1a1a;
+    --muted:   #999;
+    --good:    #2d7a3a;
+    --warn:    #b06a00;
+    --bad:     #c0392b;
+    --good-bg: #eaf5ec;
+    --warn-bg: #fdf3e3;
+    --bad-bg:  #fdecea;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:var(--bg); color:var(--text);
+    font-family:'DM Mono',monospace;
+    display:grid; grid-template-rows:auto 1fr; height:100vh; overflow:hidden;
+  }
+  header {
+    padding:14px 28px; border-bottom:1px solid var(--border);
+    background:var(--panel); display:flex; align-items:baseline; gap:14px;
+  }
+  header h1 { font-family:'Bebas Neue'; font-size:1.9rem; letter-spacing:3px; color:var(--accent); }
+  header span { font-size:0.62rem; color:var(--muted); letter-spacing:2px; }
+
+  .main { display:grid; grid-template-columns:1fr 290px; height:calc(100vh - 55px); overflow:hidden; }
+
+  .video-area {
+    position:relative; background:#e8e5e0;
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+  }
+  #uploadZone {
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    cursor:pointer; opacity:0.65; transition:opacity .2s;
+  }
+  #uploadZone:hover { opacity:1; }
+  .upload-icon {
+    width:68px; height:68px; border:1.5px solid var(--accent);
+    border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.6rem;
+  }
+  #uploadZone strong { font-family:'Bebas Neue'; font-size:1rem; color:var(--accent); letter-spacing:3px; }
+  #uploadZone p { font-size:0.65rem; color:var(--muted); text-align:center; line-height:1.6; }
+  #fileInput { display:none; }
+
+  #videoContainer { position:relative; display:none; width:100%; height:100%; }
+  #inputVideo, #inputImage { position:absolute; width:100%; height:100%; object-fit:contain; }
+  #inputImage { display:none; }
+  #poseCanvas { position:absolute; width:100%; height:100%; object-fit:contain; }
+  #webcamVideo { position:absolute; width:100%; height:100%; object-fit:contain; display:none; transform:scaleX(-1); }
+
+  .controls {
+    position:absolute; bottom:0; left:0; right:0;
+    padding:10px 16px; background:linear-gradient(transparent,rgba(244,242,238,.95));
+    display:none; align-items:center; gap:10px;
+  }
+  .btn {
+    background:transparent; border:1px solid var(--border); color:var(--text);
+    font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:2px;
+    padding:5px 12px; cursor:pointer; transition:all .15s; text-transform:uppercase;
+  }
+  .btn:hover { border-color:var(--accent); }
+  #seekBar {
+    flex:1; -webkit-appearance:none; height:2px; background:var(--border); outline:none; cursor:pointer;
+  }
+  #seekBar::-webkit-slider-thumb {
+    -webkit-appearance:none; width:11px; height:11px; background:var(--accent); border-radius:50%;
+  }
+  #timeDisplay { font-size:0.58rem; color:var(--muted); min-width:80px; text-align:right; }
+
+  #notHandstandBanner {
+    position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    background:var(--bad-bg); border:1px solid #e8b4b0; color:var(--bad);
+    font-size:0.6rem; letter-spacing:2px; padding:5px 14px; display:none; white-space:nowrap; z-index:5;
+  }
+  #debugInfo {
+    position:absolute; bottom:48px; left:12px;
+    font-size:0.52rem; color:rgba(0,0,0,.35); pointer-events:none; letter-spacing:1px;
+  }
+  #loadingOverlay {
+    position:absolute; inset:0; background:rgba(244,242,238,.9);
+    display:none; align-items:center; justify-content:center;
+    flex-direction:column; gap:10px; z-index:10;
+  }
+  .spinner {
+    width:28px; height:28px; border:2px solid var(--border);
+    border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #loadingText { font-size:0.62rem; letter-spacing:3px; color:var(--accent); }
+  #loadingSub  { font-size:0.5rem; color:var(--muted); letter-spacing:1px; }
+
+  .panel { border-left:1px solid var(--border); background:var(--panel); overflow-y:auto; display:flex; flex-direction:column; }
+  .panel::-webkit-scrollbar { width:3px; }
+  .panel::-webkit-scrollbar-thumb { background:var(--border); }
+  .panel-section { padding:14px 16px; border-bottom:1px solid var(--border); }
+  .section-title { font-size:0.52rem; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; }
+
+  .source-btns { display:flex; flex-direction:column; gap:6px; }
+  .source-btns .btn { text-align:left; padding:8px 12px; }
+
+  .score-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .score-box { padding:10px 12px; background:var(--bg); border:1px solid var(--border); }
+  .score-box-label { font-size:0.52rem; letter-spacing:2px; color:var(--muted); margin-bottom:3px; }
+  .score-num { font-family:'Bebas Neue'; font-size:2.2rem; line-height:1; color:var(--accent); }
+  .score-num.warn { color:var(--warn); }
+  .score-num.bad  { color:var(--bad); }
+  .score-bar-wrap { height:3px; background:var(--border); margin-top:8px; border-radius:2px; overflow:hidden; }
+  .score-bar { height:100%; background:var(--good); border-radius:2px; width:0%; transition:width .3s; }
+
+  .angle-grid { display:flex; flex-direction:column; gap:5px; }
+  .angle-card {
+    display:grid; grid-template-columns:1fr auto; align-items:center;
+    padding:8px 10px; background:var(--bg); border:1px solid var(--border);
+    border-left:3px solid var(--border); opacity:.35; transition:opacity .3s, border-color .3s;
+  }
+  .angle-card.visible { opacity:1; }
+  .angle-card.good { border-left-color:var(--good); background:var(--good-bg); }
+  .angle-card.warn { border-left-color:var(--warn); background:var(--warn-bg); }
+  .angle-card.bad  { border-left-color:var(--bad);  background:var(--bad-bg); }
+  .angle-label  { font-size:0.56rem; letter-spacing:1px; color:var(--muted); margin-bottom:3px; text-transform:uppercase; }
+  .angle-weight { font-size:0.48rem; color:#bbb; }
+  .angle-bar-wrap { height:2px; background:var(--border); margin-top:4px; border-radius:2px; overflow:hidden; }
+  .angle-bar { height:100%; border-radius:2px; transition:width .2s; }
+  .angle-val { font-family:'Bebas Neue'; font-size:1.35rem; line-height:1; color:var(--muted); }
+  .angle-val.good { color:var(--good); }
+  .angle-val.warn { color:var(--warn); }
+  .angle-val.bad  { color:var(--bad); }
+
+  .feedback-list { display:flex; flex-direction:column; gap:5px; }
+  .feedback-item {
+    font-size:0.6rem; line-height:1.55; padding:7px 10px;
+    background:var(--bg); border-left:2px solid var(--border); color:var(--muted);
+  }
+  .feedback-item.good { border-left-color:var(--good); color:var(--good); background:var(--good-bg); }
+  .feedback-item.warn { border-left-color:var(--warn); color:var(--warn); background:var(--warn-bg); }
+  .feedback-item.bad  { border-left-color:var(--bad);  color:var(--bad);  background:var(--bad-bg); }
+
+  .orient-pill {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:5px 11px; border:1px solid var(--border); font-size:0.6rem; letter-spacing:2px; color:var(--muted);
+  }
+  .orient-dot { width:7px; height:7px; border-radius:50%; background:var(--border); }
+  .orient-pill.inverted { border-color:var(--good); color:var(--good); }
+  .orient-pill.inverted .orient-dot { background:var(--good); }
+
+  .empty-state { font-size:0.6rem; color:var(--muted); text-align:center; padding:16px 0; }
+
+  @media (max-width:680px) {
+    .main { grid-template-columns:1fr; grid-template-rows:55vw 1fr; }
+    .panel { border-left:none; border-top:1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Handstand Analyzer</h1>
+  <span>MediaPipe Pose · modelComplexity 2</span>
+</header>
+
+<div class="main">
+  <div class="video-area">
+    <div id="uploadZone" onclick="document.getElementById('fileInput').click()">
+      <div class="upload-icon">▲</div>
+      <strong>Upload Video or Photo</strong>
+      <p>MP4 · MOV · WEBM · JPG · PNG<br>
+        <span style="font-size:.6rem;opacity:.5">or use Source buttons →</span></p>
+    </div>
+
+    <input type="file" id="fileInput" accept="video/*,image/*" onchange="loadFile(event)">
+    <video id="webcamVideo" autoplay playsinline muted></video>
+
+    <div id="videoContainer">
+      <video id="inputVideo" playsinline></video>
+      <img    id="inputImage">
+      <canvas id="poseCanvas"></canvas>
+    </div>
+
+    <div id="notHandstandBanner">⚠ NOT INVERTED — get upside down for scoring</div>
+    <div id="debugInfo"></div>
+
+    <div class="controls" id="controls">
+      <button class="btn" onclick="togglePlay()">⏯</button>
+      <input type="range" id="seekBar" min="0" max="100" step="0.1" value="0" oninput="seek(this.value)">
+      <span id="timeDisplay">0:00 / 0:00</span>
+      <button class="btn" id="bestBtn" style="display:none" onclick="jumpToBest()">★ BEST</button>
+    </div>
+
+    <div id="loadingOverlay">
+      <div class="spinner"></div>
+      <div id="loadingText">LOADING MEDIAPIPE...</div>
+      <div id="loadingSub">First load ~25 MB · cached after that</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-section">
+      <div class="section-title">Source</div>
+      <div class="source-btns">
+        <button class="btn" onclick="document.getElementById('fileInput').click()">📁 &nbsp;Upload video or photo</button>
+        <button class="btn" onclick="startWebcam()">📷 &nbsp;Open webcam</button>
+      </div>
+    </div>
+    <div style="margin-top:10px;">
+  <div class="section-title" style="margin-bottom:6px;">Draw Side</div>
+  <div class="source-btns">
+    <button class="btn" id="leftSideBtn" onclick="setSideToDraw('left')">← &nbsp;Left (blue)</button>
+    <button class="btn" id="rightSideBtn" onclick="setSideToDraw('right')">→ &nbsp;Right (red)</button>
+    <!--<button class="btn" id="bothSideBtn" onclick="setSideToDraw('both')">↔ &nbsp;Both</button>-->
+  </div>
+</div>
+    <div class="panel-section">
+      <div class="section-title">Score</div>
+      <div class="score-row">
+        <div class="score-box">
+          <div class="score-box-label">CURRENT</div>
+          <div class="score-num" id="scoreNow">—</div>
+        </div>
+        <div class="score-box">
+          <div class="score-box-label">BEST FRAME</div>
+          <div class="score-num" id="scoreBest">—</div>
+        </div>
+      </div>
+      <div class="score-bar-wrap"><div class="score-bar" id="scoreBar"></div></div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">Orientation</div>
+      <div class="orient-pill" id="orientPill">
+        <div class="orient-dot"></div>
+        <span id="orientText">—</span>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">Joint Angles (averaged)</div>
+      <div class="angle-grid" id="angleGrid">
+        <div class="empty-state">Upload a file or start webcam</div>
+      </div>
+    </div>
+
+    <div class="panel-section" style="flex:1">
+      <div class="section-title">Coaching</div>
+      <div class="feedback-list" id="feedbackList">
+        <div class="empty-state">No data yet</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+<script>
+
+// ─── DOM ──────────────────────────────────────────────────────────────────────
+const inputVideo  = document.getElementById('inputVideo');
+const inputImage  = document.getElementById('inputImage');
+const webcamVideo = document.getElementById('webcamVideo');
+const poseCanvas  = document.getElementById('poseCanvas');
+const ctx         = poseCanvas.getContext('2d');
+const controls    = document.getElementById('controls');
+const seekBar     = document.getElementById('seekBar');
+const timeDisplay = document.getElementById('timeDisplay');
+const loading     = document.getElementById('loadingOverlay');
+const loadingText = document.getElementById('loadingText');
+const banner      = document.getElementById('notHandstandBanner');
+const debugInfo   = document.getElementById('debugInfo');
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let pose = null, poseReady = false;
+let activeSource = null;
+let webcamCamera = null;
+let animFrame    = null;
+let isInverted   = false;
+let objURL       = null;
+let bestScore = 0, bestTime = 0;
+let sideToDraw = 'left';
+
+const VIS = 0.5;
+
+// ─── Angle definitions ────────────────────────────────────────────────────────
+const ANGLE_DEFS = [
+  { key:'elbow',    label:'Elbow',    weight:20, ideal:180, tol:15,
+    ptsR:[15,13,11], ptsL:[16,14,12],
+    labelLm:13,
+    coach:{ bad:'Lock out elbows fully', warn:'Elbows slightly bent' }},
+  { key:'shoulder', label:'Shoulder', weight:30, ideal:180, tol:20,
+    ptsR:[13,11,23], ptsL:[14,12,24],
+    labelLm:11,
+    coach:{ bad:'Open shoulders — push floor away', warn:'Shoulders slightly closed' }},
+  { key:'hip',      label:'Hip',      weight:30, ideal:180, tol:15,
+    ptsR:[11,23,25], ptsL:[12,24,26],
+    labelLm:23,
+    coach:{ bad:'Hips piked — squeeze glutes', warn:'Slight hip pike' }},
+  { key:'knee',     label:'Knee',     weight:15, ideal:180, tol:10,
+    ptsR:[23,25,27], ptsL:[24,26,28],
+    labelLm:25,
+    coach:{ bad:'Straighten knees', warn:'Knees slightly bent' }},
+  { key:'ankle',    label:'Ankle',    weight: 5, ideal:160, tol:30,
+    ptsR:[25,27,31], ptsL:[26,28,32],
+    labelLm:27,
+    coach:{ bad:'Point toes', warn:'Toes can be more pointed' }},
+];
+
+// ─── MediaPipe ────────────────────────────────────────────────────────────────
+function initPose() {
+  return new Promise(resolve => {
+    pose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
+    pose.setOptions({
+      modelComplexity:        2,
+      smoothLandmarks:        true,
+      enableSegmentation:     false,
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence:  0.5
+    });
+    pose.onResults(onResults);
+    pose.initialize().then(resolve);
+  });
+}
+
+// ─── Side toggle helpers ──────────────────────────────────────────────────────
+function setSideToDraw(side) {
+  sideToDraw = side;
+  updateSideButtons();
+}
+
+function updateSideButtons() {
+  const leftBtn  = document.getElementById('leftSideBtn');
+  const rightBtn = document.getElementById('rightSideBtn');
+  const bothBtn  = document.getElementById('bothSideBtn');
+
+  if (!leftBtn || !rightBtn || !bothBtn) return;
+
+  const activeBorder = 'var(--accent)';
+  const inactiveBorder = 'var(--border)';
+
+  leftBtn.style.borderColor  = sideToDraw === 'left'  ? activeBorder : inactiveBorder;
+  rightBtn.style.borderColor = sideToDraw === 'right' ? activeBorder : inactiveBorder;
+  bothBtn.style.borderColor  = sideToDraw === 'both'  ? activeBorder : inactiveBorder;
+}
+
+// ─── File loading ─────────────────────────────────────────────────────────────
+async function loadFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  stopWebcam();
+  if (objURL) { URL.revokeObjectURL(objURL); objURL = null; }
+  loading.style.display = 'flex';
+  loadingText.textContent = 'LOADING MODEL...';
+  if (!poseReady) { await initPose(); poseReady = true; }
+  if (file.type.startsWith('image/')) await loadImage(file);
+  else await loadVideo(file);
+}
+
+async function loadImage(file) {
+  activeSource = 'image';
+  objURL = URL.createObjectURL(file);
+  inputVideo.style.display = 'none';
+  inputImage.style.display = 'block';
+  inputImage.src = objURL;
+  await new Promise(r => { inputImage.onload = r; });
+  poseCanvas.width  = inputImage.naturalWidth;
+  poseCanvas.height = inputImage.naturalHeight;
+  showVideoContainer();
+  controls.style.display = 'none';
+  loading.style.display  = 'none';
+  bestScore = 0;
+  await pose.send({ image: inputImage });
+}
+
+async function loadVideo(file) {
+  activeSource = 'video';
+  objURL = URL.createObjectURL(file);
+  inputImage.style.display = 'none';
+  inputVideo.style.display = 'block';
+  inputVideo.src = objURL;
+  inputVideo.load();
+  await new Promise(r => { inputVideo.onloadedmetadata = r; });
+  syncCanvas();
+  showVideoContainer();
+  controls.style.display = 'flex';
+  loading.style.display  = 'none';
+  bestScore = 0;
+  document.getElementById('bestBtn').style.display = 'none';
+  document.getElementById('scoreBest').textContent = '—';
+  startVideoLoop();
+}
+
+function showVideoContainer() {
+  document.getElementById('uploadZone').style.display     = 'none';
+  document.getElementById('videoContainer').style.display = 'block';
+}
+
+function syncCanvas() {
+  if (activeSource === 'image') {
+    poseCanvas.width  = inputImage.naturalWidth;
+    poseCanvas.height = inputImage.naturalHeight;
+  } else {
+    const src = activeSource === 'webcam' ? webcamVideo : inputVideo;
+    poseCanvas.width  = src.videoWidth  || 640;
+    poseCanvas.height = src.videoHeight || 480;
+  }
+}
+
+// ─── Video loop ───────────────────────────────────────────────────────────────
+let lastSend = 0;
+function startVideoLoop() {
+  cancelAnimationFrame(animFrame);
+  async function loop(ts) {
+    if (activeSource === 'video' && !inputVideo.paused && !inputVideo.ended) {
+      if (ts - lastSend > 66) { lastSend = ts; await pose.send({ image: inputVideo }); }
+    }
+    updateSeekBar();
+    animFrame = requestAnimationFrame(loop);
+  }
+  animFrame = requestAnimationFrame(loop);
+}
+
+function togglePlay() { inputVideo.paused ? inputVideo.play() : inputVideo.pause(); }
+function seek(v)      { if (inputVideo.duration) inputVideo.currentTime = (v/100)*inputVideo.duration; }
+function jumpToBest() { if (inputVideo.duration) inputVideo.currentTime = bestTime; }
+function updateSeekBar() {
+  if (!inputVideo.duration) return;
+  seekBar.value = (inputVideo.currentTime/inputVideo.duration)*100;
+  timeDisplay.textContent = fmt(inputVideo.currentTime)+' / '+fmt(inputVideo.duration);
+}
+function fmt(s) { return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'); }
+
+// ─── Webcam ───────────────────────────────────────────────────────────────────
+async function startWebcam() {
+  activeSource = 'webcam';
+  showVideoContainer();
+  webcamVideo.style.display = 'block';
+  inputVideo.style.display  = 'none';
+  inputImage.style.display  = 'none';
+  controls.style.display    = 'none';
+  loading.style.display     = 'flex';
+  loadingText.textContent   = 'LOADING MODEL...';
+  if (!poseReady) { await initPose(); poseReady = true; }
+  loadingText.textContent = 'STARTING CAMERA...';
+  webcamCamera = new Camera(webcamVideo, {
+    onFrame: async () => { syncCanvas(); await pose.send({ image: webcamVideo }); },
+    width: 1280, height: 720
+  });
+  webcamCamera.start()
+    .then(()  => loading.style.display = 'none')
+    .catch(e  => { loadingText.textContent = 'CAMERA ERROR: ' + e.message; });
+}
+
+function stopWebcam() {
+  if (webcamCamera) { webcamCamera.stop(); webcamCamera = null; }
+  webcamVideo.style.display = 'none';
+}
+
+// ─── Angle math ───────────────────────────────────────────────────────────────
+function angle3(A, B, C) {
+  const ax = A.x-B.x, ay = A.y-B.y;
+  const cx = C.x-B.x, cy = C.y-B.y;
+  const dot = ax*cx + ay*cy;
+  const mag = Math.sqrt((ax*ax+ay*ay)*(cx*cx+cy*cy));
+  if (!mag) return null;
+  return Math.round(Math.acos(Math.max(-1, Math.min(1, dot/mag))) * 180/Math.PI);
+}
+
+function calcAngles(lm) {
+  const ok  = (...i) => i.every(j => (lm[j].visibility??1) >= VIS);
+  const angles = {};
+  for (const def of ANGLE_DEFS) {
+    const [ar,br,cr] = def.ptsR;
+    const [al,bl,cl] = def.ptsL;
+    const valR = ok(ar,br,cr) ? angle3(lm[ar],lm[br],lm[cr]) : null;
+    const valL = ok(al,bl,cl) ? angle3(lm[al],lm[bl],lm[cl]) : null;
+    if      (valR !== null && valL !== null) angles[def.key] = Math.round((valR+valL)/2);
+    else if (valR !== null)                  angles[def.key] = valR;
+    else if (valL !== null)                  angles[def.key] = valL;
+    else                                     angles[def.key] = null;
+  }
+  return angles;
+}
+
+function getQuality(def, val) {
+  if (val == null) return 'neutral';
+  const d = Math.abs(val - def.ideal);
+  if (d <= def.tol * 0.4) return 'good';
+  if (d <= def.tol)       return 'warn';
+  return 'bad';
+}
+
+function weightedScore(angles) {
+  let score = 0, used = 0;
+  for (const def of ANGLE_DEFS) {
+    if (!def.weight) continue;
+    const val = angles[def.key];
+    if (val == null) continue;
+    score += Math.max(0, 100 - (Math.abs(val-def.ideal)/def.tol)*100) * def.weight;
+    used  += def.weight;
+  }
+  return used > 0 ? Math.round(score/used) : 0;
+}
+
+// ─── Inversion detection ──────────────────────────────────────────────────────
+function detectInversion(lm) {
+  const wristY = (lm[15].y + lm[16].y) / 2;
+  const ankleY = (lm[27].y + lm[28].y) / 2;
+  const inv    = ankleY < wristY;
+  debugInfo.textContent = `wrist_y=${wristY.toFixed(2)}  ankle_y=${ankleY.toFixed(2)}  →  ${inv?'HANDSTAND':'UPRIGHT'}`;
+  return inv;
+}
+
+// ─── Pose results ─────────────────────────────────────────────────────────────
+function onResults(results) {
+  ctx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
+  if (!results.poseLandmarks) { renderPanel(null, null); return; }
+
+  const lm   = results.poseLandmarks;
+  isInverted = detectInversion(lm);
+
+  drawSkeleton(lm, sideToDraw);
+
+  const angles = calcAngles(lm);
+  const score  = isInverted ? weightedScore(angles) : null;
+
+  if (activeSource === 'video' && isInverted && score !== null && score > bestScore) {
+    bestScore = score;
+    bestTime  = inputVideo.currentTime;
+    const el  = document.getElementById('scoreBest');
+    el.textContent = bestScore;
+    colorScore(el, bestScore);
+    document.getElementById('bestBtn').style.display = 'inline-block';
+  }
+
+  drawAnglesOnCanvas(lm, angles);
+  renderPanel(angles, score);
+}
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+const CONNECTIONS_LEFT = [
+  [11,13],[13,15],
+  [11,23],
+  [23,25],[25,27],[27,31],
+];
+
+const CONNECTIONS_RIGHT = [
+  [12,14],[14,16],
+  [12,24],
+  [24,26],[26,28],[28,32],
+];
+
+const LEFT_DOTS = new Set([11,13,15,23,25,27,31]);
+const RIGHT_DOTS = new Set([12,14,16,24,26,28,32]);
+
+function lmPx(lm, i) {
+  return { x: lm[i].x * poseCanvas.width, y: lm[i].y * poseCanvas.height };
+}
+
+function drawSkeleton(lm, side_to_draw = 'right') {
+  ctx.lineWidth   = 2.5;
+  ctx.lineCap     = 'round';
+  ctx.setLineDash([]);
+
+  const drawDots = (dotSet, strokeColor) => {
+    for (const i of dotSet) {
+      if ((lm[i].visibility ?? 1) < 0.3) continue;
+      const p = lmPx(lm, i);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 2;
+      ctx.fill();
+      ctx.stroke();
+    }
+  };
+
+  const drawConnections = (connections, lineColor) => {
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 2.5;
+    for (const [a, b] of connections) {
+      if ((lm[a].visibility ?? 1) < 0.3 || (lm[b].visibility ?? 1) < 0.3) continue;
+      const pa = lmPx(lm, a);
+      const pb = lmPx(lm, b);
+      ctx.beginPath();
+      ctx.moveTo(pa.x, pa.y);
+      ctx.lineTo(pb.x, pb.y);
+      ctx.stroke();
+    }
+  };
+
+  if (side_to_draw === 'left') {
+    drawConnections(CONNECTIONS_LEFT, 'rgba(26,26,255,0.65)');
+    drawDots(LEFT_DOTS, 'rgba(0,26,26,0.8)');
+  } else if (side_to_draw === 'right') {
+    drawConnections(CONNECTIONS_RIGHT, 'rgba(255,26,26,0.65)');
+    drawDots(RIGHT_DOTS, 'rgba(26,0,26,0.8)');
+  } else if (side_to_draw === 'both') {
+    drawConnections(CONNECTIONS_LEFT, 'rgba(26,26,26,0.65)');
+    drawConnections(CONNECTIONS_RIGHT, 'rgba(26,26,26,0.65)');
+    drawDots(LEFT_DOTS, 'rgba(0,26,26,0.8)');
+    drawDots(RIGHT_DOTS, 'rgba(26,0,26,0.8)');
+  }
+}
+
+// ─── Angle labels on canvas ───────────────────────────────────────────────────
+function drawAnglesOnCanvas(lm, angles) {
+  ctx.textAlign = 'center';
+  ctx.font      = 'bold 14px DM Mono, monospace';
+
+  for (const def of ANGLE_DEFS) {
+    const val = angles[def.key];
+    if (val == null) continue;
+    const q   = getQuality(def, val);
+    const col = q === 'good' ? '#2d7a3a' : q === 'warn' ? '#b06a00' : '#c0392b';
+    const p   = lmPx(lm, def.labelLm);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillText(val+'°', p.x+1, p.y-12);
+    ctx.fillStyle = col;
+    ctx.fillText(val+'°', p.x,   p.y-13);
+  }
+}
+
+// ─── Panel rendering ──────────────────────────────────────────────────────────
+function colorScore(el, s) {
+  el.className = 'score-num' + (s >= 75 ? '' : s >= 50 ? ' warn' : ' bad');
+}
+
+function renderPanel(angles, score) {
+  const pill = document.getElementById('orientPill');
+  const oTxt = document.getElementById('orientText');
+
+  if (!angles) {
+    pill.className   = 'orient-pill';
+    oTxt.textContent = 'NO POSE DETECTED';
+    banner.style.display = 'none';
+    document.getElementById('angleGrid').innerHTML    = '<div class="empty-state">No pose detected</div>';
+    document.getElementById('feedbackList').innerHTML = '<div class="empty-state">No data yet</div>';
+    document.getElementById('scoreNow').textContent   = '—';
+    document.getElementById('scoreBar').style.width   = '0%';
+    return;
+  }
+
+  pill.className   = 'orient-pill' + (isInverted ? ' inverted' : '');
+  oTxt.textContent = isInverted ? 'INVERTED · HANDSTAND ✓' : 'UPRIGHT · NOT SCORED';
+  banner.style.display = isInverted ? 'none' : 'block';
+
+  const nowEl = document.getElementById('scoreNow');
+  const bar   = document.getElementById('scoreBar');
+  if (score !== null) { nowEl.textContent = score; colorScore(nowEl, score); bar.style.width = score+'%'; }
+  else                { nowEl.textContent = '—'; bar.style.width = '0%'; }
+
+  const grid     = document.getElementById('angleGrid');
+  const feedback = [];
+  grid.innerHTML = '';
+
+  for (const def of ANGLE_DEFS) {
+    const val     = angles[def.key];
+    const q       = getQuality(def, val);
+    const visible = val !== null;
+    const barPct  = val != null ? Math.min(100, (val/200)*100) : 0;
+    const barCol  = q === 'good' ? 'var(--good)' : q === 'warn' ? 'var(--warn)' : 'var(--bad)';
+
+    const card = document.createElement('div');
+    card.className = `angle-card${visible?' visible':''} ${visible?q:''}`;
+    card.innerHTML = `
+      <div>
+        <div class="angle-label">${def.label} <span class="angle-weight">${def.weight?def.weight+'%':''}</span></div>
+        <div class="angle-bar-wrap"><div class="angle-bar" style="width:${barPct}%;background:${barCol}"></div></div>
+      </div>
+      <div class="angle-val ${visible?q:''}">${val!=null?val+'°':'—'}</div>`;
+    grid.appendChild(card);
+
+    if (isInverted && visible && q !== 'good' && def.coach[q])
+      feedback.push({ text: def.coach[q], cls: q });
+  }
+
+  const fl = document.getElementById('feedbackList');
+  if (!isInverted) {
+    fl.innerHTML = '<div class="feedback-item warn">Get inverted to receive handstand coaching</div>';
+  } else if (feedback.length === 0) {
+    fl.innerHTML = '<div class="feedback-item good">✓ Perfect alignment — hold it!</div>';
+  } else {
+    fl.innerHTML = feedback.map(f => `<div class="feedback-item ${f.cls}">${f.text}</div>`).join('');
+  }
+}
+
+updateSideButtons();
+
+</script>
+</body>
+</html>
