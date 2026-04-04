@@ -25,7 +25,7 @@
   body {
     background:var(--bg); color:var(--text);
     font-family:'DM Mono',monospace;
-    display:grid; grid-template-rows:auto 1fr; height:100vh; overflow:hidden;
+    display:grid; grid-template-rows:auto 1fr; height:100vh; height:100dvh; overflow:hidden;
   }
   header {
     padding:14px 28px; border-bottom:1px solid var(--border);
@@ -34,7 +34,7 @@
   header h1 { font-family:'Bebas Neue'; font-size:1.9rem; letter-spacing:3px; color:var(--accent); }
   header span { font-size:0.62rem; color:var(--muted); letter-spacing:2px; }
 
-  .main { display:grid; grid-template-columns:1fr 290px; height:calc(100vh - 55px); overflow:hidden; }
+  .main { display:grid; grid-template-columns:1fr 290px; height:calc(100vh - 55px); height:calc(100dvh - 55px); overflow:hidden; }
 
   .video-area {
     position:relative; background:#e8e5e0;
@@ -184,6 +184,7 @@
       display:block;
       position:relative;
       height:calc(100vh - 55px);
+      height:calc(100dvh - 55px);
       overflow:hidden;
     }
 
