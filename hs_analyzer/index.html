@@ -100,6 +100,7 @@
   #loadingText { font-size:0.62rem; letter-spacing:3px; color:var(--accent); }
   #loadingSub  { font-size:0.5rem; color:var(--muted); letter-spacing:1px; }
 
+  /* ── Desktop panel ── */
   .panel { border-left:1px solid var(--border); background:var(--panel); overflow-y:auto; display:flex; flex-direction:column; }
   .panel::-webkit-scrollbar { width:3px; }
   .panel::-webkit-scrollbar-thumb { background:var(--border); }
@@ -156,9 +157,92 @@
 
   .empty-state { font-size:0.6rem; color:var(--muted); text-align:center; padding:16px 0; }
 
+  /* ── Toggle switch ── */
+  .toggle-row {
+    display:flex; align-items:center; gap:8px; padding:0 0 6px 0;
+  }
+  .toggle-label { font-size:0.56rem; letter-spacing:1px; color:var(--muted); text-transform:uppercase; cursor:pointer; }
+  .toggle-switch {
+    position:relative; width:32px; height:16px; cursor:pointer;
+  }
+  .toggle-switch input { opacity:0; width:0; height:0; }
+  .toggle-track {
+    position:absolute; inset:0;
+    background:var(--border); border-radius:8px; transition:background .2s;
+  }
+  .toggle-switch input:checked ~ .toggle-track { background:var(--accent); }
+  .toggle-thumb {
+    position:absolute; top:2px; left:2px;
+    width:12px; height:12px; border-radius:50%; background:#fff;
+    transition:transform .2s; pointer-events:none;
+  }
+  .toggle-switch input:checked ~ .toggle-thumb { transform:translateX(16px); }
+
+  /* ── Mobile overlay panel ── */
   @media (max-width:680px) {
-    .main { grid-template-columns:1fr; grid-template-rows:55vw 1fr; }
-    .panel { border-left:none; border-top:1px solid var(--border); }
+    .main {
+      display:block;
+      position:relative;
+      height:calc(100vh - 55px);
+      overflow:hidden;
+    }
+
+    .video-area {
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+    }
+
+    /* Panel floats over the video on the right */
+    .panel {
+      position:absolute;
+      top:0; right:0; bottom:0;
+      width:62vw;
+      max-width:160px;
+      border-left:1px solid rgba(221,221,221,0.5);
+      background:rgba(255,255,255,0.5);
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+      z-index:20;
+      overflow-y:auto;
+      /* Collapsed by default — toggle via button */
+      transform:translateX(100%);
+      transition:transform .25s ease;
+    }
+    .panel.open {
+      transform:translateX(0);
+    }
+
+    /* Floating toggle button */
+    #panelToggle {
+      display:flex;
+      position:absolute;
+      top:10px; right:10px;
+      z-index:30;
+      background:rgba(255,255,255,0.75);
+      border:1px solid rgba(0,0,0,0.2);
+      font-family:'DM Mono',monospace;
+      font-size:0.6rem; letter-spacing:2px;
+      padding:5px 10px; cursor:pointer;
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
+    }
+
+    .panel-section {
+      padding:10px 12px;
+      border-bottom:1px solid rgba(221,221,221,0.4);
+    }
+
+    /* Make score numbers slightly smaller on overlay */
+    .score-num { font-size:1.8rem; }
+
+    /* Controls stay above panel */
+    .controls { z-index:25; }
+  }
+
+  @media (min-width:681px) {
+    #panelToggle { display:none; }
   }
 </style>
 </head>
@@ -204,7 +288,10 @@
     </div>
   </div>
 
-  <div class="panel">
+  <!-- Mobile floating toggle -->
+  <button id="panelToggle" onclick="togglePanel()">☰ INFO</button>
+
+  <div class="panel" id="sidePanel">
     <div class="panel-section">
       <div class="section-title">Source</div>
       <div class="source-btns">
@@ -212,14 +299,27 @@
         <button class="btn" onclick="startWebcam()">📷 &nbsp;Open webcam</button>
       </div>
     </div>
-    <div style="margin-top:10px;">
-  <div class="section-title" style="margin-bottom:6px;">Draw Side</div>
-  <div class="source-btns">
-    <button class="btn" id="leftSideBtn" onclick="setSideToDraw('left')">← &nbsp;Left (blue)</button>
-    <button class="btn" id="rightSideBtn" onclick="setSideToDraw('right')">→ &nbsp;Right (red)</button>
-    <!--<button class="btn" id="bothSideBtn" onclick="setSideToDraw('both')">↔ &nbsp;Both</button>-->
-  </div>
-</div>
+
+    <div class="panel-section">
+      <div class="section-title">Draw Side</div>
+      <div class="source-btns">
+        <button class="btn" id="leftSideBtn" onclick="setSideToDraw('left')">← &nbsp;Left (blue)</button>
+        <button class="btn" id="rightSideBtn" onclick="setSideToDraw('right')">→ &nbsp;Right (red)</button>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="section-title">Angle Labels</div>
+      <div class="toggle-row">
+        <label class="toggle-switch">
+          <input type="checkbox" id="whiteLabelsToggle" onchange="whiteLabels = this.checked">
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </label>
+        <span class="toggle-label" onclick="document.getElementById('whiteLabelsToggle').click()">White on video</span>
+      </div>
+    </div>
+
     <div class="panel-section">
       <div class="section-title">Score</div>
       <div class="score-row">
@@ -258,6 +358,7 @@
     </div>
   </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 <script>
@@ -285,6 +386,7 @@ let isInverted   = false;
 let objURL       = null;
 let bestScore = 0, bestTime = 0;
 let sideToDraw = 'left';
+let whiteLabels = false;   // ← new: white angle label mode
 
 const VIS = 0.5;
 
@@ -328,6 +430,14 @@ function initPose() {
   });
 }
 
+// ─── Mobile panel toggle ──────────────────────────────────────────────────────
+function togglePanel() {
+  const panel = document.getElementById('sidePanel');
+  const btn   = document.getElementById('panelToggle');
+  const open  = panel.classList.toggle('open');
+  btn.textContent = open ? '✕ CLOSE' : '☰ INFO';
+}
+
 // ─── Side toggle helpers ──────────────────────────────────────────────────────
 function setSideToDraw(side) {
   sideToDraw = side;
@@ -337,16 +447,10 @@ function setSideToDraw(side) {
 function updateSideButtons() {
   const leftBtn  = document.getElementById('leftSideBtn');
   const rightBtn = document.getElementById('rightSideBtn');
-  const bothBtn  = document.getElementById('bothSideBtn');
-
-  if (!leftBtn || !rightBtn || !bothBtn) return;
-
-  const activeBorder = 'var(--accent)';
+  const activeBorder   = 'var(--accent)';
   const inactiveBorder = 'var(--border)';
-
-  leftBtn.style.borderColor  = sideToDraw === 'left'  ? activeBorder : inactiveBorder;
-  rightBtn.style.borderColor = sideToDraw === 'right' ? activeBorder : inactiveBorder;
-  bothBtn.style.borderColor  = sideToDraw === 'both'  ? activeBorder : inactiveBorder;
+  if (leftBtn)  leftBtn.style.borderColor  = sideToDraw === 'left'  ? activeBorder : inactiveBorder;
+  if (rightBtn) rightBtn.style.borderColor = sideToDraw === 'right' ? activeBorder : inactiveBorder;
 }
 
 // ─── File loading ─────────────────────────────────────────────────────────────
@@ -556,7 +660,7 @@ const CONNECTIONS_RIGHT = [
   [24,26],[26,28],[28,32],
 ];
 
-const LEFT_DOTS = new Set([11,13,15,23,25,27,31]);
+const LEFT_DOTS  = new Set([11,13,15,23,25,27,31]);
 const RIGHT_DOTS = new Set([12,14,16,24,26,28,32]);
 
 function lmPx(lm, i) {
@@ -564,8 +668,8 @@ function lmPx(lm, i) {
 }
 
 function drawSkeleton(lm, side_to_draw = 'right') {
-  ctx.lineWidth   = 2.5;
-  ctx.lineCap     = 'round';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap   = 'round';
   ctx.setLineDash([]);
 
   const drawDots = (dotSet, strokeColor) => {
@@ -574,9 +678,9 @@ function drawSkeleton(lm, side_to_draw = 'right') {
       const p = lmPx(lm, i);
       ctx.beginPath();
       ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle   = '#fff';
       ctx.strokeStyle = strokeColor;
-      ctx.lineWidth = 2;
+      ctx.lineWidth   = 2;
       ctx.fill();
       ctx.stroke();
     }
@@ -584,7 +688,7 @@ function drawSkeleton(lm, side_to_draw = 'right') {
 
   const drawConnections = (connections, lineColor) => {
     ctx.strokeStyle = lineColor;
-    ctx.lineWidth = 2.5;
+    ctx.lineWidth   = 2.5;
     for (const [a, b] of connections) {
       if ((lm[a].visibility ?? 1) < 0.3 || (lm[b].visibility ?? 1) < 0.3) continue;
       const pa = lmPx(lm, a);
@@ -602,10 +706,10 @@ function drawSkeleton(lm, side_to_draw = 'right') {
   } else if (side_to_draw === 'right') {
     drawConnections(CONNECTIONS_RIGHT, 'rgba(255,26,26,0.65)');
     drawDots(RIGHT_DOTS, 'rgba(26,0,26,0.8)');
-  } else if (side_to_draw === 'both') {
-    drawConnections(CONNECTIONS_LEFT, 'rgba(26,26,26,0.65)');
+  } else {
+    drawConnections(CONNECTIONS_LEFT,  'rgba(26,26,26,0.65)');
     drawConnections(CONNECTIONS_RIGHT, 'rgba(26,26,26,0.65)');
-    drawDots(LEFT_DOTS, 'rgba(0,26,26,0.8)');
+    drawDots(LEFT_DOTS,  'rgba(0,26,26,0.8)');
     drawDots(RIGHT_DOTS, 'rgba(26,0,26,0.8)');
   }
 }
@@ -619,13 +723,28 @@ function drawAnglesOnCanvas(lm, angles) {
     const val = angles[def.key];
     if (val == null) continue;
     const q   = getQuality(def, val);
-    const col = q === 'good' ? '#2d7a3a' : q === 'warn' ? '#b06a00' : '#c0392b';
     const p   = lmPx(lm, def.labelLm);
 
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.fillText(val+'°', p.x+1, p.y-12);
-    ctx.fillStyle = col;
-    ctx.fillText(val+'°', p.x,   p.y-13);
+    if (whiteLabels) {
+      // White text with dark shadow for contrast on any background
+      ctx.shadowColor   = 'rgba(0,0,0,0.75)';
+      ctx.shadowBlur    = 4;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 1;
+      ctx.fillStyle     = '#ffffff';
+      ctx.fillText(val+'°', p.x, p.y - 13);
+      ctx.shadowColor   = 'transparent';
+      ctx.shadowBlur    = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+    } else {
+      // Original coloured labels with white background halo
+      const col = q === 'good' ? '#2d7a3a' : q === 'warn' ? '#b06a00' : '#c0392b';
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillText(val+'°', p.x+1, p.y-12);
+      ctx.fillStyle = col;
+      ctx.fillText(val+'°', p.x,   p.y-13);
+    }
   }
 }
 
