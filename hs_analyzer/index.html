@@ -33,6 +33,11 @@
   }
   header h1 { font-family:'Bebas Neue'; font-size:1.9rem; letter-spacing:3px; color:var(--accent); }
   header span { font-size:0.62rem; color:var(--muted); letter-spacing:2px; }
+  .privacy-note {
+    margin-left:auto; font-size:0.55rem; color:var(--muted); letter-spacing:1px;
+    display:flex; align-items:center; gap:6px; cursor:default;
+  }
+  .privacy-dot { width:6px; height:6px; border-radius:50%; background:var(--good); flex-shrink:0; }
 
   .main { display:grid; grid-template-columns:1fr 290px; height:calc(100vh - 55px); height:calc(100dvh - 55px); overflow:hidden; }
 
@@ -137,6 +142,26 @@
   .angle-val.good { color:var(--good); }
   .angle-val.warn { color:var(--warn); }
   .angle-val.bad  { color:var(--bad); }
+
+  /* ── Angle overlay on video ── */
+  #angleOverlay {
+    position:absolute; top:50px; right:12px;
+    display:none; flex-direction:column; gap:4px;
+    z-index:10; pointer-events:none;
+  }
+  .ov-row {
+    display:flex; align-items:center; justify-content:flex-end; gap:6px;
+    background:rgba(255,255,255,0.82); backdrop-filter:blur(3px);
+    padding:4px 8px; border-right:3px solid var(--border);
+  }
+  .ov-row.good { border-right-color:var(--good); }
+  .ov-row.warn { border-right-color:var(--warn); }
+  .ov-row.bad  { border-right-color:var(--bad);  }
+  .ov-label { font-size:0.5rem; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; }
+  .ov-val   { font-family:'Bebas Neue'; font-size:1.1rem; line-height:1; color:var(--accent); min-width:36px; text-align:right; }
+  .ov-val.good { color:var(--good); }
+  .ov-val.warn { color:var(--warn); }
+  .ov-val.bad  { color:var(--bad); }
 
   .feedback-list { display:flex; flex-direction:column; gap:5px; }
   .feedback-item {
@@ -256,6 +281,10 @@
 <header>
   <h1>Handstand Analyzer</h1>
   <span>MediaPipe Pose · modelComplexity 2</span>
+  <div class="privacy-note" title="All processing happens in your browser via WebAssembly. No video, image or pose data is ever uploaded or sent to any server.">
+    <div class="privacy-dot"></div>
+    100% local · no upload · no server · your video never leaves this device
+  </div>
 </header>
 
 <div class="main">
@@ -291,6 +320,8 @@
       <div id="loadingText">LOADING MEDIAPIPE...</div>
       <div id="loadingSub">First load ~25 MB · cached after that</div>
     </div>
+
+    <div id="angleOverlay"></div>
   </div>
 
   <!-- Mobile floating toggle -->
@@ -348,17 +379,18 @@
       </div>
     </div>
 
-    <div class="panel-section">
-      <div class="section-title">Joint Angles (averaged)</div>
-      <div class="angle-grid" id="angleGrid">
-        <div class="empty-state">Upload a file or start webcam</div>
-      </div>
-    </div>
-
     <div class="panel-section" style="flex:1">
       <div class="section-title">Coaching</div>
       <div class="feedback-list" id="feedbackList">
         <div class="empty-state">No data yet</div>
+      </div>
+    </div>
+
+    <div class="panel-section" style="text-align:center; padding:12px 16px;">
+      <div style="font-size:0.5rem; color:var(--muted); letter-spacing:1.5px; line-height:1.8;">
+        made by<br>
+        <a href="https://www.rene-smit.com" target="_blank" style="color:var(--accent); text-decoration:none; letter-spacing:2px; font-size:0.55rem;">René Smit</a><br>
+        <span style="font-size:0.48rem; opacity:0.6;">www.rene-smit.com</span>
       </div>
     </div>
   </div>
@@ -467,7 +499,9 @@ async function loadFile(event) {
   if (objURL) { URL.revokeObjectURL(objURL); objURL = null; }
   loading.style.display = 'flex';
   loadingText.textContent = 'LOADING MODEL...';
-  if (!poseReady) { await initPose(); poseReady = true; }
+  // Always recreate pose to avoid stale internal state between files
+  pose = null; poseReady = false;
+  await initPose(); poseReady = true;
   if (file.type.startsWith('image/')) await loadImage(file);
   else await loadVideo(file);
 }
@@ -485,6 +519,7 @@ async function loadImage(file) {
   controls.style.display = 'none';
   loading.style.display  = 'none';
   bestScore = 0;
+  hasBeenInverted = false;
   await pose.send({ image: inputImage });
 }
 
@@ -761,14 +796,15 @@ function colorScore(el, s) {
 }
 
 function renderPanel(angles, score) {
-  const pill = document.getElementById('orientPill');
-  const oTxt = document.getElementById('orientText');
+  const pill    = document.getElementById('orientPill');
+  const oTxt    = document.getElementById('orientText');
+  const overlay = document.getElementById('angleOverlay');
 
   if (!angles) {
     pill.className   = 'orient-pill';
     oTxt.textContent = 'NO POSE DETECTED';
-    banner.style.display = 'none';
-    document.getElementById('angleGrid').innerHTML    = '<div class="empty-state">No pose detected</div>';
+    banner.style.display   = 'none';
+    overlay.style.display  = 'none';
     document.getElementById('feedbackList').innerHTML = '<div class="empty-state">No data yet</div>';
     document.getElementById('scoreNow').textContent   = '—';
     document.getElementById('scoreBar').style.width   = '0%';
@@ -784,26 +820,23 @@ function renderPanel(angles, score) {
   if (score !== null) { nowEl.textContent = score; colorScore(nowEl, score); bar.style.width = score+'%'; }
   else                { nowEl.textContent = '—'; bar.style.width = '0%'; }
 
-  const grid     = document.getElementById('angleGrid');
+  // ── Angle overlay ──
+  const hasAny = ANGLE_DEFS.some(d => angles[d.key] !== null);
+  overlay.style.display = hasAny ? 'flex' : 'none';
+  overlay.innerHTML = '';
   const feedback = [];
-  grid.innerHTML = '';
 
   for (const def of ANGLE_DEFS) {
     const val     = angles[def.key];
     const q       = getQuality(def, val);
     const visible = val !== null;
-    const barPct  = val != null ? Math.min(100, (val/200)*100) : 0;
-    const barCol  = q === 'good' ? 'var(--good)' : q === 'warn' ? 'var(--warn)' : 'var(--bad)';
 
-    const card = document.createElement('div');
-    card.className = `angle-card${visible?' visible':''} ${visible?q:''}`;
-    card.innerHTML = `
-      <div>
-        <div class="angle-label">${def.label} <span class="angle-weight">${def.weight?def.weight+'%':''}</span></div>
-        <div class="angle-bar-wrap"><div class="angle-bar" style="width:${barPct}%;background:${barCol}"></div></div>
-      </div>
-      <div class="angle-val ${visible?q:''}">${val!=null?val+'°':'—'}</div>`;
-    grid.appendChild(card);
+    if (visible) {
+      const row = document.createElement('div');
+      row.className = `ov-row ${q}`;
+      row.innerHTML = `<span class="ov-label">${def.label}</span><span class="ov-val ${q}">${val}°</span>`;
+      overlay.appendChild(row);
+    }
 
     if (isInverted && visible && q !== 'good' && def.coach[q])
       feedback.push({ text: def.coach[q], cls: q });
