@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Char Infinite Bloom | Shadow & Intuitive Mentor</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --sage:        #7A9478;
+      --sage-light:  #A8BEA6;
+      --sage-subtle: #EEF2EC;
+      --clay:        #C4784A;
+      --clay-subtle: #F5EDE4;
+      --cream:       #FAF7F2;
+      --cream-2:     #F2EDE4;
+      --warm-white:  #FDFCF9;
+      --parchment:   #EDE8DF;
+      --bark:        #2A1F17;
+      --bark-2:      #4A3A2E;
+      --bark-muted:  #8A7060;
+      --gold:        #C9A84C;
+      --shadow-sm:   0 1px 4px rgba(42,31,23,0.08), 0 0 0 1px rgba(42,31,23,0.04);
+      --shadow-md:   0 4px 20px rgba(42,31,23,0.10), 0 1px 6px rgba(42,31,23,0.06);
+      --shadow-lg:   0 12px 48px rgba(42,31,23,0.12), 0 2px 10px rgba(42,31,23,0.06);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--bark);
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* Custom cursor */
+    .cursor {
+      position: fixed; top: 0; left: 0; z-index: 9999;
+      pointer-events: none; mix-blend-mode: multiply;
+    }
+    .cursor-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--clay); transform: translate(-50%, -50%);
+      transition: transform 0.1s ease;
+    }
+    .cursor-ring {
+      position: fixed; top: 0; left: 0; z-index: 9998; pointer-events: none;
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1.5px solid var(--sage); transform: translate(-50%, -50%);
+      transition: transform 0.18s ease, width 0.2s ease, height 0.2s ease, opacity 0.2s ease;
+      opacity: 0.7;
+    }
+    body:has(a:hover) .cursor-ring,
+    body:has(button:hover) .cursor-ring { width: 52px; height: 52px; opacity: 0.4; }
+
+    /* Nav */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 20px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: linear-gradient(to bottom, rgba(250,247,242,0.95) 0%, rgba(250,247,242,0) 100%);
+      backdrop-filter: blur(4px);
+      transition: background 0.4s ease;
+    }
+    nav.scrolled { background: rgba(250,247,242,0.97); backdrop-filter: blur(12px); }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem; font-weight: 500; letter-spacing: 0.04em;
+      color: var(--bark); text-decoration: none;
+    }
+    .nav-logo span { color: var(--sage); }
+    .nav-links { display: flex; gap: 36px; list-style: none; }
+    .nav-links a {
+      font-size: 0.8rem; font-weight: 400; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--bark-2);
+      text-decoration: none; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--clay); }
+    .nav-cta {
+      background: var(--clay); color: white !important;
+      padding: 10px 22px; border-radius: 50px;
+      transition: background 0.2s, transform 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--bark) !important; transform: translateY(-1px); }
+
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: grid; grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 120px 48px 80px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 70% 50%, rgba(168,190,166,0.18) 0%, transparent 70%),
+                  radial-gradient(ellipse 40% 40% at 20% 80%, rgba(196,120,74,0.10) 0%, transparent 60%);
+    }
+    .hero-text { position: relative; z-index: 2; max-width: 560px; }
+    .hero-eyebrow {
+      font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--sage); font-weight: 500; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .hero-eyebrow::before {
+      content: ''; width: 32px; height: 1px; background: var(--sage);
+    }
+    .hero-h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(3.4rem, 5.5vw, 5.2rem);
+      font-weight: 400; line-height: 1.05;
+      color: var(--bark); margin-bottom: 28px;
+    }
+    .hero-h1 em {
+      font-style: italic; color: var(--clay);
+      display: block; font-size: 1.12em;
+    }
+    .hero-sub {
+      font-size: 1.05rem; line-height: 1.75; color: var(--bark-2);
+      font-weight: 300; margin-bottom: 44px; max-width: 460px;
+    }
+    .hero-sub strong { font-weight: 500; color: var(--bark); }
+    .hero-buttons { display: flex; gap: 16px; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--clay); color: white;
+      padding: 15px 34px; border-radius: 50px;
+      font-size: 0.85rem; font-weight: 500; letter-spacing: 0.05em;
+      text-decoration: none; transition: all 0.25s ease;
+      box-shadow: 0 4px 20px rgba(196,120,74,0.35);
+    }
+    .btn-primary:hover { background: var(--bark); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(196,120,74,0.3); }
+    .btn-ghost {
+      border: 1.5px solid var(--parchment); color: var(--bark-2);
+      padding: 14px 32px; border-radius: 50px;
+      font-size: 0.85rem; font-weight: 400; letter-spacing: 0.04em;
+      text-decoration: none; transition: all 0.25s ease;
+    }
+    .btn-ghost:hover { border-color: var(--sage); color: var(--sage); }
+
+    /* Hero image side */
+    .hero-visual { position: relative; z-index: 2; display: flex; justify-content: flex-end; }
+    .hero-photo-wrap {
+      position: relative; width: 480px; max-width: 100%;
+    }
+    .hero-photo-wrap::before {
+      content: ''; position: absolute;
+      top: -24px; left: -24px;
+      width: 100%; height: 100%;
+      border: 1.5px solid var(--sage-light);
+      border-radius: 200px 200px 120px 120px;
+      z-index: 0; opacity: 0.5;
+      animation: float-border 6s ease-in-out infinite;
+    }
+    @keyframes float-border { 0%,100% { transform: translate(0,0) rotate(0deg); } 50% { transform: translate(-4px, -8px) rotate(0.5deg); } }
+    .hero-photo {
+      width: 100%; aspect-ratio: 3/4; object-fit: cover;
+      border-radius: 200px 200px 120px 120px;
+      position: relative; z-index: 1;
+      box-shadow: var(--shadow-lg);
+    }
+    .hero-tag {
+      position: absolute; z-index: 3;
+      background: var(--warm-white); border-radius: 50px;
+      padding: 10px 18px; box-shadow: var(--shadow-md);
+      font-size: 0.78rem; font-weight: 500; color: var(--bark);
+      display: flex; align-items: center; gap: 8px;
+      animation: tag-float 4s ease-in-out infinite;
+    }
+    .hero-tag .tag-icon { font-size: 1rem; }
+    .hero-tag-1 { top: 15%; left: -40px; animation-delay: 0s; }
+    .hero-tag-2 { bottom: 30%; right: -36px; animation-delay: 1.5s; }
+    .hero-tag-3 { bottom: 15%; left: -20px; animation-delay: 0.8s; }
+    @keyframes tag-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+    /* Scroll indicator */
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--bark-muted);
+    }
+    .scroll-line { width: 1px; height: 40px; background: var(--parchment); position: relative; overflow: hidden; }
+    .scroll-line::after {
+      content: ''; position: absolute; top: -100%; left: 0;
+      width: 100%; height: 100%; background: var(--clay);
+      animation: scroll-drop 2s ease-in-out infinite;
+    }
+    @keyframes scroll-drop { 0% { top: -100%; } 100% { top: 200%; } }
+
+    /* Marquee */
+    .marquee-wrap {
+      background: var(--bark); overflow: hidden;
+      padding: 16px 0;
+    }
+    .marquee { display: flex; gap: 0; animation: marquee-run 28s linear infinite; }
+    .marquee-item {
+      white-space: nowrap; padding: 0 32px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.1rem; font-style: italic; font-weight: 300;
+      color: var(--parchment); display: flex; align-items: center; gap: 24px;
+    }
+    .marquee-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--sage-light); display: inline-block; }
+    @keyframes marquee-run { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+
+    /* Section base */
+    section { padding: 96px 48px; }
+    .section-eyebrow {
+      font-size: 0.72rem; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--sage); font-weight: 500; margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.4rem, 4vw, 3.6rem); font-weight: 400; line-height: 1.1;
+      color: var(--bark); margin-bottom: 20px;
+    }
+    .section-title em { font-style: italic; color: var(--clay); }
+
+    /* About */
+    .about { background: var(--warm-white); }
+    .about-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.1fr; gap: 80px; align-items: center; }
+    .about-photos { position: relative; height: 580px; }
+    .about-img-1 {
+      position: absolute; top: 0; left: 0;
+      width: 72%; aspect-ratio: 4/5; object-fit: cover;
+      border-radius: 120px 24px 120px 24px;
+      box-shadow: var(--shadow-lg);
+    }
+    .about-img-2 {
+      position: absolute; bottom: 0; right: 0;
+      width: 54%; aspect-ratio: 3/4; object-fit: cover;
+      border-radius: 24px 120px 24px 120px;
+      box-shadow: var(--shadow-md);
+      border: 4px solid var(--warm-white);
+    }
+    .about-badge {
+      position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
+      background: var(--clay); color: white;
+      padding: 14px 22px; border-radius: 50px;
+      font-size: 0.82rem; font-weight: 500; white-space: nowrap;
+      box-shadow: 0 8px 24px rgba(196,120,74,0.4); z-index: 3;
+    }
+    .about-text .section-eyebrow { display: block; }
+    .about-body {
+      font-size: 1.02rem; line-height: 1.85; color: var(--bark-2);
+      font-weight: 300; margin-top: 24px;
+    }
+    .about-body p { margin-bottom: 18px; }
+    .about-body strong { color: var(--bark); font-weight: 500; }
+    .about-tags { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 32px; }
+    .about-tag {
+      background: var(--sage-subtle); color: var(--sage);
+      padding: 8px 16px; border-radius: 50px;
+      font-size: 0.78rem; font-weight: 500; letter-spacing: 0.04em;
+    }
+
+    /* Problem / You section */
+    .problem { background: var(--bark); position: relative; overflow: hidden; }
+    .problem::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 80% 50%, rgba(122,148,120,0.12) 0%, transparent 60%),
+                  radial-gradient(ellipse 40% 40% at 10% 80%, rgba(196,120,74,0.10) 0%, transparent 60%);
+    }
+    .problem-inner { max-width: 1200px; margin: 0 auto; position: relative; z-index: 2; }
+    .problem .section-eyebrow { color: var(--sage-light); }
+    .problem .section-title { color: #FAF7F2; }
+    .problem .section-title em { color: var(--clay); }
+    .problem-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+      margin-top: 60px; background: rgba(255,255,255,0.06);
+      border-radius: 24px; overflow: hidden;
+    }
+    .problem-card {
+      background: rgba(255,255,255,0.03); padding: 40px 32px;
+      transition: background 0.3s ease;
+    }
+    .problem-card:hover { background: rgba(255,255,255,0.07); }
+    .problem-icon { font-size: 2rem; margin-bottom: 20px; display: block; }
+    .problem-card h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.4rem; font-weight: 400; color: #FAF7F2;
+      margin-bottom: 12px; line-height: 1.25;
+    }
+    .problem-card p { font-size: 0.88rem; line-height: 1.75; color: rgba(250,247,242,0.55); font-weight: 300; }
+    .problem-cta-wrap { text-align: center; margin-top: 64px; }
+    .problem-quote {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.6rem, 3vw, 2.4rem); font-style: italic;
+      font-weight: 300; color: rgba(250,247,242,0.75);
+      max-width: 680px; margin: 0 auto 40px; line-height: 1.5;
+    }
+
+    /* Method */
+    .method { background: var(--cream-2); }
+    .method-inner { max-width: 1200px; margin: 0 auto; }
+    .method-steps { margin-top: 60px; display: grid; gap: 2px; }
+    .method-step {
+      display: grid; grid-template-columns: 80px 1fr;
+      gap: 32px; padding: 40px 0; border-bottom: 1px solid var(--parchment);
+      transition: all 0.3s ease;
+    }
+    .method-step:last-child { border-bottom: none; }
+    .step-num {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 3rem; font-weight: 300; color: var(--parchment);
+      line-height: 1; padding-top: 4px;
+      transition: color 0.3s ease;
+    }
+    .method-step:hover .step-num { color: var(--clay); }
+    .step-content h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.7rem; font-weight: 400; color: var(--bark);
+      margin-bottom: 10px; line-height: 1.2;
+    }
+    .step-content p { font-size: 0.92rem; line-height: 1.8; color: var(--bark-2); font-weight: 300; max-width: 560px; }
+    .step-tags { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .step-tag {
+      font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase;
+      background: var(--clay-subtle); color: var(--clay);
+      padding: 5px 12px; border-radius: 50px; font-weight: 500;
+    }
+
+    /* Testimonial / quote */
+    .quotes { background: var(--cream); }
+    .quotes-inner { max-width: 1100px; margin: 0 auto; }
+    .quotes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; margin-top: 52px; }
+    .quote-card {
+      background: var(--warm-white); padding: 36px 32px;
+      border-radius: 20px; box-shadow: var(--shadow-sm);
+      border: 1px solid var(--parchment);
+      position: relative; transition: all 0.3s ease;
+    }
+    .quote-card::before {
+      content: '"'; font-family: 'Cormorant Garamond', serif;
+      font-size: 5rem; font-weight: 300; color: var(--sage-subtle);
+      position: absolute; top: 8px; left: 20px; line-height: 1;
+    }
+    .quote-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+    .quote-text { font-size: 0.95rem; line-height: 1.82; color: var(--bark-2); font-weight: 300; margin-bottom: 20px; padding-top: 12px; }
+    .quote-author { font-size: 0.8rem; font-weight: 500; color: var(--bark); letter-spacing: 0.04em; }
+    .quote-sub { font-size: 0.72rem; color: var(--bark-muted); margin-top: 2px; }
+
+    /* Offer / Work with me */
+    .offer { background: var(--cream-2); }
+    .offer-inner { max-width: 1200px; margin: 0 auto; }
+    .offer-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 56px; }
+    .offer-card {
+      background: var(--warm-white);
+      border-radius: 24px; overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--parchment);
+      transition: all 0.3s ease;
+      display: flex; flex-direction: column;
+    }
+    .offer-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); }
+    .offer-card.featured {
+      background: var(--bark);
+      border-color: transparent;
+    }
+    .offer-top { padding: 36px 32px 24px; flex: 1; }
+    .offer-label {
+      font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+      font-weight: 600; margin-bottom: 12px; display: block;
+    }
+    .offer-card:not(.featured) .offer-label { color: var(--sage); }
+    .offer-card.featured .offer-label { color: var(--sage-light); }
+    .offer-name {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.8rem; font-weight: 400; line-height: 1.15;
+      margin-bottom: 16px;
+    }
+    .offer-card:not(.featured) .offer-name { color: var(--bark); }
+    .offer-card.featured .offer-name { color: #FAF7F2; }
+    .offer-desc {
+      font-size: 0.88rem; line-height: 1.78; font-weight: 300;
+    }
+    .offer-card:not(.featured) .offer-desc { color: var(--bark-2); }
+    .offer-card.featured .offer-desc { color: rgba(250,247,242,0.65); }
+    .offer-features { list-style: none; padding: 0 32px 32px; display: flex; flex-direction: column; gap: 10px; }
+    .offer-features li {
+      font-size: 0.83rem; padding-left: 20px; position: relative;
+      font-weight: 300;
+    }
+    .offer-card:not(.featured) .offer-features li { color: var(--bark-2); }
+    .offer-card.featured .offer-features li { color: rgba(250,247,242,0.6); }
+    .offer-features li::before {
+      content: '✦'; position: absolute; left: 0;
+      font-size: 0.6rem; top: 2px;
+    }
+    .offer-card:not(.featured) .offer-features li::before { color: var(--sage); }
+    .offer-card.featured .offer-features li::before { color: var(--gold); }
+    .offer-bottom { padding: 0 32px 32px; }
+    .offer-btn {
+      display: block; text-align: center; text-decoration: none;
+      padding: 13px 24px; border-radius: 50px;
+      font-size: 0.82rem; font-weight: 500; letter-spacing: 0.04em;
+      transition: all 0.25s ease;
+    }
+    .offer-card:not(.featured) .offer-btn {
+      border: 1.5px solid var(--parchment); color: var(--bark);
+    }
+    .offer-card:not(.featured) .offer-btn:hover { border-color: var(--clay); color: var(--clay); }
+    .offer-card.featured .offer-btn {
+      background: var(--clay); color: white;
+      box-shadow: 0 4px 20px rgba(196,120,74,0.4);
+    }
+    .offer-card.featured .offer-btn:hover { background: white; color: var(--bark); }
+
+    /* Philosophy / wisdom section */
+    .wisdom { background: var(--warm-white); }
+    .wisdom-inner { max-width: 900px; margin: 0 auto; text-align: center; }
+    .wisdom .section-title { margin-bottom: 48px; }
+    .wisdom-blocks { display: grid; gap: 24px; }
+    .wisdom-block {
+      background: var(--cream); border-radius: 20px; padding: 40px 48px;
+      border: 1px solid var(--parchment); position: relative; overflow: hidden;
+      transition: all 0.3s ease; text-align: left;
+    }
+    .wisdom-block:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .wisdom-block::after {
+      content: ''; position: absolute; right: -20px; top: -20px;
+      width: 120px; height: 120px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(122,148,120,0.12) 0%, transparent 70%);
+    }
+    .wisdom-block p {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.35rem; line-height: 1.65; font-weight: 300;
+      color: var(--bark); font-style: italic;
+    }
+    .wisdom-block .w-source { font-family: 'DM Sans', sans-serif; font-style: normal; font-size: 0.78rem; font-weight: 500; color: var(--sage); margin-top: 16px; display: block; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    /* Bodyscan CTA */
+    .bodyscan {
+      background: var(--clay); position: relative; overflow: hidden;
+      text-align: center; padding: 96px 48px;
+    }
+    .bodyscan::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 70% at 50% 50%, rgba(255,255,255,0.08) 0%, transparent 70%);
+    }
+    .bodyscan-inner { max-width: 640px; margin: 0 auto; position: relative; z-index: 2; }
+    .bodyscan h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.4rem, 4vw, 3.6rem); font-weight: 400;
+      color: white; line-height: 1.1; margin-bottom: 24px;
+    }
+    .bodyscan h2 em { font-style: italic; display: block; }
+    .bodyscan p { font-size: 1rem; color: rgba(255,255,255,0.78); line-height: 1.75; margin-bottom: 40px; font-weight: 300; }
+    .btn-white {
+      background: white; color: var(--clay);
+      padding: 16px 40px; border-radius: 50px;
+      font-size: 0.9rem; font-weight: 600; letter-spacing: 0.05em;
+      text-decoration: none; display: inline-block;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    }
+    .btn-white:hover { transform: translateY(-3px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .bodyscan-small { margin-top: 20px; font-size: 0.78rem; color: rgba(255,255,255,0.55); letter-spacing: 0.08em; }
+
+    /* Footer */
+    footer {
+      background: var(--bark); color: rgba(250,247,242,0.55);
+      padding: 64px 48px 40px;
+    }
+    .footer-inner { max-width: 1200px; margin: 0 auto; }
+    .footer-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 56px; flex-wrap: wrap; gap: 32px; }
+    .footer-brand .nav-logo { color: rgba(250,247,242,0.9); font-size: 1.5rem; }
+    .footer-brand p { font-size: 0.85rem; line-height: 1.7; margin-top: 12px; max-width: 280px; font-weight: 300; }
+    .footer-links h4 {
+      font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+      color: rgba(250,247,242,0.35); font-weight: 500; margin-bottom: 16px;
+    }
+    .footer-links ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-links a { color: rgba(250,247,242,0.55); text-decoration: none; font-size: 0.88rem; transition: color 0.2s; }
+    .footer-links a:hover { color: rgba(250,247,242,0.9); }
+    .footer-bottom { border-top: 1px solid rgba(255,255,255,0.07); padding-top: 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .footer-bottom p { font-size: 0.78rem; }
+    .social-links { display: flex; gap: 16px; }
+    .social-link {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; color: rgba(250,247,242,0.55);
+      text-decoration: none; transition: all 0.2s ease;
+    }
+    .social-link:hover { border-color: var(--sage-light); color: var(--sage-light); }
+
+    /* Animations */
+    .fade-up { opacity: 0; transform: translateY(30px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      nav { padding: 20px 32px; }
+      .hero { grid-template-columns: 1fr; padding: 120px 32px 80px; }
+      .hero-visual { justify-content: center; margin-top: 48px; }
+      .hero-photo-wrap { width: 360px; }
+      section { padding: 72px 32px; }
+      .about-inner { grid-template-columns: 1fr; gap: 48px; }
+      .about-photos { height: 440px; }
+      .problem-grid { grid-template-columns: 1fr; }
+      .offer-cards { grid-template-columns: 1fr; max-width: 480px; }
+      .quotes-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      nav { padding: 16px 20px; }
+      .nav-links { display: none; }
+      section { padding: 56px 20px; }
+      .hero { padding: 100px 20px 64px; }
+      .hero-tag { display: none; }
+      .footer-top { flex-direction: column; }
+      body { cursor: auto; }
+      .cursor, .cursor-ring { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cursor"><div class="cursor-dot"></div></div>
+<div class="cursor-ring" id="cursor-ring"></div>
+
+<!-- Nav -->
+<nav id="main-nav">
+  <a href="#" class="nav-logo">Char <span>∞</span> Bloom</a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#method">Method</a></li>
+    <li><a href="#work">Work With Me</a></li>
+    <li><a href="#bodyscan" class="nav-cta">Free Body Scan</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-text fade-up">
+    <p class="hero-eyebrow">Shadow & Intuitive Mentor</p>
+    <h1 class="hero-h1">
+      Stop looping.<br>
+      <em>Start becoming.</em>
+    </h1>
+    <p class="hero-sub">
+      You're aware. You've done the work. So why do the same patterns keep showing up?<br><br>
+      <strong>Because awareness doesn't reprogram what's stored in your nervous system, your energetic field, your blind spots.</strong> I help you find the root — and close the loop for good.
+    </p>
+    <div class="hero-buttons">
+      <a href="#bodyscan" class="btn-primary">Comment BODYSCAN →</a>
+      <a href="#about" class="btn-ghost">Meet Charlotte</a>
+    </div>
+  </div>
+  <div class="hero-visual fade-up" style="transition-delay:0.2s">
+    <div class="hero-photo-wrap">
+      <img src="img/Screenshot 2026-04-06 105519.png" alt="Charlotte" class="hero-photo">
+      <div class="hero-tag hero-tag-1"><span class="tag-icon">𓂀</span> Shadow Work</div>
+      <div class="hero-tag hero-tag-2"><span class="tag-icon">🌺</span> Digital Nomad</div>
+      <div class="hero-tag hero-tag-3"><span class="tag-icon">✦</span> Loop Closer</div>
+    </div>
+  </div>
+  <div class="scroll-hint"><span>scroll</span><div class="scroll-line"></div></div>
+</section>
+
+<!-- Marquee -->
+<div class="marquee-wrap">
+  <div class="marquee">
+    <div class="marquee-item">Shadow Work <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Nervous System Regulation <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Somatic Release <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Intuition Development <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Break the Pattern <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Energy Alchemy <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Subconscious Reprogramming <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Shadow Work <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Nervous System Regulation <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Somatic Release <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Intuition Development <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Break the Pattern <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Energy Alchemy <span class="marquee-dot"></span></div>
+    <div class="marquee-item">Subconscious Reprogramming <span class="marquee-dot"></span></div>
+  </div>
+</div>
+
+<!-- About -->
+<section class="about" id="about">
+  <div class="about-inner">
+    <div class="about-photos fade-up">
+      <img src="img/Screenshot 2026-04-06 105828.png" alt="Charlotte" class="about-img-1">
+      <img src="img/Screenshot 2026-04-06 105811.png" alt="Charlotte practicing yoga" class="about-img-2">
+      <div class="about-badge">✦ Grounded Psychic Healer</div>
+    </div>
+    <div class="about-text fade-up" style="transition-delay:0.15s">
+      <span class="section-eyebrow">Hey, I'm Charlotte</span>
+      <h2 class="section-title">Energy Alchemist.<br><em>Loop Closer.</em></h2>
+      <div class="about-body">
+        <p>I'm a digital nomad, adventure-lover, and — fair warning — very sarcastic. I've had my darker days too. I kept myself isolated through the void phase, and I didn't share it with many people. But I finally feel <strong>embodied, grounded, and fully in my element</strong>.</p>
+        <p>I'm not here to tell you what you want to hear. I'm here to help you <strong>see what's actually inhibiting your transformation</strong> — the subconscious beliefs and interference patterns keeping you stuck in the loop.</p>
+        <p>This is multi-dimensional work: energetic, somatic, subconscious. I've lived this transformation myself, which is why I can guide it safely in others.</p>
+        <p><strong>I call out bullsh*t — including my own.</strong></p>
+      </div>
+      <div class="about-tags">
+        <span class="about-tag">🌿 Energy Alchemist</span>
+        <span class="about-tag">♏ Scorpio</span>
+        <span class="about-tag">✈️ Digital Nomad</span>
+        <span class="about-tag">🧠 Somatic Work</span>
+        <span class="about-tag">𓂀 Intuitive</span>
+        <span class="about-tag">🎨 Freelance Designer</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Problem -->
+<section class="problem" id="problem">
+  <div class="problem-inner">
+    <p class="section-eyebrow fade-up">Sound familiar?</p>
+    <h2 class="section-title fade-up">You're doing <em>everything right.</em><br>So why are you still looping?</h2>
+    <div class="problem-grid fade-up">
+      <div class="problem-card">
+        <span class="problem-icon">🔁</span>
+        <h3>The same relationship dynamics keep showing up</h3>
+        <p>Different person, same wound. Your body is running a script it wrote years ago — and it doesn't care that you've done therapy.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-icon">😶‍🌫️</span>
+        <h3>Still feeling unworthy despite the affirmations</h3>
+        <p>Affirmations don't reach the nervous system. They don't touch your energetic field. They don't clear ancestral conditioning stored at the cellular level.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-icon">🚶‍♀️</span>
+        <h3>Stuck in survival mode even while "doing the work"</h3>
+        <p>You've tried meditation, breathwork, pop manifestation. You know your patterns. But knowing isn't the same as releasing.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-icon">😮‍💨</span>
+        <h3>People-pleasing and struggling with boundaries</h3>
+        <p>Saying yes when you mean no. Shrinking. Abandoning yourself to keep the peace. Your nervous system learned this was the only way to stay safe.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-icon">🌀</span>
+        <h3>Triggered by people who "shouldn't" trigger you</h3>
+        <p>He's lovely, but you're walking on eggshells anyway. The body doesn't know the difference between then and now — until you show it.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-icon">✨</span>
+        <h3>You know there's more — you just can't get there</h3>
+        <p>A F*CK YES life. Real freedom. Intuition you trust. You can feel it. The gap between here and there is exactly where I work.</p>
+      </div>
+    </div>
+    <div class="problem-cta-wrap fade-up">
+      <p class="problem-quote">"Awareness doesn't reprogram what's running at the subconscious level. These are your blind spots."</p>
+      <a href="#bodyscan" class="btn-primary">Start with the Body Scan →</a>
+    </div>
+  </div>
+</section>
+
+<!-- Method -->
+<section class="method" id="method">
+  <div class="method-inner">
+    <p class="section-eyebrow fade-up">How we work</p>
+    <h2 class="section-title fade-up">The system that <em>actually works.</em></h2>
+    <div class="method-steps">
+      <div class="method-step fade-up">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <h3>Become Aware → Find the Blind Spot</h3>
+          <p>We start where you are — naturally intuitive, self-aware, but spinning. The body scan reveals what you can't see from inside the pattern. We locate the belief, the interference, the block you didn't know was there.</p>
+          <div class="step-tags"><span class="step-tag">Intuition Work</span><span class="step-tag">Body Scan</span></div>
+        </div>
+      </div>
+      <div class="method-step fade-up">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <h3>Get to the Root</h3>
+          <p>Not the story — the source. We go into the nervous system, the energetic field, the subconscious mind, and in some cases the ancestral line. Conditioning stored in the DNA doesn't respond to surface-level tools.</p>
+          <div class="step-tags"><span class="step-tag">Subconscious</span><span class="step-tag">Somatic</span><span class="step-tag">Energetic</span></div>
+        </div>
+      </div>
+      <div class="method-step fade-up">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <h3>Regulate, Release & Close the Loop</h3>
+          <p>This is the part most healing misses. We don't just understand the pattern — we work somatically to release what's stored in the body, regulate the nervous system, and close the loop so the change actually manifests in your life.</p>
+          <div class="step-tags"><span class="step-tag">Breathwork</span><span class="step-tag">Fascia Release</span><span class="step-tag">Energy Healing</span></div>
+        </div>
+      </div>
+      <div class="method-step fade-up">
+        <div class="step-num">04</div>
+        <div class="step-content">
+          <h3>Embody the New Pattern</h3>
+          <p>Real change looks different. It's not dramatic — it's quiet. New decisions feel natural. Triggers lose their charge. Relationships shift. Your body knows it's safe to receive what you've been asking for.</p>
+          <div class="step-tags"><span class="step-tag">Integration</span><span class="step-tag">Embodiment</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Wisdom / Quotes from her content -->
+<section class="wisdom">
+  <div class="wisdom-inner">
+    <p class="section-eyebrow">Philosophy</p>
+    <h2 class="section-title">Truths I live by</h2>
+    <div class="wisdom-blocks">
+      <div class="wisdom-block fade-up">
+        <p>"We cannot control the perceptions of other people. If people want to believe you're too much — let them. The right people will not be intimidated by you. They will love you for exactly who you are."</p>
+        <span class="w-source">On self-worth & releasing the need for approval</span>
+      </div>
+      <div class="wisdom-block fade-up">
+        <p>"Talking to your body IS talking to your higher self. After breathwork, I drop in, tune into where the energy is sitting, breathe into it, and ask: what belief is this? And my body tells me. This isn't weird. This is the most natural thing we've forgotten how to do."</p>
+        <span class="w-source">On somatic intuition work</span>
+      </div>
+      <div class="wisdom-block fade-up">
+        <p>"Your nervous system holds onto trauma from the past. Self-regulating is the new flex and superpower. The body wants to move what the mind has already processed — so shake, dance, release."</p>
+        <span class="w-source">On nervous system regulation</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Work with me -->
+<section class="offer" id="work">
+  <div class="offer-inner">
+    <p class="section-eyebrow fade-up">Work with Charlotte</p>
+    <h2 class="section-title fade-up">Choose your <em>path.</em></h2>
+    <div class="offer-cards">
+      <div class="offer-card fade-up">
+        <div class="offer-top">
+          <span class="offer-label">Entry Point</span>
+          <h3 class="offer-name">The Body Scan</h3>
+          <p class="offer-desc">Your starting point. Reveals what you can't see from inside the pattern. A guided session to identify the subconscious interference keeping you looping.</p>
+        </div>
+        <ul class="offer-features">
+          <li>Guided body scan session</li>
+          <li>Identify your core blind spot</li>
+          <li>Personalised findings report</li>
+          <li>Next step recommendations</li>
+        </ul>
+        <div class="offer-bottom">
+          <a href="#bodyscan" class="offer-btn">Comment BODYSCAN</a>
+        </div>
+      </div>
+      <div class="offer-card featured fade-up" style="transition-delay:0.1s">
+        <div class="offer-top">
+          <span class="offer-label">Most Popular</span>
+          <h3 class="offer-name">1:1 Shadow Work Mentoring</h3>
+          <p class="offer-desc">Deep-dive container. We work through the root — energetically, somatically, subconsciously — until the loop actually closes and change manifests in your life.</p>
+        </div>
+        <ul class="offer-features">
+          <li>Multi-dimensional work (energy + somatic + subconscious)</li>
+          <li>Personalised session cadence</li>
+          <li>Nervous system regulation tools</li>
+          <li>Intuition development</li>
+          <li>Ongoing voice/text support</li>
+        </ul>
+        <div class="offer-bottom">
+          <a href="#bodyscan" class="offer-btn">Comment READY to apply</a>
+        </div>
+      </div>
+      <div class="offer-card fade-up" style="transition-delay:0.2s">
+        <div class="offer-top">
+          <span class="offer-label">Self-Paced</span>
+          <h3 class="offer-name">Intuition Activator</h3>
+          <p class="offer-desc">For women who want to strengthen their intuitive gifts, trust their inner knowing, and learn the breathwork + somatic tools at their own pace.</p>
+        </div>
+        <ul class="offer-features">
+          <li>Breathwork activation practices</li>
+          <li>Somatic release techniques</li>
+          <li>Fascia & body dialogue methods</li>
+          <li>Community access</li>
+        </ul>
+        <div class="offer-bottom">
+          <a href="#bodyscan" class="offer-btn">Join the waitlist</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonial quotes -->
+<section class="quotes">
+  <div class="quotes-inner">
+    <p class="section-eyebrow fade-up">Real results</p>
+    <h2 class="section-title fade-up">The loop <em>closed.</em></h2>
+    <div class="quotes-grid">
+      <div class="quote-card fade-up">
+        <p class="quote-text">I'd done years of therapy and still found myself in the same relationship patterns. After working with Charlotte, something actually shifted. Not just in my understanding — in my body. I stopped bracing.</p>
+        <p class="quote-author">S.M.</p>
+        <p class="quote-sub">1:1 Shadow Work container</p>
+      </div>
+      <div class="quote-card fade-up" style="transition-delay:0.1s">
+        <p class="quote-text">She doesn't sugarcoat anything. She called out exactly what I was avoiding, and she did it with so much care that I actually wanted to hear it. That's rare. Real change happened fast.</p>
+        <p class="quote-author">K.O.</p>
+        <p class="quote-sub">Body Scan + 1:1 Mentoring</p>
+      </div>
+      <div class="quote-card fade-up">
+        <p class="quote-text">I kept thinking I just needed to meditate more. Charlotte showed me the belief was in my nervous system — not my thoughts. Learning to actually talk to my body changed everything.</p>
+        <p class="quote-author">J.R.</p>
+        <p class="quote-sub">Intuition Activator</p>
+      </div>
+      <div class="quote-card fade-up" style="transition-delay:0.1s">
+        <p class="quote-text">The moment I understood my triggers were old trauma loops — not current reality — everything got quieter. I finally trust myself. That's the gift Charlotte gave me.</p>
+        <p class="quote-author">A.P.</p>
+        <p class="quote-sub">1:1 Shadow Work container</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="bodyscan" id="bodyscan">
+  <div class="bodyscan-inner fade-up">
+    <h2>Your body already knows<br><em>what you can't see yet.</em></h2>
+    <p>The Body Scan is your starting point. It reveals the subconscious interference and nervous system patterns keeping you in the loop — the blind spots that no amount of affirmations or meditation has been able to reach.</p>
+    <a href="https://instagram.com/charinfinitebloom" class="btn-white" target="_blank">Comment BODYSCAN on Instagram →</a>
+    <p class="bodyscan-small">Or DM Charlotte directly at @charinfinitebloom</p>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="nav-logo">Char <span style="color:var(--sage-light)">∞</span> Bloom</a>
+        <p>Charlotte | Women's Shadow & Intuitive Mentor. Helping you break the loop, regulate your nervous system, and step into a F*CK YES life.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="#about">About Charlotte</a></li>
+          <li><a href="#method">The Method</a></li>
+          <li><a href="#work">Work With Me</a></li>
+          <li><a href="#bodyscan">Free Body Scan</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Connect</h4>
+        <ul>
+          <li><a href="https://instagram.com/charinfinitebloom" target="_blank">@charinfinitebloom</a></li>
+          <li><a href="#">TikTok</a></li>
+          <li><a href="#">Newsletter</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2025 Char Infinite Bloom. Made with 🌺 somewhere nomadic.</p>
+      <div class="social-links">
+        <a href="https://instagram.com/charinfinitebloom" class="social-link" target="_blank">ig</a>
+        <a href="#" class="social-link">tt</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Custom cursor
+  const cursor = document.getElementById('cursor');
+  const cursorRing = document.getElementById('cursor-ring');
+  let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0;
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX; mouseY = e.clientY;
+    cursor.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+  });
+  function animateRing() {
+    ringX += (mouseX - ringX) * 0.12;
+    ringY += (mouseY - ringY) * 0.12;
+    cursorRing.style.transform = `translate(${ringX}px, ${ringY}px)`;
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+
+  // Nav scroll
+  const nav = document.getElementById('main-nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 60);
+  });
+
+  // Fade-up on scroll
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // Trigger first elements on load
+  setTimeout(() => {
+    document.querySelectorAll('.hero .fade-up').forEach(el => el.classList.add('visible'));
+  }, 100);
+</script>
+</body>
+</html>
