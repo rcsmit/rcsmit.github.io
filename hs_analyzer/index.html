@@ -392,6 +392,7 @@ let objURL       = null;
 let bestScore = 0, bestTime = 0;
 let sideToDraw = 'left';
 let whiteLabels = false;
+let hasBeenInverted = false;
 
 const VIS = 0.5;
 
@@ -500,6 +501,7 @@ async function loadVideo(file) {
   controls.style.display = 'flex';
   loading.style.display  = 'none';
   bestScore = 0;
+  hasBeenInverted = false;
   document.getElementById('bestBtn').style.display = 'none';
   document.getElementById('scoreBest').textContent = '—';
   startVideoLoop();
@@ -634,6 +636,7 @@ function onResults(results) {
 
   const lm   = results.poseLandmarks;
   isInverted = detectInversion(lm);
+  if (isInverted) hasBeenInverted = true;
 
   drawSkeleton(lm, sideToDraw);
 
@@ -774,7 +777,7 @@ function renderPanel(angles, score) {
 
   pill.className   = 'orient-pill' + (isInverted ? ' inverted' : '');
   oTxt.textContent = isInverted ? 'INVERTED · HANDSTAND ✓' : 'UPRIGHT · NOT SCORED';
-  banner.style.display = isInverted ? 'none' : 'block';
+  banner.style.display = (hasBeenInverted && !isInverted) ? 'block' : 'none';
 
   const nowEl = document.getElementById('scoreNow');
   const bar   = document.getElementById('scoreBar');
