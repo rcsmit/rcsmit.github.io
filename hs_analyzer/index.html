@@ -163,6 +163,19 @@
   .ov-val.warn { color:var(--warn); }
   .ov-val.bad  { color:var(--bad); }
 
+  /* ── Torque overlay on video ── */
+  #torqueOverlay {
+    position:absolute; right:12px;
+    display:none; flex-direction:column; gap:4px;
+    z-index:10; pointer-events:none;
+  }
+  .ov-divider {
+    height:1px; background:rgba(0,0,0,0.1); margin:2px 0;
+  }
+  .ov-row.torque-row {
+    background:rgba(245,243,240,0.88);
+  }
+
   .feedback-list { display:flex; flex-direction:column; gap:5px; }
   .feedback-item {
     font-size:0.6rem; line-height:1.55; padding:7px 10px;
@@ -220,7 +233,6 @@
       height:100%;
     }
 
-    /* Panel floats over the video on the right */
     .panel {
       position:absolute;
       top:0; right:0; bottom:0;
@@ -238,7 +250,6 @@
       transform:translateX(0);
     }
 
-    /* Floating toggle button */
     #panelToggle {
       display:flex;
       position:absolute;
@@ -258,16 +269,12 @@
       border-bottom:1px solid rgba(221,221,221,0.4);
     }
 
-    /* Make score numbers slightly smaller on overlay */
     .score-num { font-size:1.8rem; }
 
-    /* Controls: top, below panel toggle on mobile */
     .controls { z-index:55; right:0; }
 
-    /* Push upload zone below the controls bar */
     #uploadZone { margin-top:60px; }
 
-    /* Banner offset for controls now at top */
     #notHandstandBanner { top:55px; }
   }
 
@@ -281,7 +288,7 @@
 <header>
   <h1>Handstand Analyzer</h1>
   <span>MediaPipe Pose · modelComplexity 2</span>
-
+  
 </header>
 
 <div class="main">
@@ -291,10 +298,10 @@
       <strong>Upload Video or Photo</strong>
       <p>MP4 · MOV · WEBM · JPG · PNG<br>
         <span style="font-size:.6rem;opacity:.5">or use Source buttons →</span></p>
-          <div class="privacy-note" title="All processing happens in your browser via WebAssembly. No video, image or pose data is ever uploaded or sent to any server.">
-            <div class="privacy-dot"></div>
-            100% local · no upload · no server · your video never leaves this device
-          </div>
+      <div class="privacy-note" title="All processing happens in your browser via WebAssembly. No video, image or pose data is ever uploaded or sent to any server.">
+        <div class="privacy-dot"></div>
+        100% local · no upload · no server · your video never leaves this device
+      </div>
     </div>
 
     <input type="file" id="fileInput" accept="video/*,image/*" onchange="loadFile(event)">
@@ -323,6 +330,7 @@
     </div>
 
     <div id="angleOverlay"></div>
+    <div id="torqueOverlay"></div>
   </div>
 
   <!-- Mobile floating toggle -->
@@ -429,6 +437,20 @@ let hasBeenInverted = false;
 
 const VIS = 0.5;
 
+// ─── Torque constants ─────────────────────────────────────────────────────────
+const G = 9.81;
+const SEGMENT_MASSES = {
+  hand:     0.6,
+  forearm:  2.2,
+  upperArm: 4,
+  torso:    24,
+  head:     7,
+  hips:     8.2,
+  thigh:    14,
+  shin:     6,
+  foot:     2
+};
+
 // ─── Angle definitions ────────────────────────────────────────────────────────
 const ANGLE_DEFS = [
   { key:'elbow',    label:'Elbow',    weight:20, ideal:180, tol:15,
@@ -500,7 +522,6 @@ async function loadFile(event) {
   if (objURL) { URL.revokeObjectURL(objURL); objURL = null; }
   loading.style.display = 'flex';
   loadingText.textContent = 'LOADING MODEL...';
-  // Always recreate pose to avoid stale internal state between files
   pose = null; poseReady = false;
   await initPose(); poseReady = true;
   if (file.type.startsWith('image/')) await loadImage(file);
@@ -656,6 +677,63 @@ function weightedScore(angles) {
   return used > 0 ? Math.round(score/used) : 0;
 }
 
+// ─── Torque calculation ───────────────────────────────────────────────────────
+function calcTorques(lm) {
+  const W = poseCanvas.width, H = poseCanvas.height;
+  const px = i => ({ x: lm[i].x * W, y: lm[i].y * H });
+
+  const isLeft = sideToDraw === 'left';
+  const wrist    = isLeft ? px(15) : px(16);
+  const elbow    = isLeft ? px(13) : px(14);
+  const shoulder = isLeft ? px(11) : px(12);
+  const hip      = isLeft ? px(23) : px(24);
+  const knee     = isLeft ? px(25) : px(26);
+  const ankle    = isLeft ? px(27) : px(28);
+  const foot     = isLeft ? px(31) : px(32);
+
+  // Check visibility — fall back gracefully
+  const side = isLeft ? [15,13,11,23,25,27,31] : [16,14,12,24,26,28,32];
+  if (side.some(i => (lm[i].visibility ?? 1) < VIS)) return null;
+
+  // Approximate each segment CoM as its midpoint
+  const segments = [
+    { mass: SEGMENT_MASSES.forearm,  com: { x:(wrist.x+elbow.x)/2,    y:(wrist.y+elbow.y)/2    }},
+    { mass: SEGMENT_MASSES.upperArm, com: { x:(elbow.x+shoulder.x)/2,  y:(elbow.y+shoulder.y)/2 }},
+    { mass: SEGMENT_MASSES.torso,    com: { x:(shoulder.x+hip.x)/2,    y:(shoulder.y+hip.y)/2   }},
+    { mass: SEGMENT_MASSES.head,     com: { x: shoulder.x,             y: shoulder.y - (shoulder.y - wrist.y) * 0.12 }},
+    { mass: SEGMENT_MASSES.hips,     com: { x:(hip.x+knee.x)/2,        y:(hip.y+knee.y)/2       }},
+    { mass: SEGMENT_MASSES.thigh,    com: { x:(hip.x+knee.x)/2,        y:(hip.y+knee.y)/2       }},
+    { mass: SEGMENT_MASSES.shin,     com: { x:(knee.x+ankle.x)/2,      y:(knee.y+ankle.y)/2     }},
+    { mass: SEGMENT_MASSES.foot,     com: { x:(ankle.x+foot.x)/2,      y:(ankle.y+foot.y)/2     }},
+  ];
+
+  // Scale px → metres: assume shoulder-to-wrist ≈ 0.6 m
+  const armLen = Math.sqrt((shoulder.x - wrist.x) ** 2 + (shoulder.y - wrist.y) ** 2);
+  const scale  = armLen > 10 ? 0.6 / armLen : 0.002;
+
+  let wristTorque    = 0;
+  let shoulderTorque = 0;
+
+  for (const seg of segments) {
+    const dx_w = (seg.com.x - wrist.x)    * scale;
+    const dx_s = (seg.com.x - shoulder.x) * scale;
+    wristTorque    += seg.mass * G * dx_w;
+    shoulderTorque += seg.mass * G * dx_s;
+  }
+
+  return {
+    wrist:    Math.round(wristTorque),
+    shoulder: Math.round(shoulderTorque)
+  };
+}
+
+function torqueQuality(val) {
+  const abs = Math.abs(val);
+  if (abs < 20) return 'good';
+  if (abs < 60) return 'warn';
+  return 'bad';
+}
+
 // ─── Inversion detection ──────────────────────────────────────────────────────
 function detectInversion(lm) {
   const wristY = (lm[15].y + lm[16].y) / 2;
@@ -668,7 +746,7 @@ function detectInversion(lm) {
 // ─── Pose results ─────────────────────────────────────────────────────────────
 function onResults(results) {
   ctx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
-  if (!results.poseLandmarks) { renderPanel(null, null); return; }
+  if (!results.poseLandmarks) { renderPanel(null, null, null); return; }
 
   const lm   = results.poseLandmarks;
   isInverted = detectInversion(lm);
@@ -676,8 +754,9 @@ function onResults(results) {
 
   drawSkeleton(lm, sideToDraw);
 
-  const angles = calcAngles(lm);
-  const score  = isInverted ? weightedScore(angles) : null;
+  const angles  = calcAngles(lm);
+  const score   = isInverted ? weightedScore(angles) : null;
+  const torques = isInverted ? calcTorques(lm) : null;
 
   if (activeSource === 'video' && isInverted && score !== null && score > bestScore) {
     bestScore = score;
@@ -689,7 +768,7 @@ function onResults(results) {
   }
 
   drawAnglesOnCanvas(lm, angles);
-  renderPanel(angles, score);
+  renderPanel(angles, score, torques);
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -796,16 +875,18 @@ function colorScore(el, s) {
   el.className = 'score-num' + (s >= 75 ? '' : s >= 50 ? ' warn' : ' bad');
 }
 
-function renderPanel(angles, score) {
+function renderPanel(angles, score, torques) {
   const pill    = document.getElementById('orientPill');
   const oTxt    = document.getElementById('orientText');
   const overlay = document.getElementById('angleOverlay');
+  const torqueOverlay = document.getElementById('torqueOverlay');
 
   if (!angles) {
     pill.className   = 'orient-pill';
     oTxt.textContent = 'NO POSE DETECTED';
-    banner.style.display   = 'none';
-    overlay.style.display  = 'none';
+    banner.style.display        = 'none';
+    overlay.style.display       = 'none';
+    torqueOverlay.style.display = 'none';
     document.getElementById('feedbackList').innerHTML = '<div class="empty-state">No data yet</div>';
     document.getElementById('scoreNow').textContent   = '—';
     document.getElementById('scoreBar').style.width   = '0%';
@@ -843,6 +924,41 @@ function renderPanel(angles, score) {
       feedback.push({ text: def.coach[q], cls: q });
   }
 
+  // ── Torque overlay — positioned just below the angle overlay ──
+  if (torques && isInverted) {
+    // Position torqueOverlay directly below angleOverlay
+    const angleBottom = overlay.getBoundingClientRect().bottom;
+    const videoAreaTop = overlay.parentElement.getBoundingClientRect().top;
+    const topOffset = angleBottom - videoAreaTop + 8;
+
+    torqueOverlay.style.display = 'flex';
+    torqueOverlay.style.top     = topOffset + 'px';
+
+    const sign = v => v >= 0 ? '+' : '';
+
+    const divider = document.createElement('div');
+    divider.className = 'ov-divider';
+
+    const wristRow    = document.createElement('div');
+    const shoulderRow = document.createElement('div');
+    const wq = torqueQuality(torques.wrist);
+    const sq = torqueQuality(torques.shoulder);
+
+    wristRow.className    = `ov-row torque-row ${wq}`;
+    shoulderRow.className = `ov-row torque-row ${sq}`;
+
+    wristRow.innerHTML    = `<span class="ov-label">Wrist τ</span><span class="ov-val ${wq}">${sign(torques.wrist)}${torques.wrist}<small style="font-size:.55rem;opacity:.7"> Nm</small></span>`;
+    shoulderRow.innerHTML = `<span class="ov-label">Shoulder τ</span><span class="ov-val ${sq}">${sign(torques.shoulder)}${torques.shoulder}<small style="font-size:.55rem;opacity:.7"> Nm</small></span>`;
+
+    torqueOverlay.innerHTML = '';
+    torqueOverlay.appendChild(divider);
+    torqueOverlay.appendChild(wristRow);
+    torqueOverlay.appendChild(shoulderRow);
+  } else {
+    torqueOverlay.style.display = 'none';
+  }
+
+  // ── Feedback list ──
   const fl = document.getElementById('feedbackList');
   if (!isInverted) {
     fl.innerHTML = '<div class="feedback-item warn">Get inverted to receive handstand coaching</div>';
