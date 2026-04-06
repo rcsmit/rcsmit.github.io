@@ -34,7 +34,7 @@
   header h1 { font-family:'Bebas Neue'; font-size:1.9rem; letter-spacing:3px; color:var(--accent); }
   header span { font-size:0.62rem; color:var(--muted); letter-spacing:2px; }
   .privacy-note {
-    margin-left:auto; font-size:0.55rem; color:var(--muted); letter-spacing:1px;
+    margin-left:auto; font-size:0.75rem; color:var(--text); letter-spacing:1px;
     display:flex; align-items:center; gap:6px; cursor:default;
   }
   .privacy-dot { width:6px; height:6px; border-radius:50%; background:var(--good); flex-shrink:0; }
@@ -281,10 +281,7 @@
 <header>
   <h1>Handstand Analyzer</h1>
   <span>MediaPipe Pose · modelComplexity 2</span>
-  <div class="privacy-note" title="All processing happens in your browser via WebAssembly. No video, image or pose data is ever uploaded or sent to any server.">
-    <div class="privacy-dot"></div>
-    100% local · no upload · no server · your video never leaves this device
-  </div>
+
 </header>
 
 <div class="main">
@@ -294,6 +291,10 @@
       <strong>Upload Video or Photo</strong>
       <p>MP4 · MOV · WEBM · JPG · PNG<br>
         <span style="font-size:.6rem;opacity:.5">or use Source buttons →</span></p>
+          <div class="privacy-note" title="All processing happens in your browser via WebAssembly. No video, image or pose data is ever uploaded or sent to any server.">
+            <div class="privacy-dot"></div>
+            100% local · no upload · no server · your video never leaves this device
+          </div>
     </div>
 
     <input type="file" id="fileInput" accept="video/*,image/*" onchange="loadFile(event)">
