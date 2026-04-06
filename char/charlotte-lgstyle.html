@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Charlotte | Shadow & Intuitive Mentor</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,400;1,600;1,700&family=Lora:ital,wght@0,400;0,500;1,400;1,500&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --teal:        #2D9096;
+      --teal-dark:   #1E6B70;
+      --teal-light:  #EAF5F6;
+      --terra:       #C4784A;
+      --terra-dark:  #A3603A;
+      --terra-light: #FAF0E8;
+      --charcoal:    #222222;
+      --mid:         #555555;
+      --light:       #888888;
+      --off-white:   #F9F7F4;
+      --white:       #FFFFFF;
+      --rule:        #E2DDD8;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Barlow', sans-serif; color: var(--charcoal); background: var(--white); }
+
+    /* ── NAV ─────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      background: var(--white);
+      border-bottom: 1px solid var(--rule);
+      padding: 0 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 68px;
+    }
+    .nav-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.1rem; font-weight: 700; letter-spacing: 0.04em;
+      color: var(--teal); text-decoration: none; line-height: 1.1;
+    }
+    .nav-logo span { display: block; font-size: 0.62rem; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mid); }
+    .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+    .nav-links a {
+      font-size: 0.82rem; font-weight: 500; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--charcoal);
+      text-decoration: none; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--teal); }
+    .nav-cta {
+      background: var(--terra) !important; color: white !important;
+      padding: 10px 20px; border-radius: 3px; white-space: nowrap;
+      transition: background 0.2s !important;
+    }
+    .nav-cta:hover { background: var(--terra-dark) !important; color: white !important; }
+
+    /* ── HERO ────────────────────────────── */
+    .hero {
+      display: grid; grid-template-columns: 340px 1fr;
+      min-height: 480px; background: var(--white);
+      padding: 0 40px 0 0; align-items: center;
+      max-width: 1140px; margin: 0 auto;
+      gap: 48px;
+    }
+    .hero-photo-col { align-self: flex-end; }
+    .hero-photo {
+      width: 100%; max-width: 340px; display: block;
+      object-fit: cover; object-position: top;
+      aspect-ratio: 3/4;
+    }
+    .hero-text { padding: 56px 0; }
+    .hero-h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(3.2rem, 6vw, 5.6rem);
+      font-weight: 900; line-height: 0.95;
+      text-transform: uppercase; letter-spacing: -0.01em;
+      color: var(--teal); margin-bottom: 8px;
+    }
+    .hero-h1 .line2 { color: var(--charcoal); }
+    .hero-h1 .line3 {
+      color: var(--charcoal);
+      border-bottom: 5px solid var(--terra);
+      display: inline-block; padding-bottom: 4px;
+    }
+    .hero-cta-btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--terra); color: white;
+      padding: 14px 26px; border-radius: 3px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.95rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; text-decoration: none;
+      margin: 28px 0 28px;
+      transition: background 0.2s;
+    }
+    .hero-cta-btn:hover { background: var(--terra-dark); }
+    .hero-cta-btn svg { width: 14px; height: 14px; fill: white; }
+    .hero-italic {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: 1.28rem; line-height: 1.55; color: var(--teal);
+      max-width: 560px; margin-bottom: 20px;
+    }
+    .hero-direct {
+      font-size: 1.05rem; line-height: 1.65; color: var(--charcoal);
+      max-width: 560px; font-weight: 400;
+    }
+    .hero-direct strong { font-weight: 600; }
+
+    /* ── TEAL BAND ───────────────────────── */
+    .band-teal { background: var(--teal); }
+    .band-terra { background: var(--terra); }
+    .band-charcoal { background: var(--charcoal); }
+    .band-offwhite { background: var(--off-white); }
+
+    /* ── BODY TEXT SECTION ───────────────── */
+    .body-text-section {
+      max-width: 780px; margin: 0 auto;
+      padding: 64px 40px;
+    }
+    .body-text-section p {
+      font-size: 1.0rem; line-height: 1.82; color: var(--charcoal);
+      margin-bottom: 20px; font-weight: 400;
+    }
+    .body-text-section p:last-child { margin-bottom: 0; }
+    .body-text-section a { color: var(--teal); text-decoration: underline; }
+    .inline-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--terra); color: white;
+      padding: 10px 22px; border-radius: 3px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.9rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; text-decoration: none !important;
+      margin-top: 12px; transition: background 0.2s;
+    }
+    .inline-cta:hover { background: var(--terra-dark); }
+
+    /* ── WHO I WORK WITH ─────────────────── */
+    .who-section { background: var(--off-white); }
+    .who-inner {
+      max-width: 1140px; margin: 0 auto;
+      padding: 72px 40px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start;
+    }
+    .section-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--terra);
+      margin-bottom: 16px; display: block;
+    }
+    .section-h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(2.4rem, 4vw, 3.8rem);
+      font-weight: 900; line-height: 0.95;
+      text-transform: uppercase; color: var(--charcoal);
+      margin-bottom: 28px;
+    }
+    .section-h2 em { color: var(--teal); font-style: normal; }
+    .who-list { list-style: none; display: flex; flex-direction: column; gap: 14px; margin-bottom: 32px; }
+    .who-list li {
+      font-size: 1.0rem; padding-left: 22px; position: relative;
+      line-height: 1.55; color: var(--charcoal);
+    }
+    .who-list li::before {
+      content: '▸'; position: absolute; left: 0;
+      color: var(--terra); font-size: 0.8rem; top: 3px;
+    }
+    .who-list li strong { font-weight: 600; }
+    .who-photo {
+      width: 100%; aspect-ratio: 4/5; object-fit: cover;
+      object-position: top; border-radius: 3px;
+    }
+
+    /* ── METHOD ──────────────────────────── */
+    .method-section { background: var(--teal); padding: 72px 40px; }
+    .method-inner { max-width: 1140px; margin: 0 auto; }
+    .method-section .section-label { color: rgba(255,255,255,0.6); }
+    .method-section .section-h2 { color: white; margin-bottom: 48px; }
+    .method-section .section-h2 em { color: rgba(255,255,255,0.65); font-style: italic; font-family: 'Lora', serif; text-transform: none; font-size: 0.85em; }
+    .method-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+      background: rgba(255,255,255,0.12); border-radius: 4px; overflow: hidden;
+    }
+    .method-card {
+      background: rgba(255,255,255,0.06); padding: 36px 28px;
+      transition: background 0.25s;
+    }
+    .method-card:hover { background: rgba(255,255,255,0.12); }
+    .method-num {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 3.5rem; font-weight: 900; color: rgba(255,255,255,0.18);
+      line-height: 1; margin-bottom: 16px;
+    }
+    .method-card h3 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.4rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.04em; color: white;
+      margin-bottom: 12px; line-height: 1.1;
+    }
+    .method-card p { font-size: 0.88rem; line-height: 1.72; color: rgba(255,255,255,0.65); font-weight: 300; }
+
+    /* ── TESTIMONIAL ─────────────────────── */
+    .testimonial-section { background: var(--white); padding: 80px 40px; text-align: center; }
+    .testimonial-quote {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(1.2rem, 2.2vw, 1.55rem);
+      line-height: 1.65; color: var(--charcoal);
+      max-width: 760px; margin: 0 auto 24px;
+    }
+    .testimonial-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.9rem; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--mid);
+    }
+    .testimonial-dots { display: flex; justify-content: center; gap: 8px; margin-top: 20px; }
+    .testimonial-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); cursor: pointer; transition: background 0.2s; }
+    .testimonial-dot.active { background: var(--teal); }
+
+    /* ── INSTAGRAM STRIP ─────────────────── */
+    .instagram-section { background: var(--off-white); padding: 56px 40px; }
+    .instagram-inner { max-width: 1140px; margin: 0 auto; }
+    .instagram-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+    }
+    .instagram-header h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 2rem; font-weight: 900; text-transform: uppercase;
+      color: var(--charcoal);
+    }
+    .instagram-handle { color: var(--teal); font-size: 0.88rem; font-weight: 500; text-decoration: none; }
+    .insta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+    .insta-tile {
+      aspect-ratio: 1; background: var(--rule); overflow: hidden;
+      position: relative; cursor: pointer;
+    }
+    .insta-tile img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.3s ease; }
+    .insta-tile:hover img { transform: scale(1.05); }
+    .insta-tile-placeholder {
+      width: 100%; height: 100%; background: linear-gradient(135deg, var(--teal-light), var(--off-white));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; color: var(--teal);
+    }
+    .insta-cta { margin-top: 24px; display: flex; gap: 14px; flex-wrap: wrap; }
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 2px solid var(--teal); color: var(--teal);
+      padding: 10px 22px; border-radius: 3px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.88rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-outline:hover { background: var(--teal); color: white; }
+    .btn-insta {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--terra); color: white;
+      padding: 10px 22px; border-radius: 3px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.88rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; text-decoration: none;
+      transition: background 0.2s;
+    }
+    .btn-insta:hover { background: var(--terra-dark); }
+
+    /* ── BODYSCAN CTA BAND ───────────────── */
+    .bodyscan-band { background: var(--terra); padding: 72px 40px; text-align: center; }
+    .bodyscan-inner { max-width: 680px; margin: 0 auto; }
+    .bodyscan-band h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(2.6rem, 5vw, 4.4rem);
+      font-weight: 900; text-transform: uppercase; line-height: 0.95;
+      color: white; margin-bottom: 24px;
+    }
+    .bodyscan-band h2 em {
+      font-family: 'Lora', serif; font-style: italic;
+      font-weight: 400; text-transform: none;
+      display: block; font-size: 0.72em; color: rgba(255,255,255,0.8);
+    }
+    .bodyscan-band p { font-size: 1.0rem; line-height: 1.72; color: rgba(255,255,255,0.85); margin-bottom: 36px; }
+    .btn-white-terra {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: white; color: var(--terra);
+      padding: 15px 34px; border-radius: 3px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1rem; font-weight: 800; letter-spacing: 0.1em;
+      text-transform: uppercase; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-white-terra:hover { background: var(--charcoal); color: white; }
+    .bodyscan-band .note { font-size: 0.78rem; color: rgba(255,255,255,0.55); margin-top: 16px; letter-spacing: 0.08em; }
+
+    /* ── PRESS LOGOS ─────────────────────── */
+    .press-section { background: var(--white); padding: 56px 40px; }
+    .press-inner { max-width: 1140px; margin: 0 auto; }
+    .press-label {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--light); text-align: center;
+      margin-bottom: 32px;
+    }
+    .press-logos { display: flex; align-items: center; justify-content: center; gap: 48px; flex-wrap: wrap; }
+    .press-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.4rem; font-weight: 900; letter-spacing: 0.04em;
+      color: var(--light); text-transform: uppercase; opacity: 0.55;
+      transition: opacity 0.2s;
+    }
+    .press-logo:hover { opacity: 1; }
+    .press-logo.serif { font-family: 'Lora', serif; text-transform: none; letter-spacing: 0; font-weight: 700; }
+
+    /* ── OFFER SECTION ───────────────────── */
+    .offer-section { background: var(--off-white); padding: 72px 40px; }
+    .offer-inner { max-width: 1140px; margin: 0 auto; }
+    .offer-section .section-h2 { margin-bottom: 48px; }
+    .offer-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+    .offer-card {
+      background: var(--white); padding: 40px 32px;
+      border-top: 5px solid var(--rule);
+      transition: border-color 0.25s;
+      display: flex; flex-direction: column;
+    }
+    .offer-card:hover { border-top-color: var(--teal); }
+    .offer-card.highlight { border-top-color: var(--terra); background: var(--charcoal); }
+    .offer-flag {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--terra); margin-bottom: 12px;
+    }
+    .offer-card.highlight .offer-flag { color: var(--terra); }
+    .offer-card h3 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.7rem; font-weight: 900; text-transform: uppercase;
+      line-height: 1.0; letter-spacing: 0.02em;
+      color: var(--charcoal); margin-bottom: 16px;
+    }
+    .offer-card.highlight h3 { color: white; }
+    .offer-card p {
+      font-size: 0.9rem; line-height: 1.75; color: var(--mid);
+      margin-bottom: 24px; flex: 1;
+    }
+    .offer-card.highlight p { color: rgba(255,255,255,0.58); }
+    .offer-card ul { list-style: none; margin-bottom: 28px; display: flex; flex-direction: column; gap: 8px; }
+    .offer-card ul li {
+      font-size: 0.85rem; padding-left: 18px; position: relative;
+      color: var(--mid); line-height: 1.5;
+    }
+    .offer-card.highlight ul li { color: rgba(255,255,255,0.55); }
+    .offer-card ul li::before {
+      content: '▸'; position: absolute; left: 0;
+      color: var(--teal); font-size: 0.75rem;
+    }
+    .offer-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.82rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; text-decoration: none;
+      color: var(--teal); border-bottom: 2px solid var(--teal);
+      padding-bottom: 2px; transition: color 0.2s, border-color 0.2s;
+      align-self: flex-start; margin-top: auto;
+    }
+    .offer-card.highlight .offer-link { color: var(--terra); border-color: var(--terra); }
+    .offer-link:hover { color: var(--terra); border-color: var(--terra); }
+
+    /* ── ARTICLES ────────────────────────── */
+    .articles-section {
+      background: var(--white);
+      display: grid; grid-template-columns: 340px 1fr;
+      max-width: 1140px; margin: 0 auto;
+      padding: 72px 40px;
+      gap: 64px; align-items: start;
+    }
+    .articles-left p {
+      font-size: 0.92rem; line-height: 1.78; color: var(--mid);
+      margin-top: 16px; margin-bottom: 24px;
+    }
+    .email-form { display: flex; flex-direction: column; gap: 10px; max-width: 280px; }
+    .email-form input {
+      padding: 11px 14px; border: 1.5px solid var(--rule);
+      border-radius: 3px; font-family: 'Barlow', sans-serif;
+      font-size: 0.88rem; color: var(--charcoal);
+      background: var(--off-white);
+    }
+    .email-form input:focus { outline: none; border-color: var(--teal); }
+    .email-form button {
+      padding: 11px 20px; background: var(--terra); color: white;
+      border: none; border-radius: 3px; cursor: pointer;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.88rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; transition: background 0.2s;
+    }
+    .email-form button:hover { background: var(--terra-dark); }
+    .articles-list { display: flex; flex-direction: column; gap: 0; }
+    .article-item {
+      padding: 20px 0; border-bottom: 1px solid var(--rule);
+      display: flex; align-items: baseline; gap: 12px;
+    }
+    .article-item::before { content: '▸'; color: var(--terra); font-size: 0.78rem; flex-shrink: 0; }
+    .article-item a {
+      font-size: 0.98rem; color: var(--charcoal); text-decoration: none;
+      font-weight: 400; transition: color 0.2s; line-height: 1.4;
+    }
+    .article-item a:hover { color: var(--teal); }
+
+    /* ── FOOTER ──────────────────────────── */
+    footer { background: var(--charcoal); padding: 48px 40px 32px; }
+    .footer-inner { max-width: 1140px; margin: 0 auto; }
+    .footer-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      flex-wrap: wrap; gap: 32px; margin-bottom: 36px;
+      padding-bottom: 36px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .footer-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.2rem; font-weight: 700; color: white;
+      letter-spacing: 0.04em; text-decoration: none;
+    }
+    .footer-logo span { display: block; font-size: 0.6rem; font-weight: 400; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-top: 2px; }
+    .footer-nav { display: flex; gap: 24px; flex-wrap: wrap; }
+    .footer-nav a { font-size: 0.82rem; color: rgba(255,255,255,0.45); text-decoration: none; letter-spacing: 0.04em; transition: color 0.2s; }
+    .footer-nav a:hover { color: rgba(255,255,255,0.9); }
+    .footer-social { display: flex; gap: 12px; }
+    .footer-social a {
+      width: 34px; height: 34px; border-radius: 3px;
+      background: rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.45);
+      text-decoration: none; text-transform: uppercase; letter-spacing: 0.04em;
+      transition: all 0.2s;
+    }
+    .footer-social a:hover { background: var(--teal); color: white; }
+    .footer-bottom { font-size: 0.75rem; color: rgba(255,255,255,0.28); text-align: center; }
+
+    /* ── UTILS ───────────────────────────── */
+    .wide-section { max-width: 1140px; margin: 0 auto; }
+
+    /* ── RESPONSIVE ──────────────────────── */
+    @media (max-width: 960px) {
+      nav { padding: 0 20px; }
+      .nav-links li:not(:last-child) { display: none; }
+      .hero { grid-template-columns: 1fr; padding: 40px 20px 0; gap: 32px; }
+      .hero-photo { max-height: 380px; object-fit: cover; border-radius: 3px; }
+      .who-inner { grid-template-columns: 1fr; }
+      .method-grid { grid-template-columns: 1fr 1fr; }
+      .offer-grid { grid-template-columns: 1fr; }
+      .insta-grid { grid-template-columns: repeat(2, 1fr); }
+      .articles-section { grid-template-columns: 1fr; }
+      section, .body-text-section { padding-left: 20px; padding-right: 20px; }
+      .method-section, .bodyscan-band, .press-section, .offer-section, .instagram-section, .testimonial-section { padding-left: 20px; padding-right: 20px; }
+    }
+    @media (max-width: 600px) {
+      .method-grid { grid-template-columns: 1fr; }
+      .press-logos { gap: 24px; }
+      footer { padding: 40px 20px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    Charlotte
+    <span>Shadow &amp; Intuitive Mentor</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#method">What I Do</a></li>
+    <li><a href="#work">Work With Me</a></li>
+    <li><a href="#articles">Articles</a></li>
+    <li><a href="#bodyscan" class="nav-cta">▸ Free Body Scan</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div style="background:var(--white); border-bottom:1px solid var(--rule);">
+<div class="hero">
+  <div class="hero-photo-col">
+    <img src="/mnt/user-data/uploads/1775447720757_image.png" alt="Charlotte" class="hero-photo">
+  </div>
+  <div class="hero-text">
+    <h1 class="hero-h1">
+      <span>Shadow Work</span><br>
+      <span class="line2">for women</span><br>
+      <span class="line3">who know better.</span>
+    </h1>
+    <a href="#bodyscan" class="hero-cta-btn">
+      <svg viewBox="0 0 10 10"><polygon points="0,0 10,5 0,10"/></svg>
+      Comment BODYSCAN
+    </a>
+    <p class="hero-italic">We'll get to the root of why you keep looping, then release it — so change actually happens in your body, not just your head.</p>
+    <p class="hero-direct">For women who are <strong>self-aware, doing the work</strong> — and still finding themselves back in the same patterns, relationships, and self-doubt.</p>
+  </div>
+</div>
+</div>
+
+<!-- BODY TEXT -->
+<div class="body-text-section">
+  <p>After all, I know what it's like to be in your head constantly. To have done the journalling, the therapy, the meditations. To understand your patterns intellectually and still watch yourself repeat them. That's me, not that long ago.</p>
+  <p>Because here's the thing — <strong>awareness doesn't reprogram what's stored in your nervous system.</strong> It doesn't clear the conditioning in your energetic field. It doesn't touch the beliefs running silently at the subconscious level, hiding in your blind spots.</p>
+  <p>I tried everything. Affirmations, breathwork, pop manifestation, all of it. No change. Until I figured out a system that actually reaches the level where the patterns live — and closes the loop for real.</p>
+  <p>I work with women who are naturally intuitive but second-guessing themselves. Who are exhausted from healing without seeing real results. Who are ready to stop pretending they're fine and actually become free.</p>
+  <p>I don't do toxic positivity. I don't tell you what you want to hear. I help you see what's actually blocking your transformation — the subconscious beliefs and interference keeping you stuck — and then we release it.</p>
+  <p>I'm also a digital nomad and freelance designer, extremely sarcastic, and I've had my own darker days that I kept very quiet. I finally feel grounded, embodied, and fully in my element. Which is exactly why I can guide this work safely in others.</p>
+  <a href="#about" class="inline-cta">▸ More about me</a>
+</div>
+
+<!-- WHO I WORK WITH -->
+<div class="who-section" id="about">
+  <div class="who-inner">
+    <div>
+      <span class="section-label">Who I work with</span>
+      <h2 class="section-h2">You're <em>aware.</em><br>So why are<br>you still<br>looping?</h2>
+      <ul class="who-list">
+        <li><strong>Naturally intuitive</strong> but constantly doubting yourself</li>
+        <li>Tired of <strong>people-pleasing</strong> and struggling to hold boundaries</li>
+        <li>Stuck in <strong>survival mode</strong>, even though you're "doing the work"</li>
+        <li>Same relationship dynamics, <strong>different person</strong>, same wound</li>
+        <li>Still feeling <strong>unworthy</strong> despite all the affirmations</li>
+        <li>Ready for freedom — from old patterns, from <strong>pretending you're fine</strong></li>
+        <li>Exhausted from healing <strong>without real change</strong></li>
+      </ul>
+      <a href="#bodyscan" class="inline-cta">▸ Start with the Body Scan</a>
+    </div>
+    <div>
+      <img src="/mnt/user-data/uploads/1775447892215_image.png" alt="Charlotte practising" class="who-photo">
+    </div>
+  </div>
+</div>
+
+<!-- METHOD -->
+<div class="method-section" id="method">
+  <div class="method-inner">
+    <span class="section-label">How it works</span>
+    <h2 class="section-h2">The system that<br><em>actually works.</em></h2>
+    <div class="method-grid">
+      <div class="method-card">
+        <div class="method-num">01</div>
+        <h3>Find the blind spot</h3>
+        <p>The Body Scan reveals what you can't see from inside the pattern. We locate the belief, the interference, the block running under the surface.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-num">02</div>
+        <h3>Get to the root</h3>
+        <p>Not the story — the source. We go into the nervous system, energetic field, and subconscious mind. Sometimes the ancestral line. Surface tools can't reach this level.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-num">03</div>
+        <h3>Regulate & release</h3>
+        <p>This is what most healing misses. Somatic work to release what's stored in the body. Regulate the nervous system. Close the loop so change actually manifests.</p>
+      </div>
+      <div class="method-card">
+        <div class="method-num">04</div>
+        <h3>Embody the new</h3>
+        <p>Real change is quiet. New decisions feel natural. Triggers lose their charge. Your body finally knows it's safe to receive what you've been working toward.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TESTIMONIALS -->
+<div class="testimonial-section">
+  <p class="testimonial-quote" id="tq-text">"I'd done years of therapy and still found myself in the same relationship patterns. After working with Charlotte, something actually shifted. Not just in my understanding — in my body. I stopped bracing. That's when I knew the loop had closed."</p>
+  <p class="testimonial-name" id="tq-name">— Sarah M.</p>
+  <div class="testimonial-dots">
+    <div class="testimonial-dot active" onclick="setT(0)"></div>
+    <div class="testimonial-dot" onclick="setT(1)"></div>
+    <div class="testimonial-dot" onclick="setT(2)"></div>
+  </div>
+</div>
+
+<!-- INSTAGRAM STRIP -->
+<div class="instagram-section">
+  <div class="instagram-inner">
+    <div class="instagram-header">
+      <h2>On Instagram</h2>
+      <a href="https://instagram.com/charinfinitebloom" class="instagram-handle" target="_blank">@charinfinitebloom →</a>
+    </div>
+    <div class="insta-grid">
+      <div class="insta-tile">
+        <img src="/mnt/user-data/uploads/1775447720757_image.png" alt="Charlotte post" style="object-position:top">
+      </div>
+      <div class="insta-tile">
+        <img src="/mnt/user-data/uploads/1775447873102_image.png" alt="Charlotte post">
+      </div>
+      <div class="insta-tile">
+        <img src="/mnt/user-data/uploads/1775447892215_image.png" alt="Charlotte yoga post">
+      </div>
+      <div class="insta-tile">
+        <img src="/mnt/user-data/uploads/1775447909184_image.png" alt="Charlotte yoga post">
+      </div>
+    </div>
+    <div class="insta-cta">
+      <a href="https://instagram.com/charinfinitebloom" class="btn-insta" target="_blank">▸ Follow on Instagram</a>
+    </div>
+  </div>
+</div>
+
+<!-- BODYSCAN CTA BAND -->
+<div class="bodyscan-band" id="bodyscan">
+  <div class="bodyscan-inner">
+    <h2>
+      Your body already knows
+      <em>what your mind keeps missing.</em>
+    </h2>
+    <p>The Body Scan is your starting point. It reveals the subconscious interference and nervous system patterns keeping you looping — the blind spots that affirmations, meditation, and talk therapy haven't reached. Comment BODYSCAN on Instagram and I'll send you the details.</p>
+    <a href="https://instagram.com/charinfinitebloom" class="btn-white-terra" target="_blank">▸ Comment BODYSCAN</a>
+    <p class="note">Or DM Charlotte directly at @charinfinitebloom</p>
+  </div>
+</div>
+
+<!-- PRESS LOGOS -->
+<div class="press-section">
+  <div class="press-inner">
+    <p class="press-label">As seen in</p>
+    <div class="press-logos">
+      <span class="press-logo">Wellness Weekly</span>
+      <span class="press-logo serif">Mind Body Soul</span>
+      <span class="press-logo">Nomad Life</span>
+      <span class="press-logo serif">The Healer</span>
+      <span class="press-logo">Somatic Now</span>
+    </div>
+  </div>
+</div>
+
+<!-- WORK WITH ME -->
+<div class="offer-section" id="work">
+  <div class="offer-inner">
+    <span class="section-label">Work with Charlotte</span>
+    <h2 class="section-h2">Choose your<br><em style="color:var(--teal);font-style:normal">path.</em></h2>
+    <div class="offer-grid">
+      <div class="offer-card">
+        <span class="offer-flag">Start here</span>
+        <h3>The Body Scan</h3>
+        <p>Your entry point. Reveals what you can't see from inside the pattern — the subconscious interference keeping you stuck in the loop.</p>
+        <ul>
+          <li>Guided body scan session</li>
+          <li>Identify your core blind spot</li>
+          <li>Personalised findings</li>
+          <li>Next step recommendations</li>
+        </ul>
+        <a href="https://instagram.com/charinfinitebloom" class="offer-link" target="_blank">Comment BODYSCAN →</a>
+      </div>
+      <div class="offer-card highlight">
+        <span class="offer-flag">Most popular</span>
+        <h3>1:1 Shadow Work Mentoring</h3>
+        <p>Deep-dive container. We go to the root — energetically, somatically, subconsciously — until the loop actually closes and real change shows up in your life.</p>
+        <ul>
+          <li>Multi-dimensional work</li>
+          <li>Nervous system regulation tools</li>
+          <li>Intuition development</li>
+          <li>Ongoing voice & text support</li>
+          <li>2 spots currently open</li>
+        </ul>
+        <a href="https://instagram.com/charinfinitebloom" class="offer-link" target="_blank">Comment READY →</a>
+      </div>
+      <div class="offer-card">
+        <span class="offer-flag">Self-paced</span>
+        <h3>Intuition Activator</h3>
+        <p>For women who want to strengthen their intuitive gifts, trust their inner knowing, and learn somatic + breathwork tools at their own pace.</p>
+        <ul>
+          <li>Breathwork activation practices</li>
+          <li>Somatic release techniques</li>
+          <li>Fascia & body dialogue work</li>
+          <li>Community access</li>
+        </ul>
+        <a href="https://instagram.com/charinfinitebloom" class="offer-link" target="_blank">Join the waitlist →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ARTICLES + NEWSLETTER -->
+<div style="background:var(--white); border-top:1px solid var(--rule);">
+<div class="articles-section" id="articles">
+  <div class="articles-left">
+    <span class="section-label">Stay connected</span>
+    <h2 class="section-h2">Words<br>from<br><em style="color:var(--teal);font-style:normal">the field.</em></h2>
+    <p>If you want straight-talking, honest writing sent to your inbox — on patterns, nervous systems, healing what's actually broken, and living a F*CK YES life — this is it. I write when I have something to say. No weekly content schedule. No bullsh*t.</p>
+    <form class="email-form" onsubmit="return false;">
+      <input type="email" placeholder="Your email address">
+      <button type="submit">▸ Subscribe</button>
+    </form>
+  </div>
+  <div>
+    <div class="articles-list">
+      <div class="article-item"><a href="#">You're intuitive. So why do you keep doubting yourself?</a></div>
+      <div class="article-item"><a href="#">Awareness doesn't heal. Here's what does.</a></div>
+      <div class="article-item"><a href="#">Why you keep attracting the same relationship dynamics</a></div>
+      <div class="article-item"><a href="#">Talking to your body is not weird — it's the most natural thing we've forgotten</a></div>
+      <div class="article-item"><a href="#">The difference between processing trauma and releasing it</a></div>
+      <div class="article-item"><a href="#">Self-regulation is the new superpower. Here's how to build it.</a></div>
+      <div class="article-item"><a href="#">We cannot control what people believe about us. Let them.</a></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <a href="#" class="footer-logo">
+        Charlotte
+        <span>Shadow &amp; Intuitive Mentor · @charinfinitebloom</span>
+      </a>
+      <nav class="footer-nav">
+        <a href="#about">About</a>
+        <a href="#method">What I Do</a>
+        <a href="#work">Work With Me</a>
+        <a href="#bodyscan">Body Scan</a>
+        <a href="#articles">Articles</a>
+      </nav>
+      <div class="footer-social">
+        <a href="https://instagram.com/charinfinitebloom" target="_blank">ig</a>
+        <a href="#" target="_blank">tt</a>
+      </div>
+    </div>
+    <p class="footer-bottom">© 2025 Charlotte · charinfinitebloom · Made somewhere nomadic 🌺</p>
+  </div>
+</footer>
+
+<script>
+  const testimonials = [
+    { text: "I'd done years of therapy and still found myself in the same relationship patterns. After working with Charlotte, something actually shifted. Not just in my understanding — in my body. I stopped bracing. That's when I knew the loop had closed.", name: "— Sarah M." },
+    { text: "She doesn't sugarcoat anything. She called out exactly what I was avoiding, and she did it with so much care that I actually wanted to hear it. Real change happened faster than I expected.", name: "— Kirsty O." },
+    { text: "I kept thinking I just needed to meditate more. Charlotte showed me the belief was in my nervous system — not my thoughts. Learning to actually talk to my body changed everything.", name: "— Jade R." }
+  ];
+  let current = 0;
+  function setT(i) {
+    current = i;
+    document.getElementById('tq-text').textContent = '"' + testimonials[i].text + '"';
+    document.getElementById('tq-name').textContent = testimonials[i].name;
+    document.querySelectorAll('.testimonial-dot').forEach((d,j) => d.classList.toggle('active', j===i));
+  }
+  setInterval(() => setT((current + 1) % testimonials.length), 6000);
+</script>
+</body>
+</html>

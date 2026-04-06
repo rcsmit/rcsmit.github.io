@@ -60,9 +60,9 @@
   #webcamVideo { position:absolute; width:100%; height:100%; object-fit:contain; display:none; transform:scaleX(-1); }
 
   .controls {
-    position:absolute; bottom:0; left:0; right:0;
-    padding:10px 16px; background:linear-gradient(transparent,rgba(244,242,238,.95));
-    display:none; align-items:center; gap:10px; z-index:5;
+    position:absolute; top:0; left:0; right:0;
+    padding:10px 16px; background:linear-gradient(rgba(244,242,238,.95),transparent);
+    display:none; align-items:center; gap:10px; z-index:50;
   }
   .btn {
     background:transparent; border:1px solid var(--border); color:var(--text);
@@ -79,12 +79,12 @@
   #timeDisplay { font-size:0.58rem; color:var(--muted); min-width:80px; text-align:right; }
 
   #notHandstandBanner {
-    position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    position:absolute; top:55px; left:50%; transform:translateX(-50%);
     background:var(--bad-bg); border:1px solid #e8b4b0; color:var(--bad);
     font-size:0.6rem; letter-spacing:2px; padding:5px 14px; display:none; white-space:nowrap; z-index:5;
   }
   #debugInfo {
-    position:absolute; bottom:48px; left:12px;
+    position:absolute; bottom:12px; left:12px;
     font-size:0.52rem; color:rgba(0,0,0,.35); pointer-events:none; letter-spacing:1px;
   }
   #loadingOverlay {
@@ -218,7 +218,7 @@
       display:flex;
       position:absolute;
       top:10px; right:10px;
-      z-index:30;
+      z-index:60;
       background:rgba(255,255,255,0.75);
       border:1px solid rgba(0,0,0,0.2);
       font-family:'DM Mono',monospace;
@@ -236,11 +236,14 @@
     /* Make score numbers slightly smaller on overlay */
     .score-num { font-size:1.8rem; }
 
-    /* Controls: above panel, don't extend under it when panel is open */
-    .controls { z-index:25; right:0; }
+    /* Controls: top, below panel toggle on mobile */
+    .controls { z-index:55; right:0; }
 
-    /* Push upload zone below the toggle button */
+    /* Push upload zone below the controls bar */
     #uploadZone { margin-top:60px; }
+
+    /* Banner offset for controls now at top */
+    #notHandstandBanner { top:55px; }
   }
 
   @media (min-width:681px) {
@@ -388,7 +391,7 @@ let isInverted   = false;
 let objURL       = null;
 let bestScore = 0, bestTime = 0;
 let sideToDraw = 'left';
-let whiteLabels = false;   // ← new: white angle label mode
+let whiteLabels = false;
 
 const VIS = 0.5;
 
@@ -500,7 +503,6 @@ async function loadVideo(file) {
   document.getElementById('bestBtn').style.display = 'none';
   document.getElementById('scoreBest').textContent = '—';
   startVideoLoop();
-  // Send first frame immediately so detection works before pressing play
   await pose.send({ image: inputVideo });
 }
 
@@ -730,7 +732,6 @@ function drawAnglesOnCanvas(lm, angles) {
     const p   = lmPx(lm, def.labelLm);
 
     if (whiteLabels) {
-      // White text with dark shadow for contrast on any background
       ctx.shadowColor   = 'rgba(0,0,0,0.75)';
       ctx.shadowBlur    = 4;
       ctx.shadowOffsetX = 1;
@@ -742,7 +743,6 @@ function drawAnglesOnCanvas(lm, angles) {
       ctx.shadowOffsetX = 0;
       ctx.shadowOffsetY = 0;
     } else {
-      // Original coloured labels with white background halo
       const col = q === 'good' ? '#2d7a3a' : q === 'warn' ? '#b06a00' : '#c0392b';
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.fillText(val+'°', p.x+1, p.y-12);
