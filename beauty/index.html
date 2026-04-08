@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Golden Ratio Beauty Analyzer</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --gold: #c9a96e;
+      --gold-light: #e8d5a3;
+      --dark: #0f0e0c;
+      --dark2: #161412;
+      --cream: #f0e8d8;
+      --muted: #7a6f60;
+      --good: #6dce85;
+      --ok: #c9a96e;
+      --off: #e87070;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+
+    html { height: 100%; }
+    body {
+      min-height: 100%;
+      background: var(--dark);
+      color: var(--cream);
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid rgba(201,169,110,0.12);
+      flex-shrink: 0;
+    }
+    .phi-symbol {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      color: var(--gold);
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 4px;
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(20px, 5vw, 42px);
+      font-weight: 300;
+      font-style: italic;
+      color: var(--cream);
+      line-height: 1.1;
+    }
+    h1 em { color: var(--gold); font-style: normal; }
+    .subtitle {
+      font-size: 9px;
+      letter-spacing: 0.22em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    /* ── App body: side-by-side on desktop, stacked on mobile ── */
+    .app-body {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* Desktop: side by side */
+    @media (min-width: 700px) {
+      .app-body { flex-direction: row; overflow: hidden; }
+      .left-col  { flex: 1; min-width: 0; border-right: 1px solid rgba(201,169,110,0.12); overflow: hidden; }
+      .right-col { width: 300px; flex-shrink: 0; overflow-y: auto; }
+    }
+
+    /* Mobile: stacked, full scroll */
+    @media (max-width: 699px) {
+      body { overflow-y: auto; }
+      .app-body { flex-direction: column; overflow: visible; flex: none; }
+      .left-col  { flex-shrink: 0; }
+      .right-col { flex-shrink: 0; border-top: 1px solid rgba(201,169,110,0.12); }
+    }
+
+    /* ── LEFT ── */
+    .left-col {
+      display: flex;
+      flex-direction: column;
+      background: #070706;
+    }
+
+    .mode-toggle {
+      display: flex;
+      flex-shrink: 0;
+      border-bottom: 1px solid rgba(201,169,110,0.12);
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 11px 0;
+      background: transparent;
+      border: none;
+      border-right: 1px solid rgba(201,169,110,0.12);
+      color: var(--muted);
+      font-family: 'Jost', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.18s;
+      touch-action: manipulation;
+    }
+    .mode-btn:last-child { border-right: none; }
+    .mode-btn.active { color: var(--gold-light); background: rgba(201,169,110,0.07); }
+
+    /* Media area */
+    .media-area {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      /* On desktop: fill remaining height. On mobile: fixed aspect ratio */
+    }
+    @media (min-width: 700px) {
+      .media-area { flex: 1; min-height: 0; overflow: hidden; }
+    }
+    @media (max-width: 699px) {
+      .media-area { width: 100%; aspect-ratio: 4/3; }
+    }
+
+    #outputCanvas {
+      display: none;
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    #liveCanvas {
+      display: none;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    .upload-prompt {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      cursor: pointer;
+    }
+    .upload-prompt-inner {
+      border: 1px dashed rgba(201,169,110,0.22);
+      border-radius: 3px;
+      padding: 28px 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s;
+    }
+    .upload-prompt:hover .upload-prompt-inner,
+    .upload-prompt.drag-over .upload-prompt-inner {
+      border-color: rgba(201,169,110,0.55);
+      background: rgba(201,169,110,0.04);
+    }
+    .upload-prompt svg { width: 36px; height: 36px; opacity: 0.35; }
+    .upload-prompt p { font-family: 'Cormorant Garamond', serif; font-size: 18px; font-style: italic; color: var(--gold-light); }
+    .upload-prompt small { font-size: 9px; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; }
+    #fileInput { display: none; }
+
+    .webcam-placeholder {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      position: absolute;
+      inset: 0;
+    }
+    .webcam-placeholder svg { width: 44px; height: 44px; opacity: 0.22; }
+    .webcam-placeholder p { font-size: 10px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; }
+
+    /* Cam controls bar */
+    .cam-bar {
+      flex-shrink: 0;
+      border-top: 1px solid rgba(201,169,110,0.12);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .cam-bar.hidden { display: none; }
+    .cam-hint { font-size: 10px; letter-spacing: 0.13em; color: var(--muted); text-transform: uppercase; flex: 1; }
+
+    .cam-buttons { display: flex; gap: 8px; align-items: center; }
+
+    .btn-cam {
+      padding: 9px 18px;
+      border: 1px solid rgba(201,169,110,0.4);
+      background: rgba(201,169,110,0.07);
+      color: var(--gold-light);
+      font-family: 'Jost', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.18s;
+      white-space: nowrap;
+      touch-action: manipulation;
+      min-height: 38px;
+    }
+    .btn-cam:hover, .btn-cam:active { background: rgba(201,169,110,0.15); border-color: var(--gold); }
+    .btn-cam.stop { border-color: rgba(232,112,112,0.45); color: var(--off); background: rgba(232,112,112,0.05); }
+    .btn-cam.stop:hover, .btn-cam.stop:active { background: rgba(232,112,112,0.12); }
+
+    /* Flip camera button (mobile only) */
+    .btn-flip {
+      padding: 9px 12px;
+      border: 1px solid rgba(201,169,110,0.25);
+      background: transparent;
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.18s;
+      touch-action: manipulation;
+      min-height: 38px;
+      display: none;
+    }
+    .btn-flip:hover, .btn-flip:active { color: var(--gold-light); border-color: rgba(201,169,110,0.5); }
+    @media (max-width: 699px) {
+      .btn-flip { display: block; }
+    }
+
+    /* Status / error */
+    .status-bar {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-top: 1px solid rgba(201,169,110,0.1);
+      flex-shrink: 0;
+    }
+    .status-bar.visible { display: flex; }
+    .spinner {
+      width: 13px; height: 13px;
+      border: 1.5px solid rgba(201,169,110,0.2);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status-text { font-size: 10px; letter-spacing: 0.18em; color: var(--gold-light); text-transform: uppercase; }
+
+    .error-msg {
+      display: none;
+      padding: 9px 12px;
+      font-size: 11px;
+      color: var(--off);
+      border-top: 1px solid rgba(232,112,112,0.18);
+      background: rgba(232,112,112,0.05);
+      flex-shrink: 0;
+    }
+    .error-msg.visible { display: block; }
+
+    /* ── RIGHT / scores ── */
+    .right-col {
+      background: var(--dark2);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .scores-empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 28px 20px;
+      text-align: center;
+      min-height: 80px;
+    }
+    .scores-empty p {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px;
+      font-style: italic;
+      color: rgba(201,169,110,0.22);
+      line-height: 1.6;
+    }
+
+    .scores-content {
+      display: none;
+      flex-direction: column;
+      padding: 14px 12px 24px;
+      gap: 12px;
+    }
+
+    /* Hero score */
+    .score-hero {
+      text-align: center;
+      padding: 18px 10px 14px;
+      border: 1px solid rgba(201,169,110,0.22);
+      border-radius: 2px;
+      background: rgba(201,169,110,0.035);
+    }
+    .score-hero-label {
+      font-size: 9px;
+      letter-spacing: 0.38em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .score-hero-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(56px, 12vw, 76px);
+      font-weight: 300;
+      line-height: 1;
+      color: var(--gold);
+    }
+    .score-hero-pct { font-size: clamp(20px, 4vw, 26px); color: var(--gold-light); }
+    .score-hero-desc {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 6px;
+    }
+    .score-bar-wrap {
+      margin-top: 10px;
+      height: 3px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .score-bar-fill {
+      height: 100%;
+      background: linear-gradient(to right, var(--gold), var(--gold-light));
+      border-radius: 2px;
+      transition: width 0.35s ease;
+      width: 0%;
+    }
+
+    /* Metrics */
+    .metrics-section-label {
+      font-size: 9px;
+      letter-spacing: 0.32em;
+      color: var(--muted);
+      text-transform: uppercase;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(201,169,110,0.1);
+    }
+    .metrics-list { display: flex; flex-direction: column; gap: 4px; }
+
+    .metric-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 8px;
+      border: 1px solid rgba(201,169,110,0.07);
+      border-radius: 2px;
+      background: rgba(255,255,255,0.015);
+    }
+    .metric-name {
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      flex: 1;
+      min-width: 0;
+      text-transform: uppercase;
+      line-height: 1.3;
+    }
+    .metric-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 15px;
+      color: var(--gold-light);
+      white-space: nowrap;
+    }
+    .metric-score {
+      font-size: 11px;
+      font-weight: 400;
+      white-space: nowrap;
+      min-width: 32px;
+      text-align: right;
+    }
+    .metric-score.good { color: var(--good); }
+    .metric-score.ok   { color: var(--ok); }
+    .metric-score.off  { color: var(--off); }
+
+    /* Reset */
+    .btn-reset {
+      display: none;
+      padding: 10px;
+      border: 1px solid rgba(201,169,110,0.2);
+      background: transparent;
+      color: var(--muted);
+      font-family: 'Jost', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      cursor: pointer;
+      border-radius: 2px;
+      transition: all 0.18s;
+      width: 100%;
+      touch-action: manipulation;
+      min-height: 40px;
+    }
+    .btn-reset:hover, .btn-reset:active { background: rgba(201,169,110,0.06); color: var(--gold-light); border-color: var(--gold); }
+    .btn-reset.visible { display: block; }
+
+    footer {
+      text-align: center;
+      padding: 10px;
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      color: rgba(201,169,110,0.1);
+      text-transform: uppercase;
+      border-top: 1px solid rgba(201,169,110,0.06);
+      flex-shrink: 0;
+    }
+
+    /* ── Scores overlay (right side of media area) ── */
+    .scores-overlay {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 200px;
+      display: flex;
+      flex-direction: column;
+      padding: 10px 8px;
+      gap: 8px;
+      overflow-y: auto;
+      pointer-events: none; /* let clicks through to canvas */
+      z-index: 10;
+    }
+    /* on narrow screens shrink a bit */
+    @media (max-width: 480px) {
+      .scores-overlay { width: 160px; padding: 8px 6px; }
+    }
+
+    .scores-overlay .score-hero {
+      text-align: center;
+      padding: 10px 8px 8px;
+      border: 1px solid rgba(201,169,110,0.35);
+      border-radius: 3px;
+      background: rgba(10,9,8,0.72);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+    .scores-overlay .score-hero-label {
+      font-size: 8px;
+      letter-spacing: 0.3em;
+      color: rgba(201,169,110,0.7);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .scores-overlay .score-hero-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 52px;
+      font-weight: 300;
+      line-height: 1;
+      color: var(--gold);
+    }
+    .scores-overlay .score-hero-pct { font-size: 20px; color: var(--gold-light); }
+    .scores-overlay .score-hero-desc {
+      font-size: 8px;
+      letter-spacing: 0.1em;
+      color: rgba(201,169,110,0.6);
+      text-transform: uppercase;
+      margin-top: 4px;
+    }
+    .scores-overlay .score-bar-wrap {
+      margin-top: 6px;
+      height: 2px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .scores-overlay .score-bar-fill {
+      height: 100%;
+      background: linear-gradient(to right, var(--gold), var(--gold-light));
+      border-radius: 2px;
+      transition: width 0.35s ease;
+      width: 0%;
+    }
+
+    .scores-overlay .metrics-section-label {
+      font-size: 8px;
+      letter-spacing: 0.28em;
+      color: rgba(201,169,110,0.5);
+      text-transform: uppercase;
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(201,169,110,0.15);
+    }
+    .scores-overlay .metrics-list { display: flex; flex-direction: column; gap: 3px; }
+
+    .scores-overlay .metric-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 6px;
+      border: 1px solid rgba(201,169,110,0.12);
+      border-radius: 2px;
+      background: rgba(10,9,8,0.65);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .scores-overlay .metric-name {
+      font-size: 8px;
+      letter-spacing: 0.02em;
+      color: rgba(201,169,110,0.6);
+      flex: 1;
+      min-width: 0;
+      text-transform: uppercase;
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .scores-overlay .metric-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 12px;
+      color: var(--gold-light);
+      white-space: nowrap;
+    }
+    .scores-overlay .metric-score {
+      font-size: 9px;
+      font-weight: 400;
+      white-space: nowrap;
+      min-width: 26px;
+      text-align: right;
+    }
+
+    /* hide the old separate right-col entirely */
+    .right-col { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="phi-symbol">φ = 1.618 · The Golden Ratio</span>
+  <h1>Facial Beauty <em>Analyzer</em></h1>
+  <p class="subtitle">Golden ratio analysis via MediaPipe face mesh</p>
+</header>
+
+<div class="app-body">
+
+  <!-- ── LEFT ── -->
+  <div class="left-col">
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btnModeUpload">⬆ Upload image</button>
+      <button class="mode-btn" id="btnModeWebcam">◉ Live webcam</button>
+    </div>
+
+    <div class="media-area" id="mediaArea">
+      <!-- Upload prompt -->
+      <div class="upload-prompt" id="uploadPrompt">
+        <div class="upload-prompt-inner">
+          <svg viewBox="0 0 48 48" fill="none" stroke="rgba(201,169,110,0.7)" stroke-width="1.5">
+            <rect x="6" y="10" width="36" height="28" rx="2"/>
+            <circle cx="18" cy="20" r="4"/>
+            <path d="M6 30l10-8 8 6 6-5 12 10"/>
+          </svg>
+          <p>Upload a portrait</p>
+          <small>JPG · PNG · WebP — frontal face</small>
+        </div>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+
+      <canvas id="outputCanvas"></canvas>
+
+      <!-- Webcam placeholder -->
+      <div class="webcam-placeholder" id="webcamPlaceholder">
+        <svg viewBox="0 0 48 48" fill="none" stroke="rgba(201,169,110,0.6)" stroke-width="1.5">
+          <circle cx="24" cy="24" r="10"/>
+          <circle cx="24" cy="24" r="3.5" fill="rgba(201,169,110,0.3)" stroke="none"/>
+          <path d="M18 8h12l3 4H36a2 2 0 012 2v20a2 2 0 01-2 2H12a2 2 0 01-2-2V14a2 2 0 012-2h3l3-4z"/>
+        </svg>
+        <p>Press Start Camera</p>
+      </div>
+      <video id="webcamVideo" autoplay playsinline muted style="display:none; position:absolute;"></video>
+      <canvas id="liveCanvas"></canvas>
+
+      <!-- ── Scores overlay ── -->
+      <div class="scores-overlay" id="scoresOverlay" style="display:none;">
+        <div class="score-hero">
+          <p class="score-hero-label">Beauty Score</p>
+          <div class="score-hero-value" id="scoreHero">—</div>
+          <p class="score-hero-desc" id="scoreDesc">—</p>
+          <div class="score-bar-wrap"><div class="score-bar-fill" id="scoreBarFill"></div></div>
+        </div>
+        <div class="metrics-section-label">Ratios</div>
+        <div class="metrics-list" id="metricsGrid"></div>
+        <button class="btn-reset" id="btnReset" style="pointer-events:auto;">↩ New</button>
+      </div>
+
+    </div>
+
+    <div class="cam-bar hidden" id="camBar">
+      <span class="cam-hint" id="camHint">Live · face the camera</span>
+      <div class="cam-buttons">
+        <button class="btn-flip" id="btnFlipCamera" title="Flip camera">🔄</button>
+        <button class="btn-cam" id="btnStartCamera">Start Camera</button>
+      </div>
+    </div>
+
+    <div class="status-bar" id="statusBar">
+      <div class="spinner"></div>
+      <span class="status-text" id="statusText">Detecting landmarks…</span>
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <!-- right-col removed; scores are now overlaid on the media area -->
+
+</div>
+
+<footer>Runs entirely in your browser · No data uploaded · Based on golden ratio proportions</footer>
+
+<img id="srcImage" style="display:none;" crossorigin="anonymous">
+
+<script>
+// ─── Landmark helpers ────────────────────────
+function lm(lms, i) { return { x: lms[i].x, y: lms[i].y }; }
+function avg(...pts) {
+  return { x: pts.reduce((s,p)=>s+p.x,0)/pts.length, y: pts.reduce((s,p)=>s+p.y,0)/pts.length };
+}
+
+// ─── Beauty calculation ──────────────────────
+function calculateBeauty(landmarks) {
+  const PHI = 1.61803398875;
+  const center_face_top        = lm(landmarks,10);
+  const top_arc_eyebrows_l     = lm(landmarks,105);
+  const top_arc_eyebrows_r     = lm(landmarks,334);
+  const top_arc_eyebrows_c     = avg(top_arc_eyebrows_l, top_arc_eyebrows_r);
+  const inside_arc_eyebrows_l  = lm(landmarks,55);
+  const inside_arc_eyebrows_r  = lm(landmarks,285);
+  const outside_arc_eyebrows_l = lm(landmarks,156);
+  const outside_arc_eyebrows_r = lm(landmarks,383);
+  const top_of_eyes_l          = lm(landmarks,159);
+  const top_of_eyes_r          = lm(landmarks,368);
+  const top_of_eyes_c          = avg(top_of_eyes_l, top_of_eyes_r);
+  const center_pupil_l         = avg(lm(landmarks,159),lm(landmarks,160),lm(landmarks,145),lm(landmarks,144));
+  const center_pupil_r         = avg(lm(landmarks,385),lm(landmarks,380),lm(landmarks,386),lm(landmarks,374));
+  const center_pupil_c         = avg(center_pupil_l, center_pupil_r);
+  const outside_eye_l          = lm(landmarks,130);
+  const outside_eye_r          = lm(landmarks,359);
+  const inside_eye_l           = lm(landmarks,133);
+  const inside_eye_r           = lm(landmarks,362);
+  const inside_eye_c           = avg(inside_eye_l, inside_eye_r);
+  const bottom_of_eyes_l       = lm(landmarks,145);
+  const bottom_of_eyes_r       = lm(landmarks,374);
+  const bottom_of_eyes_c       = avg(bottom_of_eyes_l, bottom_of_eyes_r);
+  const side_of_face_l         = lm(landmarks,127);
+  const side_of_face_r         = lm(landmarks,447);
+  const nose_flair_top_l       = lm(landmarks,198);
+  const nose_flair_top_r       = lm(landmarks,420);
+  const nose_flair_top_c       = avg(nose_flair_top_l, nose_flair_top_r);
+  const nose_nostril_l         = lm(landmarks,64);
+  const nose_nostril_r         = lm(landmarks,294);
+  const nose_nostril_c         = avg(nose_nostril_l, nose_nostril_r);
+  const nose_base_l            = lm(landmarks,240);
+  const nose_base_r            = lm(landmarks,460);
+  const nose_base_c            = avg(nose_base_l, nose_base_r);
+  const top_of_lips_l          = lm(landmarks,37);
+  const top_of_lips_r          = lm(landmarks,267);
+  const top_of_lips_c          = avg(top_of_lips_l, top_of_lips_r);
+  const middle_of_lips_l       = lm(landmarks,57);
+  const middle_of_lips_r       = lm(landmarks,287);
+  const middle_of_lips_c       = avg(middle_of_lips_l, middle_of_lips_r);
+  const center_of_lips         = lm(landmarks,14);
+  const bottom_of_chin         = lm(landmarks,152);
+
+  // ── Face dimensions ──
+  const face_w = side_of_face_r.x - side_of_face_l.x;
+  const face_h = bottom_of_chin.y - center_face_top.y;
+  const v0 = face_h / face_w;  // display only
+
+  // ── Vertical proportions (all ideally φ) ──
+  // v1: pupils→lips / lips→chin
+  const v1 = (center_of_lips.y - center_pupil_c.y) / (bottom_of_chin.y - center_of_lips.y);
+  // v3: pupils→nose-flair-top / nose-flair-top→nose-base
+  const v3 = (nose_flair_top_c.y - center_pupil_c.y) / (nose_base_c.y - nose_flair_top_c.y);
+  // v5: pupils→nostril / nostril→lips
+  const v5 = (nose_nostril_c.y - center_pupil_c.y) / (center_of_lips.y - nose_nostril_c.y);
+  // v7: nostril→top-lip / top-lip→center-lip  (ideal φ)
+  const v7 = (top_of_lips_c.y - nose_nostril_c.y) / (center_of_lips.y - top_of_lips_c.y);
+  // a1: eye-level→lips / lips→chin  (ideal φ)
+  const a1 = (middle_of_lips_c.y - (outside_eye_l.y + outside_eye_r.y) / 2) / (bottom_of_chin.y - middle_of_lips_c.y);
+
+  // ── Horizontal proportions ──
+  // eye_w: width of one eye (average L+R), ideal = inter-eye gap (ideal ratio 1.0)
+  const eye_w_l    = outside_eye_l.x - inside_eye_l.x;  // note: l landmarks, x increases rightward
+  const eye_w_r    = inside_eye_r.x  - outside_eye_r.x;
+  const inter_eye  = inside_eye_r.x  - inside_eye_l.x;
+  // Neoclassical canon: eye_width = inter-eye distance = outer-eye to face-edge
+  // ratio should be 1:1:1:1:1 across five zones
+  // We measure: are L-eye-width and R-eye-width equal? (pure symmetry)
+  const eye_symm   = Math.min(eye_w_l, eye_w_r) / Math.max(eye_w_l, eye_w_r);  // 1.0 = perfect
+
+  // h_symm: are the two pupils equidistant from face center?
+  const face_cx    = (side_of_face_l.x + side_of_face_r.x) / 2;
+  const d_pupil_l  = face_cx - center_pupil_l.x;
+  const d_pupil_r  = center_pupil_r.x - face_cx;
+  const h_symm     = Math.min(d_pupil_l, d_pupil_r) / Math.max(d_pupil_l, d_pupil_r);  // 1.0 = perfect
+
+  // nose_w: outer nostril width (widest point of nose) — lm 64/294
+  const nose_w  = nose_nostril_r.x - nose_nostril_l.x;
+  const mouth_w = middle_of_lips_r.x - middle_of_lips_l.x;
+  const score3a = mouth_w / nose_w;
+
+  // inter-eye / nose-width: ideal 1.0 (neoclassical: nose width = one eye width = inter-eye gap)
+  const inter_nose = inter_eye / nose_w;
+
+  function rs(val, ideal) {
+    if (val<=0||ideal<=0) return 0;
+    return Math.min(val,ideal)/Math.max(val,ideal);
+  }
+
+  // Weighted components — symmetry metrics get full weight, reliable vertical ratios weighted higher
+  const comps = [
+    { v: rs(v3,   PHI), w: 1.5 }, // pupils→nose
+    { v: rs(v5,   PHI), w: 1.5 }, // pupils→nostril
+    { v: rs(a1,   PHI), w: 1.5 }, // eye-level→lips/chin
+    { v: h_symm,        w: 2 },   // pupil symmetry
+    { v: eye_symm,      w: 2 },   // eye width symmetry
+    { v: rs(score3a, PHI), w: 1 }, // mouth/nose width
+    { v: rs(inter_nose, 1.0), w: 1 }, // inter-eye/nose canon
+  ];
+  const totalW = comps.reduce((s,c)=>s+c.w, 0);
+  const score  = comps.reduce((s,c)=>s+c.v*c.w, 0) / totalW;
+
+  return {
+    score, v0, v1, v3, v5, v7, a1,
+    h_symm, eye_symm, score3a, inter_nose,
+    pts: {
+      center_face_top, center_pupil_l, center_pupil_r, center_pupil_c,
+      inside_eye_l, inside_eye_r, outside_eye_l, outside_eye_r,
+      side_of_face_l, side_of_face_r, bottom_of_chin,
+      nose_base_l, nose_base_r, nose_base_c,
+      middle_of_lips_l, middle_of_lips_r, middle_of_lips_c,
+      inside_arc_eyebrows_l, inside_arc_eyebrows_r,
+      outside_arc_eyebrows_l, outside_arc_eyebrows_r,
+    }
+  };
+}
+
+// ─── Draw annotations (BOLD) ─────────────────
+function drawAnnotations(canvas, ctx, landmarks, result) {
+  const W = canvas.width, H = canvas.height;
+  const p = result.pts;
+  const dotR = Math.max(5, W * 0.008);       // landmark dot radius
+  const lw   = Math.max(1.5, W * 0.002);     // line width
+
+  function px(pt) { return [pt.x*W, pt.y*H]; }
+
+  function hline(y, color, w) {
+    ctx.strokeStyle=color; ctx.lineWidth=w||lw;
+    ctx.beginPath(); ctx.moveTo(0,y*H); ctx.lineTo(W,y*H); ctx.stroke();
+  }
+  function vline(x, color, w) {
+    ctx.strokeStyle=color; ctx.lineWidth=w||lw;
+    ctx.beginPath(); ctx.moveTo(x*W,0); ctx.lineTo(x*W,H); ctx.stroke();
+  }
+  function dot(pt, r, fill, stroke) {
+    const [x,y]=px(pt);
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=fill; ctx.fill();
+    if(stroke){ ctx.strokeStyle=stroke; ctx.lineWidth=1.5; ctx.stroke(); }
+  }
+  function polyline(idxArr, color, w, close) {
+    ctx.strokeStyle=color; ctx.lineWidth=w||lw;
+    ctx.beginPath();
+    idxArr.forEach((i,n)=>{
+      const l=landmarks[i];
+      n===0 ? ctx.moveTo(l.x*W,l.y*H) : ctx.lineTo(l.x*W,l.y*H);
+    });
+    if(close) ctx.closePath();
+    ctx.stroke();
+  }
+  function hspan(ptA, ptB, color, w) {
+    // horizontal span between two points at the average y
+    const y = (ptA.y+ptB.y)/2*H;
+    ctx.strokeStyle=color; ctx.lineWidth=w||lw;
+    ctx.beginPath(); ctx.moveTo(ptA.x*W,y); ctx.lineTo(ptB.x*W,y); ctx.stroke();
+    // tick marks
+    ctx.beginPath(); ctx.moveTo(ptA.x*W,y-6); ctx.lineTo(ptA.x*W,y+6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(ptB.x*W,y-6); ctx.lineTo(ptB.x*W,y+6); ctx.stroke();
+  }
+
+  // ── Silhouette ──
+  const SIL=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+  polyline(SIL, 'rgba(201,169,110,0.65)', lw*1.2, true);
+
+  // ── Eye outlines ──
+  polyline([246,161,160,159,158,157,173,133,155,154,153,145,144,163,7,33], 'rgba(255,220,140,0.8)', lw, true);
+  polyline([466,388,387,386,385,384,398,362,382,381,380,374,373,390,249,263], 'rgba(255,220,140,0.8)', lw, true);
+
+  // ── Eyebrows ──
+  polyline([156,70,63,105,66,107,55,193], 'rgba(255,200,80,0.7)', lw);
+  polyline([383,300,293,334,296,336,285,417], 'rgba(255,200,80,0.7)', lw);
+
+  // ── Lips ──
+  polyline([61,185,40,39,37,0,267,269,270,409,291], 'rgba(255,150,100,0.75)', lw);
+  polyline([146,91,181,84,17,314,405,321,375,291], 'rgba(255,150,100,0.75)', lw);
+
+  // ── Horizontal measurement lines (BRIGHT, full width) ──
+  hline(p.center_face_top.y,   'rgba(201,169,110,0.7)',  lw);
+  hline(p.center_pupil_c.y,    '#ffe566',                lw*1.6);  // pupils — brightest
+  hline(p.nose_base_c.y,       'rgba(255,200,100,0.75)', lw*1.2);
+  hline(p.middle_of_lips_c.y,  'rgba(201,169,110,0.7)',  lw);
+  hline(p.bottom_of_chin.y,    'rgba(201,169,110,0.7)',  lw);
+
+  // ── Vertical measurement lines ──
+  vline(p.side_of_face_l.x,  'rgba(201,169,110,0.55)', lw);
+  vline(p.side_of_face_r.x,  'rgba(201,169,110,0.55)', lw);
+  vline(p.outside_eye_l.x,   'rgba(201,169,110,0.45)', lw*0.9);
+  vline(p.outside_eye_r.x,   'rgba(201,169,110,0.45)', lw*0.9);
+  vline(p.inside_eye_l.x,    '#ffe566',                lw*1.6);
+  vline(p.inside_eye_r.x,    '#ffe566',                lw*1.6);
+
+  // ── Nose width span ──
+  hspan(p.nose_base_l, p.nose_base_r, 'rgba(255,180,60,0.8)', lw*1.2);
+
+  // ── Mouth width span ──
+  hspan(p.middle_of_lips_l, p.middle_of_lips_r, 'rgba(255,130,90,0.8)', lw*1.2);
+
+  // ── Left-edge segment brackets ──
+  const bx = 4/W;
+  ctx.strokeStyle='#ffe566'; ctx.lineWidth=lw*1.5;
+  ctx.beginPath(); ctx.moveTo(bx*W, p.center_pupil_c.y*H); ctx.lineTo(bx*W, p.middle_of_lips_c.y*H); ctx.stroke();
+  ctx.strokeStyle='rgba(201,169,110,0.8)'; ctx.lineWidth=lw*1.5;
+  ctx.beginPath(); ctx.moveTo(bx*2*W, p.middle_of_lips_c.y*H); ctx.lineTo(bx*2*W, p.bottom_of_chin.y*H); ctx.stroke();
+
+  // ── Key measurement dots ──
+  const stdDots = [
+    p.center_face_top, p.inside_eye_l, p.inside_eye_r,
+    p.outside_eye_l, p.outside_eye_r, p.side_of_face_l, p.side_of_face_r,
+    p.nose_base_l, p.nose_base_r, p.nose_base_c,
+    p.middle_of_lips_l, p.middle_of_lips_r, p.bottom_of_chin,
+    p.inside_arc_eyebrows_l, p.inside_arc_eyebrows_r,
+    p.outside_arc_eyebrows_l, p.outside_arc_eyebrows_r,
+  ];
+  stdDots.forEach(pt => dot(pt, dotR, '#c9a96e', '#000'));
+
+  // ── Pupil dots — bigger, brighter ──
+  dot(p.center_pupil_l, dotR*1.5, '#ffe566', '#000');
+  dot(p.center_pupil_r, dotR*1.5, '#ffe566', '#000');
+  dot(p.center_pupil_c, dotR*1.2, 'rgba(255,229,102,0.6)', null);
+
+  // ── Score overlay ──
+  const pct = Math.round(result.score * 100);
+  const fs  = Math.max(13, W * 0.026);
+  ctx.font = `300 ${fs}px Cormorant Garamond, serif`;
+  const txt = `φ  ${pct}%`;
+  const tw  = ctx.measureText(txt).width;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(W - tw - 18, 8, tw + 14, fs + 12);
+  ctx.fillStyle = '#ffe566';
+  ctx.fillText(txt, W - tw - 11, 8 + fs + 1);
+}
+
+// ─── UI helpers ─────────────────────────────
+const PHI = 1.61803398875;
+
+function scoreDescription(s) {
+  if (s>=0.97) return 'Near-perfect golden proportions';
+  if (s>=0.93) return 'Exceptional golden symmetry';
+  if (s>=0.88) return 'High golden ratio alignment';
+  if (s>=0.82) return 'Strong facial harmony';
+  if (s>=0.75) return 'Above-average proportions';
+  if (s>=0.65) return 'Moderate golden alignment';
+  return 'Diverges from golden ratio';
+}
+
+function showScores(result) {
+  document.getElementById('scoresOverlay').style.display = 'flex';
+
+  const pct = Math.round(result.score * 100);
+  document.getElementById('scoreHero').innerHTML = `${pct}<span class="score-hero-pct">%</span>`;
+  document.getElementById('scoreDesc').textContent = scoreDescription(result.score);
+  document.getElementById('scoreBarFill').style.width = pct + '%';
+
+  const metrics = [
+    { name:'Face H/W',                      val:result.v0,         ideal:PHI,  scored:false },
+    { name:'Pupils — nose top — nose base', val:result.v3,         ideal:PHI,  scored:true  },
+    { name:'Pupils — nostril — lips',       val:result.v5,         ideal:PHI,  scored:true  },
+    { name:'Eyes — lips — chin',            val:result.a1,         ideal:PHI,  scored:true  },
+    { name:'Pupil symmetry L = R',          val:result.h_symm,     ideal:1.0,  scored:true, direct:true },
+    { name:'Eye width L = R',               val:result.eye_symm,   ideal:1.0,  scored:true, direct:true },
+    { name:'Nose width — mouth width',      val:result.score3a,    ideal:PHI,  scored:true  },
+    { name:'Inter-eye = nose width',        val:result.inter_nose, ideal:1.0,  scored:true  },
+  ];
+  const grid = document.getElementById('metricsGrid');
+  grid.innerHTML = '';
+  metrics.forEach(m => {
+    const s   = m.direct ? m.val : (m.val>0&&m.ideal>0) ? Math.min(m.val,m.ideal)/Math.max(m.val,m.ideal) : 0;
+    const pct = Math.round(s*100);
+    const cls = !m.scored ? 'ok' : pct>=95?'good':pct>=85?'ok':'off';
+    const row = document.createElement('div');
+    row.className = 'metric-row';
+    const scoreLabel = m.scored ? `${pct}%` : '—';
+    row.innerHTML = `<span class="metric-name">${m.name}</span><span class="metric-value">${m.val.toFixed(3)}</span><span class="metric-score ${cls}">${scoreLabel}</span>`;
+    grid.appendChild(row);
+  });
+}
+
+function resetScores() {
+  document.getElementById('scoresOverlay').style.display = 'none';
+  document.getElementById('scoreBarFill').style.width = '0%';
+}
+
+function setStatus(msg, show=true) {
+  document.getElementById('statusText').textContent = msg;
+  document.getElementById('statusBar').classList.toggle('visible', show);
+}
+function setError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.toggle('visible', !!msg);
+}
+
+// ─── Static image processing ─────────────────
+async function processImage(imgSrc) {
+  setStatus('Detecting landmarks…', true);
+  setError('');
+  document.getElementById('uploadPrompt').style.display = 'none';
+  document.getElementById('outputCanvas').style.display = 'none';
+
+  return new Promise((resolve, reject) => {
+    const img = document.getElementById('srcImage');
+    img.onload = async () => {
+      try {
+        const fm = new FaceMesh({ locateFile: f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+        fm.setOptions({ maxNumFaces:1, refineLandmarks:false, minDetectionConfidence:0.5, minTrackingConfidence:0.5 });
+        fm.onResults(res => {
+          setStatus('',false);
+          if (!res.multiFaceLandmarks?.length) {
+            setError('No face detected — use a clear frontal portrait.');
+            document.getElementById('uploadPrompt').style.display = '';
+            reject(); return;
+          }
+          const canvas = document.getElementById('outputCanvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          canvas.style.display = 'block';
+          ctx.drawImage(img, 0, 0);
+          const result = calculateBeauty(res.multiFaceLandmarks[0]);
+          drawAnnotations(canvas, ctx, res.multiFaceLandmarks[0], result);
+          showScores(result);
+          document.getElementById('btnReset').style.display = 'block';
+          resolve(result);
+        });
+        await fm.initialize();
+        await fm.send({ image: img });
+      } catch(e) {
+        setStatus('',false); setError('Error: '+e.message);
+        document.getElementById('uploadPrompt').style.display = '';
+        reject(e);
+      }
+    };
+    img.onerror = () => {
+      setStatus('',false); setError('Could not load image.');
+      document.getElementById('uploadPrompt').style.display = '';
+      reject();
+    };
+    img.src = imgSrc;
+  });
+}
+
+// ─── Mode switch ─────────────────────────────
+document.getElementById('btnModeUpload').addEventListener('click', ()=>switchMode('upload'));
+document.getElementById('btnModeWebcam').addEventListener('click', ()=>switchMode('webcam'));
+
+function switchMode(mode) {
+  const up = mode==='upload';
+  document.getElementById('btnModeUpload').classList.toggle('active', up);
+  document.getElementById('btnModeWebcam').classList.toggle('active', !up);
+  document.getElementById('uploadPrompt').style.display  = up ? '' : 'none';
+  document.getElementById('outputCanvas').style.display  = 'none';
+  document.getElementById('webcamPlaceholder').style.display = up ? 'none' : '';
+  document.getElementById('liveCanvas').style.display    = 'none';
+  document.getElementById('camBar').classList.toggle('hidden', up);
+  if (up) stopWebcam();
+  resetScores(); setError(''); setStatus('',false);
+}
+
+// ─── Upload events ────────────────────────────
+const uploadPrompt = document.getElementById('uploadPrompt');
+const fileInput    = document.getElementById('fileInput');
+uploadPrompt.addEventListener('click', ()=>fileInput.click());
+uploadPrompt.addEventListener('dragover', e=>{e.preventDefault();uploadPrompt.classList.add('drag-over');});
+uploadPrompt.addEventListener('dragleave', ()=>uploadPrompt.classList.remove('drag-over'));
+uploadPrompt.addEventListener('drop', e=>{
+  e.preventDefault(); uploadPrompt.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f?.type.startsWith('image/')) loadFile(f);
+});
+fileInput.addEventListener('change', ()=>{ if(fileInput.files[0]) loadFile(fileInput.files[0]); });
+function loadFile(f) { const r=new FileReader(); r.onload=e=>processImage(e.target.result); r.readAsDataURL(f); }
+
+document.getElementById('btnReset').addEventListener('click', ()=>{
+  resetScores();
+  document.getElementById('outputCanvas').style.display='none';
+  document.getElementById('uploadPrompt').style.display='';
+  fileInput.value=''; setError('');
+});
+
+// ─── Webcam real-time ─────────────────────────
+const btnStart    = document.getElementById('btnStartCamera');
+const btnFlip     = document.getElementById('btnFlipCamera');
+const webcamVideo = document.getElementById('webcamVideo');
+const liveCanvas  = document.getElementById('liveCanvas');
+const liveCtx     = liveCanvas.getContext('2d');
+let faceMeshLive=null, mpCamera=null, liveRunning=false;
+let facingMode = 'user'; // 'user' = front cam, 'environment' = back cam
+let isFrontCam = true;
+
+btnStart.addEventListener('click', ()=>liveRunning?stopWebcam():startWebcam());
+btnFlip.addEventListener('click', async ()=>{
+  if (!liveRunning) return;
+  facingMode = facingMode === 'user' ? 'environment' : 'user';
+  isFrontCam = facingMode === 'user';
+  await stopWebcamKeepUI();
+  await startWebcam();
+});
+
+async function startWebcam() {
+  setError(''); setStatus('Starting camera…',true); btnStart.disabled=true;
+  try {
+    faceMeshLive = new FaceMesh({ locateFile: f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+    faceMeshLive.setOptions({ maxNumFaces:1, refineLandmarks:false, minDetectionConfidence:0.5, minTrackingConfidence:0.5 });
+    faceMeshLive.onResults(onLiveResults);
+    await faceMeshLive.initialize();
+
+    // Size canvas to actual container
+    const area = document.getElementById('mediaArea');
+    const w = area.clientWidth || 640;
+    const h = area.clientHeight || 480;
+    liveCanvas.width  = w;
+    liveCanvas.height = h;
+
+    mpCamera = new Camera(webcamVideo, {
+      onFrame: async ()=>{ await faceMeshLive.send({ image: webcamVideo }); },
+      width: w, height: h,
+      facingMode: facingMode
+    });
+    await mpCamera.start();
+
+    liveRunning=true;
+    liveCanvas.style.display='block';
+    document.getElementById('webcamPlaceholder').style.display='none';
+    document.getElementById('camHint').textContent='Live analysis · hold still';
+    btnStart.textContent='Stop Camera'; btnStart.classList.add('stop'); btnStart.disabled=false;
+    setStatus('',false);
+  } catch(e) {
+    setStatus('',false); setError('Camera error: '+e.message); btnStart.disabled=false;
+  }
+}
+
+// Stop camera but keep the UI in webcam mode (used for flip)
+async function stopWebcamKeepUI() {
+  if(mpCamera){mpCamera.stop();mpCamera=null;}
+  if(faceMeshLive){faceMeshLive.close();faceMeshLive=null;}
+  liveRunning=false;
+  liveCanvas.style.display='none';
+  webcamVideo.srcObject=null;
+}
+
+function onLiveResults(results) {
+  const W = liveCanvas.width, H = liveCanvas.height;
+
+  // Front cam: mirror the canvas display (CSS transform) + flip landmarks
+  // Back cam: no mirror
+  liveCanvas.style.transform = isFrontCam ? 'scaleX(-1)' : 'scaleX(1)';
+
+  liveCtx.drawImage(results.image, 0, 0, W, H);
+
+  if (!results.multiFaceLandmarks?.length) {
+    liveCtx.fillStyle='rgba(0,0,0,0.4)'; liveCtx.fillRect(0,0,W,H);
+    liveCtx.fillStyle='rgba(255,229,102,0.8)';
+    liveCtx.font=`${Math.max(13, W*0.022)}px Jost,sans-serif`;
+    liveCtx.textAlign='center';
+    liveCtx.fillText('No face detected',W/2,H/2);
+    liveCtx.textAlign='left';
+    resetScores(); return;
+  }
+
+  // For front cam, flip x so landmarks match the mirrored display
+  const raw = results.multiFaceLandmarks[0];
+  const landmarks = isFrontCam
+    ? raw.map(l=>({x:1-l.x, y:l.y, z:l.z}))
+    : raw;
+
+  const result = calculateBeauty(landmarks);
+  drawAnnotations(liveCanvas, liveCtx, landmarks, result);
+  showScores(result);
+}
+
+function stopWebcam() {
+  if(mpCamera){mpCamera.stop();mpCamera=null;}
+  if(faceMeshLive){faceMeshLive.close();faceMeshLive=null;}
+  liveRunning=false;
+  liveCanvas.style.display='none';
+  liveCanvas.style.transform='';
+  webcamVideo.srcObject=null;
+  document.getElementById('webcamPlaceholder').style.display='';
+  document.getElementById('camHint').textContent='Live · face the camera';
+  btnStart.textContent='Start Camera'; btnStart.classList.remove('stop');
+  resetScores(); setStatus('',false);
+}
+
+// Resize canvas when window resizes (important on mobile orientation change)
+window.addEventListener('resize', ()=>{
+  if (!liveRunning) return;
+  const area = document.getElementById('mediaArea');
+  liveCanvas.width  = area.clientWidth  || 640;
+  liveCanvas.height = area.clientHeight || 480;
+});
+</script>
+</body>
+</html>
