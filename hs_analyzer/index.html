@@ -175,7 +175,7 @@
   /* ── Mobile ── */
   @media (max-width:680px) {
     .main { display:block; position:relative; height:calc(100vh - 55px); height:calc(100dvh - 55px); overflow:hidden; }
-    .video-area { position:absolute; inset:0; width:100%; height:100%; }
+    .video-area { position:absolute; inset:0; width:100%; height:100dvh; }
 
     /* Panel slides in from the LEFT */
     .panel {
@@ -588,7 +588,9 @@ function onResults(results){
   ctx.clearRect(0,0,poseCanvas.width,poseCanvas.height);
   if(!results.poseLandmarks){
     latestLandmarks=null;latestAngles=null;latestScore=null;latestTorques=null;
-    renderPanel(null,null,null);return;
+    renderPanel(null,null,null);
+    if(compositeRunning)renderCompositeFrame();
+    return;
   }
   const lm=results.poseLandmarks;
   isInverted=detectInversion(lm);
@@ -605,6 +607,8 @@ function onResults(results){
   }
   drawAnglesOnCanvas(lm,angles,ctx,poseCanvas);
   renderPanel(angles,score,torques);
+  // Paint composite every time pose fires — keeps recording in sync on desktop
+  if(compositeRunning)renderCompositeFrame();
 }
 
 // ─── Skeleton draw (accepts any canvas context) ───────────────────────────────
@@ -772,7 +776,7 @@ function drawCompositePanel(c,lm,angles,score,torques,W,H){
   }
 
   // ── Watermark ──
-  c.fillStyle='rgba(255,255,255,.5)';
+  c.fillStyle='rgba(255,255,255,1)';
   c.font=`${Math.max(9,lfs)}px DM Mono,monospace`;c.textAlign='right';
   c.fillText('rcsmit.github.io/hs_analyzer',W-8,H-6);
 
@@ -800,8 +804,6 @@ function renderCompositeFrame(){
 
   // 3. Info panel
   drawCompositePanel(cc,latestLandmarks,latestAngles,latestScore,latestTorques,cw,ch);
-
-  if(compositeRunning)recAnimFrame=requestAnimationFrame(renderCompositeFrame);
 }
 
 // ── Recording controls ─────────────────────────────────────────────────────────
@@ -841,7 +843,7 @@ function startRecording(){
 
 function stopRecording(){
   if(!mediaRecorder||mediaRecorder.state==='inactive')return;
-  mediaRecorder.stop();isRecording=false;compositeRunning=false;cancelAnimationFrame(recAnimFrame);
+  mediaRecorder.stop();isRecording=false;compositeRunning=false;
   recStatus.style.display='none';
   const rb=document.getElementById('recBtn'),eb=document.getElementById('exportBtn');
   rb.textContent='⏺ REC';eb.textContent='⏺ Record & Export';
