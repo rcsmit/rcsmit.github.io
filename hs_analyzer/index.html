@@ -29,15 +29,15 @@
   }
   header {
     padding:14px 28px; border-bottom:1px solid var(--border);
-    background:var(--panel); display:flex; align-items:baseline; gap:14px;
+    background:var(--panel); display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
   }
   header h1 { font-family:'Bebas Neue'; font-size:1.9rem; letter-spacing:3px; color:var(--accent); }
   header span { font-size:0.62rem; color:var(--muted); letter-spacing:2px; }
-  .privacy-note {
-    margin:auto; font-size:0.75rem; color:var(--text); letter-spacing:1px;
-    display:flex; align-items:center; gap:6px; cursor:default;
+  .header-url {
+    margin-left:auto; font-size:0.55rem; color:var(--muted); letter-spacing:1.5px;
+    text-decoration:none; opacity:0.6; transition:opacity .2s; white-space:nowrap; align-self:center;
   }
-  .privacy-dot { width:6px; height:6px; border-radius:50%; background:var(--good); flex-shrink:0; }
+  .header-url:hover { opacity:1; color:var(--accent); }
 
   .main { display:grid; grid-template-columns:1fr 290px; height:calc(100vh - 55px); height:calc(100dvh - 55px); overflow:hidden; }
 
@@ -67,7 +67,7 @@
   .controls {
     position:absolute; top:0; left:0; right:0;
     padding:10px 16px; background:linear-gradient(rgba(244,242,238,.95),transparent);
-    display:none; align-items:center; gap:10px; z-index:50;
+    display:none; align-items:center; gap:8px; z-index:50; flex-wrap:wrap;
   }
   .btn {
     background:transparent; border:1px solid var(--border); color:var(--text);
@@ -75,8 +75,11 @@
     padding:5px 12px; cursor:pointer; transition:all .15s; text-transform:uppercase;
   }
   .btn:hover { border-color:var(--accent); }
+  .btn.rec-active { border-color:#c0392b; color:#c0392b; animation:recpulse 1s ease-in-out infinite; }
+  @keyframes recpulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
   #seekBar {
-    flex:1; -webkit-appearance:none; height:2px; background:var(--border); outline:none; cursor:pointer;
+    flex:1; -webkit-appearance:none; height:2px; background:var(--border); outline:none; cursor:pointer; min-width:40px;
   }
   #seekBar::-webkit-slider-thumb {
     -webkit-appearance:none; width:11px; height:11px; background:var(--accent); border-radius:50%;
@@ -92,6 +95,12 @@
     position:absolute; bottom:12px; left:12px;
     font-size:0.52rem; color:rgba(0,0,0,.35); pointer-events:none; letter-spacing:1px;
   }
+  #recStatus {
+    position:absolute; bottom:0; left:0; right:0;
+    background:rgba(192,57,43,0.88); color:#fff;
+    font-size:0.58rem; letter-spacing:2px; text-align:center;
+    padding:6px; display:none; z-index:60;
+  }
   #loadingOverlay {
     position:absolute; inset:0; background:rgba(244,242,238,.9);
     display:none; align-items:center; justify-content:center;
@@ -101,11 +110,11 @@
     width:28px; height:28px; border:2px solid var(--border);
     border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite;
   }
-  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes spin { to{transform:rotate(360deg)} }
   #loadingText { font-size:0.62rem; letter-spacing:3px; color:var(--accent); }
   #loadingSub  { font-size:0.5rem; color:var(--muted); letter-spacing:1px; }
 
-  /* ── Desktop panel ── */
+  /* ── Panel ── */
   .panel { border-left:1px solid var(--border); background:var(--panel); overflow-y:auto; display:flex; flex-direction:column; }
   .panel::-webkit-scrollbar { width:3px; }
   .panel::-webkit-scrollbar-thumb { background:var(--border); }
@@ -124,163 +133,85 @@
   .score-bar-wrap { height:3px; background:var(--border); margin-top:8px; border-radius:2px; overflow:hidden; }
   .score-bar { height:100%; background:var(--good); border-radius:2px; width:0%; transition:width .3s; }
 
-  .angle-grid { display:flex; flex-direction:column; gap:5px; }
-  .angle-card {
-    display:grid; grid-template-columns:1fr auto; align-items:center;
-    padding:8px 10px; background:var(--bg); border:1px solid var(--border);
-    border-left:3px solid var(--border); opacity:.35; transition:opacity .3s, border-color .3s;
-  }
-  .angle-card.visible { opacity:1; }
-  .angle-card.good { border-left-color:var(--good); background:var(--good-bg); }
-  .angle-card.warn { border-left-color:var(--warn); background:var(--warn-bg); }
-  .angle-card.bad  { border-left-color:var(--bad);  background:var(--bad-bg); }
-  .angle-label  { font-size:0.56rem; letter-spacing:1px; color:var(--muted); margin-bottom:3px; text-transform:uppercase; }
-  .angle-weight { font-size:0.48rem; color:#bbb; }
-  .angle-bar-wrap { height:2px; background:var(--border); margin-top:4px; border-radius:2px; overflow:hidden; }
-  .angle-bar { height:100%; border-radius:2px; transition:width .2s; }
-  .angle-val { font-family:'Bebas Neue'; font-size:1.35rem; line-height:1; color:var(--muted); }
-  .angle-val.good { color:var(--good); }
-  .angle-val.warn { color:var(--warn); }
-  .angle-val.bad  { color:var(--bad); }
+  .feedback-list { display:flex; flex-direction:column; gap:5px; }
+  .feedback-item { font-size:0.6rem; line-height:1.55; padding:7px 10px; background:var(--bg); border-left:2px solid var(--border); color:var(--muted); }
+  .feedback-item.good { border-left-color:var(--good); color:var(--good); background:var(--good-bg); }
+  .feedback-item.warn { border-left-color:var(--warn); color:var(--warn); background:var(--warn-bg); }
+  .feedback-item.bad  { border-left-color:var(--bad);  color:var(--bad);  background:var(--bad-bg); }
 
-  /* ── Angle overlay on video ── */
-  #angleOverlay {
-    position:absolute; top:50px; right:12px;
-    display:none; flex-direction:column; gap:4px;
-    z-index:10; pointer-events:none;
-  }
-  .ov-row {
-    display:flex; align-items:center; justify-content:flex-end; gap:6px;
-    background:rgba(255,255,255,0.82); backdrop-filter:blur(3px);
-    padding:4px 8px; border-right:3px solid var(--border);
-  }
+  .orient-pill { display:inline-flex; align-items:center; gap:8px; padding:5px 11px; border:1px solid var(--border); font-size:0.6rem; letter-spacing:2px; color:var(--muted); }
+  .orient-dot  { width:7px; height:7px; border-radius:50%; background:var(--border); }
+  .orient-pill.inverted { border-color:var(--good); color:var(--good); }
+  .orient-pill.inverted .orient-dot { background:var(--good); }
+  .empty-state { font-size:0.6rem; color:var(--muted); text-align:center; padding:16px 0; }
+
+  /* toggle */
+  .toggle-row { display:flex; align-items:center; gap:8px; padding:0 0 6px 0; }
+  .toggle-label { font-size:0.56rem; letter-spacing:1px; color:var(--muted); text-transform:uppercase; cursor:pointer; }
+  .toggle-switch { position:relative; width:32px; height:16px; cursor:pointer; }
+  .toggle-switch input { opacity:0; width:0; height:0; }
+  .toggle-track { position:absolute; inset:0; background:var(--border); border-radius:8px; transition:background .2s; }
+  .toggle-switch input:checked ~ .toggle-track { background:var(--accent); }
+  .toggle-thumb { position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%; background:#fff; transition:transform .2s; pointer-events:none; }
+  .toggle-switch input:checked ~ .toggle-thumb { transform:translateX(16px); }
+
+  /* angle overlay */
+  #angleOverlay { position:absolute; top:50px; right:12px; display:none; flex-direction:column; gap:4px; z-index:10; pointer-events:none; }
+  .ov-row { display:flex; align-items:center; justify-content:flex-end; gap:6px; background:rgba(255,255,255,0.82); backdrop-filter:blur(3px); padding:4px 8px; border-right:3px solid var(--border); }
   .ov-row.good { border-right-color:var(--good); }
   .ov-row.warn { border-right-color:var(--warn); }
-  .ov-row.bad  { border-right-color:var(--bad);  }
+  .ov-row.bad  { border-right-color:var(--bad); }
   .ov-label { font-size:0.5rem; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; }
   .ov-val   { font-family:'Bebas Neue'; font-size:1.1rem; line-height:1; color:var(--accent); min-width:36px; text-align:right; }
   .ov-val.good { color:var(--good); }
   .ov-val.warn { color:var(--warn); }
   .ov-val.bad  { color:var(--bad); }
 
-  /* ── Torque overlay on video ── */
-  #torqueOverlay {
-    position:absolute; right:12px;
-    display:none; flex-direction:column; gap:4px;
-    z-index:10; pointer-events:none;
-  }
-  .ov-divider {
-    height:1px; background:rgba(0,0,0,0.1); margin:2px 0;
-  }
-  .ov-row.torque-row {
-    background:rgba(245,243,240,0.88);
-  }
+  /* torque overlay */
+  #torqueOverlay { position:absolute; right:12px; display:none; flex-direction:column; gap:4px; z-index:10; pointer-events:none; }
+  .ov-divider { height:1px; background:rgba(0,0,0,0.1); margin:2px 0; }
+  .ov-row.torque-row { background:rgba(245,243,240,0.88); }
 
-  .feedback-list { display:flex; flex-direction:column; gap:5px; }
-  .feedback-item {
-    font-size:0.6rem; line-height:1.55; padding:7px 10px;
-    background:var(--bg); border-left:2px solid var(--border); color:var(--muted);
-  }
-  .feedback-item.good { border-left-color:var(--good); color:var(--good); background:var(--good-bg); }
-  .feedback-item.warn { border-left-color:var(--warn); color:var(--warn); background:var(--warn-bg); }
-  .feedback-item.bad  { border-left-color:var(--bad);  color:var(--bad);  background:var(--bad-bg); }
-
-  .orient-pill {
-    display:inline-flex; align-items:center; gap:8px;
-    padding:5px 11px; border:1px solid var(--border); font-size:0.6rem; letter-spacing:2px; color:var(--muted);
-  }
-  .orient-dot { width:7px; height:7px; border-radius:50%; background:var(--border); }
-  .orient-pill.inverted { border-color:var(--good); color:var(--good); }
-  .orient-pill.inverted .orient-dot { background:var(--good); }
-
-  .empty-state { font-size:0.6rem; color:var(--muted); text-align:center; padding:16px 0; }
-
-  /* ── Toggle switch ── */
-  .toggle-row {
-    display:flex; align-items:center; gap:8px; padding:0 0 6px 0;
-  }
-  .toggle-label { font-size:0.56rem; letter-spacing:1px; color:var(--muted); text-transform:uppercase; cursor:pointer; }
-  .toggle-switch {
-    position:relative; width:32px; height:16px; cursor:pointer;
-  }
-  .toggle-switch input { opacity:0; width:0; height:0; }
-  .toggle-track {
-    position:absolute; inset:0;
-    background:var(--border); border-radius:8px; transition:background .2s;
-  }
-  .toggle-switch input:checked ~ .toggle-track { background:var(--accent); }
-  .toggle-thumb {
-    position:absolute; top:2px; left:2px;
-    width:12px; height:12px; border-radius:50%; background:#fff;
-    transition:transform .2s; pointer-events:none;
-  }
-  .toggle-switch input:checked ~ .toggle-thumb { transform:translateX(16px); }
-
-  /* ── Mobile overlay panel ── */
+  /* ── Mobile ── */
   @media (max-width:680px) {
-    .main {
-      display:block;
-      position:relative;
-      height:calc(100vh - 55px);
-      height:calc(100dvh - 55px);
-      overflow:hidden;
-    }
+    .main { display:block; position:relative; height:calc(100vh - 55px); height:calc(100dvh - 55px); overflow:hidden; }
+    .video-area { position:absolute; inset:0; width:100%; height:100%; }
 
-    .video-area {
-      position:absolute;
-      inset:0;
-      width:100%;
-      height:100%;
-    }
-
+    /* Panel slides in from the LEFT */
     .panel {
-      position:absolute;
-      top:0; right:0; bottom:0;
-      width:160px;
-      border-left:1px solid rgba(221,221,221,0.5);
-      background:rgba(255,255,255,0.5);
-      backdrop-filter:blur(6px);
-      -webkit-backdrop-filter:blur(6px);
-      z-index:20;
-      overflow-y:auto;
-      transform:translateX(100%);
-      transition:transform .25s ease;
+      position:absolute; top:0; left:0; bottom:0; width:172px;
+      border-right:1px solid rgba(221,221,221,0.5);
+      border-left:none;
+      background:rgba(255,255,255,0.55); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+      z-index:20; overflow-y:auto; transform:translateX(-100%); transition:transform .25s ease;
     }
-    .panel.open {
-      transform:translateX(0);
-    }
+    .panel.open { transform:translateX(0); }
 
+    /* Hamburger — top-left, below controls bar height */
     #panelToggle {
-      display:flex;
-      position:absolute;
-      top:10px; right:10px;
-      z-index:60;
-      background:rgba(255,255,255,0.75);
-      border:1px solid rgba(0,0,0,0.2);
-      font-family:'DM Mono',monospace;
-      font-size:0.6rem; letter-spacing:2px;
-      padding:5px 10px; cursor:pointer;
-      backdrop-filter:blur(4px);
-      -webkit-backdrop-filter:blur(4px);
+      display:flex; position:absolute; top:10px; left:10px; z-index:60;
+      background:rgba(255,255,255,0.82); border:1px solid rgba(0,0,0,0.18);
+      font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:2px;
+      padding:5px 10px; cursor:pointer; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
     }
 
-    .panel-section {
-      padding:10px 12px;
-      border-bottom:1px solid rgba(221,221,221,0.4);
+    /* Controls bar: push content right so it clears the hamburger button (~90px) */
+    .controls {
+      z-index:55;
+      padding-left: 90px;   /* clear the ☰ button */
     }
 
+    .panel-section { padding:10px 12px; border-bottom:1px solid rgba(221,221,221,0.4); }
     .score-num { font-size:1.8rem; }
-
-    .controls { z-index:55; right:0; }
-
     #uploadZone { margin-top:60px; }
-
     #notHandstandBanner { top:55px; }
-  }
+    .header-url { display:none; }
 
-  @media (min-width:681px) {
-    #panelToggle { display:none; }
+    /* Angle/torque overlays move to left when panel is closed, right when open */
+    #angleOverlay  { right:10px; }
+    #torqueOverlay { right:10px; }
   }
+  @media (min-width:681px) { #panelToggle { display:none; } }
 </style>
 </head>
 <body>
@@ -288,7 +219,7 @@
 <header>
   <h1>Handstand Analyzer</h1>
   <span>MediaPipe Pose · modelComplexity 2</span>
-  
+  <a class="header-url" href="https://rcsmit.github.io/hs_analyzer" target="_blank">rcsmit.github.io/hs_analyzer</a>
 </header>
 
 <div class="main">
@@ -298,9 +229,9 @@
       <strong>Upload Video or Photo</strong>
       <p>MP4 · MOV · WEBM · JPG · PNG<br>
         <span style="font-size:.6rem;opacity:.5">or use Source buttons →</span></p>
-      <div class="privacy-note" title="All processing happens in your browser via WebAssembly. No video, image or pose data is ever uploaded or sent to any server.">
-        <div class="privacy-dot"></div>
-        100% local · no upload · no server · your video never leaves this device
+      <div style="font-size:0.72rem;color:var(--text);letter-spacing:1px;display:flex;align-items:center;gap:6px">
+        <div style="width:6px;height:6px;border-radius:50%;background:var(--good);flex-shrink:0"></div>
+        100% local · no upload · no server
       </div>
     </div>
 
@@ -315,12 +246,14 @@
 
     <div id="notHandstandBanner">⚠ NOT INVERTED — get upside down for scoring</div>
     <div id="debugInfo"></div>
+    <div id="recStatus">⏺ RECORDING — press STOP REC when done</div>
 
     <div class="controls" id="controls">
       <button class="btn" onclick="togglePlay()">⏯</button>
       <input type="range" id="seekBar" min="0" max="100" step="0.1" value="0" oninput="seek(this.value)">
       <span id="timeDisplay">0:00 / 0:00</span>
       <button class="btn" id="bestBtn" style="display:none" onclick="jumpToBest()">★ BEST</button>
+      <button class="btn" id="recBtn" style="display:none" onclick="toggleRecording()">⏺ REC</button>
     </div>
 
     <div id="loadingOverlay">
@@ -333,7 +266,6 @@
     <div id="torqueOverlay"></div>
   </div>
 
-  <!-- Mobile floating toggle -->
   <button id="panelToggle" onclick="togglePanel()">☰ INFO</button>
 
   <div class="panel" id="sidePanel">
@@ -348,7 +280,7 @@
     <div class="panel-section">
       <div class="section-title">Draw Side</div>
       <div class="source-btns">
-        <button class="btn" id="leftSideBtn" onclick="setSideToDraw('left')">← &nbsp;Left (blue)</button>
+        <button class="btn" id="leftSideBtn"  onclick="setSideToDraw('left')">← &nbsp;Left (blue)</button>
         <button class="btn" id="rightSideBtn" onclick="setSideToDraw('right')">→ &nbsp;Right (red)</button>
       </div>
     </div>
@@ -362,6 +294,22 @@
           <div class="toggle-thumb"></div>
         </label>
         <span class="toggle-label" onclick="document.getElementById('whiteLabelsToggle').click()">White on video</span>
+      </div>
+    </div>
+
+    <!-- Export section -->
+    <div class="panel-section">
+      <div class="section-title">Export</div>
+      <div class="source-btns">
+        <button class="btn" id="exportBtn" style="display:none" onclick="toggleRecording()">⏺ &nbsp;Record &amp; Export</button>
+        <div id="exportHint" style="font-size:0.52rem;color:var(--muted);line-height:1.7;margin-top:4px;display:none">
+          Composites skeleton + panels onto video.<br>
+          Start → play through → Stop to download.<br>
+          Stops auto when video ends.
+        </div>
+        <div id="exportNoteNoSrc" style="font-size:0.52rem;color:var(--muted);line-height:1.6">
+          Load a video or start webcam to enable export.
+        </div>
       </div>
     </div>
 
@@ -395,11 +343,11 @@
       </div>
     </div>
 
-    <div class="panel-section" style="text-align:center; padding:12px 16px;">
-      <div style="font-size:0.5rem; color:var(--muted); letter-spacing:1.5px; line-height:1.8;">
+    <div class="panel-section" style="text-align:center;padding:12px 16px;">
+      <div style="font-size:0.5rem;color:var(--muted);letter-spacing:1.5px;line-height:1.8;">
         made by<br>
-        <a href="https://www.rene-smit.com" target="_blank" style="color:var(--accent); text-decoration:none; letter-spacing:2px; font-size:0.55rem;">René Smit</a><br>
-        <span style="font-size:0.48rem; opacity:0.6;">www.rene-smit.com</span>
+        <a href="https://www.rene-smit.com" target="_blank" style="color:var(--accent);text-decoration:none;letter-spacing:2px;font-size:0.55rem;">René Smit</a><br>
+        <a href="https://rcsmit.github.io/hs_analyzer" target="_blank" style="color:var(--muted);text-decoration:none;font-size:0.48rem;opacity:0.7;">rcsmit.github.io/hs_analyzer</a>
       </div>
     </div>
   </div>
@@ -408,7 +356,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
 <script>
-
 // ─── DOM ──────────────────────────────────────────────────────────────────────
 const inputVideo  = document.getElementById('inputVideo');
 const inputImage  = document.getElementById('inputImage');
@@ -422,556 +369,499 @@ const loading     = document.getElementById('loadingOverlay');
 const loadingText = document.getElementById('loadingText');
 const banner      = document.getElementById('notHandstandBanner');
 const debugInfo   = document.getElementById('debugInfo');
+const recStatus   = document.getElementById('recStatus');
 
 // ─── State ────────────────────────────────────────────────────────────────────
-let pose = null, poseReady = false;
-let activeSource = null;
-let webcamCamera = null;
-let animFrame    = null;
-let isInverted   = false;
-let objURL       = null;
-let bestScore = 0, bestTime = 0;
-let sideToDraw = 'left';
-let whiteLabels = false;
-let hasBeenInverted = false;
+let pose=null, poseReady=false;
+let activeSource=null, webcamCamera=null, animFrame=null;
+let isInverted=false, objURL=null, bestScore=0, bestTime=0;
+let sideToDraw='left', whiteLabels=false, hasBeenInverted=false;
 
-const VIS = 0.5;
+// Latest pose data (used by composite renderer)
+let latestLandmarks=null, latestAngles=null, latestScore=null, latestTorques=null;
 
-// ─── Torque constants ─────────────────────────────────────────────────────────
-const G = 9.81;
-const SEGMENT_MASSES = {
-  hand:     0.6,
-  forearm:  2.2,
-  upperArm: 4,
-  torso:    24,
-  head:     7,
-  hips:     8.2,
-  thigh:    14,
-  shin:     6,
-  foot:     2
-};
+// Recording
+let mediaRecorder=null, recordedChunks=[], isRecording=false;
+let compositeCanvas=null, compositeCtx=null, recAnimFrame=null;
+let compositeRunning=false;
 
-// ─── Angle definitions ────────────────────────────────────────────────────────
-const ANGLE_DEFS = [
-  { key:'elbow',    label:'Elbow',    weight:20, ideal:180, tol:15,
-    ptsR:[15,13,11], ptsL:[16,14,12],
-    labelLm:13,
-    coach:{ bad:'Lock out elbows fully', warn:'Elbows slightly bent' }},
-  { key:'shoulder', label:'Shoulder', weight:30, ideal:180, tol:20,
-    ptsR:[13,11,23], ptsL:[14,12,24],
-    labelLm:11,
-    coach:{ bad:'Open shoulders — push floor away', warn:'Shoulders slightly closed' }},
-  { key:'hip',      label:'Hip',      weight:30, ideal:180, tol:15,
-    ptsR:[11,23,25], ptsL:[12,24,26],
-    labelLm:23,
-    coach:{ bad:'Hips piked — squeeze glutes', warn:'Slight hip pike' }},
-  { key:'knee',     label:'Knee',     weight:15, ideal:180, tol:10,
-    ptsR:[23,25,27], ptsL:[24,26,28],
-    labelLm:25,
-    coach:{ bad:'Straighten knees', warn:'Knees slightly bent' }},
-  { key:'ankle',    label:'Ankle',    weight: 5, ideal:160, tol:30,
-    ptsR:[25,27,31], ptsL:[26,28,32],
-    labelLm:27,
-    coach:{ bad:'Point toes', warn:'Toes can be more pointed' }},
+const VIS=0.5;
+const G=9.81;
+
+const SEGMENT_MASSES={hand:.6,forearm:2.2,upperArm:4,torso:24,head:7,hips:8.2,thigh:14,shin:6,foot:2};
+
+const ANGLE_DEFS=[
+  {key:'elbow',    label:'Elbow',    weight:20,ideal:180,tol:15, ptsR:[15,13,11],ptsL:[16,14,12],labelLm:13, coach:{bad:'Lock out elbows fully',warn:'Elbows slightly bent'}},
+  {key:'shoulder', label:'Shoulder', weight:30,ideal:180,tol:20, ptsR:[13,11,23],ptsL:[14,12,24],labelLm:11, coach:{bad:'Open shoulders — push floor away',warn:'Shoulders slightly closed'}},
+  {key:'hip',      label:'Hip',      weight:30,ideal:180,tol:15, ptsR:[11,23,25],ptsL:[12,24,26],labelLm:23, coach:{bad:'Hips piked — squeeze glutes',warn:'Slight hip pike'}},
+  {key:'knee',     label:'Knee',     weight:15,ideal:180,tol:10, ptsR:[23,25,27],ptsL:[24,26,28],labelLm:25, coach:{bad:'Straighten knees',warn:'Knees slightly bent'}},
+  {key:'ankle',    label:'Ankle',    weight:5, ideal:160,tol:30, ptsR:[25,27,31],ptsL:[26,28,32],labelLm:27, coach:{bad:'Point toes',warn:'Toes can be more pointed'}},
 ];
 
 // ─── MediaPipe ────────────────────────────────────────────────────────────────
 function initPose() {
-  return new Promise(resolve => {
-    pose = new Pose({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}` });
-    pose.setOptions({
-      modelComplexity:        2,
-      smoothLandmarks:        true,
-      enableSegmentation:     false,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence:  0.5
-    });
+  return new Promise(resolve=>{
+    pose=new Pose({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/pose/${f}`});
+    pose.setOptions({modelComplexity:2,smoothLandmarks:true,enableSegmentation:false,minDetectionConfidence:.5,minTrackingConfidence:.5});
     pose.onResults(onResults);
     pose.initialize().then(resolve);
   });
 }
 
-// ─── Mobile panel toggle ──────────────────────────────────────────────────────
-function togglePanel() {
-  const panel = document.getElementById('sidePanel');
-  const btn   = document.getElementById('panelToggle');
-  const open  = panel.classList.toggle('open');
-  btn.textContent = open ? '✕ CLOSE' : '☰ INFO';
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+function togglePanel(){
+  const p=document.getElementById('sidePanel'),b=document.getElementById('panelToggle');
+  b.textContent=p.classList.toggle('open')?'✕ CLOSE':'☰ INFO';
+}
+function setSideToDraw(s){sideToDraw=s;updateSideButtons();}
+function updateSideButtons(){
+  document.getElementById('leftSideBtn').style.borderColor  = sideToDraw==='left'  ?'var(--accent)':'var(--border)';
+  document.getElementById('rightSideBtn').style.borderColor = sideToDraw==='right' ?'var(--accent)':'var(--border)';
+}
+function showExportUI(){
+  document.getElementById('exportBtn').style.display='inline-block';
+  document.getElementById('exportHint').style.display='block';
+  document.getElementById('exportNoteNoSrc').style.display='none';
+  document.getElementById('recBtn').style.display='inline-block';
+}
+function hideExportUI(){
+  document.getElementById('exportBtn').style.display='none';
+  document.getElementById('exportHint').style.display='none';
+  document.getElementById('exportNoteNoSrc').style.display='block';
+  document.getElementById('recBtn').style.display='none';
 }
 
-// ─── Side toggle helpers ──────────────────────────────────────────────────────
-function setSideToDraw(side) {
-  sideToDraw = side;
-  updateSideButtons();
+// ─── File / video loading ─────────────────────────────────────────────────────
+async function loadFile(e){
+  const file=e.target.files[0]; if(!file) return;
+  stopWebcam(); if(objURL){URL.revokeObjectURL(objURL);objURL=null;}
+  loading.style.display='flex'; loadingText.textContent='LOADING MODEL...';
+  pose=null; poseReady=false;
+  await initPose(); poseReady=true;
+  if(file.type.startsWith('image/')) await loadImage(file); else await loadVideo(file);
 }
-
-function updateSideButtons() {
-  const leftBtn  = document.getElementById('leftSideBtn');
-  const rightBtn = document.getElementById('rightSideBtn');
-  const activeBorder   = 'var(--accent)';
-  const inactiveBorder = 'var(--border)';
-  if (leftBtn)  leftBtn.style.borderColor  = sideToDraw === 'left'  ? activeBorder : inactiveBorder;
-  if (rightBtn) rightBtn.style.borderColor = sideToDraw === 'right' ? activeBorder : inactiveBorder;
+async function loadImage(file){
+  activeSource='image'; objURL=URL.createObjectURL(file);
+  inputVideo.style.display='none'; inputImage.style.display='block'; inputImage.src=objURL;
+  await new Promise(r=>{inputImage.onload=r;});
+  poseCanvas.width=inputImage.naturalWidth; poseCanvas.height=inputImage.naturalHeight;
+  showVideoContainer(); controls.style.display='none'; loading.style.display='none';
+  bestScore=0; hasBeenInverted=false; hideExportUI();
+  await pose.send({image:inputImage});
 }
-
-// ─── File loading ─────────────────────────────────────────────────────────────
-async function loadFile(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  stopWebcam();
-  if (objURL) { URL.revokeObjectURL(objURL); objURL = null; }
-  loading.style.display = 'flex';
-  loadingText.textContent = 'LOADING MODEL...';
-  pose = null; poseReady = false;
-  await initPose(); poseReady = true;
-  if (file.type.startsWith('image/')) await loadImage(file);
-  else await loadVideo(file);
+async function loadVideo(file){
+  activeSource='video'; objURL=URL.createObjectURL(file);
+  inputImage.style.display='none'; inputVideo.style.display='block';
+  inputVideo.src=objURL; inputVideo.load();
+  await new Promise(r=>{inputVideo.onloadedmetadata=r;});
+  syncCanvas(); showVideoContainer(); controls.style.display='flex'; loading.style.display='none';
+  bestScore=0; hasBeenInverted=false;
+  document.getElementById('bestBtn').style.display='none';
+  document.getElementById('scoreBest').textContent='—';
+  showExportUI(); startVideoLoop();
+  await pose.send({image:inputVideo});
 }
-
-async function loadImage(file) {
-  activeSource = 'image';
-  objURL = URL.createObjectURL(file);
-  inputVideo.style.display = 'none';
-  inputImage.style.display = 'block';
-  inputImage.src = objURL;
-  await new Promise(r => { inputImage.onload = r; });
-  poseCanvas.width  = inputImage.naturalWidth;
-  poseCanvas.height = inputImage.naturalHeight;
-  showVideoContainer();
-  controls.style.display = 'none';
-  loading.style.display  = 'none';
-  bestScore = 0;
-  hasBeenInverted = false;
-  await pose.send({ image: inputImage });
+function showVideoContainer(){
+  document.getElementById('uploadZone').style.display='none';
+  document.getElementById('videoContainer').style.display='block';
 }
-
-async function loadVideo(file) {
-  activeSource = 'video';
-  objURL = URL.createObjectURL(file);
-  inputImage.style.display = 'none';
-  inputVideo.style.display = 'block';
-  inputVideo.src = objURL;
-  inputVideo.load();
-  await new Promise(r => { inputVideo.onloadedmetadata = r; });
-  syncCanvas();
-  showVideoContainer();
-  controls.style.display = 'flex';
-  loading.style.display  = 'none';
-  bestScore = 0;
-  hasBeenInverted = false;
-  document.getElementById('bestBtn').style.display = 'none';
-  document.getElementById('scoreBest').textContent = '—';
-  startVideoLoop();
-  await pose.send({ image: inputVideo });
-}
-
-function showVideoContainer() {
-  document.getElementById('uploadZone').style.display     = 'none';
-  document.getElementById('videoContainer').style.display = 'block';
-}
-
-function syncCanvas() {
-  if (activeSource === 'image') {
-    poseCanvas.width  = inputImage.naturalWidth;
-    poseCanvas.height = inputImage.naturalHeight;
-  } else {
-    const src = activeSource === 'webcam' ? webcamVideo : inputVideo;
-    poseCanvas.width  = src.videoWidth  || 640;
-    poseCanvas.height = src.videoHeight || 480;
-  }
+function syncCanvas(){
+  if(activeSource==='image'){poseCanvas.width=inputImage.naturalWidth;poseCanvas.height=inputImage.naturalHeight;return;}
+  const src=activeSource==='webcam'?webcamVideo:inputVideo;
+  poseCanvas.width=src.videoWidth||640; poseCanvas.height=src.videoHeight||480;
 }
 
 // ─── Video loop ───────────────────────────────────────────────────────────────
-let lastSend = 0;
-function startVideoLoop() {
+let lastSend=0;
+function startVideoLoop(){
   cancelAnimationFrame(animFrame);
-  async function loop(ts) {
-    if (activeSource === 'video') {
-      if (ts - lastSend > 66) { lastSend = ts; await pose.send({ image: inputVideo }); }
-    }
+  async function loop(ts){
+    if(activeSource==='video'&&ts-lastSend>66){lastSend=ts;await pose.send({image:inputVideo});}
     updateSeekBar();
-    animFrame = requestAnimationFrame(loop);
+    animFrame=requestAnimationFrame(loop);
   }
-  animFrame = requestAnimationFrame(loop);
+  animFrame=requestAnimationFrame(loop);
 }
+function togglePlay(){inputVideo.paused?inputVideo.play():inputVideo.pause();}
+function seek(v){if(inputVideo.duration)inputVideo.currentTime=(v/100)*inputVideo.duration;}
+function jumpToBest(){if(inputVideo.duration)inputVideo.currentTime=bestTime;}
+function updateSeekBar(){
+  if(!inputVideo.duration)return;
+  seekBar.value=(inputVideo.currentTime/inputVideo.duration)*100;
+  timeDisplay.textContent=fmt(inputVideo.currentTime)+' / '+fmt(inputVideo.duration);
+}
+function fmt(s){return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');}
 
-function togglePlay() { inputVideo.paused ? inputVideo.play() : inputVideo.pause(); }
-function seek(v)      { if (inputVideo.duration) inputVideo.currentTime = (v/100)*inputVideo.duration; }
-function jumpToBest() { if (inputVideo.duration) inputVideo.currentTime = bestTime; }
-function updateSeekBar() {
-  if (!inputVideo.duration) return;
-  seekBar.value = (inputVideo.currentTime/inputVideo.duration)*100;
-  timeDisplay.textContent = fmt(inputVideo.currentTime)+' / '+fmt(inputVideo.duration);
-}
-function fmt(s) { return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0'); }
+inputVideo.addEventListener('ended',()=>{if(isRecording)stopRecording();});
 
 // ─── Webcam ───────────────────────────────────────────────────────────────────
-async function startWebcam() {
-  activeSource = 'webcam';
-  showVideoContainer();
-  webcamVideo.style.display = 'block';
-  inputVideo.style.display  = 'none';
-  inputImage.style.display  = 'none';
-  controls.style.display    = 'none';
-  loading.style.display     = 'flex';
-  loadingText.textContent   = 'LOADING MODEL...';
-  if (!poseReady) { await initPose(); poseReady = true; }
-  loadingText.textContent = 'STARTING CAMERA...';
-  webcamCamera = new Camera(webcamVideo, {
-    onFrame: async () => { syncCanvas(); await pose.send({ image: webcamVideo }); },
-    width: 1280, height: 720
+async function startWebcam(){
+  activeSource='webcam'; showVideoContainer();
+  webcamVideo.style.display='block'; inputVideo.style.display='none'; inputImage.style.display='none';
+  controls.style.display='none'; loading.style.display='flex'; loadingText.textContent='LOADING MODEL...';
+  if(!poseReady){await initPose();poseReady=true;}
+  loadingText.textContent='STARTING CAMERA...';
+  webcamCamera=new Camera(webcamVideo,{
+    onFrame:async()=>{syncCanvas();await pose.send({image:webcamVideo});},
+    width:1280,height:720
   });
   webcamCamera.start()
-    .then(()  => loading.style.display = 'none')
-    .catch(e  => { loadingText.textContent = 'CAMERA ERROR: ' + e.message; });
+    .then(()=>{loading.style.display='none';showExportUI();})
+    .catch(e=>{loadingText.textContent='CAMERA ERROR: '+e.message;});
 }
-
-function stopWebcam() {
-  if (webcamCamera) { webcamCamera.stop(); webcamCamera = null; }
-  webcamVideo.style.display = 'none';
-}
+function stopWebcam(){if(webcamCamera){webcamCamera.stop();webcamCamera=null;}webcamVideo.style.display='none';}
 
 // ─── Angle math ───────────────────────────────────────────────────────────────
-function angle3(A, B, C) {
-  const ax = A.x-B.x, ay = A.y-B.y;
-  const cx = C.x-B.x, cy = C.y-B.y;
-  const dot = ax*cx + ay*cy;
-  const mag = Math.sqrt((ax*ax+ay*ay)*(cx*cx+cy*cy));
-  if (!mag) return null;
-  return Math.round(Math.acos(Math.max(-1, Math.min(1, dot/mag))) * 180/Math.PI);
+function angle3(A,B,C){
+  const ax=A.x-B.x,ay=A.y-B.y,cx=C.x-B.x,cy=C.y-B.y;
+  const dot=ax*cx+ay*cy,mag=Math.sqrt((ax*ax+ay*ay)*(cx*cx+cy*cy));
+  if(!mag)return null;
+  return Math.round(Math.acos(Math.max(-1,Math.min(1,dot/mag)))*180/Math.PI);
 }
-
-function calcAngles(lm) {
-  const ok  = (...i) => i.every(j => (lm[j].visibility??1) >= VIS);
-  const angles = {};
-  for (const def of ANGLE_DEFS) {
-    const [ar,br,cr] = def.ptsR;
-    const [al,bl,cl] = def.ptsL;
-    const valR = ok(ar,br,cr) ? angle3(lm[ar],lm[br],lm[cr]) : null;
-    const valL = ok(al,bl,cl) ? angle3(lm[al],lm[bl],lm[cl]) : null;
-    if      (valR !== null && valL !== null) angles[def.key] = Math.round((valR+valL)/2);
-    else if (valR !== null)                  angles[def.key] = valR;
-    else if (valL !== null)                  angles[def.key] = valL;
-    else                                     angles[def.key] = null;
+function calcAngles(lm){
+  const ok=(...i)=>i.every(j=>(lm[j].visibility??1)>=VIS);
+  const a={};
+  for(const d of ANGLE_DEFS){
+    const [ar,br,cr]=d.ptsR,[al,bl,cl]=d.ptsL;
+    const vR=ok(ar,br,cr)?angle3(lm[ar],lm[br],lm[cr]):null;
+    const vL=ok(al,bl,cl)?angle3(lm[al],lm[bl],lm[cl]):null;
+    if(vR!==null&&vL!==null)a[d.key]=Math.round((vR+vL)/2);
+    else if(vR!==null)a[d.key]=vR;
+    else if(vL!==null)a[d.key]=vL;
+    else a[d.key]=null;
   }
-  return angles;
+  return a;
 }
-
-function getQuality(def, val) {
-  if (val == null) return 'neutral';
-  const d = Math.abs(val - def.ideal);
-  if (d <= def.tol * 0.4) return 'good';
-  if (d <= def.tol)       return 'warn';
+function getQuality(def,val){
+  if(val==null)return 'neutral';
+  const d=Math.abs(val-def.ideal);
+  if(d<=def.tol*.4)return 'good';
+  if(d<=def.tol)   return 'warn';
   return 'bad';
 }
-
-function weightedScore(angles) {
-  let score = 0, used = 0;
-  for (const def of ANGLE_DEFS) {
-    if (!def.weight) continue;
-    const val = angles[def.key];
-    if (val == null) continue;
-    score += Math.max(0, 100 - (Math.abs(val-def.ideal)/def.tol)*100) * def.weight;
-    used  += def.weight;
+function weightedScore(angles){
+  let s=0,u=0;
+  for(const d of ANGLE_DEFS){
+    if(!d.weight)continue;
+    const v=angles[d.key];if(v==null)continue;
+    s+=Math.max(0,100-(Math.abs(v-d.ideal)/d.tol)*100)*d.weight;u+=d.weight;
   }
-  return used > 0 ? Math.round(score/used) : 0;
+  return u>0?Math.round(s/u):0;
 }
 
-// ─── Torque calculation ───────────────────────────────────────────────────────
-function calcTorques(lm) {
-  const W = poseCanvas.width, H = poseCanvas.height;
-  const px = i => ({ x: lm[i].x * W, y: lm[i].y * H });
-
-  const isLeft = sideToDraw === 'left';
-  const wrist    = isLeft ? px(15) : px(16);
-  const elbow    = isLeft ? px(13) : px(14);
-  const shoulder = isLeft ? px(11) : px(12);
-  const hip      = isLeft ? px(23) : px(24);
-  const knee     = isLeft ? px(25) : px(26);
-  const ankle    = isLeft ? px(27) : px(28);
-  const foot     = isLeft ? px(31) : px(32);
-
-  // Check visibility — fall back gracefully
-  const side = isLeft ? [15,13,11,23,25,27,31] : [16,14,12,24,26,28,32];
-  if (side.some(i => (lm[i].visibility ?? 1) < VIS)) return null;
-
-  // Approximate each segment CoM as its midpoint
-  const segments = [
-    { mass: SEGMENT_MASSES.forearm,  com: { x:(wrist.x+elbow.x)/2,    y:(wrist.y+elbow.y)/2    }},
-    { mass: SEGMENT_MASSES.upperArm, com: { x:(elbow.x+shoulder.x)/2,  y:(elbow.y+shoulder.y)/2 }},
-    { mass: SEGMENT_MASSES.torso,    com: { x:(shoulder.x+hip.x)/2,    y:(shoulder.y+hip.y)/2   }},
-    { mass: SEGMENT_MASSES.head,     com: { x: shoulder.x,             y: shoulder.y - (shoulder.y - wrist.y) * 0.12 }},
-    { mass: SEGMENT_MASSES.hips,     com: { x:(hip.x+knee.x)/2,        y:(hip.y+knee.y)/2       }},
-    { mass: SEGMENT_MASSES.thigh,    com: { x:(hip.x+knee.x)/2,        y:(hip.y+knee.y)/2       }},
-    { mass: SEGMENT_MASSES.shin,     com: { x:(knee.x+ankle.x)/2,      y:(knee.y+ankle.y)/2     }},
-    { mass: SEGMENT_MASSES.foot,     com: { x:(ankle.x+foot.x)/2,      y:(ankle.y+foot.y)/2     }},
+// ─── Torque ───────────────────────────────────────────────────────────────────
+function calcTorques(lm){
+  const W=poseCanvas.width,H=poseCanvas.height;
+  const px=i=>({x:lm[i].x*W,y:lm[i].y*H});
+  const iL=sideToDraw==='left';
+  const wrist=iL?px(15):px(16),elbow=iL?px(13):px(14),shoulder=iL?px(11):px(12);
+  const hip=iL?px(23):px(24),knee=iL?px(25):px(26),ankle=iL?px(27):px(28),foot=iL?px(31):px(32);
+  const side=iL?[15,13,11,23,25,27,31]:[16,14,12,24,26,28,32];
+  if(side.some(i=>(lm[i].visibility??1)<VIS))return null;
+  const segs=[
+    {mass:SEGMENT_MASSES.forearm,  com:{x:(wrist.x+elbow.x)/2,    y:(wrist.y+elbow.y)/2}},
+    {mass:SEGMENT_MASSES.upperArm, com:{x:(elbow.x+shoulder.x)/2, y:(elbow.y+shoulder.y)/2}},
+    {mass:SEGMENT_MASSES.torso,    com:{x:(shoulder.x+hip.x)/2,   y:(shoulder.y+hip.y)/2}},
+    {mass:SEGMENT_MASSES.head,     com:{x:shoulder.x,             y:shoulder.y-(shoulder.y-wrist.y)*.12}},
+    {mass:SEGMENT_MASSES.hips,     com:{x:(hip.x+knee.x)/2,       y:(hip.y+knee.y)/2}},
+    {mass:SEGMENT_MASSES.thigh,    com:{x:(hip.x+knee.x)/2,       y:(hip.y+knee.y)/2}},
+    {mass:SEGMENT_MASSES.shin,     com:{x:(knee.x+ankle.x)/2,     y:(knee.y+ankle.y)/2}},
+    {mass:SEGMENT_MASSES.foot,     com:{x:(ankle.x+foot.x)/2,     y:(ankle.y+foot.y)/2}},
   ];
-
-  // Scale px → metres: assume shoulder-to-wrist ≈ 0.6 m
-  const armLen = Math.sqrt((shoulder.x - wrist.x) ** 2 + (shoulder.y - wrist.y) ** 2);
-  const scale  = armLen > 10 ? 0.6 / armLen : 0.002;
-
-  let wristTorque    = 0;
-  let shoulderTorque = 0;
-
-  for (const seg of segments) {
-    const dx_w = (seg.com.x - wrist.x)    * scale;
-    const dx_s = (seg.com.x - shoulder.x) * scale;
-    wristTorque    += seg.mass * G * dx_w;
-    shoulderTorque += seg.mass * G * dx_s;
-  }
-
-  return {
-    wrist:    Math.round(wristTorque),
-    shoulder: Math.round(shoulderTorque)
-  };
+  const armLen=Math.sqrt((shoulder.x-wrist.x)**2+(shoulder.y-wrist.y)**2);
+  const scale=armLen>10?0.6/armLen:.002;
+  let wt=0,st=0;
+  for(const seg of segs){wt+=seg.mass*G*(seg.com.x-wrist.x)*scale;st+=seg.mass*G*(seg.com.x-shoulder.x)*scale;}
+  return{wrist:Math.round(wt),shoulder:Math.round(st)};
 }
-
-function torqueQuality(val) {
-  const abs = Math.abs(val);
-  if (abs < 20) return 'good';
-  if (abs < 60) return 'warn';
-  return 'bad';
-}
+function torqueQuality(v){const a=Math.abs(v);return a<20?'good':a<60?'warn':'bad';}
 
 // ─── Inversion detection ──────────────────────────────────────────────────────
-function detectInversion(lm) {
-  const wristY = (lm[15].y + lm[16].y) / 2;
-  const ankleY = (lm[27].y + lm[28].y) / 2;
-  const inv    = ankleY < wristY;
-  debugInfo.textContent = `wrist_y=${wristY.toFixed(2)}  ankle_y=${ankleY.toFixed(2)}  →  ${inv?'HANDSTAND':'UPRIGHT'}`;
+function detectInversion(lm){
+  const wY=(lm[15].y+lm[16].y)/2,aY=(lm[27].y+lm[28].y)/2,inv=aY<wY;
+  debugInfo.textContent=`wrist_y=${wY.toFixed(2)}  ankle_y=${aY.toFixed(2)}  →  ${inv?'HANDSTAND':'UPRIGHT'}`;
   return inv;
 }
 
 // ─── Pose results ─────────────────────────────────────────────────────────────
-function onResults(results) {
-  ctx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
-  if (!results.poseLandmarks) { renderPanel(null, null, null); return; }
-
-  const lm   = results.poseLandmarks;
-  isInverted = detectInversion(lm);
-  if (isInverted) hasBeenInverted = true;
-
-  drawSkeleton(lm, sideToDraw);
-
-  const angles  = calcAngles(lm);
-  const score   = isInverted ? weightedScore(angles) : null;
-  const torques = isInverted ? calcTorques(lm) : null;
-
-  if (activeSource === 'video' && isInverted && score !== null && score > bestScore) {
-    bestScore = score;
-    bestTime  = inputVideo.currentTime;
-    const el  = document.getElementById('scoreBest');
-    el.textContent = bestScore;
-    colorScore(el, bestScore);
-    document.getElementById('bestBtn').style.display = 'inline-block';
+function onResults(results){
+  ctx.clearRect(0,0,poseCanvas.width,poseCanvas.height);
+  if(!results.poseLandmarks){
+    latestLandmarks=null;latestAngles=null;latestScore=null;latestTorques=null;
+    renderPanel(null,null,null);return;
   }
-
-  drawAnglesOnCanvas(lm, angles);
-  renderPanel(angles, score, torques);
+  const lm=results.poseLandmarks;
+  isInverted=detectInversion(lm);
+  if(isInverted)hasBeenInverted=true;
+  drawSkeleton(lm,sideToDraw,ctx,poseCanvas);
+  const angles=calcAngles(lm);
+  const score=isInverted?weightedScore(angles):null;
+  const torques=isInverted?calcTorques(lm):null;
+  latestLandmarks=lm;latestAngles=angles;latestScore=score;latestTorques=torques;
+  if(activeSource==='video'&&isInverted&&score!==null&&score>bestScore){
+    bestScore=score;bestTime=inputVideo.currentTime;
+    const el=document.getElementById('scoreBest');el.textContent=bestScore;colorScore(el,bestScore);
+    document.getElementById('bestBtn').style.display='inline-block';
+  }
+  drawAnglesOnCanvas(lm,angles,ctx,poseCanvas);
+  renderPanel(angles,score,torques);
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
-const CONNECTIONS_LEFT = [
-  [11,13],[13,15],
-  [11,23],
-  [23,25],[25,27],[27,31],
-];
+// ─── Skeleton draw (accepts any canvas context) ───────────────────────────────
+const CONNECTIONS_LEFT  =[[11,13],[13,15],[11,23],[23,25],[25,27],[27,31]];
+const CONNECTIONS_RIGHT =[[12,14],[14,16],[12,24],[24,26],[26,28],[28,32]];
+const LEFT_DOTS  =new Set([11,13,15,23,25,27,31]);
+const RIGHT_DOTS =new Set([12,14,16,24,26,28,32]);
 
-const CONNECTIONS_RIGHT = [
-  [12,14],[14,16],
-  [12,24],
-  [24,26],[26,28],[28,32],
-];
+function lmPx(lm,i,canvas){return{x:lm[i].x*canvas.width,y:lm[i].y*canvas.height};}
 
-const LEFT_DOTS  = new Set([11,13,15,23,25,27,31]);
-const RIGHT_DOTS = new Set([12,14,16,24,26,28,32]);
-
-function lmPx(lm, i) {
-  return { x: lm[i].x * poseCanvas.width, y: lm[i].y * poseCanvas.height };
-}
-
-function drawSkeleton(lm, side_to_draw = 'right') {
-  ctx.lineWidth = 2.5;
-  ctx.lineCap   = 'round';
-  ctx.setLineDash([]);
-
-  const drawDots = (dotSet, strokeColor) => {
-    for (const i of dotSet) {
-      if ((lm[i].visibility ?? 1) < 0.3) continue;
-      const p = lmPx(lm, i);
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
-      ctx.fillStyle   = '#fff';
-      ctx.strokeStyle = strokeColor;
-      ctx.lineWidth   = 2;
-      ctx.fill();
-      ctx.stroke();
+function drawSkeleton(lm,side,c,canvas){
+  c.lineWidth=2.5;c.lineCap='round';c.setLineDash([]);
+  const drawDots=(set,stroke)=>{
+    for(const i of set){
+      if((lm[i].visibility??1)<.3)continue;
+      const p=lmPx(lm,i,canvas);
+      c.beginPath();c.arc(p.x,p.y,6,0,Math.PI*2);
+      c.fillStyle='#fff';c.strokeStyle=stroke;c.lineWidth=2;c.fill();c.stroke();
     }
   };
-
-  const drawConnections = (connections, lineColor) => {
-    ctx.strokeStyle = lineColor;
-    ctx.lineWidth   = 2.5;
-    for (const [a, b] of connections) {
-      if ((lm[a].visibility ?? 1) < 0.3 || (lm[b].visibility ?? 1) < 0.3) continue;
-      const pa = lmPx(lm, a);
-      const pb = lmPx(lm, b);
-      ctx.beginPath();
-      ctx.moveTo(pa.x, pa.y);
-      ctx.lineTo(pb.x, pb.y);
-      ctx.stroke();
+  const drawConns=(conns,color)=>{
+    c.strokeStyle=color;c.lineWidth=2.5;
+    for(const[a,b]of conns){
+      if((lm[a].visibility??1)<.3||(lm[b].visibility??1)<.3)continue;
+      const pa=lmPx(lm,a,canvas),pb=lmPx(lm,b,canvas);
+      c.beginPath();c.moveTo(pa.x,pa.y);c.lineTo(pb.x,pb.y);c.stroke();
     }
   };
-
-  if (side_to_draw === 'left') {
-    drawConnections(CONNECTIONS_LEFT, 'rgba(26,26,255,0.65)');
-    drawDots(LEFT_DOTS, 'rgba(0,26,26,0.8)');
-  } else if (side_to_draw === 'right') {
-    drawConnections(CONNECTIONS_RIGHT, 'rgba(255,26,26,0.65)');
-    drawDots(RIGHT_DOTS, 'rgba(26,0,26,0.8)');
-  } else {
-    drawConnections(CONNECTIONS_LEFT,  'rgba(26,26,26,0.65)');
-    drawConnections(CONNECTIONS_RIGHT, 'rgba(26,26,26,0.65)');
-    drawDots(LEFT_DOTS,  'rgba(0,26,26,0.8)');
-    drawDots(RIGHT_DOTS, 'rgba(26,0,26,0.8)');
-  }
+  if(side==='left'){drawConns(CONNECTIONS_LEFT,'rgba(26,26,255,0.65)');drawDots(LEFT_DOTS,'rgba(0,26,26,0.8)');}
+  else             {drawConns(CONNECTIONS_RIGHT,'rgba(255,26,26,0.65)');drawDots(RIGHT_DOTS,'rgba(26,0,26,0.8)');}
 }
 
-// ─── Angle labels on canvas ───────────────────────────────────────────────────
-function drawAnglesOnCanvas(lm, angles) {
-  ctx.textAlign = 'center';
-  ctx.font      = 'bold 14px DM Mono, monospace';
-
-  for (const def of ANGLE_DEFS) {
-    const val = angles[def.key];
-    if (val == null) continue;
-    const q   = getQuality(def, val);
-    const p   = lmPx(lm, def.labelLm);
-
-    if (whiteLabels) {
-      ctx.shadowColor   = 'rgba(0,0,0,0.75)';
-      ctx.shadowBlur    = 4;
-      ctx.shadowOffsetX = 1;
-      ctx.shadowOffsetY = 1;
-      ctx.fillStyle     = '#ffffff';
-      ctx.fillText(val+'°', p.x, p.y - 13);
-      ctx.shadowColor   = 'transparent';
-      ctx.shadowBlur    = 0;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = 0;
-    } else {
-      const col = q === 'good' ? '#2d7a3a' : q === 'warn' ? '#b06a00' : '#c0392b';
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fillText(val+'°', p.x+1, p.y-12);
-      ctx.fillStyle = col;
-      ctx.fillText(val+'°', p.x,   p.y-13);
+function drawAnglesOnCanvas(lm,angles,c,canvas){
+  c.textAlign='center';c.font='bold 14px DM Mono,monospace';
+  for(const def of ANGLE_DEFS){
+    const val=angles[def.key];if(val==null)continue;
+    const q=getQuality(def,val),p=lmPx(lm,def.labelLm,canvas);
+    if(whiteLabels){
+      c.shadowColor='rgba(0,0,0,.75)';c.shadowBlur=4;c.shadowOffsetX=1;c.shadowOffsetY=1;
+      c.fillStyle='#fff';c.fillText(val+'°',p.x,p.y-13);
+      c.shadowColor='transparent';c.shadowBlur=0;c.shadowOffsetX=0;c.shadowOffsetY=0;
+    }else{
+      const col=q==='good'?'#2d7a3a':q==='warn'?'#b06a00':'#c0392b';
+      c.fillStyle='rgba(255,255,255,.85)';c.fillText(val+'°',p.x+1,p.y-12);
+      c.fillStyle=col;c.fillText(val+'°',p.x,p.y-13);
     }
   }
 }
 
 // ─── Panel rendering ──────────────────────────────────────────────────────────
-function colorScore(el, s) {
-  el.className = 'score-num' + (s >= 75 ? '' : s >= 50 ? ' warn' : ' bad');
-}
+function colorScore(el,s){el.className='score-num'+(s>=75?'':s>=50?' warn':' bad');}
 
-function renderPanel(angles, score, torques) {
-  const pill    = document.getElementById('orientPill');
-  const oTxt    = document.getElementById('orientText');
-  const overlay = document.getElementById('angleOverlay');
-  const torqueOverlay = document.getElementById('torqueOverlay');
-
-  if (!angles) {
-    pill.className   = 'orient-pill';
-    oTxt.textContent = 'NO POSE DETECTED';
-    banner.style.display        = 'none';
-    overlay.style.display       = 'none';
-    torqueOverlay.style.display = 'none';
-    document.getElementById('feedbackList').innerHTML = '<div class="empty-state">No data yet</div>';
-    document.getElementById('scoreNow').textContent   = '—';
-    document.getElementById('scoreBar').style.width   = '0%';
-    return;
+function renderPanel(angles,score,torques){
+  const pill=document.getElementById('orientPill'),oTxt=document.getElementById('orientText');
+  const overlay=document.getElementById('angleOverlay'),torqueOverlay=document.getElementById('torqueOverlay');
+  if(!angles){
+    pill.className='orient-pill';oTxt.textContent='NO POSE DETECTED';
+    banner.style.display='none';overlay.style.display='none';torqueOverlay.style.display='none';
+    document.getElementById('feedbackList').innerHTML='<div class="empty-state">No data yet</div>';
+    document.getElementById('scoreNow').textContent='—';document.getElementById('scoreBar').style.width='0%';return;
   }
-
-  pill.className   = 'orient-pill' + (isInverted ? ' inverted' : '');
-  oTxt.textContent = isInverted ? 'INVERTED · HANDSTAND ✓' : 'UPRIGHT · NOT SCORED';
-  banner.style.display = (hasBeenInverted && !isInverted) ? 'block' : 'none';
-
-  const nowEl = document.getElementById('scoreNow');
-  const bar   = document.getElementById('scoreBar');
-  if (score !== null) { nowEl.textContent = score; colorScore(nowEl, score); bar.style.width = score+'%'; }
-  else                { nowEl.textContent = '—'; bar.style.width = '0%'; }
-
-  // ── Angle overlay ──
-  const hasAny = ANGLE_DEFS.some(d => angles[d.key] !== null);
-  overlay.style.display = hasAny ? 'flex' : 'none';
-  overlay.innerHTML = '';
-  const feedback = [];
-
-  for (const def of ANGLE_DEFS) {
-    const val     = angles[def.key];
-    const q       = getQuality(def, val);
-    const visible = val !== null;
-
-    if (visible) {
-      const row = document.createElement('div');
-      row.className = `ov-row ${q}`;
-      row.innerHTML = `<span class="ov-label">${def.label}</span><span class="ov-val ${q}">${val}°</span>`;
+  pill.className='orient-pill'+(isInverted?' inverted':'');
+  oTxt.textContent=isInverted?'INVERTED · HANDSTAND ✓':'UPRIGHT · NOT SCORED';
+  banner.style.display=(hasBeenInverted&&!isInverted)?'block':'none';
+  const nowEl=document.getElementById('scoreNow'),bar=document.getElementById('scoreBar');
+  if(score!==null){nowEl.textContent=score;colorScore(nowEl,score);bar.style.width=score+'%';}
+  else{nowEl.textContent='—';bar.style.width='0%';}
+  const hasAny=ANGLE_DEFS.some(d=>angles[d.key]!==null);
+  overlay.style.display=hasAny?'flex':'none';overlay.innerHTML='';
+  const feedback=[];
+  for(const def of ANGLE_DEFS){
+    const val=angles[def.key],q=getQuality(def,val);
+    if(val!==null){
+      const row=document.createElement('div');row.className=`ov-row ${q}`;
+      row.innerHTML=`<span class="ov-label">${def.label}</span><span class="ov-val ${q}">${val}°</span>`;
       overlay.appendChild(row);
     }
-
-    if (isInverted && visible && q !== 'good' && def.coach[q])
-      feedback.push({ text: def.coach[q], cls: q });
+    if(isInverted&&val!==null&&q!=='good'&&def.coach[q])feedback.push({text:def.coach[q],cls:q});
   }
-
-  // ── Torque overlay — positioned just below the angle overlay ──
-  if (torques && isInverted) {
-    // Position torqueOverlay directly below angleOverlay
-    const angleBottom = overlay.getBoundingClientRect().bottom;
-    const videoAreaTop = overlay.parentElement.getBoundingClientRect().top;
-    const topOffset = angleBottom - videoAreaTop + 8;
-
-    torqueOverlay.style.display = 'flex';
-    torqueOverlay.style.top     = topOffset + 'px';
-
-    const sign = v => v >= 0 ? '+' : '';
-
-    const divider = document.createElement('div');
-    divider.className = 'ov-divider';
-
-    const wristRow    = document.createElement('div');
-    const shoulderRow = document.createElement('div');
-    const wq = torqueQuality(torques.wrist);
-    const sq = torqueQuality(torques.shoulder);
-
-    wristRow.className    = `ov-row torque-row ${wq}`;
-    shoulderRow.className = `ov-row torque-row ${sq}`;
-
-    wristRow.innerHTML    = `<span class="ov-label">Wrist τ</span><span class="ov-val ${wq}">${sign(torques.wrist)}${torques.wrist}<small style="font-size:.55rem;opacity:.7"> Nm</small></span>`;
-    shoulderRow.innerHTML = `<span class="ov-label">Shoulder τ</span><span class="ov-val ${sq}">${sign(torques.shoulder)}${torques.shoulder}<small style="font-size:.55rem;opacity:.7"> Nm</small></span>`;
-
-    torqueOverlay.innerHTML = '';
-    torqueOverlay.appendChild(divider);
-    torqueOverlay.appendChild(wristRow);
-    torqueOverlay.appendChild(shoulderRow);
-  } else {
-    torqueOverlay.style.display = 'none';
-  }
-
-  // ── Feedback list ──
-  const fl = document.getElementById('feedbackList');
-  if (!isInverted) {
-    fl.innerHTML = '<div class="feedback-item warn">Get inverted to receive handstand coaching</div>';
-  } else if (feedback.length === 0) {
-    fl.innerHTML = '<div class="feedback-item good">✓ Perfect alignment — hold it!</div>';
-  } else {
-    fl.innerHTML = feedback.map(f => `<div class="feedback-item ${f.cls}">${f.text}</div>`).join('');
-  }
+  if(torques&&isInverted){
+    const ab=overlay.getBoundingClientRect().bottom,vt=overlay.parentElement.getBoundingClientRect().top;
+    torqueOverlay.style.display='flex';torqueOverlay.style.top=(ab-vt+8)+'px';
+    const sign=v=>v>=0?'+':'';
+    const wq=torqueQuality(torques.wrist),sq=torqueQuality(torques.shoulder);
+    torqueOverlay.innerHTML=`<div class="ov-divider"></div>
+      <div class="ov-row torque-row ${wq}"><span class="ov-label">Wrist τ</span><span class="ov-val ${wq}">${sign(torques.wrist)}${torques.wrist}<small style="font-size:.55rem;opacity:.7"> Nm</small></span></div>
+      <div class="ov-row torque-row ${sq}"><span class="ov-label">Shoulder τ</span><span class="ov-val ${sq}">${sign(torques.shoulder)}${torques.shoulder}<small style="font-size:.55rem;opacity:.7"> Nm</small></span></div>`;
+  }else{torqueOverlay.style.display='none';}
+  const fl=document.getElementById('feedbackList');
+  if(!isInverted)fl.innerHTML='<div class="feedback-item warn">Get inverted to receive coaching</div>';
+  else if(!feedback.length)fl.innerHTML='<div class="feedback-item good">✓ Perfect alignment — hold it!</div>';
+  else fl.innerHTML=feedback.map(f=>`<div class="feedback-item ${f.cls}">${f.text}</div>`).join('');
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── RECORDING / EXPORT ───────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
 
+function getSupportedMime(){
+  const types=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
+  for(const t of types){try{if(MediaRecorder.isTypeSupported(t))return t;}catch(e){}}
+  return '';
+}
+function mimeToExt(m){return m.includes('mp4')?'mp4':m.includes('webm')?'webm':'video';}
+
+// ── Composite canvas panel draw ────────────────────────────────────────────────
+function drawCompositePanel(c,lm,angles,score,torques,W,H){
+  if(!angles&&!score)return;
+  const COLS={good:'#2d7a3a',warn:'#b06a00',bad:'#c0392b',muted:'#888'};
+  const panW=Math.min(170,W*0.27);
+  const px=W-panW-10;
+  const rowH=Math.max(22,H*0.044);
+  const fs=Math.max(11,rowH*.48);
+  const lfs=Math.max(8,fs*.62);
+  let py=52;
+
+  c.save();
+
+  // ── Angle rows ──
+  if(angles){
+    for(const def of ANGLE_DEFS){
+      const val=angles[def.key];if(val==null)continue;
+      const q=getQuality(def,val);
+      const bgMap={good:'rgba(234,245,236,.9)',warn:'rgba(253,243,227,.9)',bad:'rgba(253,236,234,.9)',neutral:'rgba(255,255,255,.8)'};
+      const bdrMap={good:'#2d7a3a',warn:'#b06a00',bad:'#c0392b',neutral:'#ccc'};
+      c.fillStyle=bgMap[q]||bgMap.neutral;c.fillRect(px,py,panW,rowH);
+      c.fillStyle=bdrMap[q]||bdrMap.neutral;c.fillRect(px+panW-3,py,3,rowH);
+      c.fillStyle=COLS.muted;c.font=`${lfs}px DM Mono,monospace`;c.textAlign='left';
+      c.fillText(def.label.toUpperCase(),px+6,py+lfs+2);
+      c.fillStyle=COLS[q]||COLS.muted;c.font=`bold ${fs}px Bebas Neue,sans-serif`;c.textAlign='right';
+      c.fillText(val+'°',px+panW-7,py+rowH-3);
+      py+=rowH+3;
+    }
+  }
+
+  // ── Torque rows ──
+  if(torques&&isInverted){
+    py+=5;
+    const rows=[
+      {label:'WRIST τ',  val:(torques.wrist>=0?'+':'')+torques.wrist+' Nm',  q:torqueQuality(torques.wrist)},
+      {label:'SHLDR τ',  val:(torques.shoulder>=0?'+':'')+torques.shoulder+' Nm', q:torqueQuality(torques.shoulder)},
+    ];
+    for(const r of rows){
+      const bgMap={good:'rgba(234,245,236,.9)',warn:'rgba(253,243,227,.9)',bad:'rgba(253,236,234,.9)'};
+      c.fillStyle=bgMap[r.q]||'rgba(245,243,240,.9)';c.fillRect(px,py,panW,rowH);
+      c.fillStyle=COLS[r.q]||COLS.muted;c.fillRect(px+panW-3,py,3,rowH);
+      c.fillStyle=COLS.muted;c.font=`${lfs}px DM Mono,monospace`;c.textAlign='left';
+      c.fillText(r.label,px+6,py+lfs+2);
+      c.fillStyle=COLS[r.q]||COLS.muted;c.font=`bold ${Math.max(10,fs*.82)}px DM Mono,monospace`;c.textAlign='right';
+      c.fillText(r.val,px+panW-7,py+rowH-3);
+      py+=rowH+3;
+    }
+  }
+
+  // ── Score badge (bottom-left) ──
+  if(score!==null){
+    const bx=10,by=H-68,bw=82,bh=58;
+    const sCol=score>=75?'#2d7a3a':score>=50?'#b06a00':'#c0392b';
+    c.fillStyle='rgba(255,255,255,.9)';c.fillRect(bx,by,bw,bh);
+    c.strokeStyle=sCol;c.lineWidth=2;c.strokeRect(bx,by,bw,bh);
+    c.fillStyle=COLS.muted;c.font=`${lfs}px DM Mono,monospace`;c.textAlign='left';
+    c.fillText('SCORE',bx+6,by+lfs+4);
+    c.fillStyle=sCol;c.font=`bold ${Math.min(36,bh*.62)}px Bebas Neue,sans-serif`;
+    c.fillText(score,bx+6,by+bh-6);
+  }
+
+  // ── Watermark ──
+  c.fillStyle='rgba(255,255,255,.5)';
+  c.font=`${Math.max(9,lfs)}px DM Mono,monospace`;c.textAlign='right';
+  c.fillText('rcsmit.github.io/hs_analyzer',W-8,H-6);
+
+  c.restore();
+}
+
+// ── Composite render loop ──────────────────────────────────────────────────────
+function renderCompositeFrame(){
+  if(!compositeCanvas||!compositeCtx)return;
+  const cw=compositeCanvas.width,ch=compositeCanvas.height,cc=compositeCtx;
+  cc.clearRect(0,0,cw,ch);
+
+  // 1. Video frame
+  const src=activeSource==='webcam'?webcamVideo:inputVideo;
+  try{
+    if(activeSource==='webcam'){cc.save();cc.translate(cw,0);cc.scale(-1,1);cc.drawImage(src,0,0,cw,ch);cc.restore();}
+    else{cc.drawImage(src,0,0,cw,ch);}
+  }catch(e){}
+
+  // 2. Pose skeleton + angle labels (re-draw onto composite)
+  if(latestLandmarks){
+    drawSkeleton(latestLandmarks,sideToDraw,cc,compositeCanvas);
+    if(latestAngles)drawAnglesOnCanvas(latestLandmarks,latestAngles,cc,compositeCanvas);
+  }
+
+  // 3. Info panel
+  drawCompositePanel(cc,latestLandmarks,latestAngles,latestScore,latestTorques,cw,ch);
+
+  if(compositeRunning)recAnimFrame=requestAnimationFrame(renderCompositeFrame);
+}
+
+// ── Recording controls ─────────────────────────────────────────────────────────
+function toggleRecording(){isRecording?stopRecording():startRecording();}
+
+function startRecording(){
+  if(activeSource==='image'){alert('Recording works with video or webcam sources only.');return;}
+  syncCanvas();
+  compositeCanvas=document.createElement('canvas');
+  compositeCanvas.width=poseCanvas.width;compositeCanvas.height=poseCanvas.height;
+  compositeCtx=compositeCanvas.getContext('2d');
+
+  const mime=getSupportedMime();
+  if(!mime){alert('MediaRecorder not supported in this browser. Try Chrome or Safari 14.5+.');return;}
+
+  recordedChunks=[];
+  let stream;
+  try{stream=compositeCanvas.captureStream(30);}catch(e){alert('captureStream not supported: '+e.message);return;}
+
+  try{mediaRecorder=new MediaRecorder(stream,{mimeType:mime});}
+  catch(e){try{mediaRecorder=new MediaRecorder(stream);}catch(e2){alert('MediaRecorder error: '+e2.message);return;}}
+
+  mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size>0)recordedChunks.push(e.data);};
+  mediaRecorder.onstop=finishRecording;
+  mediaRecorder.start(100);
+  isRecording=true;
+  compositeRunning=true;
+  renderCompositeFrame();
+
+  if(activeSource==='video'&&inputVideo.paused)inputVideo.play();
+
+  recStatus.style.display='block';
+  const rb=document.getElementById('recBtn'),eb=document.getElementById('exportBtn');
+  rb.textContent='⏹ STOP REC';eb.textContent='⏹ Stop & Save';
+  rb.classList.add('rec-active');eb.classList.add('rec-active');
+}
+
+function stopRecording(){
+  if(!mediaRecorder||mediaRecorder.state==='inactive')return;
+  mediaRecorder.stop();isRecording=false;compositeRunning=false;cancelAnimationFrame(recAnimFrame);
+  recStatus.style.display='none';
+  const rb=document.getElementById('recBtn'),eb=document.getElementById('exportBtn');
+  rb.textContent='⏺ REC';eb.textContent='⏺ Record & Export';
+  rb.classList.remove('rec-active');eb.classList.remove('rec-active');
+}
+
+function finishRecording(){
+  if(!recordedChunks.length)return;
+  const mime=mediaRecorder.mimeType||getSupportedMime();
+  const blob=new Blob(recordedChunks,{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const ts=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  a.href=url;a.download=`handstand_${ts}.${mimeToExt(mime)}`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),8000);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 updateSideButtons();
-
 </script>
 </body>
 </html>
