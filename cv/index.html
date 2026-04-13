@@ -146,11 +146,25 @@ body {
 .tooltip-hi li { color: var(--text-secondary); padding-left: 12px; position: relative; font-size: 11px; }
 .tooltip-hi li::before { content: '·'; position: absolute; left: 3px; color: var(--text-tertiary); }
 
+/* Mobile: center tooltip on screen */
+@media (max-width: 768px) {
+  .tooltip {
+    position: fixed;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+    max-width: 85vw;
+    min-width: 240px;
+    pointer-events: none;
+  }
+}
+
 .footer-row { margin-top: 1.75rem; padding-left: var(--label-w); display: flex; gap: 2.5rem; flex-wrap: wrap; }
 .footer-block { display: flex; flex-direction: column; gap: 6px; }
 .footer-label { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); font-family: var(--font); }
 .lang-list { display: flex; gap: 10px; flex-wrap: wrap; }
 .lang-item { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; font-family: var(--font); }
+.lang-item img.flag { width: 16px; height: 11px; object-fit: cover; vertical-align: middle; flex-shrink: 0; }
 .lang-level { font-size: 10px; color: var(--text-tertiary); }
 </style>
 </head>
@@ -163,23 +177,7 @@ body {
 
 <div class="gantt" id="gantt"></div>
 
-<div class="footer-row">
-  <div class="footer-block">
-    <div class="footer-label">Languages</div>
-    <div class="lang-list">
-      <div class="lang-item">🇳🇱 Dutch <span class="lang-level">C2</span></div>
-      <div class="lang-item">🇬🇧 English <span class="lang-level">C1</span></div>
-      <div class="lang-item">🇫🇷 French <span class="lang-level">C1</span></div>
-      <div class="lang-item">🇮🇹 Italian <span class="lang-level">B2</span></div>
-      <div class="lang-item">🇩🇪 German <span class="lang-level">B2</span></div>
-      <div class="lang-item">🇪🇸 Spanish <span class="lang-level">A2</span></div>
-    </div>
-  </div>
-  <div class="footer-block">
-    <div class="footer-label">Education</div>
-    <div class="lang-item">BSc Food Technology · Larenstein Velp · 2001</div>
-  </div>
-</div>
+<div class="footer-row"></div>
 
 <div id="tooltip" class="tooltip"></div>
 
@@ -200,7 +198,6 @@ function fmtDate(str) {
 }
 function fmtPeriod(s,e) { return fmtDate(s)+' – '+fmtDate(e); }
 
-// Known employer colours — keyed by lowercase name fragment
 const KNOWN_COLORS = {
   'eurocamp':              { color:'#FFAD00', textColor:'#042C53' },
   'vacansoleil':           { color:'#142F5E', textColor:'#04342C' },
@@ -214,7 +211,6 @@ const KNOWN_COLORS = {
   'peeze':                 { color:'#9FC648', textColor:'#2C2C2A' },
 };
 
-// Fallback palette for unknown employers
 const FALLBACK = [
   { color:'#639922', textColor:'#173404' },
   { color:'#BA7517', textColor:'#412402' },
@@ -236,7 +232,6 @@ function getEmpColors(name) {
   return FALLBACK[fallbackIdx++ % FALLBACK.length];
 }
 
-// Preferred row order for the gantt (by name fragment, lowercase)
 const ROW_ORDER = ['eurocamp','vacansoleil','selectcamp','camping village fabulous','disneyland paris','hotel papendal','68 degrees','jmw','koffiebranderij peeze'];
 function rowSortKey(name) {
   const lower = name.toLowerCase();
@@ -244,7 +239,6 @@ function rowSortKey(name) {
   return i === -1 ? 999 : i;
 }
 
-// CV section order: camping employers first
 const CV_ORDER = ['eurocamp','vacansoleil','selectcamp'];
 
 const gantt   = document.getElementById('gantt');
@@ -253,7 +247,6 @@ const tooltip = document.getElementById('tooltip');
 fetch('https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/main/input/cv_rene_smit_json_resume.json')
   .then(r => r.json())
   .then(data => {
-    // Build empMap and ROWS from JSON work array
     const empMap = {};
     const rowMap = {};
 
@@ -280,26 +273,21 @@ fetch('https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/mai
       });
     });
 
-    // Sort rows by preferred order
     const ROWS = Object.values(rowMap).sort((a,b) =>
       rowSortKey(empMap[a.emp].label) - rowSortKey(empMap[b.emp].label)
     );
 
-    // Compute axis range
     const allYears = ROWS.flatMap(r => r.jobs.flatMap(j => [toDecYear(j.start), toDecYear(j.end)]));
     const YEAR_START = Math.floor(Math.min(...allYears));
-    // const YEAR_END   = Math.ceil(Math.max(...allYears)) + 1;
     const YEAR_END = Math.ceil(Math.max(...allYears));
     const YEAR_COUNT = YEAR_END - YEAR_START;
 
     function pct(yr)    { return ((yr-YEAR_START)/YEAR_COUNT*100).toFixed(4)+'%'; }
     function pctW(s,e)  { return ((e-s)/YEAR_COUNT*100).toFixed(4)+'%'; }
 
-    // Update title span
     document.querySelector('.title-row span').textContent =
       YEAR_START + ' – ' + (YEAR_END - 1);
 
-    // Build footer from JSON
     buildFooter(data);
 
     // Axis
@@ -378,7 +366,7 @@ fetch('https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/mai
         });
         ro.observe(bar);
 
-        bar.addEventListener('mouseenter', ev => {
+        function showTooltip() {
           tooltip.innerHTML = `
             <div class="tooltip-title">${job.title}</div>
             <div class="tooltip-sub">${emp.label}</div>
@@ -386,10 +374,21 @@ fetch('https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/mai
             <div class="tooltip-period">${fmtPeriod(job.start, job.end)}</div>
             <ul class="tooltip-hi">${job.hi.map(h=>`<li>${h}</li>`).join('')}</ul>`;
           tooltip.classList.add('visible');
-          moveTooltip(ev);
-        });
+        }
+
+        bar.addEventListener('mouseenter', ev => { showTooltip(); moveTooltip(ev); });
         bar.addEventListener('mousemove', moveTooltip);
         bar.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+
+        // Touch support for mobile
+        bar.addEventListener('touchstart', ev => {
+          ev.preventDefault();
+          showTooltip();
+        }, { passive: false });
+        bar.addEventListener('touchend', () => {
+          setTimeout(() => tooltip.classList.remove('visible'), 2500);
+        });
+
         barsArea.appendChild(bar);
       });
 
@@ -498,20 +497,26 @@ function buildFooter(data) {
   if (!footer) return;
   footer.innerHTML = '';
 
+  // Languages
   if (data.languages && data.languages.length) {
-    const flags = { Dutch:'🇳🇱', English:'🇬🇧', French:'🇫🇷', Italian:'🇮🇹', German:'🇩🇪', Spanish:'🇪🇸' };
+    const flagFiles = { Dutch:'nl', English:'gb', French:'fr', Italian:'it', German:'de', Spanish:'es' };
     const lb = document.createElement('div'); lb.className = 'footer-block';
     const ll = document.createElement('div'); ll.className = 'footer-label'; ll.textContent = 'Languages';
     const list = document.createElement('div'); list.className = 'lang-list';
     data.languages.forEach(l => {
       const item = document.createElement('div'); item.className = 'lang-item';
-      item.innerHTML = (flags[l.language]||'') + ' ' + l.language +
+      const flagCode = flagFiles[l.language] || '';
+      const flagHtml = flagCode
+        ? `<img class="flag" src="img/${flagCode}.gif" alt="${l.language}">`
+        : '';
+      item.innerHTML = flagHtml + ' ' + l.language +
         ' <span class="lang-level">' + l.fluency + '</span>';
       list.appendChild(item);
     });
     lb.appendChild(ll); lb.appendChild(list); footer.appendChild(lb);
   }
 
+  // Education
   if (data.education && data.education.length) {
     const eb = document.createElement('div'); eb.className = 'footer-block';
     const el = document.createElement('div'); el.className = 'footer-label'; el.textContent = 'Education';
@@ -523,15 +528,35 @@ function buildFooter(data) {
     });
     eb.prepend(el); footer.appendChild(eb);
   }
+
+  // Skills
+  const sb = document.createElement('div'); sb.className = 'footer-block';
+  const sl = document.createElement('div'); sl.className = 'footer-label'; sl.textContent = 'Skills';
+  const skills = [
+    'Customer orientated',
+    'Versatile',
+    'Team spirit',
+    'Organizational capabilities',
+    'Reliable',
+    'Flexible',
+    'Business intelligence',
+    'Design / infographics',
+  ];
+  skills.forEach(s => {
+    const item = document.createElement('div'); item.className = 'lang-item';
+    item.textContent = s;
+    sb.appendChild(item);
+  });
+  sb.prepend(sl); footer.appendChild(sb);
 }
 
 function moveTooltip(e) {
+  if (window.innerWidth <= 768) return; // CSS handles centering on mobile
   const tw = 280;
   const left = e.clientX+16+tw > window.innerWidth ? e.clientX-tw-16 : e.clientX+16;
   tooltip.style.left = left+'px';
   tooltip.style.top  = (e.clientY+14)+'px';
 }
-
 </script>
 </body>
 </html>
