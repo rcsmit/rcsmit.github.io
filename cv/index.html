@@ -1,1273 +1,537 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>CV van René Smit</title>
-  <meta content="text/html; charset=utf-8"
-        http-equiv="Content-Type">
-  <link href='http://fonts.googleapis.com/css?family=Lato&subset=latin,latin-ext'
-        rel='stylesheet'
-        type='text/css'>
-  <style type="text/css">
-        @font-face {
-                font-family : "'Lato'";
-                font-style : normal;
-                font-weight : 400;
-                src : local('Lato Regular'), local('Lato-Regular'), url(http://fonts.gstatic.com/s/lato/v16/S6uyw4BMUTPHjxAwWw.ttf) format('truetype');
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work experience — René Smit</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font: 'DM Sans', system-ui, sans-serif;
+  --bg: #ffffff;
+  --bg-secondary: #f7f6f3;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555550;
+  --text-tertiary: #999994;
+  --border: rgba(0,0,0,0.10);
+  --border-strong: rgba(0,0,0,0.22);
+  --label-w: 120px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --bg-secondary: #242424;
+    --text-primary: #b3b3b3;
+    --text-secondary: #4d4d4d;
+    --text-tertiary: #282828;
+    --border: rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.22);
   }
-              body
-                  {
-                        font-family: 'Lato', Geneva, Arial, Helvetica, sans-serif; font-size: 12pt; margin: 0;}
+  .row-label img { filter: brightness(0) invert(1); }
+}
 
-                h1
-                        {text-align:center;}
-                h2
-                        {text-align:center; margin: 25px 10px 5px 10px;}
-            a:link {text-decoration: none;color: black;}
-            a:visited {text-decoration: none;color: black;}
-            a:active {text-decoration: none;color: black;}
-            a:hover {text-decoration: underline; color: black;}
-                .regel
-                        {clear:both; padding:5px;  }
-                .regel1
-                        {clear:both; padding:5px;   }
+html, body { width: 100%; overflow-x: hidden; }
 
-                .label
-                        {text-align: right; width:30% ;float:left; }
-                .content
-                        {text-align: left;  width:70%; padding-left:30px;   margin-left:30%;  }
-                .content1  /* voor het gedeelte met de pasfoto */
-                        {text-align: left;  width:50%; padding-left:30px;   margin-left:30%;  }
-                .pasfoto
-                        {float:left; }
-  .titel
-                        { font-weight:bold;}
-  .subtitel
-                        { font-style:italic;}
-        .perso_infobox
-                        {float:left;  width:80%;}
-        #nav {
-                width: 100%;
-                float: left;
-                margin: 0 0  30px   0 ;
-                padding: 0px;
-                background-color: #427AA1;
-                border-bottom: 1px solid #ccc;
-                position:fixed;
-                top:0;
-                left:0;
-                }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-primary);
+  padding: 2rem 2rem 3rem;
+}
 
-        #nav1 {width:480px;
-                border-right: 1px solid #ccc;
-                margin: 0 auto    0 ;
-                background-color: #427AA1;
+.title-row { display: flex; align-items: baseline; gap: 14px; margin-bottom: 1.75rem; }
+.title-row h1 { font-size: 22px; font-weight: 500; color: var(--text-primary); }
+.title-row span { font-size: 13px; color: var(--text-tertiary); }
 
-                }
+.gantt { display: block; width: 100%; }
 
-        #nav ul {
-                 list-style: none;  background-color: #427AA1;
-                padding: 0;  margin: 0 auto    0 ;
+.axis-row {
+  display: flex;
+  margin-left: var(--label-w);
+  border-bottom: 1px solid var(--border-strong);
+}
+.axis-year {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding-bottom: 5px;
+  border-left: 1px solid var(--border);
+  padding-left: 4px;
+  font-family: var(--font);
+}
 
-                border-right: 1px solid #ccc;
+.row { display: flex; align-items: center; min-height: 40px; border-bottom: 1px solid var(--border); }
+.row:last-child { border-bottom: none; }
 
-                }
-        #nav li {
-                float: left; }
-        #nav li a {
-                display: block;
-                padding: 8px 8px;
-                text-decoration: none;
-                font-weight: bold;
-                color: #069;
-                height:100%;
-                vertical-align:middle; }
+.row-label {
+  flex-shrink: 0;
+  width: var(--label-w);
+  padding-right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.row-label img { max-width: 90px; max-height: 26px; object-fit: contain; display: block; }
+.row-label .fallback { font-size: 11px; color: var(--text-secondary); text-align: right; font-family: var(--font); }
 
-        #nav li:first-child a {
-                border-left: 1px solid #ccc; }
-        #nav li:last-child a {
-                border-right: 1px solid #ccc; }
+.bars-area { flex: 1; position: relative; height: 40px; min-width: 0; }
 
-        #nav li a:hover {
-                color: #c00;
-                background-color: #fff; }
-        #nav li.active a {
-                        background-color: #fff;
-                        }
+.grid-line { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border); pointer-events: none; }
 
-  div.spacer {
-                clear: both;
-                height:0;
-                }
+.row.group-camping  { background: #fffdf0; }
+.row.group-hospitality { background: #fff5f5; }
 
-  #contact {min-height:500px;}
+@media (prefers-color-scheme: dark) {
+  .row.group-camping     { background: #2a2800; }
+  .row.group-hospitality { background: #2a1a1a; }
+}
 
-                #wrapper
-                        {
-                        width: 100%; margin: 0px auto;}
-                .innerwrapper
-                        {
-                        width: 900px;
-                        margin: 0px auto;
-                        padding: 30px 0;
-                        }
-                /*
-                #nl     {background-color: #6BB9F0;}
-                #en     {background-color: #F9BF3B;}
+.bar {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  height: 16px; border-radius: 8px;
+  cursor: pointer;
+  transition: height 0.15s, filter 0.15s;
+  display: flex; align-items: center; overflow: hidden; min-width: 2px;
+}
+.bar:hover { height: 24px; filter: brightness(1.12); z-index: 10; }
 
-                #fr     {background-color: #DCC6E0;}
-                #it     {background-color: #C8F7C5;}
-                */
-                /*http://www.flatuicolorpicker.com/gray*/
+.bar-label {
+  font-size: 10px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: clip;
+  padding: 0 8px; pointer-events: none; font-family: var(--font);
+}
+.bar.too-narrow .bar-label { visibility: hidden; }
 
-                #nl     {background-color: #FDF5BF;}
-                #it     {background-color: #EBF2FA;}
+.cv-section { margin-top: 3rem; border-top: 1px solid var(--border-strong); padding-top: 2rem; }
+.cv-section-title { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 1.5rem; font-family: var(--font); }
+.cv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; }
+@media (max-width: 600px) { .cv-grid { grid-template-columns: 1fr; } }
+.cv-group { margin-bottom: 2.25rem; break-inside: avoid; }
+.cv-group-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0.6rem; }
+.cv-group-dot { width: 12px; height: 12px; border-radius: 6px; flex-shrink: 0; }
+.cv-group-name { font-size: 16px; font-weight: 500; color: var(--text-primary); font-family: var(--font); }
+.cv-entries { margin-left: 22px; display: flex; flex-direction: column; gap: 0.9rem; }
+.cv-entry-period { font-size: 12px; color: var(--text-tertiary); font-family: var(--font); white-space: nowrap; }
+.cv-entry-title { font-size: 13px; font-weight: 500; color: var(--text-secondary); font-family: var(--font); }
+.cv-entry-loc { font-size: 12px; color: var(--text-tertiary); font-family: var(--font); }
+.cv-highlights { margin-top: 3px; list-style: none; }
+.cv-highlights li { font-size: 12px; color: var(--text-tertiary); padding-left: 12px; position: relative; line-height: 1.6; }
+.cv-highlights li::before { content: '·'; position: absolute; left: 3px; }
 
-                #fr     {background-color: #F3D3BD;}
-                #en     {background-color: #ECF0F1;}
-                #contact        {background-color: #FAFF7F;}
+.tooltip {
+  position: fixed;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px; line-height: 1.6;
+  z-index: 1000; min-width: 210px; max-width: 270px;
+  pointer-events: none; opacity: 0; transition: opacity 0.12s;
+  font-family: var(--font);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+.tooltip.visible { opacity: 1; }
+.tooltip-title { font-weight: 500; font-size: 13px; color: var(--text-primary); margin-bottom: 2px; }
+.tooltip-sub { color: var(--text-secondary); }
+.tooltip-loc { color: var(--text-tertiary); font-size: 11px; }
+.tooltip-period { color: var(--text-tertiary); font-size: 11px; margin-top: 1px; }
+.tooltip-hi { margin-top: 7px; border-top: 1px solid var(--border); padding-top: 7px; list-style: none; }
+.tooltip-hi li { color: var(--text-secondary); padding-left: 12px; position: relative; font-size: 11px; }
+.tooltip-hi li::before { content: '·'; position: absolute; left: 3px; color: var(--text-tertiary); }
 
-  </style>
+.footer-row { margin-top: 1.75rem; padding-left: var(--label-w); display: flex; gap: 2.5rem; flex-wrap: wrap; }
+.footer-block { display: flex; flex-direction: column; gap: 6px; }
+.footer-label { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); font-family: var(--font); }
+.lang-list { display: flex; gap: 10px; flex-wrap: wrap; }
+.lang-item { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; font-family: var(--font); }
+.lang-level { font-size: 10px; color: var(--text-tertiary); }
+</style>
 </head>
 <body>
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"
-        type="text/javascript"></script> 
-  <script type="text/javascript">
 
+<div class="title-row">
+  <h1>Work experience — René Smit</h1>
+  <span>2001 – 2025</span>
+</div>
 
-  // JavaScript Document
-  jQuery(document).ready(function() {
+<div class="gantt" id="gantt"></div>
 
-  var device = navigator.userAgent.toLowerCase();
-  var ios = device.match(/(iphone|ipod|ipad)/);
-  //function that returns element's y position
+<div class="footer-row">
+  <div class="footer-block">
+    <div class="footer-label">Languages</div>
+    <div class="lang-list">
+      <div class="lang-item">🇳🇱 Dutch <span class="lang-level">C2</span></div>
+      <div class="lang-item">🇬🇧 English <span class="lang-level">C1</span></div>
+      <div class="lang-item">🇫🇷 French <span class="lang-level">C1</span></div>
+      <div class="lang-item">🇮🇹 Italian <span class="lang-level">B2</span></div>
+      <div class="lang-item">🇩🇪 German <span class="lang-level">B2</span></div>
+      <div class="lang-item">🇪🇸 Spanish <span class="lang-level">A2</span></div>
+    </div>
+  </div>
+  <div class="footer-block">
+    <div class="footer-label">Education</div>
+    <div class="lang-item">BSc Food Technology · Larenstein Velp · 2001</div>
+  </div>
+</div>
 
-    jQuery("a[href*=#]").on('click', function(e) {
-      var scrollTarget = jQuery(this.hash).offset().top;
-      if(scrollTarget)
-          e.preventDefault();
-        if(parseInt(scrollTarget) !== parseInt(jQuery(window).scrollTop())) {
-          var nav2 = jQuery("nav");
-        if (ios) nav2.hide();
-          jQuery('html,body').animate({scrollTop:scrollTarget}, 1000, "swing", function(evt) {
-          if (ios) {
-            if(scrollTarget == 0)
-                nav2.css({position:'absolute', top:jQuery("#intro").height()});
-            else
-                nav2.css({position:'absolute', top:scrollTarget});
-            var nav2clone = jQuery("nav")
-            nav2clone.show();
-          }
+<div id="tooltip" class="tooltip"></div>
+
+<script>
+function toDecYear(str) {
+  const p = str.split('-').map(Number);
+  const y = p[0], m = (p[1]||1)-1, d = p[2]||1;
+  const date = new Date(y,m,d), s = new Date(y,0,1), e = new Date(y+1,0,1);
+  return y + (date-s)/(e-s);
+}
+
+const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(str) {
+  const p = str.split('-').map(Number);
+  if (p.length===1) return ''+p[0];
+  if (p.length===2) return MO[p[1]-1]+' '+p[0];
+  return MO[p[1]-1]+' '+p[2]+', '+p[0];
+}
+function fmtPeriod(s,e) { return fmtDate(s)+' – '+fmtDate(e); }
+
+// Known employer colours — keyed by lowercase name fragment
+const KNOWN_COLORS = {
+  'eurocamp':              { color:'#FFAD00', textColor:'#042C53' },
+  'vacansoleil':           { color:'#142F5E', textColor:'#04342C' },
+  'selectcamp':            { color:'#A8003B', textColor:'#26215C' },
+  'camping village fabulous': { color:'#95C225', textColor:'#412402' },
+  'fabulous':              { color:'#95C225', textColor:'#412402' },
+  'disneyland':            { color:'#D4537E', textColor:'#4B1528' },
+  'jmw':                   { color:'#D85A30', textColor:'#4A1B0C' },
+  'hotel papendal':        { color:'#EE7202', textColor:'#4A1B0C' },
+  '68 degrees':            { color:'#ED174F', textColor:'#4A1B0C' },
+  'peeze':                 { color:'#9FC648', textColor:'#2C2C2A' },
+};
+
+// Fallback palette for unknown employers
+const FALLBACK = [
+  { color:'#639922', textColor:'#173404' },
+  { color:'#BA7517', textColor:'#412402' },
+  { color:'#993556', textColor:'#4B1528' },
+  { color:'#185FA5', textColor:'#042C53' },
+  { color:'#5F5E5A', textColor:'#2C2C2A' },
+];
+let fallbackIdx = 0;
+
+function slugify(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+}
+
+function getEmpColors(name) {
+  const lower = name.toLowerCase();
+  for (const key of Object.keys(KNOWN_COLORS)) {
+    if (lower.includes(key)) return KNOWN_COLORS[key];
+  }
+  return FALLBACK[fallbackIdx++ % FALLBACK.length];
+}
+
+// Preferred row order for the gantt (by name fragment, lowercase)
+const ROW_ORDER = ['eurocamp','vacansoleil','selectcamp','camping village fabulous','disneyland paris','hotel papendal','68 degrees','jmw','koffiebranderij peeze'];
+function rowSortKey(name) {
+  const lower = name.toLowerCase();
+  const i = ROW_ORDER.findIndex(k => lower.includes(k));
+  return i === -1 ? 999 : i;
+}
+
+// CV section order: camping employers first
+const CV_ORDER = ['eurocamp','vacansoleil','selectcamp'];
+
+const gantt   = document.getElementById('gantt');
+const tooltip = document.getElementById('tooltip');
+
+fetch('https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/main/input/cv_rene_smit_json_resume.json')
+  .then(r => r.json())
+  .then(data => {
+    // Build empMap and ROWS from JSON work array
+    const empMap = {};
+    const rowMap = {};
+
+    data.work.forEach(job => {
+      const name  = job.name.trim();
+      const key   = slugify(name);
+      if (!empMap[key]) {
+        const colors = getEmpColors(name);
+        empMap[key] = {
+          key,
+          label: name,
+          logo: 'svg/' + key + '.svg',
+          color: colors.color,
+          textColor: colors.textColor,
+        };
+      }
+      if (!rowMap[key]) rowMap[key] = { emp: key, jobs: [] };
+      rowMap[key].jobs.push({
+        start: job.startDate,
+        end:   job.endDate,
+        title: job.position.trim(),
+        loc:   job.location || '',
+        hi:    (job.highlights || []).map(h => h.trim()),
       });
-    }
     });
 
-    if (ios) {
-        jQuery(document).bind('touchmove',function(){
-          var intro = jQuery("#intro"), nav2 = jQuery("nav");
-          console.log(nav2.position().top);
-        if(intro.height() != nav2.position().top)
-        {
-            nav2.css({position:'fixed', top:'0px'});
-            console.log(nav2.position().top);
-        }
-        else
-        {
-            nav2.css({position:'relative', top: ''});
-        }
+    // Sort rows by preferred order
+    const ROWS = Object.values(rowMap).sort((a,b) =>
+      rowSortKey(empMap[a.emp].label) - rowSortKey(empMap[b.emp].label)
+    );
+
+    // Compute axis range
+    const allYears = ROWS.flatMap(r => r.jobs.flatMap(j => [toDecYear(j.start), toDecYear(j.end)]));
+    const YEAR_START = Math.floor(Math.min(...allYears));
+    // const YEAR_END   = Math.ceil(Math.max(...allYears)) + 1;
+    const YEAR_END = Math.ceil(Math.max(...allYears));
+    const YEAR_COUNT = YEAR_END - YEAR_START;
+
+    function pct(yr)    { return ((yr-YEAR_START)/YEAR_COUNT*100).toFixed(4)+'%'; }
+    function pctW(s,e)  { return ((e-s)/YEAR_COUNT*100).toFixed(4)+'%'; }
+
+    // Update title span
+    document.querySelector('.title-row span').textContent =
+      YEAR_START + ' – ' + (YEAR_END - 1);
+
+    // Build footer from JSON
+    buildFooter(data);
+
+    // Axis
+    const axisRow = document.createElement('div');
+    axisRow.className = 'axis-row';
+    for (let y = YEAR_START; y < YEAR_END; y++) {
+      const el = document.createElement('div');
+      el.className = 'axis-year';
+      el.style.width = (1/YEAR_COUNT*100).toFixed(4)+'%';
+      el.dataset.year = y;
+      axisRow.appendChild(el);
+    }
+    gantt.appendChild(axisRow);
+
+    function updateAxisLabels() {
+      const barsWidth = gantt.offsetWidth - 120;
+      const pxPerYear = barsWidth / YEAR_COUNT;
+      const useShort  = pxPerYear < 28;
+      const skipOdd   = pxPerYear < 18;
+      axisRow.querySelectorAll('.axis-year').forEach(el => {
+        const y = +el.dataset.year;
+        if (skipOdd && y % 2 !== 0) { el.textContent = ''; }
+        else { el.textContent = useShort ? String(y).slice(2) : String(y); }
       });
     }
+    updateAxisLabels();
+    window.addEventListener('resize', updateAxisLabels);
+
+    // Gantt rows
+    ROWS.forEach(row => {
+      const emp = empMap[row.emp];
+      const rowEl = document.createElement('div');
+      rowEl.className = 'row';
+
+      const lowerLabel = empMap[row.emp].label.toLowerCase();
+      const campingGroup    = ['eurocamp','vacansoleil','selectcamp'];
+      const hospitalityGroup = ['hotel papendal','68 degrees','jmw'];
+      if (campingGroup.some(k => lowerLabel.includes(k)))     rowEl.classList.add('group-camping');
+      if (hospitalityGroup.some(k => lowerLabel.includes(k))) rowEl.classList.add('group-hospitality');
+
+      const labelEl = document.createElement('div');
+      labelEl.className = 'row-label';
+      const img = document.createElement('img');
+      img.src = emp.logo; img.alt = emp.label; img.title = emp.label;
+      img.onerror = function() {
+        this.remove();
+        const fb = document.createElement('span');
+        fb.className = 'fallback'; fb.textContent = emp.label;
+        labelEl.appendChild(fb);
+      };
+      labelEl.appendChild(img);
+
+      const barsArea = document.createElement('div');
+      barsArea.className = 'bars-area';
+
+      for (let y = YEAR_START; y < YEAR_END; y++) {
+        const gl = document.createElement('div');
+        gl.className = 'grid-line'; gl.style.left = pct(y);
+        barsArea.appendChild(gl);
+      }
+
+      row.jobs.forEach(job => {
+        const s = toDecYear(job.start), e = toDecYear(job.end);
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.left = pct(s); bar.style.width = pctW(s,e);
+        bar.style.background = emp.color;
+
+        const lbl = document.createElement('span');
+        lbl.className = 'bar-label'; lbl.style.color = emp.textColor;
+        lbl.textContent = job.title;
+        bar.appendChild(lbl);
+
+        const ro = new ResizeObserver(() => {
+          bar.classList.toggle('too-narrow', bar.offsetWidth < lbl.scrollWidth + 16);
+        });
+        ro.observe(bar);
+
+        bar.addEventListener('mouseenter', ev => {
+          tooltip.innerHTML = `
+            <div class="tooltip-title">${job.title}</div>
+            <div class="tooltip-sub">${emp.label}</div>
+            <div class="tooltip-loc">${job.loc}</div>
+            <div class="tooltip-period">${fmtPeriod(job.start, job.end)}</div>
+            <ul class="tooltip-hi">${job.hi.map(h=>`<li>${h}</li>`).join('')}</ul>`;
+          tooltip.classList.add('visible');
+          moveTooltip(ev);
+        });
+        bar.addEventListener('mousemove', moveTooltip);
+        bar.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+        barsArea.appendChild(bar);
+      });
+
+      rowEl.appendChild(labelEl);
+      rowEl.appendChild(barsArea);
+      gantt.appendChild(rowEl);
+    });
+
+    // CV text section
+    const cvSection = document.createElement('div');
+    cvSection.className = 'cv-section';
+    const cvTitleEl = document.createElement('div');
+    cvTitleEl.className = 'cv-section-title';
+    cvTitleEl.textContent = 'Work experience';
+    cvSection.appendChild(cvTitleEl);
+
+    const cvGrid = document.createElement('div');
+    cvGrid.className = 'cv-grid';
+    cvSection.appendChild(cvGrid);
+
+    const campingKeys = CV_ORDER;
+    const otherRows   = ROWS.filter(r => !campingKeys.some(k => empMap[r.emp].label.toLowerCase().includes(k)));
+    const cvRows      = [
+      ...campingKeys.map(k => ROWS.find(r => empMap[r.emp].label.toLowerCase().includes(k))).filter(Boolean),
+      ...otherRows
+    ];
+
+    cvRows.forEach(row => {
+      const emp = empMap[row.emp];
+      const groups = [];
+      row.jobs.forEach(job => {
+        const g = groups.find(g => g.title === job.title);
+        if (g) g.entries.push(job);
+        else   groups.push({ title: job.title, entries: [job] });
+      });
+
+      const cvGroup = document.createElement('div');
+      cvGroup.className = 'cv-group';
+
+      const header = document.createElement('div');
+      header.className = 'cv-group-header';
+      const dot = document.createElement('div');
+      dot.className = 'cv-group-dot'; dot.style.background = emp.color;
+      const name = document.createElement('div');
+      name.className = 'cv-group-name'; name.textContent = emp.label;
+      header.appendChild(dot); header.appendChild(name);
+      cvGroup.appendChild(header);
+
+      const entries = document.createElement('div');
+      entries.className = 'cv-entries';
+
+      groups.forEach(g => {
+        const block = document.createElement('div');
+        const titleRow = document.createElement('div');
+        titleRow.style.cssText = 'display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;';
+        const titleEl = document.createElement('span');
+        titleEl.className = 'cv-entry-title'; titleEl.textContent = g.title;
+        titleRow.appendChild(titleEl);
+
+        if (g.entries.length > 1) {
+          const earliest = g.entries.reduce((a,b) => a.start < b.start ? a : b).start;
+          const latest   = g.entries.reduce((a,b) => a.end   > b.end   ? a : b).end;
+          const isDisney = emp.label.toLowerCase().includes('disneyland');
+          const span = document.createElement('span');
+          span.className = 'cv-entry-period';
+          span.textContent = fmtDate(earliest) + ' – ' + fmtDate(latest) +
+            (isDisney ? '' : ' (' + g.entries.length + ' seasons)');
+          titleRow.appendChild(span);
+        }
+        block.appendChild(titleRow);
+
+        g.entries.forEach(job => {
+          const entryRow = document.createElement('div');
+          entryRow.style.cssText = 'display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-top:2px;';
+          const period = document.createElement('span');
+          period.className = 'cv-entry-period'; period.textContent = fmtPeriod(job.start, job.end);
+          const loc = document.createElement('span');
+          loc.className = 'cv-entry-loc'; loc.textContent = job.loc;
+          entryRow.appendChild(period); entryRow.appendChild(loc);
+          block.appendChild(entryRow);
+        });
+
+        if (g.entries[0].hi && g.entries[0].hi.length) {
+          const ul = document.createElement('ul');
+          ul.className = 'cv-highlights';
+          g.entries[0].hi.forEach(h => {
+            const li = document.createElement('li'); li.textContent = h; ul.appendChild(li);
+          });
+          block.appendChild(ul);
+        }
+        entries.appendChild(block);
+      });
+
+      cvGroup.appendChild(entries);
+      cvGrid.appendChild(cvGroup);
+    });
+
+    document.body.appendChild(cvSection);
+  })
+  .catch(err => {
+    gantt.textContent = 'Could not load CV data: ' + err.message;
   });
-  </script> 
-  <script type='text/javascript'>
 
+function buildFooter(data) {
+  const footer = document.querySelector('.footer-row');
+  if (!footer) return;
+  footer.innerHTML = '';
 
-      $(window).load(function(){
-                // http://stackoverflow.com/questions/9979827/change-active-menu-item-on-page-scroll
-            // also possibile with Srollspy http://getbootstrap.com/javascript/#scrollspy
+  if (data.languages && data.languages.length) {
+    const flags = { Dutch:'🇳🇱', English:'🇬🇧', French:'🇫🇷', Italian:'🇮🇹', German:'🇩🇪', Spanish:'🇪🇸' };
+    const lb = document.createElement('div'); lb.className = 'footer-block';
+    const ll = document.createElement('div'); ll.className = 'footer-label'; ll.textContent = 'Languages';
+    const list = document.createElement('div'); list.className = 'lang-list';
+    data.languages.forEach(l => {
+      const item = document.createElement('div'); item.className = 'lang-item';
+      item.innerHTML = (flags[l.language]||'') + ' ' + l.language +
+        ' <span class="lang-level">' + l.fluency + '</span>';
+      list.appendChild(item);
+    });
+    lb.appendChild(ll); lb.appendChild(list); footer.appendChild(lb);
+  }
 
-                // Cache selectors
-                var lastId,
-                    topMenu = $("#nav2a"),
-                    topMenuHeight = topMenu.outerHeight()+15,
-                    // All list items
-                    menuItems = topMenu.find("a"),
-                    // Anchors corresponding to menu items
-                    scrollItems = menuItems.map(function(){
-                      var item = $($(this).attr("href"));
-                      if (item.length) { return item; }
-                    });
+  if (data.education && data.education.length) {
+    const eb = document.createElement('div'); eb.className = 'footer-block';
+    const el = document.createElement('div'); el.className = 'footer-label'; el.textContent = 'Education';
+    data.education.forEach(e => {
+      const item = document.createElement('div'); item.className = 'lang-item';
+      item.textContent = e.studyType + ' ' + e.area + ' · ' + e.institution + ' · ' +
+        new Date(e.endDate).getFullYear();
+      eb.appendChild(item);
+    });
+    eb.prepend(el); footer.appendChild(eb);
+  }
+}
 
-                // Bind click handler to menu items
-                // so we can get a fancy scroll animation
-                menuItems.click(function(e){
-                  var href = $(this).attr("href"),
-                      offsetTop = href === "#" ? 0 : $(href).offset().top-topMenuHeight+1;
-                  $('html, body').stop().animate({
-                      scrollTop: offsetTop
-                  }, 300);
-                  e.preventDefault();
-      });
+function moveTooltip(e) {
+  const tw = 280;
+  const left = e.clientX+16+tw > window.innerWidth ? e.clientX-tw-16 : e.clientX+16;
+  tooltip.style.left = left+'px';
+  tooltip.style.top  = (e.clientY+14)+'px';
+}
 
-      // Bind to scroll
-      $(window).scroll(function(){
-                // Get container scroll position
-                var fromTop = $(this).scrollTop()+topMenuHeight;
-
-                // Get id of current scroll item
-                var cur = scrollItems.map(function(){
-                  if ($(this).offset().top < fromTop)
-                    return this;
-                });
-                // Get the id of the current element
-                cur = cur[cur.length-1];
-                var id = cur && cur.length ? cur[0].id : "";
-
-                if (lastId !== id) {
-                    lastId = id;
-                    // Set/remove active class
-                    menuItems
-                      .parent().removeClass("active")
-                      .end().filter("[href=#"+id+"]").parent().addClass("active");
-                }
-      });
-      });
-
-  </script>
-  <div id="wrapper">
-    <div id="nav">
-      <div id="nav1">
-        <div id="nav2a">
-          <ul>
-            <li>
-              <a href="#en"><img src="en.gif"></a>
-            </li>
-            <li>
-              <a href="#nl"><img src="nl.gif"></a>
-            </li>
-            <li>
-              <a href="#it"><img src="it.gif"></a>
-            </li>
-            <li>
-              <a href="#fr"><img src="fr.gif"></a>
-            </li>
-            <li>
-              <a href="#contact"><img height="12"
-                   src="mail.png"></a>
-            </li><!---</ul>
-                                        </div>
-                                        <div id="nav2b">
-                                                <ul>=-->
-            <!--- <li><a href="CV_Rene_Smit_NL_IT_EN.doc"><img src="word.gif" /></a></li>  =-->
-            <li>
-              <a href="http://www.linkedin.com/in/rcsmit"
-                  target="_blank"><img height="12"
-                   src="linkedin.gif"></a>
-            </li><!---<li><a href="http://pinterest.com/rcsmit/it-s-me/" target="_blank"><img src="pinterest.gif" height="12"></a></li> =-->
-            <!---<li><a href="http://www.servendo.nl" target="_blank"><img src="servendo.gif" height="12"></a></li> =-->
-            <li>
-              <a href="http://rcsmit.github.io/portfolio"
-                  target="_blank"><img height="12"
-                   src="graphic_design.png"></a>
-            </li>
-            <li>
-              <a href="http://yepyoga.wordpress.com"
-                  target="_blank"><img height="12"
-                   src="yepyoga.png"></a>
-            </li>
-            <li>
-              <a href="http://crazywaiter.wordpress.com/category/favorite-posts"
-                  target="_blank"><img height="12"
-                   src="crazywaiter.gif"></a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div><a id="en"
-         name="en"></a>
-    <div class="spacer"></div>
-    <div id="en">
-      <div class="innerwrapper">
-        <h1>Personal data resume</h1>
-        <div class="perso_infobox">
-          <div class="regel">
-            <div class="label">
-              Name
-            </div>
-            <div class="content1">
-              René Coniah SMIT
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Address
-            </div>
-            <div class="content1">
-              xxxxstraat X<br>
-              682x XX ARNHEM<br>
-              the Netherlands
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Phone number
-            </div>
-            <div class="content1">
-              0031(0)6 3914 xxxx
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              E-mail
-            </div>
-            <div class="content1">
-              <a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a>
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Nationality
-            </div>
-            <div class="content1">
-              Dutch
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Birth date
-            </div>
-            <div class="content1">
-              23rd of august 1977
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Gender
-            </div>
-            <div class="content1">
-              Male
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Drivers licence
-            </div>
-            <div class="content1">
-              B
-            </div>
-          </div>
-        </div>
-        <div class="pasfoto"><img alt="photo of Rene Smit"
-             class="pasfoto"
-             src="pasf2020.jpg"
-             width="100px"></div>
-        <div class="regel"></div>
-        <h2>Education</h2>
-        <div class="perso_infobox">
-          <div class="regel">
-            <div class="label">
-              2016
-            </div>
-            <div class="content">
-              <span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br>
-              <span class="subtitel">Yoga Teacher Training - Hatha yoga 200 hours</span>
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              <span class="subtitel">1997 - 2001</span>
-            </div>
-            <div class="content">
-              <span class="subtitel"><span class="titel">Larenstein Velp (the Netherlands)</span><br>
-              <span class="subtitel">Foodtechnology (quality management)<br>
-              (BSc, ISCED 5)</span></span>
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              <span class="subtitel">1989-1996</span>
-            </div>
-            <div class="content">
-              <span class="subtitel"><span class="titel">RSG Ter Apel</span><br>
-              <span class="subtitel">Pre-university education</span></span>
-            </div>
-          </div>
-        </div>
-        <div class="pasfoto"></div>
-        <div class="regel"></div>
-        <h2><span class="subtitel">Employement</span></h2>
-        <center>
-          <span class="subtitel"><img class="cvplaatje"
-               margin="10px"
-               src="cvrene.png"></span>
-          <center>
-            <div class="perso_infobox">
-              <div class="regel">
-                <div class="label">
-                  <span class="subtitel">zomer 2020, 2021, 2022, 2023</span>
-                </div>
-                <div class="content">
-                  <span class="subtitel"><span class="titel">Vacansoleil, Camping De Schatberg, Sevenum (L.), The Netherlands</span><br>
-                  <span class="subtitel">Camping host</span></span>
-                  <ul>
-                    <li>Cleaning and preparing accomodations</li>
-                    <li>Checkin-/check out</li>
-                    <li>Assisting and replacing the supervisor</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  summer 2014, 2016, 2019
-                </div>
-                <div class="content">
-                  <span class="titel">Camping Village Fabulous (EC Vacanze), Rome, Italy</span><br>
-                  <span class="subtitel">Staffmember Info-point</span>
-                  <ul>
-                    <li>Providing information about the campsite and Rome</li>
-                    <li>Selling tickets and excursions</li>
-                    <li>Finding information and assisting guests in unforeseen situations (stolen documents, need of medical accessories etc.)</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  winter 2017, 2018, 2019
-                </div>
-                <div class="content">
-                  <span class="titel">YepYoga</span><br>
-                  <span class="subtitel">Free lance yoga teacher</span>
-                  <ul>
-                    <li>Teaching (private) hatha yoga lessen in ho(s)tels in Asia</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  summer 2017, 2018
-                </div>
-                <div class="content">
-                  <span class="titel">Vacansoleil, Camping Village Fabulous, Rome, Italië</span><br>
-                  <span class="subtitel">Camping host</span>
-                  <ul>
-                    <li>Checking accomodations</li>
-                    <li>Checkin-/check out</li>
-                    <li>Assisting and replacing the supervisor</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  2006 - 2011, 2015
-                </div>
-                <div class="content">
-                  <span class="titel">Disneyland Paris, France</span><br>
-                  <span class="subtitel">Waiter in Restaurant Inventions, Disneyland Hotel (5*)<br>
-                  Waiter in Park Side Dinner,Hotel New York (4*)<br></span>
-                  <ul>
-                    <li>One of the circa 60 employees (out of 13.000) who has been most cited as "outstanding castmember" by the guests in 2009, 2010, 2011 and 2015</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  summer 2012, 2013
-                </div>
-                <div class="content">
-                  <span class="titel">Selectcamp</span><br>
-                  <span class="subtitel">Courier at Camping Ca'Savio, Cavallino-Treporti (VE), Italy<br>
-                  Courier at Prà delle Torri, Caorle (VE), Italy</span>
-                  <ul>
-                    <li>Being the central point for the guest in name of Selectcamp</li>
-                    <li>Cleaning and preparing the mobilehomes and lodgetents before and at the end of the season and at arrival of the new guests</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  2004 - 2006
-                </div>
-                <div class="content">
-                  <span class="titel">Various companies in the Netherlands</span><br>
-                  <span class="subtitel">Temporary employee in the hospitality business, especially for banqueting and partycatering</span>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  2013
-                </div>
-                <div class="content">
-                  <span class="titel">Hotel Papendal (Arnhem)</span><br>
-                  <span class="subtitel">Waiter restaurant, bar, banqueting</span>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  2001-2004
-                </div>
-                <div class="content">
-                  <span class="titel">Koffiebranderij Peeze</span><br>
-                  <span class="subtitel">Quality management, Environment, Safety and Health, hygiene and HACCP in a coffee roasting company (comparabile with Illy)</span>
-                </div>
-              </div>
-            </div>
-            <div class="pasfoto"></div>
-            <div class="regel"></div>
-            <h2>Languages</h2>
-            <div class="perso_infobox">
-              <div class="regel">
-                <div class="label"></div>
-                <div class="content">
-                  <ul>
-                    <li>Dutch (mothertongue)</li>
-                    <li>English (B2/C1)</li>
-                    <li>French (B1/B2)</li>
-                    <li>Italian (B1/B2)</li>
-                    <li>German (A2/B1)</li>
-                    <li>Spanish (A1/A2)</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="pasfoto"></div>
-            <div class="regel"></div>
-            <h2>Other skills and information</h2>
-            <div class="perso_infobox">
-              <div class="regel">
-                <div class="label"></div>
-                <div class="content">
-                  <ul>
-                    <li>Team spirit and welcoming</li>
-                    <li>Working and interaction with children</li>
-                    <li>Organisational skills</li>
-                    <li>Windows, Office, Photoshop, SPSS, VBScript/ASP, HTML</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="pasfoto"></div>
-            <div class="regel"></div>
-          </center>
-        </center>
-      </div><!-- /innerwrapper -->
-    </div><!-- /en -->
-    <a id="nl"
-         name="nl"></a>
-    <div class="spacer"></div>
-    <div id="nl">
-      <div class="innerwrapper">
-        <h1>Curriculum Vitae</h1>
-        <div class="perso_infobox">
-          <div class="regel1">
-            <div class="label">
-              Naam
-            </div>
-            <div class="content1">
-              Smit
-            </div>
-          </div>
-          <div class="regel1">
-            <div class="label">
-              Voornamen
-            </div>
-            <div class="content1">
-              René Coniah
-            </div>
-          </div>
-          <div class="regel11">
-            <div class="label">
-              Geslacht
-            </div>
-            <div class="content1">
-              M
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Adres
-            </div>
-            <div class="content1">
-              xxxxstraat X<br>
-              682x XX ARNHEM<br>
-              Pays Bas<br>
-              +31 (0)6 3914 xxx
-            </div>
-          </div>
-          <div class="regel1">
-            <div class="label">
-              E-mail
-            </div>
-            <div class="content1">
-              <a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a>
-            </div>
-          </div>
-          <div class="regel1">
-            <div class="label">
-              Burgelijke staat
-            </div>
-            <div class="content1">
-              Ongehuwd
-            </div>
-          </div>
-          <div class="regel1">
-            <div class="label">
-              Geboortedatum
-            </div>
-            <div class="content1">
-              23 augustus 1977
-            </div>
-          </div>
-          <div class="regel1">
-            <div class="label">
-              Geboorteplaats
-            </div>
-            <div class="content1">
-              Taipei (Taiwan)
-            </div>
-          </div>
-          <div class="regel1">
-            <div class="label">
-              Nationaliteit
-            </div>
-            <div class="content1">
-              Nederlandse
-            </div>
-          </div>
-          <div class="regel1">
-            <div class="label">
-              Rijbewijs
-            </div>
-            <div class="content1">
-              B
-            </div>
-          </div>
-        </div>
-        <div class="pasfoto"><img alt="photo of Rene Smit"
-             class="pasfoto"
-             src="pasf2020.jpg"
-             width="100px"></div>
-        <div class="regel"></div>
-        <h2>Opleiding</h2>
-        <div class="perso_infobox">
-          <div class="regel">
-            <div class="label">
-              2016
-            </div>
-            <div class="content">
-              <span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br>
-              <span class="subtitel">Yoga Teacher Training - Hatha yoga 200 hours</span>
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              1997-2001
-            </div>
-            <div class="content">
-              <span class="titel">Larenstein Velp</span><br>
-              <span class="subtitel">Agroproductkunde (thans Voedingsmiddelentechnologie)<br></span> (Ing./ BSc., ISCED 5)
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              1989-1996
-            </div>
-            <div class="content">
-              <span class="titel">RSG Ter Apel</span><br>
-              VWO
-            </div>
-          </div>
-        </div>
-        <div class="pasfoto"></div>
-        <div class="regel"></div>
-        <h2>Werkervaring</h2>
-        <center>
-          <img class="cvplaatje"
-                  margin="10px"
-                  src="cvrene.png">
-          <center>
-            <div class="perso_infobox">
-              <div class="regel">
-                <div class="label">
-                  zomer 2020, 2021, 2022
-                </div>
-                <div class="content">
-                  <span class="titel">Vacansoleil, Camping De Schatberg, Sevenum (L.), Nederland</span><br>
-                  <span class="subtitel">Camping host</span>
-                  <ul>
-                    <li>Schoonmaken en prepareren van accomodaties</li>
-                    <li>Checkin-/check out</li>
-                    <li>Assisteren en vervangen van supervisor</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  zomer 2014, 2016, 2019
-                </div>
-                <div class="content">
-                  <span class="titel">Camping Village Fabulous (EC Vacanze), Rome, Italië</span><br>
-                  <span class="subtitel">Medewerker info-point</span>
-                  <ul>
-                    <li>Informatie geven over de camping en Rome</li>
-                    <li>Verkoop van tickets en excursies</li>
-                    <li>Informatie zoeken en assisteren bij onvoorziene omstandigheden (gestolen documenten, medische accessoires etc.)</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  winter 2017, 2018, 2019
-                </div>
-                <div class="content">
-                  <span class="titel">YepYoga</span><br>
-                  <span class="subtitel">Free lance yoga leraar</span>
-                  <ul>
-                    <li>Het geven van (privé) hatha yoga lessen in ho(s)tels in Azie</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  zomer 2017, 2018
-                </div>
-                <div class="content">
-                  <span class="titel">Vacansoleil, Camping Village Fabulous, Rome, Italië</span><br>
-                  <span class="subtitel">Camping host</span>
-                  <ul>
-                    <li>Controleren accomodaties</li>
-                    <li>Checkin-/check out</li>
-                    <li>Assisteren en vervangen van supervisor</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  2006 - 2011, 2015
-                </div>
-                <div class="content">
-                  <span class="titel">Disneyland Paris</span><br>
-                  <span class="subtitel">Kelner in Inventions, Disneyland Hotel (5*)<br>
-                  Kelner in Park Side Dinner,Hotel New York(4*)<br></span>
-                  <ul>
-                    <li>Eén van de circa 60 medewerkers (van de 13.000) die het meest is genoemd door de gasten als "uitzonderlijke castmember" in 2009 en 2010, 2011 en 2015</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  zomer 2012, 2013
-                </div>
-                <div class="content">
-                  <span class="titel">Selectcamp</span><br>
-                  <span class="subtitel">Courier op Camping Ca'Savio, Cavallino-Treporti (VE), Italië<br>
-                  Courier op Prà delle Torri, Caorle (VE), Italië</span>
-                  <ul>
-                    <li>Centraal aanspreekpunt voor de gasten waarbij service en kwaliteit voorop staat</li>
-                    <li>Schoonmaken en gereedmaken van de accommodaties voor en na het seizoen en bij gastenwisseling</li>
-                  </ul>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  2013
-                </div>
-                <div class="content">
-                  <span class="titel">Hotel Papendal (Arnhem)</span><br>
-                  <span class="subtitel">Kelner restaurant, bar, banqueting</span>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  2004- 2006
-                </div>
-                <div class="content">
-                  <span class="titel">JMW Horeca-uitzendbureau (interimair)</span><br>
-                  <span class="subtitel">Kelner, met name banqueting en partycatering</span>
-                </div>
-              </div>
-              <div class="regel">
-                <div class="label">
-                  2001-2004
-                </div>
-                <div class="content">
-                  <span class="titel">Koffiebranderij G. Peeze B.V. Arnhem</span><br>
-                  <span class="subtitel">Alle voorkomende werkzaamheden op het gebied van kwaliteitsmanagement, arbeidsomstandigheden, milieubeheer, HACCP, duurzaamheid en marketing</span>
-                </div>
-              </div>
-            </div>
-            <div class="regel"></div>
-            <h2>Talenkennis</h2>
-            <div class="perso_infobox">
-              <div class="regel">
-                <div class="label"></div>
-                <div class="content">
-                  <ul>
-                    <li>Nederlands (moedertaal)</li>
-                    <li>Engels (B2/C1)</li>
-                    <li>Frans (B1/B2)</li>
-                    <li>Italiaans (B1/B2)</li>
-                    <li>Duits (A2/B1)</li>
-                    <li>Spaans (A1/A2)</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="regel"></div>
-            <h2>Overige vaardigheden</h2>
-            <div class="perso_infobox">
-              <div class="regel">
-                <div class="label"></div>
-                <div class="content">
-                  <ul>
-                    <li>Teamspirit, gastvrij</li>
-                    <li>Organisatorische capaciteiten</li>
-                    <li>Interactief met kinderen</li>
-                    <li>Windows, Office, Photoshop, SPSS, VBScript/ASP, HTML</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="regel"></div>
-          </center>
-        </center>
-      </div><!-- /innerwrapper -->
-    </div><!-- /nl -->
-    <a id="it"
-         name="it"></a>
-    <div class="spacer"></div>
-    <div id="it">
-      <div class="innerwrapper">
-        <h1>Informazioni personali</h1>
-        <div class="perso_infobox">
-          <div class="regel">
-            <div class="label">
-              Nome / Cognome
-            </div>
-            <div class="content1">
-              René Coniah SMIT
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Indirizzo
-            </div>
-            <div class="content1">
-              xxxxstraat X<br>
-              682x XX ARNHEM<br>
-              Paessi Bassi
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Telefono
-            </div>
-            <div class="content1">
-              0031(0)6 3914 xxxx
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              E-mail
-            </div>
-            <div class="content1">
-              <a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a>
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Cittadinanza
-            </div>
-            <div class="content1">
-              Olandese
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Data di nascita
-            </div>
-            <div class="content1">
-              23 agosto 1977
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Sesso
-            </div>
-            <div class="content1">
-              Maschile
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Patente
-            </div>
-            <div class="content1">
-              B
-            </div>
-          </div>
-        </div>
-        <div class="pasfoto"><img alt="photo of Rene Smit"
-             class="pasfoto"
-             src="pasf2020.jpg"
-             width="100px"></div>
-        <div class="regel"></div>
-        <h2>Istruzione e formazione</h2>
-        <div class="perso_infobox">
-          <div class="regel">
-            <div class="label">
-              2016
-            </div>
-            <div class="content">
-              <span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br>
-              Yoga Teacher Training - Hatha yoga 200 hours
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              1997 - 2001
-            </div>
-            <div class="content">
-              <span class="titel">Larenstein (Hogeschool), Velp (Paesi Bassi)</span><br>
-              Tecnologia degli alimenti (Management della qualità)<br>
-              (llivello bachelor, ISCED 5)
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              1989-1996
-            </div>
-            <div class="content">
-              <span class="titel">RSG Ter Apel</span><br>
-              Liceo scientifico
-            </div>
-          </div>
-        </div>
-        <div class="pasfoto"></div>
-        <div class="regel"></div>
-        <h2>Esperienza professionale</h2>
-        <center>
-          <img class="cvplaatje"
-                  margin="10px"
-                  src="cvrene.png">
-          <center>
-            <!---
-                                <div class="perso_infobox">
-
-                                        <div class="regel"><div class="label">L'estate 2014</div>
-                                        <div class="content"><span class="titel">Camping Village Fabulous (EC Vacanze), Roma</span> <br />
-                                                Addetto info-point
-                                                <ul><li>Fornire il servizio di informazione sul campeggio e Roma</li>
-                                                <li>Vendere biglietti e gite</li>
-                                                <li>Ricerca di informazioni e assistere gli ospiti in situazioni impreviste (documenti rubati, bisogno di accessori medici ecc)</li>
-                                        </ul></div></div>
-
-                                        <div class="regel"><div class="label">l'Estate 2013</div>
-                                        <div class="content"><span class="titel">Selectcamp</span> <br />
-                                                Courier presso Camping Ca'Savio, Cavallino-Treporti (VE)<BR />
-                                                <ul><li>Essendo il principale punto di contatto per gli ospiti dando enfasi a servizio e qualità. L'ospitalità è fondamentale.</li>
-                                                <li>Pulendo, controllando e preparando gli alloggi prima e dopo la stagione e in mezzo a partenze e arrivi di differenti ospiti.</li></ul></div></div>
-
-                                        <div class="regel">
-                                                <div class="label">2013</div>
-                                                <div class="content"><span class="titel">Hotel Papendal (Arnhem)</span> <br />
-                                                Cameriere restaurant, bar, banqueting</div>
-                                        </div>
-
-                                        <div class="regel">
-                                                <div class="label">l'Estate 2012</div>
-                                                <div class="content"><span class="titel">Selectcamp</span> <br />
-                                                Courier presso Prà delle Torri, Caorle (VE)</div>
-                                        </div>
-
-                                                <div class="regel"><div class="label">2006 - 2011</div>
-                                        <div class="content"><span class="titel">Disneyland Paris, Francia</span> <br />
-                                                Cameriere in Inventions, Disneyland Hotel (5*)<br />
-                                                Uno dei circa 60 dipendenti (su 13.000) che sono i piu' citati come "castmember eccezionale" dai clienti nel 2009 e 2010</div></div>
-                                        <div class="regel"><div class="label">2004 - 2006</div><div class="content"><span class="titel">Varie aziende nei paesi bassi</span><br />
-                                                Cameriere interinale, sopratutto banqueting e partycatering</div></div>
-                                        <div class="regel"><div class="label">2001-2004</div><div class="content"><span class="titel">Koffiebranderij Peeze</span><br />
-                                                Gestione di Qualità, Ambiente, Sicurezza sul lavoro, Marketing, Sostenibilità, HACCP &amp; Igiene presso un'azienda di torrefazione di caffé (comparabile con Illy)</div></div>
-                                </div>
-                                <div class="regel"></div>
-
-                                =-->
-            <h2>Lingue</h2>
-            <div class="perso_infobox">
-              <div class="regel">
-                <div class="label"></div>
-                <div class="content">
-                  <ul>
-                    <li>Olandese (madrelingua)</li>
-                    <li>Inglese (B2/C1)</li>
-                    <li>Francese (B1/B2)</li>
-                    <li>Italiano (B1/B2)</li>
-                    <li>Tedesco (A2/B1)</li>
-                    <li>Spagnolo / Castigliano (A1/A2)</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="pasfoto"></div>
-            <div class="regel"></div>
-            <h2>Capacità e competenze</h2>
-            <div class="perso_infobox">
-              <div class="regel">
-                <div class="label"></div>
-                <div class="content">
-                  <ul>
-                    <li>Spirito di sqaudra, animato, accogliente</li>
-                    <li>Capacità di interagire con i bambini</li>
-                    <li>Capacità e competenze organizzative</li>
-                    <li>Windows, Office, Photoshop, SPSS, VBSCRIPT/ASP, HTML</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="pasfoto"></div>
-            <div class="regel"></div>
-          </center>
-        </center>
-      </div><!-- /innerwrapper -->
-    </div><!-- /it -->
-    <a id="fr"
-         name="fr"></a>
-    <div class="spacer"></div>
-    <div id="fr">
-      <div class="innerwrapper">
-        <h1>Curriculum Vitae</h1>
-        <div class="perso_infobox">
-          <div class="regel">
-            <div class="label">
-              Nom
-            </div>
-            <div class="content1">
-              Smit
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Prénoms
-            </div>
-            <div class="content1">
-              René Coniah
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Sexe
-            </div>
-            <div class="content1">
-              homme
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Adresse
-            </div>
-            <div class="content1">
-              xxxxstraat X<br>
-              682x XX ARNHEM<br>
-              Pays Bas<br>
-              +31 (0)6 3914 xxx
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Adresse email
-            </div>
-            <div class="content1">
-              <a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a>
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Etat civil
-            </div>
-            <div class="content1">
-              Célibataire
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              La date de naissance
-            </div>
-            <div class="content1">
-              23 Août 1977
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              lieu de naissance
-            </div>
-            <div class="content1">
-              Taipei (Taiwan)
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Nationalité
-            </div>
-            <div class="content1">
-              Néerlandais
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              Permis de conduire
-            </div>
-            <div class="content1">
-              B
-            </div>
-          </div>
-        </div>
-        <div class="pasfoto"><img alt="photo of Rene Smit"
-             class="pasfoto"
-             src="pasf2020.jpg"
-             width="100px"></div>
-        <div class="regel"></div>
-        <h2>Formation</h2>
-        <div class="perso_infobox">
-          <div class="regel">
-            <div class="label">
-              2016
-            </div>
-            <div class="content">
-              <span class="titel">Samyak Yoga (RYS-200), Mysore (India)</span><br>
-              Yoga Teacher Training - Hatha yoga 200 hours
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              1997-2001
-            </div>
-            <div class="content">
-              <span class="titel">Larenstein Velp</span><br>
-              Etude agro-alimentaire - management de qualité<br>
-              (BTS, Licence, Bac+4)
-            </div>
-          </div>
-          <div class="regel">
-            <div class="label">
-              1989-1996
-            </div>
-            <div class="content">
-              <span class="titel">RSG Ter Apel</span><br>
-              VWO (Lycée)
-            </div>
-          </div>
-        </div>
-        <div class="pasfoto"></div>
-        <div class="regel"></div>
-        <h2>Expériences professionnelles</h2>
-        <center>
-          <img class="cvplaatje"
-                  margin="10px"
-                  src="cvrene.png">
-          <center>
-            <!---
-                                <div class="perso_infobox">
-
-                                        <div class="regel"><div class="label">L'éte 2014</div>
-                                        <div class="content"><span class="titel">Camping Village Fabulous (EC Vacanze), Rome, l'Italie</span> <br />
-
-                                        Employé point info
-                                                <ul><li>Renseignements sur le camping et sur Rome</li>
-                                                <li>Vente de billets et excursions</li>
-                                                <li>Assistance des clients en cas d'urgences (documents volés etc.)</li></ul></div></div>
-
-                                        <div class="regel"><div class="label">l'été 2013</div>
-                                        <div class="content"><span class="titel">Selectcamp</span> <br />
-                                                Courier au Camping Ca'Savio, Cavallino-Treporti (VE), l'Italie<BR />
-                                                </div></div>
-
-                                        <div class="regel"><div class="label">2013</div>
-                                        <div class="content"><span class="titel">Hotel Papendal, Arnhem</span> <br />
-                                                Serveur restaurant, bar, banqueting</div></div>
-
-                                        <div class="regel"><div class="label">l'été 2012</div>
-                                        <div class="content"><span class="titel">Selectcamp</span> <br />
-                                                Courier au Prà delle Torri, Caorle (VE), l'Italie<BR />
-                                                </div></div>
-
-                                        <div class="regel"><div class="label">2006 - 2011</div><div class="content"><span class="titel">DisneylandParis</span><br />
-                                                Serveur au Restaurant Inventions, Hôtel Disneyland (5*)<br />
-                                                Un parmi 60 employees (de 13.000) qui sont cités comme 'castmember remarquable' par les guests en 2009 et 2010</div></div>
-
-                                        <div class="regel"><div class="label">2004- 2006</div><div class="content"><span class="titel">JMW Horeca-uitzendbureau (interimair)</span><br />
-                                                Barman, serveur
-                                                hotels, restaurants, cafés, banquets, traiteurs événementiels etc.</div></div>
-
-                                        <div class="regel"><div class="label">2001-2004</div><div class="content"><span class="titel">Koffiebranderij G. Peeze B.V. Arnhem</span><br />
-                                        management de qualité, conditions de travail, protection de l'environnement, sécurité alimentaire, plaintes et compte-rendu</div></div>
-                                </div>
-                                <div class="pasfoto">
-                                        </div>
-                                <div class="regel"></div>
-
-                                =-->
-            <h2>Connaissance linguistiques</h2>
-            <div class="perso_infobox">
-              <div class="regel">
-                <div class="label"></div>
-                <div class="content">
-                  <ul>
-                    <li>Néerlandais (langue maternelle)</li>
-                    <li>Anglais (B2/C1)</li>
-                    <li>Français(B1/B2)</li>
-                    <li>Italien (B1/B2)</li>
-                    <li>Allemand (A2/B1)</li>
-                    <li>Espagnol (A1/A2)</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="pasfoto"></div>
-            <div class="regel"></div>
-            <h2>Divers</h2>
-            <div class="perso_infobox">
-              <div class="regel">
-                <div class="label"></div>
-                <div class="content">
-                  <ul>
-                    <li>L'esprit d'equipe et d'acceuil</li>
-                    <li>Fort en interaction avec les enfants</li>
-                    <li>Capacité d'organisation</li>
-                    <li>Windows, Office, Photoshop, SPSS, VBSCRIPT/ASP, HTML</li>
-                    <li>Lecture, course à pied, jouer du piano</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-            <div class="pasfoto"></div>
-            <div class="regel"></div>
-          </center>
-        </center>
-      </div><!-- /innerwrapper -->
-    </div><!-- /fr -->
-    <a id="contact"
-         name="contact"></a>
-    <div class="spacer"></div>
-    <div id="contact">
-      <div class="innerwrapper">
-        <h1>Contact</h1>(disabled due to spam, please connect with me on <a href="http://www.twitter.com/rcsmit"
-             target="_blank">twitter</a>, <a href="http://www.instagram.com/rcsmit"
-             target="_blank">instagram</a> or <a href="http://www.facebook.com/rcsmit"
-             target="_blank">facebook</a>). Looking forward to your message! <!---
-                <Form Method="Post" Action="contact.asp">
-
-                        <div class="perso_infobox">
-                                        <div class="regel1"><div class="label">Your e-mailaddress</div><div class="content1"><INPUT  size="30" type="text" name="mailfrom"></div></div>
-
-<div class="regel1"><div class="label">Subject</div><div class="content1"><INPUT Type="text"   size="50" name="subject" value="Reply to the CV of René Smit"></div></div>
-<div class="regel1"><div class="label">Message</div><div class="content1"><TEXTAREA NAME="tekst" ROWS="5" COLS="30"></TEXTAREA></div></div>
-<div class="regel1"><div class="label"><Input type=checkbox name="mailing"></div><div class="content1">Send a copy to my own e-mail address</div></div>
-<div class="regel1"><div class="label">&nbsp;</div><div class="content1"><INPUT Type="submit" Value="Send" name="Submit"></div></div>
-                                </div>
-
-                                </form>
-
--->
-      </div><!-- /innerwrapper -->
-    </div><!-- /contact -->
-  </div><!-- /wrapper -->
+</script>
 </body>
 </html>
