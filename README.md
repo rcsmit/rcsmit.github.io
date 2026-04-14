@@ -3,7 +3,7 @@
 Multidisciplinary freelancer working at the intersection of **data, design, and movement**.
 Python · Streamlit · Data viz · Web design · Yoga · Acroyoga
 
-🔗 [rcsmit.streamlit.app](https://rcsmit.streamlit.app) · [rene-smit.com](https://rene-smit.com) · [github.com/rcsmit](https://github.com/rcsmit)
+🔗 [rene-smit.com](https://rene-smit.com) · [rcsmit.streamlit.app](https://rcsmit.streamlit.app) · [github.com/rcsmit](https://github.com/rcsmit)
 
 ---
 
