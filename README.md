@@ -22,7 +22,7 @@ Python · Streamlit · Data viz · Web design · Yoga · Acroyoga
 | [hs_analyzer](https://rcsmit.github.io/hs_analyzer) | Handstand analyzer — MediaPipe Pose, torque overlays, video export |
 | [hs_drills](https://rcsmit.github.io/hs_drills) | Handstand drill library |
 | [hs_drills_app](https://rcsmit.github.io/hs_drills_app) | Mobile web app with swipe navigation for HS drills |
-
+| [acroyoga](https://rcsmit.github.io/acroyoga) | Acroyoga Flowchart |
 ---
 
 ## 🌍 Geo & Maps
@@ -32,7 +32,6 @@ Python · Streamlit · Data viz · Web design · Yoga · Acroyoga
 | [astrocart](https://rcsmit.github.io/astrocart) | Astrocartography calculator — 10 planets, 4 line types, influence corridors |
 | [radiusmap](https://rcsmit.github.io/radiusmap) | Radius map tool  |
 | [geoquest](https://rcsmit.github.io/geoquest) | Geography quiz game |
-| [acroyoga](https://rcsmit.github.io/acroyoga) | Acroyoga resources and community tools |
 | [conscious_communities](https://rcsmit.github.io/conscious_communities) | Conscious communities on a map |
 
 ---
@@ -41,7 +40,6 @@ Python · Streamlit · Data viz · Web design · Yoga · Acroyoga
 
 | Project | Description |
 |---|---|
-| [disar2](https://rcsmit.github.io/disar2) | Website for DJ Disar Marxin (Didier Salembier) |
 | [djviz](https://rcsmit.github.io/djviz) | DJ/VJ visual loop tool |
 | [suno_generator](https://rcsmit.github.io/suno_generator) | Suno AI prompt generator |
 | [handpong](https://rcsmit.github.io/handpong) | Hand-controlled Pong game |
@@ -53,7 +51,7 @@ Python · Streamlit · Data viz · Web design · Yoga · Acroyoga
 
 | Project | Description |
 |---|---|
-
+| [disar2](https://rcsmit.github.io/disar2) | Website for DJ Disar Marxin (Didier Salembier) |
 | [char](https://rcsmit.github.io/char) | Charlotte — shadow work mentor |
 | [luiza](https://rcsmit.github.io/luiza) | Luiza Paixão — Brazilian astrologer & yoga teacher |
 | [panov](https://rcsmit.github.io/panov) | Evgeny Panov — Moscow yoga teacher |
