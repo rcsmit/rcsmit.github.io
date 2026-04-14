@@ -68,11 +68,12 @@ Python · Streamlit · Data viz · Web design · Yoga · Acroyoga
 | [questions](https://rcsmit.github.io/questions) | Question / reflection tool |
 | [yepcheck26](https://rcsmit.github.io/yepcheck26) | Yep / checklist tool |
 | [go_archive](https://rcsmit.github.io/go_archive) | Tool to open sites at Archive.io |
-<!-- | [beauty](https://rcsmit.github.io/beauty) | Facial beauty / symmetry analyzer | -->
 | [nonu](https://rcsmit.github.io/nonu) | Transcript Thai sentences |
 | [dodek](https://rcsmit.github.io/dodek) | Flashcards for Thai alphabet |
 | [gfontviewer](https://rcsmit.github.io/gfontviewer) | Google Fonts viewer |
 | [geslacht](https://rcsmit.github.io/geslacht) | Number of slaughtered animals in real time |
+
+<!-- | [beauty](https://rcsmit.github.io/beauty) | Facial beauty / symmetry analyzer | -->
 
 ---
 
@@ -92,7 +93,7 @@ Python · Streamlit · Data viz · Web design · Yoga · Acroyoga
 
 ## 📌 Start here
 
-→ [START_HERE.html](https://rcsmit.github.io/START_HERE.html)
+→ [START_HERE.html](https://rcsmit.github.io/index.html)
 
 ---
 
