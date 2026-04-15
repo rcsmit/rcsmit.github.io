@@ -1,296 +1,596 @@
-<html>
+<!DOCTYPE html>
+<html lang="nl">
 <head>
-<!-- Global site tag (gtag.js) - Google Analytics -->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<title>Dieren geslacht in Nederland</title>
+
+<!-- Google Analytics -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=UA-147735325-1"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'UA-147735325-1');
+  gtag('js', new Date()); gtag('config', 'UA-147735325-1');
 </script>
 
-<link href="dead.css" rel="stylesheet" />
-<title>Aantal dieren dat in Nederland jaarlijks wordt geslacht</title>
+<meta property="og:url"         content="https://rcsmit.github.io/geslacht/" />
+<meta property="og:type"        content="website" />
+<meta property="og:title"       content="Aantal dieren dat in Nederland jaarlijks wordt geslacht" />
+<meta property="og:description" content="Hoeveel dieren worden er geslacht terwijl jij naar dit scherm kijkt?" />
 
- <meta property="og:url"           content="http://www.yepcheck.com/geslacht/" />
-  <meta property="og:type"          content="website" />
-  <meta property="og:title"         content="Aantal dieren dat in Nederland jaarlijks wordt geslacht" />
-  <meta property="og:description"   content="Aantal dieren dat in Nederland jaarlijks wordt geslacht" />
-  <meta property="og:image"         content="https://www.your-domain.com/path/image.jpg" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
 
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d0d0d;
+    --surface:  #161616;
+    --border:   #2a2a2a;
+    --accent:   #e8320a;
+    --accent2:  #ff6b3d;
+    --muted:    #555;
+    --text:     #e8e0d6;
+    --sub:      #888;
+    --mono:     'DM Mono', monospace;
+    --sans:     'Syne', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 2rem 2rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  header h1 {
+    font-size: clamp(1.4rem, 4vw, 2.4rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    color: var(--text);
+  }
+
+  header h1 span { color: var(--accent); }
+
+  .header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .btn-info {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    padding: 0.5rem 1.2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .btn-info:hover { background: var(--accent); color: #fff; }
+
+  .header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.75rem;
+  }
+
+  /* ── MODE TOGGLE ── */
+  .mode-toggle {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    font-family: var(--mono);
+    font-size: 0.75rem;
+  }
+
+  .mode-toggle button {
+    padding: 0.45rem 1rem;
+    background: transparent;
+    border: none;
+    color: var(--sub);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .mode-toggle button.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* ── TIMER ── */
+  #passed {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    color: var(--sub);
+    letter-spacing: 0.05em;
+  }
+
+  .mode-note {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--muted);
+    padding: 0 2rem 0.75rem;
+  }
+
+  /* ── GRID ── */
+  .counter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+    flex: 1;
+    border-top: 1px solid var(--border);
+  }
+
+  .counter-cell {
+    background: var(--bg);
+    padding: 1.8rem 1.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .counter-cell:hover { background: var(--surface); }
+
+  .counter-cell::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 3px; height: 0;
+    background: var(--accent);
+    transition: height 0.4s ease;
+  }
+
+  .counter-cell:hover::before { height: 100%; }
+
+  .animal-icon {
+    width: 36px;
+    height: 36px;
+    opacity: 0.35;
+    filter: invert(1);
+    transition: opacity 0.2s;
+  }
+
+  .counter-cell:hover .animal-icon { opacity: 0.6; }
+
+  .counter-num {
+    font-family: var(--mono);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 500;
+    color: var(--accent2);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    transition: color 0.3s;
+  }
+
+  .counter-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--sub);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── FLASH on update ── */
+  @keyframes flash {
+    0%   { color: #fff; }
+    100% { color: var(--accent2); }
+  }
+
+  .flashed { animation: flash 0.3s ease-out; }
+
+  /* ── INFO MODAL ── */
+  .info-bar {
+    border-top: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+  }
+
+  .btn {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 0.5rem 1.1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--sub);
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-width: 620px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 2rem;
+    position: relative;
+  }
+
+  .modal h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 1.25rem;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+
+  .modal h3 {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin: 1.25rem 0 0.6rem;
+    font-family: var(--mono);
+  }
+
+  .modal ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .modal li {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--sub);
+    padding: 0.3rem 0;
+    border-bottom: 1px solid #1e1e1e;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .modal li span.num {
+    color: var(--accent2);
+    font-weight: 500;
+  }
+
+  .modal a { color: var(--accent2); text-decoration: none; }
+  .modal a:hover { text-decoration: underline; }
+
+  .modal-close {
+    position: sticky;
+    top: 0;
+    float: right;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--sub);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover { border-color: var(--accent); color: var(--accent); }
+
+  .share-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+
+  /* ── STATUS BANNER ── */
+  #status-banner {
+    display: none;
+    background: #1a0e0a;
+    border: 1px solid var(--accent);
+    color: var(--accent2);
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    padding: 0.6rem 2rem;
+    letter-spacing: 0.06em;
+  }
+
+  #status-banner.visible { display: block; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media (max-width: 480px) {
+    header { padding: 1.25rem 1rem 1rem; }
+    .counter-grid { grid-template-columns: 1fr 1fr; }
+    .info-bar { padding: 0.75rem 1rem; }
+    .mode-note { padding: 0 1rem 0.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <h1>Dieren geslacht<br><span>voor voedsel</span></h1>
+    <button class="btn-info" onclick="openInfo()">ℹ info</button>
+  </div>
+  <div class="header-row">
+    <p id="passed" style="color:var(--sub); font-family:var(--mono); font-size:0.8rem;">Wachten...</p>
+    <div class="mode-toggle">
+      <button id="btn-work" class="active" onclick="setMode('work')">Werkuren</button>
+      <button id="btn-365"              onclick="setMode('365')">24/7 &nbsp;365d</button>
+    </div>
+  </div>
+</header>
+
+<div id="status-banner">⏸ Buiten slachturen — teller gepauzeerd</div>
+
+<!-- COUNTER GRID -->
+<div class="counter-grid">
+
+  <div class="counter-cell">
+    <img class="animal-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNOTQuOTMzLDM4LjA0M2MtMC4zNzMtMS41NzUtMi4yOTYtMS40MDEtMy41Ny0yLjM4YzEuMjgxLTEuNjExLDEuMjY4LTMuMjY4LDAuNjA0LTQuMzc0Yy0wLjg5NS0xLjQ5NC0yLjk3Mi0xLjk5Ni00LjY4NC0wLjA0OWMtNC4wNjQtNC4zMDgtOS4zODgtNi4xMzEtMTYuODMxLTYuNDU5Yy0xOS4xNTktMC44NDEtMzYuMjc0LDIuMDc1LTQ3LjA5Miw5LjUyMmMtMS42NzksMS4xNTctNi4zNzUsNi4xNTQtOC42Nyw1Ljk1MWMtMS4xMDQtMC4wOTctMS42NzItMS43NTktMy4yMzEtMS44NzFjLTEuMTE4LTAuMDc4LTIuMDc5LDAuMzEyLTIuMjA5LDEuN2MxLjg0NSwwLjc2MSwzLjYyNCwxLjU5LDMuMjI5LDQuNTljLTEuNzYxLDAuNS0xLjEwNSwyLjMyMS0xLjcsMy45MWMtMC42NCwxLjcxNy0yLjQ1MSwyLjM1My0zLjU3LDMuNTY5Yy0xLjAxNywwLjQ0Mi0xLjkwMywwLjQ2MS0yLjI1OSwxLjAxNGMwLjI3NiwyLjE2MiwxLjM4NywzLjQ4NiwyLjM4LDQuOTI5YzQuNjAxLTAuMzcxLDguMDU4LDEuNDUsMTEuNTYsMS43YzQuMjE5LDAuMzAxLDcuNDA2LDAuNzQyLDEwLjcwNCwwLjk5MmgwLjAwMWMxLjc2MiwwLjE3MiwzLjExMSwwLjQ3NSw0LjE0OCwwLjgzOWMwLjM1NiwwLjEyNywwLjY3OCwwLjI2MSwwLjk2NCwwLjM5OGMwLjU5LDAuMjg4LDEuMDQsMC42LDEuMzc3LDAuOTExYzAuNDg2LDAuNDQ5LDAuNzQ3LDAuODk4LDAuODgzLDEuMjgyYy0wLjAwMSwwLjAyOCwwLDAuMDU3LTAuMDAyLDAuMDg1Yy0wLjA0LDAuNjEzLTAuMTA3LDEuMjIzLTAuMTk1LDEuODI5Yy0wLjA4MiwwLjU1Ny0wLjE4MiwxLjExMi0wLjI5OSwxLjY2MWMtMC4wNjIsMC4yODgtMC4xMjEsMC41ODEtMC4xNzksMC44NzNjLTAuMDA1LDAuMDI1LTAuMDEsMC4wNDYtMC4wMTQsMC4wNzJjLTAuMDU4LDAuMjcxLTAuMTE1LDAuNTQ1LTAuMTc3LDAuODE4Yy0wLjEwNCwwLjQ0NS0wLjIzMywwLjg3OS0wLjM4OCwxLjI5OWMtMC4wMzgsMC4xMDItMC4wNjYsMC4yMDYtMC4xMDksMC4zMDdjLTAuMjM1LDAuNTU3LTAuNTk5LDEuMDQ1LTAuOTMxLDEuNTQ1YzAsMCwwLjAwMi0wLjAwNCwwLjAwMy0wLjAwNmMtMC4wMDYsMC4wMDktMC4wMTEsMC4wMTctMC4wMTYsMC4wMjZjLTAuMTA0LDAuMTU3LTAuMjAzLDAuMzE0LTAuMjk0LDAuNDc0Yy0wLjAxOCwwLjAzNC0wLjAzNCwwLjA2NC0wLjA1MiwwLjA5M2MtMC4wOTIsMC4xNzQtMC4xNzgsMC4zNDgtMC4yNDYsMC41MzRjLTAuMDIyLDAuMDU5LTAuMDU0LDAuMTA2LTAuMDkxLDAuMTQ4Yy0wLjAxNSwwLjAxNS0wLjAzMywwLjAyNS0wLjA1LDAuMDM4Yy0wLjAyNSwwLjAyMS0wLjA0OSwwLjA0My0wLjA3NiwwLjA1NWMtMC4wMjIsMC4wMDgtMC4wNDYsMC4wMTMtMC4wNjksMC4wMTljLTAuMDI2LDAuMDExLTAuMDUxLDAuMDE3LTAuMDc4LDAuMDIxYy0wLjAyNCwwLjAwMi0wLjA0OCwwLTAuMDcyLTAuMDAyYy0wLjAzNCwwLTAuMDY4LDAtMC4xMDEtMC4wMDhjLTAuMjYzLDAuNDc1LTAuNjk0LDAuNzgtMC43MDIsMS41MDVjMC4wOTEsMC4wNDIsMC4xOTEsMC4wNywwLjI5NSwwLjA5N3YwLjAwNGwwLjAwMS0wLjAwNGMwLjYzNSwwLjE1NSwxLjUwNSwwLjA3NiwyLjMxMywwLjA1N3YwLjAwMmgwLjQ2YzAuMTEzLDAuMDAyLDAuMjI1LDAuMDA0LDAuMzMyLDAuMDE1YzAuMDA0LTAuMDA0LDAuMDA4LTAuMDExLDAuMDE0LTAuMDE1aDAuNzM1YzAuMDg3LTEuMzQzLDIuOTk5LTEuOTU4LDMuNDA3LTMuMzYxYzAuMTc1LTAuNjExLTAuMTIyLTEuODM5LDAtMi43MjFjMC4zNzktMi43NjYsMi42NS01LjQ2NCwyLjkwOC04LjI1M2MwLjU1NS0wLjQ3NCwxLjA5OC0wLjg2NCwxLjUyMi0xLjEyMWMxLjQxOC0wLjg2NywxLjY3Mi0wLjQ4NSwzLjY1NS0wLjM0MWM0LjMxNCwwLjMxNCw4LjUyNiwxLjM0LDEyLjkyLDEuNTNjMy40NiwwLjE1Myw2LjgyOS0wLjUsMTAuNDAyLTAuNjU1bC0wLjAwOC0wLjAwNmMwLDAsMi44NTEtMC41ODEsNC41MjctMC41NjRjMC4xMDMsMCwwLjIwMiwwLjAwNCwwLjI5NywwLjAxMWMwLjA5OCwwLjA0NSwwLjE3NiwwLjEzLDAuMjAzLDAuMjczYzAuMzM0LDEuNzk3LDAuOTE1LDMuNTksMS4zNyw1LjRjMC4zNjcsMS40NTgsMC42NTIsMC40NTgsMC42NjQsMS45NDNjMC4wMTIsMS4yOTUtMC4xMTMsMi42ODEtMC44MTgsMy44MDRjLTAuNjQ5LDEuMDM4LTEuODU5LDEuNzkxLTIuMjIyLDIuOTc1YzAuMDEyLTAuMDAyLDAuMDIzLTAuMDAyLDAuMDM1LTAuMDA0YzAuMDI2LDAuNTIxLTAuNTk2LDAuNzYzLTAuMTcsMS4xODloMS44NWgxLjg5MWMwLjA4NS0xLjM0MSwyLjQ4Mi0xLjgyOSwyLjg5LTMuMjMyYzAuMTc1LTAuNjA4LTAuMTIyLTEuODM3LDAtMi43MTljMC40LTIuOTE4LDIuOTEyLTUuNzYyLDIuOTM1LTguNzE3aDAuMDA2YzAsMCwwLTEuNTc5LDAuOTEtMy4zOTNjMC4wOTYtMC4xOTEsMC4xOTMtMC4zODMsMC4zMS0wLjU3NmMwLjAwNC0wLjAxMSwwLjAwNS0wLjAxNSwwLjAxLTAuMDIzYzIuNjMzLTMuMTE5LDQuNzQ2LTcuNjE5LDQuODM3LTEyLjUzN2MwLjY3LDAuNTAyLDEuMDgzLDEuODUyLDIuMjEsMS4zNjFjMC45My0xLjIwOC0wLjU1Ni0xLjIzNi0wLjUxMS0yLjM4QzkzLjE0LDQxLjIyLDk1LjQxNCw0MC4wNzIsOTQuOTMzLDM4LjA0M3oiLz48L3N2Zz4=" alt="varken">
+    <div class="counter-num" id="akc-Varkens">0</div>
+    <div class="counter-label">Varkens</div>
+  </div>
+
+  <div class="counter-cell">
+    <img class="animal-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3NjIgNjAyLjUiIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIj48cGF0aCBkPSJNNjk2IDYzbC0zNCAtMzJjMTIsMCAyNSw0IDM1LC0yIDE3LC0xMiAyMCwtMjQgMTEsLTIxIC0xLDAgLTQsMSAtNSwyIC0yNCwxMCAtNDksLTEyIC03NiwtMTAgLTUsMyAtMTEsNSAtMTIsMTIgLTEsNyA2LDkgNSwxNyAtMTYsLTEgLTIzLC0xOSAtMzksLTEwIC00LDIgLTEyLDEwIC03LDE4IDMsNSAxNCw0IDE5LDggLTEsNCAtMyw2IC05LDYgLTQsMCAtOCwwIC0xMywxbC04MiA1Yy0zNiwyIC03Miw1IC0xMDgsOCAtMzYsMyAtNzEsMTAgLTEwOCw4IC0zNSwtMSAtNzEsLTUgLTEwNywtOCAtMzUsLTMgLTc0LC0xMSAtOTksOCAtMTcsMTIgLTE0LDE0IC0yMCwyNCAtMiw0IC0zLDQgLTYsOSAtOCwxNCAtMTYsODQgLTE2LDEwMCAzLDY1IC0xMyw0MCAtMjIsNjEgLTEwLDI1IDcsNTEgOCw3NCA3LC0yIDExLC0xMyAxMSwtMjMgLTEsLTMyIDE4LC0zMSAyMCwtNTAgMSwtMTQgLTgsLTggLTUsLTI1IDUsLTI4IDYsLTEwMyAxNSwtMTIxbC0yIDg1YzAsMTIgLTEsMzAgMiw0MiAyLDExIDEzLDE3IDEzLDI5IC0zLDMgLTYsMyAtOSw2IC0zLDIgLTYsNSAtOCw3IC00LDYgLTgsMTQgLTcsMjMgMSwxMiA3LDI2IDksMTAgMiwyNSAyLDM5IDAsNTggLTEsNCAtMiwxMCAwLDE0IDIsNiA0LDQgNyw3IDcsNyAtNSwxMiAtNSwyMSAyLDcgMzYsMjMgNTEsMTUgOSwtNSA3LC0xNiAwLC0yMyAtMjEsLTIwIC0xOSwtNTYgLTE1LC04NCAxLC0xMiA5LC00MiAxOSwtNTAgMTgsMTkgMjksNzEgMjksMTA0IDAsMSA4LDUgMTUsMTIgMTQsMTUgMTAsMjQgMzAsMjUgOSwwIDE2LDAgMjIsLTUgLTEsLTEwIC05LC0xOCAtMTQsLTI0IC00LC01IC0xMiwtMTUgLTE2LC0yMiAtOCwtMTUgLTE0LC00NCAtNiwtNjJsOSAtMSA0IDdjMywzIDQsNCA3LDUgMywtMyA1LC03IDcsLTEybDEzIC0xYzIsNiA2LDExIDEwLDEzIDksLTYgMiwtMTQgMTAsLTE5IDEsLTEgMywtMSA0LC0yIDgsLTUgMTMsLTggMTksLTE1IDMsLTUgNiwtMTEgOSwtMTQgNDEsMCA1NCwzIDEwMiwwIDgsLTEgMTYsLTEgMjUsLTIgOSwtMSAxNSwtMyAyMCwzIDcsMTAgNywzMSAyLDQzIC05LDIwIC0yLDE5IDQsMjcgOCwxMyAxMiw0MCA4LDUzIC00LDExIC0yLDkgNSwxNSA3LDYgNiwxMCAxMSwxNSA3LDYgMjAsMTAgMzAsOSAyLDAgNSwwIDYsLTEgNSwtMiAyLDAgNCwtMyA1LC0xMSAtMTIsLTE0IC0xNiwtMjEgLTMsLTQgLTIwLC03OCAxLC05OCAyLDMgMiw4IDIsMTIgMSwxOCA2LDE3IDEyLDI4IDEyLDIyIDIsNTUgMTUsNjUgMTIsOCAyMywyMCAzMSwyMyA3LDIgMTcsMSAyMiwtMiAyLC0xNCAtMjMsLTE1IC0zNCwtNjMgLTQsLTIxIC00LC02NyAwLC04OSAyLC0yIDgsMCAxMiwtMSAyMywtMSAzNCwtMzkgNDEsLTU3IDExLC0zMyAyMSwtNTEgNDAsLTcxIDM1LC0zNyA0MywtMTQgODMsLTI5IDYwLC0yMyA1MywtMiA2MywtMjEgNSwtNyAxMCwtNyAxNCwtMTMgMiwtOSAtMjQsLTMwIC0zMiwtMzhsLTM0IC0zM3oiLz48L3N2Zz4=" alt="koe">
+    <div class="counter-num" id="akc-Totaal-runderen">0</div>
+    <div class="counter-label">Totaal runderen</div>
+  </div>
+
+  <div class="counter-cell">
+    <img class="animal-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIHg9IjBweCIgeT0iMHB4IiB2aWV3Qm94PSIwIDAgNTAgNjIuNSIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgNTAgNTAiIHhtbDpzcGFjZT0icHJlc2VydmUiPjxnPjxwYXRoIGZpbGwtcnVsZT0iZXZlbm9kZCIgY2xpcC1ydWxlPSJldmVub2RkIiBkPSJNMzguMjE3LDUuMjkyYzAtMC41OTgsMC40ODUtMS4wODIsMS4wODMtMS4wODJjMC41OTgsMCwxLjA4MywwLjQ4NSwxLjA4MywxLjA4MiAgIGMwLDAuNTk4LTAuNDg1LDEuMDgyLTEuMDgzLDEuMDgyQzM4LjcwMiw2LjM3NCwzOC4yMTcsNS44OSwzOC4yMTcsNS4yOTIgTTE3LjAzNiwxMC4zNzZjLTEuNjAxLTAuOTE4LTMuOTE0LTAuNzc2LTUuNDc1LDAuMTU1ICAgYy0xLjk1Ni0wLjQzOC00LjUwOSwwLjM4MS01LjMzNSwyLjMzOWMtMi4wMjIsMC42MzgtMy41MjQsMy4wNDItMy41NDksNC45NzljLTEuNTczLDEuMzk2LTEuODIsNC4yMzEtMC42ODEsNS45NjQgICBjLTEuMzE5LDEuOTU1LTAuNjYzLDUuNzIsMS41MjMsNi44MmMtMC44OCwyLjE1OCwwLjE5NSw1LjcwMSwyLjczNSw2LjEzMVY0OS4zOGMwLDAuMzQyLDAuMjU3LDAuNjIsMC42MDMsMC42MmgzLjkgICBjMC4zNDEsMCwwLjYxOC0wLjI1NywwLjYxOC0wLjYwM3YtMTAuNjJjMC0yLjM2OSwxLjgxMS00LjA3OCw0LjAxLTQuMzExYzIuMzE3LTAuMjIsNS42OTItMC44NjQsMTEuNTM1LDAuMDAzICAgYzIuMjIzLDAuMzI5LDQuMjIzLDEuNzY5LDQuMjQzLDQuMzA4VjQ5LjM4YzAsMC4zNDIsMC4yNTcsMC42MiwwLjYwMywwLjYyaDMuOWMwLjM0MiwwLDAuNjE5LTAuMjU3LDAuNjE5LTAuNjAzVjM2LjcyOSAgIGMxLjY1Mi0wLjMwOCwyLjkzMy0xLjc5OSwzLjUyNC0zLjMyNGMxLjM0My0wLjY5NSwyLjI0NC0yLjAzOCwyLjQzMy0zLjUzMmMyLjE5My0wLjUwNiwyLjcxNC0zLjc0OSwyLjQyOS01LjYzICAgYzEuMzUxLTEuMzExLDEuNTUzLTQuMzc2LDAuNTExLTUuOTFjMC4xMDUtMS4zMzUtMC4yODMtMi45NTktMS4wNzgtNC4wMzRjMC41NTYtMC4wMTksMS4wNjYtMC4wMDYsMS41MzUtMC4wMjggICBjMC40NjUtMC4wMjIsMC44MDctMC4wNDIsMS4xOS0wLjIwMWMxLjQ1MS0wLjYwMSwyLjUyNy0zLjE0MywxLjQ0LTQuNDAyYy0wLjU3My0wLjY4My0xLjMzNy0xLjM5OS0xLjk5LTIuMDE3bC00LjUzOC00LjU4NiAgIGMtMC44MDQtMC45NjUtMS45NjktMS4yOC0zLjI0Mi0xLjQwOUwzNC41NjEsMC40NWwtMC4yMTYtMC4wOTVjLTEuNTkxLTAuNjc1LTMuMjMtMC42MDEtMi42MzEsMi4xMzRsMC40MjgsMS45NTcgICBjLTEuNDQxLDAuNjQ2LTIuMjQ3LDEuOTYtMi4yMzgsMy42MzVjLTEuNTAyLDAuMDg4LTIuODU1LDEuMzUxLTMuMzc3LDIuNzA5Yy0xLjE4OC0wLjI2Ni0yLjk1MS0wLjA3Ni00LjA5MywwLjI5MyAgIEMyMS4wNDYsOS45NTgsMTguNjcyLDkuNjk1LDE3LjAzNiwxMC4zNzZ6Ii8+PC9nPjwvc3ZnPg==" alt="schaap">
+    <div class="counter-num" id="akc-Schapen incl. lammeren">0</div>
+    <div class="counter-label">Schapen &amp; lammeren</div>
+  </div>
+
+  <div class="counter-cell">
+    <img class="animal-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyOTIgMzIwIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCI+PHBhdGggZD0iTTkzIDI1NmMtMSwtNiA2LC03IDgsLTE1IDAsMjIgMSwtNDAgLTUsLTU2IC02LC0xNiAtOCwtMzIgLTgsLTUxIC0xLDcgLTIsMTAgLTEsMjAgLTI2LC0yMiAtMjgsLTUwIC0zNywtODEgMywxIDUsMiA4LDMgLTgsMiAtMTQsNCAtMjQsMyAwLDMgLTIsNiAtNCw3IDEsMTMgLTQsNSAtNiwxOCAtNiwtOSAwLC0xMiAtMywtMjAgLTQsLTcgLTQsLTYgLTExLC01IC05LDAgLTEzLC03IC03LC0xNSAxMCwtMTAgMjAsLTIwIDI4LC0zMSA2LC0xNyAyNCwtMzIgNDQsLTI1IDE5LDAgMjEsNSAyNiw5IC0yMCwtNyAtMzQsLTUgLTQwLDYgOCw2IDE1LDEzIDE2LDIxIC0yLDAgLTUsMCAtNywwIDEzLDIxIDI0LDMzIDM5LDM3IDc2LDI2IDEyNywtMjggMTUyLDE5IDI3LDIgNDAsMzAgMjQsMzggMSwtNCAxLC03IC0xLC0xMCAwLDMgLTIsNSAtNCw1IDAsMy0xLC01IDAsLTggLTEsMSAtMiwxIC0zLDIgMCwtOSAtNSwtMTUgLTEyLC0xOSAzLDE0IDQsMjggLTIsNDEgLTE0LDI2IDE0LDUwIDAsMTUgLTQsNCAtNywzNSAtNyw0MyAtMSwwIC0yLDAgLTMsLTEgMCwzIDEsNiAtMiw2IC00LDAgLTgsMCAtMTIsMCAtMiwtNyA2LC01IDgsLTEzIDAsMTAgMCwtMzEgLTEsLTQxIC0xLC02IC01LC0yMyAtMTMsLTE5IDEsMiA1LDEwIDAsMjIgLTMsNSAtNywzNiAtNyw0MyAtMSwwIC0yLDAgLTMsMCAwLDMgMSw1IC0yLDUgLTQsMCAtOCwwIC0xMiwxIC0yLC04IDYsLTYgOCwtMTMgMCwtMTIgMywtMzcgMCwtNDQgLTgsLTE0IC0xOSwtMTkgLTMxLC0yOSAtMTEsMSAtMjIsMCAtMzQsLTEgLTgsMjYgLTE2LDQ0IC0xMSw4MSAtMSwwIC0yLDAgLTQsMCAxLDYgLTQsNiAtMTYsNSAtMSwtNiA2LC03IDgsLTE1IDAsMjMgLTEsLTQ3IC0zLC03MyAtOSwyOSAtMTksNDcgLTEzLDg1IC0yLDAgLTMsMCAtNCwwIDAsMzcgLTUsNiAtMTYsNnptLTY4IC0yMTBjMSwtNiA3LC02IDExLC03IC0xLDAgLTQsMSAtNSwyIC0xLDQgLTQsNiAtNiw1em0yMSAtMjhjNSwtNiAxMSwtMTEgMTksLTEzIC01LC0xIC0xNiwzIC0xOSwxM3oiLz48L3N2Zz4=" alt="geit">
+    <div class="counter-num" id="akc-Geiten">0</div>
+    <div class="counter-label">Geiten</div>
+  </div>
+
+  <div class="counter-cell">
+    <img class="animal-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGNsaXAtcnVsZT0iZXZlbm9kZCIgZD0iTTkzLjc1OSw2OS41ODdjMi41NjcsMC45ODYtMi43MTEtMS43MDgtMS43NzEtMTIuODI0YzAuOTQ0LTExLjExOC0yLjAyMS0xMy40MjYtMi44NTUtMTQuNTgzYy0wLjgzNy0xLjE1OC0zLjI3Ni00LjM3My01LjgxMi00LjgzYzAsMC0yLjAxOS0wLjIzNS0xLjgwNi0wLjA3OWMwLjAxOCwwLjAxMywwLjAyNCwwLjAyNywwLjA0MiwwLjAzOWMtMy4zNjktMS4xMTMtNy42ODYtMi4xMjEtMTEuNjQ1LTIuMDk5Yy0yLjk1MSwwLjAxNy01LjYyMywwLjc3Mi04LjA5NSwxLjQ0NWMtMi4zODYsMC42NTEtNS4wMjUsMS44MDctNy41MTcsMi4wMjRjLTQuNDMyLDAuMzg5LTcuODc3LTIuMzQ3LTExLjM3MS0zLjA4NmMtMS4zNzctMC4yODYtMi42NTQtMC4xNzktMy43NTgtMC41NzdjLTAuNzkzLTAuMjg2LTEuNzUtMS4wNDUtMi42MDItMS42MzhjLTQuMzI4LTMuMDA5LTguNjk2LTUuNDQxLTEzLjEwNy04LjE4OWMtMS4xNDctMC43MTctMy4zMTEtMS4xMTMtMy45NDktMi40MWMtMS44OTUtMy44NjEtMy41NTktNC4wMTMtMy41NTktNC4wMTNzMi4wMDcsMi42NjcsMS4wNzIsMy43NDljLTAuMzk4LDAtMC43MjIsMC4wNDktMS4wNDUsMC4wOTVjMC4wNzEtMC4xLDAuMTUxLTAuMTY2LDAuMjU1LTAuMTY2YzAuNTIzLDAsMC4wMTUtMC40MTYtMC44NDUtMC4yNzFjLTAuMTkzLTAuNTIxLTAuNDIxLTEuMDMtMC42OTItMS4zODhjLTAuNzI5LTAuOTQ5LTEuODQ1LTAuOTkxLTEuODU0LTAuOTkxbC0wLjEzNy0wLjAwN2wwLjA2MywwLjEyMmMwLDAuMDAzLDAuMzM1LDAuNjMyLDAuNjczLDEuNDczYzAuMTkzLDAuNDgyLDAuMzYyLDEuMDIzLDAuNDkxLDEuNTU3Yy0xLjEwMSwxLjA1Mi0xLjkxMSwyLjk4NS0zLjY3MywzLjU4NWMwLjQwOSwwLjMwMSwxLjY1OS0wLjE1NCwyLjExOS0wLjMzNWMtMC4wMjYsMC4wNjEtMC4wNTEsMC4xMjQtMC4wNzgsMC4xODZjLTAuMzA0LDAuMjk2LTAuODI3LDAuNzU2LTEuMjg3LDAuODc4Yy0wLjY4MywwLjE4NC0xLjM5LDAuNjQ4LTEuMzksMC42NDhzMC43ODMsMC4wODksMS43NjctMC4wNjFjLTEuNDA5LDIuMDE0LTIuNjg3LDMuNzUxLTQuMTE4LDUuODI4Yy0wLjczNCwxLjA2OS0xLjg2NCwyLjQzMy0xLjczNywzLjg1NGMwLjEzMiwxLjQxMiwxLjg5NCwzLjMyMywzLjM3NCwzLjE4MmMxLjI1Ni0wLjEyMywxLjgwOS0xLjcwMSwyLjk4OC0yLjUwNmMwLjkxLTAuNjIxLDIuMTIxLTEuMTU1LDMuMzcxLTEuOTI4YzEuMDY3LTAuNjU2LDIuNDMzLTEuNjc5LDMuNjYzLTEuNjM4YzEuMTk0LDAuMDM5LDMuMTc0LDEuMzQxLDQuMDQ4LDIuMjE3YzEsMC45MDEgMS4yMjgsMi43NDYgMS44Myw0LjE0M2MwLjQ1NywxLjA1OCwxLjE0NywyLjIxLDEuODMyLDMuMDgzYzEuNDI1LDEuODIxLDMuNzk2LDMuNTgzLDQuNTI3LDUuMzk4YzAuNDk2LDEuMjIxLDAuMjE1LDIuOTM4LDAuNzczLDQuNTI5YzAuNDIxLDEuMTk2LDEuMzE2LDIuMzA4LDEuMjUsMy4yNzZjLTAuMDc4LDEuMTU5LTEuODQsMy4wODgtMi41MDMsMy42NmMtMS43MzIsMS41MDMtNC41NTQsMi41NjItNS4zLDQuNjI3Yy0wLjY0NiwxLjc4NC0wLjEwOCwzLjkxLTAuNzczLDUuNjg1Yy0wLjM5NSwxLjA1Mi0xLjUzOSwyLjMzNC0xLjYzNywzLjQ3Yy0wLjA4NiwwLjk5MywwLjU1MywxLjkyNiwwLjY3NSwzLjA4M2MwLjExNSwxLjEwOC0wLjM4OSwyLjIzOCwwLjM4NSwzLjI3NmMxLjE2NywwLjE4OCwyLjE0Ni0wLjE4OCwyLjMxNC0wLjk2NGMwLjIwMy0wLjk2LTAuODY5LTEuNzE2LTEuMDYyLTIuNjk3Yy0wLjI1Mi0xLjMwNywwLjIxOC02LjI2OSwwLjY3Ni03LjIyOGMwLjUwMi0xLjA1NSwxLjYxNy0xLjg0LDIuNDA3LTIuNjk2YzAuODM1LTAuOTA1LDEuMzc4LTIuMDk1LDIuNDEtMi40MWMwLjUzMS0wLjE2NCwxLjM3Ni0wLjA5NiwxLjczNS0wLjE5M2MwLjc3NS0wLjIxNiwxLjU3Ni0wLjg3NiwyLjIxNS0xLjM0OWMwLjQ0LTAuMzI1LDEuNDctMS40NTgsMi4zMTQtMS4zNDljMC43ODUsMC4xMDEsMS4zODUsMS45MDEsMS44MywyLjk4NWMxLjAzLDIuNTA0LDEuMzEsNS4wNDMsMi4yMTUsNy40MTljMC40ODQsMS4yNzEsMS4zMTYsMi4xMTksMS42MzksMy4yNzZjMC40ODQsMS43MzcsMC40NzUsNS4wNTEsMCw2LjY1MWMtMC42MTksMi4wNzctMi44NjcsMy40ODEtMi43OTQsNS45NzVjMC45NDcsMC4yMTEsMi45MzcsMC40NywzLjU2Ny0wLjA5OGMwLjY4My0wLjYxNCwwLjE4NC0xLjY4NiwwLjQ3OS0yLjk4N2MwLjIzNy0xLjAzMywxLjIwOS0xLjQzNSwxLjM0OS0yLjIxN2MwLjI4OC0xLjU1NC0wLjYwNy00LjI4Mi0wLjg2Ni01Ljk3NGMtMC4zNS0yLjI4LDAuMTE1LTQuNTEyLTAuMDk4LTYuNTU1Yy0wLjE1Ny0xLjUyOS0wLjkyNi0zLjUwMi0xLjA1OC01LjQ5MWMtMC4xMDctMS41NjMtMC4xOTUtNC4zMDcsMC4zODUtNC44MTdjMC41MTYtMC40NTUsMi4xODUtMC4yOTksMy4zNzQtMC4zODdjMy44MTItMC4yODEsNy4xMzUtMC42NDYsMTAuMDIyLTEuMzQ5YzQuMjY1LTEuMDQsNi42MzEtMy4zMDYsMTEuNjU2LTMuNDY3YzEuNTQ0LDAuNTQzLDEuODIxLDIuMzE3LDIuNDEsMy44NTJjMS4yMDcsMy4xMzksMi4xNTYsNi4wMzksMy4zNzUsOS4xNTZjMC42MDksMS41NjMsMS43MiwzLjA2OCwxLjkyNiw0LjQzMWMwLjE3OCwxLjE3NS0wLjAyMiwyLjYzMy0wLjA5NiwzLjg1NGMtMC4yMDgsMy40MzktMC43MzYsNS43NDUtMi4wMjYsNy45MDVjLTAuNjU1LDEuMTA2LTEuODgyLDEuNjg4LTIuMjE0LDIuODg4YzAuODg4LDAuNjA2LDMuMTkyLDEuMjY4LDQuMDQ3LDAuMjk0YzAuNDkyLTAuNTY1LDAuMTgxLTIuMjYyLDAuMzg3LTMuMDg5YzAuMzItMS4yOTQsMS41MjQtMS43MzIsMS44MjctMi43OTRjMC4zMzEtMS4xNDMsMC4wOTktMy4wNzMsMC4wOTktNC44MTVjMC0xLjY4MS0wLjAxLTMuNDY3LDAuMDk4LTQuOTE2YzAuMDkxLTEuMjc3LDAuODYxLTIuNDcxLDAuODY2LTMuNDdjMC4wMTUtMi4yNDMtMS43OTEtNC45NS0wLjU3Ny02LjU1M2MxLjQxOSwwLjczOSwyLjUyOSwyLjI1NiwzLjY2LDMuNTY1YzEuMTA0LDEuMjgyLDIuMzQ0LDIuNzAxLDMuMDgzLDQuMjRjMS44NjcsMy44NzEsMi4zMDUsMTAuMTQ5LDAuMzg5LDE0LjI2MWMtMC41NjIsMS4yMDQtMS40MzgsMi4wODUtMS42NDIsMy40NzJjMS41ODYsMC43MzksMy44MSwwLjUyOSw0LjMzOS0wLjU4YzAuMzI3LTAuNjg1LTAuMTE4LTEuOTE4LDAuMDk1LTMuMjc2YzAuMTQtMC44ODEsMC44NTItMS40MjQsMC45NjUtMi4zMTRjMC4xMDctMC44NjMtMC4yNy0xLjcwOC0wLjM4NS0yLjUwMWMtMC4xMzItMC44ODMtMC4xMDctMS44MjItMC4xOTMtMi43OTZjLTAuMTQtMS41NTUtMC43NjktNC41OTEsMC4zODUtNC45MTZjMC4wMjYtMC4wMDgsMC4wNTYtMC4wNzgsMC4wODMtMC4xMDVjMS44NjQsMS45MzMsNC43NzMsMy40MDYsNC42NTEsMy4yOTRjLTIuNTExLTIuMjYyLTMuNzQxLTQuMDM1LTQuMTU1LTQuNjkxYzAuMDA4LTAuMDI5LDAuMDE1LTAuMDYxLDAuMDIyLTAuMDlsMy4yNzgsMy4yNzhsLTEuOTk2LTQuODYyYy0wLjM3Mi0wLjU2Ny0wLjQxNi0xLjAxNS0wLjQxNi0xLjAxNWwwLjQxNiwxLjAxNUM5MS44MTgsNjguNDM1LDkyLjQ5NCw2OS4xMDMsOTMuNzU5LDY5LjU4N3ogTTg1LjA0MSw2MC42NWMtMC43OTEtMi4wNDMtMS4zOTctNS40OS0xLjM0OS04LjA5NGMwLjA0Mi0yLjE5NSwxLjMwNy00LjMzNiwxLjI1MS02LjM1OWMtMC4wNi0yLjMxNy0xLjYwNC00LjExNi0xLjczMi02LjA3MWMwLjAxLTAuMDI0LDAuMDM5LTAuMDI5LDAuMDUxLTAuMDUxYzAuMjI2LDAuMTc2LDMuOTk2LDAuNzA3LDMuMjkxLDguNjRjLTAuNDE4LDQuNzEzLTAuMzkyLDEwLjA1NSwwLjIxMSwxNC4zNzhDODUuOTk1LDYyLjQ0Miw4NS4zNzksNjEuNTIxLDg1LjA0MSw2MC42NXoiLz48L3N2Zz4=" alt="paard">
+    <div class="counter-num" id="akc-Eenhoevigen">0</div>
+    <div class="counter-label">Paarden</div>
+  </div>
+
+  <div class="counter-cell">
+    <img class="animal-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNODAuMSwzMi45Yy0wLjYtMS41LTIuNC0yLjEtMi40LTIuMXMtMC4yLTAuOS0wLjctMS43YzAuMS0wLjEsMC4zLTAuMiwwLjQtMC40YzAuMi0wLjUsMC4yLTEuMSwwLTEuNmMtMC43LTEuNS0xLjEtMC42LTEuOC0wLjZjLTAuNywwLTAuOS0xLjItMS42LTFjLTAuMiwwLjEtMC40LDAuNC0wLjcsMC40Uzc0LjcsMjUuMyA3NCwyNWMtMC45LTAuMy0wLjksMS4yLTEuMiwxLjJzLTAuNi0wLjUtMS4yLTAuNWMtMC43LDAtMC43LDEuNy0wLjcsMS43cy0wLjktMC42LTEuMiwwLjFjLTAuMSwwLjIsMCwwLjcsMC4yLDEuMWMwLjQsMC43LDEuMSwwLjgsMS44LDAuOWMtMy40LDIuMy03LjMsNy4yLTExLjEsMTUuNWMtMi44LDAuNi02LjUsMC40LTExLjMsMC4yYy01LjEtNC45LTAuOC0xNS4zLTEyLTE1LjZDMzIuNiwyOS41LDI5LDMwLDI2LDM0Yy0xLjMsMS44LTMsNiwzLjIsM0MyMyw0Mi4xLDIzLDQ3LjcsMjQuNyw0OC4zYzIuMSwwLjgsNi4yLTQuMyw4LjItNS43Yy0zLjEsNC4yLTUuNCw5LjMtMy44LDEwLjFjMS40LDAuNyw0LTIuMiw1LTIuOGMwLjYtMC45LTAuMiwwLjUtMS4zLDMuM0MzMS41LDU2LDMzLjYsNTYuNiwzNiw1NWMwLjItMC4xLDAuNC0wLjIsMC42LTAuM2MwLjQsMS44LDEuMiwzLjUsMi4zLDQuOGMyLjgsMy4zLDUuOSw3LjcsMTAuNiw5LjljMC43LDEuNSwyLjMsMi45LDMuMywzLjdsLTAuNCw3LjFjMCwwLTEuMiwwLjEtMS4yLDEuOEg1NWwyLjMsMC4yIDIuOCwwLjhjMCwwLDAuMS0wLjUtMC4xLTAuOWwyLjcsMC4zYzAsMCwwLjItMS0xLTEuMWMtMS4yLTAuMS01LjUtMC45LTUuNS0wLjlsMC4zLTYuN2wyLjEtMi43Yy0xLjEsMC0xLjktMC4xLTIuNS0wLjJjLTAuMiwwLTAuMi0wLjMsMC4xLTAuM2MxLDAuMSwzLTAuMSwzLTAuMUM2Ni42LDY5LjMsNzEuMyw2NS4yLDczLDYwYzUuNy01LjgsMS40LTE0LDEuMy0yMS44YzEuMywwLjQsMy4yLTAuMywzLjItMS42YzAtMS4yLTAuNC0yLjMtMC44LTNMODAuMSwzMi45eiIvPjwvc3ZnPg==" alt="kip">
+    <div class="counter-num" id="akc-Vleeskuikens">0</div>
+    <div class="counter-label">Vleeskuikens</div>
+  </div>
+
+  <div class="counter-cell">
+    <img class="animal-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNNzEuOSwzMS41bDcuMy0zLjhsLTYuOS00LjRDNzAuOSwxNSA2My42LDguOCA1NC45LDguOGMtOS44LDAtMTcuNyw3LjktMTcuNywxNy43YzAsMi45LDAuNyw1LjYsMS45LDhjLTguNiwyLjktMTQuOSwxMS4xLTE0LjksMjAuN2MwLDkuMiw1LjcsMTcuMSwxMy44LDIwLjN2OC4ybC00LjgsNWMtMC4zLDAuMy0wLjMsMC45LDAuMSwxLjJjMC4yLDAuMiwwLjQsMC4yLDAuNiwwLjJjMC4yLDAsMC40LTAuMSwwLjYtMC4zbDMuNS0zLjd2Mi45YzAsMC41LDAuNCwwLjgsMC44LDAuOGMwLjUsMCwwLjgtMC40LDAuOC0wLjh2LTIuOWwzLjMsMy41YzAuMywwLjMsMC45LDAuNCwxLjIsMGMwLjMtMC4zLDAuNC0wLjksMC0xLjJsLTQuNS00Ljh2LTcuNmMyLDAuNiw0LjIsMC45LDYuNCwwLjljMS45LDAsMy43LTAuMiw1LjUtMC43djcuNGwtNC44LDVjLTAuMywwLjMtMC4zLDAuOSwwLDEuMmMwLjIsMC4yLDAuNCwwLjIsMC42LDAuMmMwLjIsMCwwLjQtMC4xLDAuNi0wLjNsMy41LTMuN3YyLjljMCwwLjUsMC40LDAuOCwwLjgsMC44czAuOC0wLjQsMC44LTAuOHYtMi45bDMuMywzLjVjMC4zLDAuMywwLjksMC40LDEuMiwwYzAuMy0wLjMsMC40LTAuOSwwLTEuMmwtNC41LTQuOHYtNy45YzguNi0zLDE0LjctMTEuMSwxNC43LTIwLjdjMC01LTEuNy05LjYtNC41LTEzLjJDNjcuNSwzOS43LDcwLjYsMzYsNzEuOSwzMS41eiBNNTkuOCwyMS40YzEuMiwwLDIuMSwxLDIuMSwyLjFzLTEsMi4xLTIuMSwyLjFzLTIuMS0xLTIuMS0yLjFTNTguNiwyMS40LDU5LjgsMjEuNHoiLz48L3N2Zz4=" alt="kuiken">
+    <div class="counter-num" id="akc-eikuikens">0</div>
+    <div class="counter-label">Kuikens (ei-productie)</div>
+  </div>
+
+  <div class="counter-cell">
+    <img class="animal-icon" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NSA1NSI+PHBhdGggZD0iTTE4LjE5MywzNS45MjdjLTAuMjQ2LDAuMDEtMC42MTgsMC4wMjUtMS4wNywwLjAzOWMtMC43NzEsMi40NzctMS4xNjIsNS41MjEsMS4zMyw2LjA2NGMxLjg4MSwwLjQwOCwzLjEzOS0wLjg1MiwzLjUyNi0yLjYwM0MyMS4xNzYsMzguMTQsMTkuOTYzLDM2Ljc0OCwxOC4xOTMsMzUuOTI3eiIvPjxwYXRoIGQ9Ik0xNi4yNzEsMjIuODM4YzAuODQ2LTEuMzk3LDIuMTUxLTIuNjMxLDQuMTI0LTMuMzk1YzEuNjg2LTAuNjUyLDMuNDA3LTAuOTgzLDUuMTE2LTAuOTgzYzIuMDc1LDAsNC40NDYsMC40OTQsNi45MSwxLjk0N2MwLjM3My0xLjg3OSwwLjE0Ni00LjAzMS0yLjkxOS0zLjg4N2MwLDAtMC4xMTYtMy4zMDYtMi4yNzItMy41ODhzLTQuMTI5LDAuOTY4LTMuODc3LDMuMzMyYzAsMC0yLjA3OC0yLjg3Ny00LjIwNy0yLjMzNGMtMi4xMjgsMC41NDUtMS4yMTUsMi45OTUtMC41MjksNC4wNDVjMCwwLTIuNzU0LTIuMDA2LTQuMjE1LTAuMjc3QzEzLjI3MSwxOS4wMzgsMTQuMTU2LDIxLjM3OCwxNi4yNzEsMjIuODM4eiIvPjxwYXRoIGQ9Ik0yMC45MDYsMjAuNzYzYy01Ljk4MiwyLjMxNS00LjM2OSw5LjM4NS00LjM2OSw5LjM4NWMtMi40NDcsMS4wODgtNi4xLDQuMjE1LTYuMSw0LjIxNWMyLjg1NSwwLjQwOCw4LjAyMSwwLjEzNyw4LjAyMSwwLjEzN2M0Ljg5NSwyLjAzOSw2LjI1NCw3LjYwNyw2LjI1NCw3LjYwN2gxOS44NUMzNi42NzgsMTcuMjI4LDI1LjMzNSwxOS4wNDgsMjAuOTA2LDIwLjc2M3ogTTIxLjU4NiwyNy45MzFjLTAuODI4LDAtMS41LTAuNjctMS41LTEuNWMwLTAuODI4LDAuNjcyLTEuNSwxLjUtMS41czEuNSwwLjY3MiwxLjUsMS41QzIzLjA4NiwyNy4yNjEsMjIuNDE0LDI3LjkzMSwyMS41ODYsMjcuOTMxeiIvPjwvc3ZnPg==" alt="kip2">
+    <div class="counter-num" id="akc-Overige kippen">0</div>
+    <div class="counter-label">Overige kippen</div>
+  </div>
+
+</div>
+<!-- END GRID -->
+
+<div id="status-banner">⏸ Buiten slachturen — teller gepauzeerd</div>
+
+
+
+<!-- INFO MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeInfo()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeInfo()">✕ sluiten</button>
+
+    <h2>Totaal geslacht in Nederland — 2025</h2>
+    <ul id="modal-animal-list"></ul>
+
+    <h3>Bronnen</h3>
+    <ul>
+      <li><span><a href="https://opendata.cbs.nl/statline/#/CBS/nl/dataset/7123slac/table" target="_blank">CBS Statline — Vleesproductie 2025</a></span></li>
+      <li><span><a href="https://project.inovo.nl/" target="_blank">Inovo — kuikens ei-productie (Cijfers 2020)</a></span></li>
+    </ul>
+
+    <h3>Methodiek</h3>
+    <ul>
+      <li><span>Werkuren-modus</span><span class="num">ma–vr 7:00–17:00</span></li>
+      <li><span>24/7-modus</span><span class="num">365 dagen × 24 uur</span></li>
+      <li><span>Export aandeel</span><span class="num">~80%</span></li>
+    </ul>
+
+    <h3>Inspiratie &amp; code</h3>
+    <ul>
+      <li><span><a href="https://considerveganism.com/counter/" target="_blank">Consider Veganism</a></span></li>
+      <li><span><a href="http://thevegancalculator.com/animal-slaughter/" target="_blank">The Vegan Calculator</a></span></li>
+    </ul>
+
+    <h3>Gemaakt door</h3>
+    <ul>
+      <li><span><a href="https://instagram.com/vegan_rene" target="_blank">@vegan_rene</a> · <a href="http://linktr.ee/rcsmit" target="_blank">Contact</a></span></li>
+    </ul>
+
+    <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px solid var(--border);">
+      <iframe width="100%" height="200" src="https://www.youtube.com/embed/Ju_71X4o0N4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius:4px;"></iframe>
+    </div>
+  </div>
+</div>
 
 <script>
+// ── CONFIG ──
+var MODE = 'work'; // 'work' | '365'
 
-var today = new Date();
-  var uur = today.getHours()
-  //var uur = 11;
-  //var weekend = 0;
+var animalsKilledPerYear = {
+  'Varkens':                          14103000,
+  'Totaal-runderen':                   1910900,
+  'Schapen incl. lammeren':             515300,
+  'Geiten':                             205300,
+  'Eenhoevigen':                           2700,
+  'Vleeskuikens':                     496489900,
+  'eikuikens':                         45000000,
+  'Overige kippen':                    21874700
+};
 
-  if(today.getDay() == 6 || today.getDay() == 0) weekend==1;
+var SECONDS_YEAR_FULL  = 365 * 24 * 60 * 60;
+var SECONDS_YEAR_WORK  = 261 * 10 * 60 * 60; // weekdays × 10h
 
-window.addEventListener('DOMContentLoaded',function(){
-  var updatesPerSecond = 20;
-  var animalsKilledPerYear = {
+var updatesPerSecond = 20;
+var interval         = 1000 / updatesPerSecond;
+var count = 0;
+var start = new Date().getTime();
+var running = true;
 
-	'Totaal-runderen':2088600,
-			'Totaal-volwassen-runderen': 529800,
-			'Koeien': 461000,
-			'Vaarzen': 12300,
-			'Stieren': 56500,
-			'Totaal-kalveren': 1558700,
-			'Kalveren jonger dan 9 maanden': 1406700,
-			'Kalveren van 9 tot en met 12 maanden': 152000,
-			'Varkens': 16666100,
-			'Schapen incl. lammeren': 685300,
-			'Schapenlammeren': 509700,
-			'Geiten': 200900,
-			'Eenhoevigen': 1600,
-			'Vleeskuikens': 577878000,
-			'Overige kippen': 19651500,
-			'eikuikens': 45000000,
-			'Overig pluimvee': 4800
+// Timer
+var sec = 0, min = 0, hour = 0;
 
+function isWorkTime() {
+  var d = new Date();
+  var h = d.getHours();
+  var day = d.getDay(); // 0=Sun, 6=Sat
+  return (day >= 1 && day <= 5 && h >= 7 && h < 17);
+}
 
+function secondsPerYear() {
+  return MODE === '365' ? SECONDS_YEAR_FULL : SECONDS_YEAR_WORK;
+}
 
- };
-
-  var secondsPerYear = 365 * 24 * 60 * 60;
-  var interval = 1000/ updatesPerSecond;
-  var count = 0, start = new Date().getTime();
-
-  function update(intervalCount) {
-    for (var subset in animalsKilledPerYear) {
-      var numKilled = animalsKilledPerYear[subset];
-      var countElement = document.getElementById("akc-" + subset);
-      if (countElement) {
-        countElement.innerHTML = Math.round(intervalCount * (numKilled/secondsPerYear) / updatesPerSecond).toLocaleString();
-      }
+function update(n) {
+  for (var key in animalsKilledPerYear) {
+    var el = document.getElementById('akc-' + key);
+    if (el) {
+      el.textContent = Math.round(n * animalsKilledPerYear[key] / secondsPerYear() / updatesPerSecond).toLocaleString('nl-NL');
     }
   }
+}
 
-  function selfCorrectingTimeoutInterval() {
-	console.log (uur);
+function tick() {
+  var shouldCount = (MODE === '365') || isWorkTime();
+  var banner = document.getElementById('status-banner');
 
-if (uur< 18 && uur > 6 && weekend == 0) {
-    update(++count);}
-	else{
-		header = document.querySelector("h2");
-		header.innerText = "Er wordt niet gewerkt momenteel";
-
-		console.log("Er wordt niet gewerkt")}
-    window.setTimeout(selfCorrectingTimeoutInterval, interval - (new Date().getTime() - start - count * interval));
+  if (shouldCount) {
+    banner.classList.remove('visible');
+    update(++count);
+  } else {
+    banner.classList.add('visible');
   }
-  window.setTimeout(selfCorrectingTimeoutInterval, interval);
-});
 
-////
-// Timer
-////
-var sec =0, min=0, hour=0;
-setInterval(function(){
-	sec++;
-	if(sec==60){sec=0; min++;}
-	if(min==60){min=0; hour++;}
-	var str = 'Sinds';
-	str+= hour?' ' +hour + (hour==1?' uur':' uren') + ' en':'';
-	str+= min?' ' +min+ (min==1?' minuut':' minuten') + ' en':'';
-	str+= sec?' ' +sec+ (sec==1?' seconde':' seconden'):'';
-document.getElementById('passed').innerHTML=str;
-},1000);
-////
-// Timer Ends
-////
+  var drift = new Date().getTime() - start - count * interval;
+  setTimeout(tick, Math.max(0, interval - drift));
+}
+
+// Elapsed timer
+setInterval(function() {
+  var shouldCount = (MODE === '365') || isWorkTime();
+  if (!shouldCount) return;
+  sec++;
+  if (sec === 60) { sec = 0; min++; }
+  if (min === 60) { min = 0; hour++; }
+  var str = 'Sinds';
+  if (hour) str += ' ' + hour + (hour === 1 ? ' uur' : ' uren') + ' en';
+  if (min)  str += ' ' + min  + (min  === 1 ? ' minuut' : ' minuten') + ' en';
+  str += ' ' + sec + (sec === 1 ? ' seconde' : ' seconden');
+  document.getElementById('passed').textContent = str;
+}, 1000);
+
+function setMode(m) {
+  MODE = m;
+  count = 0;
+  start = new Date().getTime();
+  sec = 0; min = 0; hour = 0;
+  document.getElementById('passed').textContent = 'Sinds 0 seconden';
+  document.getElementById('btn-work').classList.toggle('active', m === 'work');
+  document.getElementById('btn-365').classList.toggle('active',  m === '365');
+
+
+  // hide banner immediately if 365
+  if (m === '365') document.getElementById('status-banner').classList.remove('visible');
+}
+
+function openInfo() {
+  // Build animal list from animalsKilledPerYear
+  var labels = {
+    'Varkens':                  'Varkens',
+    'Totaal-runderen':          'Rundvee totaal',
+    'Schapen incl. lammeren':   'Schapen incl. lammeren',
+    'Geiten':                   'Geiten',
+    'Eenhoevigen':              'Paarden/eenhoevigen',
+    'Vleeskuikens':             'Vleeskuikens',
+    'eikuikens':                'Kuikens (ei-productie) [2020]',
+    'Overige kippen':           'Overige kippen'
+  };
+  var ul = document.getElementById('modal-animal-list');
+  ul.innerHTML = '';
+  for (var key in animalsKilledPerYear) {
+    var label = labels[key] || key;
+    var num = animalsKilledPerYear[key].toLocaleString('nl-NL');
+    var li = document.createElement('li');
+    li.innerHTML = '<span>' + label + '</span><span class="num">' + num + '</span>';
+    ul.appendChild(li);
+  }
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeInfo() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// keyboard close
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeInfo(); });
+
+// Start
+setTimeout(tick, interval);
 </script>
-
-</head>
-<body class="animal-slaughter">
-<div class="counter-body">
-<h1>Dieren geslacht voor voedsel </h1>
-<h2>sinds je deze pagina hebt geopend</h2>
-
-	<p id="passed" class="time-so-far">Sinds 0 seconden</p>
-
-	<ul class="slaughter-counter">
-		<li>
-			<div class="counter-inner-wrapper" id="x1">
-				<div class="counter-box" >
-					<!--- <img src="pig2.svg"   height="27px"/> --->
-
-						<span id='akc-Varkens'>0</span>
-						<p>Varkens</p>
-					</div>
-				</div>
-
-		</li>
-		<li>
-			<div class="counter-inner-wrapper" id="x2">
-
-					<div class="counter-box">
-							<!--- <img src="cow.svg"   height="27px"/> --->
-
-						<span id='akc-Totaal-runderen'>0</span> <p>Totaal runderen</p>	</div>
-
-			</div></li>
-		<li>
-			<div class="counter-inner-wrapper" id="x3">
-
-					<div class="counter-box">
-							<!--- <img src="sheep.svg"   height="27px"/> --->
-
-						<span id='akc-Schapen incl. lammeren'>0</span> <p>Schapen incl. lammeren</p>	</div>
-				</div>
-
-		</li>
-
-		<li>
-			<div class="counter-inner-wrapper" id="x4">
-
-					<div class="counter-box">
-							<!--- <img src="goat.svg"   height="27px"/> --->
-
-					<span id='akc-Geiten'>0</span> <p>Geiten</p>	</div>
-				</div>
-
-		</li>
-		<li>
-			<div class="counter-inner-wrapper" id="x5">
-
-					<div class="counter-box">
-							<!--- <img src="horse.svg"   height="27px"/> --->
-
-					<span id='akc-Eenhoevigen'>0</span> <p>Paarden</p>	</div>
-
-			</div>
-		</li>
-		<li>
-			<div class="counter-inner-wrapper" id="x6">
-
-					<div class="counter-box">
-							<!--- <img src="chicken.svg"   height="27px"/> --->
-
-					<span id='akc-Vleeskuikens'>0</span> <p>Vleeskuikens (kippen)</p>	</div>
-
-			</div>
-		</li>
-		<li>
-			<div class="counter-inner-wrapper" id="x7">
-
-					<div class="counter-box">
-							<!--- <img src="chick.svg"   height="27px"/> --->
-
-					<span id='akc-eikuikens'>0</span> <p>Kuikens (ei-productie)</p>	</div>
-
-			</div>
-		</li>
-		<li>
-			<div class="counter-inner-wrapper" id="x8">
-
-					<div class="counter-box">
-							<!--- <img src="chicken2.svg"   height="27px"/> --->
-
-					<span id='akc-Overige kippen'>0</span> <p>Overige kippen</p>	</div>
-
-			</div>
-		</li>
-</ul>
-</div>
-<div class="counter-info">
-
-
-	<p>Er wordt ervan uit gegaan dat er 5 dagen per week tussen 7:00 en 17:00 wordt geslacht.<br><a href="index365.html">Deze teller</a> gaat uit van 365 dagen, 24 uur per dag</p>
-
-	<p>Veel dieren in Nederland (80% als ik me niet vergis) worden ook geslacht voor de export.</p>
-
-<div class="footer">
-	<ul class="sources">
-
-
-		<h3>Totaal aantal geslachte dieren in 2020</h3>
-	<ul>
-		<li>Rundvee (totaal) - 2088600</li>
-		<li>Totaal volwassen runderen - 529800</li>
-		<li>Koeien - 461000</li>
-		<li>Vaarzen - 12300</li>
-		<li>Stieren - 56500</li>
-		<li>Totaal kalveren - 1558700</li>
-		<li>Kalveren jonger dan 9 maanden - 1406700</li>
-		<li>Kalveren van 9 tot en met 12 maanden - 152000</li>
-		<li>Varkens (totaal) - 16666100</li>
-		<li>Schapen incl. lammeren - 685300</li>
-		<li>Schapenlammeren - 509700</li>
-		<li>Geiten (totaal) - 200900</li>
-		<li>Eenhoevigen - 1600</li>
-		<li>Vleeskuikens - 577878000</li>
-		<li>Overige kippen - 19651500</li>
-		<li>Overig pluimvee (oa. kalkoenen) - 4800</li>
-		<li>Kuikens in eierproductie: 45.000.000</li>
-
-	</ul>
-	<h3>Bronnen</h3>
-	<li><a href="https://opendata.cbs.nl/statline/#/CBS/nl/dataset/7123slac/table" target="_blank">CBS Statline</a> Vleesproductie; aantal slachtingen en geslacht gewicht per diersoort, 2020 (voorlopige cijfers)</li>
-	<li><a href="https://project.inovo.nl/" target="_blank">Aantal geslachte kuikens ivm ei-productie</a>
-	</ul>
-	<!---
-
-
-	<li>Pig by Alena Artemova from the Noun Project</li>
-	<li>Cow by Chris Pyper from the Noun Project</li>
-	<li>Sheep by Georgiana Ionescu from the Noun Project</li>
-	<li>Goat by Wahyuntitle from the Noun Project</li>
-	<li>Horse by Semilla Solar from the Noun Project</li>
-	<li>Chicken by Pariphat Sinma from the Noun Project</li>
-	<li>chick by Abdo from the Noun Project</li>
-	<li>Chicken by Matt Dean from the Noun Project</li>
-	<li><a href="https://thenounproject.com">https://thenounproject.com</a></li>
-
-	--->
-
-
-	  <!-- Load Facebook SDK for JavaScript -->
-	  <div id="fb-root"></div>
-	  <script>(function(d, s, id) {
-		var js, fjs = d.getElementsByTagName(s)[0];
-		if (d.getElementById(id)) return;
-		js = d.createElement(s); js.id = id;
-		js.src = "https://connect.facebook.net/en_US/sdk.js#xfbml=1&version=v3.0";
-		fjs.parentNode.insertBefore(js, fjs);
-	  }(document, 'script', 'facebook-jssdk'));</script>
-
-
-
-	<ul><h3>Delen</h3>
-	<li>
-	<a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
-	</li>
-	<li>&nbsp;</li>
-	<li>
-	 <div class="fb-share-button"
-		data-href="https://rcsmit.github.io/geslacht/"
-		data-layout="button_count">
-	  </div>
-	  </li>
-	</ul>
-
-	<ul><h3>Code / inspiration</h3>
-	<li><a href="https://considerveganism.com/counter/" target="_blank">Consider Veganism</a>  </li>
-	<li> <a href="http://thevegancalculator.com/animal-slaughter/" target="_blank">The Vegan calculator</a></li>
-	</ul>
-
-	<ul><h3>Gemaakt door</h3>
-	<li><a href="https://instagram.com/vegan_rene" target="_blank">@vegan_rene</a>  </li>
-	<li> <a href="http://linktr.ee/rcsmit" target="_blank">Contact</a></li>
-	</ul>
-
-	</div>
-
-	</div>
-
-	<center>
-	<iframe width="560" height="315" src="https://www.youtube.com/embed/Ju_71X4o0N4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-	</center>
-
-
-
-	</body>
-	</html>
+</body>
+</html>
