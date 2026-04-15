@@ -1,0 +1,167 @@
+[
+  {
+    "category": "Personal & Featured",
+    "directory": "cv",
+    "description": "Curriculum Vitae"
+  },
+  {
+    "category": "Personal & Featured",
+    "directory": "portfolio",
+    "description": "Design portfolio"
+  },
+  {
+    "category": "Personal & Featured",
+    "directory": "coaching",
+    "description": "Life & financial coaching (NL)"
+  },
+  {
+    "category": "Personal & Featured",
+    "directory": "hs_analyzer",
+    "description": "Handstand analyzer"
+  },
+  {
+    "category": "Personal & Featured",
+    "directory": "geoquest",
+    "description": "Geography quiz game"
+  },
+  {
+    "category": "Personal & Featured",
+    "directory": "disar2",
+    "description": "Website for DJ Disar Marxin (Didier Salembier)"
+  },
+  {
+    "category": "Movement & Body",
+    "directory": "hs_analyzer",
+    "description": "Handstand analyzer — MediaPipe Pose, torque overlays, video export"
+  },
+  {
+    "category": "Movement & Body",
+    "directory": "hs_drills",
+    "description": "Handstand drill library"
+  },
+  {
+    "category": "Movement & Body",
+    "directory": "hs_drills_app",
+    "description": "Mobile web app with swipe navigation for HS drills"
+  },
+  {
+    "category": "Movement & Body",
+    "directory": "acroyoga",
+    "description": "Acroyoga interactive flowchart"
+  },
+  {
+    "category": "Geo & Maps",
+    "directory": "astrocart",
+    "description": "Astrocartography calculator — 10 planets, 4 line types, influence corridors"
+  },
+  {
+    "category": "Geo & Maps",
+    "directory": "radiusmap",
+    "description": "Radius map tool — single-file HTML"
+  },
+  {
+    "category": "Geo & Maps",
+    "directory": "geoquest",
+    "description": "D3.js geography quiz game with continent zoom and USA states"
+  },
+  {
+    "category": "Geo & Maps",
+    "directory": "conscious_communities",
+    "description": "Conscious communities on a map"
+  },
+  {
+    "category": "Music & Visuals",
+    "directory": "djviz",
+    "description": "DJ/VJ visual loop tool"
+  },
+  {
+    "category": "Music & Visuals",
+    "directory": "suno_generator",
+    "description": "Suno AI prompt generator"
+  },
+  {
+    "category": "Music & Visuals",
+    "directory": "handpong",
+    "description": "Hand-controlled Pong game"
+  },
+  {
+    "category": "Music & Visuals",
+    "directory": "ridermania",
+    "description": "Rider generator for DJs"
+  },
+  {
+    "category": "People & Profiles",
+    "directory": "disar2",
+    "description": "Website for DJ Disar Marxin (Didier Salembier)"
+  },
+  {
+    "category": "People & Profiles",
+    "directory": "char",
+    "description": "Charlotte — shadow work mentor"
+  },
+  {
+    "category": "People & Profiles",
+    "directory": "luiza",
+    "description": "Luiza Paixão — Brazilian astrologer & yoga teacher"
+  },
+  {
+    "category": "People & Profiles",
+    "directory": "panov",
+    "description": "Evgeny Panov — Moscow yoga teacher"
+  },
+  {
+    "category": "People & Profiles",
+    "directory": "frank",
+    "description": "Frank the Ropeman"
+  },
+  {
+    "category": "People & Profiles",
+    "directory": "vs",
+    "description": "Camping information"
+  },
+  {
+    "category": "Tools & Apps",
+    "directory": "annika",
+    "description": "Countdown timer with voice"
+  },
+  {
+    "category": "Tools & Apps",
+    "directory": "questions",
+    "description": "Questions / reflection tool"
+  },
+  {
+    "category": "Tools & Apps",
+    "directory": "yepcheck26",
+    "description": "Checklist tool"
+  },
+  {
+    "category": "Tools & Apps",
+    "directory": "go_archive",
+    "description": "Tool to open sites at Archive.is"
+  },
+  {
+    "category": "Tools & Apps",
+    "directory": "nonu",
+    "description": "Transcript Thai sentences"
+  },
+  {
+    "category": "Tools & Apps",
+    "directory": "dodek",
+    "description": "Flashcards for Thai alphabet"
+  },
+  {
+    "category": "Tools & Apps",
+    "directory": "gfontviewer",
+    "description": "Google Fonts viewer"
+  },
+  {
+    "category": "Tools & Apps",
+    "directory": "geslacht",
+    "description": "Number of slaughtered animals in real time"
+  },
+  {
+    "category": "Coaching & Community",
+    "directory": "coachen",
+    "description": "Peper en zout model van het coachen"
+  }
+]

@@ -88,6 +88,7 @@
       line-height: 1.45;
     }
 
+    /* ── Screenshot cards ── */
     .screenshot {
       height: 200px;
       object-fit: cover;
@@ -118,10 +119,20 @@
       font-size: 0.78rem;
       color: #666;
     }
+    .screenshot-placeholder {
+      height: 200px;
+      width: 100%;
+      background: #e9eef5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #9aadcc;
+      font-size: 2rem;
+    }
 
     /* ── Sections bg ── */
-    .section-light  { background: #f8f9fa; padding: 2.5rem 0; }
-    .section-white  { background: #fff;    padding: 2.5rem 0; }
+    .section-light { background: #f8f9fa; padding: 2.5rem 0; }
+    .section-white { background: #fff;    padding: 2.5rem 0; }
 
     /* ── Footer / Contact ── */
     .contact-band { background-color: var(--orange); padding: 2.5rem 0; }
@@ -131,31 +142,6 @@
 
     .footer-bottom { background: var(--dark-blue); color: #aaa; font-size: 0.82rem; padding: 1rem 0; }
     .footer-bottom a { color: #f0c890; }
-
-    /* ── Start here banner ── */
-    .start-banner {
-      background: var(--dark-blue);
-      color: #fff;
-      padding: 1rem 1.5rem;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 0.8rem;
-    }
-    .start-banner span { font-size: 0.95rem; }
-    .start-banner a {
-      background: var(--orange);
-      color: #fff;
-      padding: 0.45rem 1.2rem;
-      border-radius: 4px;
-      font-weight: 600;
-      font-size: 0.88rem;
-      text-decoration: none;
-      transition: background 0.18s;
-    }
-    .start-banner a:hover { background: #d96a10; }
   </style>
 </head>
 <body>
@@ -183,334 +169,10 @@
   </div>
 </header>
 
-
 <!-- ══════════════════════════════════════════
-     FEATURED SCREENSHOTS (existing projects)
+     CONTENT — rendered from items.json
 ══════════════════════════════════════════ -->
-<section class="section-light">
-  <div class="container">
-    <h2 class="section-heading">Personal & Featured</h2>
-    <div class="row">
-        <div class="col-md-4 mb-4">
-        <a href="https://rcsmit.github.io/cv" target="_blank" class="text-decoration-none">
-          <div class="screenshot-card">
-            <img class="screenshot" src="img/cvrene.png" onerror="this.style.display='none'" alt="CV">
-            <div class="card-body">
-              <p class="card-title">cv</p>
-              <p class="card-text">Curriculum Vitae</p>
-            </div>
-          </div>
-        </a>
-      </div>
-      
-      
-      <div class="col-md-4 mb-4">
-        <a href="https://rcsmit.github.io/portfolio" target="_blank" class="text-decoration-none">
-          <div class="screenshot-card">
-            <img class="screenshot" src="img/portfolio.png" onerror="this.style.display='none'" alt="Portfolio">
-            <div class="card-body">
-              <p class="card-title">portfolio</p>
-              <p class="card-text">Design portfolio</p>
-            </div>
-          </div>
-        </a>
-      </div>
-
-      
-     
-
-        <div class="col-md-4 mb-4">
-        <a href="https://rcsmit.github.io/coaching" target="_blank" class="text-decoration-none">
-          <div class="screenshot-card">
-            <img class="screenshot" src="img/coaching.png" onerror="this.style.display='none'" alt="Coaching">
-            <div class="card-body">
-              <p class="card-title">coaching</p>
-              <p class="card-text">Life &amp; financial coaching (NL)</p>
-            </div>
-          </div>
-        </a>
-      </div>
-
-       <div class="col-md-4 mb-4">
-        <a href="https://rcsmit.github.io/hs_analyzer" target="_blank" class="text-decoration-none">
-          <div class="screenshot-card">
-            <img class="screenshot" src="img/hs_analyzer.png" onerror="this.style.display='none'" alt="Handstand Analyzer">
-            <div class="card-body">
-              <p class="card-title">hs_analyzer</p>
-              <p class="card-text">Handstand analyzer</p>
-            </div>
-          </div>
-        </a>
-      </div>
-      <div class="col-md-4 mb-4">
-        <a href="https://rcsmit.github.io/geoquest" target="_blank" class="text-decoration-none">
-          <div class="screenshot-card">
-            <img class="screenshot" src="img/geoquest.png" onerror="this.style.display='none'" alt="GeoQuest">
-            <div class="card-body">
-              <p class="card-title">geoquest</p>
-              <p class="card-text">Geography quiz game</p>
-            </div>
-          </div>
-        </a>
-      </div>
-
-      <div class="col-md-4 mb-4">
-        <a href="https://rcsmit.github.io/disar2" target="_blank" class="text-decoration-none">
-          <div class="screenshot-card">
-            <img class="screenshot" src="img/disar2.png" onerror="this.style.display='none'" alt="Disar">
-            <div class="card-body">
-              <p class="card-title">Disar2</p>
-              <p class="card-text">Website for DJ Disar Marxin (Didier Salembier)</p>
-            </div>
-          </div>
-        </a>
-      </div>
-
-    
-
-    </div>
-  </div>
-</section>
-
-
-<!-- ══════════════════════════════════════════
-     ALL PROJECTS BY CATEGORY
-══════════════════════════════════════════ -->
-<section class="section-white">
-  <div class="container">
-
-    <!-- Personal -->
-    <!-- <h2 class="section-heading">👤 Personal</h2>
-    <div class="row mb-4">
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/cv" target="_blank" class="project-card">
-          <span class="proj-name">cv</span>
-          <span class="proj-desc">CV</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/portfolio" target="_blank" class="project-card">
-          <span class="proj-name">portfolio</span>
-          <span class="proj-desc">Design portfolio</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/coaching" target="_blank" class="project-card">
-          <span class="proj-name">coaching</span>
-          <span class="proj-desc">Life &amp; financial coaching (NL)</span>
-        </a>
-      </div>
-    </div> -->
-
-    <!-- Movement & Body -->
-    <h2 class="section-heading">🤸 Movement &amp; Body</h2>
-    <div class="row mb-4">
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/hs_analyzer" target="_blank" class="project-card">
-          <span class="proj-name">hs_analyzer</span>
-          <span class="proj-desc">Handstand analyzer — MediaPipe Pose, torque overlays, video export</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/hs_drills" target="_blank" class="project-card">
-          <span class="proj-name">hs_drills</span>
-          <span class="proj-desc">Handstand drill library</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/hs_drills_app" target="_blank" class="project-card">
-          <span class="proj-name">hs_drills_app</span>
-          <span class="proj-desc">Mobile web app with swipe navigation for HS drills</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/acroyoga" target="_blank" class="project-card">
-          <span class="proj-name">acroyoga</span>
-          <span class="proj-desc">Acroyoga interactive flowchart</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Geo & Maps -->
-    <h2 class="section-heading">🌍 Geo &amp; Maps</h2>
-    <div class="row mb-4">
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/astrocart" target="_blank" class="project-card">
-          <span class="proj-name">astrocart</span>
-          <span class="proj-desc">Astrocartography calculator — 10 planets, 4 line types, influence corridors</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/radiusmap" target="_blank" class="project-card">
-          <span class="proj-name">radiusmap</span>
-          <span class="proj-desc">Radius map tool — single-file HTML</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/geoquest" target="_blank" class="project-card">
-          <span class="proj-name">geoquest</span>
-          <span class="proj-desc">D3.js geography quiz game with continent zoom and USA states</span>
-        </a>
-      </div>
-      
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/conscious_communities" target="_blank" class="project-card">
-          <span class="proj-name">conscious_communities</span>
-          <span class="proj-desc">Conscious communities on a map</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Music & Visuals -->
-    <h2 class="section-heading">🎵 Music &amp; Visuals</h2>
-    <div class="row mb-4">
-      
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/djviz" target="_blank" class="project-card">
-          <span class="proj-name">djviz</span>
-          <span class="proj-desc">DJ/VJ visual loop tool</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/suno_generator" target="_blank" class="project-card">
-          <span class="proj-name">suno_generator</span>
-          <span class="proj-desc">Suno AI prompt generator</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/handpong" target="_blank" class="project-card">
-          <span class="proj-name">handpong</span>
-          <span class="proj-desc">Hand-controlled Pong game</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/ridermania" target="_blank" class="project-card">
-          <span class="proj-name">ridermania</span>
-          <span class="proj-desc">Rider generator for DJ's</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- People & Profiles -->
-    <h2 class="section-heading">👥 People &amp; Profiles</h2>
-    <div class="row mb-4">
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/disar2" target="_blank" class="project-card">
-          <span class="proj-name">disar2</span>
-          <span class="proj-desc">Website for DJ Disar Marxin (Didier Salembier)</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/char" target="_blank" class="project-card">
-          <span class="proj-name">char</span>
-          <span class="proj-desc">Charlotte — shadow work mentor</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/luiza" target="_blank" class="project-card">
-          <span class="proj-name">luiza</span>
-          <span class="proj-desc">Luiza Paixão — Brazilian astrologer &amp; yoga teacher</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/panov" target="_blank" class="project-card">
-          <span class="proj-name">panov</span>
-          <span class="proj-desc">Evgeny Panov — Moscow yoga teacher</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/frank" target="_blank" class="project-card">
-          <span class="proj-name">frank</span>
-          <span class="proj-desc">Frank the Ropeman</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/vs" target="_blank" class="project-card">
-          <span class="proj-name">vs</span>
-          <span class="proj-desc">Camping information</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Tools & Apps -->
-    <h2 class="section-heading">💡 Tools &amp; Apps</h2>
-    <div class="row mb-4">
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/annika" target="_blank" class="project-card">
-          <span class="proj-name">annika</span>
-          <span class="proj-desc">Countdown timer with voice</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/questions" target="_blank" class="project-card">
-          <span class="proj-name">questions</span>
-          <span class="proj-desc">Questions- / reflection tool</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/yepcheck26" target="_blank" class="project-card">
-          <span class="proj-name">yepcheck26</span>
-          <span class="proj-desc">Checklist tool</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/go_archive" target="_blank" class="project-card">
-          <span class="proj-name">go_archive</span>
-          <span class="proj-desc">Tool to open sites at Archive.is</span>
-        </a>
-      </div>
-      <!-- <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/beauty" target="_blank" class="project-card">
-          <span class="proj-name">beauty</span>
-          <span class="proj-desc">Facial beauty / symmetry analyzer</span>
-        </a>
-      </div> -->
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/nonu" target="_blank" class="project-card">
-          <span class="proj-name">nonu</span>
-          <span class="proj-desc">Transcript Thai sentences</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/dodek" target="_blank" class="project-card">
-          <span class="proj-name">dodek</span>
-          <span class="proj-desc">Flashcards for Thai alphabet</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/gfontviewer" target="_blank" class="project-card">
-          <span class="proj-name">gfontviewer</span>
-          <span class="proj-desc">Google Fonts viewer</span>
-        </a>
-      </div>
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/geslacht" target="_blank" class="project-card">
-          <span class="proj-name">geslacht</span>
-          <span class="proj-desc">Number of slaughtered animals in real time</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Coaching & Community -->
-    <h2 class="section-heading">🧘 Coaching &amp; Community</h2>
-    <div class="row mb-4">
-      <div class="col-sm-6 col-md-4 mb-3">
-        <a href="https://rcsmit.github.io/coachen" target="_blank" class="project-card">
-          <span class="proj-name">coachen</span>
-          <span class="proj-desc">Peper en zout model van het coachen</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- Start here -->
-    <!-- <div class="start-banner mt-2 mb-2">
-      <span>📌 Not sure where to start?</span>
-      <a href="https://rcsmit.github.io/START_HERE.html">START HERE →</a>
-    </div> -->
-
-  </div>
-</section>
-
+<div id="page-content"></div>
 
 <!-- ══════════════════════════════════════════
      CONTACT
@@ -554,7 +216,6 @@
           <li><a class="text-white" href="https://www.instagram.com/rcsmit" target="_blank"><i class="fa fa-instagram mr-2"></i>Instagram</a></li>
           <li><a class="text-white" href="https://www.facebook.com/renesmitcoaching" target="_blank"><i class="fa fa-facebook mr-2"></i>Facebook</a></li>
           <li class="mt-3"><a class="text-white" href="https://rcsmit.streamlit.app" target="_blank"><i class="fa fa-bar-chart mr-2"></i>Streamlit apps</a></li>
-        
         </ul>
       </div>
     </div>
@@ -574,5 +235,130 @@
 <script crossorigin="anonymous"
         integrity="sha384-XEerZL0cuoUbHE4nZReLT7nx9gQrQreJekYhJD9WNWhH8nEW+0c5qq7aIo2Wl30J"
         src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.1/js/bootstrap.min.js"></script>
+
+<script>
+const BASE = "https://rcsmit.github.io/";
+
+const CATEGORY_ICONS = {
+  "Personal & Featured":  "",
+  "Movement & Body":      "🤸 ",
+  "Geo & Maps":           "🌍 ",
+  "Music & Visuals":      "🎵 ",
+  "People & Profiles":    "👥 ",
+  "Tools & Apps":         "💡 ",
+  "Coaching & Community": "🧘 ",
+  "Uncategorized":        "📁 "
+};
+
+// Alternate section backgrounds for non-featured sections
+const BG_CLASSES = ["section-white", "section-light"];
+
+// Directories to never show
+const EXCLUDE_DIRS = new Set(["beauty", "img"]);
+
+async function getRepoDirs() {
+  try {
+    const res = await fetch("https://api.github.com/repos/rcsmit/rcsmit.github.io/contents/");
+    const entries = await res.json();
+    return entries
+      .filter(e => e.type === "dir" && !EXCLUDE_DIRS.has(e.name))
+      .map(e => e.name);
+  } catch (e) {
+    console.warn("Could not fetch repo contents:", e);
+    return [];
+  }
+}
+
+async function init() {
+  const [itemsRes, repoDirs] = await Promise.all([
+    fetch("items.json"),
+    getRepoDirs()
+  ]);
+  const items = await itemsRes.json();
+
+  // Collect all directories already listed in items.json
+  const listedDirs = new Set(items.map(i => i.directory));
+
+  // Add uncategorized entries for any repo dir not in items.json
+  for (const dir of repoDirs) {
+    if (!listedDirs.has(dir)) {
+      items.push({ category: "Uncategorized", directory: dir, description: "", image: null });
+    }
+  }
+
+  // Group by category, preserving order, deduplicating directory within each category
+  const categoryMap = new Map();
+  for (const item of items) {
+    if (!categoryMap.has(item.category)) categoryMap.set(item.category, new Map());
+    const dirMap = categoryMap.get(item.category);
+    if (!dirMap.has(item.directory)) dirMap.set(item.directory, item);
+  }
+
+  const content = document.getElementById("page-content");
+  let bgIndex = 0;
+
+  for (const [cat, dirMap] of categoryMap.entries()) {
+    const entries = [...dirMap.values()];
+    const icon = CATEGORY_ICONS[cat] || "";
+    const isFeatured = cat === "Personal & Featured";
+
+    const section = document.createElement("section");
+
+    if (isFeatured) {
+      section.className = "section-light";
+      section.innerHTML = `
+        <div class="container">
+          <h2 class="section-heading">${cat}</h2>
+          <div class="row">
+            ${entries.map(screenshotCardHTML).join("")}
+          </div>
+        </div>`;
+    } else {
+      section.className = BG_CLASSES[bgIndex % 2];
+      bgIndex++;
+      section.innerHTML = `
+        <div class="container">
+          <h2 class="section-heading">${icon}${cat}</h2>
+          <div class="row mb-4">
+            ${entries.map(projectCardHTML).join("")}
+          </div>
+        </div>`;
+    }
+
+    content.appendChild(section);
+  }
+}
+
+function screenshotCardHTML(item) {
+  const href = BASE + item.directory;
+  return `
+    <div class="col-md-4 mb-4">
+      <a href="${href}" target="_blank" class="text-decoration-none">
+        <div class="screenshot-card">
+          <img class="screenshot" src="img/${item.directory}.png"
+               onerror="this.outerHTML='<div class=\'screenshot-placeholder\'><i class=\'fa fa-picture-o\'></i></div>'"
+               alt="${item.directory}">
+          <div class="card-body">
+            <p class="card-title">${item.directory}</p>
+            <p class="card-text">${item.description}</p>
+          </div>
+        </div>
+      </a>
+    </div>`;
+}
+
+function projectCardHTML(item) {
+  const href = BASE + item.directory;
+  return `
+    <div class="col-sm-6 col-md-4 mb-3">
+      <a href="${href}" target="_blank" class="project-card">
+        <span class="proj-name">${item.directory}</span>
+        <span class="proj-desc">${item.description}</span>
+      </a>
+    </div>`;
+}
+
+init();
+</script>
 </body>
 </html>
