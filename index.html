@@ -239,6 +239,13 @@
 <script>
 const BASE = "https://rcsmit.github.io/";
 
+function imgFallback(el) {
+  const div = document.createElement("div");
+  div.className = "screenshot-placeholder";
+  div.innerHTML = '<i class="fa fa-picture-o"></i>';
+  el.parentNode.replaceChild(div, el);
+}
+
 const CATEGORY_ICONS = {
   "Personal & Featured":  "⭐ ",
   "Movement & Body":      "🤸 ",
@@ -254,7 +261,7 @@ const CATEGORY_ICONS = {
 const BG_CLASSES = ["section-white", "section-light"];
 
 // Directories to never show
-const EXCLUDE_DIRS = new Set(["beauty", "img"]);
+const EXCLUDE_DIRS = new Set(["beauty", "img","annika_v1", "cv_oud", "conscious_communities"]);
 
 async function getRepoDirs() {
   try {
@@ -320,7 +327,7 @@ async function init() {
         <div class="container">
           <h2 class="section-heading">${icon}${cat}</h2>
           <div class="row mb-4">
-            ${entries.map(projectCardHTML).join("")}
+            ${entries.map(screenshotCardHTML).join("")}
           </div>
         </div>`;
     }
@@ -336,7 +343,7 @@ function screenshotCardHTML(item) {
       <a href="${href}" target="_blank" class="text-decoration-none">
         <div class="screenshot-card">
           <img class="screenshot" src="img/${item.directory}.png"
-               onerror="this.outerHTML='<div class=\'screenshot-placeholder\'><i class=\'fa fa-picture-o\'></i></div>'"
+               onerror="imgFallback(this)"
                alt="${item.directory}">
           <div class="card-body">
             <p class="card-title">${item.directory}</p>
