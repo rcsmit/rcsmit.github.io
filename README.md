@@ -88,13 +88,3 @@ Python · Streamlit · Data viz · Web design · Yoga · Acroyoga
 
 ---
 
-
----
-
-## 📌 Start here
-
-→ [START_HERE.html](https://rcsmit.github.io/index.html)
-
----
-
-*Location-independent · Netherlands · Vietnam · Thailand · Indonesia*

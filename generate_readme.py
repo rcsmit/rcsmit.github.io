@@ -50,13 +50,10 @@ FOOTER = """\
 
 ---
 
-## 📌 Start here
-
-→ [START_HERE.html]({base_url}/index.html)
 
 ---
 
-*Location-independent · Netherlands · Vietnam · Thailand · Indonesia*
+* · Netherlands *
 """.format(base_url=BASE_URL)
 
 
