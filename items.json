@@ -102,7 +102,7 @@
   {
     "category": "Movement & Body",
     "directory": "hs_analyzer",
-    "description": "Handstand analyzer — MediaPipe Pose, torque overlays, video export"
+    "description": "Handstand analyzer"
   },
   {
     "category": "Movement & Body",
@@ -122,7 +122,7 @@
   {
     "category": "Geo & Maps",
     "directory": "astrocart",
-    "description": "Astrocartography calculator — 10 planets, 4 line types, influence corridors"
+    "description": "Astrocartography calculator"
   },
   {
     "category": "Geo & Maps",

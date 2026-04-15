@@ -30,8 +30,16 @@
     .jumbotron h1 { font-size: 2.4rem; font-weight: 700; }
     .jumbotron .lead { color: #c9d4e8; }
 
-    .social-icons a { color: #fff; margin-left: 10px; font-size: 1.2rem; }
-    .social-icons a:hover { color: var(--orange); }
+    .social-bar {
+      width: 100%;
+      background: #0d2040;
+      display: flex;
+      justify-content: center;
+      gap: 1.4rem;
+      padding: 0.5rem 1rem;
+    }
+    .social-bar a { color: #c9d4e8; font-size: 1.1rem; text-decoration: none; transition: color 0.2s; }
+    .social-bar a:hover { color: var(--orange); }
 
     .meta-links a {
       color: #f0c890;
@@ -147,18 +155,21 @@
 <body>
 
 <!-- ══════════════════════════════════════════
+     SOCIAL BAR
+══════════════════════════════════════════ -->
+<div class="social-bar">
+  <a href="https://www.facebook.com/rcsmit" target="_blank" title="Facebook"><i class="fa fa-facebook"></i></a>
+  <a href="https://www.instagram.com/rcsmit" target="_blank" title="Instagram"><i class="fa fa-instagram"></i></a>
+  <a href="https://www.linkedin.com/in/rcsmit" target="_blank" title="LinkedIn"><i class="fa fa-linkedin"></i></a>
+  <a href="https://www.github.com/rcsmit" target="_blank" title="GitHub"><i class="fa fa-github"></i></a>
+  <a href="#contact" title="Contact"><i class="fa fa-envelope"></i></a>
+</div>
+
+<!-- ══════════════════════════════════════════
      HEADER
 ══════════════════════════════════════════ -->
 <header class="jumbotron text-center">
   <div class="container">
-    <div class="row mb-3">
-      <div class="col text-right social-icons">
-        <a href="https://www.facebook.com/rcsmit" target="_blank" title="Facebook"><i class="fa fa-facebook"></i></a>
-        <a href="https://www.instagram.com/rcsmit" target="_blank" title="Instagram"><i class="fa fa-instagram"></i></a>
-        <a href="https://www.linkedin.com/in/rcsmit" target="_blank" title="LinkedIn"><i class="fa fa-linkedin"></i></a>
-        <a href="#contact" title="Contact"><i class="fa fa-envelope"></i></a>
-      </div>
-    </div>
     <h1>GitHub pages of René Smit</h1>
     <p class="lead">Multidisciplinary freelancer — Data · Design · Movement</p>
     <p class="meta-links mt-3">
@@ -247,7 +258,7 @@ function imgFallback(el) {
 }
 
 const CATEGORY_ICONS = {
-  "Personal & Featured":  "⭐ ",
+  "Personal & Featured":  "",
   "Movement & Body":      "🤸 ",
   "Geo & Maps":           "🌍 ",
   "Music & Visuals":      "🎵 ",
@@ -261,7 +272,7 @@ const CATEGORY_ICONS = {
 const BG_CLASSES = ["section-white", "section-light"];
 
 // Directories to never show
-const EXCLUDE_DIRS = new Set(["beauty", "img","annika_v1", "cv_oud", "conscious_communities"]);
+const EXCLUDE_DIRS = new Set(["beauty", "img"]);
 
 async function getRepoDirs() {
   try {
