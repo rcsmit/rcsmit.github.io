@@ -59,7 +59,7 @@ Python · Streamlit · Data viz · Web design · Yoga · Acroyoga
 | [disar2](https://rcsmit.github.io/disar2) | Website for DJ Disar Marxin (Didier Salembier) |
 | [char](https://rcsmit.github.io/char) | Charlotte — shadow work mentor |
 | [luiza](https://rcsmit.github.io/luiza) | Luiza  — Brazilian astrologer & yoga teacher |
-| [panov](https://rcsmit.github.io/panov) | Evgeny  — Moscow yoga teacher |
+| [evgeny](https://rcsmit.github.io/evgeny) | Evgeny  — Moscow yoga teacher |
 | [frank](https://rcsmit.github.io/frank) | Frank the Ropeman |
 | [vs](https://rcsmit.github.io/vs) | Camping information |
 
