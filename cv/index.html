@@ -22,18 +22,19 @@
   --border-strong: rgba(0,0,0,0.22);
   --label-w: 120px;
 }
-
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #1a1a1a;
+    --cv: #e0e0da;
     --bg-secondary: #242424;
-    --text-primary: #b3b3b3;
-    --text-secondary: #4d4d4d;
-    --text-tertiary: #282828;
+    --text-primary: #e0e0da;
+    --text-secondary: #a0a09a;
+    --text-tertiary: #606060;
     --border: rgba(255,255,255,0.10);
     --border-strong: rgba(255,255,255,0.22);
   }
   .row-label img { filter: brightness(0) invert(1); }
+  .cv-section { background: var(--cv); }
 }
 
 html, body { width: 100%; overflow-x: hidden; }
