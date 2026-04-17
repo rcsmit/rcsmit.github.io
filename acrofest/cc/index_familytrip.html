@@ -1,0 +1,1987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pine Mountain Lake / Yosemite — Command Center</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0C10;
+      --surface: #161B22;
+      --surface2: #1C2128;
+      --border: #30363D;
+      --border2: #21262D;
+      --primary: #C9D1D9;
+      --muted: #6E7681;
+      --muted2: #8B949E;
+      --critical: #F85149;
+      --warning: #D29922;
+      --success: #3FB950;
+      --info: #58A6FF;
+      --violet: #A371F7;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-sans: 'IBM Plex Sans', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { height: 100%; overflow: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--primary);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 3px; height: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+    /* ── APP SHELL ── */
+    #app {
+      display: grid;
+      grid-template-rows: 44px 36px 1fr;
+      grid-template-columns: 220px 1fr 280px;
+      grid-template-areas:
+        "header header header"
+        "subnav subnav subnav"
+        "sidebar content inspector";
+      height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    #header {
+      grid-area: header;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border2);
+      z-index: 100;
+    }
+
+    .header-logo {
+      width: 18px;
+      height: 18px;
+      background: var(--primary);
+      clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary);
+    }
+
+    .header-subtitle {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .header-sep { flex: 1; }
+
+    .header-pill {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      color: var(--muted2);
+    }
+
+    .header-pill.live {
+      border-color: var(--success);
+      color: var(--success);
+      animation: pulse-border 2s infinite;
+    }
+
+    @keyframes pulse-border {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ── SUBNAV ── */
+    #subnav {
+      grid-area: subnav;
+      display: flex;
+      align-items: stretch;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border2);
+      padding: 0 16px;
+      gap: 2px;
+      z-index: 90;
+    }
+
+    .nav-btn {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0 12px;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .nav-btn:hover { color: var(--primary); }
+    .nav-btn.active {
+      color: var(--info);
+      border-bottom-color: var(--info);
+    }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      grid-area: sidebar;
+      background: var(--surface);
+      border-right: 1px solid var(--border2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-section {
+      padding: 12px;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .sidebar-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    /* ── DAY SELECTOR ── */
+    .day-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+
+    .day-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 3px;
+      padding: 6px 8px;
+      cursor: pointer;
+      text-align: left;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .day-btn:hover {
+      border-color: var(--border);
+      background: #1F2937;
+    }
+
+    .day-btn.active {
+      border-color: var(--info);
+      background: rgba(88, 166, 255, 0.08);
+    }
+
+    .day-btn-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      color: var(--muted2);
+      letter-spacing: 0.05em;
+    }
+
+    .day-btn.active .day-btn-label { color: var(--info); }
+
+    .day-btn-title {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--primary);
+      margin-top: 2px;
+    }
+
+    .day-btn-weather {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* ── FAMILY STATUS ── */
+    .family-list { display: flex; flex-direction: column; gap: 4px; }
+
+    .family-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .family-item:hover { border-color: var(--border); }
+    .family-item.active { border-color: var(--info); }
+
+    .family-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .family-name {
+      font-size: 12px;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .family-origin {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--muted);
+    }
+
+    .family-readiness {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .readiness-bar-wrap {
+      height: 2px;
+      background: var(--border2);
+      border-radius: 1px;
+      margin-top: 3px;
+    }
+
+    .readiness-bar {
+      height: 2px;
+      border-radius: 1px;
+      background: var(--success);
+      transition: width 0.4s ease;
+    }
+
+    /* ── CONTENT AREA ── */
+    #content {
+      grid-area: content;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page { display: none; flex-direction: column; height: 100%; }
+    .page.active { display: flex; }
+
+    /* ── MAP ── */
+    #map-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .leaflet-container {
+      background: #0e1117 !important;
+      font-family: var(--font-sans) !important;
+    }
+
+    .map-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .map-pill {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      background: rgba(22, 27, 34, 0.92);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      color: var(--muted2);
+      backdrop-filter: blur(4px);
+    }
+
+    .weather-widget {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 500;
+      display: flex;
+      gap: 6px;
+    }
+
+    .weather-card {
+      background: rgba(22, 27, 34, 0.93);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 8px 12px;
+      backdrop-filter: blur(6px);
+      min-width: 110px;
+    }
+
+    .weather-card.active { border-color: var(--info); }
+
+    .weather-place {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .weather-temp {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+    }
+
+    .weather-desc {
+      font-size: 10px;
+      color: var(--muted2);
+      margin-top: 2px;
+    }
+
+    /* ── CUSTOM MAP MARKERS ── */
+    .custom-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── CONTENT PAGES ── */
+    .page-inner {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .page-header {
+      margin-bottom: 16px;
+    }
+
+    .page-title {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--primary);
+    }
+
+    .page-subtitle {
+      font-size: 11px;
+      color: var(--muted2);
+      margin-top: 3px;
+    }
+
+    /* ── TIMELINE ── */
+    .timeline-wrap {
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+
+    .timeline-grid {
+      min-width: 640px;
+    }
+
+    .timeline-header {
+      display: grid;
+      grid-template-columns: 80px repeat(4, 1fr);
+      margin-bottom: 4px;
+    }
+
+    .timeline-day-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 0 4px;
+    }
+
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      align-items: center;
+      margin-bottom: 5px;
+      gap: 6px;
+    }
+
+    .timeline-row-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .timeline-track {
+      position: relative;
+      height: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .timeline-seg {
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      padding: 0 6px;
+      font-size: 10px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: opacity 0.2s;
+      border-left: 2px solid transparent;
+    }
+
+    /* ── CARDS ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 8px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .card:hover {
+      border-color: var(--border);
+      background: var(--surface2);
+    }
+
+    .card.active {
+      border-color: var(--info);
+      background: rgba(88, 166, 255, 0.04);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .card-body {
+      font-size: 11px;
+      color: var(--muted2);
+      line-height: 1.6;
+    }
+
+    /* ── BADGES ── */
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 2px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-info    { background: rgba(88,166,255,0.15); color: var(--info); }
+    .badge-success { background: rgba(63,185,80,0.15);  color: var(--success); }
+    .badge-warning { background: rgba(210,153,34,0.15); color: var(--warning); }
+    .badge-critical{ background: rgba(248,81,73,0.15);  color: var(--critical); }
+    .badge-muted   { background: rgba(139,148,158,0.12);color: var(--muted2); }
+    .badge-violet  { background: rgba(163,113,247,0.15);color: var(--violet); }
+
+    /* ── TABLE ── */
+    .data-table { width: 100%; border-collapse: collapse; }
+
+    .data-table th {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-align: left;
+      padding: 6px 10px;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .data-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border2);
+      font-size: 12px;
+      vertical-align: top;
+    }
+
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .data-table tr.settled td { opacity: 0.5; }
+
+    /* ── CHECKLIST ── */
+    .checklist { display: flex; flex-direction: column; gap: 4px; }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .check-item:hover { background: rgba(255,255,255,0.03); }
+
+    .check-box {
+      width: 14px;
+      height: 14px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .check-item.done .check-box {
+      background: var(--success);
+      border-color: var(--success);
+      color: #000;
+    }
+
+    .check-item.done .check-label {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .check-label { font-size: 12px; }
+
+    /* ── INSPECTOR ── */
+    #inspector {
+      grid-area: inspector;
+      background: var(--surface);
+      border-left: 1px solid var(--border2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .inspector-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border2);
+      flex-shrink: 0;
+    }
+
+    .inspector-entity-type {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .inspector-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary);
+      line-height: 1.3;
+    }
+
+    .inspector-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px;
+    }
+
+    .inspector-section {
+      margin-bottom: 16px;
+    }
+
+    .inspector-section-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .inspector-kv {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 4px 12px;
+      font-size: 11px;
+    }
+
+    .inspector-key {
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .inspector-val { color: var(--primary); }
+
+    .inspector-note {
+      font-size: 11px;
+      color: var(--muted2);
+      line-height: 1.6;
+      padding: 8px;
+      background: var(--surface2);
+      border-radius: 3px;
+      border-left: 2px solid var(--border);
+    }
+
+    .inspector-img {
+      width: 100%;
+      height: 130px;
+      object-fit: cover;
+      border-radius: 3px;
+      border: 1px solid var(--border2);
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    /* ── EXPENSE TOTALS ── */
+    .expense-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+      margin-top: 8px;
+    }
+
+    .expense-total-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .expense-total-val {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* ── MISSION BRIEFING ── */
+    .briefing-card {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 4px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .briefing-code {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .briefing-summary {
+      font-size: 12px;
+      color: var(--muted2);
+      line-height: 1.7;
+      margin-bottom: 10px;
+    }
+
+    .briefing-lookouts {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .briefing-lookout {
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted2);
+    }
+
+    .briefing-lookout::before {
+      content: "→";
+      color: var(--warning);
+      flex-shrink: 0;
+      font-family: var(--font-mono);
+    }
+
+    /* ── STAY ── */
+    .room-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .room-card {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: 3px;
+      padding: 8px 10px;
+    }
+
+    .room-label {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+
+    .room-assign {
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .ops-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .ops-item {
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted2);
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border2);
+    }
+
+    .ops-item:last-child { border-bottom: none; }
+
+    .ops-num {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: var(--muted);
+      flex-shrink: 0;
+      padding-top: 2px;
+    }
+
+    /* ── SCROLL CONTAINER ── */
+    .scroll-y { overflow-y: auto; flex: 1; }
+
+    /* ── PROGRESS RING ── */
+    .progress-ring {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+    }
+
+    /* ── WEATHER LOADING ── */
+    .weather-loading {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      animation: blink 1.2s step-start infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      #app {
+        grid-template-columns: 0 1fr 0;
+        grid-template-areas:
+          "header header header"
+          "subnav subnav subnav"
+          "content content content";
+      }
+      #sidebar, #inspector { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <header id="header">
+    <div class="header-logo"></div>
+    <div>
+      <div class="header-title">Family Trip Command Center</div>
+      <div class="header-subtitle">Pine Mountain Lake / Yosemite · Thu 4/09 – Sun 4/12</div>
+    </div>
+    <div class="header-sep"></div>
+    <div class="header-pill live" id="weather-status">Weather loading…</div>
+    <div class="header-pill">3 Families · 4 Days</div>
+  </header>
+
+  <!-- SUBNAV -->
+  <nav id="subnav">
+    <button class="nav-btn active" data-page="itinerary">Itinerary</button>
+    <button class="nav-btn" data-page="stay">Stay</button>
+    <button class="nav-btn" data-page="meals">Meals</button>
+    <button class="nav-btn" data-page="activities">Activities</button>
+    <button class="nav-btn" data-page="expenses">Expenses</button>
+    <button class="nav-btn" data-page="families">Families</button>
+  </nav>
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Day Focus</div>
+      <div class="day-grid" id="day-grid"></div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1; overflow-y:auto;">
+      <div class="sidebar-label">Units</div>
+      <div class="family-list" id="family-list"></div>
+    </div>
+
+  </aside>
+
+  <!-- CONTENT -->
+  <main id="content">
+
+    <!-- ITINERARY PAGE -->
+    <div class="page active" id="page-itinerary">
+      <div id="map-container">
+        <div id="map"></div>
+        <div class="map-overlay">
+          <div class="map-pill" id="map-day-pill">All Days</div>
+        </div>
+        <div class="weather-widget" id="weather-widget"></div>
+      </div>
+      <div style="padding: 0 16px; border-top: 1px solid var(--border2); overflow-y:auto; max-height: 200px;">
+        <div style="padding: 10px 0 6px;">
+          <div class="sidebar-label">Timeline Overview</div>
+        </div>
+        <div class="timeline-wrap">
+          <div class="timeline-grid" id="timeline-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STAY PAGE -->
+    <div class="page" id="page-stay">
+      <div class="page-inner scroll-y">
+        <div class="page-header">
+          <div class="page-title">Basecamp Operations</div>
+          <div class="page-subtitle">Pine Mountain Lake · Check-in after 4:00 PM · Check-out before 11:00 AM</div>
+        </div>
+        <div id="stay-content"></div>
+      </div>
+    </div>
+
+    <!-- MEALS PAGE -->
+    <div class="page" id="page-meals">
+      <div class="page-inner scroll-y">
+        <div class="page-header">
+          <div class="page-title">Meal Plan</div>
+          <div class="page-subtitle">Restaurant anchors set for Thu/Fri · Basecamp cook-in for the rest</div>
+        </div>
+        <table class="data-table" id="meals-table">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Meal</th>
+              <th>Owner</th>
+              <th>Status</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody id="meals-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ACTIVITIES PAGE -->
+    <div class="page" id="page-activities">
+      <div class="page-inner scroll-y">
+        <div class="page-header">
+          <div class="page-title">Activities</div>
+          <div class="page-subtitle">Four operational windows across the weekend</div>
+        </div>
+        <div class="card-grid" id="activities-grid"></div>
+      </div>
+    </div>
+
+    <!-- EXPENSES PAGE -->
+    <div class="page" id="page-expenses">
+      <div class="page-inner scroll-y">
+        <div class="page-header">
+          <div class="page-title">Shared Expenses</div>
+          <div class="page-subtitle">Shared visibility over exact accounting</div>
+        </div>
+        <table class="data-table" id="expenses-table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Payer</th>
+              <th>Amount</th>
+              <th>Split</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="expenses-tbody"></tbody>
+        </table>
+        <div id="expense-totals"></div>
+      </div>
+    </div>
+
+    <!-- FAMILIES PAGE -->
+    <div class="page" id="page-families">
+      <div class="page-inner scroll-y">
+        <div class="page-header">
+          <div class="page-title">Unit Profiles</div>
+          <div class="page-subtitle">Each family owns a task package before Thursday morning</div>
+        </div>
+        <div id="families-content"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- INSPECTOR -->
+  <aside id="inspector">
+    <div class="inspector-header">
+      <div class="inspector-entity-type" id="inspector-type">—</div>
+      <div class="inspector-title" id="inspector-title">Select an item</div>
+    </div>
+    <div class="inspector-body" id="inspector-body">
+      <div style="color: var(--muted); font-size: 11px; padding-top: 8px;">
+        Click any item to inspect it here.
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BASECAMP_COORDS = [37.8586, -120.2142]
+
+const DAYS = [
+  { id: 'thu', shortLabel: 'Thu 4/09', title: 'Transit Day',        weather: 'Sunny',          temperature: '72 F', caution: 'Low',    weatherEmoji: '☀️' },
+  { id: 'fri', shortLabel: 'Fri 4/10', title: 'Pine Mountain Lake', weather: 'Partly Cloudy',  temperature: '68 F', caution: 'Low',    weatherEmoji: '⛅' },
+  { id: 'sat', shortLabel: 'Sat 4/11', title: 'Yosemite Day',       weather: 'Showers',        temperature: '62 F', caution: 'Medium', weatherEmoji: '🌧' },
+  { id: 'sun', shortLabel: 'Sun 4/12', title: 'Drive Home',         weather: 'Sunny',          temperature: '75 F', caution: 'Low',    weatherEmoji: '☀️' },
+]
+
+const FAMILIES = [
+  {
+    id: 'north-star', name: 'Parkers', origin: 'Los Angeles', shortOrigin: 'LA',
+    status: 'Transit', eta: 'Thu 4:00 PM', driveTime: '5.5 hrs',
+    headcount: '2 adults, 1 kid', vehicle: 'SUV', responsibility: 'Firewood + snacks',
+    readiness: 82, routeSummary: 'Single-leg drive from LA to Pine Mountain Lake',
+    color: '#D29922', coords: [34.0522, -118.2437],
+    checklist: [
+      { id: 'car-pack',  label: 'Car packed night before',   done: true },
+      { id: 'kid-bag',   label: 'Kid activity bag loaded',   done: true },
+      { id: 'groceries', label: 'Road snacks secured',       done: false },
+      { id: 'firewood',  label: 'Pickup firewood on arrival',done: false },
+    ],
+  },
+  {
+    id: 'silver-peak', name: 'Jiangs', origin: 'San Francisco', shortOrigin: 'SF',
+    status: 'Transit', eta: 'Thu 4:00 PM', driveTime: '3.5 hrs',
+    headcount: '2 adults, 1 kid', vehicle: 'SUV', responsibility: 'Coolers + breakfast fruit',
+    readiness: 88, routeSummary: 'Short Bay Area drive before Pine Mountain Lake',
+    color: '#F85149', coords: [37.7855, -122.4068],
+    checklist: [
+      { id: 'lake-gear', label: 'Lake towels and floaties', done: true },
+      { id: 'breakfast', label: 'Breakfast fruit packed',   done: true },
+      { id: 'kids-shoes',label: 'Backup shoes for kid',     done: false },
+      { id: 'charger',   label: 'Portable charger packed',  done: true },
+    ],
+  },
+  {
+    id: 'desert-bloom', name: 'Riveras', origin: 'Reno', shortOrigin: 'RN',
+    status: 'Friday Arrival', eta: 'Fri 1:00 PM', driveTime: '5 hrs',
+    headcount: '2 adults, 1 kid', vehicle: 'SUV', responsibility: 'Grill kit + Saturday lunch',
+    readiness: 71, routeSummary: 'Friday arrival from Reno straight into Pine Mountain Lake',
+    color: '#A371F7', coords: [39.5296, -119.8138],
+    checklist: [
+      { id: 'late-arrival',     label: 'Friday arrival confirmed',   done: true },
+      { id: 'grill-kit',        label: 'Grill kit packed',           done: false },
+      { id: 'yosemite-daypack', label: 'Yosemite daypacks staged',   done: false },
+      { id: 'park-pass',        label: 'Park entry docs confirmed',  done: true },
+    ],
+  },
+]
+
+const MEALS = [
+  { id: 'thu-dinner',    day: 'Thursday',  meal: 'Two Guys Pizza Pies',               owner: 'Walk-in', status: 'Assigned', note: 'Simple first-night pizza around 6:00 PM, one-hour stop then back to basecamp.' },
+  { id: 'fri-breakfast', day: 'Friday',    meal: 'Basecamp breakfast',                owner: 'Shared',  status: 'Assigned', note: 'Easy basecamp morning before local Friday day.' },
+  { id: 'fri-lunch',     day: 'Friday',    meal: 'The Grill at Pine Mountain Lake',   owner: 'Shared',  status: 'Assigned', note: 'Local lunch outing without creating a Friday evening convoy.' },
+  { id: 'fri-dinner',    day: 'Friday',    meal: 'Basecamp dinner',                   owner: 'Shared',  status: 'Assigned', note: 'Dinner at basecamp keeps Friday evening drive-free.' },
+  { id: 'sat-lunch',     day: 'Saturday',  meal: 'Packed Yosemite lunch',             owner: 'Shared',  status: 'Assigned', note: 'Portable lunch to keep the Yosemite day flexible.' },
+  { id: 'sat-dinner',    day: 'Saturday',  meal: 'Around The Horn Brewing Company',   owner: 'Walk-in', status: 'Assigned', note: 'Return-drive dinner stop in Groveland after Yosemite.' },
+  { id: 'sun-breakfast', day: 'Sunday',    meal: 'Basecamp brunch before departure',  owner: 'Shared',  status: 'Assigned', note: 'Cook brunch before checkout and the drive home.' },
+]
+
+const EXPENSES = [
+  { id: 'airbnb',    label: 'Basecamp booking',            payer: 'Parkers',      amount: 1280, split: '3 families',   settled: false },
+  { id: 'groceries', label: 'Groceries',                   payer: 'Jiangs',       amount: 210,  split: 'shared food',  settled: false },
+  { id: 'gas',       label: 'Gas + driving',               payer: 'Each family',  amount: 0,    split: 'individual',   settled: true  },
+  { id: 'parking',   label: 'Activity / gate / parking',   payer: 'Unassigned',   amount: 60,   split: 'shared',       settled: false },
+]
+
+const ACTIVITIES = [
+  {
+    id: 'thu-transit', title: 'Transit + Settle In', status: 'Go', window: 'Thu / all day',
+    description: 'Two families move on Thursday. Goal: arrival, check-in, kid decompression, and easy dinner.',
+    backup: 'If traffic spikes, switch to late arrival meal and minimum-viable setup.',
+  },
+  {
+    id: 'fri-lake', title: 'Pine Mountain Lake Day', status: 'Go', window: 'Fri / all day',
+    description: 'Local lake day close to basecamp. Lower logistics load, easier for kids, flexible for the Friday-arrival family.',
+    backup: 'If weather or parking is difficult, shift to cabin hang + shorter local outing.',
+  },
+  {
+    id: 'sat-yosemite', title: 'Yosemite Day', status: 'Watch', window: 'Sat / early start',
+    description: 'Primary excursion day. Needs early departure, packed lunches, kid pacing, and weather-aware backup logic.',
+    backup: 'If showers worsen, downgrade to scenic stops + flexible walking plan.',
+  },
+  {
+    id: 'sun-home', title: 'Sunday Return', status: 'Go', window: 'Sun / checkout',
+    description: 'Pack, cabin reset, check-out, and staggered drive home windows.',
+    backup: 'Pre-pack Saturday night to reduce morning chaos.',
+  },
+]
+
+const STAY_DETAILS = {
+  commandSummary: 'Basecamp operations run through the Groveland-area staging house.',
+  photos: [
+    { label: 'Exterior', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80' },
+    { label: 'Interior', url: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80' },
+  ],
+  houseOps: [
+    'Confirm gate access and arrival sequence before Thursday departures.',
+    'Stage sleeping assignments before first family arrival.',
+    'Consolidate beach / lake parking assumptions before Friday.',
+    'Pre-pack Yosemite day gear Friday night.',
+  ],
+  rooms: [
+    { label: 'Room 1', assignment: 'Parkers' },
+    { label: 'Room 2', assignment: 'Jiangs' },
+    { label: 'Room 3', assignment: 'Riveras' },
+    { label: 'Kid overflow', assignment: 'Flexible based on bedtime logistics' },
+  ],
+}
+
+const MAP_POINTS = [
+  { id: 'sf-silver-peak',     label: 'Jiangs',    caption: 'San Francisco',    tone: 'critical', position: [37.7855, -122.4068] },
+  { id: 'sf-desert-bloom',    label: 'Riveras',   caption: 'Reno',             tone: 'violet',   position: [39.5296, -119.8138] },
+  { id: 'la-north-star',      label: 'Parkers',   caption: 'Los Angeles',      tone: 'warning',  position: [34.0522, -118.2437] },
+  { id: 'pine-mountain-lake', label: 'Basecamp',  caption: 'Pine Mountain Lake',tone: 'success', position: BASECAMP_COORDS },
+  { id: 'yosemite',           label: 'Yosemite',  caption: 'Primary target',   tone: 'muted',    position: [37.8651, -119.5383] },
+]
+
+const MAP_ROUTES = [
+  { id: 'route-north-star',    tone: 'warning', path: [[34.0522,-118.2437],[35.298,-119.148],BASECAMP_COORDS] },
+  { id: 'route-silver-peak',   tone: 'critical',path: [[37.7855,-122.4068],[38.032,-121.86],BASECAMP_COORDS] },
+  { id: 'route-desert-bloom',  tone: 'violet',  path: [[39.5296,-119.8138],BASECAMP_COORDS], dashed: true },
+  { id: 'route-yosemite-day',  tone: 'muted',   path: [BASECAMP_COORDS,[37.861,-119.93],[37.8651,-119.5383]] },
+]
+
+const TONE_COLORS = {
+  critical: '#F85149',
+  warning:  '#D29922',
+  success:  '#3FB950',
+  info:     '#58A6FF',
+  violet:   '#A371F7',
+  muted:    '#4B5563',
+}
+
+const TIMELINE_ROWS = [
+  {
+    label: 'Transit',
+    segments: [
+      { start: 1.75/4, span: 0.92/4, color: 'warning',  label: 'Parkers drive' },
+      { start: 2.09/4, span: 0.58/4, color: 'critical', label: 'Jiangs drive' },
+      { start: 5.33/4, span: 0.83/4, color: 'violet',   label: 'Riveras drive' },
+    ],
+  },
+  {
+    label: 'Main Ops',
+    segments: [
+      { start: 0.7/4,  span: 2.53/4, color: 'critical', label: 'Transit + settle in' },
+      { start: 4/4,    span: 4/4,    color: 'info',     label: 'Pine Mountain Lake day' },
+      { start: 8/4,    span: 4/4,    color: 'warning',  label: 'Yosemite day mission' },
+      { start: 12/4,   span: 3/4,    color: 'success',  label: 'Drive home' },
+    ],
+  },
+  {
+    label: 'Support',
+    segments: [
+      { start: 2/4,  span: 1/4, color: 'muted', label: 'Basecamp check-in' },
+      { start: 4/4,  span: 1/4, color: 'muted', label: 'Groceries & restock' },
+      { start: 7/4,  span: 1/4, color: 'muted', label: 'Yosemite prep window' },
+    ],
+  },
+]
+
+const DAY_BRIEFINGS = {
+  thu: {
+    code: 'Insertion / Consolidation',
+    tone: 'warning',
+    summary: 'Thursday is about getting everyone in cleanly. The main threat is staggered arrival timing, road fatigue, and losing momentum before basecamp is fully online. Win condition: all families reach Pine Mountain Lake, get through the gate, settle basecamp, and keep dinner simple.',
+    lookouts: [
+      'Protect arrival energy. Long-drive families should prioritize clean breaks over pushing nonstop.',
+      'Gate + check-in friction is the main avoidable failure point — keep address, fee, and access details ready.',
+      'Do not over-schedule the evening. Dinner and reset are the operation.',
+    ],
+  },
+  fri: {
+    code: 'Basecamp / Local Ops',
+    tone: 'info',
+    summary: 'Friday is the stabilization day. Everyone is in theater, so the goal shifts from transit to rhythm: house setup, lake access, kid-friendly pacing, and preserving energy for the Yosemite push.',
+    lookouts: [
+      'Parking, beach timing, and family split-ups can create unnecessary overhead if not lightly coordinated.',
+      'Use this day to test house logistics, meal flow, and what each family actually needs before Saturday.',
+      'Avoid turning the lake day into a checklist marathon. The point is to settle in.',
+    ],
+  },
+  sat: {
+    code: 'Yosemite Main Mission',
+    tone: 'critical',
+    summary: 'Saturday is the primary excursion and the highest-complexity day of the trip. This is the longest operating window with the most movement, the most dependency on traffic and timing, and the highest risk of decision fatigue.',
+    lookouts: [
+      'Departure discipline matters more than itinerary ambition. Late starts compound quickly on Yosemite day.',
+      'Weather is on watch — showers are possible. Have the downgraded plan ready before Saturday morning.',
+      'Keep kid energy reserves in mind on the return leg. The evening cookout depends on it.',
+    ],
+  },
+  sun: {
+    code: 'Extraction / RTB',
+    tone: 'success',
+    summary: 'Sunday is the recovery and exit window. The goal is a clean checkout, staggered departures, and preserving the trip energy for the drive home rather than scrambling.',
+    lookouts: [
+      'Pre-pack Saturday night to reduce Sunday morning chaos.',
+      'Stagger departure windows to avoid convoy fatigue at checkout.',
+      'Leave basecamp cleaner than you found it.',
+    ],
+  },
+}
+
+const WEATHER_LOCATIONS = {
+  basecamp:  { label: 'Basecamp',  coordinates: { lat: 37.8586, lng: -120.2142 } },
+  yosemite:  { label: 'Yosemite',  coordinates: { lat: 37.8651, lng: -119.5383 } },
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+
+let state = {
+  activePage: 'itinerary',
+  activeDay: 'all',
+  activeFamilyId: null,
+  selectedEntity: null,
+  expenses: JSON.parse(localStorage.getItem('trip-vanilla/expenses') || 'null') || EXPENSES,
+  checklists: JSON.parse(localStorage.getItem('trip-vanilla/checklists') || 'null') || null,
+  weatherBundles: {},
+  weatherLoading: true,
+}
+
+if (!state.checklists) {
+  state.checklists = {}
+  FAMILIES.forEach(f => {
+    state.checklists[f.id] = f.checklist.map(c => ({ ...c }))
+  })
+}
+
+function saveState() {
+  localStorage.setItem('trip-vanilla/expenses', JSON.stringify(state.expenses))
+  localStorage.setItem('trip-vanilla/checklists', JSON.stringify(state.checklists))
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAP
+// ─────────────────────────────────────────────────────────────────────────────
+
+let map, mapLayers = {}
+
+function initMap() {
+  map = L.map('map', {
+    center: [37.0, -119.8],
+    zoom: 7,
+    zoomControl: false,
+    attributionControl: false,
+  })
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19,
+  }).addTo(map)
+
+  L.control.zoom({ position: 'bottomright' }).addTo(map)
+
+  renderMapFeatures()
+}
+
+function renderMapFeatures() {
+  // Clear existing
+  Object.values(mapLayers).forEach(l => { try { map.removeLayer(l) } catch(e) {} })
+  mapLayers = {}
+
+  const dayFilter = state.activeDay
+
+  // Routes
+  MAP_ROUTES.forEach(route => {
+    const color = TONE_COLORS[route.tone] || '#8B949E'
+    const layer = L.polyline(route.path, {
+      color,
+      weight: 2,
+      opacity: 0.75,
+      dashArray: route.dashed ? '6 4' : null,
+    }).addTo(map)
+    mapLayers['route_' + route.id] = layer
+  })
+
+  // Points
+  MAP_POINTS.forEach(pt => {
+    const color = TONE_COLORS[pt.tone] || '#8B949E'
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="
+        background:rgba(22,27,34,0.93);
+        border: 1.5px solid ${color};
+        border-radius: 3px;
+        padding: 3px 7px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        font-weight: 700;
+        color: ${color};
+        white-space: nowrap;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+        backdrop-filter: blur(4px);
+      ">${pt.label}</div>`,
+      iconAnchor: [20, 10],
+    })
+
+    const marker = L.marker(pt.position, { icon })
+      .addTo(map)
+      .bindTooltip(`<b>${pt.label}</b><br><span style="color:#8B949E">${pt.caption}</span>`, {
+        permanent: false,
+        direction: 'top',
+        className: 'dark-tooltip',
+      })
+
+    marker.on('click', () => selectEntity({ type: 'mappoint', ...pt }))
+    mapLayers['point_' + pt.id] = marker
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WEATHER
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function fetchWeatherBundle(loc) {
+  try {
+    const r = await fetch(`https://api.weather.gov/points/${loc.coordinates.lat},${loc.coordinates.lng}`, {
+      headers: { Accept: 'application/geo+json' }
+    })
+    if (!r.ok) throw new Error('points failed')
+    const pts = await r.json()
+    const props = pts.properties || {}
+    const relLoc = props.relativeLocation?.properties
+
+    const [forecastResp, hourlyResp] = await Promise.all([
+      props.forecast ? fetch(props.forecast, { headers: { Accept: 'application/geo+json' } }) : null,
+      props.forecastHourly ? fetch(props.forecastHourly, { headers: { Accept: 'application/geo+json' } }) : null,
+    ])
+
+    const forecast = forecastResp?.ok ? await forecastResp.json() : null
+    const hourly   = hourlyResp?.ok   ? await hourlyResp.json()   : null
+
+    const forecastPeriods = forecast?.properties?.periods || []
+    const hourlyPeriods   = hourly?.properties?.periods   || []
+    const live0 = hourlyPeriods[0]
+
+    return {
+      label: loc.label,
+      placeLabel: relLoc ? `${relLoc.city || loc.label}, ${relLoc.state || ''}`.replace(/, $/, '') : loc.label,
+      forecastPeriods,
+      live: {
+        summary: live0?.shortForecast || 'Forecast pending',
+        temperature: live0 ? `${live0.temperature} ${live0.temperatureUnit || 'F'}` : '--',
+        timestamp: live0?.startTime || null,
+      },
+    }
+  } catch (err) {
+    return null
+  }
+}
+
+async function loadWeather() {
+  document.getElementById('weather-status').textContent = 'Fetching weather…'
+  const entries = await Promise.all(
+    Object.entries(WEATHER_LOCATIONS).map(async ([key, loc]) => {
+      const bundle = await fetchWeatherBundle(loc)
+      return [key, bundle]
+    })
+  )
+  entries.forEach(([key, bundle]) => {
+    if (bundle) state.weatherBundles[key] = bundle
+  })
+  state.weatherLoading = false
+
+  const wstatus = document.getElementById('weather-status')
+  if (Object.keys(state.weatherBundles).length > 0) {
+    wstatus.textContent = 'Live weather'
+  } else {
+    wstatus.textContent = 'Weather unavailable'
+    wstatus.classList.remove('live')
+  }
+
+  renderWeatherWidget()
+  renderDayGrid() // update with live weather
+}
+
+function getLiveTempForDay(dayId) {
+  const targets = { thu: 'basecamp', fri: 'basecamp', sat: 'yosemite', sun: 'basecamp' }
+  const key = targets[dayId]
+  const bundle = state.weatherBundles[key]
+  if (!bundle) return null
+
+  const day = DAYS.find(d => d.id === dayId)
+  if (!day) return null
+  const match = day.shortLabel.match(/(\d{1,2})\/(\d{1,2})/)
+  if (!match) return null
+
+  const year = new Date().getFullYear()
+  const targetDate = new Date(Date.UTC(year, Number(match[1])-1, Number(match[2]))).toISOString().slice(0,10)
+
+  const period = bundle.forecastPeriods.find(p =>
+    p.startTime?.slice(0,10) === targetDate && p.isDaytime
+  ) || bundle.forecastPeriods.find(p => p.startTime?.slice(0,10) === targetDate)
+
+  if (period) {
+    return { temp: `${period.temperature} ${period.temperatureUnit||'F'}`, summary: period.shortForecast }
+  }
+  return null
+}
+
+function renderWeatherWidget() {
+  const el = document.getElementById('weather-widget')
+  if (!el) return
+
+  const bundles = Object.entries(state.weatherBundles)
+  if (bundles.length === 0) {
+    el.innerHTML = ''
+    return
+  }
+
+  el.innerHTML = bundles.map(([key, bundle]) => `
+    <div class="weather-card ${key === 'basecamp' ? 'active' : ''}">
+      <div class="weather-place">${bundle.placeLabel || key}</div>
+      <div class="weather-temp">${bundle.live.temperature}</div>
+      <div class="weather-desc">${bundle.live.summary}</div>
+    </div>
+  `).join('')
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER: DAY GRID
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderDayGrid() {
+  const el = document.getElementById('day-grid')
+  const allBtn = `
+    <button class="day-btn ${state.activeDay==='all'?'active':''}" data-day="all" style="grid-column:1/-1">
+      <div class="day-btn-label">All Days</div>
+      <div class="day-btn-title">Full Weekend</div>
+    </button>
+  `
+  const dayBtns = DAYS.map(d => {
+    const liveWeather = getLiveTempForDay(d.id)
+    const weatherText = liveWeather ? `${liveWeather.temp} · ${liveWeather.summary}` : `${d.temperature} · ${d.weather}`
+    return `
+      <button class="day-btn ${state.activeDay===d.id?'active':''}" data-day="${d.id}">
+        <div class="day-btn-label">${d.shortLabel}</div>
+        <div class="day-btn-title">${d.title}</div>
+        <div class="day-btn-weather">${weatherText}</div>
+      </button>
+    `
+  }).join('')
+
+  el.innerHTML = allBtn + dayBtns
+
+  el.querySelectorAll('.day-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.activeDay = btn.dataset.day
+      renderDayGrid()
+      document.getElementById('map-day-pill').textContent = btn.dataset.day === 'all' ? 'All Days' : DAYS.find(d=>d.id===btn.dataset.day)?.shortLabel || 'All Days'
+    })
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER: FAMILY LIST (sidebar)
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderFamilyList() {
+  const el = document.getElementById('family-list')
+  el.innerHTML = FAMILIES.map(f => {
+    const checklist = state.checklists[f.id] || []
+    const done = checklist.filter(c => c.done).length
+    const readiness = checklist.length ? Math.round((done/checklist.length)*100) : 100
+    return `
+      <div class="family-item ${state.activeFamilyId===f.id?'active':''}" data-family="${f.id}">
+        <div class="family-dot" style="background:${f.color}"></div>
+        <div style="flex:1; min-width:0">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span class="family-name">${f.name}</span>
+            <span class="family-origin">${f.shortOrigin}</span>
+          </div>
+          <div class="readiness-bar-wrap">
+            <div class="readiness-bar" style="width:${readiness}%; background:${f.color}"></div>
+          </div>
+        </div>
+        <div class="family-readiness" style="color:${f.color}">${readiness}%</div>
+      </div>
+    `
+  }).join('')
+
+  el.querySelectorAll('.family-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const fid = item.dataset.family
+      state.activeFamilyId = state.activeFamilyId === fid ? null : fid
+      renderFamilyList()
+      const family = FAMILIES.find(f => f.id === fid)
+      if (family) selectEntity({ type: 'family', ...family })
+    })
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER: TIMELINE
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderTimeline() {
+  const el = document.getElementById('timeline-grid')
+
+  const header = `
+    <div class="timeline-header">
+      <div></div>
+      ${DAYS.map(d => `<div class="timeline-day-label">${d.shortLabel}</div>`).join('')}
+    </div>
+  `
+
+  const rows = TIMELINE_ROWS.map(row => {
+    const segs = row.segments.map(seg => {
+      const color = TONE_COLORS[seg.color] || '#8B949E'
+      const left = (seg.start * 100).toFixed(2)
+      const width = (seg.span * 100).toFixed(2)
+      return `
+        <div class="timeline-seg"
+          style="left:${left}%; width:${width}%; background:${color}18; border-left-color:${color}; color:${color}">
+          ${seg.label}
+        </div>
+      `
+    }).join('')
+
+    return `
+      <div class="timeline-row">
+        <div class="timeline-row-label">${row.label}</div>
+        <div class="timeline-track">${segs}</div>
+      </div>
+    `
+  }).join('')
+
+  el.innerHTML = header + rows
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER: MEALS
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderMeals() {
+  const tbody = document.getElementById('meals-tbody')
+  tbody.innerHTML = MEALS.map(m => `
+    <tr>
+      <td><span class="badge badge-muted">${m.day}</span></td>
+      <td style="font-weight:500">${m.meal}</td>
+      <td style="color:var(--muted2)">${m.owner}</td>
+      <td><span class="badge ${m.status==='Assigned'?'badge-info':'badge-warning'}">${m.status}</span></td>
+      <td style="color:var(--muted2); font-size:11px">${m.note}</td>
+    </tr>
+  `).join('')
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER: ACTIVITIES
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderActivities() {
+  const el = document.getElementById('activities-grid')
+  el.innerHTML = ACTIVITIES.map(a => {
+    const badgeClass = a.status==='Go' ? 'badge-success' : a.status==='Watch' ? 'badge-warning' : 'badge-muted'
+    return `
+      <div class="card" data-activity="${a.id}">
+        <div class="card-header">
+          <div class="card-title">${a.title}</div>
+          <span class="badge ${badgeClass}">${a.status}</span>
+        </div>
+        <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.08em; color:var(--muted); margin-bottom:6px">${a.window}</div>
+        <div class="card-body">${a.description}</div>
+        ${a.backup ? `<div style="margin-top:8px; font-size:10px; color:var(--warning); padding:6px 8px; background:rgba(210,153,34,0.06); border-radius:2px; border-left:2px solid var(--warning)">⚠ ${a.backup}</div>` : ''}
+      </div>
+    `
+  }).join('')
+
+  el.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+      el.querySelectorAll('.card').forEach(c => c.classList.remove('active'))
+      card.classList.add('active')
+      const activity = ACTIVITIES.find(a => a.id === card.dataset.activity)
+      if (activity) selectEntity({ type: 'activity', ...activity })
+    })
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER: EXPENSES
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderExpenses() {
+  const tbody = document.getElementById('expenses-tbody')
+  tbody.innerHTML = state.expenses.map(e => `
+    <tr class="${e.settled ? 'settled' : ''}" data-expense="${e.id}" style="cursor:pointer">
+      <td style="font-weight:500">${e.label}</td>
+      <td style="color:var(--muted2)">${e.payer}</td>
+      <td style="font-family:var(--font-mono); font-weight:600">${e.amount ? '$' + e.amount.toLocaleString() : '—'}</td>
+      <td style="color:var(--muted2)">${e.split}</td>
+      <td>
+        <span class="badge ${e.settled ? 'badge-success' : 'badge-muted'}">${e.settled ? 'Settled' : 'Pending'}</span>
+      </td>
+    </tr>
+  `).join('')
+
+  tbody.querySelectorAll('tr').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = row.dataset.expense
+      const expense = state.expenses.find(e => e.id === id)
+      if (expense) selectEntity({ type: 'expense', ...expense })
+    })
+    row.addEventListener('dblclick', () => {
+      const id = row.dataset.expense
+      state.expenses = state.expenses.map(e => e.id===id ? {...e, settled: !e.settled} : e)
+      saveState()
+      renderExpenses()
+    })
+  })
+
+  const total = state.expenses.reduce((sum, e) => sum + (e.amount||0), 0)
+  const settled = state.expenses.filter(e => e.settled).reduce((sum, e) => sum + (e.amount||0), 0)
+  document.getElementById('expense-totals').innerHTML = `
+    <div class="expense-total-row">
+      <span class="expense-total-label">Total</span>
+      <span class="expense-total-val">$${total.toLocaleString()}</span>
+    </div>
+    <div class="expense-total-row" style="border-top:none; padding-top:0">
+      <span class="expense-total-label" style="color:var(--muted)">Settled</span>
+      <span style="font-family:var(--font-mono); font-size:12px; color:var(--success)">$${settled.toLocaleString()}</span>
+    </div>
+  `
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER: FAMILIES PAGE
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderFamiliesPage() {
+  const el = document.getElementById('families-content')
+  el.innerHTML = FAMILIES.map(f => {
+    const checklist = state.checklists[f.id] || []
+    const done = checklist.filter(c => c.done).length
+    const readiness = checklist.length ? Math.round((done/checklist.length)*100) : 100
+
+    const checkItems = checklist.map(c => `
+      <div class="check-item ${c.done?'done':''}" data-family="${f.id}" data-check="${c.id}">
+        <div class="check-box">${c.done ? '✓' : ''}</div>
+        <span class="check-label">${c.label}</span>
+      </div>
+    `).join('')
+
+    return `
+      <div style="margin-bottom:16px; background:var(--surface); border:1px solid var(--border2); border-radius:4px; overflow:hidden; border-left:3px solid ${f.color}">
+        <div style="padding:12px 14px; border-bottom:1px solid var(--border2); display:flex; align-items:center; gap:12px">
+          <div>
+            <div style="font-size:14px; font-weight:600">${f.name}</div>
+            <div style="font-size:11px; color:var(--muted2); margin-top:2px">${f.origin} · ${f.driveTime} · ${f.headcount}</div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="text-align:right">
+            <div style="font-family:var(--font-mono); font-size:18px; font-weight:700; color:${f.color}">${readiness}%</div>
+            <div style="font-family:var(--font-mono); font-size:9px; color:var(--muted); letter-spacing:0.06em">READINESS</div>
+          </div>
+        </div>
+        <div style="padding:10px 14px; border-bottom:1px solid var(--border2); display:flex; gap:16px; flex-wrap:wrap">
+          <div><span style="font-family:var(--font-mono); font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em">Status</span><br><span class="badge badge-info" style="margin-top:3px; display:inline-block">${f.status}</span></div>
+          <div><span style="font-family:var(--font-mono); font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em">ETA</span><br><span style="font-size:12px; font-weight:500">${f.eta}</span></div>
+          <div><span style="font-family:var(--font-mono); font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em">Task</span><br><span style="font-size:12px; color:var(--muted2)">${f.responsibility}</span></div>
+        </div>
+        <div style="padding:10px 14px">
+          <div style="font-family:var(--font-mono); font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:6px">Checklist</div>
+          <div class="checklist">${checkItems}</div>
+        </div>
+      </div>
+    `
+  }).join('')
+
+  el.querySelectorAll('.check-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const fid = item.dataset.family
+      const cid = item.dataset.check
+      const list = state.checklists[fid] || []
+      state.checklists[fid] = list.map(c => c.id===cid ? {...c, done: !c.done} : c)
+      saveState()
+      renderFamiliesPage()
+      renderFamilyList()
+    })
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER: STAY
+// ─────────────────────────────────────────────────────────────────────────────
+
+function renderStay() {
+  const el = document.getElementById('stay-content')
+
+  const photos = STAY_DETAILS.photos.map(p => `
+    <img class="inspector-img" src="${p.url}" alt="${p.label}" onerror="this.style.display='none'" />
+  `).join('')
+
+  const opsItems = STAY_DETAILS.houseOps.map((op, i) => `
+    <div class="ops-item">
+      <span class="ops-num">0${i+1}</span>
+      <span>${op}</span>
+    </div>
+  `).join('')
+
+  const rooms = STAY_DETAILS.rooms.map(r => `
+    <div class="room-card">
+      <div class="room-label">${r.label}</div>
+      <div class="room-assign">${r.assignment}</div>
+    </div>
+  `).join('')
+
+  const briefingCards = DAYS.map(d => {
+    const b = DAY_BRIEFINGS[d.id]
+    const color = TONE_COLORS[b.tone] || '#8B949E'
+    return `
+      <div class="briefing-card" style="border-left:3px solid ${color}">
+        <div class="briefing-code" style="color:${color}">${d.shortLabel} — ${b.code}</div>
+        <div class="briefing-summary">${b.summary}</div>
+        <div class="briefing-lookouts">
+          ${b.lookouts.map(l => `<div class="briefing-lookout">${l}</div>`).join('')}
+        </div>
+      </div>
+    `
+  }).join('')
+
+  el.innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:16px">
+      ${photos}
+    </div>
+
+    <div style="margin-bottom:20px">
+      <div class="sidebar-label">Check-in Details</div>
+      <div class="inspector-kv" style="margin-bottom:4px">
+        <span class="inspector-key">Check-in</span><span class="inspector-val">After 4:00 PM</span>
+        <span class="inspector-key">Check-out</span><span class="inspector-val">Before 11:00 AM</span>
+        <span class="inspector-key">Location</span><span class="inspector-val">Pine Mountain Lake, Groveland, CA 95321</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:20px">
+      <div class="sidebar-label">House Operations</div>
+      <div class="ops-list">${opsItems}</div>
+    </div>
+
+    <div style="margin-bottom:20px">
+      <div class="sidebar-label">Room Assignments</div>
+      <div class="room-grid">${rooms}</div>
+    </div>
+
+    <div>
+      <div class="sidebar-label">Day Briefings</div>
+      ${briefingCards}
+    </div>
+  `
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INSPECTOR
+// ─────────────────────────────────────────────────────────────────────────────
+
+function selectEntity(entity) {
+  state.selectedEntity = entity
+  renderInspector()
+}
+
+function renderInspector() {
+  const entity = state.selectedEntity
+  const typeEl  = document.getElementById('inspector-type')
+  const titleEl = document.getElementById('inspector-title')
+  const bodyEl  = document.getElementById('inspector-body')
+
+  if (!entity) {
+    typeEl.textContent = '—'
+    titleEl.textContent = 'Select an item'
+    bodyEl.innerHTML = '<div style="color:var(--muted); font-size:11px; padding-top:8px">Click any item to inspect it here.</div>'
+    return
+  }
+
+  typeEl.textContent = entity.type
+  titleEl.textContent = entity.title || entity.name || entity.label || entity.meal || entity.id
+
+  let html = ''
+
+  if (entity.type === 'family') {
+    const family = FAMILIES.find(f => f.id === entity.id) || entity
+    const checklist = state.checklists[family.id] || []
+    const done = checklist.filter(c => c.done).length
+    const pct = checklist.length ? Math.round((done/checklist.length)*100) : 100
+
+    html = `
+      <div class="inspector-section">
+        <div class="inspector-section-label">Status</div>
+        <div class="inspector-kv">
+          <span class="inspector-key">Origin</span><span class="inspector-val">${family.origin}</span>
+          <span class="inspector-key">ETA</span><span class="inspector-val">${family.eta}</span>
+          <span class="inspector-key">Drive</span><span class="inspector-val">${family.driveTime}</span>
+          <span class="inspector-key">Party</span><span class="inspector-val">${family.headcount}</span>
+          <span class="inspector-key">Task</span><span class="inspector-val">${family.responsibility}</span>
+          <span class="inspector-key">Readiness</span><span class="inspector-val" style="color:${family.color};font-weight:600">${pct}%</span>
+        </div>
+      </div>
+      <div class="inspector-section">
+        <div class="inspector-section-label">Route</div>
+        <div class="inspector-note">${family.routeSummary}</div>
+      </div>
+      <div class="inspector-section">
+        <div class="inspector-section-label">Checklist (${done}/${checklist.length})</div>
+        <div class="checklist">
+          ${checklist.map(c => `
+            <div class="check-item ${c.done?'done':''}" data-family="${family.id}" data-check="${c.id}" style="cursor:pointer">
+              <div class="check-box">${c.done?'✓':''}</div>
+              <span class="check-label">${c.label}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `
+  } else if (entity.type === 'activity') {
+    const badgeClass = entity.status==='Go' ? 'badge-success' : entity.status==='Watch' ? 'badge-warning' : 'badge-muted'
+    html = `
+      <div class="inspector-section">
+        <div style="display:flex; gap:8px; margin-bottom:10px; align-items:center">
+          <span class="badge ${badgeClass}">${entity.status}</span>
+          <span style="font-family:var(--font-mono); font-size:9px; color:var(--muted); letter-spacing:0.06em">${entity.window}</span>
+        </div>
+        <div class="inspector-note">${entity.description}</div>
+      </div>
+      ${entity.backup ? `
+        <div class="inspector-section">
+          <div class="inspector-section-label">Backup Plan</div>
+          <div style="font-size:11px; color:var(--warning); padding:8px; background:rgba(210,153,34,0.06); border-radius:3px; border-left:2px solid var(--warning); line-height:1.6">${entity.backup}</div>
+        </div>
+      ` : ''}
+    `
+  } else if (entity.type === 'expense') {
+    html = `
+      <div class="inspector-section">
+        <div class="inspector-kv">
+          <span class="inspector-key">Payer</span><span class="inspector-val">${entity.payer}</span>
+          <span class="inspector-key">Amount</span><span class="inspector-val" style="font-family:var(--font-mono); font-weight:600">${entity.amount ? '$' + entity.amount.toLocaleString() : '—'}</span>
+          <span class="inspector-key">Split</span><span class="inspector-val">${entity.split}</span>
+          <span class="inspector-key">Status</span><span class="inspector-val"><span class="badge ${entity.settled?'badge-success':'badge-muted'}">${entity.settled?'Settled':'Pending'}</span></span>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <button onclick="toggleExpenseFromInspector('${entity.id}')" style="
+          font-family:var(--font-mono); font-size:10px; letter-spacing:0.06em; text-transform:uppercase;
+          background:${entity.settled?'rgba(248,81,73,0.1)':'rgba(63,185,80,0.1)'};
+          border:1px solid ${entity.settled?'var(--critical)':'var(--success)'};
+          color:${entity.settled?'var(--critical)':'var(--success)'};
+          padding:5px 12px; border-radius:2px; cursor:pointer; width:100%
+        ">
+          ${entity.settled ? 'Mark Pending' : 'Mark Settled'}
+        </button>
+      </div>
+    `
+  } else if (entity.type === 'mappoint') {
+    html = `
+      <div class="inspector-section">
+        <div class="inspector-kv">
+          <span class="inspector-key">Location</span><span class="inspector-val">${entity.caption}</span>
+        </div>
+      </div>
+    `
+    const dayBriefing = entity.id === 'pine-mountain-lake' ? DAY_BRIEFINGS['fri'] : entity.id === 'yosemite' ? DAY_BRIEFINGS['sat'] : null
+    if (dayBriefing) {
+      const color = TONE_COLORS[dayBriefing.tone]
+      html += `
+        <div class="inspector-section">
+          <div class="inspector-section-label">Mission Brief</div>
+          <div class="briefing-card" style="border-left:2px solid ${color}; margin:0">
+            <div class="briefing-code" style="color:${color}">${dayBriefing.code}</div>
+            <div class="briefing-summary" style="font-size:11px">${dayBriefing.summary}</div>
+          </div>
+        </div>
+      `
+    }
+  } else {
+    html = `
+      <div class="inspector-section">
+        <div class="inspector-note">${entity.description || entity.summary || entity.note || 'No additional details.'}</div>
+      </div>
+    `
+  }
+
+  bodyEl.innerHTML = html
+
+  // Re-attach checklist events
+  bodyEl.querySelectorAll('.check-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const fid = item.dataset.family
+      const cid = item.dataset.check
+      const list = state.checklists[fid] || []
+      state.checklists[fid] = list.map(c => c.id===cid ? {...c, done: !c.done} : c)
+      saveState()
+      renderFamilyList()
+      renderInspector()
+      if (state.activePage === 'families') renderFamiliesPage()
+    })
+  })
+}
+
+function toggleExpenseFromInspector(id) {
+  state.expenses = state.expenses.map(e => e.id===id ? {...e, settled: !e.settled} : e)
+  saveState()
+  renderExpenses()
+  const expense = state.expenses.find(e => e.id===id)
+  if (expense) selectEntity({ type: 'expense', ...expense })
+}
+window.toggleExpenseFromInspector = toggleExpenseFromInspector
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAGE NAVIGATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+function setPage(pageId) {
+  state.activePage = pageId
+
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.page === pageId)
+  })
+
+  document.querySelectorAll('.page').forEach(page => {
+    page.classList.toggle('active', page.id === 'page-' + pageId)
+  })
+
+  if (pageId === 'itinerary' && map) {
+    setTimeout(() => map.invalidateSize(), 50)
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Nav
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => setPage(btn.dataset.page))
+  })
+
+  // Init components
+  renderDayGrid()
+  renderFamilyList()
+  renderTimeline()
+  renderMeals()
+  renderActivities()
+  renderExpenses()
+  renderFamiliesPage()
+  renderStay()
+
+  // Init map
+  initMap()
+
+  // Load weather async
+  loadWeather()
+
+  // Select first activity by default
+  selectEntity({ type: 'activity', ...ACTIVITIES[0] })
+})
+</script>
+</body>
+</html>
