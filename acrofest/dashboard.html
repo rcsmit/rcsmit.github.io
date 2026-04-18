@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AcroFest 2025 — Command Center</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand:#5B9E6E; --brand-2:#3A7D52; --brand-subtle:#EAF4EE;
+  --warm:#E8A84C; --warm-sub:#FDF3E1;
+  --sky:#4A89B0; --sky-sub:#E5F0F8;
+  --rose:#C4706A; --rose-sub:#F9EAE9;
+  --violet:#7A6E9E; --violet-sub:#F0EEF8;
+  --gold:#C9A84C; --gold-sub:#FBF5E0;
+  --bg:#F3F6F3; --surface:#FAFCFA; --surface-2:#EDF2ED;
+  --border:#D6E4D8; --border-strong:#B0C8B4;
+  --text:#152318; --text-2:#3A5440; --muted:#7A9880;
+  --shadow-sm:0 1px 3px rgba(30,80,40,.07),0 0 0 1px rgba(30,80,40,.04);
+  --shadow-md:0 4px 16px rgba(30,80,40,.09),0 1px 4px rgba(30,80,40,.05);
+  --shadow-lg:0 12px 40px rgba(30,80,40,.11),0 2px 8px rgba(30,80,40,.06);
+  --nav-w:52px; --sb-w:240px; --rp-w:270px; --r:10px; --rs:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;font-size:13px;line-height:1.5;}
+
+/* ── TOPBAR */
+.topbar{height:44px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0;box-shadow:var(--shadow-sm);z-index:100;}
+.tb-logo{font-family:'DM Serif Display',serif;font-size:15px;color:var(--brand-2);white-space:nowrap;}
+.tb-logo span{color:var(--warm);font-style:italic;}
+.tb-div{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+.tb-sub{font-size:10.5px;font-weight:500;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;}
+.tb-sp{flex:1;}
+.tb-pill{padding:3px 10px;background:var(--warm-sub);color:var(--warm);border-radius:99px;font-size:10px;font-weight:600;letter-spacing:.04em;}
+.tb-search{display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--rs);padding:5px 10px;font-size:11.5px;color:var(--muted);cursor:text;min-width:170px;}
+.tb-btn{padding:5px 12px;border-radius:var(--rs);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-2);transition:all .15s;font-family:inherit;}
+.tb-btn:hover{background:var(--surface-2);}
+.tb-btn.pri{background:var(--brand-subtle);color:var(--brand-2);}
+.tb-btn.pri:hover{background:var(--brand);color:white;}
+
+/* ── LAYOUT */
+.app-body{display:flex;flex:1;overflow:hidden;}
+
+/* ── LEFT ICON NAV */
+.nav{width:var(--nav-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:2px;flex-shrink:0;}
+.ni{width:38px;height:38px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;color:var(--muted);transition:all .15s;font-size:16px;position:relative;}
+.ni:hover{background:var(--surface-2);color:var(--text-2);}
+.ni.active{background:var(--brand-subtle);color:var(--brand-2);}
+.ni-sp{flex:1;}
+.ni-tip{position:absolute;left:46px;top:50%;transform:translateY(-50%);background:#1A2A1E;color:#fff;font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s;z-index:300;}
+.ni:hover .ni-tip{opacity:1;}
+
+/* ── SIDEBAR */
+.sidebar{width:var(--sb-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+.sb-hdr{padding:14px 16px 10px;border-bottom:1px solid var(--border);}
+.sb-ey{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.sb-title{font-family:'DM Serif Display',serif;font-size:15px;color:var(--text);line-height:1.2;}
+.sb-scroll{flex:1;overflow-y:auto;padding:8px 0;}
+.sb-scroll::-webkit-scrollbar{width:3px;}
+.sb-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.sb-section-lbl{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:10px 16px 4px;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;border-left:2px solid transparent;transition:all .12s;font-size:12.5px;font-weight:500;color:var(--text-2);}
+.sb-item:hover{background:var(--surface-2);color:var(--text);}
+.sb-item.active{background:var(--brand-subtle);border-left-color:var(--brand-2);color:var(--brand-2);font-weight:600;}
+.sb-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0;}
+.sb-badge{margin-left:auto;background:var(--brand);color:white;font-size:9.5px;font-weight:700;border-radius:99px;padding:1px 7px;min-width:20px;text-align:center;}
+.sb-sep{height:1px;background:var(--border);margin:6px 16px;}
+.sb-ftr{padding:10px 16px;border-top:1px solid var(--border);}
+.sb-add{width:100%;padding:8px;background:var(--brand-subtle);border:1px dashed var(--border-strong);border-radius:var(--rs);color:var(--brand-2);font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit;}
+.sb-add:hover{background:var(--brand);color:white;border-style:solid;}
+
+/* Schedule sidebar items */
+.day-grp{margin-bottom:2px;}
+.day-hdr{padding:6px 16px 3px;display:flex;align-items:center;gap:7px;cursor:pointer;}
+.day-dot{width:7px;height:7px;border-radius:50%;background:var(--brand);flex-shrink:0;}
+.day-dot.warm{background:var(--warm);} .day-dot.sky{background:var(--sky);} .day-dot.rose{background:var(--rose);}
+.day-lbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.day-name{font-size:11px;font-weight:500;color:var(--text-2);flex:1;}
+.day-cnt{font-size:10px;color:var(--muted);}
+.sess-item{padding:7px 16px 7px 28px;cursor:pointer;display:flex;align-items:flex-start;gap:8px;border-left:2px solid transparent;transition:all .12s;}
+.sess-item:hover{background:var(--surface-2);}
+.sess-item.active{background:var(--brand-subtle);border-left-color:var(--brand-2);}
+.sess-time{font-size:10px;font-weight:600;color:var(--muted);min-width:36px;padding-top:1px;font-variant-numeric:tabular-nums;}
+.sess-info{flex:1;min-width:0;}
+.sess-name{font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sess-sub{font-size:10px;color:var(--muted);margin-top:1px;}
+.sess-badge{font-size:9px;font-weight:600;padding:2px 5px;border-radius:3px;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
+.b-class{background:var(--brand-subtle);color:var(--brand-2);}
+.b-jam{background:var(--warm-sub);color:var(--warm);}
+.b-workshop{background:var(--sky-sub);color:var(--sky);}
+.b-performance{background:var(--rose-sub);color:var(--rose);}
+.b-social{background:var(--surface-2);color:var(--muted);}
+
+/* ── MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+.main-content{flex:1;overflow-y:auto;padding:22px 26px;}
+.main-content::-webkit-scrollbar{width:4px;}
+.main-content::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.view{display:none;animation:fadeIn .15s ease;}
+.view.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ── TYPOGRAPHY */
+.page-ey{font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-2);margin-bottom:5px;}
+.page-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);line-height:1.15;margin-bottom:5px;}
+.page-meta{font-size:11.5px;color:var(--muted);margin-bottom:18px;display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+
+/* ── CARDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-sm);padding:16px;transition:box-shadow .15s;}
+.card:hover{box-shadow:var(--shadow-md);}
+.card-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;}
+
+/* Stat card */
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow-sm);}
+.stat-n{font-family:'DM Serif Display',serif;font-size:28px;color:var(--text);line-height:1;margin-bottom:3px;}
+.stat-l{font-size:10.5px;color:var(--muted);font-weight:500;}
+.prog{height:4px;background:var(--surface-2);border-radius:2px;margin-top:8px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;background:var(--brand);transition:width .4s;}
+.prog-fill.warm{background:var(--warm);} .prog-fill.sky{background:var(--sky);} .prog-fill.rose{background:var(--rose);}
+
+/* Highlight */
+.hl{border-radius:var(--r);padding:12px 16px;margin-bottom:14px;font-size:12px;line-height:1.65;display:flex;gap:12px;}
+.hl.green{background:var(--brand-subtle);border:1px solid #B8D9BF;color:#1E4A2A;}
+.hl.warm{background:var(--warm-sub);border:1px solid #E8C97A;color:#6B4A10;}
+.hl.sky{background:var(--sky-sub);border:1px solid #A8CCE0;color:#1E4060;}
+.hl.rose{background:var(--rose-sub);border:1px solid #E8A8A5;color:#6B2020;}
+.hl-icon{font-size:17px;flex-shrink:0;margin-top:1px;}
+
+/* Info rows */
+.ir{display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid var(--surface-2);font-size:11.5px;}
+.ir:last-child{border-bottom:none;}
+.ir-lbl{font-weight:600;color:var(--muted);min-width:115px;flex-shrink:0;padding-top:1px;font-size:10.5px;}
+.ir-val{color:var(--text-2);line-height:1.5;}
+
+/* Pills */
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;margin:2px 2px 2px 0;}
+.pill.green{background:var(--brand-subtle);color:var(--brand-2);}
+.pill.warm{background:var(--warm-sub);color:var(--warm);}
+.pill.sky{background:var(--sky-sub);color:var(--sky);}
+.pill.rose{background:var(--rose-sub);color:var(--rose);}
+.pill.violet{background:var(--violet-sub);color:var(--violet);}
+.pill.gold{background:var(--gold-sub);color:var(--gold);}
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:500;margin:2px 2px 2px 0;}
+.tag.beg{background:var(--brand-subtle);color:var(--brand-2);}
+.tag.int{background:var(--sky-sub);color:var(--sky);}
+.tag.adv{background:var(--rose-sub);color:var(--rose);}
+.tag.all{background:var(--warm-sub);color:var(--warm);}
+
+/* Checklist */
+.cr{display:flex;align-items:center;gap:8px;padding:6px 0;cursor:pointer;font-size:11.5px;color:var(--text-2);border-bottom:1px solid var(--surface-2);transition:color .1s;}
+.cr:last-child{border-bottom:none;}
+.cr:hover{color:var(--text);}
+.cr.done{text-decoration:line-through;color:var(--muted);}
+.chk{width:14px;height:14px;border-radius:3px;border:1.5px solid var(--border-strong);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;color:white;transition:all .15s;}
+.chk.on{background:var(--brand);border-color:var(--brand);}
+
+/* Weather */
+.wx-stripe{display:flex;gap:8px;margin-bottom:14px;}
+.wx{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;box-shadow:var(--shadow-sm);text-align:center;}
+.wx-day{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;}
+.wx-ico{font-size:18px;margin-bottom:3px;}
+.wx-temp{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);}
+.wx-desc{font-size:9.5px;color:var(--muted);}
+
+/* Timeline */
+.tl-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--surface-2);}
+.tl-item:last-child{border-bottom:none;}
+.tl-time{font-size:10.5px;font-weight:600;color:var(--muted);min-width:42px;font-variant-numeric:tabular-nums;padding-top:2px;}
+.tl-dc{display:flex;flex-direction:column;align-items:center;width:16px;padding-top:5px;}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--brand);}
+.tl-dot.warm{background:var(--warm);} .tl-dot.sky{background:var(--sky);} .tl-dot.rose{background:var(--rose);}
+.tl-n{font-size:12px;font-weight:600;color:var(--text);line-height:1.3;}
+.tl-d{font-size:10.5px;color:var(--muted);margin-top:1px;}
+
+/* People */
+.prow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--surface-2);font-size:11.5px;}
+.prow:last-child{border-bottom:none;}
+.pav{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;}
+.pname{font-weight:500;color:var(--text);flex:1;}
+.prole{font-size:10px;color:var(--muted);}
+.fac-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 5px;background:var(--surface-2);border:1px solid var(--border);border-radius:99px;margin:2px;font-size:11px;color:var(--text-2);font-weight:500;}
+.fac-av{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0;}
+
+/* People grid */
+.ppl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+.ppl-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 10px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;}
+.ppl-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:white;}
+.ppl-name{font-weight:600;font-size:12px;color:var(--text);}
+.ppl-role{font-size:10.5px;color:var(--muted);}
+.ppl-cnt{font-size:10px;color:var(--brand-2);font-weight:600;}
+
+/* Activity cards */
+.act-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow-sm);display:flex;gap:14px;align-items:flex-start;margin-bottom:10px;}
+.act-ico{width:40px;height:40px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.act-name{font-weight:600;font-size:13px;color:var(--text);margin-bottom:3px;}
+.act-desc{font-size:11.5px;color:var(--text-2);line-height:1.6;}
+
+/* Note area */
+.note-wrap{border:1px solid var(--border);border-radius:var(--r);background:var(--surface);overflow:hidden;margin-bottom:14px;box-shadow:var(--shadow-sm);}
+.note-hdr{padding:9px 14px;border-bottom:1px solid var(--surface-2);display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);}
+.note-link{font-size:10px;color:var(--brand-2);cursor:pointer;font-weight:600;}
+.note-ta{width:100%;border:none;outline:none;resize:none;padding:10px 14px;background:transparent;font-family:'DM Sans',sans-serif;font-size:12px;color:var(--text-2);line-height:1.6;min-height:80px;}
+.note-ta::placeholder{color:var(--muted);}
+
+/* Action bar */
+.action-bar{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.ab-btn{padding:7px 13px;border-radius:var(--rs);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-2);display:flex;align-items:center;gap:6px;transition:all .15s;font-family:inherit;}
+.ab-btn:hover{background:var(--surface-2);border-color:var(--border-strong);}
+.ab-btn.pri{background:var(--brand-subtle);color:var(--brand-2);}
+.ab-btn.pri:hover{background:var(--brand);color:white;}
+.ab-btn.warn{background:var(--warm-sub);color:var(--warm);}
+.ab-btn.warn:hover{background:var(--warm);color:white;}
+
+/* Finance table */
+.fin-table{width:100%;border-collapse:collapse;}
+.fin-table th{text-align:left;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:7px 10px;border-bottom:1px solid var(--border);background:var(--surface-2);}
+.fin-table td{padding:9px 10px;border-bottom:1px solid var(--surface-2);font-size:11.5px;color:var(--text-2);vertical-align:middle;}
+.fin-table tr:last-child td{border-bottom:none;}
+.fin-table tr:hover td{background:var(--surface-2);}
+.fin-pos{font-family:'DM Serif Display',serif;font-size:14px;color:var(--brand-2);}
+.fin-neg{font-family:'DM Serif Display',serif;font-size:14px;color:var(--rose);}
+.fin-neutral{font-family:'DM Serif Display',serif;font-size:14px;color:var(--text);}
+
+/* Comms */
+.msg{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--surface-2);}
+.msg:last-child{border-bottom:none;}
+.msg-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;flex-shrink:0;}
+.msg-name{font-weight:600;font-size:12px;color:var(--text);}
+.msg-time{font-size:10px;color:var(--muted);margin-left:8px;}
+.msg-unread{font-size:10px;font-weight:700;background:var(--brand);color:white;border-radius:99px;padding:0 5px;margin-left:6px;}
+.msg-body{font-size:11.5px;color:var(--text-2);line-height:1.5;margin-top:2px;}
+
+/* Toggles */
+.toggle{width:36px;height:20px;border-radius:99px;background:var(--surface-2);border:1.5px solid var(--border-strong);cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--brand);border-color:var(--brand);}
+.toggle-knob{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:white;transition:left .2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle.on .toggle-knob{left:18px;}
+
+/* Settings row */
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--surface-2);gap:16px;}
+.set-row:last-child{border-bottom:none;}
+.set-lbl{font-size:12.5px;font-weight:600;color:var(--text);}
+.set-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+
+/* FAQ */
+.faq-item{border:1px solid var(--border);border-radius:var(--rs);margin-bottom:8px;background:var(--surface);}
+.faq-q{padding:11px 16px;font-weight:600;font-size:12.5px;color:var(--text);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none;}
+.faq-q:hover{background:var(--surface-2);}
+.faq-q.open{color:var(--brand-2);background:var(--brand-subtle);}
+.faq-arr{transition:transform .2s;font-size:11px;color:var(--muted);}
+.faq-q.open .faq-arr{transform:rotate(180deg);}
+.faq-a{display:none;padding:0 16px 12px;font-size:12px;color:var(--text-2);line-height:1.7;border-top:1px solid var(--border);}
+.faq-a.open{display:block;}
+
+/* Announcement */
+.ann{background:var(--warm-sub);border:1px solid #E8C97A;border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:11.5px;color:#6B4A10;line-height:1.6;display:flex;gap:10px;}
+.ann-ico{font-size:16px;flex-shrink:0;}
+
+/* Right panel */
+.rp{width:var(--rp-w);background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+.rp-scroll{flex:1;overflow-y:auto;}
+.rp-scroll::-webkit-scrollbar{width:3px;}
+.rp-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.rp-sec{padding:14px 16px;border-bottom:1px solid var(--border);}
+.rp-sec:last-child{border-bottom:none;}
+.rp-lbl{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+
+/* Bottom timeline bar */
+.tl-bar{height:54px;background:var(--surface);border-top:1px solid var(--border);display:flex;align-items:center;padding:0 20px;overflow-x:auto;flex-shrink:0;box-shadow:0 -2px 8px rgba(30,80,40,.04);}
+.tl-bar::-webkit-scrollbar{height:2px;}
+.tl-bar::-webkit-scrollbar-thumb{background:var(--border);}
+.tl-day-wrap{display:flex;align-items:center;flex-shrink:0;}
+.tl-day-lbl{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;padding:0 6px;flex-shrink:0;}
+.tl-blocks{display:flex;gap:3px;}
+.tl-blk{height:26px;border-radius:4px;display:flex;align-items:center;font-size:9px;font-weight:600;white-space:nowrap;padding:0 8px;cursor:pointer;transition:opacity .15s;border:1px solid transparent;}
+.tl-blk:hover{opacity:.75;}
+.tl-blk.class{background:var(--brand-subtle);color:var(--brand-2);border-color:var(--border);}
+.tl-blk.jam{background:var(--warm-sub);color:var(--warm);border-color:#E8C97A;}
+.tl-blk.workshop{background:var(--sky-sub);color:var(--sky);border-color:#A8CCE0;}
+.tl-blk.performance{background:var(--rose-sub);color:var(--rose);border-color:#E8A8A5;}
+.tl-blk.social{background:var(--surface-2);color:var(--muted);border-color:var(--border);}
+.tl-sep{width:1px;height:36px;background:var(--border);margin:0 8px;flex-shrink:0;}
+
+@media(max-width:1100px){.rp{display:none;}}
+@media(max-width:820px){:root{--sb-w:200px;}}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="tb-logo">AcroFest <span>2025</span></div>
+  <div class="tb-div"></div>
+  <div class="tb-sub">Command Center</div>
+  <div class="tb-sp"></div>
+  <div class="tb-pill">⚡ LIVE · Day 3/5</div>
+  <div class="tb-div"></div>
+  <div class="tb-search"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="M12 12l2.5 2.5"/></svg> Search…</div>
+  <button class="tb-btn" onclick="alert('Opens participant portal in new tab')">👤 Portal View</button>
+  <button class="tb-btn pri" onclick="alert('Add session dialog')">+ Session</button>
+</div>
+
+<div class="app-body">
+
+<!-- LEFT ICON NAV -->
+<div class="nav">
+  <div class="ni active" id="ni-dashboard" onclick="goTab('dashboard')">🏠<span class="ni-tip">Dashboard</span></div>
+  <div class="ni" id="ni-schedule" onclick="goTab('schedule')">📅<span class="ni-tip">Schedule</span></div>
+  <div class="ni" id="ni-participants" onclick="goTab('participants')">👥<span class="ni-tip">Participants</span></div>
+  <div class="ni" id="ni-teachers" onclick="goTab('teachers')">👩‍🏫<span class="ni-tip">Teachers</span></div>
+  <div class="ni" id="ni-logistics" onclick="goTab('logistics')">📦<span class="ni-tip">Logistics</span></div>
+  <div class="ni" id="ni-financial" onclick="goTab('financial')">💰<span class="ni-tip">Financial</span></div>
+  <div class="ni" id="ni-communications" onclick="goTab('communications')">📣<span class="ni-tip">Communications</span></div>
+  <div class="ni-sp"></div>
+  <div class="ni" id="ni-settings" onclick="goTab('settings')">⚙️<span class="ni-tip">Settings</span></div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-hdr">
+    <div class="sb-ey" id="sb-ey">EVENT</div>
+    <div class="sb-title" id="sb-title">AcroFest 2025</div>
+  </div>
+  <div class="sb-scroll" id="sb-scroll"></div>
+  <div class="sb-ftr"><button class="sb-add" id="sb-add-btn" onclick="alert('Coming soon!')">+ Add Session</button></div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+<div class="main-content">
+
+<!-- ════ DASHBOARD ════ -->
+<div class="view active" id="view-dashboard">
+  <div class="page-ey">Festival Overview</div>
+  <div class="page-title">AcroFest 2025 — Bali</div>
+  <div class="page-meta">
+    <span>📍 Ubud Eco-Retreat, Ubud, Bali</span>
+    <span>📅 Wed 14 – Sun 18 May 2025</span>
+    <span>👥 120 participants · 19 countries</span>
+  </div>
+  <div class="ann"><div class="ann-ico">🔔</div><div><strong>Today — Day 3 (Fri 16 May):</strong> Morning flow at 08:00 on Main Platform. Evening jam delayed 30 min — catering overlap. Check logistics board.</div></div>
+  <div class="g4">
+    <div class="stat"><div class="stat-n">5</div><div class="stat-l">Festival days</div><div class="prog"><div class="prog-fill" style="width:60%"></div></div></div>
+    <div class="stat"><div class="stat-n">26</div><div class="stat-l">Scheduled sessions</div><div class="prog"><div class="prog-fill" style="width:100%"></div></div></div>
+    <div class="stat"><div class="stat-n">120</div><div class="stat-l">Participants</div><div class="prog"><div class="prog-fill warm" style="width:100%"></div></div></div>
+    <div class="stat"><div class="stat-n">6</div><div class="stat-l">Lead facilitators</div><div class="prog"><div class="prog-fill" style="width:90%"></div></div></div>
+  </div>
+  <div class="wx-stripe">
+    <div class="wx"><div class="wx-day">WED 14</div><div class="wx-ico">☀️</div><div class="wx-temp">29°</div><div class="wx-desc">Sunny</div></div>
+    <div class="wx"><div class="wx-day">THU 15</div><div class="wx-ico">⛅</div><div class="wx-temp">28°</div><div class="wx-desc">P. Cloudy</div></div>
+    <div class="wx" style="border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-subtle)"><div class="wx-day" style="color:var(--brand-2)">FRI 16 ← NOW</div><div class="wx-ico">🌤️</div><div class="wx-temp">27°</div><div class="wx-desc">Clear</div></div>
+    <div class="wx"><div class="wx-day">SAT 17</div><div class="wx-ico">🌦️</div><div class="wx-temp">26°</div><div class="wx-desc">Rain pm</div></div>
+    <div class="wx"><div class="wx-day">SUN 18</div><div class="wx-ico">☀️</div><div class="wx-temp">30°</div><div class="wx-desc">Perfect</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-lbl">Today — Fri 16 May (click any to open)</div>
+      <div class="tl-item" style="cursor:pointer" onclick="openSession(11)"><div class="tl-time">08:00</div><div class="tl-dc"><div class="tl-dot"></div></div><div><div class="tl-n">Morning Flow & Warm-Up</div><div class="tl-d">Main Platform · Elena M. · All levels</div></div></div>
+      <div class="tl-item" style="cursor:pointer" onclick="openSession(12)"><div class="tl-time">10:00</div><div class="tl-dc"><div class="tl-dot sky"></div></div><div><div class="tl-n">Therapeutic Acro Deep Dive</div><div class="tl-d">Studio B · Ama F. · Intermediate</div></div></div>
+      <div class="tl-item" style="cursor:pointer" onclick="openSession(13)"><div class="tl-time">12:00</div><div class="tl-dc"><div class="tl-dot warm"></div></div><div><div class="tl-n">Midday Open Jam</div><div class="tl-d">Lawn · All levels</div></div></div>
+      <div class="tl-item" style="cursor:pointer" onclick="openSession(14)"><div class="tl-time">15:00</div><div class="tl-dc"><div class="tl-dot"></div></div><div><div class="tl-n">Handstand Lab II</div><div class="tl-d">Studio A · Jonas B. · Beginner</div></div></div>
+      <div class="tl-item" style="cursor:pointer" onclick="openSession(15)"><div class="tl-time">19:30</div><div class="tl-dc"><div class="tl-dot rose"></div></div><div><div class="tl-n">Evening Jam + Live Music ⚠️ +30min</div><div class="tl-d">Main Platform · All levels</div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Critical Tasks — Fri</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> Safety guidelines shared with all</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> Facilitator briefing 07:45 done</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk"></div> Evening jam setup — mats to platform</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk"></div> Sound system delivery — confirm Sat</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> Medical contact on-site (Dr. Putu Sari)</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk"></div> Vegan meal count for Sat dinner</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk"></div> Sat weather alert → send to all by 20:00</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-lbl">Venue Map — 5 practice spaces (matches participant portal)</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:2px">
+      <div style="flex:1;min-width:200px">
+        <div class="ir"><div class="ir-lbl">Main Platform</div><div class="ir-val">Open-air · 200 m² · Full sound · Morning flows, evening jams, Opening & Closing ceremonies</div></div>
+        <div class="ir"><div class="ir-lbl">Studio A</div><div class="ir-val">Indoor · 80 m² · Sprung floor · Beginner classes, Handstand Lab, Skills Lab</div></div>
+        <div class="ir"><div class="ir-lbl">Studio B</div><div class="ir-val">Indoor · 60 m² · Natural ventilation · L-Basing Clinic, Therapeutic Acro</div></div>
+        <div class="ir"><div class="ir-lbl">Lawn</div><div class="ir-val">Grass · 400 m² · Slack-line rig · Open jams, Community Jam, Flying Beginner</div></div>
+        <div class="ir"><div class="ir-lbl">Garden Nook</div><div class="ir-val">Shaded pavilion · 30 m² · Consent Talk, facilitator briefings, Welcome Dinner</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ SCHEDULE ════ -->
+<div class="view" id="view-schedule">
+  <div id="sess-detail">
+    <div class="page-ey">Programme</div>
+    <div class="page-title">5-Day Retreat Schedule</div>
+    <div class="page-meta"><span>📅 Wed 14 – Sun 18 May · 26 sessions across 5 venues</span><span style="color:var(--warm)">← Select a session from the sidebar</span></div>
+    <div class="hl warm"><div class="hl-icon">⚠️</div><div>Minor changes may occur. Fri Evening Jam delayed 30 min. Sat Community Jam may move to Main Platform (rain pm). Check WhatsApp group for live updates.</div></div>
+    <div id="full-sched"></div>
+  </div>
+</div>
+
+<!-- ════ PARTICIPANTS ════ -->
+<div class="view" id="view-participants">
+  <div class="page-ey">People</div>
+  <div class="page-title">Participants</div>
+  <div class="page-meta"><span>👥 120 total</span><span>🤸 84 practitioners</span><span>🎓 6 lead facilitators</span><span>🙋 12 volunteers</span></div>
+  <div class="hl green"><div class="hl-icon">🌍</div><div>Participants from <strong>19 countries</strong> across all experience levels — as shown in the guest portal Group Info section.</div></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-lbl">Level Breakdown</div>
+      <div class="ir"><div class="ir-lbl">Beginner</div><div class="ir-val" style="flex:1"><div class="prog" style="margin-top:4px"><div class="prog-fill" style="width:40%"></div></div><span style="font-size:10px;color:var(--muted)">48 participants</span></div></div>
+      <div class="ir"><div class="ir-lbl">Intermediate</div><div class="ir-val" style="flex:1"><div class="prog" style="margin-top:4px"><div class="prog-fill warm" style="width:35%"></div></div><span style="font-size:10px;color:var(--muted)">42 participants</span></div></div>
+      <div class="ir"><div class="ir-lbl">Advanced</div><div class="ir-val" style="flex:1"><div class="prog" style="margin-top:4px"><div class="prog-fill rose" style="width:25%"></div></div><span style="font-size:10px;color:var(--muted)">30 participants</span></div></div>
+      <div class="ir"><div class="ir-lbl">Countries</div><div class="ir-val">
+        <span class="pill green">🇳🇱 NL · 18</span><span class="pill sky">🇩🇪 DE · 14</span><span class="pill warm">🇧🇷 BR · 12</span><span class="pill rose">🇮🇱 IL · 11</span><span class="pill violet">🇫🇷 FR · 9</span><span class="pill gold">🇦🇺 AU · 8</span><span class="pill green">🇺🇸 US · 7</span><span class="pill sky">🇧🇪 BE · 6</span><span class="pill">+11 more</span>
+      </div></div>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Ticket Types & Add-ons</div>
+      <div class="ir"><div class="ir-lbl">Full package</div><div class="ir-val">68 — accommodation + all meals (Wed–Sun)</div></div>
+      <div class="ir"><div class="ir-lbl">Festival only</div><div class="ir-val">36 — self-arranged accommodation</div></div>
+      <div class="ir"><div class="ir-lbl">Day pass</div><div class="ir-val">16 — single-day access</div></div>
+      <div class="ir"><div class="ir-lbl">Dietary</div><div class="ir-val">89 vegan · 18 vegetarian · 13 omnivore</div></div>
+      <div class="ir"><div class="ir-lbl">Allergies</div><div class="ir-val">14 flagged — list shared with kitchen ✅</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-lbl">Facilitation Team</div>
+    <div id="fac-list"></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="card-lbl">Volunteers (12)</div>
+    <div id="vol-list" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:4px"></div>
+  </div>
+  <div class="action-bar" style="margin-top:14px">
+    <button class="ab-btn" onclick="alert('Export CSV — all 120 records')">📥 Export CSV</button>
+    <button class="ab-btn" onclick="alert('Email all 120 participants')">📧 Email All</button>
+    <button class="ab-btn pri" onclick="alert('Add participant manually')">+ Add Participant</button>
+    <button class="ab-btn" onclick="alert('QR check-in scanner')">📱 Check-in Scanner</button>
+  </div>
+</div>
+
+<!-- ════ TEACHERS ════ -->
+<div class="view" id="view-teachers">
+  <div class="page-ey">Facilitation Team</div>
+  <div class="page-title">Teachers & Facilitators</div>
+  <div class="page-meta"><span>6 lead facilitators · same profiles as guest portal Group Info</span></div>
+  <div class="hl green"><div class="hl-icon">🤸</div><div>All profiles correspond to the guest portal. Public bios and session assignments visible to all registered participants.</div></div>
+  <div class="ppl-grid" id="teacher-grid"></div>
+  <div class="card">
+    <div class="card-lbl">Session Assignments</div>
+    <table class="fin-table" id="teacher-assignments"></table>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="card-lbl">Community Guidelines (as shown in portal)</div>
+    <div class="ir"><div class="ir-lbl">Ask before touching</div><div class="ir-val">Always ask before adjusting, spotting, or offering hands-on support</div></div>
+    <div class="ir"><div class="ir-lbl">No means no</div><div class="ir-val">Any decline is complete — no explanation needed</div></div>
+    <div class="ir"><div class="ir-lbl">Skill honesty</div><div class="ir-val">Be honest about your level — it keeps everyone safe</div></div>
+    <div class="ir"><div class="ir-lbl">Spotters welcome</div><div class="ir-val">Having a spotter is a sign of wisdom, not weakness</div></div>
+    <div class="ir"><div class="ir-lbl">Leave space</div><div class="ir-val">Be mindful of others' practice space during jams</div></div>
+  </div>
+</div>
+
+<!-- ════ LOGISTICS ════ -->
+<div class="view" id="view-logistics">
+  <div class="page-ey">Operations</div>
+  <div class="page-title">Logistics Board</div>
+  <div class="page-meta"><span>📍 Ubud Eco-Retreat · 5-day festival</span></div>
+  <div class="g3">
+    <div class="card">
+      <div class="card-lbl">Equipment</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> 60 yoga mats confirmed</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> Crash pads (8 sets)</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk"></div> Slack-line rig setup</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk"></div> Sound system delivery Sat</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> First aid kits (3 stations)</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> AV for closing ceremony</div>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Catering (plant-based default)</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> Breakfast 07:00–09:00 (Wed–Sun)</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> Lunch 12:30–14:00 (all days)</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk"></div> Vegan dinner count — Sat</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk"></div> Allergy list to chef (14 flagged)</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> Water stations — 5 points</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> Snack station + coconuts stocked</div>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Communications</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> WhatsApp group active (120 members)</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> Daily briefing 07:45 established</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk"></div> Printed daily schedule</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk"></div> Emergency protocol shared</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> Consent + safety brief done</div>
+      <div class="cr" onclick="toggleCR(this)"><div class="chk on">✓</div> Dr. Putu Sari on-call confirmed</div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-lbl">Accommodation (matches portal)</div>
+      <div class="ir"><div class="ir-lbl">Private bungalows</div><div class="ir-val">6 units · all occupied · rice field view, AC, en-suite</div></div>
+      <div class="ir"><div class="ir-lbl">4-bed shared rooms</div><div class="ir-val">8 rooms · 28 beds occupied · 4 free</div></div>
+      <div class="ir"><div class="ir-lbl">Check-in</div><div class="ir-val">Wed 14 May from 14:00 · luggage from 10:00</div></div>
+      <div class="ir"><div class="ir-lbl">Check-out</div><div class="ir-val">Sun 18 May by 11:00 · luggage until 16:00</div></div>
+      <div class="ir"><div class="ir-lbl">Transfer Sun</div><div class="ir-val">Group to DPS departs 17:30</div></div>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Key Contacts (matches portal Practical Info)</div>
+      <div class="ir"><div class="ir-lbl">Festival Director</div><div class="ir-val">Elena M. · +62 812 000 1111</div></div>
+      <div class="ir"><div class="ir-lbl">Venue reception</div><div class="ir-val">+62 361 000 0000 · 24h</div></div>
+      <div class="ir"><div class="ir-lbl">Medical</div><div class="ir-val">Dr. Putu Sari · on-call · via reception</div></div>
+      <div class="ir"><div class="ir-lbl">Nearest hospital</div><div class="ir-val">BIMC Ubud · 10 min by car</div></div>
+      <div class="ir"><div class="ir-lbl">Emergency (Bali)</div><div class="ir-val">112</div></div>
+    </div>
+  </div>
+  <div class="note-wrap"><div class="note-hdr"><span>Operations Notes</span><span class="note-link">Note to Task</span></div><textarea class="note-ta" placeholder="Capture logistics constraints, supplier contacts, last-minute changes…"></textarea></div>
+</div>
+
+<!-- ════ FINANCIAL ════ -->
+<div class="view" id="view-financial">
+  <div class="page-ey">Business</div>
+  <div class="page-title">Financial Overview</div>
+  <div class="page-meta"><span>AcroFest 2025 · All figures in EUR</span></div>
+  <div class="g4">
+    <div class="stat"><div class="stat-n" style="color:var(--brand-2)">€28,500</div><div class="stat-l">Total revenue</div><div class="prog"><div class="prog-fill" style="width:85%"></div></div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--rose)">€14,200</div><div class="stat-l">Total expenses</div><div class="prog"><div class="prog-fill rose" style="width:50%"></div></div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--brand-2)">€14,300</div><div class="stat-l">Net margin (50%)</div><div class="prog"><div class="prog-fill" style="width:50%"></div></div></div>
+    <div class="stat"><div class="stat-n" style="color:var(--warm)">€2,100</div><div class="stat-l">Add-on revenue</div><div class="prog"><div class="prog-fill warm" style="width:30%"></div></div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-lbl">Revenue Breakdown</div>
+      <table class="fin-table"><thead><tr><th>Ticket Type</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>
+        <tr><td>Full Package (accom + meals)</td><td>68</td><td>€280</td><td class="fin-pos">€19,040</td></tr>
+        <tr><td>Festival Only</td><td>36</td><td>€180</td><td class="fin-pos">€6,480</td></tr>
+        <tr><td>Day Pass</td><td>16</td><td>€55</td><td class="fin-pos">€880</td></tr>
+        <tr><td>Add-ons (massage, tours, yoga)</td><td>—</td><td>—</td><td class="fin-pos">€2,100</td></tr>
+        <tr style="font-weight:700"><td colspan="3">Total Revenue</td><td class="fin-pos">€28,500</td></tr>
+      </tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Expense Breakdown</div>
+      <table class="fin-table"><thead><tr><th>Category</th><th>Amount</th><th>Status</th></tr></thead><tbody>
+        <tr><td>🏡 Venue hire (5 nights)</td><td class="fin-neg">€4,800</td><td><span class="pill green" style="font-size:9px">Paid</span></td></tr>
+        <tr><td>🍽️ Catering (all meals)</td><td class="fin-neg">€3,200</td><td><span class="pill green" style="font-size:9px">Paid</span></td></tr>
+        <tr><td>👩‍🏫 Facilitator fees</td><td class="fin-neg">€3,600</td><td><span class="pill warm" style="font-size:9px">Due Sun</span></td></tr>
+        <tr><td>🎵 Sound system rental</td><td class="fin-neg">€800</td><td><span class="pill warm" style="font-size:9px">Pending</span></td></tr>
+        <tr><td>📣 Marketing & design</td><td class="fin-neg">€1,200</td><td><span class="pill green" style="font-size:9px">Paid</span></td></tr>
+        <tr><td>🚐 Airport transfers</td><td class="fin-neg">€600</td><td><span class="pill green" style="font-size:9px">Paid</span></td></tr>
+        <tr style="font-weight:700"><td colspan="1">Total Expenses</td><td class="fin-neg">€14,200</td><td></td></tr>
+      </tbody></table>
+    </div>
+  </div>
+  <div class="hl sky"><div class="hl-icon">💡</div><div>Net margin: <strong>€14,300 (~50%)</strong>. Facilitator fees (€3,600) due Sunday after closing ceremony. Sound system deposit (€800) pending Saturday delivery confirmation.</div></div>
+  <div class="action-bar">
+    <button class="ab-btn" onclick="alert('Export P&L as PDF')">📄 Export P&L</button>
+    <button class="ab-btn" onclick="alert('Invoice register download')">📊 Invoices</button>
+    <button class="ab-btn pri" onclick="alert('Add expense record')">+ Add Expense</button>
+  </div>
+</div>
+
+<!-- ════ COMMUNICATIONS ════ -->
+<div class="view" id="view-communications">
+  <div class="page-ey">Outreach</div>
+  <div class="page-title">Communications</div>
+  <div class="page-meta"><span>120 participants · WhatsApp + Email channels</span></div>
+  <div class="hl warm"><div class="hl-icon">📢</div><div><strong>Action needed:</strong> Saturday weather alert must go out today — rain forecast from 14:00. Community Jam may move from Lawn to Main Platform. Send to all by 20:00.</div></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-lbl">Compose Announcement</div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">CHANNEL</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="ab-btn pri" style="padding:5px 10px">📱 WhatsApp</button>
+          <button class="ab-btn" style="padding:5px 10px">✉️ Email</button>
+          <button class="ab-btn" style="padding:5px 10px">🌐 Portal Banner</button>
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">TO</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="ab-btn pri" style="padding:5px 10px">All participants (120)</button>
+          <button class="ab-btn" style="padding:5px 10px">Facilitators (6)</button>
+          <button class="ab-btn" style="padding:5px 10px">Volunteers (12)</button>
+        </div>
+      </div>
+      <textarea class="note-ta" style="border:1px solid var(--border);border-radius:var(--rs);background:var(--surface-2)">⚠️ Weather update: Saturday afternoon rain expected from ~14:00. The Community Jam (14:00) moves to Main Platform. Full sound system will be set up. See you there! 🌧️🤸</textarea>
+      <div class="action-bar" style="margin-bottom:0;margin-top:10px">
+        <button class="ab-btn pri" onclick="alert('Message sent to all 120 participants!')">📤 Send Now</button>
+        <button class="ab-btn" onclick="alert('Scheduled for 20:00 tonight')">🕗 Schedule for 20:00</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Recent Messages</div>
+      <div class="msg"><div class="msg-av" style="background:#5B9E6E">EM</div><div><div><span class="msg-name">Elena M.</span><span class="msg-time">07:45 today</span></div><div class="msg-body">Good morning! Today's morning flow starts at 08:00 sharp on the Main Platform. Breezy at sunrise — bring a light layer 🌅</div></div></div>
+      <div class="msg"><div class="msg-av" style="background:#4A89B0">CC</div><div><div><span class="msg-name">Command Center</span><span class="msg-time">Thu 22:00</span></div><div class="msg-body">📅 Friday schedule: Morning Flow 08:00 · Therapeutic Deep Dive 10:00 · Midday Jam 12:00 · Handstand Lab II 15:00 · Evening Jam 19:30 (⚠️ 30min delay possible)</div></div></div>
+      <div class="msg"><div class="msg-av" style="background:#E8A84C">SK</div><div><div><span class="msg-name">Sarah K.</span><span class="msg-time">Thu 19:15</span><span class="msg-unread">3</span></div><div class="msg-body">The Consent & Communication talk was beautiful tonight 🙏 Reminder: consent guidelines pinned in WhatsApp — please re-read before tomorrow's jams.</div></div></div>
+      <div class="msg"><div class="msg-av" style="background:#C4706A">AF</div><div><div><span class="msg-name">Ama F.</span><span class="msg-time">Thu 18:00</span></div><div class="msg-body">Need 3 extra blankets for tomorrow's Therapeutic Deep Dive in Studio B before 09:30. Can logistics help?</div></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-lbl">Automated Messages Status</div>
+    <div class="ir"><div class="ir-lbl">Registration conf.</div><div class="ir-val">120/120 sent ✅</div></div>
+    <div class="ir"><div class="ir-lbl">Pre-arrival info</div><div class="ir-val">120/120 sent (7 days before arrival) ✅</div></div>
+    <div class="ir"><div class="ir-lbl">Day 1 welcome</div><div class="ir-val">120/120 sent Wed 14 May 09:00 ✅</div></div>
+    <div class="ir"><div class="ir-lbl">Daily Fri schedule</div><div class="ir-val">120/120 sent Thu 22:00 ✅</div></div>
+    <div class="ir"><div class="ir-lbl">Weather alert Sat</div><div class="ir-val"><span style="color:var(--warm);font-weight:600">⏳ Pending — send by 20:00 tonight</span></div></div>
+    <div class="ir"><div class="ir-lbl">Post-event survey</div><div class="ir-val">Scheduled for Sun 18 May 17:00</div></div>
+  </div>
+</div>
+
+<!-- ════ SETTINGS ════ -->
+<div class="view" id="view-settings">
+  <div class="page-ey">Configuration</div>
+  <div class="page-title">Festival Settings</div>
+  <div class="page-meta"><span>AcroFest 2025 · Ubud Eco-Retreat, Bali · 14–18 May</span></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-lbl">Event Details</div>
+      <div class="ir"><div class="ir-lbl">Event name</div><div class="ir-val">AcroFest 2025</div></div>
+      <div class="ir"><div class="ir-lbl">Dates</div><div class="ir-val">Wed 14 May – Sun 18 May 2025</div></div>
+      <div class="ir"><div class="ir-lbl">Venue</div><div class="ir-val">Ubud Eco-Retreat, Jl. Raya Ubud, Bali, Indonesia</div></div>
+      <div class="ir"><div class="ir-lbl">Airport</div><div class="ir-val">Ngurah Rai (DPS) · ~75 min drive</div></div>
+      <div class="ir"><div class="ir-lbl">Timezone</div><div class="ir-val">WITA (UTC+8) — Bali local time</div></div>
+      <div class="ir"><div class="ir-lbl">Capacity</div><div class="ir-val">120 participants (full)</div></div>
+      <div class="ir"><div class="ir-lbl">Language</div><div class="ir-val">English (all sessions)</div></div>
+      <div class="action-bar" style="margin-bottom:0;margin-top:12px"><button class="ab-btn pri" onclick="alert('Edit event details')">✏️ Edit Details</button></div>
+    </div>
+    <div class="card">
+      <div class="card-lbl">Portal & Notification Settings</div>
+      <div class="set-row"><div><div class="set-lbl">Guest portal live</div><div class="set-sub">Participants can view schedule, map & all info</div></div><div class="toggle on" onclick="this.classList.toggle('on');this.querySelector('.toggle-knob').style.left=this.classList.contains('on')?'18px':'2px'"><div class="toggle-knob" style="left:18px"></div></div></div>
+      <div class="set-row"><div><div class="set-lbl">Daily schedule emails</div><div class="set-sub">Auto-send tomorrow's schedule at 22:00</div></div><div class="toggle on" onclick="this.classList.toggle('on');this.querySelector('.toggle-knob').style.left=this.classList.contains('on')?'18px':'2px'"><div class="toggle-knob" style="left:18px"></div></div></div>
+      <div class="set-row"><div><div class="set-lbl">WhatsApp auto-updates</div><div class="set-sub">Push announcements to group</div></div><div class="toggle on" onclick="this.classList.toggle('on');this.querySelector('.toggle-knob').style.left=this.classList.contains('on')?'18px':'2px'"><div class="toggle-knob" style="left:18px"></div></div></div>
+      <div class="set-row"><div><div class="set-lbl">Weather alerts</div><div class="set-sub">Auto-notify when rain forecast &gt; 50%</div></div><div class="toggle" onclick="this.classList.toggle('on');this.querySelector('.toggle-knob').style.left=this.classList.contains('on')?'18px':'2px'"><div class="toggle-knob"></div></div></div>
+      <div class="set-row"><div><div class="set-lbl">Post-event survey</div><div class="set-sub">Send to all on closing day (Sun 17:00)</div></div><div class="toggle on" onclick="this.classList.toggle('on');this.querySelector('.toggle-knob').style.left=this.classList.contains('on')?'18px':'2px'"><div class="toggle-knob" style="left:18px"></div></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-lbl">Team Access</div>
+    <div class="ir"><div class="ir-lbl">Admin</div><div class="ir-val">Elena M. · Ravi S. (full access)</div></div>
+    <div class="ir"><div class="ir-lbl">View-only</div><div class="ir-val">All 6 facilitators — schedule + participants</div></div>
+    <div class="ir"><div class="ir-lbl">Portal URL</div><div class="ir-val">acrofest2025.com/portal — sent in confirmation emails</div></div>
+    <div class="ir"><div class="ir-lbl">WhatsApp group</div><div class="ir-val">120 members · managed by Elena M. + Sarah K.</div></div>
+    <div class="action-bar" style="margin-bottom:0;margin-top:12px">
+      <button class="ab-btn" onclick="alert('Invite team member by email')">+ Invite Member</button>
+      <button class="ab-btn" style="color:var(--rose);border-color:var(--rose-sub)" onclick="confirm('Archive this event?')">🗄️ Archive Event</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main-content -->
+
+<!-- BOTTOM TIMELINE BAR -->
+<div class="tl-bar" id="tl-bar"></div>
+</div><!-- /main -->
+
+<!-- RIGHT PANEL -->
+<div class="rp">
+  <div class="rp-scroll">
+    <div class="rp-sec">
+      <div class="rp-lbl">Location</div>
+      <div style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--text);margin-bottom:3px">Ubud Eco-Retreat</div>
+      <div style="font-size:10.5px;color:var(--muted);margin-bottom:8px">Ubud, Bali · Indonesia</div>
+      <div style="font-size:11px;color:var(--text-2);line-height:1.5">Surrounded by rice fields. 5 open-air and indoor venues. 15 min from Ubud center. ~75 min from DPS airport.</div>
+    </div>
+    <div class="rp-sec">
+      <div class="rp-lbl">Today's Checklist <span style="float:right;color:var(--muted);font-size:9px" id="rp-cnt">3/7</span></div>
+      <div id="rp-chk">
+        <div class="cr" onclick="toggleRPCR(this,'rp-cnt',7)"><div class="chk on">✓</div><span>Safety guidelines shared</span></div>
+        <div class="cr" onclick="toggleRPCR(this,'rp-cnt',7)"><div class="chk on">✓</div><span>Facilitators briefed 07:45</span></div>
+        <div class="cr" onclick="toggleRPCR(this,'rp-cnt',7)"><div class="chk"></div><span>Evening jam mats setup</span></div>
+        <div class="cr" onclick="toggleRPCR(this,'rp-cnt',7)"><div class="chk"></div><span>Closing ceremony rehearsal</span></div>
+        <div class="cr" onclick="toggleRPCR(this,'rp-cnt',7)"><div class="chk on">✓</div><span>Medical on-site confirmed</span></div>
+        <div class="cr" onclick="toggleRPCR(this,'rp-cnt',7)"><div class="chk"></div><span>Sat weather alert sent</span></div>
+        <div class="cr" onclick="toggleRPCR(this,'rp-cnt',7)"><div class="chk"></div><span>Allergy list to kitchen</span></div>
+      </div>
+    </div>
+    <div class="rp-sec">
+      <div class="rp-lbl">Selected</div>
+      <div id="rp-sel-lbl" style="font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">OVERVIEW</div>
+      <div id="rp-sel-title" style="font-family:'DM Serif Display',serif;font-size:14px;color:var(--text);margin-bottom:5px">AcroFest 2025 — Bali</div>
+      <div id="rp-sel-body" style="font-size:11px;color:var(--text-2);line-height:1.6">5-day festival in Ubud for all levels — classes, jams, workshops, and community building.</div>
+    </div>
+    <div class="rp-sec">
+      <div class="rp-lbl">Planning Notes</div>
+      <textarea style="width:100%;border:1px solid var(--border);border-radius:var(--rs);background:var(--surface-2);font-family:'DM Sans',sans-serif;font-size:11px;color:var(--text-2);padding:8px;outline:none;resize:none;min-height:70px;line-height:1.6" placeholder="Quick notes, decisions, follow-ups…"></textarea>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app-body -->
+
+<script>
+// ── DATA (exact match with guest portal) ──────────────────────────────
+const DAYS = [
+  { key:'wed', label:'WED 14', name:'Opening Day',     dot:'sky' },
+  { key:'thu', label:'THU 15', name:'Flow Day',        dot:'' },
+  { key:'fri', label:'FRI 16', name:'Deep Dive',       dot:'warm', today:true },
+  { key:'sat', label:'SAT 17', name:'Performance Day', dot:'rose' },
+  { key:'sun', label:'SUN 18', name:'Closing Day',     dot:'' },
+];
+
+const SESSIONS = [
+  {id:0,  day:'wed', time:'09:00', name:'Opening Ceremony',           venue:'Main Platform', type:'social',      level:'alllevels',    facs:['Elena M.','Ravi S.'],  desc:'Welcome circle, intention setting, and community agreements. First group flow.',                                    fb:'If rain, move to Studio A with reduced capacity.'},
+  {id:1,  day:'wed', time:'10:30', name:'Foundations of Acro',        venue:'Studio A',      type:'class',       level:'beginner',     facs:['Sarah K.'],             desc:'Introduction to base, flyer and spotter roles. Safe communication practices. Core washing machine sequences.',         fb:'Can run on lawn if studio is needed.'},
+  {id:2,  day:'wed', time:'14:00', name:'Flying High: Beginner Flows',venue:'Lawn',          type:'workshop',    level:'beginner',     facs:['Mia T.','Jonas B.'],    desc:'Outdoor workshop on trust, breath, and first backflow entries. Emphasis on partner communication.',                fb:''},
+  {id:3,  day:'wed', time:'17:00', name:'Welcome Jam',                venue:'Main Platform', type:'jam',         level:'alllevels',    facs:[],                       desc:'Open jam session. All levels welcome. Spotters available. Evening sun, music, community.',                          fb:''},
+  {id:4,  day:'wed', time:'19:30', name:'Welcome Dinner',             venue:'Garden Nook',   type:'social',      level:'alllevels',    facs:[],                       desc:'Communal dinner, introductions, and informal sharing circle. Vegan/vegetarian catering.',                          fb:''},
+  {id:5,  day:'thu', time:'07:30', name:'Morning Yoga & Breathwork',  venue:'Main Platform', type:'class',       level:'alllevels',    facs:['Elena M.'],             desc:'Pranayama, sun salutations, and somatic warm-up to prepare body and mind for the day.',                          fb:''},
+  {id:6,  day:'thu', time:'09:30', name:'L-Basing Clinic',            venue:'Studio B',      type:'workshop',    level:'intermediate', facs:['Ravi S.'],              desc:'Focused technical workshop on L-base fundamentals, pop entries, and cleaning the technique.',                     fb:''},
+  {id:7,  day:'thu', time:'11:00', name:'Therapeutic Acro Intro',     venue:'Studio A',      type:'class',       level:'alllevels',    facs:['Ama F.'],               desc:'Thai massage meets acro. Passive stretching sequences, partner body reading, and slow flow. Great for recovery.',  fb:''},
+  {id:8,  day:'thu', time:'14:00', name:'Handstand Lab',              venue:'Studio A',      type:'workshop',    level:'beginner',     facs:['Jonas B.'],             desc:'Wrist warm-up, wall work, bail techniques, and line coaching for beginners. No prior experience required.',       fb:''},
+  {id:9,  day:'thu', time:'16:30', name:'Afternoon Open Jam',         venue:'Lawn',          type:'jam',         level:'alllevels',    facs:[],                       desc:'Open practice. Props available. Facilitators circulate.',                                                            fb:''},
+  {id:10, day:'thu', time:'19:00', name:'Talk: Consent & Communication',venue:'Garden Nook', type:'social',      level:'alllevels',    facs:['Sarah K.','Elena M.'],  desc:'Community talk on consent culture, spotter language, and how to make jams inclusive for all bodies.',              fb:''},
+  {id:11, day:'fri', time:'08:00', name:'Morning Flow & Warm-Up',     venue:'Main Platform', type:'class',       level:'alllevels',    facs:['Elena M.'],             desc:'Community flow, dynamic partner warm-up, and group washing machine to start the day together.',                   fb:''},
+  {id:12, day:'fri', time:'10:00', name:'Therapeutic Acro Deep Dive', venue:'Studio B',      type:'workshop',    level:'intermediate', facs:['Ama F.'],               desc:'Second session for therapeutic track. Deeper sequences, passive Thai inversions, and slow dragon.',                fb:''},
+  {id:13, day:'fri', time:'12:00', name:'Midday Open Jam',            venue:'Lawn',          type:'jam',         level:'alllevels',    facs:[],                       desc:'Spontaneous, music-guided open jam. Slack-line also available. Consolidate morning skills.',                       fb:''},
+  {id:14, day:'fri', time:'15:00', name:'Handstand Lab II',           venue:'Studio A',      type:'workshop',    level:'beginner',     facs:['Jonas B.'],             desc:'Freestanding attempts, line work, and partner feedback. Continuation of Thursday lab.',                            fb:''},
+  {id:15, day:'fri', time:'19:30', name:'Evening Jam + Live Music',   venue:'Main Platform', type:'jam',         level:'alllevels',    facs:[],                       desc:'Live percussion and ambient music accompany the evening jam. One of the festival highlights. Arrive early.',       fb:'⚠️ Delayed 30 min — catering overlap. Check board.'},
+  {id:16, day:'sat', time:'07:30', name:'Sunrise Flow',               venue:'Main Platform', type:'class',       level:'alllevels',    facs:['Elena M.'],             desc:'Optional early morning slow flow. Quiet, meditative, beautiful light. Bring a layer.',                             fb:''},
+  {id:17, day:'sat', time:'09:30', name:'Flying High: Advanced',      venue:'Studio A',      type:'workshop',    level:'advanced',     facs:['Ravi S.','Mia T.'],     desc:'Advanced flyer sequences: reverse star, monkeybar transitions, and intro to dynamic flying. Prereq: solid star.',   fb:''},
+  {id:18, day:'sat', time:'11:00', name:'Acro Flow Choreography',     venue:'Main Platform', type:'workshop',    level:'intermediate', facs:['Elena M.','Ama F.'],    desc:'Creating a short performance piece together. Emphasis on musicality, transitions, and expression.',                  fb:''},
+  {id:19, day:'sat', time:'14:00', name:'Community Jam',              venue:'Lawn',          type:'jam',         level:'alllevels',    facs:[],                       desc:'Largest jam of the festival. All participants. Spotters posted at 5 stations.',                                    fb:'⚠️ Rain Sat pm — may move to Main Platform. Watch WhatsApp.'},
+  {id:20, day:'sat', time:'18:00', name:'Performance Showcase',       venue:'Main Platform', type:'performance', level:'alllevels',    facs:['All facilitators'],     desc:'Participant-created performances, invited artists, and community acts. 90 minutes of movement art.',              fb:'Rain contingency: Studio A, reduced audience.'},
+  {id:21, day:'sat', time:'20:30', name:'Closing Party & DJ Set',     venue:'Main Platform', type:'social',      level:'alllevels',    facs:[],                       desc:'DJ set, casual acro, dancing, and celebration. The social heart of the festival.',                                fb:''},
+  {id:22, day:'sun', time:'08:00', name:'Gentle Morning Practice',    venue:'Studio B',      type:'class',       level:'alllevels',    facs:['Ama F.'],               desc:"Recovery-focused: breathwork, gentle bodywork, and slow therapeutic acro. Great after Saturday's energy.",        fb:''},
+  {id:23, day:'sun', time:'10:00', name:'Skills Lab: Your Choice',    venue:'Studio A',      type:'workshop',    level:'alllevels',    facs:['Mia T.','Jonas B.'],    desc:'Participant-led focus. Bring a skill to improve — coaches facilitate, community supports.',                       fb:''},
+  {id:24, day:'sun', time:'12:30', name:'Final Open Jam',             venue:'Lawn',          type:'jam',         level:'alllevels',    facs:[],                       desc:'Last jam of the festival. Bittersweet, beautiful. Bring your full presence.',                                     fb:''},
+  {id:25, day:'sun', time:'16:00', name:'Closing Ceremony',           venue:'Main Platform', type:'social',      level:'alllevels',    facs:['Elena M.','Ravi S.'],   desc:'Closing circle, gratitude sharing, group AV presentation, and community intentions for the future.',              fb:'AV check at 16:00 — confirm with logistics team.'},
+];
+
+const FACILITATORS = [
+  {name:'Elena M.',  role:'Lead Facilitator',  initials:'EM', color:'#5B9E6E'},
+  {name:'Ravi S.',   role:'Advanced Coach',     initials:'RS', color:'#4A89B0'},
+  {name:'Sarah K.',  role:'Consent & Comms',    initials:'SK', color:'#E8A84C'},
+  {name:'Ama F.',    role:'Therapeutic Acro',   initials:'AF', color:'#C4706A'},
+  {name:'Jonas B.',  role:'Handstand Coach',    initials:'JB', color:'#7A6E9E'},
+  {name:'Mia T.',    role:'Flying Coach',       initials:'MT', color:'#3A7D52'},
+];
+
+const VOLUNTEERS = ['Alex R.','Sari W.','Lena K.','Tom D.','Maya H.','Noa S.','Bram V.','Ines L.','Kai M.','Flo P.','Anna G.','Dani O.'];
+
+// ── SIDEBAR CONFIGS ────────────────────────────────────────────────────
+const SB = {
+  dashboard:     {ey:'EVENT',     title:'AcroFest 2025',    btn:'+ Add Session', mode:'schedule'},
+  schedule:      {ey:'PROGRAMME', title:'5-Day Schedule',   btn:'+ Add Session', mode:'schedule'},
+  participants:  {ey:'PEOPLE',    title:'Participants',     btn:'+ Add Person',  mode:'nav', items:[
+    {icon:'📊', label:'Overview', badge:'120'},
+    {icon:'📈', label:'By Level'},
+    {icon:'📱', label:'Check-in'},
+    {icon:'🙋', label:'Volunteers', badge:'12'},
+    {icon:'📥', label:'Export CSV'},
+  ]},
+  teachers:      {ey:'FACILITATION', title:'Teachers',      btn:'+ Invite Teacher', mode:'nav', items:[
+    {icon:'👩‍🏫', label:'All Facilitators', badge:'6'},
+    {icon:'📅', label:'Session Assignments'},
+    {icon:'📄', label:'Contracts & Fees'},
+    {icon:'💬', label:'Briefings'},
+  ]},
+  logistics:     {ey:'OPERATIONS', title:'Logistics',       btn:'+ Add Task',    mode:'nav', items:[
+    {icon:'🎒', label:'Equipment'},
+    {icon:'🍽️', label:'Catering'},
+    {icon:'🛏️', label:'Accommodation'},
+    {icon:'📞', label:'Key Contacts'},
+    {icon:'📦', label:'Checklist'},
+  ]},
+  financial:     {ey:'BUSINESS',  title:'Financial',        btn:'+ Add Expense', mode:'nav', items:[
+    {icon:'📊', label:'P&L Overview'},
+    {icon:'💚', label:'Revenue'},
+    {icon:'📉', label:'Expenses'},
+    {icon:'🧾', label:'Invoices'},
+  ]},
+  communications:{ey:'OUTREACH',  title:'Communications',   btn:'+ New Message', mode:'nav', items:[
+    {icon:'✉️', label:'Compose'},
+    {icon:'📜', label:'History'},
+    {icon:'🤖', label:'Automated'},
+    {icon:'📱', label:'WhatsApp'},
+  ]},
+  settings:      {ey:'CONFIG',    title:'Settings',         btn:'+ Invite Member', mode:'nav', items:[
+    {icon:'🗓️', label:'Event Details'},
+    {icon:'🌐', label:'Portal Settings'},
+    {icon:'👥', label:'Team Access'},
+    {icon:'🔗', label:'Integrations'},
+  ]},
+};
+
+// ── STATE ──────────────────────────────────────────────────────────────
+let activeTab = 'dashboard';
+let activeSession = null;
+
+// ── HELPERS ────────────────────────────────────────────────────────────
+function typeClass(t) { return {class:'class',jam:'jam',workshop:'workshop',performance:'performance',social:'social'}[t]||'social'; }
+function typeLbl(t)   { return {class:'CLASS',jam:'JAM',workshop:'WORKSHOP',performance:'SHOW',social:'SOCIAL'}[t]||t.toUpperCase(); }
+function bClass(t)    { return {class:'b-class',jam:'b-jam',workshop:'b-workshop',performance:'b-performance',social:'b-social'}[t]||''; }
+function levelTag(l)  {
+  const m = {beginner:'beg Beginner', intermediate:'int Intermediate', advanced:'adv Advanced', alllevels:'all All Levels'};
+  const [c,n] = (m[l]||'all All Levels').split(' ');
+  return `<span class="tag ${c}">${n}</span>`;
+}
+
+// ── goTab ──────────────────────────────────────────────────────────────
+function goTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  const ni = document.getElementById('ni-' + tab);
+  if (ni) ni.classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+  buildSidebar();
+  // Update right panel
+  document.getElementById('rp-sel-lbl').textContent = tab.toUpperCase();
+  document.getElementById('rp-sel-title').textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
+  document.getElementById('rp-sel-body').textContent = 'Viewing ' + tab + ' section.';
+}
+
+// ── openSession (from dashboard "today" clicks) ────────────────────────
+function openSession(id) {
+  activeSession = id;
+  goTab('schedule');
+  setTimeout(() => activateSession(id), 10);
+}
+
+// ── buildSidebar ───────────────────────────────────────────────────────
+function buildSidebar() {
+  const cfg = SB[activeTab];
+  if (!cfg) return;
+  document.getElementById('sb-ey').textContent = cfg.ey;
+  document.getElementById('sb-title').textContent = cfg.title;
+  document.getElementById('sb-add-btn').textContent = cfg.btn;
+
+  const cont = document.getElementById('sb-scroll');
+  cont.innerHTML = '';
+
+  if (cfg.mode === 'schedule') {
+    DAYS.forEach(day => {
+      const sessions = SESSIONS.filter(s => s.day === day.key);
+      const grp = document.createElement('div');
+      grp.className = 'day-grp';
+      const todayMark = day.today
+        ? ' <span style="font-size:9px;background:var(--warm-sub);color:var(--warm);padding:1px 5px;border-radius:3px;margin-left:4px;font-weight:700">TODAY</span>'
+        : '';
+      grp.innerHTML = `<div class="day-hdr"><div class="day-dot ${day.dot||''}"></div><div class="day-lbl">${day.label}</div><div class="day-name">${day.name}${todayMark}</div><div class="day-cnt">${sessions.length}</div></div>`;
+      sessions.forEach(s => {
+        const item = document.createElement('div');
+        item.className = 'sess-item' + (activeSession === s.id ? ' active' : '');
+        item.innerHTML = `<div class="sess-time">${s.time}</div><div class="sess-info"><div class="sess-name">${s.name}</div><div class="sess-sub">${s.venue}</div></div><div class="sess-badge ${bClass(s.type)}">${typeLbl(s.type)}</div>`;
+        item.onclick = () => activateSession(s.id);
+        grp.appendChild(item);
+      });
+      cont.appendChild(grp);
+    });
+  } else {
+    // nav list
+    cfg.items.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.className = 'sb-item' + (i === 0 ? ' active' : '');
+      const badge = item.badge ? `<span class="sb-badge">${item.badge}</span>` : '';
+      div.innerHTML = `<span class="sb-icon">${item.icon}</span>${item.label}${badge}`;
+      div.onclick = () => {
+        cont.querySelectorAll('.sb-item').forEach(x => x.classList.remove('active'));
+        div.classList.add('active');
+      };
+      cont.appendChild(div);
+    });
+  }
+}
+
+// ── activateSession ────────────────────────────────────────────────────
+function activateSession(id) {
+  activeSession = id;
+  buildSidebar();
+  const s = SESSIONS.find(x => x.id === id);
+  if (!s) return;
+  const day = DAYS.find(d => d.key === s.day);
+
+  const facHtml = s.facs.map(fname => {
+    const fd = FACILITATORS.find(f => f.name === fname) || {initials: fname.slice(0,2).toUpperCase(), color:'#888', name:fname, role:''};
+    return `<div class="fac-chip"><div class="fac-av" style="background:${fd.color}">${fd.initials}</div>${fd.name}${fd.role ? ` <span style="color:var(--muted);font-size:10px">· ${fd.role}</span>` : ''}</div>`;
+  }).join('');
+
+  document.getElementById('sess-detail').innerHTML = `
+    <div class="page-ey">Session Planning</div>
+    <div class="page-title">${s.name}</div>
+    <div class="page-meta">
+      <span>📅 ${day.label} · ${day.name}</span>
+      <span>🕐 ${s.time}</span>
+      <span>📍 ${s.venue}</span>
+    </div>
+    <div class="action-bar">
+      <button class="ab-btn pri" onclick="alert('Added to checklist')">📋 Add to Checklist</button>
+      <button class="ab-btn" onclick="alert('Venue map')">🗺️ View Venue</button>
+      <button class="ab-btn" onclick="alert('Link copied')">🔗 Share</button>
+      <button class="ab-btn" onclick="alert('Edit dialog opens')">✏️ Edit Session</button>
+      ${s.fb ? `<button class="ab-btn warn" onclick="alert('Fallback: ${s.fb.replace(/'/g,"\\'")}')">⚠️ Fallback Plan</button>` : ''}
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-lbl">Session Details</div>
+        <div class="ir"><div class="ir-lbl">Type</div><div class="ir-val"><span class="sess-badge ${bClass(s.type)}">${typeLbl(s.type)}</span></div></div>
+        <div class="ir"><div class="ir-lbl">Level</div><div class="ir-val">${levelTag(s.level)}</div></div>
+        <div class="ir"><div class="ir-lbl">Venue</div><div class="ir-val">${s.venue}</div></div>
+        <div class="ir"><div class="ir-lbl">Time</div><div class="ir-val">${s.time} · ${day.label}</div></div>
+        <div class="ir"><div class="ir-lbl">Description</div><div class="ir-val">${s.desc}</div></div>
+        ${s.fb ? `<div class="ir"><div class="ir-lbl" style="color:var(--warm)">⚠️ Fallback</div><div class="ir-val" style="color:#6B4A10">${s.fb}</div></div>` : ''}
+      </div>
+      <div class="card">
+        <div class="card-lbl">Facilitators</div>
+        ${facHtml || '<div style="font-size:11px;color:var(--muted)">Open session — no assigned facilitator</div>'}
+      </div>
+    </div>
+    <div class="note-wrap">
+      <div class="note-hdr"><span>Session Notes</span><span class="note-link">Note to Task</span></div>
+      <textarea class="note-ta" placeholder="Capture alternate plans, prop needs, weather triggers, or level-specific adjustments…"></textarea>
+    </div>
+  `;
+
+  document.getElementById('rp-sel-lbl').textContent = typeLbl(s.type) + ' SNAPSHOT';
+  document.getElementById('rp-sel-title').textContent = s.name;
+  document.getElementById('rp-sel-body').textContent = s.desc;
+
+  // Make sure schedule tab + view is active
+  document.querySelectorAll('.ni').forEach(n => n.classList.remove('active'));
+  document.getElementById('ni-schedule').classList.add('active');
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-schedule').classList.add('active');
+  activeTab = 'schedule';
+}
+
+// ── buildFullSched ─────────────────────────────────────────────────────
+function buildFullSched() {
+  const cont = document.getElementById('full-sched');
+  if (!cont) return;
+  cont.innerHTML = '';
+  DAYS.forEach(day => {
+    const sessions = SESSIONS.filter(s => s.day === day.key);
+    const sec = document.createElement('div');
+    sec.style.marginBottom = '22px';
+    const todayPill = day.today ? '<span class="pill warm" style="font-size:9px;margin-left:10px">TODAY</span>' : '';
+    sec.innerHTML = `<div style="display:flex;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:2px solid var(--brand-subtle)"><div style="font-family:'DM Serif Display',serif;font-size:16px">${day.label} — ${day.name}</div>${todayPill}</div>`;
+    sessions.forEach(s => {
+      const row = document.createElement('div');
+      row.className = 'tl-item';
+      row.style.cursor = 'pointer';
+      const dotColor = {jam:'warm',workshop:'sky',performance:'rose',class:'',social:''}[s.type]||'';
+      row.innerHTML = `<div class="tl-time">${s.time}</div><div class="tl-dc"><div class="tl-dot ${dotColor}"></div></div><div style="flex:1"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span class="tl-n">${s.name}</span><span class="sess-badge ${bClass(s.type)}">${typeLbl(s.type)}</span>${levelTag(s.level)}</div><div class="tl-d">${s.venue}${s.facs.length ? ' · ' + s.facs.join(', ') : ''}${s.fb ? '</div><div style="font-size:10px;color:var(--warm);margin-top:1px">⚠️ ' + s.fb : ''}</div></div>`;
+      row.onclick = () => activateSession(s.id);
+      sec.appendChild(row);
+    });
+    cont.appendChild(sec);
+  });
+}
+
+// ── buildTimeline ──────────────────────────────────────────────────────
+function buildTimeline() {
+  const bar = document.getElementById('tl-bar');
+  bar.innerHTML = '';
+  DAYS.forEach((day, di) => {
+    if (di > 0) { const sep = document.createElement('div'); sep.className = 'tl-sep'; bar.appendChild(sep); }
+    const wrap = document.createElement('div');
+    wrap.className = 'tl-day-wrap';
+    wrap.innerHTML = `<div class="tl-day-lbl">${day.label.split(' ')[0]}</div>`;
+    const blks = document.createElement('div');
+    blks.className = 'tl-blocks';
+    SESSIONS.filter(s => s.day === day.key).forEach(s => {
+      const b = document.createElement('div');
+      b.className = 'tl-blk ' + typeClass(s.type);
+      b.textContent = s.time + ' ' + s.name.split(' ').slice(0,2).join(' ');
+      b.onclick = () => openSession(s.id);
+      blks.appendChild(b);
+    });
+    wrap.appendChild(blks);
+    bar.appendChild(wrap);
+  });
+}
+
+// ── buildTeachers ──────────────────────────────────────────────────────
+function buildTeachers() {
+  const grid = document.getElementById('teacher-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  FACILITATORS.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'ppl-card';
+    const sessionCount = SESSIONS.filter(s => s.facs.includes(f.name)).length;
+    card.innerHTML = `<div class="ppl-av" style="background:${f.color}">${f.initials}</div><div class="ppl-name">${f.name}</div><div class="ppl-role">${f.role}</div><div class="ppl-cnt">${sessionCount} session${sessionCount !== 1 ? 's' : ''}</div>`;
+    grid.appendChild(card);
+  });
+
+  const tbl = document.getElementById('teacher-assignments');
+  if (!tbl) return;
+  tbl.innerHTML = `<thead><tr><th>Facilitator</th><th>Role</th><th>Sessions</th><th>~Hours</th></tr></thead>`;
+  const tbody = document.createElement('tbody');
+  FACILITATORS.forEach(f => {
+    const sessions = SESSIONS.filter(s => s.facs.includes(f.name));
+    const names = sessions.map(s => s.name).join(' · ');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><div style="display:flex;align-items:center;gap:7px"><div class="pav" style="background:${f.color};width:22px;height:22px;font-size:9px">${f.initials}</div>${f.name}</div></td><td>${f.role}</td><td style="font-size:10.5px;max-width:280px">${names||'—'}</td><td style="font-weight:600">${sessions.length * 1.5}h</td>`;
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+}
+
+// ── buildParticipants ──────────────────────────────────────────────────
+function buildParticipants() {
+  const fl = document.getElementById('fac-list');
+  if (fl) {
+    fl.innerHTML = '';
+    FACILITATORS.forEach(f => {
+      const row = document.createElement('div');
+      row.className = 'prow';
+      row.innerHTML = `<div class="pav" style="background:${f.color}">${f.initials}</div><div class="pname">${f.name}</div><div class="prole">${f.role}</div>`;
+      fl.appendChild(row);
+    });
+  }
+  const vl = document.getElementById('vol-list');
+  if (vl) {
+    vl.innerHTML = '';
+    const colors = ['#5B9E6E','#4A89B0','#E8A84C','#C4706A','#7A6E9E'];
+    VOLUNTEERS.forEach(v => {
+      const chip = document.createElement('div');
+      chip.className = 'fac-chip';
+      const col = colors[v.charCodeAt(0) % colors.length];
+      chip.innerHTML = `<div class="fac-av" style="background:${col}">${v.slice(0,2).toUpperCase()}</div>${v}`;
+      vl.appendChild(chip);
+    });
+  }
+}
+
+// ── toggles ────────────────────────────────────────────────────────────
+function toggleCR(el) {
+  const box = el.querySelector('.chk');
+  if (box.classList.contains('on')) { box.classList.remove('on'); box.textContent = ''; el.classList.remove('done'); }
+  else { box.classList.add('on'); box.textContent = '✓'; el.classList.add('done'); }
+}
+function toggleRPCR(el, countId, total) {
+  toggleCR(el);
+  const cont = el.closest('#rp-chk') || el.parentElement;
+  const checked = cont.querySelectorAll('.chk.on').length;
+  document.getElementById(countId).textContent = checked + '/' + total;
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────
+buildSidebar();
+buildTimeline();
+buildFullSched();
+buildTeachers();
+buildParticipants();
+</script>
+</body>
+</html>

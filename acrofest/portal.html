@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AcroFest 2025 — Participant Portal</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand:        #5B9E6E;
+  --brand-2:      #3A7D52;
+  --brand-subtle: #EAF4EE;
+  --brand-warm:   #D4893A;
+  --warm-subtle:  #FDF3E1;
+  --sky:          #4A89B0;
+  --sky-subtle:   #E5F0F8;
+  --rose:         #C4706A;
+  --rose-subtle:  #F9EAE9;
+  --gold:         #C9A84C;
+  --gold-subtle:  #FBF5E0;
+  --violet:       #7A6E9E;
+  --violet-subtle:#F0EEF8;
+
+  --bg:           #F3F6F3;
+  --surface:      #FAFCFA;
+  --surface-2:    #EDF2ED;
+  --border:       #D6E4D8;
+  --border-strong:#B0C8B4;
+  --text:         #152318;
+  --text-2:       #3A5440;
+  --text-muted:   #7A9880;
+
+  --shadow-sm: 0 1px 3px rgba(30,80,40,0.07), 0 0 0 1px rgba(30,80,40,0.04);
+  --shadow-md: 0 4px 16px rgba(30,80,40,0.09), 0 1px 4px rgba(30,80,40,0.05);
+  --shadow-lg: 0 12px 40px rgba(30,80,40,0.11), 0 2px 8px rgba(30,80,40,0.06);
+
+  --sidebar-w: 240px;
+  --r: 10px;
+  --r-sm: 6px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+
+/* ── HEADER ─────────────────────────────── */
+.header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  height: 52px;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: var(--brand-2);
+  letter-spacing: -0.01em;
+}
+.header-logo span { color: var(--brand-warm); font-style: italic; }
+.header-divider { width: 1px; height: 22px; background: var(--border); }
+.header-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.header-spacer { flex: 1; }
+.header-badge {
+  padding: 4px 12px;
+  background: var(--brand-subtle);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--brand-2);
+}
+.header-date {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ── LAYOUT ─────────────────────────────── */
+.layout {
+  display: flex;
+  min-height: calc(100vh - 52px);
+}
+
+/* ── SIDEBAR ─────────────────────────────── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px 0 32px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 52px;
+  height: calc(100vh - 52px);
+  overflow-y: auto;
+}
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.sidebar-section { margin-bottom: 6px; }
+.sidebar-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 0 20px 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: all 0.13s;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  user-select: none;
+}
+.nav-item:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.nav-item.active {
+  background: var(--brand-subtle);
+  border-left-color: var(--brand-2);
+  color: var(--brand-2);
+  font-weight: 600;
+}
+.nav-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+.sidebar-sep {
+  height: 1px;
+  background: var(--border);
+  margin: 10px 20px;
+}
+
+/* ── MAIN ─────────────────────────────── */
+.main {
+  flex: 1;
+  padding: 32px 40px 60px;
+  min-width: 0;
+  max-width: 860px;
+}
+
+/* ── PAGE SECTIONS ─────────────────────── */
+.page { display: none; animation: fadeIn 0.18s ease; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+.page-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--brand-2);
+  margin-bottom: 6px;
+}
+.page-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 30px;
+  color: var(--text);
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  max-width: 560px;
+}
+
+/* ── CARDS ─────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+  padding: 20px 24px;
+  margin-bottom: 16px;
+  transition: box-shadow 0.15s;
+}
+.card:hover { box-shadow: var(--shadow-md); }
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title-icon { font-size: 16px; }
+.card-body {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+
+.cards-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+@media (max-width: 680px) { .cards-2 { grid-template-columns: 1fr; } }
+
+/* ── INFO ROWS ─────────────────────────── */
+.info-table { width: 100%; border-collapse: collapse; }
+.info-table tr { border-bottom: 1px solid var(--surface-2); }
+.info-table tr:last-child { border-bottom: none; }
+.info-table td { padding: 9px 0; vertical-align: top; font-size: 12.5px; }
+.info-table td:first-child {
+  font-weight: 600;
+  color: var(--text-muted);
+  width: 140px;
+  font-size: 11.5px;
+  padding-right: 16px;
+}
+.info-table td:last-child { color: var(--text-2); }
+
+/* ── PILLS / BADGES ─────────────────────── */
+.pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 10.5px;
+  font-weight: 600;
+  margin: 2px 2px 2px 0;
+}
+.pill-green { background: var(--brand-subtle); color: var(--brand-2); }
+.pill-warm  { background: var(--warm-subtle);  color: var(--brand-warm); }
+.pill-sky   { background: var(--sky-subtle);   color: var(--sky); }
+.pill-rose  { background: var(--rose-subtle);  color: var(--rose); }
+.pill-gold  { background: var(--gold-subtle);  color: var(--gold); }
+.pill-violet{ background: var(--violet-subtle);color: var(--violet); }
+
+/* ── SCHEDULE TABLE ─────────────────────── */
+.schedule-day {
+  margin-bottom: 24px;
+}
+.schedule-day-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--brand-subtle);
+}
+.schedule-day-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 17px;
+  color: var(--text);
+}
+.schedule-day-date {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.schedule-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--surface-2);
+  font-size: 12.5px;
+}
+.schedule-row:last-child { border-bottom: none; }
+.schedule-time {
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 48px;
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+.schedule-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--brand);
+  margin-top: 5px; flex-shrink: 0;
+}
+.schedule-content { flex: 1; }
+.schedule-name { font-weight: 600; color: var(--text); line-height: 1.3; }
+.schedule-detail { font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+
+/* ── HIGHLIGHT BOX ─────────────────────── */
+.highlight {
+  border-radius: var(--r);
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  font-size: 12.5px;
+  line-height: 1.65;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.highlight-green  { background: var(--brand-subtle); border: 1px solid #B8D9BF; color: #1E4A2A; }
+.highlight-warm   { background: var(--warm-subtle);  border: 1px solid #E8C97A; color: #6B4A10; }
+.highlight-sky    { background: var(--sky-subtle);   border: 1px solid #A8CCE0; color: #1E4060; }
+.highlight-rose   { background: var(--rose-subtle);  border: 1px solid #E8A8A5; color: #6B2020; }
+.highlight-icon   { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+/* ── FAQ ───────────────────────────────── */
+.faq-item {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  margin-bottom: 8px;
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+.faq-q {
+  padding: 13px 18px;
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  transition: background 0.12s;
+}
+.faq-q:hover { background: var(--surface-2); }
+.faq-q.open { color: var(--brand-2); background: var(--brand-subtle); }
+.faq-arrow { transition: transform 0.2s; font-size: 11px; color: var(--text-muted); }
+.faq-q.open .faq-arrow { transform: rotate(180deg); }
+.faq-a {
+  display: none;
+  padding: 0 18px 14px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.7;
+  border-top: 1px solid var(--border);
+}
+.faq-a.open { display: block; }
+
+/* ── PACKING LIST ─────────────────────── */
+.pack-section { margin-bottom: 18px; }
+.pack-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.pack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 6px;
+}
+.pack-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: all 0.12s;
+  box-shadow: var(--shadow-sm);
+}
+.pack-item:hover { background: var(--surface-2); }
+.pack-item.checked { background: var(--brand-subtle); color: var(--brand-2); border-color: var(--border); }
+.pack-check {
+  width: 15px; height: 15px;
+  border-radius: 3px;
+  border: 1.5px solid var(--border-strong);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; color: white;
+  flex-shrink: 0;
+  transition: all 0.13s;
+}
+.pack-item.checked .pack-check { background: var(--brand); border-color: var(--brand); }
+.pack-progress {
+  height: 4px;
+  background: var(--surface-2);
+  border-radius: 2px;
+  margin-bottom: 14px;
+  overflow: hidden;
+}
+.pack-progress-fill {
+  height: 100%; border-radius: 2px;
+  background: var(--brand);
+  transition: width 0.3s ease;
+}
+
+/* ── PEOPLE GRID ─────────────────────── */
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.person-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  transition: box-shadow 0.15s;
+}
+.person-card:hover { box-shadow: var(--shadow-md); }
+.person-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: white;
+}
+.person-name { font-weight: 600; font-size: 12.5px; color: var(--text); }
+.person-role { font-size: 11px; color: var(--text-muted); }
+
+/* ── ACTIVITY CARDS ─────────────────────── */
+.activity-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  transition: box-shadow 0.15s;
+}
+.activity-card:hover { box-shadow: var(--shadow-md); }
+.activity-icon-wrap {
+  width: 42px; height: 42px;
+  border-radius: var(--r-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.activity-content { flex: 1; }
+.activity-name { font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 4px; }
+.activity-desc { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+
+/* ── VENUE MAP ─────────────────────────── */
+.map-wrap {
+  position: relative;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  margin-bottom: 20px;
+  user-select: none;
+}
+.map-svg {
+  width: 100%;
+  display: block;
+}
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.map-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+.map-legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.venue-popup {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  box-shadow: var(--shadow-lg);
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--text-2);
+  min-width: 180px;
+  max-width: 220px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 10;
+  line-height: 1.5;
+}
+.venue-popup.visible { opacity: 1; }
+.venue-popup-name {
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.venue-popup-type {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.map-venue-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.map-venue-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 14px 16px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 3px solid transparent;
+}
+.map-venue-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.map-venue-card.highlighted { border-left-color: var(--brand-2); background: var(--brand-subtle); }
+.map-venue-card-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+}
+.map-venue-card-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.map-venue-card-name { font-weight: 700; font-size: 12.5px; color: var(--text); }
+.map-venue-card-body { font-size: 11.5px; color: var(--text-2); line-height: 1.55; }
+.map-venue-card-tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* mobile sidebar toggle */
+.mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 8px; left: 12px;
+  width: 36px; height: 36px;
+  border-radius: var(--r-sm);
+  background: var(--brand-2);
+  color: white;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  align-items: center; justify-content: center;
+}
+@media (max-width: 700px) {
+  .sidebar { position: fixed; left: -260px; top: 52px; transition: left 0.22s; z-index: 150; height: calc(100vh - 52px); }
+  .sidebar.open { left: 0; }
+  .main { padding: 20px 18px 60px; }
+  .mobile-menu-btn { display: flex; }
+  .page-title { font-size: 24px; }
+  .header { padding: 0 16px 0 58px; gap: 8px; }
+  .header-badge { display: none; }
+  .header-date { display: none; }
+  .header-divider { display: none; }
+  .header-sub { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-logo">AcroFest <span>2025</span></div>
+  <div class="header-divider"></div>
+  <div class="header-sub">Participant Portal</div>
+  <div class="header-spacer"></div>
+  <div class="header-date">14–18 May · Ubud, Bali</div>
+  <div class="header-divider"></div>
+  <div class="header-badge">🌿 Welcome!</div>
+</div>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Festival Info</div>
+      <div class="nav-item active" onclick="show('overview', this)"><div class="nav-icon">🏕️</div> Retreat Overview</div>
+      <div class="nav-item" onclick="show('schedule', this)"><div class="nav-icon">📅</div> Retreat Schedule</div>
+      <div class="nav-item" onclick="show('map', this)"><div class="nav-icon">🗺️</div> Venue Map</div>
+      <div class="nav-item" onclick="show('arrival', this)"><div class="nav-icon">✈️</div> Arrival & Departure</div>
+      <div class="nav-item" onclick="show('accommodation', this)"><div class="nav-icon">🛏️</div> Accommodation</div>
+      <div class="nav-item" onclick="show('packing', this)"><div class="nav-icon">🎒</div> Packing Guide</div>
+      <div class="nav-item" onclick="show('addons', this)"><div class="nav-icon">✨</div> Optional Add-Ons</div>
+    </div>
+    <div class="sidebar-sep"></div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Practical</div>
+      <div class="nav-item" onclick="show('food', this)"><div class="nav-icon">🥗</div> Food & Dietary Info</div>
+      <div class="nav-item" onclick="show('activities', this)"><div class="nav-icon">🤸</div> Activities & Experiences</div>
+      <div class="nav-item" onclick="show('practical', this)"><div class="nav-icon">💡</div> Practical Information</div>
+      <div class="nav-item" onclick="show('faq', this)"><div class="nav-icon">❓</div> FAQs</div>
+      <div class="nav-item" onclick="show('group', this)"><div class="nav-icon">👥</div> Group Info</div>
+    </div>
+    <div class="sidebar-sep"></div>
+    <div class="sidebar-section">
+      <a href="cc/index.html" class="nav-item" title="Control Center" style="text-decoration:none;color:inherit"><div class="nav-icon">⚙️</div> Control Center</a>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <!-- RETREAT OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="page-eyebrow">Welcome</div>
+      <div class="page-title">Retreat Overview</div>
+      <div class="page-subtitle">Everything you need to know about AcroFest 2025 — five days of movement, community, and connection in the heart of Bali.</div>
+
+      <div class="highlight highlight-green">
+        <div class="highlight-icon">🌿</div>
+        <div>You're joining <strong>120 participants from 19 countries</strong> for five days of acroyoga classes, jams, workshops, performances, and shared meals at the Ubud Eco-Retreat. We're so happy you're here.</div>
+      </div>
+
+      <div class="cards-2">
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">📍</span> Location</div>
+          <div class="card-body">
+            <table class="info-table">
+              <tr><td>Venue</td><td>Ubud Eco-Retreat</td></tr>
+              <tr><td>Address</td><td>Jl. Raya Ubud, Ubud, Bali, Indonesia</td></tr>
+              <tr><td>Setting</td><td>Rice field views, jungle surroundings</td></tr>
+              <tr><td>From airport</td><td>~75 min from Ngurah Rai (DPS)</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">📅</span> Dates & Times</div>
+          <div class="card-body">
+            <table class="info-table">
+              <tr><td>Check-in</td><td>Wed 14 May from 14:00</td></tr>
+              <tr><td>Opening</td><td>Wed 14 May at 17:00</td></tr>
+              <tr><td>Closing</td><td>Sun 18 May at 17:00</td></tr>
+              <tr><td>Check-out</td><td>Sun 18 May by 11:00</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🤸</span> What to Expect</div>
+        <div class="card-body">Each day has a morning flow, 2–3 workshops or classes across skill levels, an open jam session, and an evening gathering. The schedule is designed so you can go deep on specific skills or float freely between sessions. There's no pressure to attend everything — rest and play are equally valid choices.<br><br>The festival runs across five outdoor and indoor venues on the retreat grounds. All venues are within walking distance of each other.</div>
+      </div>
+
+      <div class="cards-2">
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">🌐</span> Language</div>
+          <div class="card-body">All sessions are in <strong>English</strong>. Facilitators speak a mix of English, Dutch, Portuguese, and Hebrew. Translation support available on request.</div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">📶</span> Connectivity</div>
+          <div class="card-body">WiFi available in communal areas and rooms. Signal is moderate — we encourage digital detox during sessions. WhatsApp group for daily updates.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RETREAT SCHEDULE -->
+    <div class="page" id="page-schedule">
+      <div class="page-eyebrow">Programme</div>
+      <div class="page-title">Retreat Schedule</div>
+      <div class="page-subtitle">Five days of movement, rest, and community. Sessions run across Main Platform, Studio A, Studio B, and the Lawn.</div>
+
+      <div class="highlight highlight-warm">
+        <div class="highlight-icon">⚠️</div>
+        <div>Schedule is subject to minor changes. Check the daily board at breakfast or the WhatsApp group for updates.</div>
+      </div>
+
+      <div class="schedule-day">
+        <div class="schedule-day-header"><div class="schedule-day-name">Wednesday — Opening Day</div><div class="schedule-day-date">14 May</div></div>
+        <div class="schedule-row"><div class="schedule-time">14:00</div><div class="schedule-dot" style="background:var(--text-muted)"></div><div class="schedule-content"><div class="schedule-name">Check-in & Room Allocation</div><div class="schedule-detail">Reception · Welcome drink provided</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">17:00</div><div class="schedule-dot" style="background:var(--sky)"></div><div class="schedule-content"><div class="schedule-name">Opening Ceremony</div><div class="schedule-detail">Main Platform · All levels · Elena M. & Ravi S.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">18:30</div><div class="schedule-dot" style="background:var(--brand)"></div><div class="schedule-content"><div class="schedule-name">Foundations of Acro</div><div class="schedule-detail">Studio A · Beginners · Sarah K.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">20:00</div><div class="schedule-dot" style="background:var(--brand-warm)"></div><div class="schedule-content"><div class="schedule-name">Welcome Dinner & Jam</div><div class="schedule-detail">Main Platform · All levels</div></div></div>
+      </div>
+
+      <div class="schedule-day">
+        <div class="schedule-day-header"><div class="schedule-day-name">Thursday — Flow Day</div><div class="schedule-day-date">15 May</div></div>
+        <div class="schedule-row"><div class="schedule-time">07:30</div><div class="schedule-dot"></div><div class="schedule-content"><div class="schedule-name">Morning Yoga & Breathwork</div><div class="schedule-detail">Main Platform · All levels · Elena M.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">09:30</div><div class="schedule-dot" style="background:var(--sky)"></div><div class="schedule-content"><div class="schedule-name">L-Basing Clinic</div><div class="schedule-detail">Studio B · Intermediate · Ravi S.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">11:00</div><div class="schedule-dot"></div><div class="schedule-content"><div class="schedule-name">Therapeutic Acro Intro</div><div class="schedule-detail">Studio A · All levels · Ama F.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">14:00</div><div class="schedule-dot"></div><div class="schedule-content"><div class="schedule-name">Handstand Lab</div><div class="schedule-detail">Studio A · Beginner · Jonas B.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">16:30</div><div class="schedule-dot" style="background:var(--brand-warm)"></div><div class="schedule-content"><div class="schedule-name">Afternoon Open Jam</div><div class="schedule-detail">Lawn · All levels</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">19:00</div><div class="schedule-dot" style="background:var(--violet)"></div><div class="schedule-content"><div class="schedule-name">Talk: Consent & Communication</div><div class="schedule-detail">Garden Nook · Sarah K. & Elena M.</div></div></div>
+      </div>
+
+      <div class="schedule-day">
+        <div class="schedule-day-header"><div class="schedule-day-name">Friday — Deep Dive</div><div class="schedule-day-date">16 May</div><span class="pill pill-green" style="font-size:9px">TODAY</span></div>
+        <div class="schedule-row"><div class="schedule-time">08:00</div><div class="schedule-dot"></div><div class="schedule-content"><div class="schedule-name">Morning Flow & Warm-Up</div><div class="schedule-detail">Main Platform · All levels</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">10:00</div><div class="schedule-dot" style="background:var(--sky)"></div><div class="schedule-content"><div class="schedule-name">Therapeutic Acro Deep Dive</div><div class="schedule-detail">Studio B · Intermediate · Ama F.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">12:00</div><div class="schedule-dot" style="background:var(--brand-warm)"></div><div class="schedule-content"><div class="schedule-name">Midday Open Jam</div><div class="schedule-detail">Lawn · All levels</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">15:00</div><div class="schedule-dot"></div><div class="schedule-content"><div class="schedule-name">Handstand Lab II</div><div class="schedule-detail">Studio A · Beginner · Jonas B.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">19:30</div><div class="schedule-dot" style="background:var(--rose)"></div><div class="schedule-content"><div class="schedule-name">Evening Jam + Live Music</div><div class="schedule-detail">Main Platform · All levels · ⚠️ Delayed 30 min</div></div></div>
+      </div>
+
+      <div class="schedule-day">
+        <div class="schedule-day-header"><div class="schedule-day-name">Saturday — Performance Day</div><div class="schedule-day-date">17 May</div></div>
+        <div class="schedule-row"><div class="schedule-time">07:30</div><div class="schedule-dot"></div><div class="schedule-content"><div class="schedule-name">Sunrise Flow</div><div class="schedule-detail">Main Platform · Optional · All levels</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">09:30</div><div class="schedule-dot" style="background:var(--rose)"></div><div class="schedule-content"><div class="schedule-name">Flying High: Advanced</div><div class="schedule-detail">Studio A · Advanced · Ravi S. & Mia T.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">11:00</div><div class="schedule-dot" style="background:var(--sky)"></div><div class="schedule-content"><div class="schedule-name">Acro Flow Choreography</div><div class="schedule-detail">Main Platform · Intermediate · Elena M.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">14:00</div><div class="schedule-dot" style="background:var(--brand-warm)"></div><div class="schedule-content"><div class="schedule-name">Community Jam</div><div class="schedule-detail">Lawn · All levels · Spotters on 5 stations</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">18:00</div><div class="schedule-dot" style="background:var(--rose)"></div><div class="schedule-content"><div class="schedule-name">Performance Showcase</div><div class="schedule-detail">Main Platform · All welcome</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">20:30</div><div class="schedule-dot" style="background:var(--violet)"></div><div class="schedule-content"><div class="schedule-name">Closing Party & DJ Set</div><div class="schedule-detail">Main Platform</div></div></div>
+      </div>
+
+      <div class="schedule-day">
+        <div class="schedule-day-header"><div class="schedule-day-name">Sunday — Closing Day</div><div class="schedule-day-date">18 May</div></div>
+        <div class="schedule-row"><div class="schedule-time">08:00</div><div class="schedule-dot"></div><div class="schedule-content"><div class="schedule-name">Gentle Morning Practice</div><div class="schedule-detail">Studio B · All levels · Ama F.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">10:00</div><div class="schedule-dot" style="background:var(--sky)"></div><div class="schedule-content"><div class="schedule-name">Skills Lab: Your Choice</div><div class="schedule-detail">Studio A · All levels · Mia T. & Jonas B.</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">11:00</div><div class="schedule-dot" style="background:var(--text-muted)"></div><div class="schedule-content"><div class="schedule-name">Check-out</div><div class="schedule-detail">Rooms vacated by 11:00 · Luggage storage available</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">12:30</div><div class="schedule-dot" style="background:var(--brand-warm)"></div><div class="schedule-content"><div class="schedule-name">Final Open Jam</div><div class="schedule-detail">Lawn · All levels</div></div></div>
+        <div class="schedule-row"><div class="schedule-time">16:00</div><div class="schedule-dot" style="background:var(--violet)"></div><div class="schedule-content"><div class="schedule-name">Closing Ceremony</div><div class="schedule-detail">Main Platform · Elena M. & Ravi S.</div></div></div>
+      </div>
+    </div>
+
+    <!-- ARRIVAL & DEPARTURE -->
+    <div class="page" id="page-arrival">
+      <div class="page-eyebrow">Getting Here</div>
+      <div class="page-title">Arrival & Departure</div>
+      <div class="page-subtitle">Everything you need for a smooth journey to and from Ubud.</div>
+
+      <div class="highlight highlight-green">
+        <div class="highlight-icon">✈️</div>
+        <div>The nearest airport is <strong>Ngurah Rai International (DPS)</strong> in Denpasar, approximately 75 minutes from the retreat venue depending on traffic.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🚗</span> Getting to the Venue</div>
+        <div class="card-body">
+          <table class="info-table">
+            <tr><td>Private taxi</td><td>~350,000–450,000 IDR from airport. Pre-book via your hotel or use Grab app.</td></tr>
+            <tr><td>Shared transfer</td><td>We've arranged group transfers on Wed 14 May at 12:00 and 15:00 from DPS. Reply to your confirmation email to reserve a seat (free of charge).</td></tr>
+            <tr><td>Scooter rental</td><td>Available in Ubud town center. Not recommended from airport with luggage.</td></tr>
+            <tr><td>From Ubud center</td><td>~15 min by Grab or taxi. Tell the driver "Ubud Eco-Retreat, Jl. Raya Ubud."</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="cards-2">
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">📥</span> Check-in</div>
+          <div class="card-body">
+            <table class="info-table">
+              <tr><td>From</td><td>14:00 on Wed 14 May</td></tr>
+              <tr><td>Early arrival</td><td>Luggage storage available from 10:00</td></tr>
+              <tr><td>What to bring</td><td>Booking confirmation + passport/ID</td></tr>
+              <tr><td>Welcome drink</td><td>Served at reception on arrival</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">📤</span> Check-out</div>
+          <div class="card-body">
+            <table class="info-table">
+              <tr><td>By</td><td>11:00 on Sun 18 May</td></tr>
+              <tr><td>Late check-out</td><td>Subject to availability — ask reception</td></tr>
+              <tr><td>Luggage</td><td>Storage available until closing ceremony at 16:00</td></tr>
+              <tr><td>Transfers</td><td>Group transfer to DPS departs 17:30 Sun</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🌍</span> Visa & Entry</div>
+        <div class="card-body">Most nationalities receive a free 30-day visa on arrival at Bali airport. Check your country's requirements at <strong>imigrasi.go.id</strong>. Bring a printed or digital copy of your return flight and proof of accommodation.</div>
+      </div>
+    </div>
+
+    <!-- ACCOMMODATION -->
+    <div class="page" id="page-accommodation">
+      <div class="page-eyebrow">Where You're Staying</div>
+      <div class="page-title">Accommodation</div>
+      <div class="page-subtitle">The retreat offers several room types across the eco-retreat grounds, all within walking distance of all venues.</div>
+
+      <div class="cards-2">
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">🏡</span> Private Bungalow</div>
+          <div class="card-body">
+            <div style="margin-bottom:8px"><span class="pill pill-warm">Premium</span></div>
+            En-suite bathroom, AC, fan, private terrace overlooking rice fields. King or twin bed. Towels, toiletries, and daily housekeeping included.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">🛏️</span> Shared Room (4-bed)</div>
+          <div class="card-body">
+            <div style="margin-bottom:8px"><span class="pill pill-green">Standard</span></div>
+            Shared bathroom (2 per room), fan, locker with key, community atmosphere. Great for solo travelers. Towels provided.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">ℹ️</span> What's Included in All Rooms</div>
+        <div class="card-body">
+          <table class="info-table">
+            <tr><td>Linen & towels</td><td>Provided and changed every 2 days</td></tr>
+            <tr><td>WiFi</td><td>Available in all rooms and communal areas</td></tr>
+            <tr><td>Power</td><td>Indonesian plugs (Type C/F). Bring a universal adapter.</td></tr>
+            <tr><td>Water</td><td>Filtered drinking water stations — please bring a reusable bottle</td></tr>
+            <tr><td>Laundry</td><td>Laundry service available at reception (paid separately)</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="highlight highlight-sky">
+        <div class="highlight-icon">💧</div>
+        <div>The retreat is an eco-property. Please use water and electricity mindfully. AC is available but we encourage fans where comfortable.</div>
+      </div>
+    </div>
+
+    <!-- PACKING GUIDE -->
+    <div class="page" id="page-packing">
+      <div class="page-eyebrow">What to Bring</div>
+      <div class="page-title">Packing Guide</div>
+      <div class="page-subtitle">Tap items to check them off. Bali is tropical — pack light and breathable.</div>
+
+      <div class="pack-progress"><div class="pack-progress-fill" id="pack-fill" style="width:0%"></div></div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px" id="pack-count">0 of 24 packed</div>
+
+      <div class="pack-section">
+        <div class="pack-section-title">🤸 Movement & Practice</div>
+        <div class="pack-grid" id="pack-movement"></div>
+      </div>
+      <div class="pack-section">
+        <div class="pack-section-title">👗 Clothing</div>
+        <div class="pack-grid" id="pack-clothing"></div>
+      </div>
+      <div class="pack-section">
+        <div class="pack-section-title">🌞 Essentials</div>
+        <div class="pack-grid" id="pack-essentials"></div>
+      </div>
+      <div class="pack-section">
+        <div class="pack-section-title">💊 Health & Wellbeing</div>
+        <div class="pack-grid" id="pack-health"></div>
+      </div>
+    </div>
+
+    <!-- OPTIONAL ADD-ONS -->
+    <div class="page" id="page-addons">
+      <div class="page-eyebrow">Extras</div>
+      <div class="page-title">Optional Add-Ons</div>
+      <div class="page-subtitle">Enhance your festival experience with these optional extras. Book at reception on arrival.</div>
+
+      <div class="activity-card">
+        <div class="activity-icon-wrap" style="background:var(--brand-subtle)">🧘</div>
+        <div class="activity-content">
+          <div class="activity-name">Private Yoga Session <span class="pill pill-green" style="font-size:9px">150k IDR / 60 min</span></div>
+          <div class="activity-desc">One-on-one session with Elena M. or Ama F. Tailored to your needs — therapeutic, alignment-focused, or pranayama. Available mornings before 08:00 and evenings after 20:00.</div>
+        </div>
+      </div>
+      <div class="activity-card">
+        <div class="activity-icon-wrap" style="background:var(--warm-subtle)">🏍️</div>
+        <div class="activity-content">
+          <div class="activity-name">Scooter Rental <span class="pill pill-warm" style="font-size:9px">80k IDR / day</span></div>
+          <div class="activity-desc">Explore Ubud and surroundings on a semi-automatic scooter. Helmet included. Valid license required. Available Wed–Sat, return by 18:00.</div>
+        </div>
+      </div>
+      <div class="activity-card">
+        <div class="activity-icon-wrap" style="background:var(--sky-subtle)">🌾</div>
+        <div class="activity-content">
+          <div class="activity-name">Rice Field Walk & Warung Lunch <span class="pill pill-sky" style="font-size:9px">120k IDR / person</span></div>
+          <div class="activity-desc">Guided 2-hour walk through the Tegallalang rice terraces, ending at a local warung for a traditional Balinese lunch. Departing Thu & Sat at 08:30.</div>
+        </div>
+      </div>
+      <div class="activity-card">
+        <div class="activity-icon-wrap" style="background:var(--rose-subtle)">💆</div>
+        <div class="activity-content">
+          <div class="activity-name">Balinese Massage <span class="pill pill-rose" style="font-size:9px">180k IDR / 90 min</span></div>
+          <div class="activity-desc">Traditional Balinese massage by local therapists. Available daily 15:00–20:00. Book at reception — slots fill fast on Fri & Sat.</div>
+        </div>
+      </div>
+      <div class="activity-card">
+        <div class="activity-icon-wrap" style="background:var(--violet-subtle)">🎨</div>
+        <div class="activity-content">
+          <div class="activity-name">Batik Workshop <span class="pill pill-violet" style="font-size:9px">200k IDR / person</span></div>
+          <div class="activity-desc">2-hour traditional Balinese batik cloth painting workshop led by a local artist. Take your piece home. Thu afternoon 14:00–16:00. Max 12 participants.</div>
+        </div>
+      </div>
+
+      <div class="highlight highlight-warm">
+        <div class="highlight-icon">ℹ️</div>
+        <div>All prices in Indonesian Rupiah (IDR). ~15,000 IDR = €1. Cash preferred for most add-ons. ATM available 5 min walk from venue.</div>
+      </div>
+    </div>
+
+    <!-- FOOD & DIETARY -->
+    <div class="page" id="page-food">
+      <div class="page-eyebrow">Nourishment</div>
+      <div class="page-title">Food & Dietary Info</div>
+      <div class="page-subtitle">All meals are included in your festival package. We eat together — it's part of the experience.</div>
+
+      <div class="highlight highlight-green">
+        <div class="highlight-icon">🥗</div>
+        <div>All meals are <strong>plant-based</strong> (vegan) by default, with optional eggs at breakfast. We source locally where possible. Please inform us of allergies and intolerances in advance.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🍽️</span> Meal Times</div>
+        <div class="card-body">
+          <table class="info-table">
+            <tr><td>Breakfast</td><td>07:00–09:00 · Garden dining area</td></tr>
+            <tr><td>Lunch</td><td>12:30–14:00 · Garden dining area</td></tr>
+            <tr><td>Dinner</td><td>19:00–20:30 · Garden dining area</td></tr>
+            <tr><td>Snacks</td><td>Fresh fruit and coconuts available all day at the snack station</td></tr>
+            <tr><td>Coffee & tea</td><td>Self-service from 06:30 at the communal kitchen</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="cards-2">
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">🚫</span> Allergens We Handle</div>
+          <div class="card-body">
+            <span class="pill pill-green">Gluten-free</span>
+            <span class="pill pill-warm">Nut-free</span>
+            <span class="pill pill-sky">Soy-free</span>
+            <span class="pill pill-rose">No nightshades</span>
+            <span class="pill pill-gold">Raw options</span>
+            <br><br>Please email us at least 7 days before arrival to flag severe allergies.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">🌴</span> Local & Seasonal</div>
+          <div class="card-body">Expect lots of fresh tropical fruit, tempeh, tofu, local greens, rice, and Balinese spice. The chef adapts the menu daily based on what's available at the morning market.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVITIES -->
+    <div class="page" id="page-activities">
+      <div class="page-eyebrow">Movement & More</div>
+      <div class="page-title">Activities & Experiences</div>
+      <div class="page-subtitle">What's on offer across the five days — from structured workshops to open exploration.</div>
+
+      <div class="activity-card">
+        <div class="activity-icon-wrap" style="background:var(--brand-subtle)">🤸</div>
+        <div class="activity-content">
+          <div class="activity-name">Acroyoga Classes <span class="pill pill-green">Included</span></div>
+          <div class="activity-desc">Daily structured classes across beginner, intermediate, and advanced tracks. Covering base technique, flying, washing machines, and therapeutic sequences.</div>
+        </div>
+      </div>
+      <div class="activity-card">
+        <div class="activity-icon-wrap" style="background:var(--warm-subtle)">🎵</div>
+        <div class="activity-content">
+          <div class="activity-name">Open Jam Sessions <span class="pill pill-warm">Included</span></div>
+          <div class="activity-desc">Unstructured practice time with music. Spotters available. All levels welcome. The heart of every festival day — come with curiosity, not a plan.</div>
+        </div>
+      </div>
+      <div class="activity-card">
+        <div class="activity-icon-wrap" style="background:var(--sky-subtle)">🙌</div>
+        <div class="activity-content">
+          <div class="activity-name">Handstand Lab <span class="pill pill-sky">Included</span></div>
+          <div class="activity-desc">Two sessions on Thu and Fri for beginners. Wrist prep, wall work, bail technique, and line coaching. No prior experience needed.</div>
+        </div>
+      </div>
+      <div class="activity-card">
+        <div class="activity-icon-wrap" style="background:var(--rose-subtle)">🎭</div>
+        <div class="activity-content">
+          <div class="activity-name">Performance Showcase <span class="pill pill-rose">Sat evening</span></div>
+          <div class="activity-desc">90-minute showcase of participant-created pieces and invited artists. If you'd like to perform, sign up at the board near reception by Friday noon.</div>
+        </div>
+      </div>
+      <div class="activity-card">
+        <div class="activity-icon-wrap" style="background:var(--violet-subtle)">💬</div>
+        <div class="activity-content">
+          <div class="activity-name">Community Talks <span class="pill pill-violet">Included</span></div>
+          <div class="activity-desc">Thu evening: Consent & Communication with Sarah K. Informal, open circle format. Attendance optional but warmly encouraged for all.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRACTICAL INFO -->
+    <div class="page" id="page-practical">
+      <div class="page-eyebrow">Good to Know</div>
+      <div class="page-title">Practical Information</div>
+      <div class="page-subtitle">Health, safety, money, and on-the-ground logistics.</div>
+
+      <div class="cards-2">
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">💰</span> Money</div>
+          <div class="card-body">
+            <table class="info-table">
+              <tr><td>Currency</td><td>Indonesian Rupiah (IDR)</td></tr>
+              <tr><td>Rate approx.</td><td>€1 ≈ 17,000 IDR</td></tr>
+              <tr><td>ATM</td><td>5 min walk from venue · BCA Bank</td></tr>
+              <tr><td>Cards</td><td>Some local spots cash only</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span class="card-title-icon">🌡️</span> Climate</div>
+          <div class="card-body">
+            <table class="info-table">
+              <tr><td>Temperature</td><td>26–30°C during the day</td></tr>
+              <tr><td>Humidity</td><td>High · bring breathable fabrics</td></tr>
+              <tr><td>Rain</td><td>Possible Sat afternoon</td></tr>
+              <tr><td>Evenings</td><td>Comfortable, light layer optional</td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">🏥</span> Health & Safety</div>
+        <div class="card-body">
+          <table class="info-table">
+            <tr><td>First aid</td><td>3 stations on-site, staffed during all sessions</td></tr>
+            <tr><td>Medical contact</td><td>Dr. Putu Sari · on-call throughout festival · contact via reception</td></tr>
+            <tr><td>Nearest hospital</td><td>BIMC Ubud · 10 min by car</td></tr>
+            <tr><td>Insurance</td><td>Travel insurance strongly recommended. Festival insurance does not cover personal injury.</td></tr>
+            <tr><td>Water</td><td>Do not drink tap water. Use the filtered stations on-site.</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="highlight highlight-rose">
+        <div class="highlight-icon">🌿</div>
+        <div><strong>Consent culture:</strong> All participants agree to the festival's consent and safety guidelines upon registration. Spotters are available at all jam sessions. If you feel unsafe or uncomfortable at any point, approach any facilitator or the orange-badged safety volunteers.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">📱</span> Useful Contacts</div>
+        <div class="card-body">
+          <table class="info-table">
+            <tr><td>Festival WhatsApp</td><td>Link sent in your confirmation email</td></tr>
+            <tr><td>Reception</td><td>+62 361 000 0000 · 24h</td></tr>
+            <tr><td>Festival Director</td><td>Elena M. · find her at the venue or via WhatsApp</td></tr>
+            <tr><td>Emergency (Bali)</td><td>112</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="page" id="page-faq">
+      <div class="page-eyebrow">Questions</div>
+      <div class="page-title">FAQs</div>
+      <div class="page-subtitle">Answers to the most common questions. Can't find yours? Ask in the WhatsApp group.</div>
+
+      <div id="faq-list"></div>
+    </div>
+
+    <!-- GROUP INFO -->
+    <div class="page" id="page-group">
+      <div class="page-eyebrow">Your People</div>
+      <div class="page-title">Group Info</div>
+      <div class="page-subtitle">The facilitators and team behind AcroFest 2025.</div>
+
+      <div class="highlight highlight-green">
+        <div class="highlight-icon">👥</div>
+        <div><strong>120 participants</strong> from 19 countries, across all skill levels. You'll be in good company.</div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px">Facilitation Team</div>
+      <div class="people-grid" id="people-grid"></div>
+
+      <div class="card" style="margin-top:8px">
+        <div class="card-title"><span class="card-title-icon">🌍</span> Where We're From</div>
+        <div class="card-body">
+          <span class="pill pill-green">🇳🇱 Netherlands · 18</span>
+          <span class="pill pill-sky">🇩🇪 Germany · 14</span>
+          <span class="pill pill-warm">🇧🇷 Brazil · 12</span>
+          <span class="pill pill-rose">🇮🇱 Israel · 11</span>
+          <span class="pill pill-violet">🇫🇷 France · 9</span>
+          <span class="pill pill-gold">🇦🇺 Australia · 8</span>
+          <span class="pill pill-green">🇺🇸 USA · 7</span>
+          <span class="pill pill-sky">🇧🇪 Belgium · 6</span>
+          <span class="pill pill-warm">+ 11 more countries</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">💬</span> Community Guidelines</div>
+        <div class="card-body">
+          <table class="info-table">
+            <tr><td>Ask before touching</td><td>Always ask before adjusting, spotting, or offering hands-on support</td></tr>
+            <tr><td>No means no</td><td>Any decline is complete, no explanation needed</td></tr>
+            <tr><td>Skill honesty</td><td>Be honest about your level — it keeps everyone safe</td></tr>
+            <tr><td>Spotters welcome</td><td>Having a spotter is a sign of wisdom, not weakness</td></tr>
+            <tr><td>Leave space</td><td>Be mindful of others' practice space during jams</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VENUE MAP -->
+    <div class="page" id="page-map">
+      <div class="page-eyebrow">Orientation</div>
+      <div class="page-title">Venue Map</div>
+      <div class="page-subtitle">The retreat grounds — all venues within 3 minutes walk of each other. Tap a location for details.</div>
+
+      <div class="map-legend">
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#5B9E6E"></div>Practice venues</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#D4893A"></div>Food & social</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#4A89B0"></div>Accommodation</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#C4706A"></div>Services</div>
+        <div class="map-legend-item"><div class="map-legend-dot" style="background:#7A6E9E"></div>Outdoor spaces</div>
+      </div>
+
+      <div class="map-wrap" id="map-wrap">
+        <svg class="map-svg" viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg" id="terrain-svg">
+          <defs>
+            <pattern id="grass" patternUnits="userSpaceOnUse" width="20" height="20">
+              <rect width="20" height="20" fill="#D8EDDA"/>
+              <circle cx="4" cy="7" r="1" fill="#B8D9BC" opacity="0.6"/>
+              <circle cx="13" cy="3" r="1.2" fill="#B8D9BC" opacity="0.5"/>
+              <circle cx="17" cy="14" r="0.8" fill="#B8D9BC" opacity="0.7"/>
+              <circle cx="7" cy="16" r="1" fill="#B8D9BC" opacity="0.5"/>
+            </pattern>
+            <pattern id="ricefield" patternUnits="userSpaceOnUse" width="24" height="12">
+              <rect width="24" height="12" fill="#C8E6CB"/>
+              <line x1="0" y1="6" x2="24" y2="6" stroke="#A5C9A8" stroke-width="0.8" opacity="0.7"/>
+              <line x1="0" y1="0" x2="24" y2="0" stroke="#A5C9A8" stroke-width="0.8" opacity="0.5"/>
+            </pattern>
+            <pattern id="path-tex" patternUnits="userSpaceOnUse" width="8" height="8">
+              <rect width="8" height="8" fill="#E8DFD0"/>
+              <circle cx="2" cy="3" r="0.6" fill="#D4C8B0" opacity="0.5"/>
+              <circle cx="6" cy="6" r="0.5" fill="#D4C8B0" opacity="0.4"/>
+            </pattern>
+            <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="2" dy="3" stdDeviation="3" flood-color="rgba(30,80,40,0.18)"/>
+            </filter>
+            <filter id="pin-shadow">
+              <feDropShadow dx="1" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.25)"/>
+            </filter>
+          </defs>
+
+          <!-- Background — rice fields perimeter -->
+          <rect width="800" height="520" fill="url(#ricefield)"/>
+
+          <!-- Retreat boundary wall -->
+          <rect x="60" y="50" width="680" height="420" rx="18" fill="url(#grass)" stroke="#A8C8AA" stroke-width="2.5"/>
+
+          <!-- Internal paths / walkways -->
+          <!-- Main central path N-S -->
+          <rect x="370" y="80" width="36" height="360" rx="4" fill="url(#path-tex)" opacity="0.9"/>
+          <!-- E-W path top -->
+          <rect x="100" y="180" width="580" height="30" rx="4" fill="url(#path-tex)" opacity="0.85"/>
+          <!-- E-W path bottom -->
+          <rect x="100" y="320" width="580" height="28" rx="4" fill="url(#path-tex)" opacity="0.85"/>
+          <!-- path to garden nook -->
+          <rect x="570" y="210" width="28" height="110" rx="4" fill="url(#path-tex)" opacity="0.75"/>
+
+          <!-- ── BUILDINGS ── -->
+
+          <!-- Main Platform (open air, large) -->
+          <rect x="110" y="90" width="220" height="130" rx="10" fill="#C8E6CB" stroke="#5B9E6E" stroke-width="2" filter="url(#soft-shadow)"/>
+          <rect x="110" y="90" width="220" height="28" rx="10" fill="#5B9E6E" opacity="0.25"/>
+          <text x="220" y="142" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2A5E38">Main Platform</text>
+          <text x="220" y="160" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#4A8A58">Open-air · 200 m²</text>
+          <!-- stage indicator -->
+          <rect x="130" y="175" width="180" height="10" rx="3" fill="#5B9E6E" opacity="0.35"/>
+          <text x="220" y="183" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="8" fill="#3A7D52">stage</text>
+
+          <!-- Studio A -->
+          <rect x="110" y="240" width="130" height="90" rx="8" fill="#E8F4FF" stroke="#4A89B0" stroke-width="2" filter="url(#soft-shadow)"/>
+          <text x="175" y="282" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#1E4A6E">Studio A</text>
+          <text x="175" y="298" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#4A89B0">Indoor · 80 m²</text>
+
+          <!-- Studio B -->
+          <rect x="260" y="240" width="100" height="80" rx="8" fill="#FDF0E8" stroke="#D4893A" stroke-width="2" filter="url(#soft-shadow)"/>
+          <text x="310" y="278" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#7A4010">Studio B</text>
+          <text x="310" y="294" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#D4893A">Indoor · 60 m²</text>
+
+          <!-- Lawn -->
+          <rect x="110" y="348" width="240" height="100" rx="12" fill="#BEDFBE" stroke="#7AB87A" stroke-width="2" stroke-dasharray="6,3" filter="url(#soft-shadow)"/>
+          <!-- decorative grass tufts on lawn -->
+          <circle cx="145" cy="378" r="6" fill="#A8D0A8" opacity="0.7"/>
+          <circle cx="200" cy="395" r="5" fill="#A8D0A8" opacity="0.6"/>
+          <circle cx="310" cy="370" r="6" fill="#A8D0A8" opacity="0.7"/>
+          <circle cx="280" cy="420" r="4" fill="#A8D0A8" opacity="0.5"/>
+          <circle cx="160" cy="430" r="5" fill="#A8D0A8" opacity="0.6"/>
+          <text x="230" y="393" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="13" font-weight="700" fill="#2A5E38">Lawn</text>
+          <text x="230" y="410" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10" fill="#4A8A58">Grass · 400 m² · Jams</text>
+
+          <!-- Slack-line indicator on lawn -->
+          <line x1="140" y1="440" x2="310" y2="440" stroke="#5B9E6E" stroke-width="2" stroke-dasharray="4,3" opacity="0.6"/>
+          <text x="225" y="452" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="8.5" fill="#5B9E6E">slack-line</text>
+
+          <!-- Garden / Dining -->
+          <rect x="420" y="90" width="180" height="90" rx="10" fill="#FEF9E7" stroke="#C9A84C" stroke-width="2" filter="url(#soft-shadow)"/>
+          <!-- table symbols -->
+          <circle cx="460" cy="128" r="12" fill="#F5E8C0" stroke="#C9A84C" stroke-width="1"/>
+          <circle cx="500" cy="128" r="12" fill="#F5E8C0" stroke="#C9A84C" stroke-width="1"/>
+          <circle cx="540" cy="128" r="12" fill="#F5E8C0" stroke="#C9A84C" stroke-width="1"/>
+          <text x="510" y="158" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="12" font-weight="700" fill="#6B4A10">Garden Dining</text>
+
+          <!-- Garden Nook / Pavilion -->
+          <rect x="590" y="220" width="100" height="80" rx="10" fill="#F0EEF8" stroke="#7A6E9E" stroke-width="2" filter="url(#soft-shadow)"/>
+          <!-- pavilion roof suggestion -->
+          <polygon points="590,230 640,215 690,230" fill="#7A6E9E" opacity="0.2"/>
+          <text x="640" y="258" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#4A3A7E">Garden Nook</text>
+          <text x="640" y="274" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9.5" fill="#7A6E9E">Talks · 30 m²</text>
+
+          <!-- Bungalows block -->
+          <rect x="420" y="210" width="140" height="85" rx="8" fill="#E5F0F8" stroke="#4A89B0" stroke-width="1.5" filter="url(#soft-shadow)"/>
+          <!-- individual bungalow rects -->
+          <rect x="430" y="222" width="35" height="28" rx="3" fill="#C8DFF0" stroke="#4A89B0" stroke-width="1"/>
+          <rect x="474" y="222" width="35" height="28" rx="3" fill="#C8DFF0" stroke="#4A89B0" stroke-width="1"/>
+          <rect x="518" y="222" width="35" height="28" rx="3" fill="#C8DFF0" stroke="#4A89B0" stroke-width="1"/>
+          <rect x="430" y="259" width="35" height="28" rx="3" fill="#C8DFF0" stroke="#4A89B0" stroke-width="1"/>
+          <rect x="474" y="259" width="35" height="28" rx="3" fill="#C8DFF0" stroke="#4A89B0" stroke-width="1"/>
+          <rect x="518" y="259" width="35" height="28" rx="3" fill="#C8DFF0" stroke="#4A89B0" stroke-width="1"/>
+          <text x="490" y="305" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10.5" font-weight="700" fill="#1E4060">Bungalows</text>
+
+          <!-- Shared rooms block -->
+          <rect x="420" y="348" width="120" height="80" rx="8" fill="#E5F0F8" stroke="#4A89B0" stroke-width="1.5" filter="url(#soft-shadow)"/>
+          <rect x="432" y="360" width="42" height="32" rx="3" fill="#C8DFF0" stroke="#4A89B0" stroke-width="1"/>
+          <rect x="484" y="360" width="42" height="32" rx="3" fill="#C8DFF0" stroke="#4A89B0" stroke-width="1"/>
+          <text x="480" y="412" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="10.5" font-weight="700" fill="#1E4060">Shared Rooms</text>
+
+          <!-- Reception / First Aid -->
+          <rect x="560" y="348" width="110" height="60" rx="8" fill="#FCE8E8" stroke="#C4706A" stroke-width="2" filter="url(#soft-shadow)"/>
+          <text x="615" y="374" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="11" font-weight="700" fill="#7A2020">Reception</text>
+          <text x="615" y="390" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9.5" fill="#C4706A">+ First Aid</text>
+
+          <!-- Entrance gate -->
+          <rect x="362" y="445" width="58" height="18" rx="4" fill="#D4C8B0" stroke="#A89878" stroke-width="1.5"/>
+          <text x="391" y="458" text-anchor="middle" font-family="DM Sans, sans-serif" font-size="9" font-weight="600" fill="#6A5A40">ENTRANCE</text>
+          <!-- gate posts -->
+          <rect x="362" y="438" width="8" height="30" rx="2" fill="#A89878"/>
+          <rect x="412" y="438" width="8" height="30" rx="2" fill="#A89878"/>
+
+          <!-- Trees / greenery decorations -->
+          <circle cx="90" cy="88" r="18" fill="#4A8A58" opacity="0.5"/>
+          <circle cx="86" cy="82" r="12" fill="#5B9E6E" opacity="0.7"/>
+          <circle cx="720" cy="90" r="16" fill="#4A8A58" opacity="0.5"/>
+          <circle cx="726" cy="84" r="11" fill="#5B9E6E" opacity="0.7"/>
+          <circle cx="90" cy="460" r="15" fill="#4A8A58" opacity="0.5"/>
+          <circle cx="86" cy="454" r="10" fill="#5B9E6E" opacity="0.65"/>
+          <circle cx="720" cy="460" r="16" fill="#4A8A58" opacity="0.5"/>
+          <circle cx="726" cy="455" r="11" fill="#5B9E6E" opacity="0.65"/>
+          <circle cx="370" cy="70" r="10" fill="#5B9E6E" opacity="0.5"/>
+          <circle cx="680" cy="190" r="12" fill="#4A8A58" opacity="0.4"/>
+          <circle cx="680" cy="340" r="10" fill="#4A8A58" opacity="0.4"/>
+          <circle cx="380" cy="340" r="9" fill="#5B9E6E" opacity="0.45"/>
+
+          <!-- Compass rose -->
+          <g transform="translate(730,90)">
+            <circle r="18" fill="white" opacity="0.7" stroke="#C8D8CA" stroke-width="1"/>
+            <text y="-6" text-anchor="middle" font-family="DM Sans" font-size="9" font-weight="700" fill="#3A5440">N</text>
+            <polygon points="0,-14 3,-4 0,-7 -3,-4" fill="#C4706A"/>
+            <polygon points="0,14 3,4 0,7 -3,4" fill="#A8B8A8"/>
+            <text y="5" text-anchor="middle" font-family="DM Sans" font-size="9" fill="#7A9880">S</text>
+          </g>
+
+          <!-- Scale bar -->
+          <g transform="translate(100,490)">
+            <line x1="0" y1="0" x2="80" y2="0" stroke="#7A9880" stroke-width="2"/>
+            <line x1="0" y1="-4" x2="0" y2="4" stroke="#7A9880" stroke-width="2"/>
+            <line x1="80" y1="-4" x2="80" y2="4" stroke="#7A9880" stroke-width="2"/>
+            <text x="40" y="-6" text-anchor="middle" font-family="DM Sans" font-size="9" fill="#7A9880">≈ 100 m</text>
+          </g>
+
+          <!-- ── INTERACTIVE PINS ── -->
+          <!-- Main Platform pin -->
+          <g class="map-pin" data-venue="0" style="cursor:pointer" transform="translate(220,97)">
+            <circle r="12" fill="#5B9E6E" filter="url(#pin-shadow)"/>
+            <text y="4" text-anchor="middle" font-size="13" fill="white">🎭</text>
+          </g>
+          <!-- Studio A pin -->
+          <g class="map-pin" data-venue="1" style="cursor:pointer" transform="translate(175,248)">
+            <circle r="11" fill="#4A89B0" filter="url(#pin-shadow)"/>
+            <text y="4" text-anchor="middle" font-size="12" fill="white">A</text>
+          </g>
+          <!-- Studio B pin -->
+          <g class="map-pin" data-venue="2" style="cursor:pointer" transform="translate(310,248)">
+            <circle r="11" fill="#D4893A" filter="url(#pin-shadow)"/>
+            <text y="4" text-anchor="middle" font-size="12" fill="white">B</text>
+          </g>
+          <!-- Lawn pin -->
+          <g class="map-pin" data-venue="3" style="cursor:pointer" transform="translate(230,382)">
+            <circle r="12" fill="#5B9E6E" filter="url(#pin-shadow)"/>
+            <text y="4" text-anchor="middle" font-size="13" fill="white">🌿</text>
+          </g>
+          <!-- Garden Dining pin -->
+          <g class="map-pin" data-venue="4" style="cursor:pointer" transform="translate(510,98)">
+            <circle r="11" fill="#C9A84C" filter="url(#pin-shadow)"/>
+            <text y="4" text-anchor="middle" font-size="12" fill="white">🍽</text>
+          </g>
+          <!-- Garden Nook pin -->
+          <g class="map-pin" data-venue="5" style="cursor:pointer" transform="translate(640,228)">
+            <circle r="11" fill="#7A6E9E" filter="url(#pin-shadow)"/>
+            <text y="4" text-anchor="middle" font-size="12" fill="white">💬</text>
+          </g>
+          <!-- Bungalows pin -->
+          <g class="map-pin" data-venue="6" style="cursor:pointer" transform="translate(490,218)">
+            <circle r="11" fill="#4A89B0" filter="url(#pin-shadow)"/>
+            <text y="4" text-anchor="middle" font-size="12" fill="white">🛏</text>
+          </g>
+          <!-- Reception pin -->
+          <g class="map-pin" data-venue="7" style="cursor:pointer" transform="translate(615,356)">
+            <circle r="11" fill="#C4706A" filter="url(#pin-shadow)"/>
+            <text y="4" text-anchor="middle" font-size="12" fill="white">+</text>
+          </g>
+
+        </svg>
+        <!-- popup overlay -->
+        <div class="venue-popup" id="venue-popup">
+          <div class="venue-popup-name" id="popup-name"></div>
+          <div class="venue-popup-type" id="popup-type"></div>
+          <div id="popup-body"></div>
+        </div>
+      </div>
+
+      <!-- Venue detail cards -->
+      <div style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:12px">All Locations</div>
+      <div class="map-venue-cards" id="venue-cards"></div>
+
+    </div>
+
+  </div><!-- end main -->
+</div><!-- end layout -->
+
+<button class="mobile-menu-btn" onclick="toggleMobile()" id="mob-btn">☰</button>
+
+<script>
+// ── Navigation ──────────────────────────────
+function show(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('sidebar').classList.remove('open');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function toggleMobile() {
+  const s = document.getElementById('sidebar');
+  s.classList.toggle('open');
+  document.getElementById('mob-btn').textContent = s.classList.contains('open') ? '✕' : '☰';
+}
+
+// ── Packing List ──────────────────────────────
+const PACKING = {
+  movement: ['Yoga mat','Grip socks','Bare feet friendly shoes','Yoga block','Resistance band','Training shorts x3','Sports bra / top x3'],
+  clothing: ['Light linen shirt x2','Sarong / wrap','Swimwear','Sandals','Rain jacket','Evening top','Underwear x6'],
+  essentials: ['Reusable water bottle','Sunscreen SPF50+','Insect repellent','Universal power adapter','Headlamp / torch','Cash (IDR)','Earplugs'],
+  health: ['Personal medications','Probiotics','Electrolyte sachets','Blister plasters','Hand sanitiser','Menstrual products if needed'],
+};
+let totalItems = 0;
+let checkedItems = 0;
+
+function buildPacking() {
+  Object.entries(PACKING).forEach(([key, items]) => {
+    const container = document.getElementById('pack-' + key);
+    items.forEach(item => {
+      totalItems++;
+      const div = document.createElement('div');
+      div.className = 'pack-item';
+      div.innerHTML = `<div class="pack-check"></div>${item}`;
+      div.onclick = () => togglePack(div);
+      container.appendChild(div);
+    });
+  });
+  updatePackCount();
+}
+
+function togglePack(el) {
+  const box = el.querySelector('.pack-check');
+  if (el.classList.contains('checked')) {
+    el.classList.remove('checked');
+    box.textContent = '';
+    checkedItems--;
+  } else {
+    el.classList.add('checked');
+    box.textContent = '✓';
+    checkedItems++;
+  }
+  updatePackCount();
+}
+
+function updatePackCount() {
+  const pct = Math.round((checkedItems / totalItems) * 100);
+  document.getElementById('pack-fill').style.width = pct + '%';
+  document.getElementById('pack-count').textContent = checkedItems + ' of ' + totalItems + ' packed';
+}
+
+// ── FAQ ──────────────────────────────────────
+const FAQS = [
+  { q: 'Do I need prior acro experience?', a: 'No. We have dedicated beginner tracks every day. The opening ceremony and foundations class on Wednesday are designed to welcome complete newcomers. Bring curiosity and a willingness to communicate.' },
+  { q: 'What skill level is this festival for?', a: 'All levels from complete beginner to advanced. Sessions are clearly marked by level and there are simultaneous options at different times so you can always find something suited to you.' },
+  { q: 'Is it safe? What about injuries?', a: 'Acro carries inherent risk like any physical practice. We have first aid on-site at all times, spotters at every jam, and a safety briefing at the opening ceremony. Following the consent and communication guidelines significantly reduces risk.' },
+  { q: 'Can I come alone?', a: 'Absolutely. Most participants come solo. The structure of acro naturally creates connection — you\'ll have partners within the first session. The evening jams and dinners are great for meeting people.' },
+  { q: 'What if I have a dietary requirement not listed?', a: 'Email us at least 7 days before arrival and we\'ll do our best to accommodate you. The kitchen is fully plant-based so most requirements (vegan, gluten-free, nut-free) are easy to handle.' },
+  { q: 'Is the schedule fixed or can I skip sessions?', a: 'The schedule is a guide, not a requirement. Rest is part of the practice. You\'re welcome to attend all sessions, some sessions, or spend a morning in a rice field — it\'s your festival.' },
+  { q: 'What\'s the refund policy?', a: 'Cancellations more than 60 days before: full refund minus 10% admin fee. 30–60 days: 50% refund. Less than 30 days: no refund, but your spot is transferable to another person.' },
+  { q: 'Is there a shop or pharmacy nearby?', a: 'Yes — Ubud center is 15 min by scooter or Grab. There\'s a pharmacy, several ATMs, and plenty of shops. The retreat has a small basics pantry with essentials.' },
+  { q: 'Can I bring a partner/friend who doesn\'t practice acro?', a: 'The festival program is acro-focused, but the grounds are open and Ubud has endless activities. Non-practicing guests are welcome to stay and join meals and social events.' },
+  { q: 'Will there be photos and video?', a: 'Festival photographers will be present. You can opt out of being photographed — let us know at check-in. Footage from the showcase may be shared on social media.' },
+];
+
+function buildFAQ() {
+  const list = document.getElementById('faq-list');
+  FAQS.forEach(f => {
+    const item = document.createElement('div');
+    item.className = 'faq-item';
+    item.innerHTML = `<div class="faq-q" onclick="toggleFAQ(this)"><span>${f.q}</span><span class="faq-arrow">▼</span></div><div class="faq-a">${f.a}</div>`;
+    list.appendChild(item);
+  });
+}
+
+function toggleFAQ(el) {
+  const answer = el.nextElementSibling;
+  const isOpen = el.classList.contains('open');
+  // close all
+  document.querySelectorAll('.faq-q.open').forEach(q => { q.classList.remove('open'); q.nextElementSibling.classList.remove('open'); });
+  if (!isOpen) { el.classList.add('open'); answer.classList.add('open'); }
+}
+
+// ── Group / People ───────────────────────────
+const PEOPLE = [
+  { name:'Elena M.', role:'Lead Facilitator', initials:'EM', color:'#5B9E6E' },
+  { name:'Ravi S.', role:'Advanced Coach', initials:'RS', color:'#4A89B0' },
+  { name:'Sarah K.', role:'Consent & Comms', initials:'SK', color:'#D4893A' },
+  { name:'Ama F.', role:'Therapeutic Acro', initials:'AF', color:'#C4706A' },
+  { name:'Jonas B.', role:'Handstand Coach', initials:'JB', color:'#7A6E9E' },
+  { name:'Mia T.', role:'Flying Coach', initials:'MT', color:'#3A7D52' },
+];
+
+function buildPeople() {
+  const grid = document.getElementById('people-grid');
+  PEOPLE.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'person-card';
+    card.innerHTML = `<div class="person-avatar" style="background:${p.color}">${p.initials}</div><div class="person-name">${p.name}</div><div class="person-role">${p.role}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+// ── Venue Map ────────────────────────────────
+const VENUES = [
+  {
+    id: 0, name: 'Main Platform', type: 'Practice Venue',
+    color: '#5B9E6E', pill: 'pill-green',
+    size: '200 m² · Open-air',
+    desc: 'The heart of the festival. Morning flows, evening jams, the performance showcase, and the closing ceremony all happen here. Full sound system, string lights at night.',
+    sessions: ['Morning Flow', 'Evening Jam', 'Opening Ceremony', 'Performance Showcase', 'Closing Ceremony'],
+    tags: [['pill-green','All levels'], ['pill-warm','Sound system'], ['pill-sky','Covered partially']],
+  },
+  {
+    id: 1, name: 'Studio A', type: 'Practice Venue',
+    color: '#4A89B0', pill: 'pill-sky',
+    size: '80 m² · Sprung floor',
+    desc: 'Indoor studio with sprung floor, mirrors, and AC. Ideal for beginner classes and handstand labs. Capacity ~30 practitioners.',
+    sessions: ['Foundations of Acro', 'Handstand Lab I & II', 'Skills Lab'],
+    tags: [['pill-sky','Sprung floor'], ['pill-green','Beginners'], ['pill-violet','AC & fans']],
+  },
+  {
+    id: 2, name: 'Studio B', type: 'Practice Venue',
+    color: '#D4893A', pill: 'pill-warm',
+    size: '60 m² · Intimate',
+    desc: 'Smaller indoor studio, perfect for workshops requiring closer attention. Good acoustics, natural ventilation, bamboo décor.',
+    sessions: ['Therapeutic Acro', 'L-Basing Clinic'],
+    tags: [['pill-warm','Intermediate+'], ['pill-green','Natural ventilation']],
+  },
+  {
+    id: 3, name: 'Lawn', type: 'Outdoor Practice',
+    color: '#5B9E6E', pill: 'pill-green',
+    size: '400 m² · Grass',
+    desc: 'The biggest space on-site. Open jams, slack-line rig, and community practice. Spotters stationed at 5 points. Surrounded by rice fields.',
+    sessions: ['Open Jams', 'Flying High Beginner', 'Community Jam', 'Final Jam'],
+    tags: [['pill-green','All levels'], ['pill-warm','Slack-line rig'], ['pill-sky','5 spotter stations']],
+  },
+  {
+    id: 4, name: 'Garden Dining', type: 'Food & Social',
+    color: '#C9A84C', pill: 'pill-gold',
+    size: 'Seats 140 · Shaded',
+    desc: 'Open-air dining pavilion where all meals are served. Also the venue for the welcome dinner on Wednesday evening. Communal tables, fairy lights.',
+    sessions: ['Breakfast 07:00', 'Lunch 12:30', 'Dinner 19:00', 'Welcome Dinner'],
+    tags: [['pill-gold','3 meals/day'], ['pill-green','Vegan menu'], ['pill-warm','Communal seating']],
+  },
+  {
+    id: 5, name: 'Garden Nook', type: 'Talks & Workshops',
+    color: '#7A6E9E', pill: 'pill-violet',
+    size: '30 m² · Shaded pavilion',
+    desc: 'An intimate shaded pavilion tucked in the greenery. Used for talks, facilitator briefings, and quiet reflection. Circle seating on cushions.',
+    sessions: ['Consent & Communication Talk', 'Facilitator Briefings'],
+    tags: [['pill-violet','Intimate'], ['pill-green','Shaded']],
+  },
+  {
+    id: 6, name: 'Bungalows', type: 'Accommodation',
+    color: '#4A89B0', pill: 'pill-sky',
+    size: '6 bungalows · Private',
+    desc: 'Private en-suite bungalows with rice field views, AC, fan, and terrace. King or twin configuration. Towels and daily housekeeping included.',
+    sessions: [],
+    tags: [['pill-sky','En-suite'], ['pill-warm','Rice field view'], ['pill-green','AC & fan']],
+  },
+  {
+    id: 7, name: 'Reception & First Aid', type: 'Services',
+    color: '#C4706A', pill: 'pill-rose',
+    size: 'Open 24h',
+    desc: 'Main reception for check-in, questions, and add-on bookings. First aid station staffed during all session hours. Emergency contact point.',
+    sessions: ['Check-in / Check-out', 'First Aid', 'Add-on bookings', 'Luggage storage'],
+    tags: [['pill-rose','24h reception'], ['pill-warm','First aid'], ['pill-green','Luggage storage']],
+  },
+];
+
+function buildVenueCards() {
+  const grid = document.getElementById('venue-cards');
+  VENUES.forEach(v => {
+    const card = document.createElement('div');
+    card.className = 'map-venue-card';
+    card.id = 'vcard-' + v.id;
+    const tagsHtml = v.tags.map(([cls, lbl]) => `<span class="pill ${cls}" style="font-size:9.5px">${lbl}</span>`).join('');
+    const sessionsHtml = v.sessions.length
+      ? '<div style="font-size:10.5px;color:var(--text-muted);margin-top:4px">📌 ' + v.sessions.slice(0,3).join(' · ') + (v.sessions.length > 3 ? ' …' : '') + '</div>'
+      : '';
+    card.innerHTML = `
+      <div class="map-venue-card-header">
+        <div class="map-venue-card-dot" style="background:${v.color}"></div>
+        <div class="map-venue-card-name">${v.name}</div>
+        <span class="pill ${v.pill}" style="font-size:9px;margin-left:auto">${v.type}</span>
+      </div>
+      <div class="map-venue-card-body">${v.size}<br>${v.desc}</div>
+      ${sessionsHtml}
+      <div class="map-venue-card-tags">${tagsHtml}</div>
+    `;
+    card.onclick = () => highlightVenue(v.id);
+    grid.appendChild(card);
+  });
+}
+
+function highlightVenue(id) {
+  document.querySelectorAll('.map-venue-card').forEach(c => c.classList.remove('highlighted'));
+  const card = document.getElementById('vcard-' + id);
+  if (card) { card.classList.add('highlighted'); card.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+  // flash the pin
+  document.querySelectorAll('.map-pin').forEach(p => {
+    p.querySelector('circle').setAttribute('opacity', p.dataset.venue == id ? '1' : '0.4');
+  });
+  setTimeout(() => {
+    document.querySelectorAll('.map-pin circle').forEach(c => c.setAttribute('opacity', '1'));
+  }, 1800);
+}
+
+function initMapPins() {
+  const popup = document.getElementById('venue-popup');
+  const wrap = document.getElementById('map-wrap');
+
+  document.querySelectorAll('.map-pin').forEach(pin => {
+    pin.addEventListener('mouseenter', (e) => {
+      const v = VENUES[parseInt(pin.dataset.venue)];
+      document.getElementById('popup-name').textContent = v.name;
+      document.getElementById('popup-type').textContent = v.type;
+      document.getElementById('popup-type').style.color = v.color;
+      document.getElementById('popup-body').textContent = v.size + ' — ' + v.desc.slice(0, 90) + '…';
+      const rect = wrap.getBoundingClientRect();
+      const pinRect = pin.getBoundingClientRect();
+      let left = pinRect.left - rect.left + 20;
+      let top = pinRect.top - rect.top - 10;
+      if (left + 230 > rect.width) left = left - 250;
+      if (top + 120 > rect.height) top = top - 100;
+      popup.style.left = left + 'px';
+      popup.style.top = top + 'px';
+      popup.classList.add('visible');
+    });
+    pin.addEventListener('mouseleave', () => popup.classList.remove('visible'));
+    pin.addEventListener('click', () => {
+      highlightVenue(parseInt(pin.dataset.venue));
+    });
+  });
+}
+
+// ── Init ─────────────────────────────────────
+buildPacking();
+buildFAQ();
+buildPeople();
+buildVenueCards();
+// init map pins after DOM ready
+setTimeout(initMapPins, 100);
+</script>
+</body>
+</html>

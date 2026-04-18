@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Build Prompt — AcroFest SaaS</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base:        #F5F0E8;
+      --bg-surface:     #FFFFFF;
+      --bg-elevated:    #FAF7F2;
+      --bg-overlay:     #EDE8DF;
+      --border-default: #D4CCB8;
+      --border-muted:   #E8E2D6;
+      --text-primary:   #1A1A1A;
+      --text-secondary: #5A5550;
+      --text-disabled:  #9E9890;
+      --brand-primary:  #2A5C8F;
+      --brand-accent:   #E8A020;
+      --success:        #3D7A4A;
+      --critical:       #C94040;
+      --warning:        #C47B1A;
+      --toc-width:      200px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      display: flex;
+    }
+
+    /* TOC */
+    .toc {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      width: var(--toc-width);
+      flex-shrink: 0;
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--border-default);
+      overflow-y: auto;
+      padding: 20px 0;
+    }
+    .toc-title {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-disabled);
+      padding: 0 14px 10px;
+    }
+    .toc a {
+      display: block;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.12s;
+    }
+    .toc a:hover { color: var(--brand-primary); background: var(--bg-overlay); }
+    .toc a.active { color: var(--brand-primary); border-left-color: var(--brand-primary); background: rgba(42,92,143,0.06); font-weight: 600; }
+    .toc a.sub { padding-left: 24px; font-size: 0.73rem; }
+    .toc-divider { height: 1px; background: var(--border-muted); margin: 8px 14px; }
+
+    /* Main */
+    .main {
+      flex: 1;
+      padding: 36px 52px 80px 48px;
+      max-width: 820px;
+      overflow-y: auto;
+      height: 100vh;
+    }
+    h1.page-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+    .page-meta {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 36px;
+      font-family: 'Geist Mono', monospace;
+    }
+
+    /* Layer sections */
+    .layer {
+      margin-bottom: 60px;
+      scroll-margin-top: 24px;
+    }
+    .layer-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 14px 18px;
+      border-radius: 4px;
+      border-left: 4px solid var(--brand-primary);
+      background: rgba(42,92,143,0.06);
+    }
+    .layer-letter {
+      font-family: 'Geist Mono', monospace;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--brand-primary);
+    }
+    .layer-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .layer-desc {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-left: auto;
+      font-style: italic;
+    }
+
+    /* Subsection */
+    .subsection {
+      margin-bottom: 32px;
+      scroll-margin-top: 24px;
+    }
+    .subsection h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .subsection h3 .anchor-id {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.68rem;
+      font-weight: 600;
+      color: var(--text-disabled);
+      background: var(--bg-overlay);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    /* Prose */
+    p { line-height: 1.7; color: var(--text-secondary); margin-bottom: 12px; font-size: 0.875rem; }
+    p strong { color: var(--text-primary); font-weight: 600; }
+    ul, ol { padding-left: 20px; margin-bottom: 12px; }
+    li { line-height: 1.65; color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 4px; }
+    li strong { color: var(--text-primary); font-weight: 600; }
+
+    /* Code blocks */
+    pre {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      padding: 14px 16px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.78rem;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+    code {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.82em;
+      background: var(--bg-overlay);
+      padding: 2px 5px;
+      border-radius: 3px;
+      color: var(--brand-primary);
+    }
+    pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+
+    /* Tables */
+    .table-wrap { overflow-x: auto; margin-bottom: 16px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+    th {
+      text-align: left;
+      padding: 7px 10px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-disabled);
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-default);
+    }
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-muted);
+      color: var(--text-secondary);
+      vertical-align: top;
+      line-height: 1.5;
+    }
+    tr:hover td { background: var(--bg-overlay); }
+    td:first-child { font-weight: 600; color: var(--text-primary); }
+    td code { font-size: 0.78em; }
+
+    /* Rule cards */
+    .rule-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+    }
+    .rule-card-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .rule-tag {
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .tag-invariant { background: rgba(201,64,64,0.1); color: var(--critical); }
+    .tag-decision  { background: rgba(196,123,26,0.12); color: var(--warning); }
+    .tag-security  { background: rgba(42,92,143,0.1); color: var(--brand-primary); }
+
+    /* Phase list */
+    .phase-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .phase-item {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      padding: 10px 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+    }
+    .phase-badge {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--brand-primary);
+      background: rgba(42,92,143,0.08);
+      border: 1px solid rgba(42,92,143,0.2);
+      padding: 2px 7px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      min-width: 70px;
+      text-align: center;
+    }
+    .phase-content { flex: 1; }
+    .phase-name { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .phase-detail { font-size: 0.75rem; color: var(--text-secondary); }
+
+    /* Alert box */
+    .alert {
+      border-left: 3px solid var(--brand-accent);
+      background: rgba(232,160,32,0.08);
+      padding: 10px 14px;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 14px;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+    .alert strong { color: #8B5A00; }
+  </style>
+</head>
+<body>
+
+  <!-- TOC -->
+  <nav class="toc">
+    <div class="toc-title">Layers</div>
+    <a href="#layer-a">Layer A — Product</a>
+    <a href="#audiences" class="sub">Audiences</a>
+    <a href="#identity" class="sub">Identity Model</a>
+    <a href="#modules" class="sub">Module Map</a>
+    <a href="#tenancy" class="sub">SaaS Tenancy</a>
+    <a href="#plans" class="sub">Plan Tiers</a>
+    <div class="toc-divider"></div>
+    <a href="#layer-b">Layer B — Tech</a>
+    <a href="#stack" class="sub">Stack</a>
+    <a href="#conventions" class="sub">Conventions</a>
+    <a href="#api-contracts" class="sub">API Contracts</a>
+    <a href="#adrs" class="sub">ADRs</a>
+    <a href="#testing" class="sub">Testing</a>
+    <a href="#observability" class="sub">Observability</a>
+    <div class="toc-divider"></div>
+    <a href="#layer-c">Layer C — Rules</a>
+    <a href="#c1" class="sub">C1 Permissions</a>
+    <a href="#c2" class="sub">C2 Money</a>
+    <a href="#c3" class="sub">C3 Refunds</a>
+    <a href="#c4" class="sub">C4 Accommodation</a>
+    <a href="#c5" class="sub">C5 GDPR Basis</a>
+    <a href="#c6" class="sub">C6 Auth Rules</a>
+    <a href="#c7" class="sub">C7 Concurrency</a>
+    <a href="#c8" class="sub">C8 Job Guarantees</a>
+    <a href="#c9" class="sub">C9 Schema</a>
+    <div class="toc-divider"></div>
+    <a href="#layer-d">Layer D — Output</a>
+    <a href="#protocol-rules" class="sub">Protocol Rules</a>
+    <a href="#phases" class="sub">Build Phases</a>
+    <div class="toc-divider"></div>
+    <a href="#startinstruction" >Start instructions</a>
+  </nav>
+
+  <!-- Main -->
+  <main class="main" id="main-scroll">
+
+    <h1 class="page-title">Master Build Prompt</h1>
+    <div class="page-meta">AcroFest SaaS v3 · Four layers: read all before generating anything</div>
+
+    <!-- ═══════════════════════════════════════ LAYER A ═══════════════════════════════════════ -->
+    <section class="layer" id="layer-a">
+      <div class="layer-header">
+        <div class="layer-letter">A</div>
+        <h2>Product Spec</h2>
+        <span class="layer-desc">What the system does and who it serves</span>
+      </div>
+
+      <div class="subsection" id="audiences">
+        <h3>Audiences <span class="anchor-id">#audiences</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Audience</th><th>App</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td>Platform operator</td><td><code>/apps/platform</code></td><td>SiteOwner. Manages tenants, billing, platform health. Never touches event content.</td></tr>
+              <tr><td>Organizer / Staff</td><td><code>/apps/admin</code></td><td>Tenant admin. Manages their event(s) end-to-end.</td></tr>
+              <tr><td>Teacher</td><td><code>/apps/portal</code></td><td>Sees their own schedule, manages their profile, views their session participants.</td></tr>
+              <tr><td>Participant</td><td><code>/apps/portal</code></td><td>Registers, pays, manages schedule and profile.</td></tr>
+              <tr><td>Prospect</td><td><code>/apps/website</code></td><td>Public visitor. Discovers the event, registers.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection" id="identity">
+        <h3>Identity and Role Model <span class="anchor-id">#identity</span></h3>
+        <p>A <strong>User</strong> is a single identity across the platform (one email, one login, one global profile). Roles are <strong>event-scoped memberships</strong>, not user attributes.</p>
+        <pre>model EventMembership {
+  id        String  @id @default(cuid())
+  userId    String
+  eventId   String
+  tenantId  String  // denormalized for query efficiency
+  roles     Role[]  // array — one record per user per event
+
+  @@unique([userId, eventId])
+  @@index([tenantId])
+  @@index([eventId])
+}
+
+enum Role { ORGANIZER STAFF TEACHER PARTICIPANT }</pre>
+        <p>The same user can hold multiple roles at one event and memberships at multiple events across multiple tenants.</p>
+        <p><strong>JWT payload contains only:</strong> <code>&#123; sub: userId, tenantId, iat, exp &#125;</code>. No role field. Roles resolved per-request per-event from the database.</p>
+        <p><strong>SiteOwner</strong> is a separate model (<code>PlatformUser</code>) with a separate auth flow. SiteOwners are never EventMembership members.</p>
+      </div>
+
+      <div class="subsection" id="modules">
+        <h3>Module Map <span class="anchor-id">#modules</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Module</th><th>Primary Audience</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>Platform dashboard</td><td>SiteOwner</td></tr>
+              <tr><td>1</td><td>Event configuration</td><td>Organizer</td></tr>
+              <tr><td>2</td><td>Teacher management</td><td>Organizer</td></tr>
+              <tr><td>3</td><td>Schedule builder</td><td>Organizer</td></tr>
+              <tr><td>4</td><td>Participant management</td><td>Organizer</td></tr>
+              <tr><td>5</td><td>Profile + visibility system</td><td>All</td></tr>
+              <tr><td>6</td><td>Booking + payment pipeline</td><td>Participant / Organizer</td></tr>
+              <tr><td>7</td><td>Logistics</td><td>Organizer / Staff</td></tr>
+              <tr><td>8</td><td>Financial dashboard</td><td>Organizer</td></tr>
+              <tr><td>9</td><td>Communications + marketing</td><td>Organizer</td></tr>
+              <tr><td>10</td><td>Participant / Teacher portal</td><td>Participant / Teacher</td></tr>
+              <tr><td>11</td><td>Public marketing website</td><td>Prospect</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection" id="tenancy">
+        <h3>SaaS Tenancy <span class="anchor-id">#tenancy</span></h3>
+        <ul>
+          <li><strong>Default URL:</strong> <code>&#123;slug&#125;.acrofest.app</code></li>
+          <li><strong>Custom domain (Pro+):</strong> tenant sets CNAME, platform issues cert via Caddy + Let's Encrypt. Domain verification: tenant adds a TXT record. Apex and subdomain both supported.</li>
+          <li><strong>Public website rendering:</strong> tenant-aware runtime rendering with aggressive caching — not per-tenant SSG builds. Cache invalidated on organizer publish action. Pre-render only homepage and <code>/programme</code> as hot paths.</li>
+          <li><strong>Database:</strong> one PostgreSQL database, all records scoped by <code>tenantId</code>. Upgrade path to per-tenant schemas is a data migration, not a redesign.</li>
+        </ul>
+      </div>
+
+      <div class="subsection" id="plans">
+        <h3>Plan Tiers <span class="anchor-id">#plans</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Feature</th><th>Free</th><th>Starter</th><th>Pro</th><th>Enterprise</th></tr></thead>
+            <tbody>
+              <tr><td>Events</td><td>1</td><td>3</td><td>Unlimited</td><td>Unlimited</td></tr>
+              <tr><td>Participants / event</td><td>50</td><td>300</td><td>2,000</td><td>Unlimited</td></tr>
+              <tr><td>Financial module</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td></tr>
+              <tr><td>Marketing module</td><td>✗</td><td>✗</td><td>✓</td><td>✓</td></tr>
+              <tr><td>Custom domain</td><td>✗</td><td>✗</td><td>✓</td><td>✓</td></tr>
+              <tr><td>White-label</td><td>✗</td><td>✗</td><td>✗</td><td>✓</td></tr>
+              <tr><td>DPA document</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td></tr>
+              <tr><td>PDF exports</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td></tr>
+              <tr><td>Social asset generator</td><td>✗</td><td>✗</td><td>✓</td><td>✓</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="alert"><strong>Invariant:</strong> Plan limits enforced at API layer, UI layer, BullMQ worker intake, storage upload handler, website publish trigger, and data export endpoint. All six. Not just UI.</div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ LAYER B ═══════════════════════════════════════ -->
+    <section class="layer" id="layer-b">
+      <div class="layer-header">
+        <div class="layer-letter">B</div>
+        <h2>Technical Standards</h2>
+        <span class="layer-desc">Stack, conventions, testing, observability</span>
+      </div>
+
+      <div class="subsection" id="stack">
+        <h3>Stack <span class="anchor-id">#stack</span></h3>
+        <pre>Frontend:    React (Vite) + TypeScript (strict) + Tailwind CSS + shadcn/ui
+Backend:     Fastify + TypeScript (strict)
+Database:    PostgreSQL 15+ via Prisma ORM
+Auth:        JWT (15-min access, 7-day refresh with rotation) + magic links + TOTP 2FA
+Payments:    Stripe primary, Mollie EU fallback — swappable adapter
+Email:       Resend primary, Postmark fallback — swappable adapter
+Queue:       BullMQ + Redis
+Cache:       Redis
+Storage:     S3-compatible (Cloudflare R2 default)
+Logging:     Pino (structured, JSON, request IDs on every log line)
+Tracing:     OpenTelemetry → Jaeger (or OTLP-compatible collector)
+Errors:      Sentry (backend + frontend, separate DSNs)
+SSL:         Caddy (auto-cert via Let's Encrypt for custom domains)
+Dev:         Docker Compose (all services)
+Prod:        Railway or Kubernetes (manifests provided)</pre>
+
+        <p><strong>Design System tokens</strong> in <code>/packages/ui/tokens.css</code>. Typography: DM Serif Display (headings) + DM Sans (body).</p>
+        <ul>
+          <li><code>/apps/platform</code> — dark Palantir-style (<code>#0A0C10</code> canvas, Geist Mono, 2–4px radii)</li>
+          <li><code>/apps/admin</code> — light, warm sage. Left icon nav + collapsible sidebar + content + inspector panel.</li>
+          <li><code>/apps/portal</code> — same palette, mobile-first (375px+), magazine feel.</li>
+          <li><code>/apps/website</code> — editorial, full-bleed hero, animate-on-scroll.</li>
+        </ul>
+      </div>
+
+      <div class="subsection" id="conventions">
+        <h3>TypeScript &amp; Code Conventions <span class="anchor-id">#conventions</span></h3>
+        <ul>
+          <li><code>strict: true</code> in all <code>tsconfig.json</code> files</li>
+          <li>No <code>any</code>. Use <code>unknown</code> and narrow with Zod.</li>
+          <li>Zod schema is the single source of truth for every API input shape</li>
+          <li><strong>All monetary values:</strong> integers in minor units (cents). Never floats.</li>
+          <li><strong>All timestamps:</strong> UTC in database. Display converted to event's IANA timezone.</li>
+          <li><strong>All findMany queries:</strong> cursor-based pagination. No offset pagination anywhere.</li>
+          <li>No <code>console.log</code> in committed code. Use Pino: <code>logger.info()</code>, <code>logger.warn()</code>, <code>logger.error()</code>.</li>
+          <li>All API routes: <code>requestId</code> (UUID v4) generated at entry, attached to Pino logger context, returned in <code>X-Request-Id</code> response header.</li>
+        </ul>
+      </div>
+
+      <div class="subsection" id="api-contracts">
+        <h3>API Contract Standards <span class="anchor-id">#api-contracts</span></h3>
+        <p><strong>URL convention:</strong> <code>/api/v1/&#123;resource&#125;</code> for public API. <code>/api/internal/&#123;resource&#125;</code> for platform-only endpoints.</p>
+
+        <p><strong>Error envelope — canonical shape (no variations):</strong></p>
+        <pre>&#123;
+  "error": &#123;
+    "code": "SNAKE_CASE_STRING",
+    "message": "Human-readable string safe to display to end users.",
+    "details": &#123;&#125;,
+    "requestId": "01HQ7ZXVKJ3M4N5P6Q7R8S9T0U"
+  &#125;
+&#125;</pre>
+
+        <p><strong>Pagination envelope:</strong></p>
+        <pre>&#123;
+  "items": [],
+  "pageInfo": &#123;
+    "nextCursor": "clx789abc",
+    "hasNextPage": true
+  &#125;
+&#125;</pre>
+
+        <p><strong>HTTP status codes — allowed set only:</strong></p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Code</th><th>When</th></tr></thead>
+            <tbody>
+              <tr><td>200</td><td>Successful read or update</td></tr>
+              <tr><td>201</td><td>Resource created (body contains created resource)</td></tr>
+              <tr><td>202</td><td>Async job accepted (body is async envelope)</td></tr>
+              <tr><td>204</td><td>Successful delete — empty body</td></tr>
+              <tr><td>400</td><td>Malformed JSON, webhook signature invalid</td></tr>
+              <tr><td>401</td><td>Missing or expired auth token</td></tr>
+              <tr><td>402</td><td>Plan limit reached (makes plan limits semantically distinct from 403)</td></tr>
+              <tr><td>403</td><td>Authenticated but insufficient permission</td></tr>
+              <tr><td>404</td><td>Resource not found or not visible to caller</td></tr>
+              <tr><td>409</td><td>Capacity exceeded, uniqueness conflict, state machine conflict</td></tr>
+              <tr><td>422</td><td>Valid JSON but fails Zod validation</td></tr>
+              <tr><td>429</td><td>Rate limit exceeded</td></tr>
+              <tr><td>500</td><td>Unhandled error — always captured by Sentry</td></tr>
+              <tr><td>503</td><td>Readiness check failing, circuit breaker open</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p><strong>Circuit breaker (payment providers):</strong> Trip on 5 consecutive failures OR error rate &gt; 50% over 30s. Open state duration: 60s. Redis-shared state across all API instances. Returns 503 with <code>PAYMENT_PROVIDER_UNAVAILABLE</code> when open.</p>
+        <p><strong>Website cache key format:</strong> <code>website:&#123;tenantId&#125;:&#123;path&#125;:&#123;locale&#125;</code>. TTL: 5 minutes. Invalidation uses Redis SCAN (never KEYS/wildcard DEL).</p>
+        <p><strong>Idempotency:</strong> All state-changing endpoints that touch money or send communications accept an <code>Idempotency-Key</code> header (UUID). Keys stored in Redis for 24 hours.</p>
+      </div>
+
+      <div class="subsection" id="adrs">
+        <h3>Architecture Decision Records <span class="anchor-id">#adrs</span></h3>
+        <p>Must be produced in <code>/docs/adr/</code> before any application code:</p>
+        <ul>
+          <li><code>001-multi-tenancy-model.md</code> — shared DB with tenantId vs schemas vs separate DBs.</li>
+          <li><code>002-auth-session-model.md</code> — JWT shape, refresh rotation, magic link constraints, impersonation model.</li>
+          <li><code>003-payment-abstraction.md</code> — adapter interface, webhook handling, idempotency, Stripe vs Mollie parity.</li>
+          <li><code>004-website-rendering.md</code> — runtime rendering with cache vs SSG. Decision and tradeoffs.</li>
+          <li><code>005-permission-model.md</code> — capability matrix, resource-action pairs, scope levels.</li>
+        </ul>
+      </div>
+
+      <div class="subsection" id="testing">
+        <h3>Testing Requirements <span class="anchor-id">#testing</span></h3>
+        <ul>
+          <li><strong>Unit tests (Vitest):</strong> 100% line coverage on <code>/packages/permissions</code> and <code>/packages/utils/money</code>. All refund, installment, and visibility edge cases.</li>
+          <li><strong>Integration tests:</strong> Auth flows, tenant isolation (cross-tenant read → 403 + security log), payment webhooks, registration flow, waitlist promotion.</li>
+          <li><strong>API contract tests:</strong> Every route asserts response shape matches Zod output schema.</li>
+          <li><strong>Permission matrix tests:</strong> Generated from the matrix table for every (role, resource, action) triple.</li>
+          <li><strong>E2E (Playwright):</strong> Prospect registers, participant manages schedule, organizer creates event, SiteOwner suspends tenant.</li>
+          <li><strong>Seed:</strong> One tenant (AcroFest Test Org), one event (Spring Retreat 2026, 3 days, 2 venues, 4 sessions), alice@test.com (teacher), bob@test.com (paid participant), carol@test.com (organizer).</li>
+        </ul>
+      </div>
+
+      <div class="subsection" id="observability">
+        <h3>Observability <span class="anchor-id">#observability</span></h3>
+        <ul>
+          <li><strong>Pino:</strong> structured JSON logs. Every request logs: requestId, method, path, statusCode, durationMs, tenantId, userId.</li>
+          <li><strong>OpenTelemetry:</strong> traces on all Fastify routes and BullMQ jobs. Span includes tenantId, userId, jobType.</li>
+          <li><strong>Sentry:</strong> backend + frontend. Separate DSNs per app.</li>
+          <li><strong>Health endpoints:</strong> <code>GET /health</code> (liveness), <code>GET /health/ready</code> (readiness — checks DB + Redis + queue).</li>
+          <li><strong>Alerts:</strong> error rate &gt; 1% over 5 min, queue depth &gt; 500 jobs, failed payment webhook, tenant isolation violation.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ LAYER C ═══════════════════════════════════════ -->
+    <section class="layer" id="layer-c">
+      <div class="layer-header">
+        <div class="layer-letter">C</div>
+        <h2>Domain Rules</h2>
+        <span class="layer-desc">Hard decisions. Implementation must follow exactly.</span>
+      </div>
+
+      <div class="subsection" id="c1">
+        <h3>C1 — Permission Capability Matrix <span class="anchor-id">#c1</span></h3>
+        <p><strong>Scope levels:</strong> PLATFORM (SiteOwner only via PlatformUser) · TENANT (organizer on ≥1 event in tenant + action targets tenant resource) · EVENT (role-scoped to one event from EventMembership) · SELF (resourceOwnerId === requestingUserId)</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Resource · Action</th><th>ORGANIZER</th><th>STAFF</th><th>TEACHER</th><th>PARTICIPANT</th></tr></thead>
+            <tbody>
+              <tr><td>Event · create</td><td>TENANT</td><td>✗</td><td>✗</td><td>✗</td></tr>
+              <tr><td>Event · read:public</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+              <tr><td>Event · read:admin</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td></tr>
+              <tr><td>Event · update / delete / publish</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
+              <tr><td>Session · create/update/delete</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td></tr>
+              <tr><td>Session · enroll_participant</td><td>✓</td><td>✓</td><td>✗</td><td>SELF</td></tr>
+              <tr><td>Session · view_enrollees</td><td>✓</td><td>✓</td><td>✓ + isTeacherOfSession</td><td>✗</td></tr>
+              <tr><td>Participant · read:sensitive</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td></tr>
+              <tr><td>Participant · read_internal_notes</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
+              <tr><td>Order · read / refund</td><td>✓</td><td>✗</td><td>✗</td><td>SELF</td></tr>
+              <tr><td>Financial · read_dashboard</td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>
+              <tr><td>UserProfile · read:organizer (all fields)</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td></tr>
+              <tr><td>UserProfile · update</td><td>✓ (any)</td><td>✗</td><td>SELF</td><td>SELF</td></tr>
+              <tr><td>Tenant · manage / impersonate</td><td>PLATFORM</td><td>✗</td><td>✗</td><td>✗</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="alert"><strong>Rule:</strong> API field sets must match permissions exactly. Use separate Zod output schemas per permission level — not one schema with optional fields stripped at runtime.</div>
+      </div>
+
+      <div class="subsection" id="c2">
+        <h3>C2 — Money Rules <span class="anchor-id">#c2</span></h3>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-invariant">Invariant</span> Integer minor units</div>
+          <p style="margin:0;font-size:0.82rem;color:var(--text-secondary);">All prices stored as integers in minor units (cents for EUR). Money fields suffixed <code>Cents</code>. Currency stored on every money record. Never floats.</p>
+        </div>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-invariant">Invariant</span> VAT at purchase time</div>
+          <p style="margin:0;font-size:0.82rem;color:var(--text-secondary);">VAT rate stored immutably at purchase time on the OrderItem (<code>vatRatePct</code>). Never recalculated from current config. V1: one VAT rate per event. Net = <code>grossCents / (1 + vatRatePct)</code>, round half-even.</p>
+        </div>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-decision">Decision</span> Invoice numbering</div>
+          <p style="margin:0;font-size:0.82rem;color:var(--text-secondary);">Format: <code>&#123;YEAR&#125;-&#123;TENANT_SHORT&#125;-&#123;SEQUENCE&#125;</code>. Sequence per tenant per year with row-level locking. Gap-tolerant: failed invoice numbers are never reused. Must be reviewed by tenant's accountant before regulated B2B use.</p>
+        </div>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-security">Policy</span> Late webhook handling</div>
+          <p style="margin:0;font-size:0.82rem;color:var(--text-secondary);">If payment arrives after reservation expiry and capacity is gone: mark payment PAID, order REQUIRES_RESOLUTION, do NOT fulfill. Queue email to participant. Queue alert to organizer. Pre-create RefundRequest in PENDING_ORGANIZER state. Audit event: <code>order.late_webhook_no_capacity</code>.</p>
+        </div>
+      </div>
+
+      <div class="subsection" id="c3">
+        <h3>C3 — Refund + Cancellation Edge Cases <span class="anchor-id">#c3</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Scenario</th><th>Handling</th></tr></thead>
+            <tbody>
+              <tr><td>Cancel within refund window</td><td>Calculate via policy engine. Create Stripe refund. Update order status. Queue confirmation email.</td></tr>
+              <tr><td>Cancel outside refund window</td><td>Return 0 refund. Queue rejection email with policy explanation.</td></tr>
+              <tr><td>Organizer cancels session</td><td>All enrolled participants notified by email.</td></tr>
+              <tr><td>Organizer cancels entire event</td><td>Full refund to all paid participants regardless of policy. Manual Stripe batch refund. Organizer notified.</td></tr>
+              <tr><td>Failed mid-installment</td><td>Order → PARTIALLY_PAID. Participant notified. Retry allowed 7 days. After 7 days: organizer notified, participant access reduced.</td></tr>
+              <tr><td>Chargeback received</td><td>Order → CHARGEBACK. Portal access suspended. Organizer notified with Stripe chargeback link.</td></tr>
+              <tr><td>Duplicate webhook</td><td>Idempotency key check. If already processed, return 200 without re-processing.</td></tr>
+              <tr><td>Transfer request</td><td>Not supported in v1. Organizer manually cancels + creates new registration.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection" id="c4">
+        <h3>C4 — Accommodation Edge Cases <span class="anchor-id">#c4</span></h3>
+        <ul>
+          <li><strong>Overbooking:</strong> Not allowed. Capacity is a hard ceiling. Attempts return 409 with <code>UNIT_AT_CAPACITY</code>.</li>
+          <li><strong>Roommate requests:</strong> Free-text field. Organizer resolves manually. No automated matching in v1.</li>
+          <li><strong>Gender/preference:</strong> Free-text — no structured enum to avoid assumptions.</li>
+          <li><strong>Waitlist ordering:</strong> FIFO by <code>createdAt</code>. No priority tiers in v1.</li>
+        </ul>
+      </div>
+
+      <div class="subsection" id="c5">
+        <h3>C5 — GDPR Legal Basis <span class="anchor-id">#c5</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Data / Processing</th><th>Legal Basis</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td>Registration personal data</td><td>Art. 6(1)(b) — contract necessity</td><td>Required to perform the service</td></tr>
+              <tr><td>Payment data</td><td>Art. 6(1)(b) — contract necessity</td><td>Required for billing</td></tr>
+              <tr><td>Event communications</td><td>Art. 6(1)(b) — contract necessity</td><td>Transactional only</td></tr>
+              <tr><td>Marketing emails</td><td>Art. 6(1)(a) — consent</td><td>Explicit opt-in, separately stored</td></tr>
+              <tr><td>Community directory</td><td>Art. 6(1)(a) — consent</td><td>Participant controls per-field visibility</td></tr>
+              <tr><td>Photo/video consent</td><td>Art. 6(1)(a) — consent</td><td>Explicit opt-in at registration</td></tr>
+              <tr><td>Financial records</td><td>Art. 6(1)(c) — legal obligation</td><td>7 years, anonymized after account deletion</td></tr>
+              <tr><td>Audit logs (security)</td><td>Art. 6(1)(f) — legitimate interests</td><td>Platform security, 2-year retention</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection" id="c6">
+        <h3>C6 — Auth Hard Rules <span class="anchor-id">#c6</span></h3>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-invariant">Invariant</span> Refresh token rotation</div>
+          <ul style="margin:0;">
+            <li>Issued as <code>bcrypt(token, 10)</code> hash — never plaintext</li>
+            <li>Tokens belong to a family (UUID from first login)</li>
+            <li>If used token re-presented → entire family revoked → forced re-login</li>
+            <li>Max 5 active families per user (5 concurrent devices)</li>
+          </ul>
+        </div>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-invariant">Invariant</span> Magic links</div>
+          <ul style="margin:0;">
+            <li>Max 1 active per user. 15-min expiry. Single-use.</li>
+            <li><code>crypto.timingSafeEqual</code> for comparison</li>
+            <li>Rate limit: 3 requests per email per hour (Redis sliding window)</li>
+            <li>Token: 32 random bytes, base64url encoded (256 bits of entropy)</li>
+          </ul>
+        </div>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-security">Policy</span> TOTP 2FA</div>
+          <ul style="margin:0;">
+            <li>Required: all ORGANIZER-role users, all PlatformUsers (SiteOwners)</li>
+            <li>Optional: TEACHER, PARTICIPANT</li>
+            <li>Backup codes: 8 single-use codes, stored as bcrypt hashes</li>
+            <li>Reset: chain of authority from ORGANIZER → SiteOwner → second SiteOwner</li>
+            <li>Abuse prevention: max 3 TOTP resets per user per 30 days</li>
+          </ul>
+        </div>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-security">Policy</span> Impersonation</div>
+          <ul style="margin:0;">
+            <li>Requires re-authentication via <code>/api/internal/auth/reauth</code></li>
+            <li>Impersonation token: max 60 minutes, non-renewable</li>
+            <li>Cannot: impersonate further, modify payment/billing data, delete data, export data</li>
+            <li>Every API call writes to AuditLog with <code>impersonated: true</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="subsection" id="c7">
+        <h3>C7 — Concurrency Rules <span class="anchor-id">#c7</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Scenario</th><th>Mechanism</th></tr></thead>
+            <tbody>
+              <tr><td>Ticket purchase (capacity)</td><td>SELECT FOR UPDATE on TicketTier within transaction. Reservation record as soft hold.</td></tr>
+              <tr><td>Session enrollment (capacity)</td><td>SELECT FOR UPDATE on Session.</td></tr>
+              <tr><td>Waitlist promotion</td><td>Distributed lock via Redis (SETNX acrofest:waitlist:&#123;sessionId&#125;:lock)</td></tr>
+              <tr><td>Accommodation assignment</td><td>SELECT FOR UPDATE on AccommodationUnit.</td></tr>
+              <tr><td>Installment charging</td><td>Idempotency key per installment attempt. Job deduplication via BullMQ jobId = installmentId.</td></tr>
+              <tr><td>Invoice number generation</td><td>DB sequence per tenant per year (InvoiceSequence table with row lock).</td></tr>
+              <tr><td>Refresh token use</td><td>UPDATE ... WHERE usedAt IS NULL AND id = ? RETURNING *. If 0 rows: token already used, revoke family.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="subsection" id="c8">
+        <h3>C8 — Background Job Guarantees <span class="anchor-id">#c8</span></h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Job</th><th>Attempts</th><th>Backoff base</th><th>Deduplication key</th></tr></thead>
+            <tbody>
+              <tr><td>send_email</td><td>3</td><td>2,000ms</td><td>email-&#123;userId&#125;-&#123;templateId&#125;-&#123;eventId&#125;</td></tr>
+              <tr><td>generate_invoice_pdf</td><td>3</td><td>5,000ms</td><td>invoice-&#123;invoiceId&#125;</td></tr>
+              <tr><td>generate_programme_pdf</td><td>2</td><td>10,000ms</td><td>programme-&#123;eventId&#125;-&#123;version&#125;</td></tr>
+              <tr><td>promote_waitlist</td><td>1</td><td>—</td><td>waitlist-&#123;sessionId&#125; (distributed lock)</td></tr>
+              <tr><td>charge_installment</td><td>3</td><td>3,600,000ms (1hr)</td><td>installment-&#123;installmentId&#125;</td></tr>
+              <tr><td>purge_deleted_user</td><td>1</td><td>—</td><td>purge-&#123;userId&#125;</td></tr>
+              <tr><td>export_user_data</td><td>1</td><td>—</td><td>export-&#123;userId&#125;-&#123;requestId&#125;</td></tr>
+              <tr><td>generate_social_asset</td><td>2</td><td>5,000ms</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Jobs exhausting all attempts move to <code>&#123;jobName&#125;:failed</code> dead-letter queue. Non-retryable errors (INVALID_TEMPLATE, USER_NOT_FOUND) must catch and discard, not exhaust retries.</p>
+      </div>
+
+      <div class="subsection" id="c9">
+        <h3>C9 — Schema Conventions <span class="anchor-id">#c9</span></h3>
+        <ul>
+          <li>All tables: <code>id String @id @default(cuid())</code>, <code>createdAt DateTime @default(now())</code>, <code>updatedAt DateTime @updatedAt</code></li>
+          <li>Tenant-scoped: <code>@@index([tenantId])</code> and <code>@@index([tenantId, id])</code></li>
+          <li>Event-scoped: <code>@@index([tenantId, eventId])</code></li>
+          <li>Soft-deletable: <code>deletedAt DateTime?</code> + <code>@@index([deletedAt])</code></li>
+          <li>Slug uniqueness: event slugs unique per tenant. Profile slugs unique globally.</li>
+          <li>Money fields: suffix <code>Cents</code>. Always <code>Int</code>.</li>
+          <li>Boolean defaults: always explicit (<code>@default(false)</code> or <code>@default(true)</code>), never implicit.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════ LAYER D ═══════════════════════════════════════ -->
+    <section class="layer" id="layer-d">
+      <div class="layer-header">
+        <div class="layer-letter">D</div>
+        <h2>Output Protocol</h2>
+        <span class="layer-desc">Exactly what to produce, when, and at what granularity</span>
+      </div>
+
+      <div class="subsection" id="protocol-rules">
+        <h3>Protocol Rules <span class="anchor-id">#protocol-rules</span></h3>
+
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-invariant">Rule 1</span> Contracts Before Code</div>
+          <p style="margin:0;font-size:0.82rem;color:var(--text-secondary);">For each phase, produce in this order: (1) Assumptions, (2) File tree, (3) Prisma schema changes, (4) Permission matrix entries, (5) API contracts, (6) Job contracts, (7) Test plan. Only then: implementation code.</p>
+        </div>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-invariant">Rule 2</span> One Phase Per Session</div>
+          <p style="margin:0;font-size:0.82rem;color:var(--text-secondary);">Build exactly one phase per session. Do not start the next phase until the current is complete and confirmed.</p>
+        </div>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-invariant">Rule 3</span> File Output Format</div>
+          <p style="margin:0;font-size:0.82rem;color:var(--text-secondary);">Each file output as a complete, self-contained code block with filepath as comment on line 1. No truncation. No "// rest of implementation here". If a file is long, output it fully.</p>
+        </div>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-invariant">Rule 4</span> No Invented Decisions</div>
+          <p style="margin:0;font-size:0.82rem;color:var(--text-secondary);">If a situation arises that Layer C does not cover, state: <code>OPEN DECISION: &#123;description&#125;</code> and wait for input before proceeding.</p>
+        </div>
+        <div class="rule-card">
+          <div class="rule-card-title"><span class="rule-tag tag-invariant">Rule 5</span> No Absolute Language</div>
+          <p style="margin:0;font-size:0.82rem;color:var(--text-secondary);">Do not claim outputs are "production-ready", "complete", or "deployable" without qualification. Instead state: "This phase implements X. Known gaps: Y. Requires review of: Z."</p>
+        </div>
+        </div>
+
+      <div class="subsection" id="phases">
+        <h3>Build Phases <span class="anchor-id">#phases</span></h3>
+        <div class="phase-list">
+          <div class="phase-item"><div class="phase-badge">PHASE 0</div><div class="phase-content"><div class="phase-name">Architecture Foundation</div><div class="phase-detail">Five ADRs in /docs/adr/. No code yet. Force explicit decisions before a single line is written.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 1</div><div class="phase-content"><div class="phase-name">Platform Schema + Tenant Lifecycle</div><div class="phase-detail">PlatformUser, Tenant, TenantPlan, InvoiceSequence. SiteOwner auth, tenant CRUD, plan management.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 2</div><div class="phase-content"><div class="phase-name">User Identity + Auth System</div><div class="phase-detail">User, RefreshToken, MagicLinkToken, ConsentRecord, AuditLog. Full auth flows. /packages/permissions with capability matrix.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 3</div><div class="phase-content"><div class="phase-name">Tenant Isolation Middleware</div><div class="phase-detail">tenantContext, requireTenant, Prisma middleware tenantId enforcement. Tests: cross-tenant access → 403 + security log.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 4</div><div class="phase-content"><div class="phase-name">Event + Venue Configuration (M1)</div><div class="phase-detail">Event, Venue, EventConfig. CRUD, publish/unpublish, clone event. Tests: plan limit, slug uniqueness, clone independence.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 5</div><div class="phase-content"><div class="phase-name">Teacher Management (M2)</div><div class="phase-detail">UserProfile, EventProfileExtension, EventMembership (TEACHER). Invite flow, visibility settings. Tests: all 4 roles × all profile fields.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 6</div><div class="phase-content"><div class="phase-name">Schedule Builder (M3)</div><div class="phase-detail">Session, SessionTeacher, SessionEnrollment. Conflict detection, session clone, iCal export.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 7</div><div class="phase-content"><div class="phase-name">Payment Pipeline (M6)</div><div class="phase-detail">Tickets, addons, discount codes, orders, installments, reservations. /packages/payments with Stripe + Mollie adapters. All edge cases.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 8</div><div class="phase-content"><div class="phase-name">Registration Flow (M4)</div><div class="phase-detail">Multi-step registration API. Waitlist enrollment. CSV import with validation errors.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 9</div><div class="phase-content"><div class="phase-name">Profile + Visibility System (M5)</div><div class="phase-detail">Profile read with visibility filter, update, community directory. All VisibilityLevel × Role combinations.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 10</div><div class="phase-content"><div class="phase-name">Financial Dashboard (M8)</div><div class="phase-detail">Revenue, expenses, P&amp;L, cash flow, payout tracker. VAT extraction. Invoice sequence tests.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 11</div><div class="phase-content"><div class="phase-name">Logistics (M7)</div><div class="phase-detail">Accommodation CRUD + assignment, meals, shuttle seats, volunteer shifts, run-of-show generation.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 12</div><div class="phase-content"><div class="phase-name">Communications (M9)</div><div class="phase-detail">EmailCampaign, Announcement. All transactional email jobs with retry/dedup guarantees.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 13</div><div class="phase-content"><div class="phase-name">Participant + Teacher Portal (M10)</div><div class="phase-detail">/apps/portal. All sections. Mobile-first. Playwright E2E: registration, portal login, schedule enrollment, invoice download.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 14</div><div class="phase-content"><div class="phase-name">Public Website (M11)</div><div class="phase-detail">/apps/website. Tenant-aware runtime rendering + Redis cache. Tests: cache invalidation on publish, correct tenant resolution.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 15</div><div class="phase-content"><div class="phase-name">GDPR Tooling</div><div class="phase-detail">purge_deleted_user (30d grace + hard purge + financial anonymization), data_retention_sweep, DPA PDF, export link tests.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 16</div><div class="phase-content"><div class="phase-name">Platform Dashboard (M0)</div><div class="phase-detail">/apps/platform. SiteOwner UI. Tenant list, revenue dashboard, feature flags, impersonation, security log, Bull-Board.</div></div></div>
+          <div class="phase-item"><div class="phase-badge">PHASE 17</div><div class="phase-content"><div class="phase-name">Observability + Hardening</div><div class="phase-detail">OpenTelemetry instrumentation. Sentry on all four apps. Health endpoints. Final security pass. Runbooks: backup-restore, schema-migration, incident-response.</div></div></div>
+        </div>
+      </div>
+
+      <div class="subsection" id="startinstruction">
+        <h3>Start instruction<span class="anchor-id">#startinstruction</span></h3>
+      
+          <p>Begin with PHASE 0 only. Output the five ADRs. No code. After each ADR, pause and state: <em>"ADR complete. Confirm to proceed to next ADR or flag any decision for revision."</em> After all five ADRs confirmed, state: <em>"Phase 0 complete. Ready for Phase 1. Confirm to proceed."</em></p>
+      
+    </section>
+
+  </main>
+
+  <script>
+    const links = document.querySelectorAll('.toc a');
+    const sections = document.querySelectorAll('[id]');
+    const mainEl = document.getElementById('main-scroll');
+
+    function onScroll() {
+      let current = '';
+      sections.forEach(s => {
+        if (s.getBoundingClientRect().top < 140) current = s.id;
+      });
+      links.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+      });
+    }
+    mainEl.addEventListener('scroll', onScroll);
+  </script>
+</body>
+</html>

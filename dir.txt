@@ -1,0 +1,52 @@
+ Volume in drive C is Windows-SSD
+ Volume Serial Number is 5C37-8EF8
+
+ Directory of C:\Users\rcxsm\rcsmit.github.io
+
+18/04/2026  11:13    <DIR>          .
+05/04/2026  11:21    <DIR>          ..
+17/04/2026  14:14    <DIR>          acrofest
+28/01/2026  11:36    <DIR>          acroyoga
+13/02/2026  13:07    <DIR>          annika
+02/03/2025  12:05    <DIR>          annika_v1
+12/03/2026  17:57    <DIR>          astrocart
+08/04/2026  13:43    <DIR>          beauty
+06/04/2026  12:00    <DIR>          char
+02/03/2025  12:05    <DIR>          coachen
+02/03/2025  12:05    <DIR>          coaching
+02/03/2025  12:05    <DIR>          conscious_communities
+13/04/2026  14:46    <DIR>          cv
+02/03/2025  12:05    <DIR>          cv_oud
+18/04/2026  11:13                 0 dir.txt
+28/03/2026  10:54    <DIR>          disar2
+19/03/2026  13:53    <DIR>          djviz
+18/04/2025  01:53    <DIR>          dodek
+23/02/2026  13:58    <DIR>          evgeny
+18/02/2026  10:07    <DIR>          frank
+15/04/2026  14:29             5.449 generate_readme.py
+01/04/2026  11:50    <DIR>          geoquest
+15/04/2026  12:57    <DIR>          geslacht
+02/03/2025  12:05    <DIR>          gfontviewer
+08/08/2025  01:37    <DIR>          go_archive
+02/04/2026  15:18    <DIR>          handpong
+09/04/2026  13:42    <DIR>          hs_analyzer
+08/03/2026  12:27    <DIR>          hs_drills
+07/03/2026  11:28    <DIR>          hs_drills_app
+15/04/2026  14:32    <DIR>          img
+15/04/2026  12:36            13.613 index.html
+15/04/2026  14:33             3.928 items.json
+24/02/2026  11:02    <DIR>          luiza
+02/03/2025  12:05    <DIR>          nonu
+02/03/2025  12:05    <DIR>          portfolio
+15/02/2026  15:46    <DIR>          questions
+31/03/2026  14:21    <DIR>          radiusmap
+15/04/2026  14:34             3.365 README.md
+12/02/2026  10:18    <DIR>          ridermania
+02/03/2025  12:05             8.738 START_HERE - Copy.html
+25/02/2026  13:54    <DIR>          suno_generator
+02/03/2025  12:05    <DIR>          vs
+19/02/2026  10:54    <DIR>          yepcheck26
+02/03/2025  12:05                41 _headers
+02/03/2025  12:05                41 _headers.yaml
+               8 File(s)         35.175 bytes
+              37 Dir(s)  15.137.107.968 bytes free

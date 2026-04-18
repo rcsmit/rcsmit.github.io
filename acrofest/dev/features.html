@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Features — AcroFest SaaS</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base:        #F5F0E8;
+      --bg-surface:     #FFFFFF;
+      --bg-elevated:    #FAF7F2;
+      --bg-overlay:     #EDE8DF;
+      --border-default: #D4CCB8;
+      --border-muted:   #E8E2D6;
+      --text-primary:   #1A1A1A;
+      --text-secondary: #5A5550;
+      --text-disabled:  #9E9890;
+      --brand-primary:  #2A5C8F;
+      --brand-accent:   #E8A020;
+      --badge-workshop: #3D7A4A;
+      --badge-jam:      #B85C1A;
+      --badge-social:   #7B4A9E;
+      --critical:       #C94040;
+      --success:        #3D7A4A;
+      --toc-width:      220px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      display: flex;
+      gap: 0;
+    }
+
+    /* ── TOC (sticky left) ── */
+    .toc {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      width: var(--toc-width);
+      flex-shrink: 0;
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--border-default);
+      overflow-y: auto;
+      padding: 24px 0;
+    }
+    .toc-title {
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-disabled);
+      padding: 0 16px 12px;
+    }
+    .toc a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 16px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.12s;
+    }
+    .toc a:hover {
+      color: var(--brand-primary);
+      background: var(--bg-overlay);
+    }
+    .toc a.active {
+      color: var(--brand-primary);
+      border-left-color: var(--brand-primary);
+      background: rgba(42,92,143,0.06);
+      font-weight: 600;
+    }
+    .toc-icon { font-size: 0.85rem; }
+
+    /* ── MAIN CONTENT ── */
+    .main {
+      flex: 1;
+      padding: 40px 48px 80px;
+      max-width: 860px;
+      overflow-y: auto;
+      height: 100vh;
+    }
+
+    .page-title {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .page-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+    }
+
+    /* Section */
+    .feature-section {
+      margin-bottom: 52px;
+      scroll-margin-top: 24px;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--border-default);
+    }
+    .section-icon {
+      font-size: 1.4rem;
+    }
+    .section-header h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+    .section-audience {
+      margin-left: auto;
+      font-size: 0.68rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--brand-primary);
+      background: rgba(42,92,143,0.08);
+      border: 1px solid rgba(42,92,143,0.2);
+      border-radius: 3px;
+      padding: 3px 8px;
+      white-space: nowrap;
+    }
+
+    /* Feature list */
+    .feature-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 11px 14px;
+      border-radius: 3px;
+      border-bottom: 1px solid var(--border-muted);
+      transition: background 0.1s;
+    }
+    .feature-item:last-child { border-bottom: none; }
+    .feature-item:hover { background: var(--bg-surface); }
+    .feature-bullet {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--brand-primary);
+      flex-shrink: 0;
+      margin-top: 6px;
+    }
+    .feature-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    .feature-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .feature-desc strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .feature-tag {
+      margin-left: auto;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 2px 7px;
+      border-radius: 3px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      align-self: flex-start;
+      margin-top: 2px;
+    }
+    .tag-key  { background: rgba(201,64,64,0.1); color: var(--critical); }
+    .tag-pro  { background: rgba(42,92,143,0.1); color: var(--brand-primary); }
+    .tag-gdpr { background: rgba(61,122,74,0.1); color: var(--badge-workshop); }
+    .tag-new  { background: rgba(232,160,32,0.15); color: #8B5A00; }
+  </style>
+</head>
+<body>
+
+  <!-- TOC -->
+  <nav class="toc">
+    <div class="toc-title">Feature Areas</div>
+    <a href="#platform" class="active"><span class="toc-icon">🏗️</span> Platform</a>
+    <a href="#events"><span class="toc-icon">🎪</span> Event Mgmt</a>
+    <a href="#teachers"><span class="toc-icon">👩‍🏫</span> Teachers</a>
+    <a href="#schedule"><span class="toc-icon">📅</span> Schedule</a>
+    <a href="#participants"><span class="toc-icon">👥</span> Participants</a>
+    <a href="#profiles"><span class="toc-icon">👤</span> Profiles</a>
+    <a href="#booking"><span class="toc-icon">💳</span> Booking</a>
+    <a href="#logistics"><span class="toc-icon">🏠</span> Logistics</a>
+    <a href="#finance"><span class="toc-icon">💰</span> Finance</a>
+    <a href="#comms"><span class="toc-icon">📣</span> Comms</a>
+    <a href="#portal"><span class="toc-icon">🌐</span> Portal</a>
+    <a href="#public"><span class="toc-icon">🌍</span> Public Site</a>
+    <a href="#auth"><span class="toc-icon">🔐</span> Auth</a>
+    <a href="#gdpr"><span class="toc-icon">🇪🇺</span> GDPR</a>
+    <a href="#infra"><span class="toc-icon">⚙️</span> Infrastructure</a>
+  </nav>
+
+  <!-- Main -->
+  <main class="main" id="main-scroll">
+
+    <h1 class="page-title">Feature Overview</h1>
+    <p class="page-subtitle">All platform capabilities across all audiences and modules.</p>
+
+    <!-- PLATFORM -->
+    <section class="feature-section" id="platform">
+      <div class="section-header">
+        <span class="section-icon">🏗️</span>
+        <h2>Platform (SiteOwner)</h2>
+        <span class="section-audience">SiteOwner</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Tenant management</div>
+            <div class="feature-desc">Create, suspend, and delete organizations. Never touches event content.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Subscription & billing</div>
+            <div class="feature-desc">Stripe-based plans — Free / Starter / Pro / Enterprise.</div>
+          </div>
+          <span class="feature-tag tag-key">Core</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Revenue dashboard</div>
+            <div class="feature-desc">MRR, ARR, churn, plan distribution across all tenants.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Feature flag console</div>
+            <div class="feature-desc">Enable/disable modules per plan or per tenant.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Impersonation</div>
+            <div class="feature-desc">Log in as any organizer. Re-auth required, <strong>60-min time limit</strong>, fully audit-logged. Blocked actions enforced.</div>
+          </div>
+          <span class="feature-tag tag-key">Security</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Global announcements</div>
+            <div class="feature-desc">Push banner to all tenant dashboards simultaneously.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Security log</div>
+            <div class="feature-desc">Tenant isolation violations, webhook failures, rate limit breaches.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">BullMQ queue dashboard</div>
+            <div class="feature-desc">Failed jobs, retry, discard. Bull-Board embedded.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- EVENT MANAGEMENT -->
+    <section class="feature-section" id="events">
+      <div class="section-header">
+        <span class="section-icon">🎪</span>
+        <h2>Event Management</h2>
+        <span class="section-audience">Organizer</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Multi-event support</div>
+            <div class="feature-desc">One tenant can run multiple events simultaneously.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Event configuration</div>
+            <div class="feature-desc">Name, slug, dates, timezone, tagline, cover image.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Multi-venue management</div>
+            <div class="feature-desc">Address, GPS, capacity, floor type, indoor/outdoor per venue.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Publish/unpublish</div>
+            <div class="feature-desc">Authenticated preview link before going public.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Event cloning</div>
+            <div class="feature-desc">Copy a prior event as a template. Produces fully independent copy.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Enabled modules toggle</div>
+            <div class="feature-desc">Per-event module activation. Respects plan limits.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEACHER MANAGEMENT -->
+    <section class="feature-section" id="teachers">
+      <div class="section-header">
+        <span class="section-icon">👩‍🏫</span>
+        <h2>Teacher Management</h2>
+        <span class="section-audience">Organizer</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Teacher profiles</div>
+            <div class="feature-desc">Bio, photo, specialties, certifications, social links.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Email invite flow</div>
+            <div class="feature-desc">Invite → accept/decline → confirmed on dashboard.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Contract & fee tracking</div>
+            <div class="feature-desc">Fixed fee, revenue share, or volunteer. Per-event fee basis — gross ticket revenue net of VAT, before processor fees, before refunds.</div>
+          </div>
+          <span class="feature-tag tag-key">Finance</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Payout tracker</div>
+            <div class="feature-desc">Manual settlement with proof-of-payment upload.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Teacher portal access</div>
+            <div class="feature-desc">Own schedule, session participants, travel/accommodation status.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCHEDULE BUILDER -->
+    <section class="feature-section" id="schedule">
+      <div class="section-header">
+        <span class="section-icon">📅</span>
+        <h2>Schedule Builder</h2>
+        <span class="section-audience">Organizer</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Visual weekly grid</div>
+            <div class="feature-desc">Drag-and-drop time slot builder per venue.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Session types</div>
+            <div class="feature-desc">Workshop, Jam, Lecture, Class, Social, Morning Practice, Ceremony.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Session fields</div>
+            <div class="feature-desc">Title, description, teacher(s), venue, time, capacity, skill level, tags.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Conflict detection</div>
+            <div class="feature-desc">Same teacher double-booked → warning with resolution options.</div>
+          </div>
+          <span class="feature-tag tag-key">Logic</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Session cloning</div>
+            <div class="feature-desc">Clone sessions across days within the same event.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Programme PDF export</div>
+            <div class="feature-desc">A5 booklet, queued async. Starter plan+.</div>
+          </div>
+          <span class="feature-tag tag-pro">Starter+</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">iCal export</div>
+            <div class="feature-desc">Per participant — enrolled sessions only.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARTICIPANT MANAGEMENT -->
+    <section class="feature-section" id="participants">
+      <div class="section-header">
+        <span class="section-icon">👥</span>
+        <h2>Participant Management</h2>
+        <span class="section-audience">Organizer / Staff</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Multi-step registration</div>
+            <div class="feature-desc">Personal info → ticket → add-ons → payment → confirmation.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Participant record</div>
+            <div class="feature-desc">Name, contact, emergency contact, dietary needs, experience level, pronouns.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Internal notes</div>
+            <div class="feature-desc">Organizer-only notes, audit-logged on every access. <strong>Never participant-visible.</strong></div>
+          </div>
+          <span class="feature-tag tag-gdpr">GDPR</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">QR code check-in</div>
+            <div class="feature-desc">Per session, plus manual override capability.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Waitlist</div>
+            <div class="feature-desc">FIFO, automatic promotion when capacity opens, email notification sent.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Bulk CSV import</div>
+            <div class="feature-desc">With validation report. Starter plan+.</div>
+          </div>
+          <span class="feature-tag tag-pro">Starter+</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Export to CSV / XLSX</div>
+            <div class="feature-desc">Full participant data export for organizer use.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE & VISIBILITY -->
+    <section class="feature-section" id="profiles">
+      <div class="section-header">
+        <span class="section-icon">👤</span>
+        <h2>Profile & Visibility System</h2>
+        <span class="section-audience">All roles</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Single global identity</div>
+            <div class="feature-desc">One profile reused across all events — photo, bio, pronouns, location, social links.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Acroyoga-specific fields</div>
+            <div class="feature-desc">Base/flyer/spotter roles, experience years, skill tags, home community. Languages, "looking for practice partner" toggle.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Per-field visibility</div>
+            <div class="feature-desc">Each field independently set to: <strong>Public / Participants only / Teachers only / Nobody.</strong></div>
+          </div>
+          <span class="feature-tag tag-key">Privacy</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Teacher-only fields</div>
+            <div class="feature-desc">Teaching philosophy, certifications, featured video.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Per-event extensions</div>
+            <div class="feature-desc">Skill level, dietary needs, emergency contact, T-shirt size — event-specific, not on global profile.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Community directory</div>
+            <div class="feature-desc">Browse participants, filter by role / experience / language / skills. Visibility-respecting.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">"Request to connect"</div>
+            <div class="feature-desc">Sends email to both parties. No internal messaging (GDPR simplification).</div>
+          </div>
+          <span class="feature-tag tag-gdpr">GDPR</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOOKING & PAYMENT -->
+    <section class="feature-section" id="booking">
+      <div class="section-header">
+        <span class="section-icon">💳</span>
+        <h2>Booking & Payment Pipeline</h2>
+        <span class="section-audience">Participant / Organizer</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Ticket tiers</div>
+            <div class="feature-desc">Early Bird, Regular, Late, Day Pass, Teacher/Staff.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Add-ons</div>
+            <div class="feature-desc">Camping, Accommodation, Meal Plan, Shuttle, T-shirt (with size), Donation.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Discount codes</div>
+            <div class="feature-desc">Flat or %, per-use limit, date range, tier-restricted.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Payment providers</div>
+            <div class="feature-desc"><strong>Stripe</strong> (primary) + <strong>Mollie</strong> (EU fallback, iDEAL / Bancontact) — swappable adapter pattern.</div>
+          </div>
+          <span class="feature-tag tag-key">Core</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Installment plans</div>
+            <div class="feature-desc">2 or 3 payments, automatic charging via saved card.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Ticket reservation</div>
+            <div class="feature-desc"><strong>15-minute hold</strong> during checkout, released on expiry.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Refund policy engine</div>
+            <div class="feature-desc">Configurable cutoff dates + percentages per event.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Chargeback handling</div>
+            <div class="feature-desc">Order suspended, organizer notified, manual resolution workflow.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">VAT handling</div>
+            <div class="feature-desc">One rate per event, stored immutably at purchase time. Gap-tolerant invoice sequence.</div>
+          </div>
+          <span class="feature-tag tag-gdpr">Compliance</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Invoice PDF</div>
+            <div class="feature-desc">Auto-generated, VAT-compliant, tenant-branded, async queued.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">All monetary values as integers</div>
+            <div class="feature-desc">Stored in minor units (cents). <strong>Never floats.</strong> Currency stored on every money-bearing record.</div>
+          </div>
+          <span class="feature-tag tag-key">Invariant</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOGISTICS -->
+    <section class="feature-section" id="logistics">
+      <div class="section-header">
+        <span class="section-icon">🏠</span>
+        <h2>Logistics</h2>
+        <span class="section-audience">Organizer / Staff</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Accommodation matrix</div>
+            <div class="feature-desc">Assign participants to beds/rooms/pitches. Color-coded occupancy. <strong>Overbooking prevented — hard 409.</strong></div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Meal planning</div>
+            <div class="feature-desc">Headcount per meal per dietary type. Printable kitchen sheet.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Shuttle manager</div>
+            <div class="feature-desc">Arrival/departure manifests, seat assignments.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Volunteer manager</div>
+            <div class="feature-desc">Shift builder, role assignment, perk tracking.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Equipment list</div>
+            <div class="feature-desc">Per session, location, responsible person.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Run-of-show</div>
+            <div class="feature-desc">Auto-generated master timeline from schedule + logistics. Editable, PDF export.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FINANCIAL DASHBOARD -->
+    <section class="feature-section" id="finance">
+      <div class="section-header">
+        <span class="section-icon">💰</span>
+        <h2>Financial Dashboard</h2>
+        <span class="section-audience">Organizer</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Revenue breakdown</div>
+            <div class="feature-desc">Ticket sales by tier, add-ons, donations. Time-series chart.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Expense tracking</div>
+            <div class="feature-desc">Manual entry with categories: Venue / Teacher / Catering / Marketing / Equipment / Travel.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Live P&L</div>
+            <div class="feature-desc">Real-time margin calculation including refunds and chargebacks.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Cash flow forecast</div>
+            <div class="feature-desc">Based on installment schedules + upcoming expenses.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Refunds pending</div>
+            <div class="feature-desc">List with amounts and deadlines.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Full ledger export</div>
+            <div class="feature-desc">CSV / XLSX, PDF summary for accountant.</div>
+          </div>
+          <span class="feature-tag tag-pro">Starter+</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMMUNICATIONS -->
+    <section class="feature-section" id="comms">
+      <div class="section-header">
+        <span class="section-icon">📣</span>
+        <h2>Communications & Marketing</h2>
+        <span class="section-audience">Organizer</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Email campaigns</div>
+            <div class="feature-desc">Compose, schedule, segment by ticket tier / registration date / session enrollment. Pro plan+.</div>
+          </div>
+          <span class="feature-tag tag-pro">Pro+</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Liquid-style variables</div>
+            <div class="feature-desc"><code>&#123;&#123;first_name&#125;&#125;</code>, <code>&#123;&#123;schedule_link&#125;&#125;</code>, etc.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Transactional emails (auto)</div>
+            <div class="feature-desc">Registration confirmation, payment receipt, installment reminder, schedule update, session cancellation, event reminder (7d + 1d), post-event feedback, magic link, waitlist promotion, connect request.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Social asset generator</div>
+            <div class="feature-desc">1:1 and 9:16 images from session data. Server-side Sharp. Pro plan+.</div>
+          </div>
+          <span class="feature-tag tag-pro">Pro+</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Referral tracking</div>
+            <div class="feature-desc">Unique links per ambassador, conversion dashboard.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">UTM builder</div>
+            <div class="feature-desc">Built-in campaign link generator.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PARTICIPANT PORTAL -->
+    <section class="feature-section" id="portal">
+      <div class="section-header">
+        <span class="section-icon">🌐</span>
+        <h2>Participant & Teacher Portal</h2>
+        <span class="section-audience">Participants / Teachers</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Mobile-first design</div>
+            <div class="feature-desc">375px+ viewport. Feels like a festival programme magazine.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">My Festival</div>
+            <div class="feature-desc">Personalised at-a-glance card, next session countdown.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">My Schedule</div>
+            <div class="feature-desc">Enrolled sessions as timeline. Add to Google/Apple Calendar.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Programme</div>
+            <div class="feature-desc">Full schedule, filterable by type / level / teacher. Save to my schedule.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">My Order</div>
+            <div class="feature-desc">Ticket details, add-ons, payment history, invoice downloads, refund request.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Community</div>
+            <div class="feature-desc">Participant directory respecting visibility settings. Filter by role / experience / language / skills.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Venue Map</div>
+            <div class="feature-desc">Leaflet.js, all venue pins, schedule overlay.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Announcements</div>
+            <div class="feature-desc">Organizer broadcasts. Web push notification opt-in.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Data export</div>
+            <div class="feature-desc">Download all personal data as JSON. Async, single-use time-limited link.</div>
+          </div>
+          <span class="feature-tag tag-gdpr">GDPR</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Account deletion</div>
+            <div class="feature-desc">Self-service. 30-day grace period before hard purge.</div>
+          </div>
+          <span class="feature-tag tag-gdpr">GDPR</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- PUBLIC WEBSITE -->
+    <section class="feature-section" id="public">
+      <div class="section-header">
+        <span class="section-icon">🌍</span>
+        <h2>Public Marketing Website</h2>
+        <span class="section-audience">Prospects</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Tenant-aware runtime rendering</div>
+            <div class="feature-desc">Not per-tenant SSG builds. Redis cache with coarse tenant-level invalidation. Pre-render homepage and /programme as hot paths.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Homepage</div>
+            <div class="feature-desc">Hero, about, teacher highlights, programme teaser, venue gallery, pricing table, FAQ, testimonials, newsletter signup.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Programme page</div>
+            <div class="feature-desc">Full schedule grid, filterable by type/level/teacher.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Blog</div>
+            <div class="feature-desc">Optional markdown-based announcements.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">SEO</div>
+            <div class="feature-desc">Full meta tags, og:image, JSON-LD Event schema, sitemap.xml, robots.txt.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Custom domains</div>
+            <div class="feature-desc">CNAME + TXT verification. Caddy auto-cert (apex + subdomain). Cert renewal owned by platform. Pro plan+.</div>
+          </div>
+          <span class="feature-tag tag-pro">Pro+</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- AUTH & SECURITY -->
+    <section class="feature-section" id="auth">
+      <div class="section-header">
+        <span class="section-icon">🔐</span>
+        <h2>Auth & Security</h2>
+        <span class="section-audience">Platform-wide</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Single identity, event-scoped roles</div>
+            <div class="feature-desc">One login. Memberships at multiple events across tenants. Roles resolved per-request from DB — not in JWT.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">JWT tokens</div>
+            <div class="feature-desc"><strong>15-min access tokens</strong>, 7-day refresh tokens with rotation and family revocation.</div>
+          </div>
+          <span class="feature-tag tag-key">Auth</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Magic links</div>
+            <div class="feature-desc">Single-use, 15-min expiry, timing-safe comparison, rate-limited.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">TOTP 2FA</div>
+            <div class="feature-desc">Mandatory for Organizers and SiteOwners. Optional for others. Backup codes. Full reset chain of authority.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Rate limiting</div>
+            <div class="feature-desc">Per endpoint, Redis-backed, sliding window.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Webhook signature verification</div>
+            <div class="feature-desc">Stripe and Mollie — verified on every inbound payment event.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">File upload security</div>
+            <div class="feature-desc">MIME validation, EXIF stripping, malware scan, no original filenames preserved.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Tenant isolation</div>
+            <div class="feature-desc">Prisma middleware + service-layer explicit filters. Violations logged as security events.</div>
+          </div>
+          <span class="feature-tag tag-key">Invariant</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Soft delete</div>
+            <div class="feature-desc">404 to all non-admin callers. Explicit <code>?includeDeleted=true</code> for organizers.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GDPR -->
+    <section class="feature-section" id="gdpr">
+      <div class="section-header">
+        <span class="section-icon">🇪🇺</span>
+        <h2>GDPR Compliance</h2>
+        <span class="section-audience">Platform-wide</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Per-field consent</div>
+            <div class="feature-desc">Event comms, marketing emails, community directory, photo/video. Each with precise <strong>Article 6 legal basis</strong>.</div>
+          </div>
+          <span class="feature-tag tag-gdpr">Art.6</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Consent withdrawal</div>
+            <div class="feature-desc">From participant portal. Immediate effect.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Right to access</div>
+            <div class="feature-desc">Async JSON export. Single-use download link. Rate-limited.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Right to erasure</div>
+            <div class="feature-desc">Soft delete → 30-day grace → hard purge. Financial records anonymised (retained 7 years).</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Data retention sweep</div>
+            <div class="feature-desc">Nightly worker per policy.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Audit log</div>
+            <div class="feature-desc">Every access to personal data. Actor, timestamp, impersonation flag. <strong>2-year retention.</strong></div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">DPA auto-generation</div>
+            <div class="feature-desc">Auto-generated PDF per tenant listing all sub-processors. Starter plan+.</div>
+          </div>
+          <span class="feature-tag tag-pro">Starter+</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Cookie consent</div>
+            <div class="feature-desc">Strictly necessary always on. Analytics opt-in. No tracking before consent.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INFRASTRUCTURE -->
+    <section class="feature-section" id="infra">
+      <div class="section-header">
+        <span class="section-icon">⚙️</span>
+        <h2>Platform Infrastructure</h2>
+        <span class="section-audience">SiteOwner / DevOps</span>
+      </div>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Multi-tenant PostgreSQL</div>
+            <div class="feature-desc">Shared DB, all records <code>tenantId</code>-scoped. Upgrade path to per-tenant schemas without redesign.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Plan limit enforcement</div>
+            <div class="feature-desc">Enforced at <strong>6 layers</strong>: API, UI, BullMQ worker, storage upload handler, website publish trigger, data export endpoint.</div>
+          </div>
+          <span class="feature-tag tag-key">Invariant</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Async job queue</div>
+            <div class="feature-desc">BullMQ + Redis. Retry policies, dead-letter queues, deduplication, poison message handling.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Observability</div>
+            <div class="feature-desc">Pino structured logs, OpenTelemetry traces, Sentry error capture, health + readiness endpoints.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Circuit breaker</div>
+            <div class="feature-desc">Per payment provider. Redis-shared state. <strong>503 on open</strong>.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Redis caching</div>
+            <div class="feature-desc">Intentionally coarse tenant-level invalidation. SCAN-based batch delete. Pre-warming for homepage and programme.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Backups</div>
+            <div class="feature-desc">Nightly pg_dump to S3. 30-day retention. Documented restore procedure.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-bullet"></div>
+          <div>
+            <div class="feature-name">Timestamps</div>
+            <div class="feature-desc">UTC in DB. Displayed in event's IANA timezone. <strong>Always.</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Highlight active TOC item on scroll
+    const sections = document.querySelectorAll('.feature-section');
+    const tocLinks = document.querySelectorAll('.toc a');
+    const mainEl = document.getElementById('main-scroll');
+
+    function onScroll() {
+      let current = '';
+      sections.forEach(s => {
+        const top = s.getBoundingClientRect().top;
+        if (top < 120) current = s.id;
+      });
+      tocLinks.forEach(a => {
+        a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+      });
+    }
+    mainEl.addEventListener('scroll', onScroll);
+  </script>
+
+</body>
+</html>

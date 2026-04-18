@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome — AcroFest SaaS</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base:        #F5F0E8;
+      --bg-surface:     #FFFFFF;
+      --bg-elevated:    #FAF7F2;
+      --bg-overlay:     #EDE8DF;
+      --border-default: #D4CCB8;
+      --border-muted:   #E8E2D6;
+      --text-primary:   #1A1A1A;
+      --text-secondary: #5A5550;
+      --text-disabled:  #9E9890;
+      --brand-primary:  #2A5C8F;
+      --brand-accent:   #E8A020;
+      --badge-workshop: #3D7A4A;
+      --badge-jam:      #B85C1A;
+      --badge-social:   #7B4A9E;
+      --critical:       #C94040;
+      --success:        #3D7A4A;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      padding: 40px 48px 60px;
+      max-width: 960px;
+    }
+
+    /* Hero */
+    .hero {
+      margin-bottom: 40px;
+    }
+    .hero-eyebrow {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--brand-accent);
+      margin-bottom: 10px;
+      font-family: 'Geist Mono', monospace;
+    }
+    .hero h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+    .hero h1 span {
+      color: var(--brand-primary);
+    }
+    .hero-desc {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: 640px;
+      margin-bottom: 24px;
+    }
+    .hero-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pill {
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-inverse, #fff);
+    }
+    .pill-blue    { background: var(--brand-primary); color: #fff; }
+    .pill-green   { background: var(--badge-workshop); color: #fff; }
+    .pill-orange  { background: var(--badge-jam); color: #fff; }
+    .pill-purple  { background: var(--badge-social); color: #fff; }
+    .pill-amber   { background: var(--brand-accent); color: #1a1a1a; }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: var(--border-default);
+      margin: 36px 0;
+    }
+
+    /* Section title */
+    .section-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-disabled);
+      margin-bottom: 16px;
+    }
+
+    /* Module grid */
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .module-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      padding: 16px 18px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      cursor: default;
+    }
+    .module-card:hover {
+      border-color: var(--brand-primary);
+    }
+    .module-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .module-num {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--text-disabled);
+      background: var(--bg-overlay);
+      padding: 2px 6px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+    .module-icon { font-size: 1rem; }
+    .module-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .module-audience {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Audiences table */
+    .audience-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+      font-size: 0.875rem;
+    }
+    .audience-table th {
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-disabled);
+      border-bottom: 1px solid var(--border-default);
+      background: var(--bg-elevated);
+    }
+    .audience-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-muted);
+      vertical-align: top;
+    }
+    .audience-table tr:hover td {
+      background: var(--bg-overlay);
+    }
+    .audience-table td:first-child {
+      font-weight: 600;
+      color: var(--brand-primary);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+
+    /* Plan tiers */
+    .plan-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .plan-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      padding: 18px 16px;
+    }
+    .plan-card.featured {
+      border-color: var(--brand-primary);
+      background: rgba(42, 92, 143, 0.04);
+    }
+    .plan-name {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .plan-card.featured .plan-name { color: var(--brand-primary); }
+    .plan-events {
+      font-family: 'Geist Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    .plan-sub {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .plan-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .plan-features li {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .plan-features li::before {
+      content: '✓';
+      color: var(--success);
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .plan-features li.no::before {
+      content: '✗';
+      color: var(--text-disabled);
+    }
+
+    /* Phase timeline */
+    .phases {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-bottom: 40px;
+    }
+    .phase-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-muted);
+    }
+    .phase-row:last-child { border-bottom: none; }
+    .phase-num {
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--brand-primary);
+      background: rgba(42,92,143,0.08);
+      border: 1px solid rgba(42,92,143,0.2);
+      border-radius: 3px;
+      padding: 2px 8px;
+      flex-shrink: 0;
+      min-width: 72px;
+      text-align: center;
+    }
+    .phase-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    .phase-desc {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+    }
+
+    /* Stack chips */
+    .stack-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 40px;
+    }
+    .stack-chip {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 3px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-family: 'Geist Mono', monospace;
+      color: var(--text-secondary);
+    }
+    .stack-chip.highlight {
+      border-color: var(--brand-primary);
+      color: var(--brand-primary);
+      background: rgba(42,92,143,0.05);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="hero-eyebrow">AcroFest SaaS · Master Build Prompt v3</div>
+    <h1>Multi-tenant platform<br>for <span>acroyoga festivals</span></h1>
+    <p class="hero-desc">
+      A full-stack SaaS for managing multi-day acroyoga and yoga festivals and retreats.
+      One deployment serves many tenant organizations. Each tenant runs one or more events
+      end-to-end — from teacher booking and schedule building to payments, logistics, and GDPR compliance.
+    </p>
+    <div class="hero-pills">
+      <span class="pill pill-blue">Multi-tenant</span>
+      <span class="pill pill-green">17 Build Phases</span>
+      <span class="pill pill-orange">Stripe + Mollie</span>
+      <span class="pill pill-purple">GDPR Compliant</span>
+      <span class="pill pill-amber">React + Fastify</span>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Audiences -->
+  <div class="section-title">Audiences & Apps</div>
+  <table class="audience-table">
+    <thead>
+      <tr>
+        <th>Role</th>
+        <th>App</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>SiteOwner</td>
+        <td>/apps/platform</td>
+        <td>Platform operator. Manages tenants, billing, platform health. Never touches event content.</td>
+      </tr>
+      <tr>
+        <td>Organizer / Staff</td>
+        <td>/apps/admin</td>
+        <td>Tenant admin. Manages their event(s) end-to-end.</td>
+      </tr>
+      <tr>
+        <td>Teacher</td>
+        <td>/apps/portal</td>
+        <td>Sees their own schedule, manages their profile, views session participants.</td>
+      </tr>
+      <tr>
+        <td>Participant</td>
+        <td>/apps/portal</td>
+        <td>Registers, pays, manages schedule and profile.</td>
+      </tr>
+      <tr>
+        <td>Prospect</td>
+        <td>/apps/website</td>
+        <td>Public visitor. Discovers the event, registers.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Modules -->
+  <div class="section-title">Module Map (12 Modules)</div>
+  <div class="module-grid">
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M0</span>
+        <span class="module-icon">🏗️</span>
+        <span class="module-name">Platform Dashboard</span>
+      </div>
+      <div class="module-audience">SiteOwner · Tenant mgmt, billing, health</div>
+    </div>
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M1</span>
+        <span class="module-icon">🎪</span>
+        <span class="module-name">Event Configuration</span>
+      </div>
+      <div class="module-audience">Organizer · Multi-event, venues, cloning</div>
+    </div>
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M2</span>
+        <span class="module-icon">👩‍🏫</span>
+        <span class="module-name">Teacher Management</span>
+      </div>
+      <div class="module-audience">Organizer · Profiles, contracts, payouts</div>
+    </div>
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M3</span>
+        <span class="module-icon">📅</span>
+        <span class="module-name">Schedule Builder</span>
+      </div>
+      <div class="module-audience">Organizer · Drag-drop grid, conflict detection</div>
+    </div>
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M4</span>
+        <span class="module-icon">👥</span>
+        <span class="module-name">Participant Management</span>
+      </div>
+      <div class="module-audience">Organizer / Staff · Registration, check-in, waitlist</div>
+    </div>
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M5</span>
+        <span class="module-icon">👤</span>
+        <span class="module-name">Profile & Visibility</span>
+      </div>
+      <div class="module-audience">All roles · Per-field privacy control</div>
+    </div>
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M6</span>
+        <span class="module-icon">💳</span>
+        <span class="module-name">Booking & Payment</span>
+      </div>
+      <div class="module-audience">Participant · Stripe, Mollie, installments</div>
+    </div>
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M7</span>
+        <span class="module-icon">🏠</span>
+        <span class="module-name">Logistics</span>
+      </div>
+      <div class="module-audience">Organizer / Staff · Accom., meals, shuttles</div>
+    </div>
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M8</span>
+        <span class="module-icon">💰</span>
+        <span class="module-name">Financial Dashboard</span>
+      </div>
+      <div class="module-audience">Organizer · P&amp;L, cash flow, invoices</div>
+    </div>
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M9</span>
+        <span class="module-icon">📣</span>
+        <span class="module-name">Communications</span>
+      </div>
+      <div class="module-audience">Organizer · Campaigns, transactional email</div>
+    </div>
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M10</span>
+        <span class="module-icon">🌐</span>
+        <span class="module-name">Participant Portal</span>
+      </div>
+      <div class="module-audience">Participant / Teacher · Mobile-first</div>
+    </div>
+    <div class="module-card">
+      <div class="module-card-header">
+        <span class="module-num">M11</span>
+        <span class="module-icon">🌍</span>
+        <span class="module-name">Public Website</span>
+      </div>
+      <div class="module-audience">Prospect · Tenant-aware, SEO, registration</div>
+    </div>
+  </div>
+
+  <!-- Plan tiers -->
+  <div class="section-title">Plan Tiers</div>
+  <div class="plan-grid">
+    <div class="plan-card">
+      <div class="plan-name">Free</div>
+      <div class="plan-events">1</div>
+      <div class="plan-sub">event · 50 participants</div>
+      <ul class="plan-features">
+        <li>Basic event config</li>
+        <li>Participant management</li>
+        <li class="no">Financial module</li>
+        <li class="no">PDF exports</li>
+        <li class="no">Custom domain</li>
+      </ul>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Starter</div>
+      <div class="plan-events">3</div>
+      <div class="plan-sub">events · 300 participants</div>
+      <ul class="plan-features">
+        <li>Financial module</li>
+        <li>PDF exports</li>
+        <li>DPA document</li>
+        <li class="no">Marketing module</li>
+        <li class="no">Custom domain</li>
+      </ul>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-name">Pro</div>
+      <div class="plan-events">∞</div>
+      <div class="plan-sub">events · 2,000 participants</div>
+      <ul class="plan-features">
+        <li>Marketing module</li>
+        <li>Custom domain</li>
+        <li>Social asset generator</li>
+        <li>Priority support</li>
+        <li class="no">White-label</li>
+      </ul>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Enterprise</div>
+      <div class="plan-events">∞</div>
+      <div class="plan-sub">events · unlimited participants</div>
+      <ul class="plan-features">
+        <li>White-label</li>
+        <li>All Pro features</li>
+        <li>SLA &amp; support</li>
+        <li>Custom contracts</li>
+        <li>Per-tenant schemas</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Tech stack -->
+  <div class="section-title">Technology Stack</div>
+  <div class="stack-row">
+    <span class="stack-chip highlight">React (Vite)</span>
+    <span class="stack-chip highlight">TypeScript strict</span>
+    <span class="stack-chip highlight">Tailwind CSS</span>
+    <span class="stack-chip highlight">shadcn/ui</span>
+    <span class="stack-chip highlight">Fastify</span>
+    <span class="stack-chip highlight">PostgreSQL 15+</span>
+    <span class="stack-chip highlight">Prisma ORM</span>
+    <span class="stack-chip">JWT + TOTP 2FA</span>
+    <span class="stack-chip">Magic Links</span>
+    <span class="stack-chip">Stripe</span>
+    <span class="stack-chip">Mollie (EU fallback)</span>
+    <span class="stack-chip">Resend / Postmark</span>
+    <span class="stack-chip">BullMQ + Redis</span>
+    <span class="stack-chip">Cloudflare R2 (S3)</span>
+    <span class="stack-chip">Pino (structured logs)</span>
+    <span class="stack-chip">OpenTelemetry</span>
+    <span class="stack-chip">Sentry</span>
+    <span class="stack-chip">Caddy (auto-cert)</span>
+    <span class="stack-chip">Docker Compose</span>
+  </div>
+
+  <!-- Build phases -->
+  <div class="section-title">Build Phases (17)</div>
+  <div class="phases">
+    <div class="phase-row">
+      <div class="phase-num">PHASE 0</div>
+      <div>
+        <div class="phase-name">Architecture Foundation</div>
+        <div class="phase-desc">Five ADRs. No code. Explicit decisions before a single line is written.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 1</div>
+      <div>
+        <div class="phase-name">Platform Schema + Tenant Lifecycle</div>
+        <div class="phase-desc">PlatformUser, Tenant, TenantPlan, InvoiceSequence. SiteOwner auth, tenant CRUD.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 2</div>
+      <div>
+        <div class="phase-name">User Identity + Auth System</div>
+        <div class="phase-desc">User, RefreshToken, MagicLinkToken, ConsentRecord, AuditLog. Full auth flows.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 3</div>
+      <div>
+        <div class="phase-name">Tenant Isolation Middleware</div>
+        <div class="phase-desc">tenantContext, requireTenant, Prisma tenantId enforcement.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 4</div>
+      <div>
+        <div class="phase-name">Event + Venue Configuration</div>
+        <div class="phase-desc">Event, Venue, EventConfig. CRUD, publish/unpublish, clone event.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 5</div>
+      <div>
+        <div class="phase-name">Teacher Management</div>
+        <div class="phase-desc">UserProfile, EventProfileExtension, EventMembership. Invite flow, visibility.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 6</div>
+      <div>
+        <div class="phase-name">Schedule Builder</div>
+        <div class="phase-desc">Session, SessionTeacher, SessionEnrollment. Conflict detection, iCal export.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 7</div>
+      <div>
+        <div class="phase-name">Payment Pipeline</div>
+        <div class="phase-desc">Tickets, addons, discount codes, orders. Stripe + Mollie adapters. All edge cases.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 8</div>
+      <div>
+        <div class="phase-name">Registration Flow</div>
+        <div class="phase-desc">Multi-step registration API. Waitlist. CSV import with validation.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 9</div>
+      <div>
+        <div class="phase-name">Profile + Visibility System</div>
+        <div class="phase-desc">Visibility matrix, community directory. All VisibilityLevel × Role combinations.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 10</div>
+      <div>
+        <div class="phase-name">Financial Dashboard</div>
+        <div class="phase-desc">Revenue, expenses, P&amp;L, cash flow, payout tracker. VAT, invoice sequences.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 11</div>
+      <div>
+        <div class="phase-name">Logistics</div>
+        <div class="phase-desc">Accommodation, meals, shuttle, volunteers, run-of-show generation.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 12</div>
+      <div>
+        <div class="phase-name">Communications</div>
+        <div class="phase-desc">Email campaigns, transactional jobs, announcements. Plan limits enforced.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 13</div>
+      <div>
+        <div class="phase-name">Participant + Teacher Portal</div>
+        <div class="phase-desc">/apps/portal. Mobile-first. All sections. Playwright E2E tests.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 14</div>
+      <div>
+        <div class="phase-name">Public Website</div>
+        <div class="phase-desc">/apps/website. Tenant-aware runtime rendering + Redis cache. SEO.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 15</div>
+      <div>
+        <div class="phase-name">GDPR Tooling</div>
+        <div class="phase-desc">Data purge, retention sweep, DPA PDF, consent withdrawal, export.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 16</div>
+      <div>
+        <div class="phase-name">Platform Dashboard</div>
+        <div class="phase-desc">/apps/platform. SiteOwner UI. Impersonation, security log, Bull-Board.</div>
+      </div>
+    </div>
+    <div class="phase-row">
+      <div class="phase-num">PHASE 17</div>
+      <div>
+        <div class="phase-name">Observability + Hardening</div>
+        <div class="phase-desc">OpenTelemetry, Sentry, health endpoints. Final security pass. Runbooks.</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
