@@ -285,57 +285,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .tl-blk.social{background:var(--surface-2);color:var(--muted);border-color:var(--border);}
 .tl-sep{width:1px;height:36px;background:var(--border);margin:0 8px;flex-shrink:0;}
 
-
-.mobile-menu-btn,.mobile-sidebar-close,.mobile-overlay{display:none;}
-
 @media(max-width:1100px){.rp{display:none;}}
-@media(max-width:820px){
-  :root{--sb-w:min(82vw,320px);}
-  .tb-sub,.tb-search,.tb-pill{display:none;}
-  .topbar{padding:0 12px;gap:8px;}
-  .tb-logo{font-size:14px;}
-  .tb-btn{padding:5px 9px;font-size:10px;}
-  .mobile-menu-btn{
-    display:inline-flex;align-items:center;justify-content:center;
-    width:32px;height:32px;border:1px solid var(--border);border-radius:8px;
-    background:var(--surface);color:var(--text-2);cursor:pointer;flex-shrink:0;
-  }
-  .mobile-menu-btn:hover{background:var(--surface-2);}
-  .mobile-menu-btn .mm-open{display:block;}
-  .mobile-menu-btn .mm-close{display:none;}
-  body.sidebar-open .mobile-menu-btn .mm-open{display:none;}
-  body.sidebar-open .mobile-menu-btn .mm-close{display:block;}
-  .sidebar{
-    position:fixed;top:44px;left:var(--nav-w);bottom:0;z-index:260;
-    width:var(--sb-w);max-width:calc(100vw - var(--nav-w) - 12px);
-    box-shadow:var(--shadow-lg);transform:translateX(-108%);
-    transition:transform .18s ease;
-  }
-  body.sidebar-open .sidebar{transform:translateX(0);}
-  .mobile-sidebar-close{
-    display:inline-flex;align-items:center;justify-content:center;
-    width:28px;height:28px;border:1px solid var(--border);border-radius:8px;
-    background:var(--surface);color:var(--text-2);cursor:pointer;flex-shrink:0;
-  }
-  .sb-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
-  .mobile-overlay{
-    display:block;position:fixed;inset:44px 0 0 var(--nav-w);
-    background:rgba(21,35,24,.26);opacity:0;pointer-events:none;z-index:250;
-    transition:opacity .18s ease;
-  }
-  body.sidebar-open .mobile-overlay{opacity:1;pointer-events:auto;}
-  .main,.rp{min-width:0;}
-}
+@media(max-width:820px){:root{--sb-w:200px;}}
 </style>
 </head>
 <body>
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle submenu" onclick="toggleSidebar()">
-    <span class="mm-open">☰</span>
-    <span class="mm-close">✕</span>
-  </button>
   <div class="tb-logo">AcroFest <span>2025</span></div>
   <div class="tb-div"></div>
   <div class="tb-sub">Command Center</div>
@@ -346,7 +303,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   <button class="tb-btn" onclick="alert('Opens participant portal in new tab')">👤 Portal View</button>
   <button class="tb-btn pri" onclick="alert('Add session dialog')">+ Session</button>
 </div>
-<div class="mobile-overlay" id="mobile-overlay" onclick="closeSidebar()"></div>
 
 <div class="app-body">
 
@@ -366,11 +322,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="sb-hdr">
-    <div>
-      <div class="sb-ey" id="sb-ey">EVENT</div>
-      <div class="sb-title" id="sb-title">AcroFest 2025</div>
-    </div>
-    <button class="mobile-sidebar-close" aria-label="Close submenu" onclick="closeSidebar()">✕</button>
+    <div class="sb-ey" id="sb-ey">EVENT</div>
+    <div class="sb-title" id="sb-title">AcroFest 2025</div>
   </div>
   <div class="sb-scroll" id="sb-scroll"></div>
   <div class="sb-ftr"><button class="sb-add" id="sb-add-btn" onclick="alert('Coming soon!')">+ Add Session</button></div>
@@ -837,19 +790,6 @@ const SB = {
 let activeTab = 'dashboard';
 let activeSession = null;
 
-function isMobileView() {
-  return window.matchMedia('(max-width: 820px)').matches;
-}
-function toggleSidebar(force) {
-  const shouldOpen = typeof force === 'boolean'
-    ? force
-    : !document.body.classList.contains('sidebar-open');
-  document.body.classList.toggle('sidebar-open', shouldOpen);
-}
-function closeSidebar() {
-  document.body.classList.remove('sidebar-open');
-}
-
 // ── HELPERS ────────────────────────────────────────────────────────────
 function typeClass(t) { return {class:'class',jam:'jam',workshop:'workshop',performance:'performance',social:'social'}[t]||'social'; }
 function typeLbl(t)   { return {class:'CLASS',jam:'JAM',workshop:'WORKSHOP',performance:'SHOW',social:'SOCIAL'}[t]||t.toUpperCase(); }
@@ -869,7 +809,6 @@ function goTab(tab) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-' + tab).classList.add('active');
   buildSidebar();
-  if (isMobileView()) toggleSidebar(true);
   // Update right panel
   document.getElementById('rp-sel-lbl').textContent = tab.toUpperCase();
   document.getElementById('rp-sel-title').textContent = tab.charAt(0).toUpperCase() + tab.slice(1);
@@ -907,7 +846,7 @@ function buildSidebar() {
         const item = document.createElement('div');
         item.className = 'sess-item' + (activeSession === s.id ? ' active' : '');
         item.innerHTML = `<div class="sess-time">${s.time}</div><div class="sess-info"><div class="sess-name">${s.name}</div><div class="sess-sub">${s.venue}</div></div><div class="sess-badge ${bClass(s.type)}">${typeLbl(s.type)}</div>`;
-        item.onclick = () => { activateSession(s.id); if (isMobileView()) closeSidebar(); };
+        item.onclick = () => activateSession(s.id);
         grp.appendChild(item);
       });
       cont.appendChild(grp);
@@ -922,7 +861,6 @@ function buildSidebar() {
       div.onclick = () => {
         cont.querySelectorAll('.sb-item').forEach(x => x.classList.remove('active'));
         div.classList.add('active');
-        if (isMobileView()) closeSidebar();
       };
       cont.appendChild(div);
     });
@@ -988,7 +926,6 @@ function activateSession(id) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById('view-schedule').classList.add('active');
   activeTab = 'schedule';
-  if (isMobileView()) closeSidebar();
 }
 
 // ── buildFullSched ─────────────────────────────────────────────────────
@@ -1103,19 +1040,6 @@ function toggleRPCR(el, countId, total) {
   const checked = cont.querySelectorAll('.chk.on').length;
   document.getElementById(countId).textContent = checked + '/' + total;
 }
-
-document.querySelector('.main').addEventListener('click', () => {
-  if (isMobileView()) closeSidebar();
-});
-const rightPanel = document.querySelector('.rp');
-if (rightPanel) {
-  rightPanel.addEventListener('click', () => {
-    if (isMobileView()) closeSidebar();
-  });
-}
-window.addEventListener('resize', () => {
-  if (!isMobileView()) closeSidebar();
-});
 
 // ── INIT ───────────────────────────────────────────────────────────────
 buildSidebar();
