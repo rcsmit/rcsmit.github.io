@@ -10,6 +10,7 @@
 .shell{display:flex;flex-direction:column;height:100%}
 .topmenu{height:44px;background:var(--brand-superdark);display:flex;align-items:center;gap:2px;padding:0 16px;overflow-x:auto;flex-shrink:0}
 .logo{font-family:'DM Serif Display',serif;color:#fff;font-size:15px;margin-right:16px;white-space:nowrap}.logo span{color:var(--accent)}
+.logo a{text-decoration:none;color:inherit;}
 .nav-btn{background:none;border:none;color:rgba(255,255,255,.68);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:6px 12px;border-radius:6px;cursor:pointer;white-space:nowrap}
 .nav-btn:hover{background:rgba(255,255,255,.1);color:#fff}.nav-btn.active{background:var(--accent);color:#1A1A1A;font-weight:600}
 .spacer{flex:1}.frame{border:0;width:100%;height:calc(100dvh - 44px);display:block;background:#fff}
@@ -17,8 +18,8 @@
 </style></head><body>
 <div class="shell">
   <nav class="topmenu">
-    <div class="logo">Fest<span>Flow</span></div>
-    <button class="nav-btn active" data-src="dashboard_mobile_menu.html">🎪 Organizer Dashboard</button>
+    <div class="logo"><a href="index.html">Fest<span>Flow</span></a></div>
+    <button class="nav-btn" data-src="dashboard_mobile_menu.html">🎪 Organizer Dashboard</button>
     <button class="nav-btn" data-src="pitch-embedded.html?screen=schedule">📅 Schedule Builder</button>
   
     <button class="nav-btn" data-src="portal.html">🌿 Participant Portal</button>
@@ -28,7 +29,7 @@
     <div class="spacer"></div>
     <button class="nav-btn" data-src="dev/index.html">🛠️ Developer info</button>
   </nav>
-  <iframe id="appFrame" class="frame" src="dev/crowdfunding.html"></iframe>
+  <iframe id="appFrame" class="frame" src="welcome.html"></iframe>
 </div>
 <script>
   const frame = document.getElementById('appFrame');

@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FestFlow — Multi-tenant Platform for Acroyoga Festivals</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #f5f0e8;
+      --navy: #1a2744;
+      --gold: #d4943a;
+      --green: #2d6a4f;
+      --muted: #6b7280;
+      --card-bg: #ffffff;
+      --border: #e5ddd0;
+      --text: #1c1c1c;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      background: var(--navy);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-logo {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 1.15rem;
+      color: #fff;
+      letter-spacing: -0.01em;
+    }
+    .nav-logo span { color: var(--gold); }
+    .nav-tag {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.45);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-left: 0.75rem;
+      font-weight: 400;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(155deg, #0b1e34 0%, #1a2744 50%, #2d6a4f 100%);
+      color: white;
+      padding: 4.5rem 2rem 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      right: -80px; top: -80px;
+      width: 380px; height: 380px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(212,148,58,0.22), rgba(212,148,58,0));
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute;
+      left: 30%; bottom: -60px;
+      width: 260px; height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(45,106,79,0.3), transparent);
+      pointer-events: none;
+    }
+    @media (max-width: 860px) {
+      .hero-inner-wrap { grid-template-columns: 1fr !important; }
+      .hero-value-card { display: none; }
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 1.1rem;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.4rem, 4.5vw, 3.5rem);
+      font-weight: 700;
+      line-height: 1.08;
+      margin-bottom: 1rem;
+    }
+    .hero h1 em {
+      font-style: italic;
+      color: var(--gold);
+    }
+    .hero-sub {
+      font-size: 1rem;
+      color: rgba(255,255,255,0.78);
+      max-width: 480px;
+      line-height: 1.65;
+      font-weight: 300;
+      margin-bottom: 1.25rem;
+    }
+    .hero-problems {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+    .hero-prob {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.7);
+    }
+    .hero-prob span { line-height: 1.4; }
+    .hero-btn-primary {
+      display: inline-flex;
+      align-items: center;
+      background: var(--gold);
+      color: #1a1a1a;
+      font-weight: 700;
+      font-size: 0.88rem;
+      padding: 0.65rem 1.3rem;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: filter 0.15s, transform 0.15s;
+    }
+    .hero-btn-primary:hover { filter: brightness(0.95); transform: translateY(-1px); }
+    .hero-btn-secondary {
+      display: inline-flex;
+      align-items: center;
+      background: transparent;
+      color: rgba(255,255,255,0.85);
+      font-weight: 600;
+      font-size: 0.88rem;
+      padding: 0.65rem 1.3rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.25);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .hero-btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+    /* hero value card */
+    .hero-value-card {
+      background: rgba(255,255,255,0.07);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+    .hero-vc-label {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 1rem;
+    }
+    .hero-vc-list { display: flex; flex-direction: column; gap: 0; }
+    .hero-vc-item {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      padding: 0.7rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.83rem;
+      color: rgba(255,255,255,0.82);
+      line-height: 1.4;
+    }
+    .hero-vc-item:last-child { border-bottom: none; }
+    .hero-vc-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+    .hero-vc-item strong { color: #fff; display: block; margin-bottom: 1px; font-weight: 600; font-size: 0.85rem; }
+
+    .badge {
+      padding: 0.3rem 0.85rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .badge-navy  { background: #1a2744; color: #fff; }
+    .badge-green { background: #2d6a4f; color: #fff; }
+    .badge-orange{ background: #c0531a; color: #fff; }
+    .badge-purple{ background: #6b3fa0; color: #fff; }
+    /* ── SECTION ── */
+    .section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem;
+    }
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 0.5rem;
+    }
+    .section-desc {
+      color: var(--muted);
+      font-size: 0.95rem;
+      max-width: 560px;
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+    }
+
+    /* ── CARDS GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+    @media (max-width: 860px) {
+      .cards-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 560px) {
+      .cards-grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(26,39,68,0.12);
+    }
+
+    .card-img {
+      width: 100%;
+      height: 185px;
+      object-fit: cover;
+      object-position: top;
+      display: block;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-body {
+      padding: 1.1rem 1.25rem 1.25rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-role {
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 0.5rem;
+      line-height: 1.25;
+    }
+
+    .card-desc {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.55;
+      flex: 1;
+      margin-bottom: 1rem;
+    }
+
+    .card-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--navy);
+      text-decoration: none;
+      border: 1.5px solid var(--navy);
+      padding: 0.4rem 0.85rem;
+      border-radius: 5px;
+      width: fit-content;
+      transition: background 0.15s, color 0.15s;
+    }
+    .card-link:hover {
+      background: var(--navy);
+      color: #fff;
+    }
+    .card-link.gold {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: #fff;
+    }
+    .card-link.gold:hover {
+      background: #b87d2a;
+      border-color: #b87d2a;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 0 1.5rem;
+    }
+
+    /* ── FEATURE STRIP ── */
+    .feature-strip {
+      background: var(--navy);
+      color: white;
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+    .feature-strip h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+    }
+    .feature-strip p {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.92rem;
+      max-width: 480px;
+      margin: 0 auto 2rem;
+      line-height: 1.6;
+    }
+    .feature-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      justify-content: center;
+    }
+    .chip {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.85);
+      padding: 0.35rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
+
+    /* ── CROWDFUNDING ── */
+    .cf-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 2rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) { .cf-layout { grid-template-columns: 1fr; } }
+
+    .cf-block { margin-bottom: 2rem; }
+    .cf-block h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 0.65rem;
+    }
+    .cf-block > p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* what you're funding grid */
+    .cf-what-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 640px) { .cf-what-grid { grid-template-columns: 1fr; } }
+    .cf-what-item {
+      background: var(--cream);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+    }
+    .cf-what-item strong { display: block; font-size: 0.85rem; color: var(--navy); margin-bottom: 0.25rem; }
+    .cf-what-item p { font-size: 0.8rem; color: var(--muted); line-height: 1.5; margin: 0; }
+
+    /* funds */
+    .funds-grid { display: flex; flex-direction: column; gap: 0.6rem; }
+    .fund-item { display: flex; align-items: center; gap: 0.75rem; }
+    .fund-bar-wrap {
+      flex: 1;
+      height: 9px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .fund-bar-fill { height: 100%; border-radius: 999px; }
+    .fund-pct { font-size: 0.78rem; font-weight: 700; color: var(--navy); width: 34px; flex-shrink: 0; }
+    .fund-label { font-size: 0.82rem; color: var(--muted); width: 160px; flex-shrink: 0; }
+
+    /* roadmap */
+    .cf-roadmap { display: flex; flex-direction: column; }
+    .cf-step {
+      display: grid;
+      grid-template-columns: 80px 1fr;
+      gap: 1rem;
+      padding: 0.85rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .cf-step-last { border-bottom: none; }
+    .cf-step strong { display: block; color: var(--navy); margin-bottom: 0.2rem; font-size: 0.88rem; }
+    .cf-step p { margin: 0; color: var(--muted); line-height: 1.5; font-size: 0.82rem; }
+    .cf-step-badge {
+      background: #e7f4ec;
+      color: #2e7d57;
+      border: 1px solid #cfe8d8;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 6px 4px;
+      height: fit-content;
+      margin-top: 2px;
+    }
+    .cf-step-badge-gold { background: #fff8e7; color: #9a6600; border-color: #f0d98a; }
+
+    /* quote */
+    .cf-quote {
+      background: linear-gradient(180deg, #fff, #fbf8f2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .cf-quote p {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      line-height: 1.45;
+      color: var(--navy);
+      margin: 0 0 0.75rem;
+    }
+    .cf-quote small { display: block; color: var(--muted); font-size: 0.82rem; line-height: 1.55; }
+
+    /* stretch goals */
+    .cf-stretch { display: flex; flex-direction: column; }
+    .cf-stretch-row {
+      display: flex;
+      gap: 1rem;
+      align-items: baseline;
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .cf-stretch-row:last-child { border-bottom: none; }
+    .cf-stretch-amt { font-family: 'Playfair Display', serif; font-weight: 700; color: var(--navy); font-size: 1rem; width: 52px; flex-shrink: 0; }
+    .cf-stretch-desc { color: var(--muted); line-height: 1.5; }
+
+    /* FAQ */
+    .cf-faq { display: flex; flex-direction: column; gap: 0.5rem; }
+    .cf-faq details {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+    }
+    .cf-faq summary { cursor: pointer; font-weight: 600; font-size: 0.88rem; color: var(--navy); }
+    .cf-faq details p { margin: 0.65rem 0 0; color: var(--muted); font-size: 0.83rem; line-height: 1.6; }
+
+    /* SIDEBAR */
+    .cf-goal-card {
+      background: var(--navy);
+      color: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .cf-goal-label {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 0.25rem;
+    }
+    .cf-goal-amount {
+      font-family: 'Playfair Display', serif;
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+    .cf-progress-track {
+      background: rgba(255,255,255,0.15);
+      border-radius: 999px;
+      height: 10px;
+      margin: 0.9rem 0 0.5rem;
+      overflow: hidden;
+    }
+    .cf-progress-fill {
+      background: linear-gradient(90deg, var(--gold), #f0bb53);
+      height: 100%;
+      border-radius: 999px;
+    }
+    .cf-progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.65);
+      margin-bottom: 1rem;
+    }
+    .cf-progress-meta strong { color: #fff; }
+    .cf-stats {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      text-align: center;
+    }
+    .cf-stat strong { display: block; font-size: 1.4rem; color: #fff; }
+    .cf-stat span { font-size: 0.68rem; color: rgba(255,255,255,0.5); }
+    .cf-cta {
+      display: block;
+      background: var(--gold);
+      color: #1a1a1a;
+      text-align: center;
+      padding: 0.7rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      text-decoration: none;
+      margin-bottom: 0.65rem;
+      transition: filter 0.15s;
+    }
+    .cf-cta:hover { filter: brightness(0.93); }
+    .cf-note { font-size: 0.7rem; color: rgba(255,255,255,0.4); text-align: center; line-height: 1.4; }
+
+    /* tiers card */
+    .cf-tiers-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .cf-tl-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    .cf-tier {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.9rem;
+      margin-bottom: 0.65rem;
+    }
+    .cf-tier-featured { border-color: var(--gold); box-shadow: 0 4px 16px rgba(212,148,58,0.15); }
+    .cf-tier-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem; }
+    .cf-tier-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--navy); }
+    .cf-tier-price { font-family: 'Playfair Display', serif; font-size: 1.35rem; font-weight: 700; color: var(--navy); }
+    .cf-tier-name { display: block; font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 0.2rem; }
+    .cf-tier-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.45; margin-bottom: 0.5rem; }
+    .cf-tier-perks { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.2rem; }
+    .cf-tier-perks li { font-size: 0.78rem; color: var(--text); line-height: 1.4; }
+
+    /* ── DOCS SECTION ── */
+    .cf-docs-section { background: #fff; border-radius: 0; }
+    .docs-inner {
+      display: grid;
+      grid-template-columns: 1fr 480px;
+      gap: 3rem;
+      align-items: center;
+    }
+    @media (max-width: 900px) {
+      .docs-inner { grid-template-columns: 1fr; }
+    }
+    .docs-img {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 24px rgba(26,39,68,0.1);
+      display: block;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .docs-img:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 36px rgba(26,39,68,0.16);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<!-- <nav>
+  <div style="display:flex;align-items:center;">
+    <span class="nav-logo">Fest<span>Flow</span></span>
+    <span class="nav-tag">Demo & Documentation</span>
+  </div>
+  <div style="display:flex;gap:0.5rem;">
+    <span class="badge badge-orange" style="font-size:0.65rem;padding:0.25rem 0.6rem;">V3.0 MASTER BUILD</span>
+  </div>
+</nav> -->
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner-wrap" style="position:relative;z-index:1;max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.2fr 0.8fr;gap:2.5rem;align-items:center;">
+
+    <!-- LEFT: organizer pitch -->
+    <div>
+      <p class="hero-eyebrow">For retreat &amp; festival organizers</p>
+      <h1>Stop managing<br>your event <em>in five<br>different tabs</em></h1>
+      <p class="hero-sub">FestFlow replaces the spreadsheets, WhatsApp threads, Google Forms, and last-minute chaos with one calm system — so you can run a great event instead of chasing logistics.</p>
+
+      <div class="hero-problems">
+        <div class="hero-prob">🧩 <span>No more scattered across forms, inboxes &amp; chats</span></div>
+        <div class="hero-prob">⏱️ <span>Finally get rid of hours lost on manual updates &amp; reminders</span></div>
+        <div class="hero-prob">🌿 <span>Concentrate on what matters most for you as organizer</span></div>
+      </div>
+
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-top:1.75rem;">
+        <a href="#crowdfunding" class="hero-btn-primary">Back the build →</a>
+        <a href="#screens" class="hero-btn-secondary">See it in action</a>
+      </div>
+    </div>
+
+    <!-- RIGHT: what you get -->
+    <div class="hero-value-card">
+      <p class="hero-vc-label">What organizers get</p>
+      <div class="hero-vc-list">
+        <div class="hero-vc-item">
+          <span class="hero-vc-icon">⚡</span>
+          <div><strong>Live command center</strong><br>One view during the event — no surprises</div>
+        </div>
+
+        <div class="hero-vc-item">
+          <span class="hero-vc-icon">🗓️</span>
+          <div><strong>Drag-and-drop schedule builder</strong><br>Multi-room, multi-day, conflict-checked</div>
+        </div>
+        <div class="hero-vc-item">
+          <span class="hero-vc-icon">🎟️</span>
+          <div><strong>Tickets &amp; payments</strong><br>Registrations, packages, invoice data</div>
+        </div>
+        <div class="hero-vc-item">
+          <span class="hero-vc-icon">🏠</span>
+          <div><strong>Participant portal</strong><br>Schedule, practical info, personal access for the participants</div>
+        </div>
+        
+        <div class="hero-vc-item">
+          <span class="hero-vc-icon">👩‍🏫</span>
+          <div><strong>Teacher workflow</strong><br>Profiles, assignments, bios — without the back-and-forth</div>
+        </div>
+        <div class="hero-vc-item">
+          <span class="hero-vc-icon">👤</span>
+          <div><strong>Participant profiles</strong><br>Profiles for each teacher and participant</div>
+        </div>
+        <div class="hero-vc-item">
+          <span class="hero-vc-icon">🌍</span>
+          <div><strong>Public website</strong><br>Public website with info directly from the system. No more endless updating</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- SCREENS -->
+<div class="section" id="screens">
+  <h2 class="section-title">Explore all six views</h2>
+  <p class="section-desc">Click any card to open the live screen. Each view corresponds to a different role or workflow within the FestFlow platform. You can also use the buttons in the topmenu</p>
+
+  <div class="cards-grid">
+
+  
+    
+    <!-- 5 · Dashboard / command center -->
+    <a class="card" href="dashboard_mobile_menu.html">
+      <img class="card-img" src="img/dashboard.png" alt="Command center dashboard">
+      <div class="card-body">
+        <p class="card-role">⚡ Organiser · Live Event</p>
+        <h3 class="card-title">Command Center</h3>
+        <p class="card-desc">Real-time festival dashboard showing live day status, scheduled sessions, weather forecast per day, today's checklist, and a critical-tasks panel — all in one glanceable view.</p>
+        <span class="card-link">View screen →</span>
+      </div>
+    </a>
+
+    <!-- 4 · Schedule builder -->
+    <a class="card" href="pitch-embedded.html?screen=schedule">
+      <img class="card-img" src="img/schedule_builder.png" alt="Schedule builder">
+      <div class="card-body">
+        <p class="card-role">🗓️ Organiser · Planning</p>
+        <h3 class="card-title">Schedule Builder</h3>
+        <p class="card-desc">Drag-and-drop multi-room, multi-day scheduler. Colour-coded session types (Class, Workshop, Jam, Social), conflict checker, and one-click export to PDF or iCal feed.</p>
+        <span class="card-link">View screen →</span>
+      </div>
+    </a>
+<!-- 2 · Participant portal -->
+    <a class="card" href="portal.html">
+      <img class="card-img" src="img/portal.png" alt="Participant portal">
+      <div class="card-body">
+        <p class="card-role">🎟️ Participant · Registered</p>
+        <h3 class="card-title">Participant Portal</h3>
+        <p class="card-desc">The personal hub for registered attendees. Navigate retreat overview, schedule, venue map, arrival info, accommodation, packing guide, food & dietary info, and optional add-ons.</p>
+        <span class="card-link">View screen →</span>
+      </div>
+    </a>
+
+    <!-- 3 · My profile -->
+    <a class="card" href="pitch-embedded.html?screen=profile">
+      <img class="card-img" src="img/my_profile.png" alt="My profile">
+      <div class="card-body">
+        <p class="card-role">👤 Participant · Profile</p>
+        <h3 class="card-title">My Profile</h3>
+        <p class="card-desc">Participant profile editor with role badges (Base, Flyer, experience years), bio, social links, and fine-grained per-field visibility controls — Public / Participants / Teachers / Nobody.</p>
+        <span class="card-link">View screen →</span>
+      </div>
+    </a>
+      <!-- 1 · Public website -->
+    <a class="card" href="pitch-embedded.html?screen=website">
+      <img class="card-img" src="img/website.png" alt="Public event website">
+      <div class="card-body">
+        <p class="card-role">🌐 Public · Visitor</p>
+        <h3 class="card-title">Event Website</h3>
+        <p class="card-desc">The public-facing landing page for a festival. Hero banner, teacher lineup, session stats, and CTA buttons for registration and programme browsing — all auto-generated per tenant event.</p>
+        <span class="card-link gold">View screen →</span>
+      </div>
+    </a>
+
+    <!-- 6 · Superadmin -->
+    <a class="card" href="pitch-embedded.html?screen=platform">
+      <img class="card-img" src="img/superadmin.png" alt="Superadmin / SiteOwner dashboard">
+      <div class="card-body">
+        <p class="card-role">🛡️ Platform owner · Super-admin</p>
+        <h3 class="card-title">SiteOwner Dashboard</h3>
+        <p class="card-desc">Platform-wide metrics (tenants, MRR, total participants) and tenant management: plan tiers (Free → Pro → Enterprise), status badges, impersonation, suspension, and upgrade prompts.</p>
+        <span class="card-link">View screen →</span>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- FEATURE STRIP -->
+<div class="feature-strip">
+  <h2>Everything a festival needs</h2>
+  <p>FestFlow covers the full lifecycle — before, during, and after each event — across every role in the organisation.</p>
+  <div class="feature-chips">
+    <span class="chip">Teacher booking & contracts</span>
+    <span class="chip">Ticket sales (Stripe / Mollie)</span>
+    <span class="chip">Multi-room scheduling</span>
+    <span class="chip">Participant portal</span>
+    <span class="chip">Live command center</span>
+    <span class="chip">GDPR consent management</span>
+    <span class="chip">iCal & PDF export</span>
+    <span class="chip">Conflict detection</span>
+    <span class="chip">Visibility controls</span>
+    <span class="chip">Multi-tenant subdomain routing</span>
+    <span class="chip">Weather integration</span>
+    <span class="chip">Checklist & logistics board</span>
+  </div>
+</div>
+
+<hr class="divider">
+
+<!-- CROWDFUNDING -->
+<div id="crowdfunding" style="background:#fff;">
+<div class="section">
+  <p class="section-label">💰 Community-backed build</p>
+  <h2 class="section-title">Help build the operating system<br>for festivals</h2>
+  <p class="section-desc">FestFlow turns scattered tools, spreadsheets, inboxes, forms, portals and last-minute chaos into one calm system for organizers, teachers and participants. This crowdfunding round funds the first production-ready version.</p>
+
+  <!-- GOAL + STATS BAR -->
+  <div class="cf-layout">
+
+    <!-- LEFT COLUMN -->
+    <div class="cf-main">
+
+      <!-- WHY CROWDFUNDING -->
+      <div class="cf-block">
+        <h4>Why crowdfunding?</h4>
+        <p>Crowdfunding validates demand, creates a first circle of committed users and gives the project enough room to ship something solid instead of a rushed half-version. The best product decisions come from real event friction, not from abstract feature lists — so backers shape the roadmap.</p>
+      </div>
+
+      <!-- WHAT YOU ARE FUNDING -->
+      <div class="cf-block">
+        <h4>A focused first release</h4>
+        <div class="cf-what-grid">
+          <div class="cf-what-item">
+            <strong>Organizer app</strong>
+            <p>Manage events, schedules, teachers, participants, communications, finance overview and operations from one place.</p>
+          </div>
+          <div class="cf-what-item">
+            <strong>Participant portal</strong>
+            <p>One clean place for schedule, practical info, group info, travel details, updates and personal event access.</p>
+          </div>
+          <div class="cf-what-item">
+            <strong>Teacher workflow</strong>
+            <p>Profiles, assignments, visibility, schedules and participant-facing bios without endless back-and-forth.</p>
+          </div>
+          <div class="cf-what-item">
+            <strong>Payments &amp; tickets</strong>
+            <p>Simple paid registrations, clearer package logic, invoice-ready order data and less admin stress.</p>
+          </div>
+          <div class="cf-what-item">
+            <strong>Operational calm</strong>
+            <p>One source of truth during the event. Fewer surprises. Faster updates. Less dependence on memory and chat threads.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- USE OF FUNDS -->
+      <div class="cf-block">
+        <h4>Where the money goes</h4>
+        <div class="funds-grid">
+          <div class="fund-item">
+            <div class="fund-bar-wrap"><div class="fund-bar-fill" style="width:42%;background:#1a2744;"></div></div>
+            <span class="fund-pct">42%</span>
+            <span class="fund-label">Product build</span>
+          </div>
+          <div class="fund-item">
+            <div class="fund-bar-wrap"><div class="fund-bar-fill" style="width:16%;background:#2d6a4f;"></div></div>
+            <span class="fund-pct">16%</span>
+            <span class="fund-label">Pilot support</span>
+          </div>
+          <div class="fund-item">
+            <div class="fund-bar-wrap"><div class="fund-bar-fill" style="width:14%;background:#d4943a;"></div></div>
+            <span class="fund-pct">14%</span>
+            <span class="fund-label">UX and design</span>
+          </div>
+          <div class="fund-item">
+            <div class="fund-bar-wrap"><div class="fund-bar-fill" style="width:12%;background:#1a6b7a;"></div></div>
+            <span class="fund-pct">12%</span>
+            <span class="fund-label">Infra and tools</span>
+          </div>
+          <div class="fund-item">
+            <div class="fund-bar-wrap"><div class="fund-bar-fill" style="width:8%;background:#6b3fa0;"></div></div>
+            <span class="fund-pct">8%</span>
+            <span class="fund-label">Legal and admin</span>
+          </div>
+          <div class="fund-item">
+            <div class="fund-bar-wrap"><div class="fund-bar-fill" style="width:8%;background:#999;"></div></div>
+            <span class="fund-pct">8%</span>
+            <span class="fund-label">Contingency</span>
+          </div>
+        </div>
+        <p style="font-size:0.78rem;color:var(--muted);margin-top:0.75rem;line-height:1.55;">This round is meant to fund a usable launch version, not a bloated platform. The goal is a lean, stable build with real pilot feedback and a strong base for growth.</p>
+      </div>
+
+      <!-- ROADMAP -->
+      <div class="cf-block">
+        <h4>What happens after the campaign</h4>
+        <div class="cf-roadmap">
+          <div class="cf-step">
+            <div class="cf-step-badge">Month 1</div>
+            <div>
+              <strong>Lock MVP scope</strong>
+              <p>Finalize the lean build around events, schedules, portal, teacher profiles, communication basics and paid registration flows.</p>
+            </div>
+          </div>
+          <div class="cf-step">
+            <div class="cf-step-badge">Month 2–4</div>
+            <div>
+              <strong>Build and test the core</strong>
+              <p>Ship the first organizer dashboard, participant portal and event setup workflows. Test with pilot organizers and tighten weak spots fast.</p>
+            </div>
+          </div>
+          <div class="cf-step">
+            <div class="cf-step-badge">Month 5</div>
+            <div>
+              <strong>Run pilot events</strong>
+              <p>Use the product in live retreat and festival settings. Track friction, reduce manual work and improve the real-world experience.</p>
+            </div>
+          </div>
+          <div class="cf-step cf-step-last">
+            <div class="cf-step-badge cf-step-badge-gold">Month 6</div>
+            <div>
+              <strong>Public launch</strong>
+              <p>Open the first public release with onboarding, pricing and a stable base for more event types and new modules.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUOTE -->
+      <div class="cf-quote">
+        <p>"We are not trying to build another giant event platform. We are building the right tool for organizers who run human-scale, high-touch experiences."</p>
+        <small>The product direction comes from real retreat and festival workflows. The aim is calm software that supports community, not software that gets in the way.</small>
+      </div>
+
+      <!-- STRETCH GOALS -->
+      <div class="cf-block" style="margin-top:1.5rem;">
+        <h4>If we go beyond target</h4>
+        <div class="cf-stretch">
+          <div class="cf-stretch-row">
+            <span class="cf-stretch-amt">€90k</span>
+            <span class="cf-stretch-desc">Better automation for reminder flows, waitlists and participant updates.</span>
+          </div>
+          <div class="cf-stretch-row">
+            <span class="cf-stretch-amt">€110k</span>
+            <span class="cf-stretch-desc">Teacher portal upgrades and better content management for public pages.</span>
+          </div>
+          <div class="cf-stretch-row">
+            <span class="cf-stretch-amt">€135k</span>
+            <span class="cf-stretch-desc">Deeper finance tooling, exports and stronger multi-event organizer workflows.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div class="cf-block">
+        <h4>Good questions</h4>
+        <div class="cf-faq">
+          <details>
+            <summary>Is this for acroyoga festivals only?</summary>
+            <p>No. Acroyoga is the clearest starting point, but the product is meant for retreats, trainings and community-led festivals with similar operational needs.</p>
+          </details>
+          <details>
+            <summary>Why crowdfunding instead of fully bootstrapping?</summary>
+            <p>Crowdfunding validates demand, creates a first circle of committed users and gives the project enough room to ship something solid instead of a rushed half-version.</p>
+          </details>
+          <details>
+            <summary>What if the full target is not reached?</summary>
+            <p>The build can still move forward in a tighter form. The scope stays focused on the core organizer dashboard, portal and event setup essentials.</p>
+          </details>
+          <details>
+            <summary>Will backers shape the product?</summary>
+            <p>Yes. Especially pilot organizers and launch partners. The best product decisions come from real event friction, not from abstract feature lists.</p>
+          </details>
+
+          <details>
+            <summary>What if the project doesn't make it?</summary>
+            <p>
+            The honest asnwer is that you'd lose what you put in. Do not back with money that you can't afford or willing to loose.
+                </p>
+            <p>
+
+                Crowdfunding a software build is a real bet, not a pre-order. If FestFlow fails to reach its goals, 
+                runs out of runway, or has to shut down for whatever reason, your contribution cannot be recovered. 
+                There are no assets to liquidate, no refund mechanism, and no guarantee of any return — financial or otherwise.
+            </p><p>
+Back this because you believe in what we're building and want to help make it exist — not because you expect a safety net. 
+The best outcome for everyone is a product that actually gets built and used by thousands of enthousiast (acro)yogis and organizers. 
+That's what your backing makes possible.
+</p>
+          </details>        
+</div>
+      </div>
+
+    </div><!-- /cf-main -->
+
+    <!-- RIGHT SIDEBAR -->
+    <div class="cf-sidebar">
+
+      <!-- GOAL CARD -->
+      <div class="cf-goal-card">
+        <p class="cf-goal-label">Funding target</p>
+        <p class="cf-goal-amount">€75,000</p>
+        <p style="font-size:0.8rem;color:rgba(255,255,255,0.7);margin-bottom:0.9rem;line-height:1.5;">Enough to ship the MVP, pilot it with real organizers and launch with confidence.See <a href="dev/calculation.html" style="font-size:0.8rem;color:rgba(255,255,255,0.7);margin-bottom:0.9rem;line-height:1.5;">this page</a> for a breakdown of costs and benefits.</p>
+        <div class="cf-progress-track">
+          <div class="cf-progress-fill" style="width:0%;"></div>
+        </div>
+        <div class="cf-progress-meta">
+          <span><strong>€0</strong> pledged</span>
+          <span>0% funded</span>
+        </div>
+        <div class="cf-stats">
+          <div class="cf-stat"><strong>142</strong><span>backers</span></div>
+          <div class="cf-stat"><strong>9</strong><span>pilot events</span></div>
+          <div class="cf-stat"><strong>Q4</strong><span>MVP target</span></div>
+        </div>
+        <a href="#cf-tiers" class="cf-cta">Back the build →</a>
+        <p class="cf-note">Payments via Stripe. Refund guarantee if goal not reached.</p>
+      </div>
+
+      <!-- TIERS CARD -->
+      <div class="cf-tiers-card" id="cf-tiers">
+        <p class="cf-tl-title">Back at the level that fits you</p>
+
+        <div class="cf-tier">
+          <div class="cf-tier-top">
+            <span class="cf-tier-tag">Supporter</span>
+            <span class="cf-tier-price">€25</span>
+          </div>
+          <strong class="cf-tier-name">Community Thank You</strong>
+          <p class="cf-tier-desc">For people who want to help this get built.</p>
+          <ul class="cf-tier-perks">
+            <li>Name on the digital supporter wall</li>
+            <li>Project updates during the build</li>
+            <li>Launch thank-you pack</li>
+          </ul>
+        </div>
+
+        <div class="cf-tier cf-tier-featured">
+          <div class="cf-tier-top">
+            <span class="cf-tier-tag">Early access</span>
+            <span class="cf-tier-price">€99</span>
+          </div>
+          <strong class="cf-tier-name">Founding Backer</strong>
+          <p class="cf-tier-desc">For organizers, teachers and community builders who want early access.</p>
+          <ul class="cf-tier-perks">
+            <li>Everything in Supporter</li>
+            <li>Early access to the platform</li>
+            <li>Founding backer badge</li>
+            <li>Discounted first-year pricing</li>
+          </ul>
+        </div>
+
+        <div class="cf-tier">
+          <div class="cf-tier-top">
+            <span class="cf-tier-tag">Organizer</span>
+            <span class="cf-tier-price">€350</span>
+          </div>
+          <strong class="cf-tier-name">Pilot Event Pass</strong>
+          <p class="cf-tier-desc">For one organizer who wants to test the system with a real event.</p>
+          <ul class="cf-tier-perks">
+            <li>Everything in Founding Backer</li>
+            <li>One pilot event setup</li>
+            <li>Onboarding support</li>
+            <li>Feedback session after the event</li>
+          </ul>
+        </div>
+
+        <div class="cf-tier">
+          <div class="cf-tier-top">
+            <span class="cf-tier-tag">Partner</span>
+            <span class="cf-tier-price">€1,500</span>
+          </div>
+          <strong class="cf-tier-name">Launch Partner</strong>
+          <p class="cf-tier-desc">For established organizers who want a direct line into the product direction.</p>
+          <ul class="cf-tier-perks">
+            <li>Everything in Pilot Event Pass</li>
+            <li>Priority onboarding</li>
+            <li>Input on roadmap decisions</li>
+            <li>Partner spotlight at launch</li>
+          </ul>
+        </div>
+
+        <a href="#" class="cf-cta" style="display:block;text-align:center;margin-top:1rem;">Choose a tier →</a>
+      </div>
+
+    </div><!-- /cf-sidebar -->
+
+  </div><!-- /cf-layout -->
+</div>
+</div><!-- /crowdfunding -->
+
+<hr class="divider">
+
+<!-- DOCUMENTATION HUB -->
+<div class="section cf-docs-section" id="docs">
+  <div class="docs-inner">
+    <div class="docs-text">
+      <p class="section-label">🔧 Developer resources</p>
+      <h2 class="section-title">Documentation Hub</h2>
+      <p class="section-desc" style="margin-bottom:1.5rem;">The full build-spec documentation site. Covers architecture decisions, 17 build phases, feature inventory, evaluation criteria, financial modelling, and the crowdfunding campaign spec — all version-tracked at V3.0 Master Build.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.75rem;">
+        <span class="badge badge-navy">Overview</span>
+        <span class="badge badge-green">Build specs (prompt)</span>
+        <span class="badge badge-orange">Features</span>
+        <span class="badge badge-teal">Evaluation</span>
+        <span class="badge badge-purple">Calculation</span>
+        <span class="badge" style="background:#8B4513;color:#fff;">Crowdfunding</span>
+      </div>
+      <a href="dev/index.html"  class="card-link gold" style="font-size:0.88rem;padding:0.55rem 1.1rem;">
+        Open Documentation Hub →
+      </a>
+    </div>
+    <div class="docs-preview">
+      <a href="dev/index.html">
+        <img src="img/dev.png" alt="Documentation hub screenshot" class="docs-img">
+      </a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  FestFlow Platform · Master Build Prompt V3 · Demo environment — not production data
+</footer>
+
+</body>
+</html>
