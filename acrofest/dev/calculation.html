@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Investment Model — AcroFest SaaS</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base:        #F5F0E8;
+      --bg-surface:     #FFFFFF;
+      --bg-elevated:    #FAF7F2;
+      --bg-overlay:     #EDE8DF;
+      --border-default: #D4CCB8;
+      --border-muted:   #E8E2D6;
+      --text-primary:   #1A1A1A;
+      --text-secondary: #5A5550;
+      --text-disabled:  #9E9890;
+      --brand-primary:  #2A5C8F;
+      --brand-accent:   #E8A020;
+      --success:        #3D7A4A;
+      --critical:       #C94040;
+      --warning:        #C47B1A;
+      --shadow-soft:    0 10px 30px rgba(26, 26, 26, 0.06);
+      --toc-width:      230px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .toc {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      width: var(--toc-width);
+      flex-shrink: 0;
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--border-default);
+      overflow-y: auto;
+      padding: 20px 0;
+    }
+
+    .toc-title {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-disabled);
+      padding: 0 14px 10px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.12s;
+    }
+
+    .toc a:hover {
+      color: var(--brand-primary);
+      background: var(--bg-overlay);
+    }
+
+    .toc a.sub {
+      padding-left: 24px;
+      font-size: 0.73rem;
+    }
+
+    .toc-divider {
+      height: 1px;
+      background: var(--border-muted);
+      margin: 8px 14px;
+    }
+
+    .main {
+      flex: 1;
+      padding: 36px 52px 80px 48px;
+      max-width: 980px;
+      overflow-y: auto;
+      height: 100vh;
+    }
+
+    .page-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 4px;
+    }
+
+    .page-meta {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 28px;
+      font-family: 'Geist Mono', monospace;
+    }
+
+    .alert {
+      border-left: 3px solid var(--brand-accent);
+      background: rgba(232,160,32,0.08);
+      padding: 12px 14px;
+      border-radius: 0 4px 4px 0;
+      margin-bottom: 22px;
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+    }
+
+    .section {
+      margin-bottom: 42px;
+      scroll-margin-top: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 14px 18px;
+      border-radius: 4px;
+      border-left: 4px solid var(--brand-primary);
+      background: rgba(42,92,143,0.06);
+    }
+
+    .section-letter {
+      font-family: 'Geist Mono', monospace;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--brand-primary);
+    }
+
+    .section-header h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .card h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-muted);
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-disabled);
+    }
+
+    .field small {
+      color: var(--text-secondary);
+      font-size: 0.74rem;
+      line-height: 1.5;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .prefix, .suffix {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Geist Mono', monospace;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+
+    .prefix { left: 12px; }
+    .suffix { right: 12px; }
+
+    input[type="number"] {
+      width: 100%;
+      height: 42px;
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      padding: 0 12px;
+      font-size: 0.92rem;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.12s, box-shadow 0.12s, background 0.12s;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .has-prefix input { padding-left: 32px; }
+    .has-suffix input { padding-right: 34px; }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 3px rgba(42,92,143,0.10);
+      background: #fff;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 6px;
+      height: 40px;
+      padding: 0 16px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.08s, opacity 0.12s, background 0.12s;
+    }
+
+    button:hover { opacity: 0.96; }
+    button:active { transform: translateY(1px); }
+
+    .primary-btn {
+      background: var(--brand-primary);
+      color: white;
+    }
+
+    .secondary-btn {
+      background: var(--bg-overlay);
+      color: var(--text-primary);
+      border: 1px solid var(--border-default);
+    }
+
+    .hero-metric {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric-lg {
+      border: 1px solid var(--border-default);
+      background: linear-gradient(180deg, rgba(42,92,143,0.08), rgba(42,92,143,0.03));
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .metric-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-disabled);
+      margin-bottom: 8px;
+    }
+
+    .metric-value {
+      font-size: 1.8rem;
+      line-height: 1.1;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+
+    .metric-sub {
+      margin-top: 6px;
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .metric-sm {
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      padding: 14px;
+      background: var(--bg-elevated);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 8px 10px;
+      font-size: 0.66rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-disabled);
+      background: var(--bg-elevated);
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    td {
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--border-muted);
+      color: var(--text-secondary);
+      vertical-align: top;
+    }
+
+    td:first-child {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .good { color: var(--success); font-weight: 700; }
+    .bad { color: var(--critical); font-weight: 700; }
+    .mono {
+      font-family: 'Geist Mono', monospace;
+    }
+
+    .footnote {
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      line-height: 1.6;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 920px) {
+      body { display: block; }
+      .toc {
+        position: relative;
+        width: 100%;
+        height: auto;
+        border-right: 0;
+        border-bottom: 1px solid var(--border-default);
+      }
+      .main {
+        height: auto;
+        max-width: 100%;
+        padding: 24px 18px 60px;
+      }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .input-grid, .metric-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <nav class="toc">
+    <div class="toc-title">Sections</div>
+    <a href="#calculator">Calculator</a>
+    <a href="#calculator" class="sub">Inputs</a>
+    <a href="#results" class="sub">Results</a>
+    <div class="toc-divider"></div>
+    <a href="#assumptions">Default assumptions</a>
+    <a href="#pricing" class="sub">Pricing package</a>
+    <a href="#fiveyear" class="sub">Five-year model</a>
+    <div class="toc-divider"></div>
+    <a href="#plans" class="sub">Plan tiers</a>
+
+  </nav>
+
+  <main class="main">
+    <h1 class="page-title">Investment, Pricing, and ROI Model</h1>
+    <div class="page-meta">Interactive business case for AcroFest SaaS</div>
+
+    <div class="alert">
+      This version fixes the broken output and uses the same visual language as the earlier files.
+    </div>
+
+    <section class="section" id="calculator">
+      <div class="section-header">
+        <div class="section-letter">A</div>
+        <h2>Interactive calculator</h2>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <h3>Inputs</h3>
+          <div class="input-grid">
+            <div class="field">
+              <label for="hourlyRate">Blended hourly rate</label>
+              <div class="input-wrap has-prefix">
+                <span class="prefix">€</span>
+                <input id="hourlyRate" type="number" value="60" min="0" step="1">
+              </div>
+              <small>Your own time translated into cost.</small>
+            </div>
+
+            <div class="field">
+              <label for="devHours">Build hours</label>
+              <div class="input-wrap has-suffix">
+                <input id="devHours" type="number" value="1800" min="0" step="10">
+                <span class="suffix">h</span>
+              </div>
+              <small>Lean but serious v1.</small>
+            </div>
+
+            <div class="field">
+              <label for="monthlyInfra">Monthly infra</label>
+              <div class="input-wrap has-prefix">
+                <span class="prefix">€</span>
+                <input id="monthlyInfra" type="number" value="400" min="0" step="10">
+              </div>
+              <small>Hosting, email, storage, monitoring.</small>
+            </div>
+
+            <div class="field">
+              <label for="otherStartup">Other startup costs</label>
+              <div class="input-wrap has-prefix">
+                <span class="prefix">€</span>
+                <input id="otherStartup" type="number" value="12000" min="0" step="100">
+              </div>
+              <small>Legal, branding, company setup, payment fees, test devices.</small>
+            </div>
+
+            <div class="field">
+              <label for="subscriptionPerOrg">Annual subscription per organizer</label>
+              <div class="input-wrap has-prefix">
+                <span class="prefix">€</span>
+                <input id="subscriptionPerOrg" type="number" value="1200" min="0" step="50">
+              </div>
+              <small>Base package for using the platform.</small>
+            </div>
+
+            <div class="field">
+              <label for="feePct">Platform fee on GMV</label>
+              <div class="input-wrap has-suffix">
+                <input id="feePct" type="number" value="3.5" min="0" step="0.1">
+                <span class="suffix">%</span>
+              </div>
+              <small>Extra take rate on ticket sales.</small>
+            </div>
+
+            <div class="field">
+              <label for="organizersYear1">Organizers in year 1</label>
+              <div class="input-wrap">
+                <input id="organizersYear1" type="number" value="8" min="0" step="1">
+              </div>
+              <small>Paying organizer accounts in the first year.</small>
+            </div>
+
+            <div class="field">
+              <label for="growthPct">Annual organizer growth</label>
+              <div class="input-wrap has-suffix">
+                <input id="growthPct" type="number" value="70" min="0" step="1">
+                <span class="suffix">%</span>
+              </div>
+              <small>High but still plausible in a niche if traction lands.</small>
+            </div>
+
+            <div class="field">
+              <label for="eventsPerOrganizer">Events per organizer per year</label>
+              <div class="input-wrap">
+                <input id="eventsPerOrganizer" type="number" value="1.4" min="0" step="0.1">
+              </div>
+              <small>Retreat plus festival or repeat editions.</small>
+            </div>
+
+            <div class="field">
+              <label for="avgGmvPerEvent">Average ticket turnover per event</label>
+              <div class="input-wrap has-prefix">
+                <span class="prefix">€</span>
+                <input id="avgGmvPerEvent" type="number" value="18000" min="0" step="500">
+              </div>
+              <small>Total event sales processed through the platform.</small>
+            </div>
+
+            <div class="field full">
+              <label for="years">Projection horizon</label>
+              <div class="input-wrap has-suffix">
+                <input id="years" type="number" value="5" min="1" max="10" step="1">
+                <span class="suffix">yrs</span>
+              </div>
+              <small>Set the business case window.</small>
+            </div>
+          </div>
+
+          <div class="button-row">
+            <button class="primary-btn" id="calcBtn" type="button">Calculate</button>
+            <button class="secondary-btn" id="resetBtn" type="button">Reset defaults</button>
+          </div>
+        </div>
+
+        <div class="card" id="results">
+          <h3>Headline results</h3>
+
+          <div class="hero-metric">
+            <div class="metric-lg">
+              <div class="metric-label">Total investment</div>
+              <div class="metric-value" id="totalInvestment">€ 0</div>
+              <div class="metric-sub" id="investmentSub">Development, infrastructure, and startup costs combined.</div>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric-sm">
+              <div class="metric-label">5-year revenue</div>
+              <div class="metric-value" id="totalRevenue">€ 0</div>
+            </div>
+            <div class="metric-sm">
+              <div class="metric-label">ROI (total)</div>
+              <div class="metric-value" id="roiPct">0%</div>
+            </div>
+            <div class="metric-sm">
+              <div class="metric-label">Break-even year</div>
+              <div class="metric-value" id="breakEven">Not yet</div>
+            </div>
+            <div class="metric-sm">
+              <div class="metric-label">Year 5 organizers</div>
+              <div class="metric-value" id="year5Organizers">0</div>
+            </div>
+          </div>
+
+          <p class="footnote" id="resultNote">
+            Change the inputs and click calculate. The model updates the summary and yearly table below.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="fiveyear">
+      <div class="section-header">
+        <div class="section-letter">B</div>
+        <h2>Five-year revenue model</h2>
+      </div>
+
+      <div class="card">
+        <h3>Year-by-year projection</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Organizers</th>
+                <th>Events</th>
+                <th>Subscription revenue</th>
+                <th>GMV</th>
+                <th>Fee revenue</th>
+                <th>Total revenue</th>
+                <th>Cumulative profit</th>
+              </tr>
+            </thead>
+            <tbody id="yearlyTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="assumptions">
+      <div class="section-header">
+        <div class="section-letter">C</div>
+        <h2>Default assumptions and package</h2>
+      </div>
+
+      <div class="grid">
+        <div class="card" id="pricing">
+          <h3>Recommended package</h3>
+          <div class="table-wrap">
+            <table>
+              <tbody>
+                <tr><td>Base annual organizer fee</td><td class="mono">€ 1,200</td></tr>
+                <tr><td>Platform fee on sales</td><td class="mono">3.5%</td></tr>
+                <tr><td>Why it works</td><td>Low entry barrier, recurring revenue, upside when organizer turnover grows.</td></tr>
+                <tr><td>Best fit</td><td>Mid-sized niche organizers who run one or two serious events per year.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Interpretation</h3>
+          <p style="line-height:1.7;color:#5A5550;font-size:0.875rem;margin-bottom:10px;">
+            This is not just a coding budget. It translates your own time into money, adds real out-of-pocket spend,
+            then compares that against a pricing model that organizers may realistically accept.
+          </p>
+          <p style="line-height:1.7;color:#5A5550;font-size:0.875rem;">
+            The biggest uncertainty is not development. It is organizer acquisition, retention, and average event sales volume.
+          </p>
+        </div>
+
+       
+      </div>
+    </section>
+
+     <section class="section" id="plans">
+      <div class="section-header">
+        <div class="section-letter">D</div>
+        <h2>Plan tiers</h2>
+      </div>
+
+           
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Feature</th><th>Free</th><th>Starter</th><th>Pro</th><th>Enterprise</th></tr></thead>
+            <tbody>
+              <tr><td>Events</td><td>1</td><td>3</td><td>Unlimited</td><td>Unlimited</td></tr>
+              <tr><td>Participants / event</td><td>50</td><td>300</td><td>2,000</td><td>Unlimited</td></tr>
+              <tr><td>Financial module</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td></tr>
+              <tr><td>Marketing module</td><td>✗</td><td>✗</td><td>✓</td><td>✓</td></tr>
+              <tr><td>Custom domain</td><td>✗</td><td>✗</td><td>✓</td><td>✓</td></tr>
+              <tr><td>White-label</td><td>✗</td><td>✗</td><td>✗</td><td>✓</td></tr>
+              <tr><td>DPA document</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td></tr>
+              <tr><td>PDF exports</td><td>✗</td><td>✓</td><td>✓</td><td>✓</td></tr>
+              <tr><td>Social asset generator</td><td>✗</td><td>✗</td><td>✓</td><td>✓</td></tr>
+            </tbody>
+          </table>
+        </div>
+         </section>
+
+  </main>
+
+  <script>
+    const defaults = {
+      hourlyRate: 60,
+      devHours: 1800,
+      monthlyInfra: 400,
+      otherStartup: 12000,
+      subscriptionPerOrg: 1200,
+      feePct: 3.5,
+      organizersYear1: 8,
+      growthPct: 70,
+      eventsPerOrganizer: 1.4,
+      avgGmvPerEvent: 18000,
+      years: 5
+    };
+
+    function getNum(id) {
+      const el = document.getElementById(id);
+      const value = parseFloat(el.value);
+      return Number.isFinite(value) ? value : 0;
+    }
+
+    function fmtCurrency(value) {
+      return new Intl.NumberFormat('en-IE', {
+        style: 'currency',
+        currency: 'EUR',
+        maximumFractionDigits: 0
+      }).format(value);
+    }
+
+    function fmtNumber(value, digits = 0) {
+      return new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits
+      }).format(value);
+    }
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value;
+    }
+
+    function calculate() {
+      const hourlyRate = getNum('hourlyRate');
+      const devHours = getNum('devHours');
+      const monthlyInfra = getNum('monthlyInfra');
+      const otherStartup = getNum('otherStartup');
+      const subscriptionPerOrg = getNum('subscriptionPerOrg');
+      const feePct = getNum('feePct') / 100;
+      const organizersYear1 = getNum('organizersYear1');
+      const growthPct = getNum('growthPct') / 100;
+      const eventsPerOrganizer = getNum('eventsPerOrganizer');
+      const avgGmvPerEvent = getNum('avgGmvPerEvent');
+      const years = Math.max(1, Math.round(getNum('years')));
+
+      const devCost = hourlyRate * devHours;
+      const infraCost = monthlyInfra * 12 * years;
+      const totalInvestment = devCost + infraCost + otherStartup;
+
+      let organizers = organizersYear1;
+      let totalRevenue = 0;
+      let cumulativeProfit = -totalInvestment;
+      let breakEvenYear = null;
+      let year5Organizers = organizersYear1;
+
+      const tbody = document.getElementById('yearlyTableBody');
+      tbody.innerHTML = '';
+
+      for (let year = 1; year <= years; year++) {
+        const events = organizers * eventsPerOrganizer;
+        const subscriptionRevenue = organizers * subscriptionPerOrg;
+        const gmv = events * avgGmvPerEvent;
+        const feeRevenue = gmv * feePct;
+        const yearRevenue = subscriptionRevenue + feeRevenue;
+        totalRevenue += yearRevenue;
+        cumulativeProfit += yearRevenue;
+
+        if (breakEvenYear === null && cumulativeProfit >= 0) {
+          breakEvenYear = year;
+        }
+
+        if (year === Math.min(5, years)) {
+          year5Organizers = organizers;
+        }
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${year}</td>
+          <td>${fmtNumber(organizers, 1)}</td>
+          <td>${fmtNumber(events, 1)}</td>
+          <td>${fmtCurrency(subscriptionRevenue)}</td>
+          <td>${fmtCurrency(gmv)}</td>
+          <td>${fmtCurrency(feeRevenue)}</td>
+          <td>${fmtCurrency(yearRevenue)}</td>
+          <td class="${cumulativeProfit >= 0 ? 'good' : 'bad'}">${fmtCurrency(cumulativeProfit)}</td>
+        `;
+        tbody.appendChild(tr);
+
+        organizers = organizers * (1 + growthPct);
+      }
+
+      const roi = totalInvestment === 0 ? 0 : ((totalRevenue - totalInvestment) / totalInvestment) * 100;
+
+      setText('totalInvestment', fmtCurrency(totalInvestment));
+      setText('totalRevenue', fmtCurrency(totalRevenue));
+      setText('roiPct', `${fmtNumber(roi, 0)}%`);
+      setText('breakEven', breakEvenYear ? `Year ${breakEvenYear}` : 'Not yet');
+      setText('year5Organizers', fmtNumber(year5Organizers, 1));
+
+      setText(
+        'investmentSub',
+        `${fmtCurrency(devCost)} development + ${fmtCurrency(infraCost)} infrastructure + ${fmtCurrency(otherStartup)} startup costs.`
+      );
+
+      setText(
+        'resultNote',
+        `This scenario assumes ${fmtNumber(organizersYear1, 1)} organizers in year 1, ${fmtNumber(growthPct * 100, 0)}% annual growth, ${fmtNumber(eventsPerOrganizer, 1)} events per organizer, and ${fmtCurrency(avgGmvPerEvent)} average GMV per event.`
+      );
+    }
+
+    function resetDefaults() {
+      Object.entries(defaults).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value;
+      });
+      calculate();
+    }
+
+    document.getElementById('calcBtn').addEventListener('click', calculate);
+    document.getElementById('resetBtn').addEventListener('click', resetDefaults);
+
+    document.querySelectorAll('input[type="number"]').forEach((input) => {
+      input.addEventListener('input', calculate);
+      input.addEventListener('change', calculate);
+    });
+
+    window.addEventListener('DOMContentLoaded', calculate);
+  </script>
+</body>
+</html>
