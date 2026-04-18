@@ -189,11 +189,39 @@
       background: var(--success);
       flex-shrink: 0;
     }
+
+    #hamburger{
+  display:none;
+  background:none;
+  border:none;
+  font-size:20px;
+  color:white;
+  cursor:pointer;
+}
+
+@media (max-width: 800px){
+  #hamburger{display:block;}
+
+  nav{
+    position:fixed;
+    top:52px;
+    left:0;
+    height:calc(100vh - 52px);
+    transform:translateX(-100%);
+    transition:transform .25s ease;
+    z-index:1000;
+  }
+
+  nav.open{
+    transform:translateX(0);
+  }
+}
   </style>
 </head>
 <body>
 
   <header>
+    <button id="hamburger" onclick="toggleMenu()">☰</button>
     <div class="header-logo">Acro<span>Fest</span> SaaS</div>
     <div class="header-tagline">Documentation Hub</div>
     <div class="header-badge">v3.0 — Master Build</div>
@@ -280,6 +308,26 @@
         frame.onload = null;
       }
     }
+
+    function toggleMenu(){
+  document.querySelector('nav').classList.toggle('open');
+}
+
+// CLOSE after click
+function loadPage(el){
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+
+  document.getElementById('main-frame').src = el.dataset.src;
+
+  // 👇 CLOSE MENU ON MOBILE
+  document.querySelector('nav').classList.remove('open');
+}
+
+// CLOSE when clicking content
+document.querySelector('.content-area').addEventListener('click', () => {
+  document.querySelector('nav').classList.remove('open');
+});
   </script>
 
 </body>
