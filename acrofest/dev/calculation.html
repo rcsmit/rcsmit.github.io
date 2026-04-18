@@ -512,12 +512,29 @@
             </div>
 
             <div class="field">
-              <label for="avgGmvPerEvent">Average ticket turnover per event</label>
+              <label for="avgParticipants">Average participants per event</label>
+              <div class="input-wrap">
+                <input id="avgParticipants" type="number" value="80" min="0" step="5">
+              </div>
+              <small>Typical retreat: 40–120, festival: 100–400.</small>
+            </div>
+
+            <div class="field">
+              <label for="avgTicketPrice">Average ticket price</label>
               <div class="input-wrap has-prefix">
                 <span class="prefix">€</span>
-                <input id="avgGmvPerEvent" type="number" value="18000" min="0" step="500">
+                <input id="avgTicketPrice" type="number" value="225" min="0" step="10">
               </div>
-              <small>Total event sales processed through the platform.</small>
+              <small>Weighted average across ticket tiers.</small>
+            </div>
+
+            <div class="field">
+              <label for="vatPct">VAT on ticket sales</label>
+              <div class="input-wrap has-suffix">
+                <input id="vatPct" type="number" value="21" min="0" step="1">
+                <span class="suffix">%</span>
+              </div>
+              <small>Used to calculate platform fee on revenue excl. VAT.</small>
             </div>
 
             <div class="field full">
@@ -564,6 +581,14 @@
               <div class="metric-label">Year 5 organizers</div>
               <div class="metric-value" id="year5Organizers">0</div>
             </div>
+            <div class="metric-sm">
+              <div class="metric-label">Derived GMV / event</div>
+              <div class="metric-value" id="derivedGmv">€ 0</div>
+            </div>
+            <div class="metric-sm">
+              <div class="metric-label">Fee base / event excl. VAT</div>
+              <div class="metric-value" id="feeBaseExVat">€ 0</div>
+            </div>
           </div>
 
           <p class="footnote" id="resultNote">
@@ -589,8 +614,8 @@
                 <th>Organizers</th>
                 <th>Events</th>
                 <th>Subscription revenue</th>
-                <th>GMV</th>
-                <th>Fee revenue</th>
+                <th>GMV incl. VAT</th>
+                <th>Fee revenue excl. VAT base</th>
                 <th>Total revenue</th>
                 <th>Cumulative profit</th>
               </tr>
@@ -675,7 +700,9 @@
       organizersYear1: 8,
       growthPct: 70,
       eventsPerOrganizer: 1.4,
-      avgGmvPerEvent: 18000,
+      avgParticipants: 80,
+      avgTicketPrice: 225,
+      vatPct: 21,
       years: 5
     };
 
@@ -714,7 +741,11 @@
       const organizersYear1 = getNum('organizersYear1');
       const growthPct = getNum('growthPct') / 100;
       const eventsPerOrganizer = getNum('eventsPerOrganizer');
-      const avgGmvPerEvent = getNum('avgGmvPerEvent');
+      const avgParticipants = getNum('avgParticipants');
+      const avgTicketPrice = getNum('avgTicketPrice');
+      const vatPct = getNum('vatPct') / 100;
+      const avgGmvPerEvent = avgParticipants * avgTicketPrice;
+      const avgGmvPerEventExVat = vatPct >= 0 ? avgGmvPerEvent / (1 + vatPct) : avgGmvPerEvent;
       const years = Math.max(1, Math.round(getNum('years')));
 
       const devCost = hourlyRate * devHours;
@@ -734,7 +765,8 @@
         const events = organizers * eventsPerOrganizer;
         const subscriptionRevenue = organizers * subscriptionPerOrg;
         const gmv = events * avgGmvPerEvent;
-        const feeRevenue = gmv * feePct;
+        const feeBaseExVat = events * avgGmvPerEventExVat;
+        const feeRevenue = feeBaseExVat * feePct;
         const yearRevenue = subscriptionRevenue + feeRevenue;
         totalRevenue += yearRevenue;
         cumulativeProfit += yearRevenue;
@@ -770,6 +802,8 @@
       setText('roiPct', `${fmtNumber(roi, 0)}%`);
       setText('breakEven', breakEvenYear ? `Year ${breakEvenYear}` : 'Not yet');
       setText('year5Organizers', fmtNumber(year5Organizers, 1));
+      setText('derivedGmv', fmtCurrency(avgGmvPerEvent));
+      setText('feeBaseExVat', fmtCurrency(avgGmvPerEventExVat));
 
       setText(
         'investmentSub',
@@ -778,7 +812,7 @@
 
       setText(
         'resultNote',
-        `This scenario assumes ${fmtNumber(organizersYear1, 1)} organizers in year 1, ${fmtNumber(growthPct * 100, 0)}% annual growth, ${fmtNumber(eventsPerOrganizer, 1)} events per organizer, and ${fmtCurrency(avgGmvPerEvent)} average GMV per event.`
+        `This scenario assumes ${fmtNumber(organizersYear1, 1)} organizers in year 1, ${fmtNumber(growthPct * 100, 0)}% annual growth, ${fmtNumber(eventsPerOrganizer, 1)} events per organizer, ${fmtNumber(avgParticipants, 0)} participants per event, ${fmtCurrency(avgTicketPrice)} average ticket price, and ${fmtNumber(vatPct * 100, 0)}% VAT. Platform fee revenue is calculated on revenue excl. VAT.`
       );
     }
 
