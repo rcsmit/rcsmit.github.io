@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Master Build Prompt — AcroFest SaaS</title>
+  <title>Master Build Prompt — FestFlow SaaS</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -323,7 +323,7 @@
   <main class="main" id="main-scroll">
 
     <h1 class="page-title">Master Build Prompt</h1>
-    <div class="page-meta">AcroFest SaaS v3 · Four layers: read all before generating anything</div>
+    <div class="page-meta">FestFlow SaaS v3 · Four layers: read all before generating anything</div>
 
     <section class="layer" id="original">
       <div class="layer-header">
@@ -433,7 +433,7 @@ enum Role { ORGANIZER STAFF TEACHER PARTICIPANT }</pre>
       <div class="subsection" id="tenancy">
         <h3>SaaS Tenancy <span class="anchor-id">#tenancy</span></h3>
         <ul>
-          <li><strong>Default URL:</strong> <code>&#123;slug&#125;.acrofest.app</code></li>
+          <li><strong>Default URL:</strong> <code>&#123;slug&#125;.FestFlow.app</code></li>
           <li><strong>Custom domain (Pro+):</strong> tenant sets CNAME, platform issues cert via Caddy + Let's Encrypt. Domain verification: tenant adds a TXT record. Apex and subdomain both supported.</li>
           <li><strong>Public website rendering:</strong> tenant-aware runtime rendering with aggressive caching — not per-tenant SSG builds. Cache invalidated on organizer publish action. Pre-render only homepage and <code>/programme</code> as hot paths.</li>
           <li><strong>Database:</strong> one PostgreSQL database, all records scoped by <code>tenantId</code>. Upgrade path to per-tenant schemas is a data migration, not a redesign.</li>
@@ -582,7 +582,7 @@ Prod:        Railway or Kubernetes (manifests provided)</pre>
           <li><strong>API contract tests:</strong> Every route asserts response shape matches Zod output schema.</li>
           <li><strong>Permission matrix tests:</strong> Generated from the matrix table for every (role, resource, action) triple.</li>
           <li><strong>E2E (Playwright):</strong> Prospect registers, participant manages schedule, organizer creates event, SiteOwner suspends tenant.</li>
-          <li><strong>Seed:</strong> One tenant (AcroFest Test Org), one event (Spring Retreat 2026, 3 days, 2 venues, 4 sessions), alice@test.com (teacher), bob@test.com (paid participant), carol@test.com (organizer).</li>
+          <li><strong>Seed:</strong> One tenant (FestFlow Test Org), one event (Spring Retreat 2026, 3 days, 2 venues, 4 sessions), alice@test.com (teacher), bob@test.com (paid participant), carol@test.com (organizer).</li>
         </ul>
       </div>
 
@@ -750,7 +750,7 @@ Prod:        Railway or Kubernetes (manifests provided)</pre>
             <tbody>
               <tr><td>Ticket purchase (capacity)</td><td>SELECT FOR UPDATE on TicketTier within transaction. Reservation record as soft hold.</td></tr>
               <tr><td>Session enrollment (capacity)</td><td>SELECT FOR UPDATE on Session.</td></tr>
-              <tr><td>Waitlist promotion</td><td>Distributed lock via Redis (SETNX acrofest:waitlist:&#123;sessionId&#125;:lock)</td></tr>
+              <tr><td>Waitlist promotion</td><td>Distributed lock via Redis (SETNX FestFlow:waitlist:&#123;sessionId&#125;:lock)</td></tr>
               <tr><td>Accommodation assignment</td><td>SELECT FOR UPDATE on AccommodationUnit.</td></tr>
               <tr><td>Installment charging</td><td>Idempotency key per installment attempt. Job deduplication via BullMQ jobId = installmentId.</td></tr>
               <tr><td>Invoice number generation</td><td>DB sequence per tenant per year (InvoiceSequence table with row lock).</td></tr>
