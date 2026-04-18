@@ -308,10 +308,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
   .sidebar{
     position:fixed;top:44px;left:var(--nav-w);bottom:0;z-index:260;
     width:var(--sb-w);max-width:calc(100vw - var(--nav-w) - 12px);
-    box-shadow:var(--shadow-lg);transform:translateX(-108%);
-    transition:transform .18s ease;
+    box-shadow:var(--shadow-lg);transform:translateX(calc(-100% - 24px));
+    visibility:hidden;pointer-events:none;
+    transition:transform .18s ease, visibility 0s linear .18s;
   }
-  body.sidebar-open .sidebar{transform:translateX(0);}
+  body.sidebar-open .sidebar{transform:translateX(0);visibility:visible;pointer-events:auto;transition:transform .18s ease;}
   .mobile-sidebar-close{
     display:inline-flex;align-items:center;justify-content:center;
     width:28px;height:28px;border:1px solid var(--border);border-radius:8px;
