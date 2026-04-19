@@ -1372,14 +1372,23 @@ svg.addEventListener("click", (e) => {
 const searchStyles = `
   .search-container {
     position: absolute;
-    top: 60px;
+    bottom: 70px;
     right: 10px;
     z-index: 1000;
     background: white;
     padding: 10px;
-    border-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    // border-radius: 5px;
+    // box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     font-family:Arial, sans-serif;
+
+      border: 1px solid rgba(26,39,68,0.18);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.96);
+    // color: var(--navy);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.14);
   }
   
   .search-input {

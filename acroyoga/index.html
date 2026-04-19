@@ -1,81 +1,267 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Acroyoga Flowchart</title>
-  <style>
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 10;
-      padding: 10;
-      overflow: hidden;
-      height: 100vh;
-      width: 100vw;
-      font-family: Arial, sans-serif;
-    }
-
-    #chart {
-      width: 100vw;
-      height: 100vh;
-      background: #fff;
-    }
-
-
-
-   #controls {
-  position: absolute;
-  top: 10px;
-  right: 10px; /* instead of left */
-  z-index: 10;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acroyoga Flowchart</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #1a2744;
+  --gold: #d4943a;
+  --cream: #f5f0e8;
+  --text: #1c1c1c;
+  --muted: rgba(255,255,255,0.78);
 }
 
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-    #controls button {
-      font-size: 18px;
-      margin-right: 5px;
-      padding: 5px 10px;
-    }
+html, body {
+  width: 100%;
+  height: 100%;
+}
 
-    .tooltip {
-      position: absolute;
-      background: #333;
-      color: white;
-      padding: 5px 10px;
-      border-radius: 4px;
-      font-size: 12px;
-      pointer-events: none;
-      visibility: hidden;
-      z-index: 10;
-    }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  overflow: hidden;
+}
 
-    #popup {
-      position: absolute;
-      background: #fff;
-      border: 1px solid #aaa;
-      padding: 10px;
-      box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
-      z-index: 20;
-      display: none;
-    }
-  </style>
+#chart {
+  /* left:10px;
+  top:5px; */
+  width: 100vw;
+  height: 100vh;
+  display: block;
+  background: #fff;
+}
+
+.brandbar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: min(220px, calc(100vw - 24px));
+  padding: 18px 18px 16px;
+  background: rgba(26, 39, 68, 0.96);
+  color: #fff;
+  border-radius: 16px;
+  z-index: 100;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+  backdrop-filter: blur(10px);
+}
+
+.brandbar.collapsed {
+  width: auto;
+  min-width: 56px;
+  padding: 14px;
+}
+
+.brand-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.brand-meta {
+  min-width: 0;
+}
+
+.brand-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+.brand-eyebrow {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.brand-collapse {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-collapse:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.brand-content {
+  margin-top: 14px;
+}
+
+.brand-content h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.45rem, 2vw, 1.8rem);
+  line-height: 1.08;
+  margin-bottom: 10px;
+}
+
+.intro-copy {
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 0.95rem;
+  max-width: 36ch;
+}
+
+.intro-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btn-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.86rem;
+  font-weight: 700;
+  transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease;
+}
+
+.btn-link.primary {
+  background: var(--gold);
+  color: #1a1a1a;
+}
+
+.btn-link.secondary {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.btn-link:hover,
+#controls button:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.98);
+}
+
+.brandbar.collapsed .brand-meta,
+.brandbar.collapsed .brand-content {
+  display: none;
+}
+
+#controls {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 90;
+  display: flex;
+  gap: 8px;
+}
+
+#controls button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid rgba(26,39,68,0.18);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.96);
+  color: var(--navy);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.14);
+}
+
+@media (max-width: 640px) {
+  .brandbar {
+    width: min(360px, calc(100vw - 20px));
+    top: 10px;
+    right: 10px;
+    padding: 16px;
+  }
+
+  .brand-content h1 {
+    font-size: 1.3rem;
+  }
+
+  .intro-copy {
+    font-size: 0.9rem;
+  }
+
+  #controls {
+    right: 10px;
+    bottom: 10px;
+  }
+}
+</style>
 </head>
 <body>
-  <div id="intro"><h1>Acroyoga L-basing beginners/intermediates</h1>
-    <p>Click on the names to get a video. The videos are taken from the Youtube Search (1st result) in an automated process.<br>Please let me know if there is a better video for a<br>certain pose/transition/washing machine</p>
-    <b>Latest version / PDF / high quality file</b><br><a href="https://rene-smit.com/acroyoga-flowchart/" target="_blank">https://rene-smit.com/acroyoga-flowchart/</a></b></div>
-   <div id="controls" style="right: 10px; left: auto;">
-    <button id="zoom-in">+</button>
-    <button id="zoom-out">-</button>
-    <button id="home">home</button>
+
+<div class="brandbar" id="brandbar">
+  <div class="brand-top">
+    <div class="brand-meta">
+      <div class="brand-title">FestFlow</div>
+      <div class="brand-eyebrow">Interactive map</div>
+    </div>
+    <button id="collapseBtn" class="brand-collapse" aria-label="Collapse brand card" title="Collapse">−</button>
   </div>
-  <svg id="chart" viewBox="0 0 1200 800">
-    <g id="viewGroup"></g>
-  </svg>
-  <div id="tooltip" class="tooltip"></div>
-  <div id="popup"></div>
 
-  <script src="flowchart.js"></script>
+  <div class="brand-content">
+    <h1>Acroyoga L-basing<br>flowchart</h1>
+    <p class="intro-copy">Explore poses, transitions, and washing machines in one clean visual map. Click a label to open the related video and move through the chart with the controls.</p>
+    <div class="intro-actions">
+      <a class="btn-link primary" href="https://rene-smit.com/acroyoga-flowchart/" target="_blank" rel="noopener noreferrer">Open latest version</a>
+      <a class="btn-link secondary" href="table.html">Open table view</a>
+    </div>
+  </div>
+</div>
 
-  
+<div id="controls">
+  <button id="zoom-in" aria-label="Zoom in">+</button>
+  <button id="zoom-out" aria-label="Zoom out">−</button>
+  <button id="home" aria-label="Go home">home</button>
+</div>
+<div id="chart_">
+<svg id="chart" viewBox="0 0 1200 800">
+  <g id="viewGroup"></g>
+</svg>
+</div>
+<script>
+const btn = document.getElementById('collapseBtn');
+const bar = document.getElementById('brandbar');
+
+function syncBrandState() {
+  const collapsed = bar.classList.contains('collapsed');
+  btn.textContent = collapsed ? '+' : '−';
+  btn.setAttribute('aria-label', collapsed ? 'Expand brand card' : 'Collapse brand card');
+  btn.setAttribute('title', collapsed ? 'Expand' : 'Collapse');
+}
+
+btn.addEventListener('click', () => {
+  bar.classList.toggle('collapsed');
+  localStorage.setItem('brandCollapsed', String(bar.classList.contains('collapsed')));
+  syncBrandState();
+});
+
+if (localStorage.getItem('brandCollapsed') === 'true') {
+  bar.classList.add('collapsed');
+}
+
+syncBrandState();
+</script>
+<script src="flowchart.js"></script>
+
 </body>
 </html>
