@@ -1,38 +1,213 @@
-<html>
-    <head>
-      <title>Conscious communities and ecovillages around the world</title>
-      <link rel="preconnect" href="https://fonts.googleapis.com">
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-      <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital@1&display=swap" rel="stylesheet">
-      <style>body, h1,p, li  {
-                  font-family: 'Open Sans', sans-serif;
-                }
-                iframe.example {  width: 100%;  height: 100%;border:0px }
-                .container {
-                
-                width: 100%;
-                 /*position: relative;
-                overflow: hidden;  padding-top: 56.25%; 16:9 Aspect Ratio (divide 9 by 16 = 0.5625) */
-              }
-      </style>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-    <h1>Conscious Communities - credits</h1>
-    <p>With contributions of
-    <ul>
-      <li>People who replied on numerous discussions in forums and facebookgroups, for example: (membership needed)</li>
-        <ul>
-          <li><a href="https://www.facebook.com/groups/KohPhanganCC/permalink/5430226180393792/" target="_blank">https://www.facebook.com/groups/KohPhanganCC/permalink/5430226180393792/</a></li>
-          <li><a href="https://www.facebook.com/groups/KohPhanganCC/permalink/4541454629270956/" target="_blank">https://www.facebook.com/groups/KohPhanganCC/permalink/4541454629270956</a></li>
-          <li><a href="https://www.facebook.com/groups/KohPhanganCC/permalink/1600295400053575/" target="_blank">https://www.facebook.com/groups/KohPhanganCC/permalink/1600295400053575/</a></li>
-          <li><a href="https://www.facebook.com/groups/KohPhanganCC/posts/5737144509701956/" target="_blank">https://www.facebook.com/groups/KohPhanganCC/posts/5737144509701956/</a></li>
-          <li><a href="https://www.facebook.com/groups/348616157134904" target="_blank">https://www.facebook.com/groups/348616157134904</a></li>
-        </ul>
-      <li><a href="https://asliinwonderland.com/2021/07/02/conscious-communities-across-the-globe/" target="_blank">Asli In Wonderland</a></li>
-      <li><a href="https://goo.gl/maps/sxXi5DZjhh2WTJJb6" target="_blank">Hippie spirit places around the world</a> by <a href="https://www.instagram.com/peggy.anke" target="_blank">Peggy Anke</a></li>
-    </ul>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Credits — Conscious Communities World Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --brand:        #2A7A5A;
+  --brand-dark:   #1A5040;
+  --brand-subtle: #E6F4ED;
+  --bg:           #F3F7F5;
+  --surface:      #FAFCFB;
+  --surface-2:    #EDF3EF;
+  --border:       #D5E5DC;
+  --border-str:   #AECFBB;
+  --text:         #0C1F17;
+  --text-2:       #344D3E;
+  --text-muted:   #7A9E8C;
+  --sh-sm: 0 1px 3px rgba(20,80,50,.08), 0 0 0 1px rgba(20,80,50,.04);
+  --sh-lg: 0 12px 40px rgba(20,80,50,.14), 0 2px 8px rgba(20,80,50,.06);
+  --ff-d: 'DM Serif Display', Georgia, serif;
+  --ff-b: 'DM Sans', system-ui, sans-serif;
+  --r: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    <a href="https://rcsmit.github.io/conscious_communities/index.html">BACK</a>
+body {
+  font-family: var(--ff-b);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* HEADER */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--sh-sm);
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 14px;
+  height: 54px; flex-shrink: 0;
+}
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.logo-icon { width: 30px; height: 30px; background: var(--brand); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+.logo-text { font-family: var(--ff-d); font-size: 1.05rem; color: var(--text); }
+.hd { width: 1px; height: 24px; background: var(--border); }
+.page-title { font-size: .82rem; color: var(--text-muted); font-weight: 500; }
+.sp { flex: 1; }
+.back-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--ff-b); font-size: .78rem; font-weight: 500;
+  color: var(--brand); text-decoration: none;
+  padding: 5px 12px; border-radius: 7px;
+  border: 1px solid var(--border-str);
+  background: var(--brand-subtle);
+  transition: all .15s;
+}
+.back-btn:hover { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+/* PAGE CONTENT */
+.page {
+  flex: 1;
+  padding: 40px 24px 60px;
+  display: flex; justify-content: center;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--sh-lg);
+  padding: 32px 36px;
+  width: 100%; max-width: 580px;
+}
+
+/* AUTHOR */
+.author-block {
+  display: flex; align-items: flex-start; gap: 16px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 18px; margin-bottom: 28px;
+}
+.author-avatar {
+  width: 46px; height: 46px; background: var(--brand);
+  border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; font-size: 22px; flex-shrink: 0;
+}
+.author-name { font-family: var(--ff-d); font-size: 1.05rem; color: var(--text); margin-bottom: 3px; }
+.author-links { font-size: .78rem; color: var(--text-muted); line-height: 1.8; }
+.author-links a { color: var(--brand); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .15s; }
+.author-links a:hover { border-color: var(--brand); }
+
+/* SECTIONS */
+.section { margin-bottom: 28px; }
+.section:last-child { margin-bottom: 0; }
+
+h1 { font-family: var(--ff-d); font-size: 1.7rem; color: var(--text); margin-bottom: 24px; }
+h2 { font-family: var(--ff-d); font-size: 1.05rem; color: var(--text); margin-bottom: 10px; padding-bottom: 7px; border-bottom: 1px solid var(--border); }
+
+p { font-size: .85rem; color: var(--text-2); line-height: 1.7; margin-bottom: 10px; }
+p:last-child { margin-bottom: 0; }
+
+ul { padding-left: 0; list-style: none; }
+ul li {
+  font-size: .83rem; color: var(--text-2); line-height: 1.6;
+  padding: 6px 0 6px 18px; border-bottom: 1px solid var(--surface-2);
+  position: relative;
+}
+ul li:last-child { border-bottom: none; }
+ul li::before { content: '→'; position: absolute; left: 0; color: var(--brand-str, var(--border-str)); font-size: .75rem; top: 8px; }
+ul li a { color: var(--brand); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color .15s; }
+ul li a:hover { border-color: var(--brand); }
+
+/* CC BADGE */
+.cc-badge {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 6px 11px;
+  font-size: .76rem; color: var(--text-muted);
+  margin-top: 8px; line-height: 1.4;
+}
+.cc-badge .cc-icon { font-size: 16px; }
+.cc-badge strong { color: var(--text-2); font-weight: 600; }
+
+/* NOTE */
+.note { font-size: .76rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="communities-map.html">
+    <div class="logo-icon">🌍</div>
+    <span class="logo-text">Conscious Communities</span>
+  </a>
+  <div class="hd"></div>
+  <span class="page-title">Credits</span>
+  <div class="sp"></div>
+  <a class="back-btn" href="communities-map.html">← Back to map</a>
+</header>
+
+<div class="page">
+  <div class="card">
+
+    <h1>Credits &amp; Acknowledgements</h1>
+
+    <!-- AUTHOR -->
+    <div class="section">
+      <h2>Made by</h2>
+      <div class="author-block">
+        <div class="author-avatar">👤</div>
+        <div>
+          <div class="author-name">René Smit</div>
+          <div class="author-links">
+            <a href="https://rene-smit.com" target="_blank">rene-smit.com</a><br>
+            <a href="https://rcsmit.github.io" target="_blank">rcsmit.github.io</a><br>
+            <a href="https://rcsmit.streamlit.app" target="_blank">rcsmit.streamlit.app</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DATA CONTRIBUTIONS -->
+    <div class="section">
+      <h2>Data contributions</h2>
+      <p>With thanks to everyone who shared suggestions in forums and Facebook groups, including:</p>
+      <ul>
+        <li><a href="https://www.facebook.com/groups/KohPhanganCC/permalink/5430226180393792/" target="_blank">Koh Phangan Conscious Communities — post 1</a> <span class="note">(membership required)</span></li>
+        <li><a href="https://www.facebook.com/groups/KohPhanganCC/permalink/4541454629270956/" target="_blank">Koh Phangan Conscious Communities — post 2</a> <span class="note">(membership required)</span></li>
+        <li><a href="https://www.facebook.com/groups/KohPhanganCC/permalink/1600295400053575/" target="_blank">Koh Phangan Conscious Communities — post 3</a> <span class="note">(membership required)</span></li>
+        <li><a href="https://www.facebook.com/groups/KohPhanganCC/posts/5737144509701956/" target="_blank">Koh Phangan Conscious Communities — post 4</a> <span class="note">(membership required)</span></li>
+        <li><a href="https://www.facebook.com/groups/348616157134904" target="_blank">Facebook group 348616157134904</a></li>
+        <li><a href="https://asliinwonderland.com/2021/07/02/conscious-communities-across-the-globe/" target="_blank">Asli In Wonderland</a> — blog article on conscious communities worldwide</li>
+        <li><a href="https://goo.gl/maps/sxXi5DZjhh2WTJJb6" target="_blank">Hippie spirit places around the world</a> — by <a href="https://www.instagram.com/peggy.anke" target="_blank">Peggy Anke</a></li>
+      </ul>
+    </div>
+
+    <!-- GEOCODING -->
+    <div class="section">
+      <h2>Geocoding data</h2>
+      <p>City coordinates are sourced from the <a href="https://simplemaps.com/data/world-cities" target="_blank">SimpleMaps World Cities</a> database (Basic edition). Locations not found there are looked up via <a href="https://nominatim.openstreetmap.org" target="_blank">Nominatim</a>.</p>
+      <div class="cc-badge">
+        <span class="cc-icon">🔖</span>
+        <div><strong>SimpleMaps World Cities</strong> is licensed under the<br>Creative Commons Attribution 4.0 International (CC BY 4.0)<br><a href="https://simplemaps.com/data/world-cities" target="_blank">simplemaps.com</a></div>
+      </div>
+      <p style="margin-top:12px">Nominatim geocoding © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a>, available under the Open Database Licence (ODbL).</p>
+    </div>
+
+    <!-- MAP TILES -->
+    <div class="section">
+      <h2>Map tiles</h2>
+      <p>Map tiles by <a href="https://carto.com/attributions" target="_blank">CARTO</a>, under CC BY 3.0. Data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a>.</p>
+    </div>
+
+    <!-- TECH -->
+    <div class="section">
+      <h2>Open source libraries</h2>
+      <ul>
+        <li><a href="https://leafletjs.com" target="_blank">Leaflet.js</a> — BSD-2 licence</li>
+        <li><a href="https://github.com/Leaflet/Leaflet.markercluster" target="_blank">Leaflet MarkerCluster</a> — MIT licence</li>
+        <li><a href="https://fonts.google.com/specimen/DM+Serif+Display" target="_blank">DM Serif Display</a> &amp; <a href="https://fonts.google.com/specimen/DM+Sans" target="_blank">DM Sans</a> fonts — SIL Open Font Licence</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
 </body>
 </html>
