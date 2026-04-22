@@ -70,6 +70,11 @@
     "description": "Number of slaughtered animals in real time"
   },
   {
+    "category": "Tools & Apps",
+    "directory": "acrofest",
+    "description": "Festival management system (in development)"
+  },
+  {
     "category": "People & Profiles",
     "directory": "disar2",
     "description": "Website for DJ Disar Marxin (Didier Salembier)"
@@ -135,6 +140,11 @@
     "description": "Geography quiz game"
   },
   
+  {
+    "category": "Geo & Maps",
+    "directory": "conscious_communities",
+    "description": "Conscious communities map"
+  },
   {
     "category": "Music & Visuals",
     "directory": "djviz",
