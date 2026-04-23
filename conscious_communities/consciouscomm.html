@@ -31,7 +31,6 @@
   --ff-d: 'DM Serif Display', Georgia, serif;
   --ff-b: 'DM Sans', system-ui, sans-serif;
   --r: 10px;
-  --sb-w: 252px;
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: var(--ff-b); background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -209,67 +208,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); box
 .modal-body .cc-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: .75rem; color: var(--text-muted); margin-top: 4px; }
 .modal-body .cc-badge span { font-size: 15px; }
 .modal-body .section-label { font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; display: block; }
-
-/* ── FILTERS FAB — mobile only, hidden on desktop ─────────── */
-.filters-fab {
-  display: none;
-  align-items: center; gap: 5px;
-  background: var(--brand); color: #fff;
-  border: none; border-radius: 20px;
-  padding: 6px 12px; font-family: var(--ff-b);
-  font-size: .75rem; font-weight: 600;
-  cursor: pointer; flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(42,122,90,.35);
-  transition: background .15s, transform .1s;
-}
-.filters-fab:active { transform: scale(.96); }
-.filters-fab .fab-badge {
-  background: rgba(255,255,255,.3); border-radius: 10px;
-  padding: 1px 5px; font-size: .65rem; font-weight: 700;
-  display: none;
-}
-.filters-fab .fab-badge.has-filters { display: inline; }
-
-/* ── SIDEBAR CLOSE BUTTON — mobile only ───────────────────── */
-.sb-close { display: none; width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); cursor: pointer; align-items: center; justify-content: center; font-size: 14px; color: var(--text-muted); flex-shrink: 0; }
-
-/* ── MOBILE SIDEBAR OVERLAY ───────────────────────────────── */
-.sb-backdrop {
-  display: none; position: fixed; inset: 0;
-  background: rgba(12,31,23,.45); z-index: 600;
-  opacity: 0; transition: opacity .25s; pointer-events: none;
-}
-.sb-backdrop.open { opacity: 1; pointer-events: auto; }
-
-/* ════════════════════════════════════════════════════════════
-   MOBILE BREAKPOINT  ≤ 640px
-   ════════════════════════════════════════════════════════════ */
-@media (max-width: 640px) {
-  header { padding: 0 10px 0 12px; gap: 8px; height: 50px; }
-  .logo-text { font-size: .88rem; }
-  .hd, .hs { display: none; }
-  .sw { display: none; }
-  .filters-fab { display: flex; }
-  .sidebar {
-    position: fixed; top: 0; left: 0; bottom: 0;
-    width: min(var(--sb-w), 88vw) !important;
-    z-index: 700;
-    transform: translateX(-110%);
-    transition: transform .28s cubic-bezier(.25,.46,.45,.94);
-    box-shadow: var(--sh-lg);
-    border-right: 1px solid var(--border);
-  }
-  .sidebar.mobile-open { transform: translateX(0); }
-  .sidebar.collapsed { width: min(var(--sb-w), 88vw) !important; }
-  .sb-backdrop { display: block; }
-  .sb-close { display: flex; }
-  .sb-inner { width: 100% !important; }
-  .sb-head { display: flex; align-items: center; justify-content: space-between; }
-  .sbt { display: none; }
-  .mw { width: 100%; }
-  .leaflet-popup-content { width: calc(100vw - 56px) !important; max-width: 260px !important; }
-  .li { padding: 9px 15px; }
-}
 </style>
 </head>
 <body>
@@ -295,12 +233,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); box
     <span class="si">🔍</span>
     <input type="text" id="q" placeholder="Search name or location…" autocomplete="off">
   </div>
-
-  <!-- Filters FAB — mobile only -->
-  <button class="filters-fab" id="filters-fab" onclick="openMobileSB()" aria-label="Open filters">
-    🗂 Filters
-    <span class="fab-badge" id="fab-badge"></span>
-  </button>
 
   <!-- Hamburger -->
   <div class="hmenu-wrap" id="hmenu-wrap">
@@ -401,26 +333,12 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); box
   </div>
 </div>
 
-<!-- Mobile sidebar backdrop -->
-<div class="sb-backdrop" id="sb-backdrop" onclick="closeMobileSB()"></div>
-
 <div class="main">
   <div class="sidebar" id="sb">
     <div class="sb-inner">
       <div class="sb-head">
-        <div>
-          <h2>Map Layers</h2>
-          <p>Click a layer to toggle visibility</p>
-        </div>
-        <button class="sb-close" id="sb-close" onclick="closeMobileSB()" aria-label="Close filters">✕</button>
-      </div>
-      <!-- Search inside sidebar — shown on mobile only -->
-      <div style="padding:8px 14px;border-bottom:1px solid var(--border);display:none" id="sb-search-row">
-        <div style="position:relative">
-          <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:12px;pointer-events:none">🔍</span>
-          <input type="text" id="q-mobile" placeholder="Search name or location…" autocomplete="off"
-            style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r);padding:7px 12px 7px 28px;font-family:var(--ff-b);font-size:.8rem;color:var(--text);outline:none;">
-        </div>
+        <h2>Map Layers</h2>
+        <p>Click a layer to toggle visibility</p>
       </div>
       <div class="sb-act">
         <button class="bx" onclick="selAll()">All on</button>
@@ -576,55 +494,12 @@ function toast(msg, ms = 4000) {
   el.textContent = msg; el.classList.add('on');
   setTimeout(() => el.classList.remove('on'), ms);
 }
-function isMobile() { return window.innerWidth <= 640; }
-
 function toggleSB() {
-  if (isMobile()) {
-    openMobileSB();
-  } else {
-    sbOpen = !sbOpen;
-    document.getElementById('sb').classList.toggle('collapsed', !sbOpen);
-    document.getElementById('sbt').textContent = sbOpen ? '◀' : '▶';
-    setTimeout(() => map.invalidateSize(), 280);
-  }
+  sbOpen = !sbOpen;
+  document.getElementById('sb').classList.toggle('collapsed', !sbOpen);
+  document.getElementById('sbt').textContent = sbOpen ? '◀' : '▶';
+  setTimeout(() => map.invalidateSize(), 280);
 }
-
-function openMobileSB() {
-  document.getElementById('sb').classList.add('mobile-open');
-  document.getElementById('sb-backdrop').classList.add('open');
-  document.body.style.overflow = 'hidden';
-  document.getElementById('sb-search-row').style.display = '';
-}
-
-function closeMobileSB() {
-  document.getElementById('sb').classList.remove('mobile-open');
-  document.getElementById('sb-backdrop').classList.remove('open');
-  document.body.style.overflow = '';
-  setTimeout(() => map.invalidateSize(), 300);
-}
-
-function updateFabBadge() {
-  const badge = document.getElementById('fab-badge');
-  if (!badge) return;
-  let count = 0;
-  // check if any layer is deselected
-  const totalLayers = document.querySelectorAll('.li').length;
-  const activeLayers = document.querySelectorAll('.li.on').length;
-  if (totalLayers > 0 && activeLayers < totalLayers) count++;
-  // check if any continent is active (filtered)
-  if (actC.size > 0) count++;
-  badge.textContent = count > 0 ? count : '';
-  badge.classList.toggle('has-filters', count > 0);
-}
-
-window.addEventListener('resize', () => {
-  if (!isMobile()) {
-    document.getElementById('sb').classList.remove('mobile-open');
-    document.getElementById('sb-backdrop').classList.remove('open');
-    document.getElementById('sb-search-row').style.display = 'none';
-    document.body.style.overflow = '';
-  }
-});
 
 // ── Map setup ─────────────────────────────────────────────────
 const map = L.map('map', {
@@ -726,7 +601,6 @@ function redraw() {
   rows.forEach(r => { if (visible(r)) { addMarker(r); v++; } });
   document.getElementById('s-vis').textContent = v;
   syncLabels();
-  updateFabBadge();
 }
 
 function syncLabels() {
@@ -802,15 +676,7 @@ function buildContinents(conts) {
 
 // ── Search ────────────────────────────────────────────────────
 document.getElementById('q').addEventListener('input', function() {
-  qStr = this.value.trim();
-  const mob = document.getElementById('q-mobile');
-  if (mob) mob.value = this.value;
-  redraw();
-});
-document.getElementById('q-mobile').addEventListener('input', function() {
-  qStr = this.value.trim();
-  document.getElementById('q').value = this.value;
-  redraw();
+  qStr = this.value.trim(); redraw();
 });
 
 // ── Hamburger menu ────────────────────────────────────────────
