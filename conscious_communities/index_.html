@@ -380,8 +380,8 @@ const CONFIG = {
   // ── Encoded Google Sheets config ──────────────────────────────
   // Generate these with encode-sheet-config.html
   SHEET_KEY:     'festflow2026',
-  SHEET_ID_ENC:  'VxU8ASlUNURFBgNgKRUXFz46FjxFSWhkCT8+GTcrVjZ0c3xnFCQXWS9ZP0c=',
-  SHEET_TAB_ENC: 'KyQgICM+',
+  SHEET_ID_ENC:  '1pOuO8Z3w61VOpdcXVyKwyZRoZMmQG9AFCNQrAd-I5P0',
+  SHEET_TAB_ENC: 'MASTER',
 
   // ── Column names (match the spreadsheet header row exactly) ───
   COL_LAYER:     'Layer',
@@ -459,8 +459,12 @@ function xorDecode(b64, key) {
     return null;
   }
 }
-const SHEET_ID  = xorDecode(CONFIG.SHEET_ID_ENC,  CONFIG.SHEET_KEY);
-const SHEET_TAB = xorDecode(CONFIG.SHEET_TAB_ENC, CONFIG.SHEET_KEY);
+// const SHEET_ID  = xorDecode(CONFIG.SHEET_ID_ENC,  CONFIG.SHEET_KEY);
+// const SHEET_TAB = xorDecode(CONFIG.SHEET_TAB_ENC, CONFIG.SHEET_KEY);
+
+
+const SHEET_ID  = CONFIG.SHEET_ID_ENC;
+const SHEET_TAB = CONFIG.SHEET_TAB_ENC;
 
 if (!SHEET_ID || !SHEET_TAB) {
   document.getElementById('ov-msg').textContent = '❌ Could not decode sheet config. Check SHEET_KEY matches the encoder.';
