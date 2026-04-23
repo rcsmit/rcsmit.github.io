@@ -410,7 +410,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); box
     <div class="sb-inner">
       <div class="sb-head">
         <div>
-          <h2>Map Layers x</h2>
+          <h2>Map Layers y</h2>
           <p>Click a layer to toggle visibility</p>
         </div>
         <button class="sb-close" id="sb-close" onclick="closeMobileSB()" aria-label="Close filters">✕</button>
@@ -636,6 +636,7 @@ L.tileLayer(CONFIG.TILE_URL, {
   attribution: CONFIG.TILE_ATTR, subdomains: CONFIG.TILE_SUBS, maxZoom: CONFIG.TILE_MAXZ,
 }).addTo(map);
 
+
 const cluster = L.markerClusterGroup({
   maxClusterRadius:        CONFIG.CLUSTER_RADIUS,
   spiderfyOnMaxZoom:       CONFIG.CLUSTER_SPIDER,
@@ -644,7 +645,14 @@ const cluster = L.markerClusterGroup({
   disableClusteringAtZoom: CONFIG.CLUSTER_UNCLUSTR,
   chunkedLoading:          true,
 });
+// map.addLayer(cluster);
+
+
+const labelLayer = L.layerGroup();
+
 map.addLayer(cluster);
+map.addLayer(labelLayer);
+
 
 // ── Color assignment ──────────────────────────────────────────
 function assignColors(layers) {
