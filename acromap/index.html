@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conscious Communities World Map</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --brand:        #2A7A5A;
+  --brand-dark:   #1A5040;
+  --brand-subtle: #E6F4ED;
+  --bg:           #F3F7F5;
+  --surface:      #FAFCFB;
+  --surface-2:    #EDF3EF;
+  --border:       #D5E5DC;
+  --border-str:   #AECFBB;
+  --text:         #0C1F17;
+  --text-2:       #344D3E;
+  --text-muted:   #7A9E8C;
+  --sh-sm: 0 1px 3px rgba(20,80,50,.08), 0 0 0 1px rgba(20,80,50,.04);
+  --sh-md: 0 4px 16px rgba(20,80,50,.10), 0 1px 4px rgba(20,80,50,.06);
+  --sh-lg: 0 12px 40px rgba(20,80,50,.14), 0 2px 8px rgba(20,80,50,.06);
+  --ff-d: 'DM Serif Display', Georgia, serif;
+  --ff-b: 'DM Sans', system-ui, sans-serif;
+  --r: 10px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--ff-b); background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* HEADER */
+header { background: var(--surface); border-bottom: 1px solid var(--border); box-shadow: var(--sh-sm); padding: 0 20px; display: flex; align-items: center; gap: 14px; height: 54px; flex-shrink: 0; z-index: 1000; position: relative; }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 30px; height: 30px; background: var(--brand); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+.logo-text { font-family: var(--ff-d); font-size: 1.05rem; color: var(--text); white-space: nowrap; }
+.hd { width: 1px; height: 24px; background: var(--border); flex-shrink: 0; }
+.hs { font-size: .72rem; color: var(--text-muted); white-space: nowrap; }
+.hs strong { color: var(--brand); font-weight: 600; }
+.sp { flex: 1; }
+.sw { position: relative; flex-shrink: 0; }
+.sw input { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r); padding: 6px 12px 6px 29px; font-family: var(--ff-b); font-size: .8rem; color: var(--text); width: 185px; outline: none; transition: border-color .2s, box-shadow .2s; }
+.sw input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(42,122,90,.12); }
+.sw input::placeholder { color: var(--text-muted); }
+.si { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 12px; pointer-events: none; }
+
+/* LAYOUT */
+.main { display: flex; flex: 1; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar { width: 268px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; transition: width .25s ease; }
+.sidebar.collapsed { width: 0; }
+.sb-inner { width: 268px; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.sb-head { padding: 13px 16px 9px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.sb-head h2 { font-family: var(--ff-d); font-size: .88rem; color: var(--text); margin-bottom: 2px; }
+.sb-head p { font-size: .67rem; color: var(--text-muted); }
+.sb-act { display: flex; gap: 5px; padding: 7px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap; }
+.bx { font-family: var(--ff-b); font-size: .67rem; font-weight: 500; padding: 3px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2); cursor: pointer; transition: all .15s; white-space: nowrap; }
+.bx:hover { background: var(--brand-subtle); border-color: var(--brand); color: var(--brand-dark); }
+
+/* DATE FILTER */
+.date-sec { padding: 8px 14px 8px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.date-sec h3 { font-size: .62rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+.date-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.date-row label { font-size: .67rem; color: var(--text-2); white-space: nowrap; width: 28px; flex-shrink: 0; }
+.date-row input[type="date"] {
+  flex: 1; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 4px 8px; font-family: var(--ff-b);
+  font-size: .72rem; color: var(--text); outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.date-row input[type="date"]:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(42,122,90,.12); }
+.date-clear { font-size: .62rem; color: var(--text-muted); background: none; border: none; cursor: pointer; padding: 0; text-decoration: underline; font-family: var(--ff-b); transition: color .15s; }
+.date-clear:hover { color: var(--brand); }
+.date-hint { font-size: .62rem; color: var(--text-muted); margin-top: 2px; }
+
+.ll { flex: 1; overflow-y: auto; padding: 5px 0; }
+.ll::-webkit-scrollbar { width: 3px; }
+.ll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.li { display: flex; align-items: center; gap: 8px; padding: 6px 15px; cursor: pointer; transition: background .12s; user-select: none; }
+.li:hover { background: var(--surface-2); }
+.lck { width: 14px; height: 14px; border-radius: 4px; border: 2px solid var(--border-str); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all .15s; }
+.li.on .lck { border-color: transparent; }
+.lck-m { display: none; font-size: 8px; color: #fff; line-height: 1; font-weight: 700; }
+.li.on .lck-m { display: block; }
+.ld { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.ll-lbl { font-size: .73rem; color: var(--text-2); flex: 1; line-height: 1.3; }
+.lc { font-size: .63rem; color: var(--text-muted); background: var(--surface-2); padding: 1px 5px; border-radius: 10px; }
+.cont-sec { padding: 9px 15px 9px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.cont-sec h3 { font-size: .62rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+.ct-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.ct { font-size: .63rem; padding: 3px 7px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text-2); cursor: pointer; transition: all .15s; }
+.ct.on, .ct:hover { background: var(--brand-subtle); border-color: var(--brand); color: var(--brand-dark); }
+
+/* MAP */
+.mw { position: relative; flex: 1; overflow: hidden; }
+#map { width: 100%; height: 100%; }
+.sbt { position: absolute; top: 50%; transform: translateY(-50%); left: 0; background: var(--surface); border: 1px solid var(--border); border-left: none; border-radius: 0 6px 6px 0; width: 17px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 500; font-size: 9px; color: var(--text-muted); box-shadow: var(--sh-sm); transition: color .15s; }
+.sbt:hover { color: var(--brand); }
+
+/* POPUP — wider */
+.leaflet-popup-content-wrapper { background: var(--surface) !important; border: 1px solid var(--border) !important; border-radius: 12px !important; box-shadow: var(--sh-lg) !important; padding: 0 !important; overflow: hidden; }
+.leaflet-popup-content { margin: 0 !important; line-height: 1 !important; width: 320px !important; }
+.leaflet-popup-tip { background: var(--surface) !important; }
+.leaflet-popup-close-button { color: var(--text-muted) !important; top: 8px !important; right: 9px !important; font-size: 16px !important; }
+
+.pb { padding: 14px 16px; font-family: var(--ff-b); }
+.pb-badge { display: inline-block; font-size: .58rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-bottom: 7px; }
+.pb-link { display: block; font-family: var(--ff-d); font-size: 1.02rem; color: var(--brand-dark); margin-bottom: 3px; line-height: 1.25; text-decoration: none; border-bottom: none !important; }
+.pb-link:hover { color: var(--brand); text-decoration: underline; }
+.pb-loc { font-size: .69rem; color: var(--text-muted); }
+.pb-dates { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: .69rem; color: var(--text-2); }
+.pb-dates .pb-date-range { background: var(--brand-subtle); color: var(--brand-dark); border-radius: 4px; padding: 2px 7px; font-weight: 500; }
+.pb-sl { margin-top: 5px; font-size: .62rem; font-weight: 700; letter-spacing: .05em; color: #D81B60; }
+.pb-rem { font-size: .70rem; color: var(--text-2); line-height: 1.55; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px; }
+.pb-geo { font-size: .62rem; color: var(--text-muted); margin-top: 4px; }
+.pb-more { font-size: .63rem; color: var(--text-muted); font-style: italic; margin-top: 2px; }
+
+/* LABELS — separate non-clustered layer */
+.mk-lbl { background: none !important; border: none !important; box-shadow: none !important; font-family: var(--ff-b); font-size: 10px; font-weight: 600; color: #12231A; white-space: nowrap; text-shadow: 0 1px 3px rgba(255,255,255,.99), 0 0 8px rgba(255,255,255,.95); pointer-events: none; }
+
+/* LOADING */
+#ov { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 16px; transition: opacity .4s; }
+#ov.gone { opacity: 0; pointer-events: none; }
+.ov-title { font-family: var(--ff-d); font-size: 1.85rem; color: var(--text); }
+.ov-title span { color: var(--brand); }
+.ov-bar-w { width: 200px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.ov-bar { height: 100%; background: var(--brand); border-radius: 2px; animation: lp 1.4s ease-in-out infinite; width: 40%; }
+@keyframes lp { 0%{transform:translateX(-100%)} 100%{transform:translateX(350%)} }
+.ov-msg { font-size: .77rem; color: var(--text-muted); text-align: center; max-width: 340px; line-height: 1.5; }
+.ov-step { font-size: .68rem; color: var(--border-str); margin-top: 4px; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 18px; right: 18px; background: var(--text); color: #fff; font-size: .73rem; font-family: var(--ff-b); padding: 8px 14px; border-radius: var(--r); box-shadow: var(--sh-lg); z-index: 9000; opacity: 0; transform: translateY(6px); transition: all .25s; pointer-events: none; max-width: 300px; line-height: 1.4; }
+.toast.on { opacity: 1; transform: translateY(0); }
+
+/* CLUSTER */
+.marker-cluster-small  { background-color: rgba(42,122,90,.14); }
+.marker-cluster-small  div { background-color: rgba(42,122,90,.74); color:#fff; font-weight:600; font-size:11px; font-family:var(--ff-b); }
+.marker-cluster-medium { background-color: rgba(224,122,48,.14); }
+.marker-cluster-medium div { background-color: rgba(224,122,48,.80); color:#fff; font-weight:600; font-size:12px; font-family:var(--ff-b); }
+.marker-cluster-large  { background-color: rgba(155,89,182,.14); }
+.marker-cluster-large  div { background-color: rgba(155,89,182,.78); color:#fff; font-weight:600; font-size:13px; font-family:var(--ff-b); }
+
+/* HAMBURGER BUTTON */
+.hbg { display: flex; flex-direction: column; justify-content: center; gap: 4px; width: 32px; height: 32px; cursor: pointer; padding: 4px; border-radius: 6px; transition: background .15s; flex-shrink: 0; }
+.hbg:hover { background: var(--surface-2); }
+.hbg span { display: block; width: 18px; height: 2px; background: var(--text-2); border-radius: 2px; transition: all .2s; }
+
+/* DROPDOWN MENU */
+.hmenu-wrap { position: relative; flex-shrink: 0; }
+.hmenu {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); box-shadow: var(--sh-lg);
+  min-width: 150px; overflow: hidden; z-index: 2000;
+  opacity: 0; transform: translateY(-6px) scale(.97);
+  pointer-events: none; transition: all .18s ease;
+}
+.hmenu.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.hmenu a, .hmenu button {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; padding: 10px 16px;
+  font-family: var(--ff-b); font-size: .82rem; font-weight: 500;
+  color: var(--text-2); text-decoration: none; background: none; border: none;
+  cursor: pointer; transition: background .12s; text-align: left;
+}
+.hmenu a:hover, .hmenu button:hover { background: var(--surface-2); color: var(--brand-dark); }
+.hmenu-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+.hmenu hr { border: none; border-top: 1px solid var(--border); margin: 3px 0; }
+
+/* MODAL OVERLAY */
+.modal-bg {
+  position: fixed; inset: 0; background: rgba(12,31,23,.45);
+  z-index: 3000; display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.modal-bg.open { opacity: 1; pointer-events: auto; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; box-shadow: var(--sh-lg);
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 80px);
+  display: flex; flex-direction: column;
+  transform: translateY(12px) scale(.98); transition: transform .22s ease;
+  overflow: hidden;
+}
+.modal-bg.open .modal { transform: translateY(0) scale(1); }
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 22px 14px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.modal-head h2 { font-family: var(--ff-d); font-size: 1.2rem; color: var(--text); }
+.modal-close {
+  width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface-2); cursor: pointer; display: flex; align-items: center;
+  justify-content: center; font-size: 14px; color: var(--text-muted);
+  transition: all .15s; flex-shrink: 0;
+}
+.modal-close:hover { background: var(--brand-subtle); border-color: var(--brand); color: var(--brand-dark); }
+.modal-body {
+  padding: 20px 22px; overflow-y: auto; flex: 1;
+  font-size: .85rem; color: var(--text-2); line-height: 1.7;
+}
+.modal-body::-webkit-scrollbar { width: 4px; }
+.modal-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.modal-body h3 { font-family: var(--ff-d); font-size: 1rem; color: var(--text); margin: 18px 0 6px; }
+.modal-body h3:first-child { margin-top: 0; }
+.modal-body p { margin-bottom: 10px; }
+.modal-body ul { padding-left: 18px; margin-bottom: 10px; }
+.modal-body li { margin-bottom: 5px; }
+.modal-body a { color: var(--brand); text-decoration: none; border-bottom: 1px solid var(--brand-subtle); transition: border-color .15s; }
+.modal-body a:hover { border-color: var(--brand); }
+.modal-body .author-block { display: flex; align-items: flex-start; gap: 14px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; }
+.modal-body .author-avatar { width: 42px; height: 42px; background: var(--brand); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.modal-body .author-name { font-family: var(--ff-d); font-size: .95rem; color: var(--text); margin-bottom: 2px; }
+.modal-body .author-links { font-size: .75rem; color: var(--text-muted); }
+.modal-body .author-links a { color: var(--brand); border-bottom-color: transparent; }
+.modal-body .author-links a:hover { border-color: var(--brand); }
+.modal-body .cc-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; font-size: .75rem; color: var(--text-muted); margin-top: 4px; }
+.modal-body .cc-badge span { font-size: 15px; }
+.modal-body .section-label { font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; display: block; }
+</style>
+</head>
+<body>
+
+<div id="ov">
+  <div class="ov-title">Conscious <span>Communities</span></div>
+  <div class="ov-bar-w"><div class="ov-bar"></div></div>
+  <div class="ov-msg" id="ov-msg">Loading…</div>
+  <div class="ov-step" id="ov-step"></div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🌍</div>
+    <span class="logo-text">Conscious Communities</span>
+  </div>
+  <div class="hd"></div>
+  <div class="hs"><strong id="s-total">–</strong> total</div>
+  <div class="hs"><strong id="s-vis">–</strong> visible</div>
+  <div class="hs" id="s-geo-stat" style="display:none"><strong id="s-geo">–</strong> geocoded</div>
+  <div class="sp"></div>
+  <div class="sw">
+    <span class="si">🔍</span>
+    <input type="text" id="q" placeholder="Search name or location…" autocomplete="off">
+  </div>
+  <div class="hmenu-wrap" id="hmenu-wrap">
+    <div class="hbg" id="hbg" onclick="toggleMenu()" title="Menu" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </div>
+    <nav class="hmenu" id="hmenu">
+      <button onclick="openModal('info');closeMenu()"><span class="hmenu-icon">ℹ️</span> Info</button>
+      <button onclick="openModal('credits');closeMenu()"><span class="hmenu-icon">🏅</span> Credits</button>
+    </nav>
+  </div>
+</header>
+
+<!-- INFO MODAL -->
+<div class="modal-bg" id="modal-info" onclick="closeModalBg(event,'info')">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>About this map</h2>
+      <button class="modal-close" onclick="closeModal('info')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="author-block">
+        <div class="author-avatar">🌍</div>
+        <div>
+          <div class="author-name">René Smit</div>
+          <div class="author-links">
+            <a href="https://rene-smit.com" target="_blank">rene-smit.com</a> ·
+            <a href="https://rcsmit.github.io" target="_blank">rcsmit.github.io</a> ·
+            <a href="https://rcsmit.streamlit.app" target="_blank">rcsmit.streamlit.app</a>
+          </div>
+        </div>
+      </div>
+      <h3>What is this?</h3>
+      <p>An interactive world map of conscious communities, ecovillages, and alternative living spaces — gathered from forum discussions, Facebook groups, and personal research.</p>
+      <p>Use the layer panel on the left to filter by type, the continent tags to zoom into a region, or the search bar to find a specific place.</p>
+      <h3>How to use</h3>
+      <ul>
+        <li>Click any marker to see details about the location</li>
+        <li>Toggle layers on/off using the sidebar checkboxes</li>
+        <li>Use <strong>⭐ Shortlist</strong> to see personally recommended spots</li>
+        <li>Use the <strong>date filter</strong> to show only events within a date range</li>
+        <li>Zoom in past level 6 to see individual name labels</li>
+        <li>Click the ◀ button on the map edge to collapse the sidebar</li>
+      </ul>
+      <h3>Technology</h3>
+      <span class="section-label">Libraries &amp; services used</span>
+      <ul>
+        <li><a href="https://leafletjs.com" target="_blank">Leaflet.js</a> — open-source mapping library (BSD-2 licence)</li>
+        <li><a href="https://github.com/Leaflet/Leaflet.markercluster" target="_blank">Leaflet MarkerCluster</a> — clustering plugin (MIT licence)</li>
+        <li><a href="https://carto.com" target="_blank">CartoDB Voyager tiles</a> — map background (free tier)</li>
+        <li><a href="https://simplemaps.com/data/world-cities" target="_blank">SimpleMaps World Cities</a> — offline geocoding database
+          <div class="cc-badge"><span>🔖</span> Creative Commons Attribution 4.0 International (CC BY 4.0)</div>
+        </li>
+        <li><a href="https://nominatim.openstreetmap.org" target="_blank">Nominatim / OpenStreetMap</a> — fallback geocoding (ODbL)</li>
+        <li>Data source: Google Sheets (private, curated dataset)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- CREDITS MODAL -->
+<div class="modal-bg" id="modal-credits" onclick="closeModalBg(event,'credits')">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Credits</h2>
+      <button class="modal-close" onclick="closeModal('credits')" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <h3>Made by</h3>
+      <div class="author-block">
+        <div class="author-avatar">👤</div>
+        <div>
+          <div class="author-name">René Smit</div>
+          <div class="author-links">
+            <a href="https://rene-smit.com" target="_blank">rene-smit.com</a> ·
+            <a href="https://rcsmit.github.io" target="_blank">rcsmit.github.io</a> ·
+            <a href="https://rcsmit.streamlit.app" target="_blank">rcsmit.streamlit.app</a>
+          </div>
+        </div>
+      </div>
+      <h3>Data contributions</h3>
+      <p>With thanks to everyone who replied in forums and Facebook groups, including:</p>
+      <ul>
+        <li><a href="https://www.facebook.com/groups/KohPhanganCC/permalink/5430226180393792/" target="_blank">Koh Phangan CC group — post 1</a></li>
+        <li><a href="https://www.facebook.com/groups/KohPhanganCC/permalink/4541454629270956/" target="_blank">Koh Phangan CC group — post 2</a></li>
+        <li><a href="https://www.facebook.com/groups/KohPhanganCC/permalink/1600295400053575/" target="_blank">Koh Phangan CC group — post 3</a></li>
+        <li><a href="https://www.facebook.com/groups/KohPhanganCC/posts/5737144509701956/" target="_blank">Koh Phangan CC group — post 4</a></li>
+        <li><a href="https://www.facebook.com/groups/348616157134904" target="_blank">Facebook group 348616157134904</a></li>
+        <li><a href="https://asliinwonderland.com/2021/07/02/conscious-communities-across-the-globe/" target="_blank">Asli In Wonderland</a> — blog article</li>
+        <li><a href="https://goo.gl/maps/sxXi5DZjhh2WTJJb6" target="_blank">Hippie spirit places around the world</a> by <a href="https://www.instagram.com/peggy.anke" target="_blank">Peggy Anke</a></li>
+      </ul>
+      <h3>Geocoding data</h3>
+      <p>City coordinates provided by <a href="https://simplemaps.com/data/world-cities" target="_blank">SimpleMaps World Cities</a> (Basic edition).</p>
+      <div class="cc-badge"><span>🔖</span> Creative Commons Attribution 4.0 International (CC BY 4.0) — SimpleMaps.com</div>
+      <p style="margin-top:10px">Fallback geocoding via <a href="https://nominatim.openstreetmap.org" target="_blank">Nominatim</a> © OpenStreetMap contributors (ODbL).</p>
+      <h3>Map tiles</h3>
+      <p>© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, © <a href="https://carto.com/attributions" target="_blank">CARTO</a>.</p>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="sidebar" id="sb">
+    <div class="sb-inner">
+      <div class="sb-head">
+        <h2>Map Layers</h2>
+        <p>Click a layer to toggle visibility</p>
+      </div>
+      <div class="sb-act">
+        <button class="bx" onclick="selAll()">All on</button>
+        <button class="bx" onclick="selNone()">All off</button>
+        <button class="bx" onclick="selSL()">⭐ Shortlist</button>
+      </div>
+
+      <!-- DATE FILTER -->
+      <div class="date-sec">
+        <h3>Date range</h3>
+        <div class="date-row">
+          <label>From</label>
+          <input type="date" id="date-from" onchange="redraw()">
+        </div>
+        <div class="date-row">
+          <label>To</label>
+          <input type="date" id="date-to" onchange="redraw()">
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px">
+          <span class="date-hint" id="date-hint"></span>
+          <button class="date-clear" id="date-clear-btn" onclick="clearDates()" style="display:none">Clear dates</button>
+        </div>
+      </div>
+
+      <div class="ll" id="ll"></div>
+      <div class="cont-sec">
+        <h3>Continent</h3>
+        <div class="ct-tags" id="ct"></div>
+      </div>
+    </div>
+  </div>
+  <div class="mw">
+    <div id="map"></div>
+    <div class="sbt" id="sbt" onclick="toggleSB()" title="Toggle sidebar">◀</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+
+<script>
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  ★  UNIVERSAL CONFIG — only section you need to change  ★   ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+const CONFIG = {
+
+  SHEET_KEY:     'festflow2026',
+  SHEET_ID_ENC:  '132gCPu46DkXTJk1Yy5RmuKcijMBm7_PPqQjRm_7AbG4',
+  SHEET_TAB_ENC: 'data',
+
+  // ── Column names (match the spreadsheet header row exactly) ───
+  COL_LAYER:     'Layer',
+  COL_LAT:       'LAT',
+  COL_LON:       'LON',
+  COL_NAME:      'EVENT NAME',
+  COL_SLUG:      'URL',                   // slug / URL column for acroinsiders link
+  COL_REMARKS:   'EVENT DESCRIPTION',
+  COL_CONTINENT: 'CONTINENT',
+  COL_COUNTRY:   'COUNTRY',
+  COL_PROVINCE:  'STATE',
+  COL_SHORTLIST: 'STICKY IN MONTH VIEW',
+  COL_START:     'EVENT START DATE',      // date format: YYYY-MM-DD or M/D/YYYY etc.
+  COL_END:       'EVENT END DATE',
+
+  // ── SimpleMaps World Cities CSV ───────────────────────────────
+  SIMPLEMAPS_CSV: 'worldcities.csv',
+
+  // ── Nominatim fallback geocoding ──────────────────────────────
+  GEOCODE_ENABLED: true,
+  GEOCODE_URL:     'https://nominatim.openstreetmap.org/search',
+  GEOCODE_DELAY:   380,
+
+  // ── Map view ──────────────────────────────────────────────────
+  MAP_CENTER:   [20, 10],
+  MAP_ZOOM:     2,
+  MAP_MIN_ZOOM: 2,
+  MAP_MAX_ZOOM: 18,
+
+  // ── Tile layer ────────────────────────────────────────────────
+  TILE_URL:  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  TILE_ATTR: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  TILE_SUBS: 'abcd',
+  TILE_MAXZ: 20,
+
+  // ── Labels ────────────────────────────────────────────────────
+  SHOW_LABELS:    true,
+  LABEL_MIN_ZOOM: 6,
+
+  // ── Clustering ────────────────────────────────────────────────
+  CLUSTER_RADIUS:    60,
+  CLUSTER_SPIDER:    true,
+  CLUSTER_UNCLUSTR:  12,
+
+  // ── 30 distinct layer colors ──────────────────────────────────
+  COLORS: [
+    '#2A7A5A','#E07A30','#9B59B6','#2980B9','#E74C3C',
+    '#27AE60','#F0A500','#16A085','#8E44AD','#34495E',
+    '#D35400','#1ABC9C','#C0392B','#6C7A89','#F39C12',
+    '#6C3483','#1A5276','#117A65','#7D6608','#154360',
+    '#922B21','#1E8449','#5B2C6F','#0E6655','#7E5109',
+    '#4A235A','#0B5345','#784212','#2C3E50','#616A6B',
+  ],
+
+  SL_COLOR:         '#E91E63',
+  POPUP_DESC_LIMIT: 500,         // max characters shown in popup description
+  ACRO_BASE_URL:    'https://acroinsiders.com/event/', // base URL for event link
+};
+
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  APP CODE                                                    ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+const SHEET_ID  = CONFIG.SHEET_ID_ENC;
+const SHEET_TAB = CONFIG.SHEET_TAB_ENC;
+
+if (!SHEET_ID || !SHEET_TAB) {
+  document.getElementById('ov-msg').textContent = '❌ Could not decode sheet config.';
+  throw new Error('Sheet config failed');
+}
+
+// ── State ─────────────────────────────────────────────────────
+let rows          = [];
+let actL          = new Set();
+let actC          = new Set();
+let lColors       = {};
+let qStr          = '';
+let sbOpen        = true;
+let smLookup      = null;
+let geocodedCount = 0;
+const nomCache    = {};
+
+// ── Date filter state ─────────────────────────────────────────
+let dateFrom = null;  // JS Date or null
+let dateTo   = null;  // JS Date or null
+
+// ── UI helpers ────────────────────────────────────────────────
+const setMsg  = m => { document.getElementById('ov-msg').textContent  = m; };
+const setStep = s => { document.getElementById('ov-step').textContent = s; };
+const hideOv  = () => {
+  const el = document.getElementById('ov');
+  el.classList.add('gone'); setTimeout(() => el.remove(), 500);
+};
+function toast(msg, ms = 4000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('on');
+  setTimeout(() => el.classList.remove('on'), ms);
+}
+function toggleSB() {
+  sbOpen = !sbOpen;
+  document.getElementById('sb').classList.toggle('collapsed', !sbOpen);
+  document.getElementById('sbt').textContent = sbOpen ? '◀' : '▶';
+  setTimeout(() => map.invalidateSize(), 280);
+}
+
+// ── Date helpers ──────────────────────────────────────────────
+function parseDate(str) {
+  if (!str || !str.trim()) return null;
+  // Try YYYY-MM-DD first, then M/D/YYYY, then native
+  const iso = str.trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) return new Date(+iso[1], +iso[2]-1, +iso[3]);
+  const us = str.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (us) return new Date(+us[3], +us[1]-1, +us[2]);
+  const d = new Date(str);
+  return isNaN(d) ? null : d;
+}
+
+function dateOnly(d) {
+  // Returns a comparable integer YYYYMMDD
+  if (!d) return null;
+  return d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
+}
+
+function clearDates() {
+  document.getElementById('date-from').value = '';
+  document.getElementById('date-to').value   = '';
+  dateFrom = null;
+  dateTo   = null;
+  updateDateHint();
+  redraw();
+}
+
+function updateDateHint() {
+  const hint = document.getElementById('date-hint');
+  const btn  = document.getElementById('date-clear-btn');
+  if (dateFrom || dateTo) {
+    const parts = [];
+    if (dateFrom) parts.push('from ' + dateFrom.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}));
+    if (dateTo)   parts.push('to '   + dateTo.toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'}));
+    hint.textContent = parts.join(' ');
+    btn.style.display = '';
+  } else {
+    hint.textContent = '';
+    btn.style.display = 'none';
+  }
+}
+
+document.getElementById('date-from').addEventListener('change', function() {
+  dateFrom = this.value ? new Date(this.value + 'T00:00:00') : null;
+  updateDateHint();
+  redraw();
+});
+document.getElementById('date-to').addEventListener('change', function() {
+  dateTo = this.value ? new Date(this.value + 'T00:00:00') : null;
+  updateDateHint();
+  redraw();
+});
+
+// ── Map setup ─────────────────────────────────────────────────
+const map = L.map('map', {
+  center: CONFIG.MAP_CENTER, zoom: CONFIG.MAP_ZOOM,
+  minZoom: CONFIG.MAP_MIN_ZOOM, maxZoom: CONFIG.MAP_MAX_ZOOM,
+});
+L.tileLayer(CONFIG.TILE_URL, {
+  attribution: CONFIG.TILE_ATTR, subdomains: CONFIG.TILE_SUBS, maxZoom: CONFIG.TILE_MAXZ,
+}).addTo(map);
+
+// ── Two separate layer groups ──────────────────────────────────
+// cluster: holds the actual clickable markers (clustered)
+// labelLayer: holds text labels only (NOT clustered, so no double dots)
+const cluster = L.markerClusterGroup({
+  maxClusterRadius:        CONFIG.CLUSTER_RADIUS,
+  spiderfyOnMaxZoom:       CONFIG.CLUSTER_SPIDER,
+  showCoverageOnHover:     false,
+  zoomToBoundsOnClick:     true,
+  disableClusteringAtZoom: CONFIG.CLUSTER_UNCLUSTR,
+  chunkedLoading:          true,
+});
+const labelLayer = L.layerGroup();  // ← labels live here, NOT in cluster
+
+map.addLayer(cluster);
+map.addLayer(labelLayer);
+
+// ── Color assignment ──────────────────────────────────────────
+function assignColors(layers) {
+  layers.forEach((l, i) => { lColors[l] = CONFIG.COLORS[i % CONFIG.COLORS.length]; });
+}
+
+// ── SVG dot icon ──────────────────────────────────────────────
+function mkIcon(color, big) {
+  const r = big ? 7 : 5, sw = big ? 2 : 1.5, d = (r + sw) * 2;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${d}" height="${d}">
+    <circle cx="${r+sw}" cy="${r+sw}" r="${r}" fill="${color}" stroke="rgba(255,255,255,.88)" stroke-width="${sw}"/>
+  </svg>`;
+  return L.divIcon({
+    html: `<div style="filter:drop-shadow(0 1px 4px rgba(0,0,0,.32))">${svg}</div>`,
+    className: '', iconSize: [d,d], iconAnchor: [r+sw,r+sw], popupAnchor: [0,-(r+sw+4)],
+  });
+}
+
+// ── Slug from URL or event name ───────────────────────────────
+function makeSlug(row) {
+  // Use the URL/slug column if available
+  const raw = (row[CONFIG.COL_SLUG] || '').trim();
+  if (raw) {
+    // If it already looks like a full URL, extract last path segment
+    if (raw.startsWith('http')) {
+      const parts = raw.replace(/\/$/, '').split('/');
+      return parts[parts.length - 1];
+    }
+    return raw;
+  }
+  // Fallback: derive slug from event name
+  return (row[CONFIG.COL_NAME] || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// ── Format date range for popup ───────────────────────────────
+function fmtDateRange(row) {
+  const s = (row[CONFIG.COL_START] || '').trim();
+  const e = (row[CONFIG.COL_END]   || '').trim();
+  if (!s && !e) return '';
+  const opts = { day: 'numeric', month: 'short', year: 'numeric' };
+  const ds = s ? parseDate(s) : null;
+  const de = e ? parseDate(e) : null;
+  const fs = ds ? ds.toLocaleDateString('en-GB', opts) : s;
+  const fe = de ? de.toLocaleDateString('en-GB', opts) : e;
+  if (s && e && s !== e) return `${fs} – ${fe}`;
+  if (s) return fs;
+  return fe;
+}
+
+// ── Popup HTML ────────────────────────────────────────────────
+function mkPopup(row) {
+  const c    = lColors[row._layer] || '#888';
+  const n    = (row[CONFIG.COL_NAME]     || '').trim() || '(unnamed)';
+  const rem  = (row[CONFIG.COL_REMARKS]  || '').trim();
+  const ctr  = (row[CONFIG.COL_COUNTRY]  || '').trim();
+  const prv  = (row[CONFIG.COL_PROVINCE] || '').trim();
+  const cnt  = (row[CONFIG.COL_CONTINENT]|| '').trim();
+  const sl   = String(row[CONFIG.COL_SHORTLIST] || '').toLowerCase();
+  const isl  = ['yes','1','true','x','✓'].includes(sl);
+  const loc  = [prv, ctr, cnt].filter(Boolean).join(', ');
+  const geoSrc = row._geoSource ? `<div class="pb-geo">📡 coords via ${row._geoSource}</div>` : '';
+  const dr   = fmtDateRange(row);
+  const slug = makeSlug(row);
+  const href = slug ? CONFIG.ACRO_BASE_URL + slug : '';
+
+  // Truncate description
+  let descHtml = '';
+  if (rem) {
+    const truncated = rem.length > CONFIG.POPUP_DESC_LIMIT;
+    const shown = truncated ? rem.slice(0, CONFIG.POPUP_DESC_LIMIT) : rem;
+    descHtml = `<div class="pb-rem">${escHtml(shown)}${truncated ? '…' : ''}</div>`;
+    if (truncated && href) {
+      descHtml += `<div class="pb-more"><a href="${escHtml(href)}" target="_blank">Read more ↗</a></div>`;
+    }
+  }
+
+  return `<div class="pb">
+    <div class="pb-badge" style="background:${c}20;color:${c}">${escHtml(row._layer)}</div>
+    ${href
+      ? `<a class="pb-link" href="${escHtml(href)}" target="_blank">${escHtml(n)} ↗</a>`
+      : `<div class="pb-link" style="cursor:default">${escHtml(n)}</div>`
+    }
+    ${loc ? `<div class="pb-loc">📍 ${escHtml(loc)}</div>` : ''}
+    ${dr  ? `<div class="pb-dates"><span class="pb-date-range">📅 ${escHtml(dr)}</span></div>` : ''}
+    ${isl ? `<div class="pb-sl">⭐ Shortlisted</div>` : ''}
+    ${geoSrc}
+    ${descHtml}
+  </div>`;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Add marker + label to SEPARATE layers ─────────────────────
+// FIX: labels go to labelLayer (plain LayerGroup), NOT to cluster.
+// This eliminates the double-marker problem entirely.
+function addMarker(row) {
+  if (!isFinite(row._lat) || !isFinite(row._lon)) return;
+  const sl  = String(row[CONFIG.COL_SHORTLIST] || '').toLowerCase();
+  const isl = ['yes','1','true','x','✓'].includes(sl);
+  const col = isl ? CONFIG.SL_COLOR : (lColors[row._layer] || '#888');
+  const m   = L.marker([row._lat, row._lon], { icon: mkIcon(col, isl) });
+  m.bindPopup(mkPopup(row), { maxWidth: 360 });
+  cluster.addLayer(m);  // ← only the dot goes into the cluster group
+
+  // Label: separate non-clustered layer → no extra dot in cluster
+  if (CONFIG.SHOW_LABELS) {
+    const name = (row[CONFIG.COL_NAME] || '').trim();
+    if (name) {
+      const lbl = L.marker([row._lat, row._lon], {
+        icon: L.divIcon({
+          html: `<div class="mk-lbl">${escHtml(name)}</div>`,
+          className: '', iconSize: [0,0], iconAnchor: [0,-4],
+        }),
+        interactive: false, zIndexOffset: -9999,
+      });
+      labelLayer.addLayer(lbl);  // ← label goes to labelLayer, not cluster
+    }
+  }
+}
+
+// ── Visibility filter (includes date range) ───────────────────
+function visible(row) {
+  if (!actL.has(row._layer)) return false;
+  if (actC.size > 0 && !actC.has((row[CONFIG.COL_CONTINENT]||'').trim())) return false;
+  if (qStr) {
+    const h = [CONFIG.COL_NAME, CONFIG.COL_COUNTRY, CONFIG.COL_PROVINCE, CONFIG.COL_CONTINENT]
+      .map(k => (row[k]||'').toLowerCase()).join(' ');
+    if (!h.includes(qStr.toLowerCase())) return false;
+  }
+
+  // Date range filter:
+  // A row is visible if its event overlaps the selected date range.
+  // An event [rowStart, rowEnd] overlaps [dateFrom, dateTo] if:
+  //   rowStart <= dateTo  AND  rowEnd >= dateFrom
+  // Rows without dates are shown unless the filter is active.
+  if (dateFrom || dateTo) {
+    const rs = parseDate(row[CONFIG.COL_START]);
+    const re = parseDate(row[CONFIG.COL_END]) || rs;  // if no end, treat as same day
+
+    if (!rs && !re) {
+      // No date info — hide when a filter is active
+      return false;
+    }
+
+    const fd = dateOnly(dateFrom);
+    const td = dateOnly(dateTo);
+    const rsd = dateOnly(rs);
+    const red = dateOnly(re);
+
+    if (fd && red && red < fd) return false;   // event ends before filter start
+    if (td && rsd && rsd > td) return false;   // event starts after filter end
+  }
+
+  return true;
+}
+
+// ── Redraw map ────────────────────────────────────────────────
+function redraw() {
+  cluster.clearLayers();
+  labelLayer.clearLayers();
+  let v = 0;
+  rows.forEach(r => { if (visible(r)) { addMarker(r); v++; } });
+  document.getElementById('s-vis').textContent = v;
+  syncLabels();
+}
+
+function syncLabels() {
+  if (!CONFIG.SHOW_LABELS) return;
+  const show = map.getZoom() >= CONFIG.LABEL_MIN_ZOOM;
+  document.querySelectorAll('.mk-lbl').forEach(el => { el.style.display = show ? '' : 'none'; });
+}
+map.on('zoomend', syncLabels);
+
+// ── Layer sidebar ─────────────────────────────────────────────
+function buildLayers(layers) {
+  const ll = document.getElementById('ll'); ll.innerHTML = '';
+  layers.forEach(layer => {
+    const cnt = rows.filter(r => r._layer === layer).length;
+    const col = lColors[layer];
+    const el  = document.createElement('div');
+    el.className = 'li on'; el.dataset.l = layer;
+    el.innerHTML = `<div class="lck" style="background:${col}"><span class="lck-m">✓</span></div>
+      <div class="ld" style="background:${col}"></div>
+      <span class="ll-lbl">${escHtml(layer)}</span><span class="lc">${cnt}</span>`;
+    el.addEventListener('click', () => {
+      if (actL.has(layer)) { actL.delete(layer); el.classList.remove('on'); el.querySelector('.lck').style.background=''; }
+      else { actL.add(layer); el.classList.add('on'); el.querySelector('.lck').style.background=col; }
+      redraw();
+    });
+    ll.appendChild(el); actL.add(layer);
+  });
+}
+function selAll() {
+  document.querySelectorAll('.li').forEach(el => {
+    actL.add(el.dataset.l); el.classList.add('on');
+    el.querySelector('.lck').style.background = lColors[el.dataset.l];
+  }); redraw();
+}
+function selNone() {
+  actL.clear();
+  document.querySelectorAll('.li').forEach(el => {
+    el.classList.remove('on'); el.querySelector('.lck').style.background = '';
+  }); redraw();
+}
+function selSL() {
+  selAll();
+  cluster.clearLayers();
+  labelLayer.clearLayers();
+  const sl = rows.filter(r => ['yes','1','true','x','✓'].includes(String(r[CONFIG.COL_SHORTLIST]||'').toLowerCase()));
+  sl.forEach(addMarker);
+  document.getElementById('s-vis').textContent = sl.length;
+  toast(`Showing ${sl.length} shortlisted locations`);
+}
+
+// ── Continent filter ──────────────────────────────────────────
+function buildContinents(conts) {
+  const wrap = document.getElementById('ct'); wrap.innerHTML = '';
+  const all = document.createElement('span');
+  all.className = 'ct on'; all.textContent = 'All';
+  all.onclick = () => {
+    actC.clear();
+    wrap.querySelectorAll('.ct').forEach(t => t.classList.remove('on'));
+    all.classList.add('on'); redraw();
+  };
+  wrap.appendChild(all);
+  conts.forEach(c => {
+    const t = document.createElement('span');
+    t.className = 'ct'; t.textContent = c;
+    t.onclick = () => {
+      if (actC.has(c)) { actC.delete(c); t.classList.remove('on'); }
+      else { actC.add(c); t.classList.add('on'); all.classList.remove('on'); }
+      if (!actC.size) all.classList.add('on');
+      redraw();
+    };
+    wrap.appendChild(t);
+  });
+}
+
+// ── Search ────────────────────────────────────────────────────
+document.getElementById('q').addEventListener('input', function() {
+  qStr = this.value.trim(); redraw();
+});
+
+// ── Hamburger menu ────────────────────────────────────────────
+function toggleMenu() { document.getElementById('hmenu').classList.toggle('open'); }
+function closeMenu()  { document.getElementById('hmenu').classList.remove('open'); }
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('hmenu-wrap');
+  if (wrap && !wrap.contains(e.target)) closeMenu();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closeMenu(); closeModal('info'); closeModal('credits'); }
+});
+
+// ── Modal open/close ──────────────────────────────────────────
+function openModal(id) { document.getElementById('modal-' + id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); document.body.style.overflow = ''; }
+function closeModalBg(e, id) { if (e.target === e.currentTarget) closeModal(id); }
+
+// ════════════════════════════════════════════════════════════════
+//  SIMPLEMAPS GEOCODER
+// ════════════════════════════════════════════════════════════════
+async function loadSimpleMaps() {
+  if (!CONFIG.SIMPLEMAPS_CSV) return false;
+  setMsg('Loading SimpleMaps city database…');
+  try {
+    const res = await fetch(CONFIG.SIMPLEMAPS_CSV);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const txt = await res.text();
+    const lines = txt.split('\n');
+    if (lines.length < 2) throw new Error('Empty file');
+
+    const headers = lines[0].split(',').map(h => h.replace(/"/g,'').trim().toLowerCase());
+    const iCity  = headers.indexOf('city_ascii');
+    const iLat   = headers.indexOf('lat');
+    const iLng   = headers.indexOf('lng');
+    const iISO2  = headers.indexOf('iso2');
+    const iCtr   = headers.indexOf('country');
+    const iAdmin = headers.indexOf('admin_name');
+
+    if (iLat < 0 || iLng < 0) throw new Error('lat/lng columns not found');
+
+    smLookup = {};
+    let count = 0;
+
+    for (let i = 1; i < lines.length; i++) {
+      const l = lines[i].trim();
+      if (!l) continue;
+      const cols  = splitCSVLine(l);
+      const city  = (cols[iCity]  || '').replace(/"/g,'').trim().toLowerCase();
+      const lat   = parseFloat(cols[iLat]  || '');
+      const lng   = parseFloat(cols[iLng]  || '');
+      const iso2  = (cols[iISO2]  || '').replace(/"/g,'').trim().toLowerCase();
+      const ctr   = (cols[iCtr]   || '').replace(/"/g,'').trim().toLowerCase();
+      const admin = (cols[iAdmin] || '').replace(/"/g,'').trim().toLowerCase();
+
+      if (!city || !isFinite(lat) || !isFinite(lng)) continue;
+
+      const coord = [lat, lng];
+      if (!smLookup[city+'|'+iso2]) smLookup[city+'|'+iso2] = coord;
+      if (!smLookup[city+'|'+ctr])  smLookup[city+'|'+ctr]  = coord;
+      if (!smLookup[city])          smLookup[city]           = coord;
+      if (admin) {
+        if (!smLookup[admin+'|'+iso2]) smLookup[admin+'|'+iso2] = coord;
+        if (!smLookup[admin+'|'+ctr])  smLookup[admin+'|'+ctr]  = coord;
+      }
+      count++;
+    }
+
+    setStep(`SimpleMaps: ${count.toLocaleString()} cities loaded`);
+    return true;
+  } catch(e) {
+    console.warn('SimpleMaps load failed:', e.message);
+    setStep(`SimpleMaps not available — using Nominatim`);
+    smLookup = null;
+    return false;
+  }
+}
+
+function splitCSVLine(line) {
+  const result = []; let field = '', inQ = false;
+  for (let i = 0; i <= line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; continue; }
+    if ((ch === ',' || ch === undefined) && !inQ) { result.push(field); field = ''; }
+    else { field += (ch || ''); }
+  }
+  return result;
+}
+
+function smLookupRow(row) {
+  if (!smLookup) return null;
+  const name = (row[CONFIG.COL_NAME]    || '').trim().toLowerCase();
+  const ctr  = (row[CONFIG.COL_COUNTRY] || '').trim().toLowerCase();
+  const prv  = (row[CONFIG.COL_PROVINCE]|| '').trim().toLowerCase();
+  for (const key of [name+'|'+ctr, prv+'|'+ctr, name, prv].filter(Boolean)) {
+    if (smLookup[key]) return smLookup[key];
+  }
+  return null;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  NOMINATIM FALLBACK
+// ════════════════════════════════════════════════════════════════
+async function nominatim(q) {
+  if (!CONFIG.GEOCODE_ENABLED || !q) return null;
+  if (q in nomCache) return nomCache[q];
+  await new Promise(r => setTimeout(r, CONFIG.GEOCODE_DELAY));
+  try {
+    const res = await fetch(
+      `${CONFIG.GEOCODE_URL}?q=${encodeURIComponent(q)}&format=json&limit=1`,
+      { headers: { 'Accept-Language': 'en' } }
+    );
+    const d = await res.json();
+    nomCache[q] = d && d.length ? [+d[0].lat, +d[0].lon] : null;
+  } catch(_) { nomCache[q] = null; }
+  return nomCache[q];
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CSV PARSER
+// ════════════════════════════════════════════════════════════════
+function parseCSV(csv) {
+  const lines = [];
+  let field = '', row = [], inQ = false;
+  for (let i = 0; i < csv.length; i++) {
+    const ch = csv[i], nx = csv[i+1];
+    if (inQ) {
+      if (ch === '"' && nx === '"') { field += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else field += ch;
+    } else {
+      if (ch === '"') inQ = true;
+      else if (ch === ',') { row.push(field); field = ''; }
+      else if (ch === '\n' || (ch === '\r' && nx === '\n')) {
+        if (ch === '\r') i++;
+        row.push(field); field = '';
+        if (row.some(Boolean)) lines.push(row);
+        row = [];
+      } else field += ch;
+    }
+  }
+  if (field || row.length) { row.push(field); if (row.some(Boolean)) lines.push(row); }
+  if (lines.length < 2) return [];
+  const headers = lines[0].map(h => h.trim());
+  return lines.slice(1).map(cols => {
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = (cols[i] || '').trim(); });
+    return obj;
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MAIN
+// ════════════════════════════════════════════════════════════════
+async function init() {
+  await loadSimpleMaps();
+
+  setMsg('Fetching spreadsheet data…'); setStep('');
+  const csvURL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
+
+  let rawCSV;
+  try {
+    const res = await fetch(csvURL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    rawCSV = await res.text();
+  } catch(e) {
+    setMsg('❌ Could not load spreadsheet: ' + e.message);
+    setStep('Check that the sheet is shared as "Anyone can view"');
+    return;
+  }
+
+  setMsg('Parsing…');
+  const data = parseCSV(rawCSV);
+
+  if (!data.length) {
+    setMsg('No data found. Check SHEET_TAB name in CONFIG.');
+    return;
+  }
+
+  const lSet = new Set(), cSet = new Set();
+  let missing = 0;
+
+  data.forEach(row => {
+    row._layer = (row[CONFIG.COL_LAYER] || 'Other').trim() || 'Other';
+    row._lat   = parseFloat((row[CONFIG.COL_LAT] || '').replace(',', '.'));
+    row._lon   = parseFloat((row[CONFIG.COL_LON] || '').replace(',', '.'));
+    row._geo   = !isFinite(row._lat) || !isFinite(row._lon);
+    row._geoSource = null;
+    lSet.add(row._layer);
+    const c = (row[CONFIG.COL_CONTINENT] || '').trim();
+    if (c) cSet.add(c);
+    if (row._geo) missing++;
+  });
+
+  rows = data;
+  const layers = Array.from(lSet).sort();
+  assignColors(layers);
+  buildLayers(layers);
+  buildContinents(Array.from(cSet).sort());
+  document.getElementById('s-total').textContent = rows.length;
+  document.getElementById('s-vis').textContent   = rows.length;
+
+  if (missing > 0) {
+    setMsg(`Looking up coordinates for ${missing} locations…`);
+    let smHits = 0, nomHits = 0, failed = 0;
+
+    for (const row of rows) {
+      if (!row._geo) continue;
+      const sm = smLookupRow(row);
+      if (sm) {
+        row._lat = sm[0]; row._lon = sm[1];
+        row._geo = false; row._geoSource = 'SimpleMaps';
+        smHits++; geocodedCount++; continue;
+      }
+      if (CONFIG.GEOCODE_ENABLED) {
+        const parts = [row[CONFIG.COL_PROVINCE], row[CONFIG.COL_COUNTRY]].filter(Boolean);
+        const q = parts.join(', ') || (row[CONFIG.COL_NAME] || '');
+        if (q) {
+          const r = await nominatim(q);
+          if (r) {
+            row._lat = r[0]; row._lon = r[1];
+            row._geo = false; row._geoSource = 'Nominatim';
+            nomHits++; geocodedCount++;
+          } else { failed++; }
+          if ((nomHits + failed) % 5 === 0) setMsg(`Geocoding: ${nomHits} found, ${failed} failed…`);
+        } else { failed++; }
+      } else { failed++; }
+    }
+
+    if (geocodedCount > 0) {
+      document.getElementById('s-geo-stat').style.display = '';
+      document.getElementById('s-geo').textContent = geocodedCount;
+    }
+    if (failed > 0) toast(`⚠ ${failed} locations could not be placed on the map`, 6000);
+  }
+
+  setMsg('Rendering map…');
+  redraw();
+  hideOv();
+}
+
+init();
+</script>
+</body>
+</html>

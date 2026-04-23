@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sheet Config Encoder</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 640px; margin: 60px auto; padding: 0 24px; background: #f7f9f8; color: #1a2e22; }
+  h1 { font-size: 1.3rem; margin-bottom: 4px; }
+  p  { font-size: .85rem; color: #5a7a6a; margin-bottom: 28px; }
+  label { display: block; font-size: .8rem; font-weight: 600; margin-bottom: 5px; color: #2a5040; }
+  input, select {
+    width: 100%; padding: 9px 12px; border: 1px solid #c8dcd0;
+    border-radius: 8px; font-size: .9rem; background: #fff;
+    outline: none; margin-bottom: 16px; font-family: monospace;
+  }
+  input:focus { border-color: #2a7a5a; box-shadow: 0 0 0 3px rgba(42,122,90,.12); }
+  .key-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
+  .key-row input { margin-bottom: 0; flex: 1; }
+  button {
+    background: #2a7a5a; color: #fff; border: none; border-radius: 8px;
+    padding: 10px 20px; font-size: .88rem; font-weight: 600; cursor: pointer;
+    transition: background .15s;
+  }
+  button:hover { background: #1a5040; }
+  .out {
+    background: #fff; border: 1px solid #c8dcd0; border-radius: 10px;
+    padding: 18px 20px; margin-top: 20px; display: none;
+  }
+  .out h2 { font-size: .85rem; color: #5a7a6a; margin-bottom: 12px; text-transform: uppercase; letter-spacing: .06em; }
+  .field { margin-bottom: 14px; }
+  .field label { font-size: .75rem; color: #5a7a6a; margin-bottom: 3px; }
+  .val { font-family: monospace; font-size: .82rem; background: #f0f7f3; padding: 8px 10px; border-radius: 6px; word-break: break-all; color: #1a2e22; }
+  .copy-btn { font-size: .7rem; padding: 3px 9px; border-radius: 5px; margin-left: 8px; background: #e6f4ed; color: #2a7a5a; border: 1px solid #b0d0bb; cursor: pointer; font-weight: 600; }
+  .copy-btn:hover { background: #2a7a5a; color: #fff; }
+  .note { font-size: .76rem; color: #7a9a8a; margin-top: 16px; line-height: 1.5; background: #f0f7f3; padding: 10px 12px; border-radius: 8px; }
+  .note code { background: #daeee5; padding: 1px 5px; border-radius: 4px; font-family: monospace; }
+  hr { border: none; border-top: 1px solid #dde8e2; margin: 28px 0; }
+</style>
+</head>
+<body>
+
+<h1>🔐 Sheet Config Encoder</h1>
+<p>Obfuscates your Google Sheets ID and tab name so they are not immediately readable in the HTML source. Paste the encoded values into the map's CONFIG block.</p>
+
+<hr>
+
+<label>Google Sheets ID</label>
+<input type="text" id="sheetId" placeholder="1pOuO8Z3w61VOpdcXVyKwyZRoZMmQG9AFCNQrAd-I5P0" value="1pOuO8Z3w61VOpdcXVyKwyZRoZMmQG9AFCNQrAd-I5P0">
+
+<label>Sheet Tab Name</label>
+<input type="text" id="sheetTab" placeholder="MASTER" value="MASTER">
+
+<label>Obfuscation Key <span style="font-weight:400;color:#7a9a8a">(pick any passphrase — must match in the map file)</span></label>
+<div class="key-row">
+  <input type="text" id="key" placeholder="my-secret-key" value="festflow2026">
+  <button onclick="randomKey()">🎲 Random</button>
+</div>
+
+<button onclick="encode()">Encode →</button>
+
+<div class="out" id="out">
+  <h2>Paste these into CONFIG in communities-map.html</h2>
+
+  <div class="field">
+    <label>SHEET_KEY (obfuscation key — same in both files)</label>
+    <div class="val" id="r-key"></div>
+  </div>
+  <div class="field">
+    <label>SHEET_ID_ENC (encoded sheet ID)</label>
+    <div class="val" id="r-id"></div>
+  </div>
+  <div class="field">
+    <label>SHEET_TAB_ENC (encoded tab name)</label>
+    <div class="val" id="r-tab"></div>
+  </div>
+
+  <div class="note">
+    ⚠ <strong>Important:</strong> This is <em>obfuscation</em>, not encryption. Anyone determined can still reverse it. It protects you from casual copy-paste and Google's own bot scanners.<br><br>
+    The key <code id="note-key"></code> must be set as <code>SHEET_KEY</code> in the map file too — it is used to decode at runtime.
+  </div>
+</div>
+
+<script>
+function xorB64(str, key) {
+  let out = '';
+  for (let i = 0; i < str.length; i++) {
+    out += String.fromCharCode(str.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+  }
+  return btoa(unescape(encodeURIComponent(out)));
+}
+
+function randomKey() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789-_';
+  let k = '';
+  for (let i = 0; i < 16; i++) k += chars[Math.floor(Math.random() * chars.length)];
+  document.getElementById('key').value = k;
+}
+
+function encode() {
+  const id  = document.getElementById('sheetId').value.trim();
+  const tab = document.getElementById('sheetTab').value.trim();
+  const key = document.getElementById('key').value.trim();
+
+  if (!id || !tab || !key) { alert('Fill in all three fields.'); return; }
+
+  document.getElementById('r-key').textContent = key;
+  document.getElementById('r-id').textContent  = xorB64(id, key);
+  document.getElementById('r-tab').textContent = xorB64(tab, key);
+  document.getElementById('note-key').textContent = key;
+  document.getElementById('out').style.display = 'block';
+}
+
+// Run on load with defaults
+encode();
+</script>
+</body>
+</html>
