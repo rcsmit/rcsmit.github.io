@@ -409,7 +409,7 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); box
     <div class="sb-inner">
       <div class="sb-head">
         <div>
-          <h2>Map Layers y</h2>
+          <h2>Map Layers z</h2>
           <p>Click a layer to toggle visibility</p>
         </div>
         <button class="sb-close" id="sb-close" onclick="closeMobileSB()" aria-label="Close filters">✕</button>
@@ -706,11 +706,16 @@ function addMarker(row) {
     const name = (row[CONFIG.COL_NAME] || '').trim();
     if (name) {
       const lbl = L.marker([row._lat, row._lon], {
-        icon: L.divIcon({ html: `<div class="mk-lbl">${name}</div>`, className: '', iconSize:[0,0], iconAnchor:[0,-4] }),
-        interactive: false, zIndexOffset: -9999,
+        icon: L.divIcon({
+          html: `<div class="mk-lbl">${name}</div>`,
+          className: '',
+          iconSize: [0, 0],
+          iconAnchor: [0, -4]
+        }),
+        interactive: false,
+        zIndexOffset: -9999
       });
-      lbl._isLbl = true;
-      cluster.addLayer(lbl);
+      labelLayer.addLayer(lbl);
     }
   }
 }
@@ -730,8 +735,14 @@ function visible(row) {
 // ── Redraw map ────────────────────────────────────────────────
 function redraw() {
   cluster.clearLayers();
+  labelLayer.clearLayers();
   let v = 0;
-  rows.forEach(r => { if (visible(r)) { addMarker(r); v++; } });
+  rows.forEach(r => {
+    if (visible(r)) {
+      addMarker(r);
+      v++;
+    }
+  });
   document.getElementById('s-vis').textContent = v;
   syncLabels();
   updateFabBadge();
