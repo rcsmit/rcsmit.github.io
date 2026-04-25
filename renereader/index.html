@@ -455,158 +455,276 @@ html.dark #loading { background: rgba(32,33,36,.82); }
 </div>
 
 <script>
-// ═══════════════════════════════════════════════════
-//  STATE
-// ═══════════════════════════════════════════════════
 const state = {
   folders: [],
   loose: [],
   activeFeed: null,
   activeItemId: null,
-  starred: new Set(JSON.parse(localStorage.getItem('rss_starred') || '[]')),
-  read:    new Set(JSON.parse(localStorage.getItem('rss_read')    || '[]')),
+  starred: new Set(JSON.parse(localStorage.getItem("rss_starred") || "[]")),
+  read: new Set(JSON.parse(localStorage.getItem("rss_read") || "[]")),
 };
 
-const CORS = 'https://api.allorigins.win/raw?url=';
+const PROXIES = [
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+];
 
-// ═══════════════════════════════════════════════════
-//  OPML
-// ═══════════════════════════════════════════════════
 function parseOpml(text) {
-  const doc = new DOMParser().parseFromString(text, 'text/xml');
-  if (doc.querySelector('parsererror')) throw new Error('Invalid OPML/XML');
-  const body = doc.querySelector('body');
-  if (!body) throw new Error('No <body> in OPML');
-  const folders = [], loose = [];
+  const doc = new DOMParser().parseFromString(text, "text/xml");
+  if (doc.querySelector("parsererror")) throw new Error("Invalid OPML/XML");
+
+  const body = doc.querySelector("body");
+  if (!body) throw new Error("No <body> in OPML");
+
+  const folders = [];
+  const loose = [];
 
   function mkFeed(el) {
     return {
-      title:  el.getAttribute('title') || el.getAttribute('text') || 'Untitled',
-      xmlUrl: el.getAttribute('xmlUrl') || el.getAttribute('xmlurl') || '',
-      htmlUrl:el.getAttribute('htmlUrl') || el.getAttribute('htmlurl') || '',
-      items: [], status: 'idle', unread: 0, error: '',
+      title: el.getAttribute("title") || el.getAttribute("text") || "Untitled",
+      xmlUrl: el.getAttribute("xmlUrl") || el.getAttribute("xmlurl") || "",
+      htmlUrl: el.getAttribute("htmlUrl") || el.getAttribute("htmlurl") || "",
+      items: [],
+      status: "idle",
+      unread: 0,
+      error: ""
     };
   }
 
   for (const ch of body.children) {
-    const xu = ch.getAttribute('xmlUrl') || ch.getAttribute('xmlurl');
-    if (xu) { loose.push(mkFeed(ch)); continue; }
-    const feeds = [];
-    for (const fc of ch.children) {
-      if (fc.getAttribute('xmlUrl') || fc.getAttribute('xmlurl')) feeds.push(mkFeed(fc));
+    const xu = ch.getAttribute("xmlUrl") || ch.getAttribute("xmlurl");
+
+    if (xu) {
+      loose.push(mkFeed(ch));
+      continue;
     }
-    if (feeds.length) folders.push({ name: ch.getAttribute('title') || ch.getAttribute('text') || 'Folder', feeds, open: true });
+
+    const feeds = [];
+
+    for (const fc of ch.children) {
+      if (fc.getAttribute("xmlUrl") || fc.getAttribute("xmlurl")) {
+        feeds.push(mkFeed(fc));
+      }
+    }
+
+    if (feeds.length) {
+      folders.push({
+        name: ch.getAttribute("title") || ch.getAttribute("text") || "Folder",
+        feeds,
+        open: true
+      });
+    }
   }
+
   return { folders, loose };
 }
 
-// ═══════════════════════════════════════════════════
-//  FEED PARSE
-// ═══════════════════════════════════════════════════
+function txt(el, names) {
+  for (const name of names) {
+    const found = el.getElementsByTagName(name)[0];
+    if (found) return found.textContent || "";
+  }
+  return "";
+}
+
 function parseFeedXml(xml, feedTitle) {
-  const doc = new DOMParser().parseFromString(xml, 'text/xml');
+  const doc = new DOMParser().parseFromString(xml, "text/xml");
+
+  if (doc.querySelector("parsererror")) {
+    throw new Error("Invalid feed XML");
+  }
+
   const items = [];
 
-  const rssItems = doc.querySelectorAll('channel > item');
-  if (rssItems.length) {
-    for (const it of rssItems) {
-      const raw = it.querySelector('encoded')?.textContent || it.querySelector('description')?.textContent || '';
-      items.push({
-        id: it.querySelector('guid')?.textContent || it.querySelector('link')?.textContent || rnd(),
-        title:  it.querySelector('title')?.textContent?.trim() || '(no title)',
-        link:   it.querySelector('link')?.textContent?.trim() || '',
-        date:   pd(it.querySelector('pubDate')?.textContent),
-        content: raw, snippet: toSnippet(raw), feedTitle,
-      });
-    }
-    return items;
-  }
+  for (const it of doc.querySelectorAll("item")) {
+    const raw = txt(it, ["content:encoded", "encoded", "description"]) || "";
 
-  for (const en of doc.querySelectorAll('entry')) {
-    const raw  = en.querySelector('content')?.textContent || en.querySelector('summary')?.textContent || '';
-    const link = en.querySelector('link[rel="alternate"]')?.getAttribute('href') || en.querySelector('link')?.getAttribute('href') || '';
     items.push({
-      id: en.querySelector('id')?.textContent || link || rnd(),
-      title:  en.querySelector('title')?.textContent?.trim() || '(no title)',
-      link,
-      date:   pd(en.querySelector('updated')?.textContent || en.querySelector('published')?.textContent),
-      content: raw, snippet: toSnippet(raw), feedTitle,
+      id: txt(it, ["guid"]) || txt(it, ["link"]) || rnd(),
+      title: txt(it, ["title"]).trim() || "(no title)",
+      link: txt(it, ["link"]).trim(),
+      date: pd(txt(it, ["pubDate", "dc:date"])),
+      content: raw,
+      snippet: toSnippet(raw),
+      feedTitle
     });
   }
+
+  for (const en of doc.querySelectorAll("entry")) {
+    const raw = txt(en, ["content", "summary"]) || "";
+
+    const link =
+      en.querySelector('link[rel="alternate"]')?.getAttribute("href") ||
+      en.querySelector("link")?.getAttribute("href") ||
+      "";
+
+    items.push({
+      id: txt(en, ["id"]) || link || rnd(),
+      title: txt(en, ["title"]).trim() || "(no title)",
+      link,
+      date: pd(txt(en, ["updated", "published"])),
+      content: raw,
+      snippet: toSnippet(raw),
+      feedTitle
+    });
+  }
+
   return items;
 }
 
-function pd(s) { if (!s) return new Date(0); const d = new Date(s); return isNaN(d) ? new Date(0) : d; }
-function rnd() { return Math.random().toString(36).slice(2); }
-function toSnippet(html) {
-  const d = document.createElement('div'); d.innerHTML = html;
-  return (d.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 180);
+function pd(s) {
+  if (!s) return new Date(0);
+  const d = new Date(s);
+  return isNaN(d) ? new Date(0) : d;
 }
 
-// ═══════════════════════════════════════════════════
-//  FETCH
-// ═══════════════════════════════════════════════════
+function rnd() {
+  return Math.random().toString(36).slice(2);
+}
+
+function toSnippet(html) {
+  const d = document.createElement("div");
+  d.innerHTML = html;
+  return (d.textContent || "").replace(/\s+/g, " ").trim().slice(0, 360);
+}
+
+async function fetchTextWithFallback(url) {
+  let lastError;
+
+  for (const makeUrl of PROXIES) {
+    try {
+      const res = await fetch(makeUrl(url), {
+        signal: AbortSignal.timeout(15000)
+      });
+
+      if (!res.ok) throw new Error("HTTP " + res.status);
+
+      const text = await res.text();
+
+      if (!text || text.length < 50) {
+        throw new Error("Empty feed");
+      }
+
+      return text;
+    } catch (e) {
+      lastError = e;
+    }
+  }
+
+  throw lastError || new Error("All proxies failed");
+}
+
 async function fetchFeed(feed) {
-  feed.status = 'loading';
+  feed.status = "loading";
+  feed.error = "";
   renderSidebar();
+
   try {
-    const res = await fetch(CORS + encodeURIComponent(feed.xmlUrl), { signal: AbortSignal.timeout(12000) });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    feed.items = parseFeedXml(await res.text(), feed.title);
+    const xml = await fetchTextWithFallback(feed.xmlUrl);
+    feed.items = parseFeedXml(xml, feed.title);
     feed.items.sort((a, b) => b.date - a.date);
     feed.unread = feed.items.filter(i => !state.read.has(i.id)).length;
-    feed.status = 'ok';
+    feed.status = "ok";
   } catch (e) {
-    feed.status = 'err'; feed.error = e.message; feed.items = []; feed.unread = 0;
+    feed.status = "err";
+    feed.error = e.message;
+    feed.items = [];
+    feed.unread = 0;
   }
+
   renderSidebar();
 }
 
 async function refreshAll() {
   const all = getAllFeeds();
-  if (!all.length) { toast('No feeds loaded', 'err'); return; }
-  setLoading(true, 'Refreshing ' + all.length + ' feeds…');
-  document.getElementById('refresh-btn').textContent = '↻ …';
+
+  if (!all.length) {
+    toast("No feeds loaded", "err");
+    return;
+  }
+
+  setLoading(true, "Refreshing " + all.length + " feeds…");
+  document.getElementById("refresh-btn").textContent = "↻ …";
+
   await Promise.allSettled(all.map(f => fetchFeed(f)));
+
   setLoading(false);
-  document.getElementById('refresh-btn').textContent = '↻ Refresh All';
-  const ok = all.filter(f => f.status === 'ok').length;
-  const err = all.filter(f => f.status === 'err').length;
-  document.getElementById('chrome-status').textContent =
-    '✓ ' + ok + ' ok' + (err ? ' · ✗ ' + err + ' err' : '') + ' · ' + new Date().toLocaleTimeString();
-  renderSidebar(); renderItems();
-  toast('Refreshed ' + ok + ' feed' + (ok !== 1 ? 's' : '') + (err ? ' (' + err + ' failed)' : ''), err ? 'err' : 'ok');
+  document.getElementById("refresh-btn").textContent = "↻ Refresh All";
+
+  const ok = all.filter(f => f.status === "ok").length;
+  const err = all.filter(f => f.status === "err").length;
+
+  document.getElementById("chrome-status").textContent =
+    "✓ " + ok + " ok" +
+    (err ? " · ✗ " + err + " err" : "") +
+    " · " + new Date().toLocaleTimeString();
+
+  renderSidebar();
+  renderItems();
+
+  toast(
+    "Refreshed " + ok + " feed" + (ok !== 1 ? "s" : "") +
+    (err ? " (" + err + " failed)" : ""),
+    err ? "err" : "ok"
+  );
 }
 
-// ═══════════════════════════════════════════════════
-//  FILE I/O
-// ═══════════════════════════════════════════════════
 function loadOpmlFile(input) {
-  const f = input.files[0]; if (!f) return;
+  const f = input.files[0];
+  if (!f) return;
+
   const r = new FileReader();
   r.onload = e => importOpml(e.target.result);
-  r.readAsText(f); input.value = '';
+  r.readAsText(f);
+  input.value = "";
 }
 
 function importOpml(text) {
   try {
     const { folders, loose } = parseOpml(text);
-    state.folders = folders; state.loose = loose;
-    state.activeFeed = null; state.activeItemId = null;
-    renderSidebar(); renderItems();
+
+    state.folders = folders;
+    state.loose = loose;
+    state.activeFeed = null;
+    state.activeItemId = null;
+
+    renderSidebar();
+    renderItems();
+
     const n = getAllFeeds().length;
-    toast('Loaded ' + n + ' feed' + (n !== 1 ? 's' : ''), 'ok');
+    toast("Loaded " + n + " feed" + (n !== 1 ? "s" : ""), "ok");
+
     refreshAll();
-  } catch (e) { toast('OPML error: ' + e.message, 'err'); }
+  } catch (e) {
+    toast("OPML error: " + e.message, "err");
+  }
 }
 
-document.addEventListener('dragover', e => { e.preventDefault(); document.getElementById('drop-overlay').classList.add('active'); });
-document.addEventListener('dragleave', e => { if (!e.relatedTarget) document.getElementById('drop-overlay').classList.remove('active'); });
-document.addEventListener('drop', e => {
-  e.preventDefault(); document.getElementById('drop-overlay').classList.remove('active');
-  const f = e.dataTransfer.files[0]; if (!f) return;
-  const r = new FileReader(); r.onload = ev => importOpml(ev.target.result); r.readAsText(f);
+document.addEventListener("dragover", e => {
+  e.preventDefault();
+  document.getElementById("drop-overlay").classList.add("active");
 });
+
+document.addEventListener("dragleave", e => {
+  if (!e.relatedTarget) {
+    document.getElementById("drop-overlay").classList.remove("active");
+  }
+});
+
+document.addEventListener("drop", e => {
+  e.preventDefault();
+  document.getElementById("drop-overlay").classList.remove("active");
+
+  const f = e.dataTransfer.files[0];
+  if (!f) return;
+
+  const r = new FileReader();
+  r.onload = ev => importOpml(ev.target.result);
+  r.readAsText(f);
+});
+
+
 
 const SAMPLE_OPML = `<?xml version='1.0' encoding='utf-8'?>
 <opml version="1.0">
@@ -896,229 +1014,352 @@ const SAMPLE_OPML = `<?xml version='1.0' encoding='utf-8'?>
       </outline>
     </body>
   </opml>`;
-function loadSampleOpml() { importOpml(SAMPLE_OPML); }
 
-// ═══════════════════════════════════════════════════
-//  HELPERS
-// ═══════════════════════════════════════════════════
-function getAllFeeds() { return [...state.folders.flatMap(f => f.feeds), ...state.loose]; }
+function loadSampleOpml() {
+  importOpml(SAMPLE_OPML);
+}
+
+function getAllFeeds() {
+  return [...state.folders.flatMap(f => f.feeds), ...state.loose];
+}
+
 function getActiveItems() {
   const feeds = state.activeFeed ? [state.activeFeed] : getAllFeeds();
   return feeds.flatMap(f => f.items).sort((a, b) => b.date - a.date);
 }
 
 function markRead(id) {
-  state.read.add(id); persist();
-  getAllFeeds().forEach(f => { f.unread = f.items.filter(i => !state.read.has(i.id)).length; });
-}
-function markAllRead() {
-  getActiveItems().forEach(i => state.read.add(i.id)); persist();
-  getAllFeeds().forEach(f => { f.unread = f.items.filter(i => !state.read.has(i.id)).length; });
-  renderSidebar(); renderItems();
-}
-function toggleStar(id, e) {
-  e.stopPropagation();
-  state.starred.has(id) ? state.starred.delete(id) : state.starred.add(id);
+  state.read.add(id);
   persist();
-  document.querySelectorAll('.item-star[data-id="' + CSS.escape(id) + '"]').forEach(el => {
-    el.classList.toggle('starred', state.starred.has(id));
+
+  getAllFeeds().forEach(f => {
+    f.unread = f.items.filter(i => !state.read.has(i.id)).length;
   });
 }
+
+function markAllRead() {
+  getActiveItems().forEach(i => state.read.add(i.id));
+  persist();
+
+  getAllFeeds().forEach(f => {
+    f.unread = f.items.filter(i => !state.read.has(i.id)).length;
+  });
+
+  renderSidebar();
+  renderItems();
+}
+
+function toggleStar(id, e) {
+  e.stopPropagation();
+
+  if (state.starred.has(id)) {
+    state.starred.delete(id);
+  } else {
+    state.starred.add(id);
+  }
+
+  persist();
+
+  document.querySelectorAll('.item-star[data-id="' + CSS.escape(id) + '"]').forEach(el => {
+    el.classList.toggle("starred", state.starred.has(id));
+  });
+}
+
 function persist() {
-  localStorage.setItem('rss_read',    JSON.stringify([...state.read].slice(-3000)));
-  localStorage.setItem('rss_starred', JSON.stringify([...state.starred].slice(-500)));
+  localStorage.setItem("rss_read", JSON.stringify([...state.read].slice(-3000)));
+  localStorage.setItem("rss_starred", JSON.stringify([...state.starred].slice(-500)));
 }
 
 function fmtTime(d) {
-  if (!d || d.getTime() === 0) return '';
+  if (!d || d.getTime() === 0) return "";
+
   const diff = (Date.now() - d) / 1000;
-  if (diff < 60)     return Math.floor(diff) + 's';
-  if (diff < 3600)   return Math.floor(diff / 60) + 'm';
-  if (diff < 86400)  return Math.floor(diff / 3600) + 'h';
-  if (diff < 604800) return Math.floor(diff / 86400) + 'd';
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+  if (diff < 60) return Math.floor(diff) + "s";
+  if (diff < 3600) return Math.floor(diff / 60) + "m";
+  if (diff < 86400) return Math.floor(diff / 3600) + "h";
+  if (diff < 604800) return Math.floor(diff / 86400) + "d";
+
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric"
+  });
 }
 
 function esc(s) {
-  if (!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  if (!s) return "";
+
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-// ═══════════════════════════════════════════════════
-//  SIDEBAR
-// ═══════════════════════════════════════════════════
 function renderSidebar() {
   const allUnread = getAllFeeds().reduce((s, f) => s + f.unread, 0);
 
-  const badge = document.getElementById('all-unread-badge');
-  if (allUnread) { badge.style.display = ''; badge.textContent = allUnread > 999 ? '999+' : allUnread; }
-  else badge.style.display = 'none';
+  const badge = document.getElementById("all-unread-badge");
 
-  document.getElementById('all-items-row').className = 'special-row' + (!state.activeFeed ? ' active' : '');
+  if (allUnread) {
+    badge.style.display = "";
+    badge.textContent = allUnread > 999 ? "999+" : allUnread;
+  } else {
+    badge.style.display = "none";
+  }
 
-  let html = '';
+  document.getElementById("all-items-row").className =
+    "special-row" + (!state.activeFeed ? " active" : "");
+
+  let html = "";
+
   for (let fi = 0; fi < state.folders.length; fi++) {
     const folder = state.folders[fi];
     const fu = folder.feeds.reduce((s, f) => s + f.unread, 0);
-    html += `<div class="folder${folder.open ? ' open' : ''}" id="folder-${fi}">
-      <div class="folder-header" onclick="toggleFolder(${fi})">
-        <span class="folder-arrow">▶</span>
-        <span class="folder-name-text">${esc(folder.name)}</span>
-        ${fu ? `<span class="folder-badge">${fu > 999 ? '999+' : fu}</span>` : ''}
-      </div>
-      <div class="folder-feeds">`;
-    for (let i = 0; i < folder.feeds.length; i++) html += buildFeedRow(folder.feeds[i], `f${fi}_${i}`);
+
+    html += `
+      <div class="folder${folder.open ? " open" : ""}" id="folder-${fi}">
+        <div class="folder-header" onclick="toggleFolder(${fi})">
+          <span class="folder-arrow">▶</span>
+          <span class="folder-name-text">${esc(folder.name)}</span>
+          ${fu ? `<span class="folder-badge">${fu > 999 ? "999+" : fu}</span>` : ""}
+        </div>
+        <div class="folder-feeds">
+    `;
+
+    for (let i = 0; i < folder.feeds.length; i++) {
+      html += buildFeedRow(folder.feeds[i], `f${fi}_${i}`);
+    }
+
     html += `</div></div>`;
   }
-  for (let i = 0; i < state.loose.length; i++) html += buildFeedRow(state.loose[i], `l${i}`);
 
-  document.getElementById('feed-tree').innerHTML = html;
+  for (let i = 0; i < state.loose.length; i++) {
+    html += buildFeedRow(state.loose[i], `l${i}`);
+  }
+
+  document.getElementById("feed-tree").innerHTML = html;
 
   const total = getAllFeeds().length;
-  document.getElementById('sidebar-stats').textContent = total + ' feed' + (total !== 1 ? 's' : '') + ' · ' + allUnread + ' unread';
+
+  document.getElementById("sidebar-stats").textContent =
+    total + " feed" + (total !== 1 ? "s" : "") + " · " + allUnread + " unread";
 }
 
 function buildFeedRow(feed, id) {
   const isActive = state.activeFeed === feed;
   const u = feed.unread;
-  return `<div class="feed-row${isActive ? ' active' : ''}" onclick="selectFeed('${id}', event)">
-    <span class="feed-dot ${feed.status}" title="${esc(feed.error || feed.status)}"></span>
-    <span class="feed-name" title="${esc(feed.title)}">${esc(feed.title)}</span>
-    ${u ? `<span class="feed-badge">${u > 999 ? '999+' : u}</span>` : ''}
-  </div>`;
+
+  return `
+    <div class="feed-row${isActive ? " active" : ""}" onclick="selectFeed('${id}', event)">
+      <span class="feed-dot ${feed.status}" title="${esc(feed.error || feed.status)}"></span>
+      <span class="feed-name" title="${esc(feed.title)}">${esc(feed.title)}</span>
+      ${u ? `<span class="feed-badge">${u > 999 ? "999+" : u}</span>` : ""}
+    </div>
+  `;
 }
 
-function toggleFolder(fi) { state.folders[fi].open = !state.folders[fi].open; renderSidebar(); }
+function toggleFolder(fi) {
+  state.folders[fi].open = !state.folders[fi].open;
+  renderSidebar();
+}
 
 function selectFeed(id, e) {
   e?.stopPropagation();
-  const feed = resolveFeed(id); if (!feed) return;
-  state.activeFeed = feed; state.activeItemId = null;
-  renderSidebar(); renderItems();
-}
-function selectAllFeeds() { state.activeFeed = null; state.activeItemId = null; renderSidebar(); renderItems(); }
-function resolveFeed(id) {
-  if (id.startsWith('f')) { const [,fi,i] = id.match(/f(\d+)_(\d+)/); return state.folders[+fi]?.feeds[+i]; }
-  const [,i] = id.match(/l(\d+)/); return state.loose[+i];
+
+  const feed = resolveFeed(id);
+  if (!feed) return;
+
+  state.activeFeed = feed;
+  state.activeItemId = null;
+
+  renderSidebar();
+  renderItems();
 }
 
-// ═══════════════════════════════════════════════════
-//  ITEMS
-// ═══════════════════════════════════════════════════
+function selectAllFeeds() {
+  state.activeFeed = null;
+  state.activeItemId = null;
+
+  renderSidebar();
+  renderItems();
+}
+
+function resolveFeed(id) {
+  if (id.startsWith("f")) {
+    const [, fi, i] = id.match(/f(\d+)_(\d+)/);
+    return state.folders[+fi]?.feeds[+i];
+  }
+
+  const [, i] = id.match(/l(\d+)/);
+  return state.loose[+i];
+}
+
 function renderItems() {
   const items = getActiveItems();
-  const title = state.activeFeed ? state.activeFeed.title : 'All items';
-  document.getElementById('feed-title-bar').textContent = title;
-  document.getElementById('item-count-label').textContent = items.length ? items.length + ' item' + (items.length !== 1 ? 's' : '') : '';
+  const title = state.activeFeed ? state.activeFeed.title : "All items";
 
-  const container = document.getElementById('items-container');
+  document.getElementById("feed-title-bar").textContent = title;
+  document.getElementById("item-count-label").textContent =
+    items.length ? items.length + " item" + (items.length !== 1 ? "s" : "") : "";
+
+  const container = document.getElementById("items-container");
+
   if (!items.length) {
-    container.innerHTML = `<div id="items-empty">
-      <div class="empty-h">${esc(title)}</div>
-      <p>${getAllFeeds().length ? 'No items yet. Try refreshing.' : 'Import an OPML file or click "Load Sample" to get started.'}</p>
-    </div>`;
+    container.innerHTML = `
+      <div id="items-empty">
+        <div class="empty-h">${esc(title)}</div>
+        <p>${getAllFeeds().length ? "No items yet. Try refreshing." : "Import an OPML file or click Load Sample to get started."}</p>
+      </div>
+    `;
     return;
   }
 
   container.innerHTML = items.map((item, idx) => {
-    const isRead    = state.read.has(item.id);
-    const isActive  = state.activeItemId === item.id;
+    const isRead = state.read.has(item.id);
+    const isActive = state.activeItemId === item.id;
     const isStarred = state.starred.has(item.id);
-    const safeId    = esc(item.id);
+    const safeId = esc(item.id);
     const sanitized = sanitize(item.content);
 
-    return `<div class="item-row${isActive ? ' active' : ''}${isRead ? ' read' : ''}" id="ir-${idx}" onclick="selectItem(${idx})">
-      <div class="item-icons" onclick="event.stopPropagation()">
-        <span class="item-check" title="Toggle read" onclick="toggleReadItem(${idx},event)">✓</span>
-        <span class="item-star${isStarred ? ' starred' : ''}" data-id="${safeId}" title="Star" onclick="toggleStar('${safeId}',event)">★</span>
-      </div>
-      <div class="item-body">
-        <div class="item-line">
-          <span class="item-title">${esc(item.title)}</span>
-          ${item.snippet ? `<span class="item-mdash"> — </span><span class="item-snippet">${esc(item.snippet)}</span>` : ''}
-          <span class="item-source">${esc(item.feedTitle)}</span>
-          <span class="item-time">${fmtTime(item.date)}</span>
+    return `
+      <div class="item-row${isActive ? " active" : ""}${isRead ? " read" : ""}" id="ir-${idx}" onclick="selectItem(${idx})">
+        <div class="item-icons" onclick="event.stopPropagation()">
+          <span class="item-check" title="Toggle read" onclick="toggleReadItem(${idx}, event)">✓</span>
+          <span class="item-star${isStarred ? " starred" : ""}" data-id="${safeId}" title="Star" onclick="toggleStar('${safeId}', event)">★</span>
         </div>
-        <div class="item-expanded-post">
-          <div class="exp-title">${esc(item.title)}</div>
-          <div class="exp-meta">
-            <strong>${esc(item.feedTitle)}</strong>
-            ${item.date.getTime() ? `<span>${item.date.toLocaleString()}</span>` : ''}
-            ${item.link ? `<a href="${esc(item.link)}" target="_blank" rel="noopener">↗ Open original</a>` : ''}
+
+        <div class="item-body">
+          <div class="item-line">
+            <span class="item-title">${esc(item.title)}</span>
+            ${item.snippet ? `<span class="item-mdash"> — </span><span class="item-snippet">${esc(item.snippet)}</span>` : ""}
+            <span class="item-source">${esc(item.feedTitle)}</span>
+            <span class="item-time">${fmtTime(item.date)}</span>
           </div>
-          <div class="exp-body">${sanitized || '<p><em>No content available. Open the original link to read.</em></p>'}</div>
+
+          <div class="item-expanded-post">
+            <div class="exp-title">${esc(item.title)}</div>
+
+            <div class="exp-meta">
+              <strong>${esc(item.feedTitle)}</strong>
+              ${item.date.getTime() ? `<span>${item.date.toLocaleString()}</span>` : ""}
+              ${item.link ? `<a href="${esc(item.link)}" target="_blank" rel="noopener">↗ Open original</a>` : ""}
+            </div>
+
+            <div class="exp-body">
+              ${sanitized || "<p><em>No content available. Open the original link to read.</em></p>"}
+            </div>
+          </div>
         </div>
       </div>
-    </div>`;
-  }).join('');
+    `;
+  }).join("");
 }
 
 function selectItem(idx) {
   const items = getActiveItems();
-  const item = items[idx]; if (!item) return;
+  const item = items[idx];
+
+  if (!item) return;
 
   if (state.activeItemId === item.id) {
-    state.activeItemId = null; renderItems(); return;
+    state.activeItemId = null;
+    renderItems();
+    return;
   }
+
   state.activeItemId = item.id;
   markRead(item.id);
-  renderSidebar(); renderItems();
+
+  renderSidebar();
+  renderItems();
+
   requestAnimationFrame(() => {
-    const el = document.getElementById('ir-' + idx);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const el = document.getElementById("ir-" + idx);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
 }
 
 function toggleReadItem(idx, e) {
   e.stopPropagation();
-  const item = getActiveItems()[idx]; if (!item) return;
-  state.read.has(item.id) ? state.read.delete(item.id) : state.read.add(item.id);
+
+  const item = getActiveItems()[idx];
+  if (!item) return;
+
+  if (state.read.has(item.id)) {
+    state.read.delete(item.id);
+  } else {
+    state.read.add(item.id);
+  }
+
   persist();
-  getAllFeeds().forEach(f => { f.unread = f.items.filter(i => !state.read.has(i.id)).length; });
-  renderSidebar(); renderItems();
+
+  getAllFeeds().forEach(f => {
+    f.unread = f.items.filter(i => !state.read.has(i.id)).length;
+  });
+
+  renderSidebar();
+  renderItems();
 }
 
 function sanitize(html) {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/on\w+="[^"]*"/gi, '')
-    .replace(/on\w+='[^']*'/gi, '');
+  if (!html) return "";
+
+  return String(html)
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
+    .replace(/\son\w+="[^"]*"/gi, "")
+    .replace(/\son\w+='[^']*'/gi, "")
+    .replace(/javascript:/gi, "");
 }
 
-// ═══════════════════════════════════════════════════
-//  UTILS
-// ═══════════════════════════════════════════════════
 function setLoading(on, msg) {
-  document.getElementById('loading').classList.toggle('hidden', !on);
-  if (msg) document.getElementById('loading-text').textContent = msg;
+  document.getElementById("loading").classList.toggle("hidden", !on);
+
+  if (msg) {
+    document.getElementById("loading-text").textContent = msg;
+  }
 }
 
 let _tt;
+
 function toast(msg, type) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.className = 'show' + (type ? ' ' + type : '');
-  clearTimeout(_tt); _tt = setTimeout(() => { el.className = ''; }, 3000);
+  const el = document.getElementById("toast");
+
+  el.textContent = msg;
+  el.className = "show" + (type ? " " + type : "");
+
+  clearTimeout(_tt);
+
+  _tt = setTimeout(() => {
+    el.className = "";
+  }, 3000);
 }
 
-// ═══════════════════════════════════════════════════
-//  THEME
-// ═══════════════════════════════════════════════════
 function toggleTheme() {
-  const dark = document.documentElement.classList.toggle('dark');
-  document.getElementById('theme-icon').textContent = dark ? '☀️' : '🌙';
-  localStorage.setItem('rss_theme', dark ? 'dark' : 'light');
+  const dark = document.documentElement.classList.toggle("dark");
+
+  document.getElementById("theme-icon").textContent = dark ? "☀️" : "🌙";
+  localStorage.setItem("rss_theme", dark ? "dark" : "light");
 }
 
-// ═══════════════════════════════════════════════════
-//  INIT
-// ═══════════════════════════════════════════════════
-if (localStorage.getItem('rss_theme') === 'dark') {
-  document.documentElement.classList.add('dark');
-  document.getElementById('theme-icon').textContent = '☀️';
+if (localStorage.getItem("rss_theme") === "dark") {
+  document.documentElement.classList.add("dark");
+  document.getElementById("theme-icon").textContent = "☀️";
 }
+
 setLoading(false);
-renderSidebar();
-renderItems();
+loadSampleOpml()
+
+
+// if (!localStorage.getItem("rss_loaded_once")) {
+//   localStorage.setItem("rss_loaded_once", "1");
+//   loadSampleOpml();
+// } else {
+//   renderSidebar();
+//   renderItems();
+// }
 </script>
+
 </body>
 </html>

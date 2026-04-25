@@ -75,6 +75,11 @@
     "description": "Festival management system (in development)"
   },
   {
+    "category": "Tools & Apps",
+    "directory": "renereader",
+    "description": "RSS reader"
+  },
+  {
     "category": "People & Profiles",
     "directory": "disar2",
     "description": "Website for DJ Disar Marxin (Didier Salembier)"
