@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hostel Scorecard</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper:    #fdf8ed;
+  --cream:    #fffabb;
+  --warm:     #efe6c4;
+  --border:   #d8cca8;
+  --border2:  #c8ba92;
+  --ink:      #2c2414;
+  --mid:      #7a6a48;
+  --muted:    #a8956a;
+  --accent:   #b85c1a;
+  --green:    #3a6e3a;
+  --amber:    #c47a0a;
+  --red:      #b03020;
+  --orange:   #d05a10;
+  --lime:     #5a8a2a;
+  --mono:     'DM Mono', monospace;
+  --serif:    'Lora', Georgia, serif;
+  --sans:     'Syne', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--cream);
+  background-image:
+    radial-gradient(ellipse at 20% 10%, rgba(255,220,120,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 90%, rgba(200,180,100,0.12) 0%, transparent 50%);
+  font-family: var(--serif);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 3rem 1.25rem 5rem;
+}
+
+.page {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+/* ── MASTHEAD ── */
+.masthead {
+  text-align: center;
+  padding-bottom: 1.5rem;
+  margin-bottom: 0;
+  position: relative;
+}
+.masthead-rule {
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--border2) 20%, var(--ink) 50%, var(--border2) 80%, transparent);
+  margin-bottom: 1.5rem;
+}
+.masthead-eyebrow {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.masthead h1 {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: clamp(2.2rem, 6vw, 3.8rem);
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+.masthead h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
+.masthead-sub {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.95rem;
+  color: var(--mid);
+  margin-bottom: 1.5rem;
+}
+.masthead-rule-thin {
+  height: 1px;
+  background: var(--border);
+  margin-bottom: 1.5rem;
+}
+
+/* ── INFO FIELDS ── */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0 2rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+.info-field {
+  padding: 0.3rem 0 0.6rem;
+  border-bottom: 1.5px solid var(--border);
+}
+.info-field label {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 2px;
+}
+.info-field input {
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+  font-family: var(--serif);
+  font-size: 0.88rem;
+  color: var(--ink);
+  padding: 1px 0;
+}
+.info-field input::placeholder { color: var(--border2); }
+
+/* ── SCORE STRIP ── */
+.score-strip {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2rem;
+  align-items: center;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+}
+.score-left { }
+.score-tag {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 0.2rem;
+}
+.score-number {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 4rem;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: #f5c842;
+}
+.score-denom {
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: rgba(255,255,255,0.3);
+}
+.score-verdict {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.55);
+  margin-top: 0.35rem;
+}
+.score-bars { }
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 5px;
+}
+.bar-label {
+  font-family: var(--mono);
+  font-size: 0.52rem;
+  color: rgba(255,255,255,0.45);
+  width: 72px;
+  flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bar-track {
+  flex: 1;
+  height: 5px;
+  background: rgba(255,255,255,0.1);
+  position: relative;
+}
+.bar-fill {
+  height: 100%;
+  width: 0%;
+  background: #f5c842;
+  transition: width 0.4s cubic-bezier(.4,0,.2,1);
+}
+.bar-pct {
+  font-family: var(--mono);
+  font-size: 0.52rem;
+  color: rgba(255,255,255,0.35);
+  width: 24px;
+  text-align: right;
+}
+
+/* ── LEGEND ── */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.2rem;
+  margin-bottom: 1.5rem;
+  padding: 0.7rem 1rem;
+  background: var(--warm);
+  border: 1px solid var(--border);
+}
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 0.56rem;
+  color: var(--mid);
+}
+.leg-pip {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.55rem; color: white;
+  font-family: var(--mono);
+  flex-shrink: 0;
+}
+.leg-star { color: var(--accent); font-size: 0.7rem; }
+
+/* ── CATEGORIES ── */
+.cat {
+  margin-bottom: 1rem;
+  border: 1.5px solid var(--border);
+  background: var(--paper);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.cat:focus-within { border-color: var(--border2); }
+
+.cat-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  border-bottom: 1.5px solid var(--border);
+  background: var(--cream);
+  user-select: none;
+  transition: background 0.15s;
+}
+.cat-head:hover { background: var(--warm); }
+.cat-icon { font-size: 1.1rem; flex-shrink: 0; }
+.cat-name {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  flex: 1;
+}
+.cat-badge {
+  font-family: var(--mono);
+  font-size: 0.52rem;
+  padding: 2px 6px;
+  background: var(--ink);
+  color: var(--paper);
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+.cat-avg {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  flex-shrink: 0;
+  min-width: 38px;
+  text-align: right;
+}
+.cat-avg strong { color: var(--ink); font-size: 0.82rem; }
+.chevron {
+  font-size: 0.6rem;
+  color: var(--muted);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.cat.closed .chevron { transform: rotate(-90deg); }
+.cat.closed .cat-body { display: none; }
+
+.cat-body { }
+
+.subhead {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  padding: 0.45rem 1rem 0.3rem;
+  background: rgba(0,0,0,0.025);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── ITEM ROWS ── */
+.item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 1rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+}
+.item:last-child { border-bottom: none; }
+.item:hover { background: rgba(220,200,140,0.12); }
+
+.item.must .item-label::before {
+  content: '★ ';
+  color: var(--accent);
+  font-size: 0.65rem;
+}
+.item-label {
+  font-family: var(--serif);
+  font-size: 0.82rem;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.item-w {
+  font-family: var(--mono);
+  font-size: 0.5rem;
+  color: var(--border2);
+  text-align: center;
+}
+
+.btns {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.btn-s {
+  width: 27px; height: 27px;
+  border: 1.5px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  color: var(--muted);
+  transition: all 0.12s;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.btn-s:hover { border-color: var(--ink); color: var(--ink); background: var(--warm); }
+
+.btn-s.on-0 { background: var(--red);    border-color: var(--red);    color: #fff; }
+.btn-s.on-1 { background: var(--orange); border-color: var(--orange); color: #fff; }
+.btn-s.on-2 { background: var(--amber);  border-color: var(--amber);  color: #fff; }
+.btn-s.on-3 { background: var(--lime);   border-color: var(--lime);   color: #fff; }
+.btn-s.on-4 { background: var(--green);  border-color: var(--green);  color: #fff; }
+.btn-s.on-na{ background: var(--mid);    border-color: var(--mid);    color: #fff; }
+
+/* ── NOTES ── */
+.notes-wrap {
+  margin-top: 2rem;
+  background: var(--paper);
+  border: 1.5px solid var(--border);
+  padding: 1.1rem 1.2rem;
+}
+.notes-wrap h3 {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+.notes-wrap textarea {
+  width: 100%;
+  min-height: 90px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  resize: vertical;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--ink);
+  outline: none;
+  line-height: 1.9;
+}
+.notes-wrap textarea::placeholder { color: var(--border2); }
+
+/* ── ACTIONS ── */
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+.action-btn {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.6rem 1.2rem;
+  border: 1.5px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.action-btn:hover { background: var(--ink); color: var(--paper); }
+.action-btn.prim { background: var(--ink); color: var(--paper); }
+.action-btn.prim:hover { background: var(--accent); border-color: var(--accent); }
+.action-btn.danger:hover { background: var(--red); border-color: var(--red); color: #fff; }
+
+/* ── PRINT ── */
+@media print {
+  body { background: white; padding: 1rem; }
+  .actions { display: none; }
+  .cat.closed .cat-body { display: block !important; }
+  .btn-s { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .bar-fill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
+@media (max-width: 560px) {
+  .score-strip { grid-template-columns: 1fr; }
+  .score-bars { display: none; }
+  .item { grid-template-columns: 1fr auto; }
+  .item-w { display: none; }
+  .score-number { font-size: 3rem; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div class="masthead-rule"></div>
+    <div class="masthead-eyebrow">Independent Review · Field Edition</div>
+    <h1>Hostel <em>Scorecard</em></h1>
+    <div class="masthead-sub">A systematic evaluation for the discerning traveller</div>
+    <div class="masthead-rule-thin"></div>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-field"><label>Hostel name</label><input type="text" placeholder="…"></div>
+    <div class="info-field"><label>City / country</label><input type="text" placeholder="…"></div>
+    <div class="info-field"><label>Date visited</label><input type="date"></div>
+    <div class="info-field"><label>Dorm type</label><input type="text" placeholder="e.g. mixed 6-bed"></div>
+    <div class="info-field"><label>Price per night (€/$)</label><input type="number" placeholder="0"></div>
+    <div class="info-field"><label>Reviewer</label><input type="text" placeholder="…"></div>
+  </div>
+
+  <!-- Score strip -->
+  <div class="score-strip">
+    <div class="score-left">
+      <div class="score-tag">Weighted total</div>
+      <div>
+        <span class="score-number" id="total-num">—</span>
+        <span class="score-denom"> / 100</span>
+      </div>
+      <div class="score-verdict" id="verdict">No scores entered yet</div>
+    </div>
+    <div class="score-bars" id="score-bars"></div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="leg-item"><div class="leg-pip" style="background:#b03020">0</div>Absent / terrible</div>
+    <div class="leg-item"><div class="leg-pip" style="background:#d05a10">1</div>Below expectation</div>
+    <div class="leg-item"><div class="leg-pip" style="background:#c47a0a">2</div>Acceptable</div>
+    <div class="leg-item"><div class="leg-pip" style="background:#5a8a2a">3</div>Good</div>
+    <div class="leg-item"><div class="leg-pip" style="background:#3a6e3a">4</div>Excellent</div>
+    <div class="leg-item"><div class="leg-pip" style="background:#7a6a48">N/A</div>Not applicable</div>
+    <div class="leg-item" style="margin-left:auto"><span class="leg-star">★</span> = Must-have</div>
+  </div>
+
+  <div id="form-root"></div>
+
+  <div class="notes-wrap">
+    <h3>Notes &amp; overall impression</h3>
+    <textarea placeholder="General vibe, surprises, tips for other travellers…"></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="action-btn prim" onclick="window.print()">⎙ Print / PDF</button>
+    <button class="action-btn" onclick="doExport()">↓ Export JSON</button>
+    <button class="action-btn" onclick="expandAll()">⊞ Expand all</button>
+    <button class="action-btn" onclick="collapseAll()">⊟ Collapse all</button>
+    <button class="action-btn danger" onclick="doReset()">↺ Reset</button>
+  </div>
+
+</div>
+<script>
+const CATS = [
+  { id:'loc', icon:'📍', name:'Location & Access', weight:8, items:[
+    { id:'loc1', label:'Good location (centre / transport links)', must:true, w:3 },
+    { id:'loc2', label:'ATM or bank nearby', must:false, w:1 },
+    { id:'loc3', label:'Scooter or bicycle rental available', must:false, w:1 },
+    { id:'loc4', label:'Safe neighbourhood', must:true, w:3 },
+  ]},
+  { id:'saf', icon:'🔒', name:'Safety & Security', weight:12, items:[
+    { id:'saf1', label:'24/7 reception or night security', must:true, w:3 },
+    { id:'saf2', label:'Key(-card) access to rooms', must:true, w:3 },
+    { id:'saf3', label:'Locker / storage space per bed (1 = wallet | 2= handbag | 3 = daypack | 4 = backpack 75 l)', must:true, w:3 },
+    { id:'saf4', label:'Smoke detectors and clear emergency exits', must:true, w:3 },
+    { id:'saf5', label:'Female-only dorm option available', must:false, w:1 },
+    { id:'saf6', label:'Spacious room — good sense of space', must:false, w:2 },
+    ]},
+  { id:'cln', icon:'✨', name:'Cleanliness', weight:8, items:[
+    { id:'cl1', label:'Clean common areas', must:true, w:4 },
+    { id:'cl2', label:'Clean dorms', must:true, w:4 },
+    { id:'cl3', label:'Clean bathrooms', must:true, w:4 },
+    { id:'cl4', label:'Clean kitchen', must:true, w:3 },
+  ]},
+    { id:'slp', icon:'🛏', name:'Sleep Quality', weight:20, groups:[
+    { label:'Noise & disturbance', items:[
+      { id:'sl1', label:'Sound-insulated walls', must:true, w:3 },
+      { id:'sl2', label:'Quiet hours enforced', must:true, w:3 },
+      { id:'sl3', label:'No shaking bunk ladder vibrations', must:false, w:2 },
+      { id:'sl4', label:'Silent door lock on dorm', must:false, w:2 },
+      { id:'sl5', label:'Quiet air-con / fan', must:false, w:2 },
+    ]},
+ 
+    { label:'Bed & bedding', items:[
+      { id:'sl6', label:'Good mattress', must:true, w:3 },
+      { id:'sl7', label:'Mattress in plastic cover (anti bed-bug)', must:true, w:3 },
+      { id:'sl8', label:'Good pillow', must:true, w:2 },
+      { id:'sl9', label:'Warm, comfortable duvet', must:false, w:2 },
+      { id:'sl10', label:'Curtains / dividers between beds (light/air tight)', must:true, w:5 },
+      { id:'sl11', label:'Blackout curtains windows', must:true, w:3 },
+      { id:'sl12', label:'Stable bunk — no movement when neighbour shifts', must:true, w:3 },
+      { id:'sl13', label:'Steps on bunk bed comfortable and safe', must:false, w:1 },
+    ]},
+    { label:'Personal bed amenities', items:[
+      { id:'sl14', label:'Own power outlet per bed', must:true, w:3 },
+      { id:'sl15', label:'Individual reading light per bed', must:false, w:2 },
+      { id:'sl16', label:'Towel available / included', must:false, w:1 },
+      { id:'sl17', label:'Good quality bed linen', must:false, w:2 },
+    ]},
+  ]},
+  { id:'bath', icon:'🚿', name:'Bathroom & Hygiene', weight:12, items:[
+    { id:'ba1', label:'Hot water with stable pressure', must:true, w:3 },
+    { id:'ba2', label:'Enough showers and toilets for guests', must:true, w:3 },
+    { id:'ba3', label:'Showers and toilets separated / with divider', must:false, w:2 },
+    { id:'ba4', label:'Bathrooms close to the dorm', must:false, w:2 },
+    { id:'ba5', label:'Shelf and hooks inside showers', must:false, w:1 },
+    { id:'ba6', label:'Hair dryer available', must:false, w:1 },
+    { id:'ba7', label:'Free soap/shampoo', must:true, w:2 },
+     { id:'ba8', label:'Toilet paper always available', must:true, w:2 },
+    { id:'ba9', label:'Daily cleaning or more', must:false, w:2 },
+    { id:'ba10', label:'Good ventilation in bathrooms', must:true, w:2 },
+  ]},
+  { id:'kit', icon:'🍳', name:'Kitchen & Food', weight:10, items:[
+    { id:'ki1', label:'Fridge available', must:true, w:3 },
+    { id:'ki2', label:'Fully equipped kitchen', must:true, w:3 },
+    { id:'ki3', label:'Label system for fridge food', must:false, w:1 },
+    { id:'ki4', label:'Free drinking water', must:true, w:3 },
+    { id:'ki5', label:'Coffee and tea included', must:false, w:1 },
+    { id:'ki6', label:'Enough pans and sharp knives', must:false, w:2 },
+    { id:'ki7', label:'Clean sponges replaced daily', must:false, w:1 },
+  ]},
+  { id:'net', icon:'📶', name:'Internet & Work', weight:8, items:[
+    { id:'in1', label:'Fast and stable WiFi', must:true, w:4 },
+    { id:'in2', label:'Ethernet option available', must:false, w:2 },
+    { id:'in3', label:'Quiet co-working zone', must:false, w:3 },
+    { id:'in4', label:'Standing desk option', must:false, w:1 },
+    { id:'in5', label:'Printer access', must:false, w:1 },
+  ]},
+  { id:'vibe', icon:'🎉', name:'Social Vibe', weight:8, items:[
+    { id:'so1', label:'Organised activities on offer', must:false, w:2 },
+    { id:'so2', label:'Music instruments available', must:false, w:1 },
+    { id:'so3', label:'Board games available', must:false, w:1 },
+    { id:'so4', label:'Chill zone and party zone separated', must:true, w:3 },
+    { id:'so5', label:'No forced social atmosphere', must:true, w:2 },
+    { id:'so6', label:'Respectful crowd of guests', must:true, w:3 },
+  ]},
+  { id:'prac', icon:'🧺', name:'Practical Extras', weight:8, items:[
+    { id:'pr1', label:'Laundry with clear pricing', must:false, w:2 },
+    { id:'pr2', label:'Drying racks available', must:false, w:2 },
+    { id:'pr3', label:'Luggage storage before and after checkout', must:true, w:3 },
+  ]},
+  { id:'env', icon:'🌿', name:'Environment & Design', weight:5, items:[
+    { id:'de1', label:'Good natural light in common areas', must:false, w:2 },
+    { id:'de2', label:'Attractive, comfortable common spaces', must:false, w:2 },
+    { id:'de3', label:'Plants and greenery', must:false, w:1 },
+    { id:'de4', label:'Trash separation / recycling', must:false, w:1 },
+    { id:'de5', label:'No mould smell anywhere', must:true, w:3 },
+  ]},
+  { id:'stf', icon:'👋', name:'Staff & Service', weight:9, items:[
+    { id:'st1', label:'Friendly and genuinely helpful staff', must:true, w:4 },
+    { id:'st2', label:'Responsive and proactive', must:true, w:3 },
+    { id:'st3', label:'Smooth check-in and check-out', must:false, w:2 },
+  ]},
+  { id:'rul', icon:'📋', name:'House Rules', weight:5, items:[
+    { id:'ru1', label:'No noisy plastic bags at night', must:false, w:1 },
+    { id:'ru2', label:'No loud packing in dorms', must:true, w:3 },
+    { id:'ru3', label:'No phone calls in sleeping areas', must:true, w:3 },
+    { id:'ru4', label:'Shoes off in rooms', must:false, w:1 },
+    { id:'ru5', label:'Rules actually enforced (not just on paper)', must:true, w:3 },
+  ]},
+
+];
+
+const S = {};
+
+function allItems(cat) {
+  if (cat.groups) return cat.groups.flatMap(g => g.items);
+  return cat.items || [];
+}
+
+function buildBars() {
+  const el = document.getElementById('score-bars');
+  el.innerHTML = CATS.map(c => `
+    <div class="bar-row">
+      <div class="bar-label">${c.name.split(' ')[0]}</div>
+      <div class="bar-track"><div class="bar-fill" id="bf-${c.id}"></div></div>
+      <div class="bar-pct" id="bp-${c.id}">—</div>
+    </div>`).join('');
+}
+
+function buildForm() {
+  const root = document.getElementById('form-root');
+  root.innerHTML = '';
+  CATS.forEach(cat => {
+    const wrap = document.createElement('div');
+    wrap.className = 'cat';
+    wrap.id = 'cat-' + cat.id;
+    wrap.innerHTML = `
+      <div class="cat-head" onclick="toggle('${cat.id}')">
+        <span class="cat-icon">${cat.icon}</span>
+        <span class="cat-name">${cat.name}</span>
+        <span class="cat-badge">weight ${cat.weight}%</span>
+        <span class="cat-avg" id="ca-${cat.id}">—<span style="font-size:0.55rem;color:var(--muted)"> /4</span></span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="cat-body" id="cb-${cat.id}"></div>`;
+    root.appendChild(wrap);
+    const body = document.getElementById('cb-' + cat.id);
+    if (cat.groups) {
+      cat.groups.forEach(g => {
+        const sh = document.createElement('div');
+        sh.className = 'subhead';
+        sh.textContent = g.label;
+        body.appendChild(sh);
+        g.items.forEach(it => body.appendChild(makeRow(it)));
+      });
+    } else {
+      (cat.items || []).forEach(it => body.appendChild(makeRow(it)));
+    }
+  });
+}
+
+function makeRow(it) {
+  const row = document.createElement('div');
+  row.className = 'item' + (it.must ? ' must' : '');
+  row.id = 'r-' + it.id;
+  row.innerHTML = `
+    <div class="item-label">${it.label}</div>
+    <div class="item-w">w${it.w}</div>
+    <div class="btns" id="b-${it.id}">
+      <button class="btn-s" onclick="pick('${it.id}',0)" title="0 – Absent / terrible">0</button>
+      <button class="btn-s" onclick="pick('${it.id}',1)" title="1 – Below expectation">1</button>
+      <button class="btn-s" onclick="pick('${it.id}',2)" title="2 – Acceptable">2</button>
+      <button class="btn-s" onclick="pick('${it.id}',3)" title="3 – Good">3</button>
+      <button class="btn-s" onclick="pick('${it.id}',4)" title="4 – Excellent">4</button>
+      <button class="btn-s" onclick="pick('${it.id}','na')" title="Not applicable">N/A</button>
+    </div>`;
+  return row;
+}
+
+function pick(id, val) {
+  S[id] = val;
+  const btns = document.querySelectorAll(`#b-${id} .btn-s`);
+  btns.forEach(b => b.className = 'btn-s');
+  const idx = val === 'na' ? 5 : val;
+  btns[idx].classList.add('on-' + val);
+  recalc();
+}
+
+function recalc() {
+  let tw = 0, ts = 0;
+  CATS.forEach(cat => {
+    const items = allItems(cat);
+    let cs = 0, cw = 0;
+    items.forEach(it => {
+      const v = S[it.id];
+      if (v !== undefined && v !== 'na') { cs += v * it.w; cw += it.w; }
+    });
+    const pct = cw > 0 ? cs / (cw * 4) * 100 : null;
+    const avg = cw > 0 ? (cs / cw).toFixed(1) : null;
+    const ca = document.getElementById('ca-' + cat.id);
+    if (ca) ca.innerHTML = avg !== null
+      ? `<strong>${avg}</strong><span style="font-size:.55rem;color:var(--muted)"> /4</span>`
+      : `—<span style="font-size:.55rem;color:var(--muted)"> /4</span>`;
+    const bf = document.getElementById('bf-' + cat.id);
+    const bp = document.getElementById('bp-' + cat.id);
+    if (bf) { bf.style.width = (pct||0) + '%'; bf.style.background = pct===null?'#f5c842':pct>=75?'#7dc87d':pct>=50?'#e8c84a':'#e07060'; }
+    if (bp) bp.textContent = pct !== null ? Math.round(pct)+'%' : '—';
+    if (pct !== null) { ts += pct * cat.weight; tw += cat.weight; }
+  });
+  const total = tw > 0 ? Math.round(ts / tw) : null;
+  document.getElementById('total-num').textContent = total ?? '—';
+  const v = document.getElementById('verdict');
+  if (total === null) { v.textContent = 'No scores entered yet'; v.style.color = 'rgba(255,255,255,.4)'; }
+  else if (total >= 85) { v.textContent = '★ Outstanding — highly recommended'; v.style.color = '#b8e87a'; }
+  else if (total >= 70) { v.textContent = '✓ Good hostel — worth booking'; v.style.color = '#d8e8a0'; }
+  else if (total >= 55) { v.textContent = '~ Acceptable — with caveats'; v.style.color = '#f0d890'; }
+  else if (total >= 40) { v.textContent = '⚠ Below expectations'; v.style.color = '#f0b070'; }
+  else { v.textContent = '✗ Not recommended'; v.style.color = '#f09090'; }
+}
+
+function toggle(id) { document.getElementById('cat-'+id).classList.toggle('closed'); }
+function expandAll()  { document.querySelectorAll('.cat').forEach(c=>c.classList.remove('closed')); }
+function collapseAll(){ document.querySelectorAll('.cat').forEach(c=>c.classList.add('closed')); }
+
+function doReset() {
+  if (!confirm('Clear all scores?')) return;
+  Object.keys(S).forEach(k=>delete S[k]);
+  document.querySelectorAll('.btn-s').forEach(b=>b.className='btn-s');
+  recalc();
+}
+
+function doExport() {
+  const name = document.querySelector('.info-field input')?.value || 'hostel';
+  const blob = new Blob([JSON.stringify({
+    hostel: name,
+    date: new Date().toISOString().split('T')[0],
+    scores: S,
+    categories: CATS.map(c=>{
+      const items=allItems(c); let cs=0,cw=0;
+      items.forEach(it=>{ const v=S[it.id]; if(v!==undefined&&v!=='na'){cs+=v*it.w;cw+=it.w;} });
+      return { id:c.id, name:c.name, weight:c.weight, avg: cw>0?(cs/cw).toFixed(2):null };
+    })
+  }, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `hostel-score-${name.replace(/\s+/g,'-')}.json`;
+  a.click();
+}
+
+buildBars();
+buildForm();
+</script>
+</body>
+</html>
