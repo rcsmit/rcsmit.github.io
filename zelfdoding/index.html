@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CBS Sterfte – Zelfdoding 2000–2024</title>
+  <title>CBS Sterfte – Doodsoorzaken</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.1/plotly.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
       --surface: #ffffff;
       --surface2: #f9fafb;
       --border: #e5e7eb;
-      --border-strong: #d1d5db;
       --accent: #2563eb;
       --accent-bg: #eff6ff;
       --text: #111827;
@@ -25,7 +24,6 @@
       --sans: 'IBM Plex Sans', sans-serif;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       background: var(--bg);
       color: var(--text);
@@ -55,6 +53,7 @@
       margin-bottom: 0.2rem;
     }
     h1 { font-size: 1.1rem; font-weight: 500; color: var(--text); }
+    .header-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
     .source-badge {
       font-family: var(--mono);
       font-size: 0.6rem;
@@ -67,6 +66,76 @@
       transition: color 0.1s, border-color 0.1s;
     }
     .source-badge:hover { color: var(--accent); border-color: var(--accent); }
+    .api-badge {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      background: #f0fdf4;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .api-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #16a34a;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* ── Loading overlay ── */
+    #loading {
+      position: fixed; inset: 0;
+      background: rgba(249,250,251,0.94);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      z-index: 100;
+      backdrop-filter: blur(2px);
+    }
+    #loading.hidden { display: none; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); }
+    .loading-sub  { font-family: var(--mono); font-size: 0.62rem; color: var(--text-muted); max-width: 320px; text-align: center; }
+    .loading-progress { width: 220px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .loading-bar { height: 100%; background: var(--accent); border-radius: 2px; width: 0%; transition: width 0.4s ease; }
+
+    /* ── Error banner ── */
+    #error-banner {
+      display: none;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 0.75rem 1.75rem;
+      gap: 0.5rem;
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    #error-banner.visible { display: flex; }
+    #error-detail { font-size: 0.62rem; color: #991b1b; margin-top: 0.15rem; }
+    #error-retry {
+      font-family: var(--mono); font-size: 0.68rem;
+      padding: 0.25rem 0.6rem;
+      border: 1px solid var(--red);
+      background: none; color: var(--red);
+      border-radius: 3px; cursor: pointer;
+      margin-top: 0.25rem;
+    }
+    #error-retry:hover { background: #fef2f2; }
 
     /* ── Controls ── */
     .controls {
@@ -102,47 +171,20 @@
     .btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
     .btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 
-    /* Age-specific active colors */
-    .btn.age-special.active { background: #374151; border-color: #374151; }
-    .btn.age-3.active { background: #d97706; border-color: #d97706; }
-    .btn.age-4.active { background: #dc2626; border-color: #dc2626; }
-    .btn.age-5.active { background: #7c3aed; border-color: #7c3aed; }
-    .btn.age-6.active { background: #0284c7; border-color: #0284c7; }
-    .btn.age-7.active  { background: #0d9488; border-color: #0d9488; }
-    .btn.age-8.active  { background: #16a34a; border-color: #16a34a; }
-    .btn.age-9.active  { background: #65a30d; border-color: #65a30d; }
-    .btn.age-10.active { background: #ca8a04; border-color: #ca8a04; }
-    .btn.age-11.active { background: #ea580c; border-color: #ea580c; }
-    .btn.age-12.active { background: #be185d; border-color: #be185d; }
-    .btn.age-13.active { background: #7e22ce; border-color: #7e22ce; }
-    .btn.age-14.active { background: #1d4ed8; border-color: #1d4ed8; }
-    .btn.age-15.active { background: #0369a1; border-color: #0369a1; }
-    .btn.age-16.active { background: #047857; border-color: #047857; }
-    .btn.age-17.active { background: #b45309; border-color: #b45309; }
-    .btn.age-18.active { background: #9f1239; border-color: #9f1239; }
-    .btn.age-19.active { background: #4338ca; border-color: #4338ca; }
-    .btn.age-20.active { background: #064e3b; border-color: #064e3b; }
-    .btn.age-0.active, .btn.age-1.active, .btn.age-2.active
-                       { background: #6b7280; border-color: #6b7280; }
-
     /* Baseline selects */
     .range-row { display: flex; align-items: center; gap: 0.4rem; }
-    .range-row select {
-      font-family: var(--mono);
-      font-size: 0.68rem;
+    .range-row select, .ctrl-select {
+      font-family: var(--mono); font-size: 0.68rem;
       padding: 0.25rem 0.45rem;
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      background: var(--surface2);
-      color: var(--text);
-      cursor: pointer;
+      border: 1px solid var(--border); border-radius: 3px;
+      background: var(--surface2); color: var(--text); cursor: pointer;
     }
-    .range-row select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .ctrl-select { max-width: 340px; width: 100%; }
+    .range-row select:focus, .ctrl-select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
     .range-sep { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); }
 
     /* ── Main ── */
     .main { flex: 1; padding: 1.25rem 1.75rem; display: flex; flex-direction: column; gap: 1rem; }
-
     #chart {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -151,42 +193,18 @@
     }
 
     /* ── Excess table ── */
-    .excess-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      overflow: hidden;
-    }
+    .excess-section { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
     .excess-head {
       padding: 0.7rem 1.25rem;
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: baseline;
-      gap: 1rem;
-      flex-wrap: wrap;
+      display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap;
       background: var(--surface2);
     }
-    .excess-title {
-      font-family: var(--mono);
-      font-size: 0.68rem;
-      font-weight: 600;
-      color: var(--text);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
+    .excess-title { font-family: var(--mono); font-size: 0.68rem; font-weight: 600; color: var(--text); text-transform: uppercase; }
     .excess-note { font-size: 0.7rem; color: var(--text-muted); }
     .excess-wrap { overflow-x: auto; }
-
     table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.7rem; }
-    thead th {
-      background: var(--surface2);
-      border-bottom: 2px solid var(--border);
-      padding: 0.45rem 0.9rem;
-      text-align: right;
-      color: var(--text-dim);
-      font-weight: 600;
-      white-space: nowrap;
-    }
+    thead th { background: var(--surface2); border-bottom: 2px solid var(--border); padding: 0.45rem 0.9rem; text-align: right; color: var(--text-dim); font-weight: 600; white-space: nowrap; }
     thead th:first-child { text-align: left; }
     tbody tr { border-bottom: 1px solid var(--border); }
     tbody tr:hover { background: #f0f4ff; }
@@ -195,95 +213,73 @@
     .pos { color: var(--red); font-weight: 600; }
     .neg { color: var(--green); font-weight: 600; }
     .zero { color: var(--text-muted); }
-    tfoot td {
-      padding: 0.45rem 0.9rem;
-      background: #f0f4ff;
-      border-top: 2px solid #bfdbfe;
-      font-weight: 700;
-      text-align: right;
-      font-size: 0.72rem;
-    }
+    tfoot td { padding: 0.45rem 0.9rem; background: #f0f4ff; border-top: 2px solid #bfdbfe; font-weight: 700; text-align: right; font-size: 0.72rem; }
     tfoot td:first-child { text-align: left; color: var(--text); }
     tfoot .pos { color: var(--red); }
     tfoot .neg { color: var(--green); }
 
     /* ── Stats strip ── */
-    .stats-strip {
-      display: flex;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      overflow: hidden;
-      flex-wrap: wrap;
-    }
-    .stat-item {
-      flex: 1;
-      min-width: 140px;
-      padding: 0.65rem 1.1rem;
-      border-right: 1px solid var(--border);
-    }
+    .stats-strip { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; flex-wrap: wrap; }
+    .stat-item { flex: 1; min-width: 140px; padding: 0.65rem 1.1rem; border-right: 1px solid var(--border); }
     .stat-item:last-child { border-right: none; }
-    .stat-label {
-      font-family: var(--mono);
-      font-size: 0.57rem;
-      letter-spacing: 0.1em;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      margin-bottom: 0.2rem;
-    }
+    .stat-label { font-family: var(--mono); font-size: 0.57rem; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.2rem; }
     .stat-val { font-family: var(--mono); font-size: 1rem; font-weight: 600; color: var(--text); }
     .stat-val.pos { color: var(--red); }
     .stat-val.neg { color: var(--green); }
+    .updated-note { font-family: var(--mono); font-size: 0.6rem; color: var(--text-muted); padding: 0.5rem 1.75rem; text-align: right; }
   </style>
 </head>
 <body>
 
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">CBS data ophalen…</div>
+  <div class="loading-progress"><div class="loading-bar" id="loading-bar"></div></div>
+  <div class="loading-sub" id="loading-sub">Verbinding maken met datasets.cbs.nl</div>
+</div>
+
+<div id="error-banner">
+  <div>
+    <strong id="error-msg">Kon data niet ophalen van de CBS API.</strong>
+    <div id="error-detail"></div>
+  </div>
+  <button id="error-retry" onclick="initData()">↺ Opnieuw proberen</button>
+</div>
+
 <header>
   <div class="title-block">
     <div class="eyebrow">CBS Sterfte · Doodsoorzaken</div>
-    <h1>Zelfdoding naar leeftijd &amp; geslacht · 2000–2024</h1>
+    <h1 id="page-title">Doodsoorzaak naar leeftijd &amp; geslacht</h1>
   </div>
-  <a class="source-badge" href="https://opendata.cbs.nl/#/CBS/nl/dataset/7052_95/table?fromstatweb" target="_blank" rel="noopener">Bron: CBS · categorie 17.2 ↗</a>
+  <div class="header-right">
+    <div class="api-badge"><div class="api-dot"></div>Live CBS OData v4</div>
+    <a class="source-badge" href="https://opendata.cbs.nl/#/CBS/nl/dataset/7052_95/table?fromstatweb" target="_blank" rel="noopener">Bron: CBS · tabel 7052_95 ↗</a>
+  </div>
 </header>
 
 <div class="controls">
   <div class="ctrl-group">
+    <div class="ctrl-label">Doodsoorzaak</div>
+    <select class="ctrl-select" id="cause-select" disabled>
+      <option>Laden…</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
     <div class="ctrl-label">Geslacht</div>
     <div class="btn-group" id="geslacht-btns">
-      <button class="btn active" data-g="Totaal mannen en vrouwen">Totaal</button>
-      <button class="btn" data-g="Mannen">Mannen</button>
-      <button class="btn" data-g="Vrouwen">Vrouwen</button>
+      <button class="btn active" data-g="T001038">Totaal</button>
+      <button class="btn" data-g="3000">Mannen</button>
+      <button class="btn" data-g="4000">Vrouwen</button>
     </div>
   </div>
-
   <div class="ctrl-group">
     <div class="ctrl-label">Leeftijdsgroep <span style="font-weight:300;letter-spacing:0;text-transform:none">(meerdere mogelijk)</span></div>
-    <div class="btn-group" id="leeftijd-btns">
-      <button class="btn age-special" data-l="Totaal alle leeftijden">Totaal</button>
-      <button class="btn age-0" data-l="0 jaar">0 jr</button>
-      <button class="btn age-1" data-l="1 tot 5 jaar">1–5</button>
-      <button class="btn age-2" data-l="5 tot 10 jaar">5–10</button>
-      <button class="btn age-3 active" data-l="10 tot 15 jaar">10–15</button>
-      <button class="btn age-4 active" data-l="15 tot 20 jaar">15–20</button>
-      <button class="btn age-5 active" data-l="20 tot 25 jaar">20–25</button>
-      <button class="btn age-6 active" data-l="25 tot 30 jaar">25–30</button>
-      <button class="btn age-7" data-l="30 tot 35 jaar">30–35</button>
-      <button class="btn age-8" data-l="35 tot 40 jaar">35–40</button>
-      <button class="btn age-9" data-l="40 tot 45 jaar">40–45</button>
-      <button class="btn age-10" data-l="45 tot 50 jaar">45–50</button>
-      <button class="btn age-11" data-l="50 tot 55 jaar">50–55</button>
-      <button class="btn age-12" data-l="55 tot 60 jaar">55–60</button>
-      <button class="btn age-13" data-l="60 tot 65 jaar">60–65</button>
-      <button class="btn age-14" data-l="65 tot 70 jaar">65–70</button>
-      <button class="btn age-15" data-l="70 tot 75 jaar">70–75</button>
-      <button class="btn age-16" data-l="75 tot 80 jaar">75–80</button>
-      <button class="btn age-17" data-l="80 tot 85 jaar">80–85</button>
-      <button class="btn age-18" data-l="85 tot 90 jaar">85–90</button>
-      <button class="btn age-19" data-l="90 tot 95 jaar">90–95</button>
-      <button class="btn age-20" data-l="95 jaar of ouder">95+</button>
-    </div>
+    <div class="btn-group" id="leeftijd-btns"></div>
   </div>
-
+  <div class="ctrl-group">
+    <div class="ctrl-label">Grafiek vanaf</div>
+    <select class="ctrl-select" id="chart-start" style="width:auto"></select>
+  </div>
   <div class="ctrl-group">
     <div class="ctrl-label">Basislijn voor regressie</div>
     <div class="range-row">
@@ -297,7 +293,6 @@
 
 <div class="main">
   <div id="chart"></div>
-
   <div class="excess-section">
     <div class="excess-head">
       <span class="excess-title">Afwijking van basislijn · 2020–2024</span>
@@ -311,79 +306,390 @@
       </table>
     </div>
   </div>
-
   <div class="stats-strip">
-    <div class="stat-item">
-      <div class="stat-label">Geselecteerde groepen</div>
-      <div class="stat-val" id="stat-groups">—</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-label">Piekjaar (werkelijk)</div>
-      <div class="stat-val" id="stat-peak">—</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-label">Totale afwijking 2020–2024</div>
-      <div class="stat-val" id="stat-excess">—</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-label">Jaar met grootste afwijking</div>
-      <div class="stat-val" id="stat-worst">—</div>
-    </div>
+    <div class="stat-item"><div class="stat-label">Geselecteerde groepen</div><div class="stat-val" id="stat-groups">—</div></div>
+    <div class="stat-item"><div class="stat-label">Piekjaar (werkelijk)</div><div class="stat-val" id="stat-peak">—</div></div>
+    <div class="stat-item"><div class="stat-label">Totale afwijking 2020–2024</div><div class="stat-val" id="stat-excess">—</div></div>
+    <div class="stat-item"><div class="stat-label">Jaar met grootste afwijking</div><div class="stat-val" id="stat-worst">—</div></div>
   </div>
+  <div class="updated-note" id="updated-note"></div>
 </div>
 
 <script>
-/* ── Data ── */
-const RAW = {"17 Uitwendige doodsoorzaken|17.2 Zelfdoding": {"Totaal mannen en vrouwen": {"0 jaar": {"2000": 0, "2001": 0, "2002": 0, "2003": 0, "2004": 0, "2005": 0, "2006": 0, "2007": 0, "2008": 0, "2009": 0, "2010": 0, "2011": 0, "2012": 0, "2013": 0, "2014": 0, "2015": 0, "2016": 0, "2017": 0, "2018": 0, "2019": 0, "2020": 0, "2021": 0, "2022": 0, "2023": 0, "2024": 0}, "1 tot 5 jaar": {"2000": 0, "2001": 0, "2002": 0, "2003": 0, "2004": 0, "2005": 0, "2006": 0, "2007": 0, "2008": 0, "2009": 0, "2010": 0, "2011": 0, "2012": 0, "2013": 0, "2014": 0, "2015": 0, "2016": 0, "2017": 0, "2018": 0, "2019": 0, "2020": 0, "2021": 0, "2022": 0, "2023": 0, "2024": 0}, "5 tot 10 jaar": {"2000": 0, "2001": 0, "2002": 0, "2003": 0, "2004": 0, "2005": 0, "2006": 0, "2007": 0, "2008": 0, "2009": 0, "2010": 0, "2011": 0, "2012": 0, "2013": 0, "2014": 0, "2015": 0, "2016": 0, "2017": 0, "2018": 0, "2019": 0, "2020": 0, "2021": 0, "2022": 0, "2023": 0, "2024": 0}, "10 tot 15 jaar": {"2000": 5, "2001": 3, "2002": 7, "2003": 3, "2004": 9, "2005": 13, "2006": 4, "2007": 9, "2008": 5, "2009": 8, "2010": 6, "2011": 4, "2012": 6, "2013": 7, "2014": 2, "2015": 7, "2016": 9, "2017": 11, "2018": 5, "2019": 5, "2020": 9, "2021": 14, "2022": 2, "2023": 4, "2024": 14}, "15 tot 20 jaar": {"2000": 43, "2001": 33, "2002": 38, "2003": 31, "2004": 32, "2005": 38, "2006": 44, "2007": 33, "2008": 29, "2009": 44, "2010": 49, "2011": 40, "2012": 45, "2013": 51, "2014": 53, "2015": 41, "2016": 39, "2017": 70, "2018": 46, "2019": 62, "2020": 53, "2021": 42, "2022": 65, "2023": 50, "2024": 48}, "20 tot 25 jaar": {"2000": 65, "2001": 70, "2002": 68, "2003": 66, "2004": 65, "2005": 73, "2006": 81, "2007": 60, "2008": 69, "2009": 56, "2010": 73, "2011": 83, "2012": 84, "2013": 88, "2014": 76, "2015": 82, "2016": 73, "2017": 88, "2018": 99, "2019": 92, "2020": 99, "2021": 113, "2022": 118, "2023": 112, "2024": 100}, "25 tot 30 jaar": {"2000": 89, "2001": 90, "2002": 92, "2003": 101, "2004": 73, "2005": 80, "2006": 85, "2007": 75, "2008": 74, "2009": 83, "2010": 75, "2011": 106, "2012": 96, "2013": 97, "2014": 81, "2015": 103, "2016": 102, "2017": 107, "2018": 123, "2019": 108, "2020": 100, "2021": 124, "2022": 123, "2023": 114, "2024": 137}, "30 tot 35 jaar": {"2000": 140, "2001": 154, "2002": 144, "2003": 112, "2004": 110, "2005": 119, "2006": 109, "2007": 87, "2008": 85, "2009": 78, "2010": 93, "2011": 94, "2012": 105, "2013": 85, "2014": 90, "2015": 108, "2016": 122, "2017": 100, "2018": 112, "2019": 113, "2020": 112, "2021": 133, "2022": 122, "2023": 147, "2024": 123}, "35 tot 40 jaar": {"2000": 142, "2001": 168, "2002": 179, "2003": 151, "2004": 159, "2005": 160, "2006": 131, "2007": 134, "2008": 137, "2009": 126, "2010": 105, "2011": 124, "2012": 123, "2013": 128, "2014": 135, "2015": 115, "2016": 118, "2017": 105, "2018": 130, "2019": 113, "2020": 131, "2021": 113, "2022": 127, "2023": 122, "2024": 141}, "40 tot 45 jaar": {"2000": 170, "2001": 148, "2002": 162, "2003": 172, "2004": 187, "2005": 187, "2006": 165, "2007": 134, "2008": 154, "2009": 168, "2010": 181, "2011": 186, "2012": 192, "2013": 187, "2014": 173, "2015": 149, "2016": 142, "2017": 145, "2018": 122, "2019": 124, "2020": 119, "2021": 107, "2022": 114, "2023": 129, "2024": 147}, "45 tot 50 jaar": {"2000": 196, "2001": 184, "2002": 191, "2003": 179, "2004": 199, "2005": 199, "2006": 188, "2007": 179, "2008": 183, "2009": 198, "2010": 216, "2011": 219, "2012": 231, "2013": 219, "2014": 225, "2015": 211, "2016": 194, "2017": 212, "2018": 176, "2019": 181, "2020": 177, "2021": 153, "2022": 142, "2023": 135, "2024": 154}, "50 tot 55 jaar": {"2000": 152, "2001": 160, "2002": 167, "2003": 149, "2004": 175, "2005": 185, "2006": 190, "2007": 151, "2008": 170, "2009": 200, "2010": 200, "2011": 184, "2012": 224, "2013": 230, "2014": 258, "2015": 235, "2016": 239, "2017": 239, "2018": 214, "2019": 194, "2020": 211, "2021": 196, "2022": 193, "2023": 197, "2024": 181}, "55 tot 60 jaar": {"2000": 115, "2001": 107, "2002": 124, "2003": 148, "2004": 152, "2005": 161, "2006": 145, "2007": 129, "2008": 146, "2009": 156, "2010": 169, "2011": 177, "2012": 183, "2013": 227, "2014": 244, "2015": 231, "2016": 208, "2017": 233, "2018": 218, "2019": 205, "2020": 197, "2021": 238, "2022": 235, "2023": 192, "2024": 195}, "60 tot 65 jaar": {"2000": 99, "2001": 85, "2002": 110, "2003": 94, "2004": 108, "2005": 85, "2006": 96, "2007": 120, "2008": 122, "2009": 127, "2010": 156, "2011": 148, "2012": 143, "2013": 169, "2014": 162, "2015": 174, "2016": 197, "2017": 194, "2018": 164, "2019": 183, "2020": 169, "2021": 178, "2022": 195, "2023": 181, "2024": 159}, "65 tot 70 jaar": {"2000": 70, "2001": 72, "2002": 64, "2003": 77, "2004": 57, "2005": 77, "2006": 81, "2007": 75, "2008": 76, "2009": 64, "2010": 84, "2011": 68, "2012": 106, "2013": 126, "2014": 91, "2015": 138, "2016": 140, "2017": 132, "2018": 135, "2019": 137, "2020": 115, "2021": 127, "2022": 144, "2023": 128, "2024": 115}, "70 tot 75 jaar": {"2000": 70, "2001": 50, "2002": 76, "2003": 68, "2004": 45, "2005": 69, "2006": 67, "2007": 50, "2008": 60, "2009": 73, "2010": 65, "2011": 83, "2012": 69, "2013": 75, "2014": 91, "2015": 94, "2016": 100, "2017": 106, "2018": 98, "2019": 113, "2020": 116, "2021": 97, "2022": 115, "2023": 130, "2024": 124}, "75 tot 80 jaar": {"2000": 54, "2001": 71, "2002": 56, "2003": 57, "2004": 55, "2005": 46, "2006": 49, "2007": 49, "2008": 52, "2009": 53, "2010": 44, "2011": 47, "2012": 58, "2013": 68, "2014": 66, "2015": 74, "2016": 86, "2017": 63, "2018": 78, "2019": 67, "2020": 90, "2021": 92, "2022": 101, "2023": 112, "2024": 93}, "80 tot 85 jaar": {"2000": 42, "2001": 43, "2002": 48, "2003": 48, "2004": 46, "2005": 42, "2006": 55, "2007": 35, "2008": 31, "2009": 53, "2010": 42, "2011": 47, "2012": 46, "2013": 43, "2014": 49, "2015": 59, "2016": 60, "2017": 56, "2018": 47, "2019": 54, "2020": 70, "2021": 78, "2022": 57, "2023": 55, "2024": 75}, "85 tot 90 jaar": {"2000": 36, "2001": 31, "2002": 30, "2003": 31, "2004": 26, "2005": 27, "2006": 25, "2007": 18, "2008": 29, "2009": 24, "2010": 26, "2011": 29, "2012": 27, "2013": 34, "2014": 27, "2015": 36, "2016": 40, "2017": 37, "2018": 49, "2019": 39, "2020": 40, "2021": 44, "2022": 37, "2023": 40, "2024": 29}, "90 tot 95 jaar": {"2000": 10, "2001": 4, "2002": 9, "2003": 8, "2004": 12, "2005": 9, "2006": 7, "2007": 12, "2008": 10, "2009": 8, "2010": 12, "2011": 7, "2012": 11, "2013": 22, "2014": 15, "2015": 14, "2016": 20, "2017": 17, "2018": 11, "2019": 18, "2020": 13, "2021": 11, "2022": 20, "2023": 12, "2024": 12}, "95 jaar of ouder": {"2000": 2, "2001": 0, "2002": 2, "2003": 5, "2004": 4, "2005": 2, "2006": 2, "2007": 3, "2008": 3, "2009": 6, "2010": 4, "2011": 1, "2012": 4, "2013": 1, "2014": 1, "2015": 0, "2016": 4, "2017": 2, "2018": 2, "2019": 3, "2020": 2, "2021": 2, "2022": 6, "2023": 3, "2024": 3}, "Totaal alle leeftijden": {"2000": 1500, "2001": 1473, "2002": 1567, "2003": 1500, "2004": 1514, "2005": 1572, "2006": 1524, "2007": 1353, "2008": 1435, "2009": 1525, "2010": 1600, "2011": 1647, "2012": 1753, "2013": 1857, "2014": 1839, "2015": 1871, "2016": 1893, "2017": 1917, "2018": 1829, "2019": 1811, "2020": 1823, "2021": 1862, "2022": 1916, "2023": 1863, "2024": 1850}}, "Mannen": {"0 jaar": {"2000": 0, "2001": 0, "2002": 0, "2003": 0, "2004": 0, "2005": 0, "2006": 0, "2007": 0, "2008": 0, "2009": 0, "2010": 0, "2011": 0, "2012": 0, "2013": 0, "2014": 0, "2015": 0, "2016": 0, "2017": 0, "2018": 0, "2019": 0, "2020": 0, "2021": 0, "2022": 0, "2023": 0, "2024": 0}, "1 tot 5 jaar": {"2000": 0, "2001": 0, "2002": 0, "2003": 0, "2004": 0, "2005": 0, "2006": 0, "2007": 0, "2008": 0, "2009": 0, "2010": 0, "2011": 0, "2012": 0, "2013": 0, "2014": 0, "2015": 0, "2016": 0, "2017": 0, "2018": 0, "2019": 0, "2020": 0, "2021": 0, "2022": 0, "2023": 0, "2024": 0}, "5 tot 10 jaar": {"2000": 0, "2001": 0, "2002": 0, "2003": 0, "2004": 0, "2005": 0, "2006": 0, "2007": 0, "2008": 0, "2009": 0, "2010": 0, "2011": 0, "2012": 0, "2013": 0, "2014": 0, "2015": 0, "2016": 0, "2017": 0, "2018": 0, "2019": 0, "2020": 0, "2021": 0, "2022": 0, "2023": 0, "2024": 0}, "10 tot 15 jaar": {"2000": 5, "2001": 1, "2002": 5, "2003": 2, "2004": 7, "2005": 11, "2006": 1, "2007": 5, "2008": 5, "2009": 6, "2010": 5, "2011": 3, "2012": 4, "2013": 4, "2014": 1, "2015": 1, "2016": 6, "2017": 8, "2018": 4, "2019": 3, "2020": 5, "2021": 7, "2022": 1, "2023": 1, "2024": 7}, "15 tot 20 jaar": {"2000": 35, "2001": 23, "2002": 27, "2003": 20, "2004": 23, "2005": 29, "2006": 30, "2007": 26, "2008": 20, "2009": 34, "2010": 37, "2011": 26, "2012": 33, "2013": 32, "2014": 30, "2015": 27, "2016": 24, "2017": 42, "2018": 26, "2019": 40, "2020": 30, "2021": 29, "2022": 41, "2023": 35, "2024": 27}, "20 tot 25 jaar": {"2000": 55, "2001": 48, "2002": 53, "2003": 48, "2004": 49, "2005": 49, "2006": 61, "2007": 45, "2008": 47, "2009": 42, "2010": 59, "2011": 59, "2012": 64, "2013": 61, "2014": 51, "2015": 62, "2016": 53, "2017": 63, "2018": 67, "2019": 57, "2020": 60, "2021": 78, "2022": 74, "2023": 82, "2024": 64}, "25 tot 30 jaar": {"2000": 63, "2001": 67, "2002": 66, "2003": 71, "2004": 58, "2005": 63, "2006": 61, "2007": 58, "2008": 54, "2009": 59, "2010": 53, "2011": 72, "2012": 70, "2013": 69, "2014": 53, "2015": 71, "2016": 71, "2017": 83, "2018": 79, "2019": 70, "2020": 64, "2021": 88, "2022": 88, "2023": 84, "2024": 84}, "30 tot 35 jaar": {"2000": 99, "2001": 116, "2002": 113, "2003": 94, "2004": 83, "2005": 81, "2006": 82, "2007": 56, "2008": 64, "2009": 55, "2010": 62, "2011": 65, "2012": 73, "2013": 67, "2014": 64, "2015": 75, "2016": 88, "2017": 71, "2018": 76, "2019": 75, "2020": 80, "2021": 94, "2022": 98, "2023": 103, "2024": 82}, "35 tot 40 jaar": {"2000": 94, "2001": 120, "2002": 122, "2003": 107, "2004": 126, "2005": 107, "2006": 96, "2007": 99, "2008": 104, "2009": 89, "2010": 68, "2011": 89, "2012": 84, "2013": 97, "2014": 97, "2015": 82, "2016": 79, "2017": 71, "2018": 93, "2019": 80, "2020": 98, "2021": 81, "2022": 88, "2023": 91, "2024": 100}, "40 tot 45 jaar": {"2000": 121, "2001": 99, "2002": 123, "2003": 133, "2004": 118, "2005": 140, "2006": 116, "2007": 103, "2008": 114, "2009": 114, "2010": 130, "2011": 125, "2012": 130, "2013": 149, "2014": 135, "2015": 104, "2016": 103, "2017": 104, "2018": 79, "2019": 90, "2020": 89, "2021": 71, "2022": 78, "2023": 97, "2024": 109}, "45 tot 50 jaar": {"2000": 120, "2001": 121, "2002": 126, "2003": 124, "2004": 125, "2005": 132, "2006": 130, "2007": 116, "2008": 127, "2009": 146, "2010": 155, "2011": 156, "2012": 159, "2013": 149, "2014": 149, "2015": 148, "2016": 130, "2017": 149, "2018": 119, "2019": 135, "2020": 124, "2021": 110, "2022": 103, "2023": 79, "2024": 111}, "50 tot 55 jaar": {"2000": 104, "2001": 112, "2002": 110, "2003": 94, "2004": 120, "2005": 124, "2006": 126, "2007": 109, "2008": 116, "2009": 134, "2010": 142, "2011": 134, "2012": 159, "2013": 160, "2014": 182, "2015": 165, "2016": 166, "2017": 176, "2018": 141, "2019": 129, "2020": 150, "2021": 135, "2022": 140, "2023": 136, "2024": 124}, "55 tot 60 jaar": {"2000": 69, "2001": 69, "2002": 83, "2003": 99, "2004": 98, "2005": 118, "2006": 84, "2007": 89, "2008": 93, "2009": 108, "2010": 118, "2011": 118, "2012": 126, "2013": 159, "2014": 164, "2015": 149, "2016": 140, "2017": 152, "2018": 130, "2019": 134, "2020": 126, "2021": 170, "2022": 144, "2023": 133, "2024": 130}, "60 tot 65 jaar": {"2000": 58, "2001": 54, "2002": 64, "2003": 60, "2004": 64, "2005": 49, "2006": 62, "2007": 78, "2008": 67, "2009": 96, "2010": 110, "2011": 108, "2012": 91, "2013": 125, "2014": 106, "2015": 114, "2016": 142, "2017": 124, "2018": 101, "2019": 121, "2020": 113, "2021": 133, "2022": 137, "2023": 125, "2024": 116}, "65 tot 70 jaar": {"2000": 42, "2001": 53, "2002": 39, "2003": 49, "2004": 40, "2005": 49, "2006": 60, "2007": 50, "2008": 55, "2009": 41, "2010": 59, "2011": 42, "2012": 61, "2013": 78, "2014": 58, "2015": 96, "2016": 83, "2017": 82, "2018": 84, "2019": 96, "2020": 75, "2021": 78, "2022": 95, "2023": 84, "2024": 78}, "70 tot 75 jaar": {"2000": 39, "2001": 32, "2002": 41, "2003": 37, "2004": 28, "2005": 42, "2006": 42, "2007": 33, "2008": 36, "2009": 44, "2010": 44, "2011": 48, "2012": 41, "2013": 49, "2014": 63, "2015": 58, "2016": 71, "2017": 65, "2018": 58, "2019": 80, "2020": 77, "2021": 54, "2022": 86, "2023": 92, "2024": 79}, "75 tot 80 jaar": {"2000": 35, "2001": 41, "2002": 37, "2003": 33, "2004": 26, "2005": 29, "2006": 34, "2007": 33, "2008": 40, "2009": 39, "2010": 32, "2011": 36, "2012": 33, "2013": 44, "2014": 45, "2015": 47, "2016": 50, "2017": 43, "2018": 48, "2019": 40, "2020": 61, "2021": 67, "2022": 67, "2023": 86, "2024": 63}, "80 tot 85 jaar": {"2000": 27, "2001": 30, "2002": 35, "2003": 23, "2004": 29, "2005": 24, "2006": 38, "2007": 24, "2008": 16, "2009": 31, "2010": 23, "2011": 31, "2012": 28, "2013": 32, "2014": 27, "2015": 46, "2016": 36, "2017": 33, "2018": 28, "2019": 40, "2020": 42, "2021": 55, "2022": 33, "2023": 37, "2024": 47}, "85 tot 90 jaar": {"2000": 25, "2001": 22, "2002": 15, "2003": 17, "2004": 18, "2005": 18, "2006": 14, "2007": 11, "2008": 19, "2009": 18, "2010": 15, "2011": 19, "2012": 19, "2013": 21, "2014": 17, "2015": 23, "2016": 23, "2017": 26, "2018": 32, "2019": 27, "2020": 24, "2021": 35, "2022": 23, "2023": 30, "2024": 20}, "90 tot 95 jaar": {"2000": 6, "2001": 2, "2002": 2, "2003": 1, "2004": 8, "2005": 7, "2006": 7, "2007": 5, "2008": 8, "2009": 3, "2010": 9, "2011": 4, "2012": 8, "2013": 11, "2014": 7, "2015": 12, "2016": 13, "2017": 11, "2018": 10, "2019": 13, "2020": 10, "2021": 9, "2022": 14, "2023": 9, "2024": 8}, "95 jaar of ouder": {"2000": 2, "2001": 0, "2002": 1, "2003": 4, "2004": 2, "2005": 1, "2006": 2, "2007": 3, "2008": 3, "2009": 5, "2010": 3, "2011": 1, "2012": 3, "2013": 1, "2014": 1, "2015": 0, "2016": 1, "2017": 1, "2018": 1, "2019": 2, "2020": 0, "2021": 1, "2022": 5, "2023": 0, "2024": 2}, "Totaal alle leeftijden": {"2000": 999, "2001": 1010, "2002": 1062, "2003": 1016, "2004": 1022, "2005": 1073, "2006": 1046, "2007": 943, "2008": 988, "2009": 1064, "2010": 1124, "2011": 1136, "2012": 1186, "2013": 1308, "2014": 1250, "2015": 1280, "2016": 1279, "2017": 1304, "2018": 1176, "2019": 1232, "2020": 1228, "2021": 1295, "2022": 1315, "2023": 1304, "2024": 1251}}, "Vrouwen": {"0 jaar": {"2000": 0, "2001": 0, "2002": 0, "2003": 0, "2004": 0, "2005": 0, "2006": 0, "2007": 0, "2008": 0, "2009": 0, "2010": 0, "2011": 0, "2012": 0, "2013": 0, "2014": 0, "2015": 0, "2016": 0, "2017": 0, "2018": 0, "2019": 0, "2020": 0, "2021": 0, "2022": 0, "2023": 0, "2024": 0}, "1 tot 5 jaar": {"2000": 0, "2001": 0, "2002": 0, "2003": 0, "2004": 0, "2005": 0, "2006": 0, "2007": 0, "2008": 0, "2009": 0, "2010": 0, "2011": 0, "2012": 0, "2013": 0, "2014": 0, "2015": 0, "2016": 0, "2017": 0, "2018": 0, "2019": 0, "2020": 0, "2021": 0, "2022": 0, "2023": 0, "2024": 0}, "5 tot 10 jaar": {"2000": 0, "2001": 0, "2002": 0, "2003": 0, "2004": 0, "2005": 0, "2006": 0, "2007": 0, "2008": 0, "2009": 0, "2010": 0, "2011": 0, "2012": 0, "2013": 0, "2014": 0, "2015": 0, "2016": 0, "2017": 0, "2018": 0, "2019": 0, "2020": 0, "2021": 0, "2022": 0, "2023": 0, "2024": 0}, "10 tot 15 jaar": {"2000": 0, "2001": 2, "2002": 2, "2003": 1, "2004": 2, "2005": 2, "2006": 3, "2007": 4, "2008": 0, "2009": 2, "2010": 1, "2011": 1, "2012": 2, "2013": 3, "2014": 1, "2015": 6, "2016": 3, "2017": 3, "2018": 1, "2019": 2, "2020": 4, "2021": 7, "2022": 1, "2023": 3, "2024": 7}, "15 tot 20 jaar": {"2000": 8, "2001": 10, "2002": 11, "2003": 11, "2004": 9, "2005": 9, "2006": 14, "2007": 7, "2008": 9, "2009": 10, "2010": 12, "2011": 14, "2012": 12, "2013": 19, "2014": 23, "2015": 14, "2016": 15, "2017": 28, "2018": 20, "2019": 22, "2020": 23, "2021": 13, "2022": 24, "2023": 15, "2024": 21}, "20 tot 25 jaar": {"2000": 10, "2001": 22, "2002": 15, "2003": 18, "2004": 16, "2005": 24, "2006": 20, "2007": 15, "2008": 22, "2009": 14, "2010": 14, "2011": 24, "2012": 20, "2013": 27, "2014": 25, "2015": 20, "2016": 20, "2017": 25, "2018": 32, "2019": 35, "2020": 39, "2021": 35, "2022": 44, "2023": 30, "2024": 36}, "25 tot 30 jaar": {"2000": 26, "2001": 23, "2002": 26, "2003": 30, "2004": 15, "2005": 17, "2006": 24, "2007": 17, "2008": 20, "2009": 24, "2010": 22, "2011": 34, "2012": 26, "2013": 28, "2014": 28, "2015": 32, "2016": 31, "2017": 24, "2018": 44, "2019": 38, "2020": 36, "2021": 36, "2022": 35, "2023": 30, "2024": 53}, "30 tot 35 jaar": {"2000": 41, "2001": 38, "2002": 31, "2003": 18, "2004": 27, "2005": 38, "2006": 27, "2007": 31, "2008": 21, "2009": 23, "2010": 31, "2011": 29, "2012": 32, "2013": 18, "2014": 26, "2015": 33, "2016": 34, "2017": 29, "2018": 36, "2019": 38, "2020": 32, "2021": 39, "2022": 24, "2023": 44, "2024": 41}, "35 tot 40 jaar": {"2000": 48, "2001": 48, "2002": 57, "2003": 44, "2004": 33, "2005": 53, "2006": 35, "2007": 35, "2008": 33, "2009": 37, "2010": 37, "2011": 35, "2012": 39, "2013": 31, "2014": 38, "2015": 33, "2016": 39, "2017": 34, "2018": 37, "2019": 33, "2020": 33, "2021": 32, "2022": 39, "2023": 31, "2024": 41}, "40 tot 45 jaar": {"2000": 49, "2001": 49, "2002": 39, "2003": 39, "2004": 69, "2005": 47, "2006": 49, "2007": 31, "2008": 40, "2009": 54, "2010": 51, "2011": 61, "2012": 62, "2013": 38, "2014": 38, "2015": 45, "2016": 39, "2017": 41, "2018": 43, "2019": 34, "2020": 30, "2021": 36, "2022": 36, "2023": 32, "2024": 38}, "45 tot 50 jaar": {"2000": 76, "2001": 63, "2002": 65, "2003": 55, "2004": 74, "2005": 67, "2006": 58, "2007": 63, "2008": 56, "2009": 52, "2010": 61, "2011": 63, "2012": 72, "2013": 70, "2014": 76, "2015": 63, "2016": 64, "2017": 63, "2018": 57, "2019": 46, "2020": 53, "2021": 43, "2022": 39, "2023": 56, "2024": 43}, "50 tot 55 jaar": {"2000": 48, "2001": 48, "2002": 57, "2003": 55, "2004": 55, "2005": 61, "2006": 64, "2007": 42, "2008": 54, "2009": 66, "2010": 58, "2011": 50, "2012": 65, "2013": 70, "2014": 76, "2015": 70, "2016": 73, "2017": 63, "2018": 73, "2019": 65, "2020": 61, "2021": 61, "2022": 53, "2023": 61, "2024": 57}, "55 tot 60 jaar": {"2000": 46, "2001": 38, "2002": 41, "2003": 49, "2004": 54, "2005": 43, "2006": 61, "2007": 40, "2008": 53, "2009": 48, "2010": 51, "2011": 59, "2012": 57, "2013": 68, "2014": 80, "2015": 82, "2016": 68, "2017": 81, "2018": 88, "2019": 71, "2020": 71, "2021": 68, "2022": 91, "2023": 59, "2024": 65}, "60 tot 65 jaar": {"2000": 41, "2001": 31, "2002": 46, "2003": 34, "2004": 44, "2005": 36, "2006": 34, "2007": 42, "2008": 55, "2009": 31, "2010": 46, "2011": 40, "2012": 52, "2013": 44, "2014": 56, "2015": 60, "2016": 55, "2017": 70, "2018": 63, "2019": 62, "2020": 56, "2021": 45, "2022": 58, "2023": 56, "2024": 43}, "65 tot 70 jaar": {"2000": 28, "2001": 19, "2002": 25, "2003": 28, "2004": 17, "2005": 28, "2006": 21, "2007": 25, "2008": 21, "2009": 23, "2010": 25, "2011": 26, "2012": 45, "2013": 48, "2014": 33, "2015": 42, "2016": 57, "2017": 50, "2018": 51, "2019": 41, "2020": 40, "2021": 49, "2022": 49, "2023": 44, "2024": 37}, "70 tot 75 jaar": {"2000": 31, "2001": 18, "2002": 35, "2003": 31, "2004": 17, "2005": 27, "2006": 25, "2007": 17, "2008": 24, "2009": 29, "2010": 21, "2011": 35, "2012": 28, "2013": 26, "2014": 28, "2015": 36, "2016": 29, "2017": 41, "2018": 40, "2019": 33, "2020": 39, "2021": 43, "2022": 29, "2023": 38, "2024": 45}, "75 tot 80 jaar": {"2000": 19, "2001": 30, "2002": 19, "2003": 24, "2004": 29, "2005": 17, "2006": 15, "2007": 16, "2008": 12, "2009": 14, "2010": 12, "2011": 11, "2012": 25, "2013": 24, "2014": 21, "2015": 27, "2016": 36, "2017": 20, "2018": 30, "2019": 27, "2020": 29, "2021": 25, "2022": 34, "2023": 26, "2024": 30}, "80 tot 85 jaar": {"2000": 15, "2001": 13, "2002": 13, "2003": 25, "2004": 17, "2005": 18, "2006": 17, "2007": 11, "2008": 15, "2009": 22, "2010": 19, "2011": 16, "2012": 18, "2013": 11, "2014": 22, "2015": 13, "2016": 24, "2017": 23, "2018": 19, "2019": 14, "2020": 28, "2021": 23, "2022": 24, "2023": 18, "2024": 28}, "85 tot 90 jaar": {"2000": 11, "2001": 9, "2002": 15, "2003": 14, "2004": 8, "2005": 9, "2006": 11, "2007": 7, "2008": 10, "2009": 6, "2010": 11, "2011": 10, "2012": 8, "2013": 13, "2014": 10, "2015": 13, "2016": 17, "2017": 11, "2018": 17, "2019": 12, "2020": 16, "2021": 9, "2022": 14, "2023": 10, "2024": 9}, "90 tot 95 jaar": {"2000": 4, "2001": 2, "2002": 7, "2003": 7, "2004": 4, "2005": 2, "2006": 0, "2007": 7, "2008": 2, "2009": 5, "2010": 3, "2011": 3, "2012": 3, "2013": 11, "2014": 8, "2015": 2, "2016": 7, "2017": 6, "2018": 1, "2019": 5, "2020": 3, "2021": 2, "2022": 6, "2023": 3, "2024": 4}, "95 jaar of ouder": {"2000": 0, "2001": 0, "2002": 1, "2003": 1, "2004": 2, "2005": 1, "2006": 0, "2007": 0, "2008": 0, "2009": 1, "2010": 1, "2011": 0, "2012": 1, "2013": 0, "2014": 0, "2015": 0, "2016": 3, "2017": 1, "2018": 1, "2019": 1, "2020": 2, "2021": 1, "2022": 1, "2023": 3, "2024": 1}, "Totaal alle leeftijden": {"2000": 501, "2001": 463, "2002": 505, "2003": 484, "2004": 492, "2005": 499, "2006": 478, "2007": 410, "2008": 447, "2009": 461, "2010": 476, "2011": 511, "2012": 567, "2013": 549, "2014": 589, "2015": 591, "2016": 614, "2017": 613, "2018": 653, "2019": 579, "2020": 595, "2021": 567, "2022": 601, "2023": 559, "2024": 599}}}};
-const CAUSE_KEY   = "17 Uitwendige doodsoorzaken|17.2 Zelfdoding";
-const ALL_YEARS   = Array.from({length: 25}, (_, i) => 2000 + i);
-const EXCESS_YEARS = [2020, 2021, 2022, 2023, 2024];
-const AGE_LABELS  = [
+/* ==========================================================================
+   CBS OData v4 configuration
+   Base: https://datasets.cbs.nl/odata/v1/CBS/{TABLE_ID}/
+   Endpoints used:
+     Properties         – table metadata (title, modified)
+     MeasureCodes       – cause of death codes + labels
+     GeslachtCodes      – gender codes + labels
+     LeeftijdCodes      – age group codes + labels
+     PeriodenCodes      – period codes + labels
+     Observations       – the actual data (long format, paginated)
+   Observation row fields: Id, Measure, ValueAttribute, Value, Geslacht, Leeftijd, Perioden
+   ========================================================================== */
+const TABLE_ID  = '7052_95';
+const BASE_URL  = `https://datasets.cbs.nl/odata/v1/CBS/${TABLE_ID}`;
+const PAGE_SIZE = 100000;   // OData v4 max per request
+
+/* Preferred sort order for age groups */
+const LEEFTIJD_SORT = [
   'Totaal alle leeftijden',
   '0 jaar','1 tot 5 jaar','5 tot 10 jaar',
   '10 tot 15 jaar','15 tot 20 jaar','20 tot 25 jaar','25 tot 30 jaar',
   '30 tot 35 jaar','35 tot 40 jaar','40 tot 45 jaar','45 tot 50 jaar',
   '50 tot 55 jaar','55 tot 60 jaar','60 tot 65 jaar','65 tot 70 jaar',
   '70 tot 75 jaar','75 tot 80 jaar','80 tot 85 jaar','85 tot 90 jaar',
-  '90 tot 95 jaar','95 jaar of ouder'
+  '90 tot 95 jaar','95 jaar of ouder',
 ];
-const AGE_SHORT   = [
-  'Totaal','0 jr','1–5','5–10',
-  '10–15','15–20','20–25','25–30',
-  '30–35','35–40','40–45','45–50',
-  '50–55','55–60','60–65','65–70',
-  '70–75','75–80','80–85','85–90',
-  '90–95','95+'
-];
-// 22 distinct colors
-const AGE_COLORS  = [
-  '#374151',
-  '#9ca3af','#6b7280','#4b5563',
+
+const EXCESS_YEARS = [2020, 2021, 2022, 2023, 2024];
+
+const AGE_COLORS = [
+  '#374151','#9ca3af','#6b7280','#4b5563',
   '#d97706','#dc2626','#7c3aed','#0284c7',
   '#0d9488','#16a34a','#65a30d','#ca8a04',
   '#ea580c','#be185d','#7e22ce','#1d4ed8',
   '#0369a1','#047857','#b45309','#9f1239',
-  '#4338ca','#064e3b'
+  '#4338ca','#064e3b',
 ];
 
-let selectedGeslacht = 'Totaal mannen en vrouwen';
-let selectedLeeftijd = new Set(['20 tot 25 jaar','25 tot 30 jaar','30 tot 35 jaar','45 tot 50 jaar']);
-let baselineStart = 2010;
-let baselineEnd   = 2019;
+/* Cause of death: populated dynamically from MeasureCodes after load */
+let allMeasures = [];       // [{code, title}] — all available measures
 
-/* ── Dropdown init ── */
+/* ==========================================================================
+   State
+   ========================================================================== */
+let DATA = {};             // measureCode → geslachtCode → leeftijdCode → year → value
+let geslachtMap = {};      // code → label
+let leeftijdMap = {};      // code → label
+let leeftijdOrder = [];    // ordered leeftijd labels
+let ALL_YEARS = [];
+
+let selectedMeasure  = null;   // active measure code
+let selectedGeslacht = 'T001038';
+let selectedLeeftijd = new Set();
+let baselineStart    = 2010;
+let baselineEnd      = 2019;
+let chartStartYear   = 2000;
+
+/* ==========================================================================
+   UI helpers
+   ========================================================================== */
+function setProgress(pct, text, sub) {
+  document.getElementById('loading-bar').style.width  = `${pct}%`;
+  if (text) document.getElementById('loading-text').textContent = text;
+  if (sub)  document.getElementById('loading-sub').textContent  = sub;
+}
+function hideLoading() { document.getElementById('loading').classList.add('hidden'); }
+function showError(msg, detail = '') {
+  hideLoading();
+  document.getElementById('error-msg').textContent    = msg;
+  document.getElementById('error-detail').textContent = detail;
+  document.getElementById('error-banner').classList.add('visible');
+}
+function hideError() { document.getElementById('error-banner').classList.remove('visible'); }
+
+/* ==========================================================================
+   OData v4 fetch — handles @odata.nextLink pagination
+   ========================================================================== */
+async function odataGetAll(url) {
+  const rows = [];
+  let nextUrl = url;
+
+  while (nextUrl) {
+    const resp = await fetch(nextUrl);
+    if (!resp.ok) {
+      const body = await resp.text().catch(() => '');
+      throw new Error(`HTTP ${resp.status} bij ${nextUrl}\n${body.slice(0, 200)}`);
+    }
+    const json = await resp.json();
+    rows.push(...(json.value ?? []));
+    /* OData v4 pagination: follow @odata.nextLink if present */
+    nextUrl = json['@odata.nextLink'] ?? null;
+  }
+  return rows;
+}
+
+/* ==========================================================================
+   Data fetch + transform
+   ========================================================================== */
+async function fetchCBSData() {
+  /* ── Step 1: dimension tables (parallel) ── */
+  setProgress(10, 'Dimensies ophalen…', 'MeasureCodes · GeslachtCodes · LeeftijdCodes · PeriodenCodes');
+
+  const [measureRows, geslachtRows, leeftijdRows, periodenRows, propRows] =
+    await Promise.all([
+      odataGetAll(`${BASE_URL}/MeasureCodes`),
+      odataGetAll(`${BASE_URL}/GeslachtCodes`),
+      odataGetAll(`${BASE_URL}/LeeftijdCodes`),
+      odataGetAll(`${BASE_URL}/PeriodenCodes`),
+      odataGetAll(`${BASE_URL}/Properties`),
+    ]);
+
+  /* Build lookup maps: Identifier → Title */
+  geslachtMap = Object.fromEntries(geslachtRows.map(r => [r.Identifier, r.Title]));
+  leeftijdMap = Object.fromEntries(leeftijdRows.map(r => [r.Identifier, r.Title]));
+
+  /* Store all measures sorted by title */
+  allMeasures = measureRows
+    .map(r => ({ code: r.Identifier, title: r.Title }))
+    .sort((a, b) => a.title.localeCompare(b.title, 'nl'));
+
+  /* Table last-modified date */
+  const props = Array.isArray(propRows) ? propRows[0] : propRows;
+  const modified = props?.Modified ?? props?.Updated ?? '';
+  if (modified) {
+    const d = new Date(modified);
+    document.getElementById('updated-note').textContent =
+      `Tabel voor het laatst bijgewerkt door CBS op ${d.toLocaleDateString('nl-NL', {day:'numeric',month:'long',year:'numeric'})}`;
+  }
+
+  /* Do NOT fetch all Observations here.
+     That table is large and makes the page look like it hangs.
+     Observations are fetched lazily per selected Measure + Geslacht. */
+  setProgress(70, 'Dimensies verwerkt…', 'Observaties worden straks gefilterd opgehaald');
+  return {};
+}
+
+/* Fetch only the rows needed for the current selection.
+   This prevents the browser from downloading the full Observations table. */
+function obsUrlFor(measureCode, geslachtCode) {
+  const params = new URLSearchParams();
+  params.set('$select', 'Measure,Value,Geslacht,Leeftijd,Perioden');
+  params.set('$filter', `Measure eq '${measureCode}' and Geslacht eq '${geslachtCode}'`);
+  params.set('$top', String(PAGE_SIZE));
+  return `${BASE_URL}/Observations?${params.toString()}`;
+}
+
+function hasCachedSelection(measureCode, geslachtCode) {
+  return Object.keys(DATA?.[measureCode]?.[geslachtCode] ?? {}).length > 0;
+}
+
+function ingestObservationRows(obsRows) {
+  for (const row of obsRows) {
+    const mCode = row.Measure?.trim();
+    const gCode = row.Geslacht?.trim();
+    const lCode = row.Leeftijd?.trim();
+    const pCode = row.Perioden?.trim();
+
+    const year = pCode?.slice(0, 4);
+    if (!year || !/^\d{4}$/.test(year)) continue;
+    if (pCode && !pCode.includes('JJ')) continue;
+
+    const value = (row.Value !== null && row.Value !== undefined) ? +row.Value : null;
+
+    DATA[mCode]               ??= {};
+    DATA[mCode][gCode]        ??= {};
+    DATA[mCode][gCode][lCode] ??= {};
+    DATA[mCode][gCode][lCode][year] = value;
+  }
+}
+
+async function ensureSelectionDataLoaded(showOverlay = true) {
+  if (!selectedMeasure || !selectedGeslacht) return true;
+  if (hasCachedSelection(selectedMeasure, selectedGeslacht)) return true;
+
+  if (showOverlay) {
+    document.getElementById('loading').classList.remove('hidden');
+    setProgress(35, 'Gefilterde CBS-data ophalen…', 'Alleen gekozen doodsoorzaak + geslacht');
+  }
+
+  try {
+    const obsRows = await odataGetAll(obsUrlFor(selectedMeasure, selectedGeslacht));
+    setProgress(80, 'Data verwerken…', `${obsRows.length} rijen`);
+    ingestObservationRows(obsRows);
+    if (showOverlay) setTimeout(hideLoading, 150);
+    return true;
+  } catch (err) {
+    showError('Kon gefilterde CBS-data niet ophalen.', err.message);
+    console.error(err);
+    return false;
+  }
+}
+
+/* ==========================================================================
+   Boot: fetch → build UI → render
+   ========================================================================== */
+async function initData() {
+  hideError();
+  document.getElementById('loading').classList.remove('hidden');
+  setProgress(0, 'CBS data ophalen…', 'Verbinding maken met datasets.cbs.nl');
+
+  try {
+    DATA = await fetchCBSData();
+  } catch (err) {
+    showError('Kon data niet ophalen van de CBS API.', err.message);
+    console.error(err);
+    return;
+  }
+
+  setProgress(92, 'Interface opbouwen…', '');
+
+  /* ── Populate cause dropdown ── */
+  const causeEl = document.getElementById('cause-select');
+  causeEl.innerHTML = '';
+  allMeasures.forEach(({ code, title }) => {
+    const o = document.createElement('option');
+    o.value = code;
+    o.textContent = title;
+    causeEl.appendChild(o);
+  });
+
+  /* Default: pick a measure containing "Zelfdoding", else first available */
+  const defaultMeasure =
+    allMeasures.find(m => m.title.toLowerCase().includes('zelfdoding')) ??
+    allMeasures[0];
+  selectedMeasure = defaultMeasure?.code ?? null;
+  causeEl.value   = selectedMeasure ?? '';
+  causeEl.disabled = false;
+
+  /* Fetch only the default selection before building the chart */
+  const ok = await ensureSelectionDataLoaded(false);
+  if (!ok) return;
+
+  /* ── Derive ALL_YEARS from selected measure ── */
+  deriveYearsAndLeeftijd();
+
+  /* ── Populate chart-start select ── */
+  populateChartStart();
+
+  /* ── Populate baseline selects ── */
+  populateSelects();
+
+  /* ── Build leeftijd buttons ── */
+  buildLeeftijdButtons();
+
+  /* ── Update page title + browser tab ── */
+  updateTitle();
+
+  /* ── Wire events (once) ── */
+  wireEvents();
+
+  setProgress(100, 'Gereed', '');
+  setTimeout(hideLoading, 300);
+  render();
+}
+
+/* Derive ALL_YEARS and leeftijdOrder for the currently selected measure */
+function deriveYearsAndLeeftijd() {
+  const yearSet = new Set();
+  for (const lmap of Object.values(DATA[selectedMeasure]?.[selectedGeslacht] ?? {}))
+    for (const y of Object.keys(lmap)) yearSet.add(+y);
+  ALL_YEARS = [...yearSet].sort((a, b) => a - b);
+
+  const availableCodes  = new Set(Object.keys(DATA[selectedMeasure]?.[selectedGeslacht] ?? {}));
+  const availableLabels = new Set([...availableCodes].map(c => leeftijdMap[c] ?? c));
+  leeftijdOrder = LEEFTIJD_SORT.filter(l => availableLabels.has(l));
+  for (const l of availableLabels)
+    if (!leeftijdOrder.includes(l)) leeftijdOrder.push(l);
+
+  /* Reset leeftijd selection to a sensible default */
+  const defaults = ['20 tot 25 jaar','25 tot 30 jaar','30 tot 35 jaar'];
+  selectedLeeftijd = new Set(defaults.filter(l => leeftijdOrder.includes(l)));
+  if (selectedLeeftijd.size === 0 && leeftijdOrder.length > 0)
+    selectedLeeftijd.add(leeftijdOrder[0]);
+}
+
+function updateTitle() {
+  const cause = allMeasures.find(m => m.code === selectedMeasure);
+  /* Strip leading hierarchy like "17 Uitwendige doodsoorzaken|17.2 " */
+  const shortTitle = cause
+    ? (cause.title.includes('|') ? cause.title.split('|').pop().trim() : cause.title)
+    : 'Doodsoorzaak';
+  document.getElementById('page-title').textContent =
+    `${shortTitle} · leeftijd & geslacht`;
+  document.title = `CBS Sterfte – ${shortTitle}`;
+}
+
+/* ==========================================================================
+   Dynamic leeftijd button builder
+   ========================================================================== */
+function leeftijdShort(l) {
+  if (l === 'Totaal alle leeftijden') return 'Totaal';
+  if (l === '95 jaar of ouder')       return '95+';
+  if (l === '0 jaar')                 return '0 jr';
+  return l.replace(' jaar','').replace(' tot ','–').replace(' of ouder','+');
+}
+
+function buildLeeftijdButtons() {
+  const container = document.getElementById('leeftijd-btns');
+  container.innerHTML = '';
+
+  /* Reverse map: leeftijdLabel → leeftijdCode */
+  const labelToCode = Object.fromEntries(
+    Object.entries(leeftijdMap).map(([k, v]) => [v, k])
+  );
+
+  leeftijdOrder.forEach((label, idx) => {
+    const color = AGE_COLORS[idx % AGE_COLORS.length];
+    const code  = labelToCode[label] ?? label;
+    const btn   = document.createElement('button');
+
+    btn.className    = 'btn';
+    btn.dataset.l    = label;
+    btn.dataset.code = code;
+    btn.textContent  = leeftijdShort(label);
+    btn.title        = label;
+
+    if (selectedLeeftijd.has(label)) applyActiveStyle(btn, color);
+
+    btn.addEventListener('click', () => {
+      if (selectedLeeftijd.has(label)) {
+        if (selectedLeeftijd.size === 1) return;
+        selectedLeeftijd.delete(label);
+        btn.classList.remove('active');
+        btn.style.removeProperty('background');
+        btn.style.removeProperty('border-color');
+        btn.style.removeProperty('color');
+      } else {
+        selectedLeeftijd.add(label);
+        applyActiveStyle(btn, color);
+      }
+      render();
+    });
+
+    container.appendChild(btn);
+  });
+}
+
+function applyActiveStyle(btn, color) {
+  btn.classList.add('active');
+  btn.style.setProperty('background', color);
+  btn.style.setProperty('border-color', color);
+  btn.style.setProperty('color', '#fff');
+}
+
+/* ==========================================================================
+   Chart-start dropdown
+   ========================================================================== */
+function populateChartStart() {
+  const el = document.getElementById('chart-start');
+  el.innerHTML = '';
+  ALL_YEARS.forEach(y => {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    if (y === chartStartYear) o.selected = true;
+    el.appendChild(o);
+  });
+}
+
+/* ==========================================================================
+   Baseline dropdowns
+   ========================================================================== */
 function populateSelects() {
-  const sEl = document.getElementById('baseline-start');
-  const eEl = document.getElementById('baseline-end');
-  sEl.innerHTML = '';
-  eEl.innerHTML = '';
-  for (let y = 2000; y <= 2022; y++) {
+  const minY = ALL_YEARS[0] ?? 2000;
+  const maxY = ALL_YEARS[ALL_YEARS.length - 1] ?? 2024;
+  const sEl  = document.getElementById('baseline-start');
+  const eEl  = document.getElementById('baseline-end');
+  sEl.innerHTML = eEl.innerHTML = '';
+  for (let y = minY; y <= maxY - 2; y++) {
     const o = document.createElement('option');
     o.value = y; o.textContent = y;
     if (y === baselineStart) o.selected = true;
     sEl.appendChild(o);
   }
-  for (let y = 2001; y <= 2023; y++) {
+  for (let y = minY + 1; y <= maxY - 1; y++) {
     const o = document.createElement('option');
     o.value = y; o.textContent = y;
     if (y === baselineEnd) o.selected = true;
@@ -391,47 +697,83 @@ function populateSelects() {
   }
 }
 
-document.getElementById('baseline-start').addEventListener('change', e => {
-  baselineStart = +e.target.value;
-  if (baselineStart >= baselineEnd) { baselineEnd = baselineStart + 1; populateSelects(); }
-  render();
-});
-document.getElementById('baseline-end').addEventListener('change', e => {
-  baselineEnd = +e.target.value;
-  if (baselineEnd <= baselineStart) { baselineStart = baselineEnd - 1; populateSelects(); }
-  render();
-});
+/* ==========================================================================
+   Event wiring (called once after data loads)
+   ========================================================================== */
+function wireEvents() {
+  /* Cause of death */
+  document.getElementById('cause-select').addEventListener('change', async e => {
+    selectedMeasure = e.target.value;
+    const ok = await ensureSelectionDataLoaded(true);
+    if (!ok) return;
+    deriveYearsAndLeeftijd();
+    populateChartStart();
+    populateSelects();
+    buildLeeftijdButtons();
+    updateTitle();
+    render();
+  });
 
-document.getElementById('geslacht-btns').addEventListener('click', e => {
-  const btn = e.target.closest('.btn');
-  if (!btn) return;
-  selectedGeslacht = btn.dataset.g;
-  document.querySelectorAll('#geslacht-btns .btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  render();
-});
-
-document.getElementById('leeftijd-btns').addEventListener('click', e => {
-  const btn = e.target.closest('.btn');
-  if (!btn) return;
-  const l = btn.dataset.l;
-  if (selectedLeeftijd.has(l)) {
-    if (selectedLeeftijd.size === 1) return;
-    selectedLeeftijd.delete(l);
-    btn.classList.remove('active');
-  } else {
-    selectedLeeftijd.add(l);
+  /* Geslacht */
+  document.getElementById('geslacht-btns').addEventListener('click', async e => {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    selectedGeslacht = btn.dataset.g;
+    document.querySelectorAll('#geslacht-btns .btn')
+      .forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-  }
-  render();
-});
+    const ok = await ensureSelectionDataLoaded(true);
+    if (!ok) return;
+    deriveYearsAndLeeftijd();
+    populateChartStart();
+    populateSelects();
+    buildLeeftijdButtons();
+    render();
+  });
 
-/* ── Linear regression helper ── */
+  /* Chart start year */
+  document.getElementById('chart-start').addEventListener('change', e => {
+    chartStartYear = +e.target.value;
+    render();
+  });
+
+  /* Baseline start */
+  document.getElementById('baseline-start').addEventListener('change', e => {
+    baselineStart = +e.target.value;
+    if (baselineStart >= baselineEnd) { baselineEnd = baselineStart + 1; populateSelects(); }
+    render();
+  });
+
+  /* Baseline end */
+  document.getElementById('baseline-end').addEventListener('change', e => {
+    baselineEnd = +e.target.value;
+    if (baselineEnd <= baselineStart) { baselineStart = baselineEnd - 1; populateSelects(); }
+    render();
+  });
+}
+
+/* ==========================================================================
+   Helpers: resolve leeftijdCode from label for current measure + geslacht
+   ========================================================================== */
+function getYearMap(geslachtCode, leeftijdLabel) {
+  const lCode = Object.entries(leeftijdMap).find(([, v]) => v === leeftijdLabel)?.[0];
+  if (!lCode) return {};
+  return DATA[selectedMeasure]?.[geslachtCode]?.[lCode] ?? {};
+}
+
+/* Years visible in the chart (respects chartStartYear) */
+function visibleYears() {
+  return ALL_YEARS.filter(y => y >= chartStartYear);
+}
+
+/* ==========================================================================
+   Linear regression
+   ========================================================================== */
 function linReg(xs, ys) {
   const n = xs.length;
-  if (n < 2) return { slope: 0, intercept: ys[0] || 0 };
-  const mX = xs.reduce((a, b) => a + b, 0) / n;
-  const mY = ys.reduce((a, b) => a + b, 0) / n;
+  if (n < 2) return { slope: 0, intercept: ys[0] ?? 0 };
+  const mX = xs.reduce((a, b) => a + b) / n;
+  const mY = ys.reduce((a, b) => a + b) / n;
   let num = 0, den = 0;
   for (let i = 0; i < n; i++) {
     num += (xs[i] - mX) * (ys[i] - mY);
@@ -441,95 +783,80 @@ function linReg(xs, ys) {
   return { slope, intercept: mY - slope * mX };
 }
 
-function makeExpectedFn(leeftijd) {
-  const gData = RAW[CAUSE_KEY][selectedGeslacht][leeftijd];
+function makeExpectedFn(leeftijdLabel) {
+  const ymap   = getYearMap(selectedGeslacht, leeftijdLabel);
   const bYears = ALL_YEARS.filter(y => y >= baselineStart && y <= baselineEnd);
-  const bVals  = bYears.map(y => gData[String(y)]);
+  const bVals  = bYears.map(y => ymap[String(y)] ?? 0);
   const { slope, intercept } = linReg(bYears, bVals);
   return y => slope * y + intercept;
 }
 
-function hexToRgba(hex, a) {
-  const r = parseInt(hex.slice(1,3), 16);
-  const g = parseInt(hex.slice(3,5), 16);
-  const b = parseInt(hex.slice(5,7), 16);
-  return `rgba(${r},${g},${b},${a})`;
-}
-
-/* ── Build Plotly traces ── */
+/* ==========================================================================
+   Plotly traces
+   ========================================================================== */
 function getTraces() {
-  const gData  = RAW[CAUSE_KEY][selectedGeslacht];
-  const traces = [];
-  const ordered = AGE_LABELS.filter(l => selectedLeeftijd.has(l));
+  const traces  = [];
+  const ordered = leeftijdOrder.filter(l => selectedLeeftijd.has(l));
+  const years   = visibleYears();
 
-  ordered.forEach(leeftijd => {
-    const idx   = AGE_LABELS.indexOf(leeftijd);
-    const color = AGE_COLORS[idx];
-    const yVals = ALL_YEARS.map(y => gData[leeftijd][String(y)]);
-    const expected = makeExpectedFn(leeftijd);
+  ordered.forEach(label => {
+    const idx    = leeftijdOrder.indexOf(label);
+    const color  = AGE_COLORS[idx % AGE_COLORS.length];
+    const ymap   = getYearMap(selectedGeslacht, label);
+    const yVals  = years.map(y => ymap[String(y)] ?? null);
+    const expFn  = makeExpectedFn(label);
 
-    /* 1. Scatter dots */
     traces.push({
-      type: 'scatter', mode: 'markers',
-      name: leeftijd,
-      x: ALL_YEARS, y: yVals,
+      type: 'scatter', mode: 'markers', name: label,
+      x: years, y: yVals,
       marker: { color, size: 7, line: { color: 'rgba(0,0,0,0.15)', width: 1 } },
-      hovertemplate: `<b>${leeftijd}</b><br>Jaar: %{x}<br>Werkelijk: %{y}<extra></extra>`,
-      legendgroup: leeftijd,
+      hovertemplate: `<b>${label}</b><br>Jaar: %{x}<br>Werkelijk: %{y}<extra></extra>`,
+      legendgroup: label,
     });
 
-    /* 2. Linear trend line (full range, extrapolated) */
     traces.push({
-      type: 'scatter', mode: 'lines',
-      name: `${leeftijd} (trend)`,
-      x: ALL_YEARS,
-      y: ALL_YEARS.map(expected),
-      line: { color, width: 1.8, dash: 'dash' },
-      opacity: 0.65,
+      type: 'scatter', mode: 'lines', name: `${label} (trend)`,
+      x: years, y: years.map(expFn),
+      line: { color, width: 1.8, dash: 'dash' }, opacity: 0.65,
       showlegend: false,
-      hovertemplate: `<b>${leeftijd} verwacht</b><br>Jaar: %{x}<br>Verwacht: %{y:.1f}<extra></extra>`,
-      legendgroup: leeftijd,
+      hovertemplate: `<b>${label} verwacht</b><br>Jaar: %{x}<br>Verwacht: %{y:.1f}<extra></extra>`,
+      legendgroup: label,
     });
-
-
   });
 
   return traces;
 }
 
-/* ── Excess table ── */
+/* ==========================================================================
+   Excess deviation table
+   ========================================================================== */
 function buildTable() {
-  const gData   = RAW[CAUSE_KEY][selectedGeslacht];
-  const ordered = AGE_LABELS.filter(l => selectedLeeftijd.has(l));
+  const ordered   = leeftijdOrder.filter(l => selectedLeeftijd.has(l));
+  const colTotals = EXCESS_YEARS.map(() => 0);
+  let grandTotal  = 0;
 
-  const thead = document.getElementById('excess-thead');
-  const tbody = document.getElementById('excess-tbody');
-  const tfoot = document.getElementById('excess-tfoot');
-
-  thead.innerHTML =
+  document.getElementById('excess-thead').innerHTML =
     `<th>Leeftijdsgroep</th>` +
     EXCESS_YEARS.map(y => `<th>${y}</th>`).join('') +
     `<th>Totaal 20–24</th>`;
 
-  const colTotals   = EXCESS_YEARS.map(() => 0);
-  let   grandTotal  = 0;
-
-  tbody.innerHTML = ordered.map(leeftijd => {
-    const exp = makeExpectedFn(leeftijd);
+  document.getElementById('excess-tbody').innerHTML = ordered.map(label => {
+    const exp    = makeExpectedFn(label);
+    const ymap   = getYearMap(selectedGeslacht, label);
     let rowTotal = 0;
-    const cells = EXCESS_YEARS.map((y, i) => {
-      const actual = gData[leeftijd][String(y)];
+    const cells  = EXCESS_YEARS.map((y, i) => {
+      const actual = ymap[String(y)] ?? 0;
       const diff   = actual - exp(y);
       colTotals[i] += diff;
-      rowTotal += diff;
+      rowTotal     += diff;
       return cellHtml(diff);
     });
     grandTotal += rowTotal;
-    return `<tr><td>${leeftijd}</td>${cells.join('')}${cellHtml(rowTotal)}</tr>`;
+    return `<tr><td>${label}</td>${cells.join('')}${cellHtml(rowTotal)}</tr>`;
   }).join('');
 
   const gt = grandTotal;
-  tfoot.innerHTML =
+  document.getElementById('excess-tfoot').innerHTML =
     `<td>Totaal alle groepen</td>` +
     colTotals.map(v => `<td class="${v > 0.5 ? 'pos' : v < -0.5 ? 'neg' : ''}">${fmt(v)}</td>`).join('') +
     `<td class="${gt > 0.5 ? 'pos' : gt < -0.5 ? 'neg' : ''}">${fmt(gt)}</td>`;
@@ -537,116 +864,95 @@ function buildTable() {
   return { colTotals, grandTotal };
 }
 
-function fmt(v) { return (v > 0 ? '+' : '') + v.toFixed(1); }
+function fmt(v)      { return (v > 0 ? '+' : '') + v.toFixed(1); }
 function cellHtml(v) {
-  const cls = v > 0.5 ? 'pos' : v < -0.5 ? 'neg' : 'zero';
-  return `<td class="${cls}">${fmt(v)}</td>`;
+  return `<td class="${v > 0.5 ? 'pos' : v < -0.5 ? 'neg' : 'zero'}">${fmt(v)}</td>`;
 }
 
-/* ── Stats strip ── */
+/* ==========================================================================
+   Stats strip
+   ========================================================================== */
 function updateStats(colTotals, grandTotal) {
-  const gData  = RAW[CAUSE_KEY][selectedGeslacht];
   let peak = { year: 0, val: -Infinity };
-  selectedLeeftijd.forEach(l => {
+  selectedLeeftijd.forEach(label => {
+    const ymap = getYearMap(selectedGeslacht, label);
     ALL_YEARS.forEach(y => {
-      const v = gData[l][String(y)];
-      if (v > peak.val) peak = { year: y, val: v };
+      const v = ymap[String(y)] ?? null;
+      if (v !== null && v > peak.val) peak = { year: y, val: v };
     });
   });
 
   document.getElementById('stat-groups').textContent = selectedLeeftijd.size;
-  document.getElementById('stat-peak').textContent   = `${peak.val} (${peak.year})`;
+  document.getElementById('stat-peak').textContent   =
+    peak.val > -Infinity ? `${peak.val} (${peak.year})` : '—';
 
   const exEl = document.getElementById('stat-excess');
   exEl.textContent = fmt(grandTotal);
   exEl.className   = 'stat-val ' + (grandTotal > 0.5 ? 'pos' : grandTotal < -0.5 ? 'neg' : '');
 
-  const worstIdx = colTotals.reduce((b, v, i) => Math.abs(v) > Math.abs(colTotals[b]) ? i : b, 0);
+  const wi = colTotals.reduce((b, v, i) => Math.abs(v) > Math.abs(colTotals[b]) ? i : b, 0);
   document.getElementById('stat-worst').textContent =
-    `${EXCESS_YEARS[worstIdx]} (${fmt(colTotals[worstIdx])})`;
+    `${EXCESS_YEARS[wi]} (${fmt(colTotals[wi])})`;
 }
 
-/* ── Main render ── */
+/* ==========================================================================
+   Main render
+   ========================================================================== */
 function render() {
-  const traces = getTraces();
+  const years = visibleYears();
+  const xMin  = years[0]  ?? chartStartYear;
+  const xMax  = years[years.length - 1] ?? ALL_YEARS[ALL_YEARS.length - 1];
 
   const shapes = [
-    /* baseline window shading */
-    { type: 'rect', xref: 'x', yref: 'paper',
-      x0: baselineStart - 0.4, x1: baselineEnd + 0.4, y0: 0, y1: 1,
-      fillcolor: 'rgba(37,99,235,0.05)', line: { width: 0 } },
-    /* baseline window borders */
-    { type: 'line', xref: 'x', yref: 'paper',
-      x0: baselineStart - 0.4, x1: baselineStart - 0.4, y0: 0, y1: 1,
-      line: { color: 'rgba(37,99,235,0.3)', width: 1, dash: 'dot' } },
-    { type: 'line', xref: 'x', yref: 'paper',
-      x0: baselineEnd + 0.4, x1: baselineEnd + 0.4, y0: 0, y1: 1,
-      line: { color: 'rgba(37,99,235,0.3)', width: 1, dash: 'dot' } },
-    /* 2020 divider */
-    { type: 'line', xref: 'x', yref: 'paper',
-      x0: 2019.5, x1: 2019.5, y0: 0, y1: 1,
-      line: { color: 'rgba(0,0,0,0.15)', width: 1, dash: 'dot' } },
+    { type:'rect', xref:'x', yref:'paper', x0: baselineStart-0.4, x1: baselineEnd+0.4, y0:0, y1:1, fillcolor:'rgba(37,99,235,0.05)', line:{width:0} },
+    { type:'line', xref:'x', yref:'paper', x0: baselineStart-0.4, x1: baselineStart-0.4, y0:0, y1:1, line:{color:'rgba(37,99,235,0.3)',width:1,dash:'dot'} },
+    { type:'line', xref:'x', yref:'paper', x0: baselineEnd+0.4,   x1: baselineEnd+0.4,   y0:0, y1:1, line:{color:'rgba(37,99,235,0.3)',width:1,dash:'dot'} },
+    ...(xMin <= 2019 && xMax >= 2020 ? [
+      { type:'line', xref:'x', yref:'paper', x0: 2019.5, x1: 2019.5, y0:0, y1:1, line:{color:'rgba(0,0,0,0.15)',width:1,dash:'dot'} },
+    ] : []),
   ];
-
   const annotations = [
-    { x: (baselineStart + baselineEnd) / 2, y: 1, yref: 'paper',
-      text: `basislijn ${baselineStart}–${baselineEnd}`, showarrow: false,
-      font: { size: 9, color: 'rgba(37,99,235,0.55)', family: 'IBM Plex Mono' },
-      xanchor: 'center', yanchor: 'bottom', yshift: 3 },
-    { x: 2020, y: 1, yref: 'paper', text: '← 2020', showarrow: false,
-      font: { size: 9, color: 'rgba(0,0,0,0.3)', family: 'IBM Plex Mono' },
-      xanchor: 'right', yanchor: 'bottom', xshift: -4, yshift: 3 },
+    { x:(baselineStart+baselineEnd)/2, y:1, yref:'paper', text:`basislijn ${baselineStart}–${baselineEnd}`, showarrow:false, font:{size:9,color:'rgba(37,99,235,0.55)',family:'IBM Plex Mono'}, xanchor:'center', yanchor:'bottom', yshift:3 },
+    ...(xMin <= 2019 && xMax >= 2020 ? [
+      { x:2020, y:1, yref:'paper', text:'← 2020', showarrow:false, font:{size:9,color:'rgba(0,0,0,0.3)',family:'IBM Plex Mono'}, xanchor:'right', yanchor:'bottom', xshift:-4, yshift:3 },
+    ] : []),
   ];
 
-  const layout = {
-    paper_bgcolor: '#ffffff',
-    plot_bgcolor:  '#f9fafb',
-    font: { family: 'IBM Plex Mono, monospace', color: '#6b7280', size: 11 },
-    margin: { t: 28, r: 20, b: 52, l: 52 },
-    xaxis: {
-      title: { text: 'Jaar', font: { size: 10, color: '#9ca3af' } },
-      tickmode: 'linear', dtick: 2,
-      gridcolor: '#e5e7eb', linecolor: '#e5e7eb',
-      tickfont: { size: 10 },
-    },
-    yaxis: {
-      title: { text: 'Aantal overledenen', font: { size: 10, color: '#9ca3af' } },
-      gridcolor: '#e5e7eb', linecolor: '#e5e7eb',
-      tickfont: { size: 10 },
-      rangemode: 'tozero',
-    },
-    legend: {
-      orientation: 'h', x: 0, y: -0.18,
-      font: { size: 10 },
-      bgcolor: 'rgba(0,0,0,0)',
-    },
-    hovermode: 'x unified',
-    hoverlabel: {
-      bgcolor: '#fff', bordercolor: '#e5e7eb',
-      font: { family: 'IBM Plex Mono', size: 11, color: '#111827' },
-    },
-    shapes,
-    annotations,
-  };
+  const causeLabel = allMeasures.find(m => m.code === selectedMeasure)?.title ?? 'cbs';
+  const fileSlug   = causeLabel.split('|').pop().trim().toLowerCase().replace(/\s+/g, '_').slice(0, 40);
 
-  Plotly.react('chart', traces, layout, {
-    responsive: true,
-    displayModeBar: true,
-    modeBarButtonsToRemove: ['select2d','lasso2d','autoScale2d'],
-    displaylogo: false,
-    toImageButtonOptions: { format: 'png', filename: 'zelfdoding_CBS', scale: 2 },
+  Plotly.react('chart', getTraces(), {
+    paper_bgcolor:'#ffffff', plot_bgcolor:'#f9fafb',
+    font:{family:'IBM Plex Mono, monospace',color:'#6b7280',size:11},
+    margin:{t:28,r:20,b:52,l:52},
+    xaxis:{
+      title:{text:'Jaar',font:{size:10,color:'#9ca3af'}},
+      tickmode:'linear', dtick: years.length > 15 ? 2 : 1,
+      range:[xMin - 0.5, xMax + 0.5],
+      gridcolor:'#e5e7eb', linecolor:'#e5e7eb', tickfont:{size:10},
+    },
+    yaxis:{title:{text:'Aantal overledenen',font:{size:10,color:'#9ca3af'}},gridcolor:'#e5e7eb',linecolor:'#e5e7eb',tickfont:{size:10},rangemode:'tozero'},
+    legend:{orientation:'h',x:0,y:-0.18,font:{size:10},bgcolor:'rgba(0,0,0,0)'},
+    hovermode:'x unified',
+    hoverlabel:{bgcolor:'#fff',bordercolor:'#e5e7eb',font:{family:'IBM Plex Mono',size:11,color:'#111827'}},
+    shapes, annotations,
+  }, {
+    responsive:true, displayModeBar:true,
+    modeBarButtonsToRemove:['select2d','lasso2d','autoScale2d'],
+    displaylogo:false,
+    toImageButtonOptions:{format:'png', filename:`cbs_sterfte_${fileSlug}`, scale:2},
   });
 
   const { colTotals, grandTotal } = buildTable();
   updateStats(colTotals, grandTotal);
-
-  /* update excess note */
   document.getElementById('excess-note').textContent =
     `Werkelijk minus verwacht · basislijn ${baselineStart}–${baselineEnd} · lineaire regressie`;
 }
 
-populateSelects();
-render();
+/* ==========================================================================
+   Start
+   ========================================================================== */
+initData();
 </script>
 </body>
 </html>
