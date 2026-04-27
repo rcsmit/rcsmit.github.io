@@ -227,39 +227,6 @@
     .stat-val.pos { color: var(--red); }
     .stat-val.neg { color: var(--green); }
     .updated-note { font-family: var(--mono); font-size: 0.6rem; color: var(--text-muted); padding: 0.5rem 1.75rem; text-align: right; }
-
-    /* ── Per-100k toggle ── */
-    .toggle-row { display: flex; align-items: center; gap: 0.5rem; }
-    .toggle-switch {
-      position: relative; width: 36px; height: 20px;
-      display: inline-block; cursor: pointer; flex-shrink: 0;
-    }
-    .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .toggle-track {
-      position: absolute; inset: 0;
-      background: var(--border); border-radius: 20px;
-      transition: background 0.15s;
-    }
-    .toggle-switch input:checked + .toggle-track { background: var(--accent); }
-    .toggle-knob {
-      position: absolute; top: 3px; left: 3px;
-      width: 14px; height: 14px;
-      background: #fff; border-radius: 50%;
-      transition: transform 0.15s;
-      pointer-events: none;
-    }
-    .toggle-switch input:checked ~ .toggle-knob { transform: translateX(16px); }
-    .toggle-label {
-      font-family: var(--mono); font-size: 0.68rem;
-      color: var(--text-dim); cursor: pointer; user-select: none;
-    }
-    .toggle-label.active { color: var(--accent); font-weight: 600; }
-    .pop-warning {
-      font-family: var(--mono); font-size: 0.6rem; color: #d97706;
-      padding: 0.3rem 1.75rem; background: #fffbeb;
-      border-bottom: 1px solid #fde68a; display: none;
-    }
-    .pop-warning.visible { display: block; }
   </style>
 </head>
 <body>
@@ -277,10 +244,6 @@
     <div id="error-detail"></div>
   </div>
   <button id="error-retry" onclick="initData()">↺ Opnieuw proberen</button>
-</div>
-
-<div class="pop-warning" id="pop-warning">
-  ⚠ Bevolkingsdata (7461BEV) wordt opgehaald voor per-100k berekening…
 </div>
 
 <header>
@@ -316,17 +279,6 @@
   <div class="ctrl-group">
     <div class="ctrl-label">Grafiek vanaf</div>
     <select class="ctrl-select" id="chart-start" style="width:auto"></select>
-  </div>
-  <div class="ctrl-group">
-    <div class="ctrl-label">Weergave</div>
-    <div class="toggle-row">
-      <label class="toggle-switch">
-        <input type="checkbox" id="per100k-toggle">
-        <div class="toggle-track"></div>
-        <div class="toggle-knob"></div>
-      </label>
-      <span class="toggle-label" id="per100k-label">Per 100.000 inwoners</span>
-    </div>
   </div>
   <div class="ctrl-group">
     <div class="ctrl-label">Basislijn voor regressie</div>
@@ -401,132 +353,6 @@ const AGE_COLORS = [
   '#0369a1','#047857','#b45309','#9f1239',
   '#4338ca','#064e3b',
 ];
-
-/* ==========================================================================
-   Population table: 7461BEV  (OData v3 — opendata.cbs.nl)
-   Dimensions: Geslacht, Leeftijd, BurgerlijkeStaat, Perioden
-   Data column: BevolkingOp1Januari_1
-   We only need BurgerlijkeStaat = 'T001019' (totaal) and annual Perioden.
-   Leeftijd codes in this table are 5-year groups like "23100" (10-15 jr) etc.
-   We fetch filtered per Geslacht to keep requests small.
-   ========================================================================== */
-const POP_BASE = 'https://opendata.cbs.nl/ODataApi/OData/7461bev';
-
-/* Population cache: mortalityGeslachtCode → leeftijdCode → year → population */
-let POP = {};
-/* Leeftijd code map for 7461BEV: label → code (populated after first fetch) */
-let popLeeftijdMap = {};   // CBS code → label (5-yr groups like "10 tot 15 jaar")
-let popGeslachtMap = {};   // CBS code → label
-
-let per100k = false;   // toggle state
-
-/* OData v3 paginated fetch */
-async function odataV3GetAll(url) {
-  const rows = [];
-  let nextUrl = url;
-  while (nextUrl) {
-    const resp = await fetch(nextUrl);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} bij ${nextUrl}`);
-    const json = await resp.json();
-    rows.push(...(json.value ?? []));
-    nextUrl = json['odata.nextLink'] ?? null;  // v3 uses odata.nextLink (no @)
-  }
-  return rows;
-}
-
-/* Fetch population dimension maps (once, on first per-100k request) */
-let popDimsLoaded = false;
-let popBevolkingCol = null;        // actual column name, e.g. "BevolkingOp1Januari_1"
-let popBurgerlijkeStaatTotaal = null; // code for "Totaal" burgerlijke staat
-let popGeslachtCodeMap = {};       // mortality geslacht code → population geslacht code
-
-async function ensurePopDims() {
-  if (popDimsLoaded) return;
-
-  const [gRows, lRows, bRows, propRows] = await Promise.all([
-    odataV3GetAll(`${POP_BASE}/Geslacht?$format=json`),
-    odataV3GetAll(`${POP_BASE}/Leeftijd?$format=json`),
-    odataV3GetAll(`${POP_BASE}/BurgerlijkeStaat?$format=json`),
-    odataV3GetAll(`${POP_BASE}/DataProperties?$format=json`),
-  ]);
-
-  popGeslachtMap = Object.fromEntries(gRows.map(r => [r.Key.trim(), r.Title.trim()]));
-  popLeeftijdMap = Object.fromEntries(lRows.map(r => [r.Key.trim(), r.Title.trim()]));
-
-  // Map mortality geslacht labels → population geslacht keys by matching Title
-  // Mortality uses T001038/3000/4000; population may use different codes
-  const mortalityLabels = {
-    'T001038': 'Totaal mannen en vrouwen',
-    '3000':    'Mannen',
-    '4000':    'Vrouwen',
-  };
-  for (const [mCode, label] of Object.entries(mortalityLabels)) {
-    const popEntry = gRows.find(r => r.Title.trim() === label);
-    if (popEntry) popGeslachtCodeMap[mCode] = popEntry.Key.trim();
-  }
-
-  // Find "Totaal" burgerlijke staat code
-  const totaal = bRows.find(r =>
-    r.Title.trim().toLowerCase().includes('totaal') ||
-    r.Key.trim().startsWith('T')
-  );
-  popBurgerlijkeStaatTotaal = totaal?.Key?.trim() ?? null;
-
-  // Find the population count column (Topic type, not Dimension)
-  const col = propRows.find(r =>
-    r.Type === 'Topic' &&
-    (r.Key?.includes('Bevolking') || r.Key?.includes('bevolking'))
-  );
-  popBevolkingCol = col?.Key?.trim() ?? 'BevolkingOp1Januari_1';
-
-  console.log('Pop dims loaded:', { popGeslachtCodeMap, popBurgerlijkeStaatTotaal, popBevolkingCol });
-  popDimsLoaded = true;
-}
-
-function hasPopCache(geslachtCode) {
-  return Object.keys(POP[geslachtCode] ?? {}).length > 0;
-}
-
-async function ensurePopLoaded(mortalityGeslachtCode) {
-  if (hasPopCache(mortalityGeslachtCode)) return true;
-  await ensurePopDims();
-
-  // Translate mortality geslacht code → population geslacht code
-  const popGCode = popGeslachtCodeMap[mortalityGeslachtCode] ?? mortalityGeslachtCode;
-
-  // Build filter — only annual periods + this geslacht
-  // Drop $select (causes HTTP 500 on CBS OData v3)
-  // Drop BurgerlijkeStaat filter if we couldn't find the code
-  let filter = `Geslacht eq '${popGCode}' and substringof('JJ',Perioden)`;
-  if (popBurgerlijkeStaatTotaal) {
-    filter += ` and BurgerlijkeStaat eq '${popBurgerlijkeStaatTotaal}'`;
-  }
-
-  const url = `${POP_BASE}/TypedDataSet?$format=json&$filter=${encodeURIComponent(filter)}`;
-  const rows = await odataV3GetAll(url);
-
-  POP[mortalityGeslachtCode] ??= {};
-  for (const row of rows) {
-    const lCode = row.Leeftijd?.trim();
-    const year  = row.Perioden?.trim().slice(0, 4);
-    if (!year || !/^\d{4}$/.test(year)) continue;
-    const val = row[popBevolkingCol];
-    if (val == null) continue;
-    POP[mortalityGeslachtCode][lCode] ??= {};
-    POP[mortalityGeslachtCode][lCode][year] = +val;
-  }
-  return true;
-}
-
-/* Get population for a given geslacht code + leeftijdLabel (from 7052_95) + year.
-   The leeftijdLabels in both tables use the same Dutch strings ("10 tot 15 jaar")
-   so we just reverse-look up the pop code by label. */
-function getPopulation(geslachtCode, leeftijdLabel, year) {
-  // Reverse map: label → pop code
-  const popCode = Object.entries(popLeeftijdMap).find(([, v]) => v === leeftijdLabel)?.[0];
-  if (!popCode) return null;
-  return POP[geslachtCode]?.[popCode]?.[String(year)] ?? null;
-}
 
 /* Cause of death: populated dynamically from MeasureCodes after load */
 let allMeasures = [];       // [{code, title}] — all available measures
@@ -888,22 +714,7 @@ function wireEvents() {
     render();
   });
 
-  /* Per-100k toggle */
-  document.getElementById('per100k-toggle').addEventListener('change', async e => {
-    per100k = e.target.checked;
-    const label = document.getElementById('per100k-label');
-    label.classList.toggle('active', per100k);
-    if (per100k) {
-      document.getElementById('pop-warning').classList.add('visible');
-      const ok = await ensurePopAndRender();
-      document.getElementById('pop-warning').classList.remove('visible');
-      if (!ok) { per100k = false; e.target.checked = false; label.classList.remove('active'); }
-    } else {
-      render();
-    }
-  });
-
-  /* Geslacht — also reload pop cache if per100k */
+  /* Geslacht */
   document.getElementById('geslacht-btns').addEventListener('click', async e => {
     const btn = e.target.closest('.btn');
     if (!btn) return;
@@ -913,14 +724,11 @@ function wireEvents() {
     btn.classList.add('active');
     const ok = await ensureSelectionDataLoaded(true);
     if (!ok) return;
-    if (per100k) await ensurePopAndRender();
-    else {
-      deriveYearsAndLeeftijd();
-      populateChartStart();
-      populateSelects();
-      buildLeeftijdButtons();
-      render();
-    }
+    deriveYearsAndLeeftijd();
+    populateChartStart();
+    populateSelects();
+    buildLeeftijdButtons();
+    render();
   });
 
   /* Chart start year */
@@ -944,23 +752,6 @@ function wireEvents() {
   });
 }
 
-/* Load population for current geslacht, then rebuild UI + render */
-async function ensurePopAndRender() {
-  try {
-    await ensurePopLoaded(selectedGeslacht);
-    deriveYearsAndLeeftijd();
-    populateChartStart();
-    populateSelects();
-    buildLeeftijdButtons();
-    render();
-    return true;
-  } catch (err) {
-    showError('Kon bevolkingsdata (7461BEV) niet ophalen.', err.message);
-    console.error(err);
-    return false;
-  }
-}
-
 /* ==========================================================================
    Helpers: resolve leeftijdCode from label for current measure + geslacht
    ========================================================================== */
@@ -973,25 +764,6 @@ function getYearMap(geslachtCode, leeftijdLabel) {
 /* Years visible in the chart (respects chartStartYear) */
 function visibleYears() {
   return ALL_YEARS.filter(y => y >= chartStartYear);
-}
-
-/* Return a value scaled to per-100k if toggle is on, else raw */
-function scaleValue(raw, leeftijdLabel, year) {
-  if (!per100k || raw == null) return raw;
-  const pop = getPopulation(selectedGeslacht, leeftijdLabel, year);
-  if (!pop || pop === 0) return null;
-  return (raw / pop) * 100000;
-}
-
-/* Build a per-100k year map for a leeftijdLabel */
-function getScaledYearMap(leeftijdLabel) {
-  const rawMap = getYearMap(selectedGeslacht, leeftijdLabel);
-  if (!per100k) return rawMap;
-  const scaled = {};
-  for (const [y, v] of Object.entries(rawMap)) {
-    scaled[y] = scaleValue(v, leeftijdLabel, +y);
-  }
-  return scaled;
 }
 
 /* ==========================================================================
@@ -1012,7 +784,7 @@ function linReg(xs, ys) {
 }
 
 function makeExpectedFn(leeftijdLabel) {
-  const ymap   = getScaledYearMap(leeftijdLabel);
+  const ymap   = getYearMap(selectedGeslacht, leeftijdLabel);
   const bYears = ALL_YEARS.filter(y => y >= baselineStart && y <= baselineEnd);
   const bVals  = bYears.map(y => ymap[String(y)] ?? 0);
   const { slope, intercept } = linReg(bYears, bVals);
@@ -1026,12 +798,11 @@ function getTraces() {
   const traces  = [];
   const ordered = leeftijdOrder.filter(l => selectedLeeftijd.has(l));
   const years   = visibleYears();
-  const unit    = per100k ? 'per 100k' : 'aantal';
 
   ordered.forEach(label => {
     const idx    = leeftijdOrder.indexOf(label);
     const color  = AGE_COLORS[idx % AGE_COLORS.length];
-    const ymap   = getScaledYearMap(label);
+    const ymap   = getYearMap(selectedGeslacht, label);
     const yVals  = years.map(y => ymap[String(y)] ?? null);
     const expFn  = makeExpectedFn(label);
 
@@ -1039,7 +810,7 @@ function getTraces() {
       type: 'scatter', mode: 'markers', name: label,
       x: years, y: yVals,
       marker: { color, size: 7, line: { color: 'rgba(0,0,0,0.15)', width: 1 } },
-      hovertemplate: `<b>${label}</b><br>Jaar: %{x}<br>Werkelijk: %{y:.2f} (${unit})<extra></extra>`,
+      hovertemplate: `<b>${label}</b><br>Jaar: %{x}<br>Werkelijk: %{y}<extra></extra>`,
       legendgroup: label,
     });
 
@@ -1048,7 +819,7 @@ function getTraces() {
       x: years, y: years.map(expFn),
       line: { color, width: 1.8, dash: 'dash' }, opacity: 0.65,
       showlegend: false,
-      hovertemplate: `<b>${label} verwacht</b><br>Jaar: %{x}<br>Verwacht: %{y:.2f} (${unit})<extra></extra>`,
+      hovertemplate: `<b>${label} verwacht</b><br>Jaar: %{x}<br>Verwacht: %{y:.1f}<extra></extra>`,
       legendgroup: label,
     });
   });
@@ -1071,7 +842,7 @@ function buildTable() {
 
   document.getElementById('excess-tbody').innerHTML = ordered.map(label => {
     const exp    = makeExpectedFn(label);
-    const ymap   = getScaledYearMap(label);
+    const ymap   = getYearMap(selectedGeslacht, label);
     let rowTotal = 0;
     const cells  = EXCESS_YEARS.map((y, i) => {
       const actual = ymap[String(y)] ?? 0;
@@ -1104,7 +875,7 @@ function cellHtml(v) {
 function updateStats(colTotals, grandTotal) {
   let peak = { year: 0, val: -Infinity };
   selectedLeeftijd.forEach(label => {
-    const ymap = getScaledYearMap(label);
+    const ymap = getYearMap(selectedGeslacht, label);
     ALL_YEARS.forEach(y => {
       const v = ymap[String(y)] ?? null;
       if (v !== null && v > peak.val) peak = { year: y, val: v };
@@ -1160,7 +931,7 @@ function render() {
       range:[xMin - 0.5, xMax + 0.5],
       gridcolor:'#e5e7eb', linecolor:'#e5e7eb', tickfont:{size:10},
     },
-    yaxis:{title:{text: per100k ? 'Per 100.000 inwoners' : 'Aantal overledenen',font:{size:10,color:'#9ca3af'}},gridcolor:'#e5e7eb',linecolor:'#e5e7eb',tickfont:{size:10},rangemode:'tozero'},
+    yaxis:{title:{text:'Aantal overledenen',font:{size:10,color:'#9ca3af'}},gridcolor:'#e5e7eb',linecolor:'#e5e7eb',tickfont:{size:10},rangemode:'tozero'},
     legend:{orientation:'h',x:0,y:-0.18,font:{size:10},bgcolor:'rgba(0,0,0,0)'},
     hovermode:'x unified',
     hoverlabel:{bgcolor:'#fff',bordercolor:'#e5e7eb',font:{family:'IBM Plex Mono',size:11,color:'#111827'}},
