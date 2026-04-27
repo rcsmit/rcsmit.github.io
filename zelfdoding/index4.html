@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CBS Sterfte – Zelfdoding</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.1/plotly.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --surface: #ffffff;
+      --surface2: #f9fafb;
+      --border: #e5e7eb;
+      --accent: #2563eb;
+      --accent-bg: #eff6ff;
+      --text: #111827;
+      --text-dim: #6b7280;
+      --text-muted: #9ca3af;
+      --red: #dc2626;
+      --green: #16a34a;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.75rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .title-block { flex: 1; min-width: 200px; }
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 0.2rem;
+    }
+    h1 { font-size: 1.1rem; font-weight: 500; color: var(--text); }
+    .header-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .source-badge {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      background: var(--surface2);
+      text-decoration: none;
+      transition: color 0.1s, border-color 0.1s;
+    }
+    .source-badge:hover { color: var(--accent); border-color: var(--accent); }
+    .api-badge {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: #16a34a;
+      border: 1px solid #bbf7d0;
+      padding: 0.2rem 0.5rem;
+      border-radius: 3px;
+      background: #f0fdf4;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .api-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #16a34a;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    /* ── Loading overlay ── */
+    #loading {
+      position: fixed; inset: 0;
+      background: rgba(249,250,251,0.94);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      z-index: 100;
+      backdrop-filter: blur(2px);
+    }
+    #loading.hidden { display: none; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); }
+    .loading-sub  { font-family: var(--mono); font-size: 0.62rem; color: var(--text-muted); max-width: 320px; text-align: center; }
+    .loading-progress { width: 220px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    .loading-bar { height: 100%; background: var(--accent); border-radius: 2px; width: 0%; transition: width 0.4s ease; }
+
+    /* ── Error banner ── */
+    #error-banner {
+      display: none;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: var(--red);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 0.75rem 1.75rem;
+      gap: 0.5rem;
+      align-items: flex-start;
+      flex-direction: column;
+    }
+    #error-banner.visible { display: flex; }
+    #error-detail { font-size: 0.62rem; color: #991b1b; margin-top: 0.15rem; }
+    #error-retry {
+      font-family: var(--mono); font-size: 0.68rem;
+      padding: 0.25rem 0.6rem;
+      border: 1px solid var(--red);
+      background: none; color: var(--red);
+      border-radius: 3px; cursor: pointer;
+      margin-top: 0.25rem;
+    }
+    #error-retry:hover { background: #fef2f2; }
+
+    /* ── Controls ── */
+    .controls {
+      background: var(--surface);
+      border-bottom: 2px solid var(--border);
+      padding: 0.8rem 1.75rem;
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .ctrl-group { display: flex; flex-direction: column; gap: 0.3rem; }
+    .ctrl-label {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .btn-group { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+    .btn {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      padding: 0.28rem 0.65rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.1s;
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+
+    /* Baseline selects */
+    .range-row { display: flex; align-items: center; gap: 0.4rem; }
+    .range-row select {
+      font-family: var(--mono); font-size: 0.68rem;
+      padding: 0.25rem 0.45rem;
+      border: 1px solid var(--border); border-radius: 3px;
+      background: var(--surface2); color: var(--text); cursor: pointer;
+    }
+    .range-row select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .range-sep { font-family: var(--mono); font-size: 0.65rem; color: var(--text-muted); }
+
+    /* ── Main ── */
+    .main { flex: 1; padding: 1.25rem 1.75rem; display: flex; flex-direction: column; gap: 1rem; }
+    #chart {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      min-height: 380px;
+    }
+
+    /* ── Excess table ── */
+    .excess-section { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+    .excess-head {
+      padding: 0.7rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap;
+      background: var(--surface2);
+    }
+    .excess-title { font-family: var(--mono); font-size: 0.68rem; font-weight: 600; color: var(--text); text-transform: uppercase; }
+    .excess-note { font-size: 0.7rem; color: var(--text-muted); }
+    .excess-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.7rem; }
+    thead th { background: var(--surface2); border-bottom: 2px solid var(--border); padding: 0.45rem 0.9rem; text-align: right; color: var(--text-dim); font-weight: 600; white-space: nowrap; }
+    thead th:first-child { text-align: left; }
+    tbody tr { border-bottom: 1px solid var(--border); }
+    tbody tr:hover { background: #f0f4ff; }
+    tbody td { padding: 0.4rem 0.9rem; text-align: right; }
+    tbody td:first-child { text-align: left; color: var(--text); font-weight: 500; }
+    .pos { color: var(--red); font-weight: 600; }
+    .neg { color: var(--green); font-weight: 600; }
+    .zero { color: var(--text-muted); }
+    tfoot td { padding: 0.45rem 0.9rem; background: #f0f4ff; border-top: 2px solid #bfdbfe; font-weight: 700; text-align: right; font-size: 0.72rem; }
+    tfoot td:first-child { text-align: left; color: var(--text); }
+    tfoot .pos { color: var(--red); }
+    tfoot .neg { color: var(--green); }
+
+    /* ── Stats strip ── */
+    .stats-strip { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; overflow: hidden; flex-wrap: wrap; }
+    .stat-item { flex: 1; min-width: 140px; padding: 0.65rem 1.1rem; border-right: 1px solid var(--border); }
+    .stat-item:last-child { border-right: none; }
+    .stat-label { font-family: var(--mono); font-size: 0.57rem; letter-spacing: 0.1em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.2rem; }
+    .stat-val { font-family: var(--mono); font-size: 1rem; font-weight: 600; color: var(--text); }
+    .stat-val.pos { color: var(--red); }
+    .stat-val.neg { color: var(--green); }
+    .updated-note { font-family: var(--mono); font-size: 0.6rem; color: var(--text-muted); padding: 0.5rem 1.75rem; text-align: right; }
+  </style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">CBS data ophalen…</div>
+  <div class="loading-progress"><div class="loading-bar" id="loading-bar"></div></div>
+  <div class="loading-sub" id="loading-sub">Verbinding maken met datasets.cbs.nl</div>
+</div>
+
+<div id="error-banner">
+  <div>
+    <strong id="error-msg">Kon data niet ophalen van de CBS API.</strong>
+    <div id="error-detail"></div>
+  </div>
+  <button id="error-retry" onclick="initData()">↺ Opnieuw proberen</button>
+</div>
+
+<header>
+  <div class="title-block">
+    <div class="eyebrow">CBS Sterfte · Doodsoorzaken</div>
+    <h1 id="page-title">Zelfdoding naar leeftijd &amp; geslacht</h1>
+  </div>
+  <div class="header-right">
+    <div class="api-badge"><div class="api-dot"></div>Live CBS OData v4</div>
+    <a class="source-badge" href="https://opendata.cbs.nl/#/CBS/nl/dataset/7052_95/table?fromstatweb" target="_blank" rel="noopener">Bron: CBS · tabel 7052_95 ↗</a>
+  </div>
+</header>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <div class="ctrl-label">Geslacht</div>
+    <div class="btn-group" id="geslacht-btns">
+      <button class="btn active" data-g="T001038">Totaal</button>
+      <button class="btn" data-g="3000">Mannen</button>
+      <button class="btn" data-g="4000">Vrouwen</button>
+    </div>
+  </div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">Leeftijdsgroep <span style="font-weight:300;letter-spacing:0;text-transform:none">(meerdere mogelijk)</span></div>
+    <div class="btn-group" id="leeftijd-btns"></div>
+  </div>
+  <div class="ctrl-group">
+    <div class="ctrl-label">Basislijn voor regressie</div>
+    <div class="range-row">
+      <span class="range-sep">van</span>
+      <select id="baseline-start"></select>
+      <span class="range-sep">t/m</span>
+      <select id="baseline-end"></select>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div id="chart"></div>
+  <div class="excess-section">
+    <div class="excess-head">
+      <span class="excess-title">Afwijking van basislijn · 2020–2024</span>
+      <span class="excess-note" id="excess-note">Werkelijk minus verwacht (lineaire trend)</span>
+    </div>
+    <div class="excess-wrap">
+      <table>
+        <thead><tr id="excess-thead"></tr></thead>
+        <tbody id="excess-tbody"></tbody>
+        <tfoot><tr id="excess-tfoot"></tr></tfoot>
+      </table>
+    </div>
+  </div>
+  <div class="stats-strip">
+    <div class="stat-item"><div class="stat-label">Geselecteerde groepen</div><div class="stat-val" id="stat-groups">—</div></div>
+    <div class="stat-item"><div class="stat-label">Piekjaar (werkelijk)</div><div class="stat-val" id="stat-peak">—</div></div>
+    <div class="stat-item"><div class="stat-label">Totale afwijking 2020–2024</div><div class="stat-val" id="stat-excess">—</div></div>
+    <div class="stat-item"><div class="stat-label">Jaar met grootste afwijking</div><div class="stat-val" id="stat-worst">—</div></div>
+  </div>
+  <div class="updated-note" id="updated-note"></div>
+</div>
+
+<script>
+/* ==========================================================================
+   CBS OData v4 configuration
+   Base: https://datasets.cbs.nl/odata/v1/CBS/{TABLE_ID}/
+   Endpoints used:
+     Properties         – table metadata (title, modified)
+     MeasureCodes       – cause of death codes + labels
+     GeslachtCodes      – gender codes + labels
+     LeeftijdCodes      – age group codes + labels
+     PeriodenCodes      – period codes + labels
+     Observations       – the actual data (long format, paginated)
+   Observation row fields: Id, Measure, ValueAttribute, Value, Geslacht, Leeftijd, Perioden
+   ========================================================================== */
+const TABLE_ID  = '7052_95';
+const BASE_URL  = `https://datasets.cbs.nl/odata/v1/CBS/${TABLE_ID}`;
+const PAGE_SIZE = 100000;   // OData v4 max per request
+
+/* Cause of death filter — we keep rows whose MeasureLabel contains this */
+const TARGET_MEASURE = 'Zelfdoding';
+
+/* Canonical display labels for geslacht dimension codes */
+const GESLACHT_LABELS = {
+  'T001038': 'Totaal mannen en vrouwen',
+  '3000':    'Mannen',
+  '4000':    'Vrouwen',
+};
+
+/* Preferred sort order for age groups */
+const LEEFTIJD_SORT = [
+  'Totaal alle leeftijden',
+  '0 jaar','1 tot 5 jaar','5 tot 10 jaar',
+  '10 tot 15 jaar','15 tot 20 jaar','20 tot 25 jaar','25 tot 30 jaar',
+  '30 tot 35 jaar','35 tot 40 jaar','40 tot 45 jaar','45 tot 50 jaar',
+  '50 tot 55 jaar','55 tot 60 jaar','60 tot 65 jaar','65 tot 70 jaar',
+  '70 tot 75 jaar','75 tot 80 jaar','80 tot 85 jaar','85 tot 90 jaar',
+  '90 tot 95 jaar','95 jaar of ouder',
+];
+
+const EXCESS_YEARS = [2020, 2021, 2022, 2023, 2024];
+
+const AGE_COLORS = [
+  '#374151','#9ca3af','#6b7280','#4b5563',
+  '#d97706','#dc2626','#7c3aed','#0284c7',
+  '#0d9488','#16a34a','#65a30d','#ca8a04',
+  '#ea580c','#be185d','#7e22ce','#1d4ed8',
+  '#0369a1','#047857','#b45309','#9f1239',
+  '#4338ca','#064e3b',
+];
+
+/* ==========================================================================
+   State
+   ========================================================================== */
+let DATA = {};             // geslachtCode → leeftijdCode → year → value
+let geslachtMap = {};      // code → label
+let leeftijdMap = {};      // code → label
+let measureCodes = [];     // codes matching TARGET_MEASURE
+let leeftijdOrder = [];    // ordered leeftijd labels
+let ALL_YEARS = [];
+
+let selectedGeslacht = 'T001038';
+let selectedLeeftijd = new Set();
+let baselineStart    = 2010;
+let baselineEnd      = 2019;
+
+/* ==========================================================================
+   UI helpers
+   ========================================================================== */
+function setProgress(pct, text, sub) {
+  document.getElementById('loading-bar').style.width  = `${pct}%`;
+  if (text) document.getElementById('loading-text').textContent = text;
+  if (sub)  document.getElementById('loading-sub').textContent  = sub;
+}
+function hideLoading() { document.getElementById('loading').classList.add('hidden'); }
+function showError(msg, detail = '') {
+  hideLoading();
+  document.getElementById('error-msg').textContent    = msg;
+  document.getElementById('error-detail').textContent = detail;
+  document.getElementById('error-banner').classList.add('visible');
+}
+function hideError() { document.getElementById('error-banner').classList.remove('visible'); }
+
+/* ==========================================================================
+   OData v4 fetch — handles @odata.nextLink pagination
+   ========================================================================== */
+async function odataGetAll(url) {
+  const rows = [];
+  let nextUrl = url;
+
+  while (nextUrl) {
+    const resp = await fetch(nextUrl);
+    if (!resp.ok) {
+      const body = await resp.text().catch(() => '');
+      throw new Error(`HTTP ${resp.status} bij ${nextUrl}\n${body.slice(0, 200)}`);
+    }
+    const json = await resp.json();
+    rows.push(...(json.value ?? []));
+    /* OData v4 pagination: follow @odata.nextLink if present */
+    nextUrl = json['@odata.nextLink'] ?? null;
+  }
+  return rows;
+}
+
+/* ==========================================================================
+   Data fetch + transform
+   ========================================================================== */
+async function fetchCBSData() {
+  /* ── Step 1: dimension tables (parallel) ── */
+  setProgress(10, 'Dimensies ophalen…', 'MeasureCodes · GeslachtCodes · LeeftijdCodes · PeriodenCodes');
+
+  const [measureRows, geslachtRows, leeftijdRows, periodenRows, propRows] =
+    await Promise.all([
+      odataGetAll(`${BASE_URL}/MeasureCodes`),
+      odataGetAll(`${BASE_URL}/GeslachtCodes`),
+      odataGetAll(`${BASE_URL}/LeeftijdCodes`),
+      odataGetAll(`${BASE_URL}/PeriodenCodes`),
+      odataGetAll(`${BASE_URL}/Properties`),
+    ]);
+
+  /* Build lookup maps: Identifier → Title */
+  const measureLookup  = Object.fromEntries(measureRows.map(r  => [r.Identifier, r.Title]));
+  geslachtMap          = Object.fromEntries(geslachtRows.map(r => [r.Identifier, r.Title]));
+  leeftijdMap          = Object.fromEntries(leeftijdRows.map(r => [r.Identifier, r.Title]));
+  const periodenLookup = Object.fromEntries(periodenRows.map(r => [r.Identifier, r.Title]));
+
+  /* Find measure codes for our target cause */
+  measureCodes = measureRows
+    .filter(r => r.Title.includes(TARGET_MEASURE))
+    .map(r => r.Identifier);
+
+  if (measureCodes.length === 0) {
+    throw new Error(`Geen meting gevonden met "${TARGET_MEASURE}" in MeasureCodes.`);
+  }
+
+  /* Table last-modified date */
+  const props = Array.isArray(propRows) ? propRows[0] : propRows;
+  const modified = props?.Modified ?? props?.Updated ?? '';
+  if (modified) {
+    const d = new Date(modified);
+    document.getElementById('updated-note').textContent =
+      `Tabel voor het laatst bijgewerkt door CBS op ${d.toLocaleDateString('nl-NL', {day:'numeric',month:'long',year:'numeric'})}`;
+  }
+
+  /* ── Step 2: Observations ── */
+  setProgress(30, 'Observaties ophalen…', `Observations · tabel ${TABLE_ID}`);
+
+  /* Filter server-side on Measure to reduce payload */
+  const measureFilter = measureCodes.map(c => `Measure eq '${c}'`).join(' or ');
+  const obsUrl = `${BASE_URL}/Observations?$filter=${encodeURIComponent(measureFilter)}`;
+  const obsRows = await odataGetAll(obsUrl);
+
+  setProgress(80, 'Data verwerken…', `${obsRows.length} rijen`);
+
+  /* ── Step 3: Build nested DATA structure ──
+     DATA[geslachtCode][leeftijdCode][year] = value  */
+  const data = {};
+
+  for (const row of obsRows) {
+    if (!measureCodes.includes(row.Measure)) continue;
+
+    const gCode = row.Geslacht?.trim();
+    const lCode = row.Leeftijd?.trim();
+    const pCode = row.Perioden?.trim();
+
+    /* Only annual periods: CBS encodes as "2024JJ00" */
+    const year = pCode?.slice(0, 4);
+    if (!year || !/^\d{4}$/.test(year)) continue;
+    /* Skip non-annual (KW=quarter, MM=month) */
+    if (pCode && !pCode.includes('JJ')) continue;
+
+    const value = (row.Value !== null && row.Value !== undefined)
+      ? +row.Value : null;
+
+    data[gCode]        ??= {};
+    data[gCode][lCode] ??= {};
+    data[gCode][lCode][year] = value;
+  }
+
+  return data;
+}
+
+/* ==========================================================================
+   Boot: fetch → build UI → render
+   ========================================================================== */
+async function initData() {
+  hideError();
+  document.getElementById('loading').classList.remove('hidden');
+  setProgress(0, 'CBS data ophalen…', 'Verbinding maken met datasets.cbs.nl');
+
+  try {
+    DATA = await fetchCBSData();
+  } catch (err) {
+    showError('Kon data niet ophalen van de CBS API.', err.message);
+    console.error(err);
+    return;
+  }
+
+  setProgress(92, 'Interface opbouwen…', '');
+
+  /* Derive ALL_YEARS */
+  const yearSet = new Set();
+  for (const lmap of Object.values(DATA[selectedGeslacht] ?? {}))
+    for (const y of Object.keys(lmap)) yearSet.add(+y);
+  ALL_YEARS = [...yearSet].sort((a, b) => a - b);
+
+  /* Derive leeftijdOrder using canonical sort, extras at end */
+  const availableCodes = new Set(Object.keys(DATA[selectedGeslacht] ?? {}));
+  const availableLabels = new Set([...availableCodes].map(c => leeftijdMap[c] ?? c));
+  leeftijdOrder = LEEFTIJD_SORT.filter(l => availableLabels.has(l));
+  for (const l of availableLabels)
+    if (!leeftijdOrder.includes(l)) leeftijdOrder.push(l);
+
+  /* Default selection: 20–25, 25–30, 30–35, 45–50 */
+  selectedLeeftijd = new Set(
+    ['20 tot 25 jaar','25 tot 30 jaar','30 tot 35 jaar','45 tot 50 jaar']
+      .filter(l => leeftijdOrder.includes(l))
+  );
+  if (selectedLeeftijd.size === 0 && leeftijdOrder.length > 0)
+    selectedLeeftijd.add(leeftijdOrder[0]);
+
+  buildLeeftijdButtons();
+  populateSelects();
+  wireEvents();
+
+  setProgress(100, 'Gereed', '');
+  setTimeout(hideLoading, 300);
+  render();
+}
+
+/* ==========================================================================
+   Dynamic leeftijd button builder
+   ========================================================================== */
+function leeftijdShort(l) {
+  if (l === 'Totaal alle leeftijden') return 'Totaal';
+  if (l === '95 jaar of ouder')       return '95+';
+  if (l === '0 jaar')                 return '0 jr';
+  return l.replace(' jaar','').replace(' tot ','–').replace(' of ouder','+');
+}
+
+function buildLeeftijdButtons() {
+  const container = document.getElementById('leeftijd-btns');
+  container.innerHTML = '';
+
+  /* Reverse map: leeftijdLabel → leeftijdCode */
+  const labelToCode = Object.fromEntries(
+    Object.entries(leeftijdMap).map(([k, v]) => [v, k])
+  );
+
+  leeftijdOrder.forEach((label, idx) => {
+    const color = AGE_COLORS[idx % AGE_COLORS.length];
+    const code  = labelToCode[label] ?? label;
+    const btn   = document.createElement('button');
+
+    btn.className    = 'btn';
+    btn.dataset.l    = label;
+    btn.dataset.code = code;
+    btn.textContent  = leeftijdShort(label);
+    btn.title        = label;
+
+    if (selectedLeeftijd.has(label)) applyActiveStyle(btn, color);
+
+    btn.addEventListener('click', () => {
+      if (selectedLeeftijd.has(label)) {
+        if (selectedLeeftijd.size === 1) return;
+        selectedLeeftijd.delete(label);
+        btn.classList.remove('active');
+        btn.style.removeProperty('background');
+        btn.style.removeProperty('border-color');
+        btn.style.removeProperty('color');
+      } else {
+        selectedLeeftijd.add(label);
+        applyActiveStyle(btn, color);
+      }
+      render();
+    });
+
+    container.appendChild(btn);
+  });
+}
+
+function applyActiveStyle(btn, color) {
+  btn.classList.add('active');
+  btn.style.setProperty('background', color);
+  btn.style.setProperty('border-color', color);
+  btn.style.setProperty('color', '#fff');
+}
+
+/* ==========================================================================
+   Baseline dropdowns
+   ========================================================================== */
+function populateSelects() {
+  const minY = ALL_YEARS[0] ?? 2000;
+  const maxY = ALL_YEARS[ALL_YEARS.length - 1] ?? 2024;
+  const sEl  = document.getElementById('baseline-start');
+  const eEl  = document.getElementById('baseline-end');
+  sEl.innerHTML = eEl.innerHTML = '';
+  for (let y = minY; y <= maxY - 2; y++) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    if (y === baselineStart) o.selected = true;
+    sEl.appendChild(o);
+  }
+  for (let y = minY + 1; y <= maxY - 1; y++) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    if (y === baselineEnd) o.selected = true;
+    eEl.appendChild(o);
+  }
+}
+
+/* ==========================================================================
+   Event wiring (called once after data loads)
+   ========================================================================== */
+function wireEvents() {
+  document.getElementById('geslacht-btns').addEventListener('click', e => {
+    const btn = e.target.closest('.btn');
+    if (!btn) return;
+    selectedGeslacht = btn.dataset.g;
+    document.querySelectorAll('#geslacht-btns .btn')
+      .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  });
+
+  document.getElementById('baseline-start').addEventListener('change', e => {
+    baselineStart = +e.target.value;
+    if (baselineStart >= baselineEnd) { baselineEnd = baselineStart + 1; populateSelects(); }
+    render();
+  });
+
+  document.getElementById('baseline-end').addEventListener('change', e => {
+    baselineEnd = +e.target.value;
+    if (baselineEnd <= baselineStart) { baselineStart = baselineEnd - 1; populateSelects(); }
+    render();
+  });
+}
+
+/* ==========================================================================
+   Helpers: resolve leeftijdCode from label for current geslacht
+   ========================================================================== */
+function getYearMap(geslachtCode, leeftijdLabel) {
+  /* Find the leeftijdCode whose label matches */
+  const lCode = Object.entries(leeftijdMap).find(([, v]) => v === leeftijdLabel)?.[0];
+  if (!lCode) return {};
+  return DATA[geslachtCode]?.[lCode] ?? {};
+}
+
+/* ==========================================================================
+   Linear regression
+   ========================================================================== */
+function linReg(xs, ys) {
+  const n = xs.length;
+  if (n < 2) return { slope: 0, intercept: ys[0] ?? 0 };
+  const mX = xs.reduce((a, b) => a + b) / n;
+  const mY = ys.reduce((a, b) => a + b) / n;
+  let num = 0, den = 0;
+  for (let i = 0; i < n; i++) {
+    num += (xs[i] - mX) * (ys[i] - mY);
+    den += (xs[i] - mX) ** 2;
+  }
+  const slope = den === 0 ? 0 : num / den;
+  return { slope, intercept: mY - slope * mX };
+}
+
+function makeExpectedFn(leeftijdLabel) {
+  const ymap   = getYearMap(selectedGeslacht, leeftijdLabel);
+  const bYears = ALL_YEARS.filter(y => y >= baselineStart && y <= baselineEnd);
+  const bVals  = bYears.map(y => ymap[String(y)] ?? 0);
+  const { slope, intercept } = linReg(bYears, bVals);
+  return y => slope * y + intercept;
+}
+
+/* ==========================================================================
+   Plotly traces
+   ========================================================================== */
+function getTraces() {
+  const traces  = [];
+  const ordered = leeftijdOrder.filter(l => selectedLeeftijd.has(l));
+
+  ordered.forEach(label => {
+    const idx    = leeftijdOrder.indexOf(label);
+    const color  = AGE_COLORS[idx % AGE_COLORS.length];
+    const ymap   = getYearMap(selectedGeslacht, label);
+    const yVals  = ALL_YEARS.map(y => ymap[String(y)] ?? null);
+    const expFn  = makeExpectedFn(label);
+
+    traces.push({
+      type: 'scatter', mode: 'markers', name: label,
+      x: ALL_YEARS, y: yVals,
+      marker: { color, size: 7, line: { color: 'rgba(0,0,0,0.15)', width: 1 } },
+      hovertemplate: `<b>${label}</b><br>Jaar: %{x}<br>Werkelijk: %{y}<extra></extra>`,
+      legendgroup: label,
+    });
+
+    traces.push({
+      type: 'scatter', mode: 'lines', name: `${label} (trend)`,
+      x: ALL_YEARS, y: ALL_YEARS.map(expFn),
+      line: { color, width: 1.8, dash: 'dash' }, opacity: 0.65,
+      showlegend: false,
+      hovertemplate: `<b>${label} verwacht</b><br>Jaar: %{x}<br>Verwacht: %{y:.1f}<extra></extra>`,
+      legendgroup: label,
+    });
+  });
+
+  return traces;
+}
+
+/* ==========================================================================
+   Excess deviation table
+   ========================================================================== */
+function buildTable() {
+  const ordered   = leeftijdOrder.filter(l => selectedLeeftijd.has(l));
+  const colTotals = EXCESS_YEARS.map(() => 0);
+  let grandTotal  = 0;
+
+  document.getElementById('excess-thead').innerHTML =
+    `<th>Leeftijdsgroep</th>` +
+    EXCESS_YEARS.map(y => `<th>${y}</th>`).join('') +
+    `<th>Totaal 20–24</th>`;
+
+  document.getElementById('excess-tbody').innerHTML = ordered.map(label => {
+    const exp    = makeExpectedFn(label);
+    const ymap   = getYearMap(selectedGeslacht, label);
+    let rowTotal = 0;
+    const cells  = EXCESS_YEARS.map((y, i) => {
+      const actual = ymap[String(y)] ?? 0;
+      const diff   = actual - exp(y);
+      colTotals[i] += diff;
+      rowTotal     += diff;
+      return cellHtml(diff);
+    });
+    grandTotal += rowTotal;
+    return `<tr><td>${label}</td>${cells.join('')}${cellHtml(rowTotal)}</tr>`;
+  }).join('');
+
+  const gt = grandTotal;
+  document.getElementById('excess-tfoot').innerHTML =
+    `<td>Totaal alle groepen</td>` +
+    colTotals.map(v => `<td class="${v > 0.5 ? 'pos' : v < -0.5 ? 'neg' : ''}">${fmt(v)}</td>`).join('') +
+    `<td class="${gt > 0.5 ? 'pos' : gt < -0.5 ? 'neg' : ''}">${fmt(gt)}</td>`;
+
+  return { colTotals, grandTotal };
+}
+
+function fmt(v)      { return (v > 0 ? '+' : '') + v.toFixed(1); }
+function cellHtml(v) {
+  return `<td class="${v > 0.5 ? 'pos' : v < -0.5 ? 'neg' : 'zero'}">${fmt(v)}</td>`;
+}
+
+/* ==========================================================================
+   Stats strip
+   ========================================================================== */
+function updateStats(colTotals, grandTotal) {
+  let peak = { year: 0, val: -Infinity };
+  selectedLeeftijd.forEach(label => {
+    const ymap = getYearMap(selectedGeslacht, label);
+    ALL_YEARS.forEach(y => {
+      const v = ymap[String(y)] ?? null;
+      if (v !== null && v > peak.val) peak = { year: y, val: v };
+    });
+  });
+
+  document.getElementById('stat-groups').textContent = selectedLeeftijd.size;
+  document.getElementById('stat-peak').textContent   =
+    peak.val > -Infinity ? `${peak.val} (${peak.year})` : '—';
+
+  const exEl = document.getElementById('stat-excess');
+  exEl.textContent = fmt(grandTotal);
+  exEl.className   = 'stat-val ' + (grandTotal > 0.5 ? 'pos' : grandTotal < -0.5 ? 'neg' : '');
+
+  const wi = colTotals.reduce((b, v, i) => Math.abs(v) > Math.abs(colTotals[b]) ? i : b, 0);
+  document.getElementById('stat-worst').textContent =
+    `${EXCESS_YEARS[wi]} (${fmt(colTotals[wi])})`;
+}
+
+/* ==========================================================================
+   Main render
+   ========================================================================== */
+function render() {
+  const shapes = [
+    { type:'rect', xref:'x', yref:'paper', x0: baselineStart-0.4, x1: baselineEnd+0.4, y0:0, y1:1, fillcolor:'rgba(37,99,235,0.05)', line:{width:0} },
+    { type:'line', xref:'x', yref:'paper', x0: baselineStart-0.4, x1: baselineStart-0.4, y0:0, y1:1, line:{color:'rgba(37,99,235,0.3)',width:1,dash:'dot'} },
+    { type:'line', xref:'x', yref:'paper', x0: baselineEnd+0.4,   x1: baselineEnd+0.4,   y0:0, y1:1, line:{color:'rgba(37,99,235,0.3)',width:1,dash:'dot'} },
+    { type:'line', xref:'x', yref:'paper', x0: 2019.5, x1: 2019.5, y0:0, y1:1, line:{color:'rgba(0,0,0,0.15)',width:1,dash:'dot'} },
+  ];
+  const annotations = [
+    { x:(baselineStart+baselineEnd)/2, y:1, yref:'paper', text:`basislijn ${baselineStart}–${baselineEnd}`, showarrow:false, font:{size:9,color:'rgba(37,99,235,0.55)',family:'IBM Plex Mono'}, xanchor:'center', yanchor:'bottom', yshift:3 },
+    { x:2020, y:1, yref:'paper', text:'← 2020', showarrow:false, font:{size:9,color:'rgba(0,0,0,0.3)',family:'IBM Plex Mono'}, xanchor:'right', yanchor:'bottom', xshift:-4, yshift:3 },
+  ];
+
+  Plotly.react('chart', getTraces(), {
+    paper_bgcolor:'#ffffff', plot_bgcolor:'#f9fafb',
+    font:{family:'IBM Plex Mono, monospace',color:'#6b7280',size:11},
+    margin:{t:28,r:20,b:52,l:52},
+    xaxis:{title:{text:'Jaar',font:{size:10,color:'#9ca3af'}},tickmode:'linear',dtick:2,gridcolor:'#e5e7eb',linecolor:'#e5e7eb',tickfont:{size:10}},
+    yaxis:{title:{text:'Aantal overledenen',font:{size:10,color:'#9ca3af'}},gridcolor:'#e5e7eb',linecolor:'#e5e7eb',tickfont:{size:10},rangemode:'tozero'},
+    legend:{orientation:'h',x:0,y:-0.18,font:{size:10},bgcolor:'rgba(0,0,0,0)'},
+    hovermode:'x unified',
+    hoverlabel:{bgcolor:'#fff',bordercolor:'#e5e7eb',font:{family:'IBM Plex Mono',size:11,color:'#111827'}},
+    shapes, annotations,
+  }, {
+    responsive:true, displayModeBar:true,
+    modeBarButtonsToRemove:['select2d','lasso2d','autoScale2d'],
+    displaylogo:false,
+    toImageButtonOptions:{format:'png',filename:'zelfdoding_CBS',scale:2},
+  });
+
+  const { colTotals, grandTotal } = buildTable();
+  updateStats(colTotals, grandTotal);
+  document.getElementById('excess-note').textContent =
+    `Werkelijk minus verwacht · basislijn ${baselineStart}–${baselineEnd} · lineaire regressie`;
+}
+
+/* ==========================================================================
+   Start
+   ========================================================================== */
+initData();
+</script>
+</body>
+</html>
