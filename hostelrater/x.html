@@ -28,6 +28,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
 html { scroll-behavior: smooth; }
 
 body {
@@ -41,7 +42,10 @@ body {
   padding: 3rem 1.25rem 5rem;
 }
 
-.page { max-width: 820px; margin: 0 auto; }
+.page {
+  max-width: 820px;
+  margin: 0 auto;
+}
 
 /* ── MASTHEAD ── */
 .masthead {
@@ -72,7 +76,10 @@ body {
   color: var(--ink);
   margin-bottom: 0.5rem;
 }
-.masthead h1 em { font-style: normal; color: var(--accent); }
+.masthead h1 em {
+  font-style: normal;
+  color: var(--accent);
+}
 .masthead-sub {
   font-family: var(--serif);
   font-style: italic;
@@ -130,6 +137,7 @@ body {
   padding: 1.5rem 2rem;
   margin-bottom: 2rem;
 }
+.score-left { }
 .score-tag {
   font-family: var(--mono);
   font-size: 0.55rem;
@@ -158,6 +166,7 @@ body {
   color: rgba(255,255,255,0.55);
   margin-top: 0.35rem;
 }
+.score-bars { }
 .bar-row {
   display: flex;
   align-items: center;
@@ -192,63 +201,6 @@ body {
   color: rgba(255,255,255,0.35);
   width: 24px;
   text-align: right;
-}
-
-/* ── DEAL BREAKERS STRIP ── */
-.deal-breakers-strip {
-  background: #3a0808;
-  border: 2px solid var(--red);
-  padding: 1rem 1.5rem;
-  margin-bottom: 2rem;
-}
-.deal-breakers-strip h2 {
-  font-family: var(--mono);
-  font-size: 0.55rem;
-  text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: #f09090;
-  margin-bottom: 0.75rem;
-}
-.db-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.5rem 1.5rem;
-}
-.db-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.35rem 0;
-  border-bottom: 1px solid rgba(176,48,32,0.3);
-}
-.db-label {
-  font-family: var(--serif);
-  font-size: 0.8rem;
-  color: #f5d5c0;
-  flex: 1;
-}
-.db-btns { display: flex; gap: 4px; }
-.db-btn {
-  padding: 3px 10px;
-  border: 1.5px solid rgba(255,255,255,0.2);
-  background: transparent;
-  cursor: pointer;
-  font-family: var(--mono);
-  font-size: 0.58rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.5);
-  transition: all 0.12s;
-}
-.db-btn:hover { border-color: rgba(255,255,255,0.6); color: #fff; }
-.db-btn.on-yes { background: var(--red); border-color: var(--red); color: #fff; }
-.db-btn.on-no  { background: var(--green); border-color: var(--green); color: #fff; }
-.db-note {
-  font-family: var(--mono);
-  font-size: 0.5rem;
-  color: rgba(255,255,255,0.3);
-  margin-top: 0.5rem;
-  font-style: italic;
 }
 
 /* ── LEGEND ── */
@@ -287,6 +239,7 @@ body {
   transition: border-color 0.2s;
 }
 .cat:focus-within { border-color: var(--border2); }
+
 .cat-head {
   display: flex;
   align-items: center;
@@ -316,9 +269,6 @@ body {
   letter-spacing: 0.06em;
   flex-shrink: 0;
 }
-.cat-badge.boosted {
-  background: var(--accent);
-}
 .cat-avg {
   font-family: var(--mono);
   font-size: 0.7rem;
@@ -336,7 +286,9 @@ body {
 }
 .cat.closed .chevron { transform: rotate(-90deg); }
 .cat.closed .cat-body { display: none; }
+
 .cat-body { }
+
 .subhead {
   font-family: var(--mono);
   font-size: 0.55rem;
@@ -360,6 +312,7 @@ body {
 }
 .item:last-child { border-bottom: none; }
 .item:hover { background: rgba(220,200,140,0.12); }
+
 .item.must .item-label::before {
   content: '★ ';
   color: var(--accent);
@@ -377,7 +330,12 @@ body {
   color: var(--border2);
   text-align: center;
 }
-.btns { display: flex; gap: 2px; flex-shrink: 0; }
+
+.btns {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
 .btn-s {
   width: 27px; height: 27px;
   border: 1.5px solid var(--border);
@@ -392,6 +350,7 @@ body {
   flex-shrink: 0;
 }
 .btn-s:hover { border-color: var(--ink); color: var(--ink); background: var(--warm); }
+
 .btn-s.on-0 { background: var(--red);    border-color: var(--red);    color: #fff; }
 .btn-s.on-1 { background: var(--orange); border-color: var(--orange); color: #fff; }
 .btn-s.on-2 { background: var(--amber);  border-color: var(--amber);  color: #fff; }
@@ -456,10 +415,11 @@ body {
 .action-btn.import-btn { border-color: var(--accent); color: var(--accent); }
 .action-btn.import-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-/* ── TOAST ── */
+/* ── IMPORT TOAST ── */
 .toast {
   position: fixed;
-  bottom: 2rem; left: 50%;
+  bottom: 2rem;
+  left: 50%;
   transform: translateX(-50%) translateY(120%);
   background: var(--ink);
   color: var(--paper);
@@ -474,8 +434,12 @@ body {
   z-index: 999;
   pointer-events: none;
 }
-.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
 
+/* Hidden file input */
 #import-file-input { display: none; }
 
 /* ── PRINT ── */
@@ -485,7 +449,6 @@ body {
   .cat.closed .cat-body { display: block !important; }
   .btn-s { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .bar-fill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .db-btn { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 
 @media (max-width: 560px) {
@@ -494,7 +457,6 @@ body {
   .item { grid-template-columns: 1fr auto; }
   .item-w { display: none; }
   .score-number { font-size: 3rem; }
-  .db-grid { grid-template-columns: 1fr; }
 }
 
 .prompt-box {
@@ -503,6 +465,7 @@ body {
   border: 1.5px solid var(--border);
   padding: 1.1rem 1.2rem;
 }
+
 .prompt-box h3 {
   font-family: var(--mono);
   font-size: 0.55rem;
@@ -511,13 +474,31 @@ body {
   color: var(--muted);
   margin-bottom: 0.6rem;
 }
-.prompt-box p {
+
+.prompt-box p{
   font-family: var(--serif);
   font-size: 0.85rem;
   color: var(--ink);
   margin-bottom: 0.8rem;
   line-height: 1.6;
 }
+
+.prompt-box textarea {
+  width: 100%;
+  min-height: 60px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  resize: vertical;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.85rem;
+  color: var(--ink);
+  outline: none;
+  line-height: 1.9;
+}
+
+.prompt-box textarea::placeholder { color: var(--border2); }
 </style>
 </head>
 <body>
@@ -553,16 +534,8 @@ body {
         <span class="score-denom"> / 100</span>
       </div>
       <div class="score-verdict" id="verdict">No scores entered yet</div>
-      <div class="score-penalty" id="penalty" style="display:none;font-family:var(--mono);font-size:0.55rem;color:#f09090;margin-top:0.3rem;letter-spacing:0.06em;"></div>
     </div>
     <div class="score-bars" id="score-bars"></div>
-  </div>
-
-  <!-- Deal Breakers -->
-  <div class="deal-breakers-strip">
-    <h2>🚨 Deal Breakers — Binary Flags</h2>
-    <div class="db-grid" id="db-grid"></div>
-    <div class="db-note">YES = confirmed problem · NO = not observed · unset = unknown</div>
   </div>
 
   <!-- Legend -->
@@ -586,94 +559,48 @@ body {
   <div class="actions">
     <button class="action-btn prim" onclick="window.print()">⎙ Print / PDF</button>
     <button class="action-btn" onclick="doExport()">↓ Export JSON</button>
+    
     <button class="action-btn" onclick="expandAll()">⊞ Expand all</button>
     <button class="action-btn" onclick="collapseAll()">⊟ Collapse all</button>
     <button class="action-btn danger" onclick="doReset()">↺ Reset</button>
   </div>
 
+
   <div class="prompt-box">
     <h3>Prompt suggestions to use when uploading the .json-file</h3>
-    <p>Write a candid hostel review based on this scorecard data. Use the category scores and item details, highlight must-have failures and any confirmed deal breakers, and end with a recommendation.</p>
+    <p>Write a candid hostel review based on this scorecard data. Use the category scores and item details, highlight must-have failures, and end with a recommendation.</p> 
     <p>Write a concise Instagram caption summarizing this hostel review, highlighting the overall score and key pros and cons.</p>
-    <p>Use the above review and caption to create an eye-catching Instagram carousel post, with 5 slides: 1) a cover slide with the hostel name, city, and overall score; 2) a summary of the pros; 3) a summary of the cons; 4) a highlight of any must-have failures or deal breakers; and 5) a final recommendation slide. Use engaging visuals and concise text for each slide.</p>
+    <p>Use the above review and caption to create an eye-catching Instagram carousel post, with 5 slides: 1) a cover slide with the hostel name, city, and overall score; 2) a summary of the pros; 3) a summary of the cons; 4) a highlight of any must-have failures; and 5) a final recommendation slide. Use engaging visuals and concise text for each slide.</p>
   </div>
 </div>
-
+<!-- Hidden file input for import -->
 <input type="file" id="import-file-input" accept=".json,application/json" onchange="doImport(event)">
+
+<!-- Toast notification -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── DEAL BREAKERS ────────────────────────────────────────────────────
-const DEAL_BREAKERS = [
-  { id:'db1', label:'Bed bugs reported or observed' },
-  { id:'db2', label:'Theft incidents known or experienced' },
-  { id:'db3', label:'Mould visible in rooms or bathrooms' },
-  { id:'db4', label:'Staff hostility or dismissiveness' },
-  { id:'db5', label:'Fake reviews vibe (too perfect / suspicious)' },
-  { id:'db6', label:'No working locks on dorm or lockers' },
-  { id:'db7', label:'No hot water at all' },
-  { id:'db8', label:'Pest sighting (cockroach, rats, etc.)' },
-   { id:'db9', label:'Unexpected noise (constructions, nightclubs etc)' },
-];
-
-// Deal breaker state: 'yes' | 'no' | undefined
-const DB = {};
-
-// ── SCORED CATEGORIES ────────────────────────────────────────────────
-// Weight note: Sleep ×2 boost → 20%, Cleanliness ×2 → 10%, Safety ×2 → 12%
-// New categories bring total to 100%.
 const CATS = [
-  // ── ARRIVAL & FIRST IMPRESSION (new) ──
-  { id:'arr', icon:'🚪', name:'Arrival & First Impression', weight:4, items:[
-    { id:'ar1', label:'Easy to find — clear signage from street', must:false, w:2 },
-    { id:'ar2', label:'Fast check-in (under 5 minutes)', must:false, w:2 },
-    { id:'ar3', label:'First smell on entry (fresh vs musty)', must:true, w:3 },
-    { id:'ar4', label:'House rules and map clearly communicated on arrival', must:false, w:2 },
-    { id:'ar5', label:'Late check-in possible without hassle', must:false, w:1 },
-    { id:'ar6', label:'Early check-in available (even for a fee)', must:false, w:1 },
-    { id:'ar7', label:'Booking confirmation matches reality', must:true, w:3 },
-    { id:'ar8', label:'Digital check-in option available', must:false, w:1 },
-    { id:'ar9', label:'Deposit system fair and transparent', must:false, w:1 },
-  ]},
-
-  // ── LOCATION & ACCESS ──
-  { id:'loc', icon:'📍', name:'Location & Access', weight:5, items:[
+  { id:'loc', icon:'📍', name:'Location & Access', weight:8, items:[
     { id:'loc1', label:'Good location (centre / transport links)', must:true, w:3 },
     { id:'loc2', label:'ATM or bank nearby', must:false, w:1 },
     { id:'loc3', label:'Scooter or bicycle rental available', must:false, w:1 },
     { id:'loc4', label:'Safe neighbourhood', must:true, w:3 },
-    { id:'loc5', label:'Staff give genuine local tips (not just tourist traps)', must:false, w:1 },
-    { id:'loc6', label:'Secure bike / scooter parking', must:false, w:1 },
   ]},
-
-  // ── SAFETY & SECURITY ── (weight boosted ×2)
   { id:'saf', icon:'🔒', name:'Safety & Security', weight:12, items:[
     { id:'saf1', label:'24/7 reception or night security', must:true, w:3 },
     { id:'saf2', label:'Key(-card) access to rooms', must:true, w:3 },
-    { id:'saf3', label:'Locker / storage space per bed (1=wallet | 2=handbag | 3=daypack | 4=backpack 75L)', must:true, w:3 },
-    { id:'saf4', label:'Locker fits a 15″ laptop', must:false, w:2 },
-    { id:'saf5', label:'Smoke detectors and clear emergency exits', must:true, w:3 },
-    { id:'saf6', label:'CCTV in common areas and entrance', must:false, w:1 },
-    { id:'saf7', label:'Female-only dorm option available', must:false, w:1 },
-    { id:'saf8', label:'Reception holds valuables securely', must:false, w:2 },
-    { id:'saf9', label:'Spacious room — good sense of space', must:false, w:2 },
-  ]},
-
-  // ── CLEANLINESS ── (weight boosted ×2)
-  { id:'cln', icon:'✨', name:'Cleanliness', weight:10, items:[
+    { id:'saf3', label:'Locker / storage space per bed (1 = wallet | 2= handbag | 3 = daypack | 4 = backpack 75 l)', must:true, w:3 },
+    { id:'saf4', label:'Smoke detectors and clear emergency exits', must:true, w:3 },
+    { id:'saf5', label:'Female-only dorm option available', must:false, w:1 },
+    { id:'saf6', label:'Spacious room — good sense of space', must:false, w:2 },
+    ]},
+  { id:'cln', icon:'✨', name:'Cleanliness', weight:8, items:[
     { id:'cl1', label:'Clean common areas', must:true, w:4 },
     { id:'cl2', label:'Clean dorms', must:true, w:4 },
     { id:'cl3', label:'Clean bathrooms', must:true, w:4 },
     { id:'cl4', label:'Clean kitchen', must:true, w:3 },
-    { id:'cl5', label:'Mattress visibly clean — no stains', must:true, w:3 },
-    { id:'cl6', label:'No signs of bed bugs (check seams)', must:true, w:4 },
-    { id:'cl7', label:'No mould smell anywhere', must:true, w:3 },
-    { id:'cl8', label:'Bin inside dorm with lid', must:false, w:1 },
-    { id:'cl9', label:'Hand sanitiser available in common areas', must:false, w:1 },
-    { id:'cl10', label:'Washing machine actually clean inside', must:false, w:1 },
   ]},
-
-  // ── SLEEP QUALITY ── (weight boosted ×2)
   { id:'slp', icon:'🛏', name:'Sleep Quality', weight:20, groups:[
     { label:'Noise & disturbance', items:[
       { id:'sl1', label:'Sound-insulated walls', must:true, w:3 },
@@ -681,8 +608,6 @@ const CATS = [
       { id:'sl3', label:'No shaking bunk ladder vibrations', must:false, w:2 },
       { id:'sl4', label:'Silent door lock on dorm', must:false, w:2 },
       { id:'sl5', label:'Quiet air-con / fan', must:false, w:2 },
-      { id:'sl18', label:'Dorm lights controllable without waking everyone', must:false, w:2 },
-      { id:'sl19', label:'No early morning staff noise (cleaning, deliveries)', must:false, w:2 },
     ]},
     { label:'Bed & bedding', items:[
       { id:'sl6', label:'Good mattress', must:true, w:3 },
@@ -690,183 +615,76 @@ const CATS = [
       { id:'sl8', label:'Good pillow', must:true, w:2 },
       { id:'sl9', label:'Warm, comfortable duvet', must:false, w:2 },
       { id:'sl10', label:'Curtains / dividers between beds (light/air tight)', must:true, w:5 },
-      { id:'sl20', label:'Real privacy — dividers actually close fully', must:true, w:3 },
-      { id:'sl11', label:'Blackout curtains on windows', must:true, w:3 },
+      { id:'sl11', label:'Blackout curtains windows', must:true, w:3 },
       { id:'sl12', label:'Stable bunk — no movement when neighbour shifts', must:true, w:3 },
       { id:'sl13', label:'Steps on bunk bed comfortable and safe', must:false, w:1 },
-      { id:'sl21', label:'Space to store personal items within arm\'s reach of bed', must:false, w:2 },
-      { id:'sl22', label:'Shelf or surface next to bed (phone, water bottle)', must:false, w:2 },
-      { id:'sl23', label:'Distance between bunks — not face-to-face', must:false, w:2 },
-      { id:'sl24', label:'Bed net available (mosquito protection)', must:false, w:2 },
-      { id:'sl25', label:'Luggage rack or space under bed for bag', must:false, w:1 },
     ]},
     { label:'Personal bed amenities', items:[
       { id:'sl14', label:'Own power outlet per bed', must:true, w:3 },
-      { id:'sl26', label:'USB ports available at bed', must:false, w:1 },
       { id:'sl15', label:'Individual reading light per bed', must:false, w:2 },
       { id:'sl16', label:'Towel available / included', must:false, w:1 },
       { id:'sl17', label:'Good quality bed linen', must:false, w:2 },
     ]},
   ]},
-
-  // ── CLIMATE & COMFORT (new) ──
-  { id:'clim', icon:'🌡️', name:'Climate & Comfort', weight:4, items:[
-    { id:'cm1', label:'Temperature control per room (AC/fan adjustable)', must:true, w:3 },
-    { id:'cm2', label:'Room does not overheat at night', must:true, w:3 },
-    { id:'cm3', label:'Humidity level acceptable (not damp)', must:true, w:3 },
-    { id:'cm4', label:'Fresh air flow without direct draft on sleeping guest', must:false, w:2 },
-    { id:'cm5', label:'No strong chemical smells (cleaning products, paint)', must:false, w:2 },
-    { id:'cm6', label:'Mosquito screens on windows', must:false, w:2 },
-    { id:'cm7', label:'Good natural light in common areas', must:false, w:1 },
-  ]},
-
-  // ── BATHROOM & HYGIENE ──
-  { id:'bath', icon:'🚿', name:'Bathroom & Hygiene', weight:7, items:[
+  { id:'bath', icon:'🚿', name:'Bathroom & Hygiene', weight:12, items:[
     { id:'ba1', label:'Hot water with stable pressure', must:true, w:3 },
-    { id:'ba11', label:'Consistent hot water timing (not just off-peak)', must:true, w:2 },
     { id:'ba2', label:'Enough showers and toilets for guests', must:true, w:3 },
     { id:'ba3', label:'Showers and toilets separated / with divider', must:false, w:2 },
-    { id:'ba12', label:'Bathroom door with proper lock and privacy', must:true, w:3 },
     { id:'ba4', label:'Bathrooms close to the dorm', must:false, w:2 },
     { id:'ba5', label:'Shelf and hooks inside showers', must:false, w:1 },
-    { id:'ba13', label:'Mirror with good lighting', must:false, w:1 },
-    { id:'ba14', label:'Non-slip mat in shower', must:false, w:1 },
     { id:'ba6', label:'Hair dryer available', must:false, w:1 },
-    { id:'ba7', label:'Free soap / shampoo', must:true, w:2 },
+    { id:'ba7', label:'Free soap/shampoo', must:true, w:2 },
     { id:'ba8', label:'Toilet paper always available', must:true, w:2 },
     { id:'ba9', label:'Daily cleaning or more', must:false, w:2 },
     { id:'ba10', label:'Good ventilation in bathrooms', must:true, w:2 },
-    { id:'ba15', label:'Drainage — no flooding showers', must:true, w:2 },
-    { id:'ba16', label:'Water smell acceptable (no sulfur / rust)', must:false, w:1 },
   ]},
-
-  // ── KITCHEN & FOOD ──
-  { id:'kit', icon:'🍳', name:'Kitchen & Food', weight:5, items:[
+  { id:'kit', icon:'🍳', name:'Kitchen & Food', weight:10, items:[
     { id:'ki1', label:'Fridge available', must:true, w:3 },
-    { id:'ki8', label:'Enough fridge space per guest', must:false, w:2 },
     { id:'ki2', label:'Fully equipped kitchen', must:true, w:3 },
-    { id:'ki9', label:'Real cooking possible (not just boiling noodles)', must:false, w:2 },
-    { id:'ki10', label:'Kitchen usable at peak times (not always crowded)', must:false, w:2 },
     { id:'ki3', label:'Label system for fridge food', must:false, w:1 },
-    { id:'ki11', label:'No food theft issues', must:false, w:2 },
     { id:'ki4', label:'Free drinking water', must:true, w:3 },
-    { id:'ki12', label:'Drinking water safety (filtered / boiled option)', must:true, w:3 },
     { id:'ki5', label:'Coffee and tea included', must:false, w:1 },
     { id:'ki6', label:'Enough pans and sharp knives', must:false, w:2 },
     { id:'ki7', label:'Clean sponges replaced daily', must:false, w:1 },
-    { id:'ki13', label:'Breakfast available or included', must:false, w:1 },
-    { id:'ki14', label:'Spices and condiments available', must:false, w:1 },
   ]},
-
-  // ── INTERNET & WORK ──
-  { id:'net', icon:'📶', name:'Internet & Work', weight:6, items:[
+  { id:'net', icon:'📶', name:'Internet & Work', weight:8, items:[
     { id:'in1', label:'Fast and stable WiFi', must:true, w:10 },
-    { id:'in6', label:'WiFi stability at peak hours (evening)', must:true, w:4 },
-    { id:'in7', label:'VPN-friendly network (no port blocking)', must:false, w:2 },
-    { id:'in8', label:'Reliable upload speed (not just download)', must:false, w:2 },
     { id:'in2', label:'Ethernet option available', must:false, w:2 },
     { id:'in3', label:'Quiet co-working zone', must:false, w:3 },
     { id:'in4', label:'Standing desk option', must:false, w:1 },
-    { id:'in12', label:'Dedicated desk with monitor or large screen', must:false, w:2 },
-    { id:'in13', label:'Video call booth or quiet pod', must:false, w:2 },
-    { id:'in14', label:'24h access to work area', must:false, w:2 },
-    { id:'in9', label:'Laptop-safe environment (no theft risk at tables)', must:false, w:2 },
-    { id:'in10', label:'Power outlets plentiful in common areas', must:false, w:2 },
     { id:'in5', label:'Printer access', must:false, w:1 },
-    { id:'in11', label:'Power backup / no disruptive outages', must:false, w:2 },
   ]},
-
-  // ── PRIVACY & PERSONAL SPACE (new) ──
-  { id:'priv', icon:'👤', name:'Privacy & Personal Space', weight:3, items:[
-    { id:'pv1', label:'Real privacy — not see-through curtains', must:true, w:3 },
-    { id:'pv2', label:'Space to sit upright on bed comfortably', must:false, w:2 },
-    { id:'pv3', label:'Distance between bunks adequate', must:false, w:2 },
-    { id:'pv4', label:'No direct face-to-face sleeping arrangement', must:false, w:2 },
-    { id:'pv5', label:'Space to dress privately', must:true, w:2 },
-    { id:'pv6', label:'Mirror in or near dorm', must:false, w:1 },
-    { id:'pv7', label:'No CCTV inside dorms or bathrooms', must:true, w:3 },
-  ]},
-
-  // ── SOCIAL VIBE ──
-  { id:'vibe', icon:'🎉', name:'Social Vibe & Dynamics', weight:4, items:[
+  { id:'vibe', icon:'🎉', name:'Social Vibe', weight:8, items:[
     { id:'so1', label:'Organised activities on offer', must:false, w:2 },
     { id:'so2', label:'Music instruments available', must:false, w:1 },
     { id:'so3', label:'Board games available', must:false, w:1 },
     { id:'so4', label:'Chill zone and party zone separated', must:true, w:3 },
-    { id:'so14', label:'Good balance of social vs quiet guests', must:false, w:2 },
     { id:'so5', label:'No forced social atmosphere', must:true, w:2 },
     { id:'so6', label:'Respectful crowd of guests', must:true, w:3 },
-    { id:'so7', label:'Easy to meet people naturally', must:false, w:2 },
-    { id:'so8', label:'Solo traveller friendly (not group/couple-oriented)', must:false, w:1 },
-    { id:'so9', label:'Staff positively influence the vibe', must:false, w:2 },
-    { id:'so10', label:'Notice board / local tips and map available', must:false, w:1 },
-    { id:'so11', label:'LGBTQ+-welcoming atmosphere', must:false, w:1 },
-    { id:'so12', label:'Regular communal meals or events', must:false, w:1 },
-    { id:'so13', label:'Volunteer or work-exchange program available', must:false, w:1 },
   ]},
-
-  // ── VALUE FOR MONEY (new) ──
-  { id:'val', icon:'💰', name:'Value for Money', weight:3, items:[
-    { id:'va1', label:'Worth the price vs local market', must:true, w:4 },
-    { id:'va2', label:'No hidden costs (towel, AC, locker charged extra)', must:true, w:3 },
-    { id:'va3', label:'What you get matches what you\'d expect at this price', must:false, w:3 },
-  ]},
-
-  // ── PRACTICAL EXTRAS ──
-  { id:'prac', icon:'🧺', name:'Practical Extras', weight:3, items:[
+  { id:'prac', icon:'🧺', name:'Practical Extras', weight:8, items:[
     { id:'pr1', label:'Laundry with clear pricing', must:false, w:2 },
     { id:'pr2', label:'Drying racks available', must:false, w:2 },
     { id:'pr3', label:'Luggage storage before and after checkout', must:true, w:3 },
-    { id:'pr4', label:'Shower available after checkout', must:false, w:2 },
-    { id:'pr5', label:'Ironing board available', must:false, w:1 },
-    { id:'pr6', label:'First aid kit visible', must:false, w:1 },
-    { id:'pr7', label:'Transport advice / taxi help on departure', must:false, w:1 },
   ]},
-
-  // ── LONG-STAY FRIENDLINESS (new) ──
-  { id:'lng', icon:'🏠', name:'Long-Stay Friendliness', weight:2, items:[
-    { id:'ls1', label:'Comfortable after 3+ nights (not just a crash pad)', must:false, w:3 },
-    { id:'ls2', label:'Storage for long-term guests (beyond one bag)', must:false, w:2 },
-    { id:'ls3', label:'Quiet work routine possible', must:false, w:3 },
-    { id:'ls4', label:'Community stability (not constant turnover of rowdy groups)', must:false, w:2 },
-    { id:'ls5', label:'Long-stay discount or weekly rate available', must:false, w:1 },
-  ]},
-
-  // ── ACCESSIBILITY (new) ──
-  { id:'acc', icon:'♿', name:'Accessibility', weight:2, items:[
-    { id:'ac1', label:'Ground floor dorm option available', must:false, w:2 },
-    { id:'ac2', label:'Elevator if multi-storey building', must:false, w:2 },
-    { id:'ac3', label:'Wheelchair accessible bathroom', must:false, w:2 },
-    { id:'ac4', label:'Clear signage in English (and local language)', must:false, w:1 },
-  ]},
-
-  // ── ENVIRONMENT & DESIGN ──
-  { id:'env', icon:'🌿', name:'Environment & Design', weight:2, items:[
+  { id:'env', icon:'🌿', name:'Environment & Design', weight:5, items:[
+    { id:'de1', label:'Good natural light in common areas', must:false, w:2 },
     { id:'de2', label:'Attractive, comfortable common spaces', must:false, w:2 },
     { id:'de3', label:'Plants and greenery', must:false, w:1 },
     { id:'de4', label:'Trash separation / recycling', must:false, w:1 },
-    { id:'de6', label:'Eco-conscious practices (solar, water saving, etc.)', must:false, w:1 },
-    { id:'de7', label:'Locally owned (not a chain hostel)', must:false, w:1 },
-    { id:'de8', label:'Outdoor seating area or rooftop / terrace', must:false, w:1 },
-    { id:'de9', label:'Building well-maintained (no leaks, broken fixtures)', must:false, w:2 },
+    { id:'de5', label:'No mould smell anywhere', must:true, w:3 },
   ]},
-
-  // ── STAFF & SERVICE ──
-  { id:'stf', icon:'👋', name:'Staff & Service', weight:4, items:[
+  { id:'stf', icon:'👋', name:'Staff & Service', weight:9, items:[
     { id:'st1', label:'Friendly and genuinely helpful staff', must:true, w:4 },
     { id:'st2', label:'Responsive and proactive', must:true, w:3 },
     { id:'st3', label:'Smooth check-in and check-out', must:false, w:2 },
-    { id:'st4', label:'Staff give genuine local recommendations (not just tourist traps)', must:false, w:1 },
   ]},
-
-  // ── HOUSE RULES ──
-  { id:'rul', icon:'📋', name:'House Rules', weight:4, items:[
+  { id:'rul', icon:'📋', name:'House Rules', weight:5, items:[
     { id:'ru1', label:'No noisy plastic bags at night', must:false, w:1 },
     { id:'ru2', label:'No loud packing in dorms', must:true, w:3 },
     { id:'ru3', label:'No phone calls in sleeping areas', must:true, w:3 },
     { id:'ru4', label:'Shoes off in rooms', must:false, w:1 },
     { id:'ru5', label:'Rules actually enforced (not just on paper)', must:true, w:3 },
-    { id:'ru6', label:'Clear info about rules given at check-in', must:false, w:1 },
   ]},
 ];
 
@@ -890,28 +708,6 @@ function buildBars() {
     </div>`).join('');
 }
 
-// ── BUILD DEAL BREAKERS ───────────────────────────────────────────────
-function buildDealBreakers() {
-  const grid = document.getElementById('db-grid');
-  grid.innerHTML = DEAL_BREAKERS.map(db => `
-    <div class="db-item">
-      <div class="db-label">${db.label}</div>
-      <div class="db-btns">
-        <button class="db-btn" id="dby-${db.id}" onclick="pickDB('${db.id}','yes')" title="Yes — this is a problem">YES</button>
-        <button class="db-btn" id="dbn-${db.id}" onclick="pickDB('${db.id}','no')"  title="No — not observed">NO</button>
-      </div>
-    </div>`).join('');
-}
-
-function pickDB(id, val) {
-  DB[id] = val;
-  const yBtn = document.getElementById('dby-' + id);
-  const nBtn = document.getElementById('dbn-' + id);
-  yBtn.className = 'db-btn' + (val === 'yes' ? ' on-yes' : '');
-  nBtn.className = 'db-btn' + (val === 'no'  ? ' on-no'  : '');
-  recalc();
-}
-
 // ── BUILD FORM ────────────────────────────────────────────────────────
 function buildForm() {
   const root = document.getElementById('form-root');
@@ -920,12 +716,11 @@ function buildForm() {
     const wrap = document.createElement('div');
     wrap.className = 'cat';
     wrap.id = 'cat-' + cat.id;
-    const isBoosted = ['slp','cln','saf'].includes(cat.id);
     wrap.innerHTML = `
       <div class="cat-head" onclick="toggle('${cat.id}')">
         <span class="cat-icon">${cat.icon}</span>
         <span class="cat-name">${cat.name}</span>
-        <span class="cat-badge${isBoosted ? ' boosted' : ''}">weight ${cat.weight}%${isBoosted ? ' ★' : ''}</span>
+        <span class="cat-badge">weight ${cat.weight}%</span>
         <span class="cat-avg" id="ca-${cat.id}">—<span style="font-size:0.55rem;color:var(--muted)"> /4</span></span>
         <span class="chevron">▾</span>
       </div>
@@ -971,6 +766,7 @@ function pick(id, val) {
   recalc();
 }
 
+/** Re-render button highlights for a single item id */
 function renderButtons(id, val) {
   const btns = document.querySelectorAll(`#b-${id} .btn-s`);
   btns.forEach(b => b.className = 'btn-s');
@@ -999,28 +795,8 @@ function recalc() {
     if (bp) bp.textContent = pct !== null ? Math.round(pct)+'%' : '—';
     if (pct !== null) { ts += pct * cat.weight; tw += cat.weight; }
   });
-  const baseTotal = tw > 0 ? Math.round(ts / tw) : null;
-
-  // ── Deal breaker penalty: each YES = -10 pts ──
-  const yesCount = Object.values(DB).filter(v => v === 'yes').length;
-  const penalty  = yesCount * 10;
-  const total    = baseTotal !== null ? Math.max(0, baseTotal - penalty) : null;
-
+  const total = tw > 0 ? Math.round(ts / tw) : null;
   document.getElementById('total-num').textContent = total ?? '—';
-
-  // Show/hide penalty line
-  const penaltyEl = document.getElementById('penalty');
-  if (penalty > 0) {
-    penaltyEl.style.display = 'block';
-    if (baseTotal !== null) {
-      penaltyEl.textContent = `${baseTotal} base − ${penalty} deal breaker penalty (${yesCount}×10)`;
-    } else {
-      penaltyEl.textContent = `⚠ ${yesCount} deal breaker${yesCount > 1 ? 's' : ''} flagged — −${penalty} pts will apply`;
-    }
-  } else {
-    penaltyEl.style.display = 'none';
-  }
-
   const v = document.getElementById('verdict');
   if (total === null) { v.textContent = 'No scores entered yet'; v.style.color = 'rgba(255,255,255,.4)'; }
   else if (total >= 85) { v.textContent = '★ Outstanding — highly recommended'; v.style.color = '#b8e87a'; }
@@ -1039,9 +815,8 @@ function collapseAll(){ document.querySelectorAll('.cat').forEach(c=>c.classList
 function doReset() {
   if (!confirm('Clear all scores and fields?')) return;
   Object.keys(S).forEach(k => delete S[k]);
-  Object.keys(DB).forEach(k => delete DB[k]);
   document.querySelectorAll('.btn-s').forEach(b => b.className = 'btn-s');
-  document.querySelectorAll('.db-btn').forEach(b => b.className = 'db-btn');
+  // Clear info fields
   ['inf-name','inf-city','inf-date','inf-dorm','inf-price','inf-reviewer'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -1052,69 +827,53 @@ function doReset() {
 
 // ── EXPORT JSON ───────────────────────────────────────────────────────
 function doExport() {
-  const name     = document.getElementById('inf-name')?.value     || 'hostel';
-  const city     = document.getElementById('inf-city')?.value     || '';
-  const date     = document.getElementById('inf-date')?.value     || new Date().toISOString().split('T')[0];
-  const dorm     = document.getElementById('inf-dorm')?.value     || '';
-  const price    = document.getElementById('inf-price')?.value    || '';
-  const reviewer = document.getElementById('inf-reviewer')?.value || '';
-  const notes    = document.getElementById('notes-field')?.value  || '';
+  const name    = document.getElementById('inf-name')?.value     || 'hostel';
+  const city    = document.getElementById('inf-city')?.value     || '';
+  const date    = document.getElementById('inf-date')?.value     || new Date().toISOString().split('T')[0];
+  const dorm    = document.getElementById('inf-dorm')?.value     || '';
+  const price   = document.getElementById('inf-price')?.value    || '';
+  const reviewer= document.getElementById('inf-reviewer')?.value || '';
+  const notes   = document.getElementById('notes-field')?.value  || '';
 
-  const SCORE_LABELS = { 0:'absent/terrible', 1:'below expectation', 2:'acceptable', 3:'good', 4:'excellent', na:'not applicable' };
-  const DB_LABELS    = { yes:'CONFIRMED PROBLEM', no:'not observed' };
-
-  const yesCount  = Object.values(DB).filter(v => v === 'yes').length;
-  const penalty   = yesCount * 10;
+  const SCORE_LABELS = { 0: 'absent/terrible', 1: 'below expectation', 2: 'acceptable', 3: 'good', 4: 'excellent', na: 'not applicable' };
 
   const payload = {
-    hostel:          name,
+    hostel:   name,
     city,
     date,
     dorm,
     price_per_night: price,
     reviewer,
     notes,
-    deal_breaker_penalty: penalty,
-    deal_breakers: DEAL_BREAKERS.map(db => ({
-      label:  db.label,
-      status: DB[db.id] !== undefined ? DB[db.id].toUpperCase() : 'unknown',
-      status_label: DB[db.id] !== undefined ? DB_LABELS[DB[db.id]] : 'not checked',
-    })),
-    scores: { ...S },
+    // ── scores: keyed by id — used by importer, do not rename ──
+    scores:   { ...S },
+    // ── categories: human-readable breakdown for AI review ──
     categories: CATS.map(c => {
       const items = allItems(c);
       let cs = 0, cw = 0;
       const scoredItems = [];
       items.forEach(it => {
         const v = S[it.id];
-        scoredItems.push({
-          label:       it.label,
-          must_have:   it.must,
-          score:       v !== undefined ? v : null,
+        const entry = {
+          label:    it.label,
+          must_have: it.must,
+          score:    v !== undefined ? v : null,
           score_label: v !== undefined ? SCORE_LABELS[v] : 'not scored',
-        });
+        };
+        scoredItems.push(entry);
         if (v !== undefined && v !== 'na') { cs += v * it.w; cw += it.w; }
       });
+      const avg = cw > 0 ? parseFloat((cs / cw).toFixed(2)) : null;
+      const pct = cw > 0 ? Math.round(cs / (cw * 4) * 100) : null;
       return {
-        category:   c.name,
-        weight_pct: c.weight,
-        avg_score:  cw > 0 ? parseFloat((cs / cw).toFixed(2)) : null,
-        score_pct:  cw > 0 ? Math.round(cs / (cw * 4) * 100) : null,
-        items:      scoredItems,
+        category:    c.name,
+        weight_pct:  c.weight,
+        avg_score:   avg,
+        score_pct:   pct,
+        items:       scoredItems,
       };
     })
   };
-
-  // Compute and inject final scores into payload
-  let tw2 = 0, ts2 = 0;
-  CATS.forEach(c => {
-    const items = allItems(c);
-    let cs = 0, cw = 0;
-    items.forEach(it => { const v = S[it.id]; if (v !== undefined && v !== 'na') { cs += v * it.w; cw += it.w; } });
-    if (cw > 0) { ts2 += (cs / (cw * 4) * 100) * c.weight; tw2 += c.weight; }
-  });
-  payload.base_score  = tw2 > 0 ? Math.round(ts2 / tw2) : null;
-  payload.final_score = payload.base_score !== null ? Math.max(0, payload.base_score - penalty) : null;
 
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -1126,6 +885,7 @@ function doExport() {
 
 // ── IMPORT JSON ───────────────────────────────────────────────────────
 function triggerImport() {
+  // Reset file input so same file can be re-imported if needed
   const fi = document.getElementById('import-file-input');
   fi.value = '';
   fi.click();
@@ -1134,17 +894,24 @@ function triggerImport() {
 function doImport(event) {
   const file = event.target.files[0];
   if (!file) return;
+
   const reader = new FileReader();
   reader.onload = function(e) {
     let data;
-    try { data = JSON.parse(e.target.result); }
-    catch (err) { showToast('✗ Invalid JSON file — could not parse', true); return; }
-
-    if (!data.scores || typeof data.scores !== 'object') {
-      showToast('✗ JSON missing "scores" field', true); return;
+    try {
+      data = JSON.parse(e.target.result);
+    } catch (err) {
+      showToast('✗ Invalid JSON file — could not parse', true);
+      return;
     }
 
-    // Restore info fields
+    // Validate minimal structure
+    if (!data.scores || typeof data.scores !== 'object') {
+      showToast('✗ JSON missing "scores" field', true);
+      return;
+    }
+
+    // ── Restore info fields ──
     const fieldMap = {
       'inf-name':     data.hostel   || data.name || '',
       'inf-city':     data.city     || '',
@@ -1158,20 +925,23 @@ function doImport(event) {
       if (el) el.value = val;
     });
 
+    // ── Restore notes ──
     const notesEl = document.getElementById('notes-field');
     if (notesEl) notesEl.value = data.notes || '';
 
-    // Clear existing scores and DB flags
+    // ── Clear existing scores ──
     Object.keys(S).forEach(k => delete S[k]);
-    Object.keys(DB).forEach(k => delete DB[k]);
     document.querySelectorAll('.btn-s').forEach(b => b.className = 'btn-s');
-    document.querySelectorAll('.db-btn').forEach(b => b.className = 'db-btn');
 
-    // Restore scores
+    // ── Restore scores & button highlights ──
     let restored = 0, skipped = 0;
+
+    // Build a flat set of all known item IDs for validation
     const knownIds = new Set(CATS.flatMap(c => allItems(c).map(it => it.id)));
+
     Object.entries(data.scores).forEach(([id, val]) => {
       if (!knownIds.has(id)) { skipped++; return; }
+      // Validate value
       const valid = val === 'na' || (Number.isInteger(val) && val >= 0 && val <= 4);
       if (!valid) { skipped++; return; }
       S[id] = val;
@@ -1179,21 +949,9 @@ function doImport(event) {
       restored++;
     });
 
-    // Restore deal breakers
-    if (Array.isArray(data.deal_breakers)) {
-      const knownDBIds = new Set(DEAL_BREAKERS.map(d => d.id));
-      // match by index position (same order) or by label
-      data.deal_breakers.forEach((entry, i) => {
-        const dbDef = DEAL_BREAKERS[i];
-        if (!dbDef) return;
-        const statusRaw = (entry.status || '').toLowerCase();
-        if (statusRaw === 'yes' || statusRaw === 'no') {
-          pickDB(dbDef.id, statusRaw);
-        }
-      });
-    }
-
     recalc();
+
+    // Expand all so imported scores are visible
     expandAll();
 
     const msg = skipped > 0
@@ -1201,6 +959,7 @@ function doImport(event) {
       : `✓ Imported ${restored} scores from "${data.hostel || file.name}"`;
     showToast(msg);
   };
+
   reader.readAsText(file);
 }
 
@@ -1217,7 +976,6 @@ function showToast(msg, isError = false) {
 
 // ── INIT ──────────────────────────────────────────────────────────────
 buildBars();
-buildDealBreakers();
 buildForm();
 </script>
 </body>
