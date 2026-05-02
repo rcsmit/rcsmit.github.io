@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events — Acro Insiders</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Corben:wght@400;700&family=Josefin+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --p1: #f19072;
+      --p2: #12807a;
+      --p3: #3d3d3e;
+      --p4: #5c5c5c;
+      --p5: #bbbdbf;
+      --p6: #d7dbde;
+      --p7: #fcdacf;
+      --p8: #fef6f4;
+      --p9: #ffffff;
+      --font-body: 'Josefin Sans', sans-serif;
+      --font-heading: 'Corben', cursive;
+      --content-width: 1290px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-body); font-size: 16px; line-height: 2; color: var(--p4); background: var(--p8); }
+    a { color: var(--p3); text-decoration: none; }
+    a:hover { color: var(--p1); }
+
+    /* Header */
+    #masthead { background: var(--p9); border-bottom: 1px solid var(--p7); }
+    .header-inner { max-width: var(--content-width); margin: 0 auto; padding: 20px 1.5rem; display: flex; align-items: center; justify-content: space-between; min-height: 80px; }
+    .site-logo-text { font-family: var(--font-heading); font-size: 1.6rem; color: var(--p3); font-weight: 700; }
+    .site-logo-text span { color: var(--p1); }
+
+    /* Page wrapper */
+    #tribe-events-pg-template { max-width: var(--content-width); margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+    /* Continent/category filter bar */
+    .tribe-before-html { background: var(--p9); border: 1px solid var(--p6); border-radius: 4px; padding: 1.5rem 2rem; margin-bottom: 2rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 600px) { .tribe-before-html { grid-template-columns: 1fr; } }
+    .tribe-filter-label { font-family: var(--font-body); font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--p2); letter-spacing: 0.08em; margin-bottom: 0.25rem; }
+    .tribe-filter-links { font-size: 16px; line-height: 1.8; }
+    .tribe-filter-links a { color: var(--p3); }
+    .tribe-filter-links a:hover { color: var(--p1); }
+    .tribe-filter-links a.active { color: var(--p1); font-weight: 700; }
+
+    /* Search + filter dropdowns bar */
+    .tribe-events-bar { background: var(--p9); border: 1px solid var(--p6); border-radius: 4px; padding: 1rem 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .tribe-search-input { flex: 1; min-width: 180px; border: 1px solid var(--p6); border-radius: 2px; padding: 0.4rem 0.75rem; font-family: var(--font-body); font-size: 14px; color: var(--p4); background: var(--p8); outline: none; }
+    .tribe-search-input:focus { border-color: var(--p2); }
+    .tribe-filter-select { border: 1px solid var(--p6); border-radius: 2px; padding: 0.4rem 2rem 0.4rem 0.75rem; font-family: var(--font-body); font-size: 14px; color: var(--p4); background: var(--p8) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 .6L5 4.6 9 .6l1 1L5 6.5.05 1.566z' fill='%235c5c5c'/%3E%3C/svg%3E") no-repeat right 8px center; appearance: none; cursor: pointer; outline: none; }
+    .tribe-filter-select:focus { border-color: var(--p2); }
+
+    /* Top bar: prev/next + date range + count */
+    .tribe-top-bar { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tribe-nav-btn { background: none; border: 1px solid var(--p6); border-radius: 2px; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: var(--p4); transition: all 0.15s; }
+    .tribe-nav-btn:hover { border-color: var(--p2); color: var(--p2); }
+    .tribe-today-btn { background: none; border: 1px solid var(--p6); border-radius: 2px; padding: 4px 14px; font-family: var(--font-body); font-size: 13px; cursor: pointer; color: var(--p4); transition: all 0.15s; }
+    .tribe-today-btn:hover { border-color: var(--p2); color: var(--p2); }
+    .tribe-date-range { font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; color: var(--p3); }
+    .tribe-event-count { margin-left: auto; font-size: 13px; color: var(--p5); }
+    .tribe-event-count strong { color: var(--p2); }
+
+    /* Loading / error */
+    .tribe-loading { text-align: center; padding: 4rem; color: var(--p5); }
+    .tribe-spinner { width: 32px; height: 32px; border: 3px solid var(--p6); border-top-color: var(--p1); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .tribe-error { background: #fff5f5; border: 1px solid #fecdcd; border-radius: 4px; padding: 1.5rem; color: #c0392b; text-align: center; margin: 2rem 0; display: none; }
+
+    /* Event list */
+    ul.tribe-events-calendar-list { list-style: none; }
+    ul.tribe-events-calendar-list ul.tribe-events-calendar-list { list-style: none; }
+
+    /* Month separator */
+    .tribe-month-separator { border-top: 2px solid var(--p1); margin: 2rem 0 0; padding-top: 0.6rem; }
+    .tribe-month-separator-text { font-family: var(--font-heading); font-size: 1.5rem; color: var(--p3); font-weight: 700; margin-bottom: 0; }
+
+    /* Each event row */
+    .tribe-event-row { display: grid; grid-template-columns: 72px 1fr; gap: 0 1.5rem; border-bottom: 1px solid var(--p6); padding: 1.25rem 0; align-items: start; }
+    .tribe-event-row:last-child { border-bottom: none; }
+
+    /* Date tag */
+    .tribe-date-tag { text-align: center; }
+    .tribe-date-weekday { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--p5); line-height: 1.2; }
+    .tribe-date-daynum { display: block; font-family: var(--font-heading); font-size: 2rem; font-weight: 700; color: var(--p3); line-height: 1; margin-top: 2px; }
+
+    /* Event detail */
+    .tribe-event-details { min-width: 0; }
+    .tribe-event-title { font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; line-height: 1.4; margin: 0 0 0.1rem; color: var(--p3); }
+    .tribe-event-title-link { color: var(--p3); cursor: pointer; }
+    .tribe-event-title-link:hover { color: var(--p1); }
+    .tribe-event-datetime { font-size: 14px; color: var(--p4); margin-bottom: 0.1rem; }
+    .tribe-event-venue { font-size: 14px; font-style: normal; color: var(--p4); margin-bottom: 0.2rem; }
+    .tribe-event-venue-name { font-weight: 700; }
+    .tribe-event-venue-addr { color: var(--p5); }
+    .tribe-event-desc { font-size: 14px; color: var(--p4); line-height: 1.7; margin-top: 0.4rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .tribe-event-tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.4rem; }
+    .tribe-tag { font-size: 11px; padding: 1px 8px; border-radius: 2px; background: var(--p7); color: var(--p2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    /* Empty */
+    .tribe-no-events { text-align: center; padding: 3rem; color: var(--p5); list-style: none; }
+    .tribe-no-events h3 { font-family: var(--font-heading); font-size: 1.5rem; color: var(--p3); margin-bottom: 0.5rem; }
+
+    /* Footer */
+    .site-footer { border-top: 1px solid var(--p1); background: var(--p7); padding: 1.5rem; text-align: center; font-size: 13px; color: var(--p5); }
+    .site-footer a { color: var(--p2); }
+
+    /* Modal overlay */
+    .tribe-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9999; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; overflow-y: auto; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .tribe-modal-overlay.open { opacity: 1; pointer-events: all; }
+    .tribe-modal { background: var(--p9); width: 100%; max-width: 760px; border-radius: 4px; box-shadow: 0 15px 50px rgba(0,0,0,0.18); position: relative; transform: translateY(14px); transition: transform 0.22s; }
+    .tribe-modal-overlay.open .tribe-modal { transform: translateY(0); }
+    .tribe-modal-head { border-bottom: 1px solid var(--p6); padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .tribe-modal-back { font-size: 13px; color: var(--p2); }
+    .tribe-modal-back:hover { color: var(--p1); }
+    .tribe-modal-close { background: none; border: 1px solid var(--p6); border-radius: 2px; width: 30px; height: 30px; font-size: 18px; line-height: 1; cursor: pointer; color: var(--p5); display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .tribe-modal-close:hover { border-color: var(--p2); color: var(--p2); }
+    .tribe-modal-body { padding: 2rem; }
+    .tribe-single-title { font-family: var(--font-heading); font-size: 2rem; font-weight: 700; color: var(--p3); line-height: 1.3; margin-bottom: 0.5rem; }
+    .tribe-single-datetime { font-size: 15px; color: var(--p2); font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .tribe-single-venue { display: flex; gap: 0.5rem; font-size: 15px; color: var(--p4); margin-bottom: 1.25rem; align-items: flex-start; }
+    .tribe-single-venue-name { font-weight: 700; color: var(--p3); }
+    .tribe-map-link { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 13px; color: var(--p2); margin-top: 3px; }
+    .tribe-map-link:hover { color: var(--p1); }
+    .tribe-single-desc { font-size: 15px; line-height: 1.9; color: var(--p4); border-top: 1px solid var(--p6); padding-top: 1.25rem; margin-top: 0.25rem; }
+    .tribe-single-desc p { margin-bottom: 0.75rem; }
+    .tribe-single-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+    .tribe-single-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--p6); }
+    .tribe-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.25rem; border-radius: 9999px; font-family: var(--font-body); font-size: 14px; font-weight: 700; cursor: pointer; border: none; text-decoration: none; transition: all 0.15s; box-shadow: 0 0 0 -7px rgba(0,0,0,0); }
+    .tribe-btn-primary { background: var(--p1); color: var(--p9); }
+    .tribe-btn-primary:hover { background: var(--p2); color: var(--p9); box-shadow: 0 15px 25px -7px rgba(0,0,0,0.15); }
+    .tribe-btn-outline { background: transparent; color: var(--p3); border: 1px solid var(--p6); }
+    .tribe-btn-outline:hover { border-color: var(--p2); color: var(--p2); }
+
+    @media (max-width: 640px) {
+      .tribe-event-row { grid-template-columns: 52px 1fr; gap: 0 1rem; }
+      .tribe-date-daynum { font-size: 1.5rem; }
+      .tribe-modal-body { padding: 1.25rem; }
+      .tribe-single-title { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header id="masthead">
+  <div class="header-inner">
+    <a href="https://acroinsiders.com" class="site-logo-text">Acro<span>Insiders</span></a>
+    <nav style="font-size:14px; display:flex; gap:1.5rem;">
+      <a href="https://acroinsiders.com/events/" style="color:var(--p2); font-weight:700;">Events</a>
+      <a href="https://acroinsiders.com">Home</a>
+    </nav>
+  </div>
+</header>
+
+<div id="tribe-events-pg-template">
+
+  <!-- Continent + event type filters -->
+  <div class="tribe-before-html">
+    <div>
+      <div class="tribe-filter-label">Filter by Continent</div>
+      <div class="tribe-filter-links" id="continent-links">
+        <a href="#" onclick="quickFilter('continent','');return false;">All</a> |
+        <a href="#" onclick="quickFilter('continent','North America');return false;">North America</a> |
+        <a href="#" onclick="quickFilter('continent','South America');return false;">South America</a> |
+        <a href="#" onclick="quickFilter('continent','Europe');return false;">Europe</a> |
+        <a href="#" onclick="quickFilter('continent','Asia');return false;">Asia</a> |
+        <a href="#" onclick="quickFilter('continent','Oceania');return false;">Oceania</a> |
+        <a href="#" onclick="quickFilter('continent','Africa');return false;">Africa</a>
+      </div>
+    </div>
+    <div>
+      <div class="tribe-filter-label">Filter by Event Type</div>
+      <div class="tribe-filter-links" id="category-links">
+        <a href="#" onclick="quickFilter('category','');return false;">All</a> |
+        <a href="#" onclick="quickFilter('category','Festival');return false;">Festival</a> |
+        <a href="#" onclick="quickFilter('category','Retreat');return false;">Retreat</a> |
+        <a href="#" onclick="quickFilter('category','Intensive');return false;">Intensive</a> |
+        <a href="#" onclick="quickFilter('category','Training');return false;">Training</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search + dropdown filters -->
+  <div class="tribe-events-bar">
+    <input class="tribe-search-input" type="text" id="search-input" placeholder="Search Events" oninput="applyFilters()" aria-label="Search events">
+    <select class="tribe-filter-select" id="continent-filter" onchange="applyFilters()" aria-label="Continent">
+      <option value="">All Continents</option>
+    </select>
+    <select class="tribe-filter-select" id="country-filter" onchange="applyFilters()" aria-label="Country">
+      <option value="">All Countries</option>
+    </select>
+    <select class="tribe-filter-select" id="category-filter" onchange="applyFilters()" aria-label="Category">
+      <option value="">All Categories</option>
+    </select>
+  </div>
+
+  <!-- Prev / next / today / date range -->
+  <div class="tribe-top-bar">
+    <button class="tribe-nav-btn" onclick="changeMonth(-1)" title="Previous Events" aria-label="Previous Events">
+      <svg width="8" height="13" viewBox="0 0 10 16" fill="currentColor"><path d="M9.7 14.4l-1.5 1.5L.3 8 8.2.1l1.5 1.5L3.3 8l6.4 6.4z"/></svg>
+    </button>
+    <button class="tribe-nav-btn" onclick="changeMonth(1)" title="Next Events" aria-label="Next Events">
+      <svg width="8" height="13" viewBox="0 0 10 16" fill="currentColor"><path d="M.3 1.6L1.8.1 9.7 8l-7.9 7.9-1.5-1.5L6.7 8 .3 1.6z"/></svg>
+    </button>
+    <button class="tribe-today-btn" onclick="goToday()">Today</button>
+    <span class="tribe-date-range" id="date-range-label"></span>
+    <span class="tribe-event-count" id="event-count"></span>
+  </div>
+
+  <!-- Loading -->
+  <div id="tribe-loading" class="tribe-loading">
+    <div class="tribe-spinner"></div>
+    Loading events…
+  </div>
+  <div id="tribe-error" class="tribe-error"></div>
+
+  <!-- Events -->
+  <ul class="tribe-events-calendar-list" id="events-list" role="list"></ul>
+
+</div>
+
+<footer class="site-footer">
+  <p>© Acro Insiders · <a href="https://acroinsiders.com/events/">acroinsiders.com/events</a></p>
+</footer>
+
+<!-- Event detail modal -->
+<div class="tribe-modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-label="Event detail">
+  <div class="tribe-modal" id="modal">
+    <div class="tribe-modal-head">
+      <a href="#" class="tribe-modal-back" onclick="closeModal();return false;">« All Events</a>
+      <button class="tribe-modal-close" onclick="closeModal()" aria-label="Close">×</button>
+    </div>
+    <div class="tribe-modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const SHEET_ID = '132gCPu46DkXTJk1Yy5RmuKcijMBm7_PPqQjRm_7AbG4';
+const CSV_URL  = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+
+let allEvents = [], filteredEvents = [];
+let viewStart = null;
+
+// ── CSV parse ──────────────────────────────────────────────────
+function parseCSV(text) {
+  const rows = []; let row = [], cell = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') { if (inQ && text[i+1]==='"'){cell+='"';i++;}else inQ=!inQ; }
+    else if (c===',' && !inQ) { row.push(cell); cell=''; }
+    else if ((c==='\n'||c==='\r') && !inQ) {
+      if (c==='\r'&&text[i+1]==='\n') i++;
+      row.push(cell); cell=''; rows.push(row); row=[];
+    } else cell+=c;
+  }
+  if (cell||row.length){row.push(cell);rows.push(row);}
+  return rows;
+}
+function toObjects(rows) {
+  if (!rows.length) return [];
+  const h = rows[0].map(x=>x.trim());
+  return rows.slice(1).filter(r=>r.some(c=>c.trim()))
+    .map(r=>{ const o={}; h.forEach((k,i)=>o[k]=(r[i]||'').trim()); return o; });
+}
+
+// ── Date helpers ───────────────────────────────────────────────
+function parseDate(s) {
+  if (!s) return null; s=s.trim();
+  let m;
+  if ((m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/))) return new Date(+m[3],+m[1]-1,+m[2]);
+  if ((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/)))         return new Date(+m[1],+m[2]-1,+m[3]);
+  if ((m=s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/)))    return new Date(+m[3],+m[2]-1,+m[1]);
+  const d=new Date(s); return isNaN(d)?null:d;
+}
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WDAYS =['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const fmtMD = d => d ? d.toLocaleDateString('en-US',{month:'long',day:'numeric'}) : '';
+const fmtFull= d => d ? d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}) : '';
+
+// ── Load ───────────────────────────────────────────────────────
+async function loadEvents() {
+  try {
+    const res = await fetch(CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status} — make sure the spreadsheet is publicly shared.`);
+    const text = await res.text();
+    const objs = toObjects(parseCSV(text));
+
+    allEvents = objs.map(e=>({
+      url:         e['URL']||'',
+      name:        e['EVENT NAME']||'',
+      venue:       e['EVENT VENUE NAME']||'',
+      startDate:   parseDate(e['EVENT START DATE']),
+      endDate:     parseDate(e['EVENT END DATE']),
+      category:    e['EVENT CATEGORY']||'',
+      continent:   e['CONTINENT']||'',
+      tags:        e['EVENT TAGS']||'',
+      image:       e['EVENT FEATURED IMAGE']||'',
+      website:     e['EVENT WEBSITE']||'',
+      description: e['EVENT DESCRIPTION']||'',
+      city:        e['City']||'',
+      state:       e['STATE']||'',
+      country:     e['COUNTRY']||'',
+      lat:         e['LAT']||'',
+      lon:         e['LON']||'',
+    })).filter(e=>e.name).sort((a,b)=>(a.startDate||0)-(b.startDate||0));
+
+    const now=new Date(); now.setHours(0,0,0,0);
+    const future=allEvents.find(e=>e.startDate&&e.startDate>=now);
+    viewStart = future
+      ? new Date(future.startDate.getFullYear(), future.startDate.getMonth(), 1)
+      : new Date(now.getFullYear(), now.getMonth(), 1);
+
+    populateDropdowns();
+    applyFilters();
+    document.getElementById('tribe-loading').style.display='none';
+  } catch(err) {
+    document.getElementById('tribe-loading').style.display='none';
+    const el=document.getElementById('tribe-error');
+    el.style.display='block';
+    el.innerHTML=`<strong>Could not load events.</strong><br>${esc(err.message)}`;
+  }
+}
+
+// ── Dropdowns ─────────────────────────────────────────────────
+function populateDropdowns() {
+  const fill=(id,vals)=>{
+    const el=document.getElementById(id);
+    [...new Set(vals.filter(Boolean))].sort()
+      .forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; el.appendChild(o); });
+  };
+  fill('continent-filter', allEvents.map(e=>e.continent));
+  fill('country-filter',   allEvents.map(e=>e.country));
+  fill('category-filter',  allEvents.map(e=>e.category));
+}
+
+// ── Quick filter (top link buttons) ───────────────────────────
+function quickFilter(type, val) {
+  if (type==='continent') document.getElementById('continent-filter').value=val;
+  if (type==='category')  document.getElementById('category-filter').value=val;
+  applyFilters();
+}
+
+// ── Apply filters ─────────────────────────────────────────────
+function applyFilters() {
+  const q  =document.getElementById('search-input').value.toLowerCase();
+  const con=document.getElementById('continent-filter').value;
+  const cou=document.getElementById('country-filter').value;
+  const cat=document.getElementById('category-filter').value;
+
+  filteredEvents=allEvents.filter(e=>{
+    if(con&&e.continent!==con) return false;
+    if(cou&&e.country!==cou)   return false;
+    if(cat&&e.category!==cat)  return false;
+    if(q){
+      const hay=[e.name,e.venue,e.city,e.country,e.tags,e.description].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  renderList();
+}
+
+// ── Month nav ─────────────────────────────────────────────────
+function changeMonth(d){viewStart=new Date(viewStart.getFullYear(),viewStart.getMonth()+d,1);renderList();}
+function goToday(){const n=new Date();viewStart=new Date(n.getFullYear(),n.getMonth(),1);renderList();}
+
+// ── Render ────────────────────────────────────────────────────
+function renderList() {
+  const wEnd=new Date(viewStart.getFullYear(),viewStart.getMonth()+3,0);
+  const shown=filteredEvents.filter(e=>{
+    if(!e.startDate) return false;
+    const eEnd=e.endDate||e.startDate;
+    return e.startDate<=wEnd && eEnd>=viewStart;
+  });
+
+  const endM=new Date(viewStart.getFullYear(),viewStart.getMonth()+2,1);
+  document.getElementById('date-range-label').textContent=
+    `${MONTHS[viewStart.getMonth()]} ${viewStart.getFullYear()} – ${MONTHS[endM.getMonth()]} ${endM.getFullYear()}`;
+  document.getElementById('event-count').innerHTML=
+    `<strong>${shown.length}</strong> event${shown.length!==1?'s':''}`;
+
+  const list=document.getElementById('events-list');
+
+  if(!shown.length){
+    list.innerHTML=`<li class="tribe-no-events"><h3>No Events Found</h3><p>There are no upcoming events in this time period.</p></li>`;
+    return;
+  }
+
+  // Group by month
+  const groups={};
+  shown.forEach(e=>{
+    const k=`${e.startDate.getFullYear()}-${String(e.startDate.getMonth()).padStart(2,'0')}`;
+    if(!groups[k]) groups[k]={label:`${MONTHS[e.startDate.getMonth()]} ${e.startDate.getFullYear()}`,events:[]};
+    groups[k].events.push(e);
+  });
+
+  list.innerHTML=Object.keys(groups).sort().map(k=>{
+    const g=groups[k];
+    return `<li>
+      <div class="tribe-month-separator">
+        <div class="tribe-month-separator-text">${esc(g.label)}</div>
+      </div>
+      <ul class="tribe-events-calendar-list">${g.events.map(e=>renderRow(e)).join('')}</ul>
+    </li>`;
+  }).join('');
+}
+
+function renderRow(e) {
+  const d=e.startDate;
+  const wday=d?WDAYS[d.getDay()]:'';
+  const dnum=d?d.getDate():'';
+  const dtStr=e.startDate
+    ?(e.endDate&&e.endDate.toDateString()!==e.startDate.toDateString()
+      ?`${fmtMD(e.startDate)} - ${fmtMD(e.endDate)}`
+      :fmtMD(e.startDate))
+    :'';
+  const addr=[e.city,e.state,e.country].filter(Boolean).join(', ');
+  const tags=e.tags?e.tags.split(',').map(t=>t.trim()).filter(Boolean):[];
+  const tagsHtml=tags.length?`<div class="tribe-event-tags">${tags.map(t=>`<span class="tribe-tag">${esc(t)}</span>`).join('')}</div>`:'';
+  // Serialize for onclick - use encodeURIComponent + JSON
+  const eData=encodeURIComponent(JSON.stringify({
+    url:e.url,name:e.name,venue:e.venue,
+    startDate:e.startDate?e.startDate.toISOString():null,
+    endDate:e.endDate?e.endDate.toISOString():null,
+    category:e.category,continent:e.continent,tags:e.tags,
+    image:e.image,website:e.website,description:e.description,
+    city:e.city,state:e.state,country:e.country,lat:e.lat,lon:e.lon
+  }));
+  return `<li class="tribe-event-row">
+    <div class="tribe-date-tag">
+      <time datetime="${d?d.toISOString().slice(0,10):''}" aria-hidden="true">
+        <span class="tribe-date-weekday">${wday}</span>
+        <span class="tribe-date-daynum">${dnum}</span>
+      </time>
+    </div>
+    <div class="tribe-event-details">
+      <header>
+        <h4 class="tribe-event-title">
+          <a class="tribe-event-title-link" href="#" onclick="openModal(decodeURIComponent('${eData}'));return false;" title="${escAttr(e.name)}">${esc(e.name)}</a>
+        </h4>
+        <div class="tribe-event-datetime"><time>${esc(dtStr)}</time></div>
+        ${e.venue||addr?`<address class="tribe-event-venue">
+          ${e.venue?`<span class="tribe-event-venue-name">${esc(e.venue)}</span> `:''}
+          ${addr?`<span class="tribe-event-venue-addr">${esc(addr)}</span>`:''}
+        </address>`:''}
+      </header>
+      ${e.description?`<div class="tribe-event-desc">${esc(e.description.slice(0,280))}${e.description.length>280?'…':''}</div>`:''}
+      ${tagsHtml}
+    </div>
+  </li>`;
+}
+
+// ── Modal ─────────────────────────────────────────────────────
+function openModal(jsonStr) {
+  let e; try { e=JSON.parse(jsonStr); } catch(_){return;}
+  if(e.startDate) e.startDate=new Date(e.startDate);
+  if(e.endDate)   e.endDate=new Date(e.endDate);
+
+  const dtStr=e.startDate
+    ?(e.endDate&&e.endDate.toDateString()!==e.startDate.toDateString()
+      ?`${fmtMD(e.startDate)} – ${fmtFull(e.endDate)}`
+      :fmtFull(e.startDate))
+    :'Date TBC';
+  const addr=[e.city,e.state,e.country].filter(Boolean).join(', ');
+  const tags=e.tags?e.tags.split(',').map(t=>t.trim()).filter(Boolean):[];
+  const mapLink=(e.lat&&e.lon)
+    ?`https://www.google.com/maps?q=${encodeURIComponent(e.lat+','+e.lon)}`
+    :(addr?`https://www.google.com/maps/search/${encodeURIComponent(addr)}`:null);
+  const descHtml=e.description
+    ?e.description.split('\n').filter(Boolean).map(l=>`<p>${esc(l)}</p>`).join('')
+    :'';
+
+  document.getElementById('modal-body').innerHTML=`
+    <h1 class="tribe-single-title">${esc(e.name)}</h1>
+    <div class="tribe-single-datetime">
+      <svg width="14" height="14" viewBox="0 0 18 19" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M0 .991v17.04c0 .236.162.428.361.428h17.175c.2 0 .361-.192.361-.429V.991c0-.237-.162-.428-.361-.428H.36C.161.563 0 .754 0 .99zm.985.803H16.89v2.301H.985v-2.3zM16.89 5.223H.985v12H16.89v-12z"/></svg>
+      ${esc(dtStr)}
+    </div>
+    ${e.venue||addr?`<div class="tribe-single-venue">
+      <svg width="12" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="flex-shrink:0;margin-top:4px"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+      <div>
+        ${e.venue?`<div class="tribe-single-venue-name">${esc(e.venue)}</div>`:''}
+        ${addr?`<div>${esc(addr)}</div>`:''}
+        ${mapLink?`<a href="${escAttr(mapLink)}" target="_blank" rel="noopener" class="tribe-map-link">+ Google Maps</a>`:''}
+      </div>
+    </div>`:''}
+    ${descHtml?`<div class="tribe-single-desc">${descHtml}</div>`:''}
+    ${tags.length?`<div class="tribe-single-tags">${tags.map(t=>`<span class="tribe-tag">${esc(t)}</span>`).join('')}</div>`:''}
+    <div class="tribe-single-actions">
+      ${e.website?`<a href="${escAttr(e.website)}" target="_blank" rel="noopener" class="tribe-btn tribe-btn-primary">Find out more</a>`:''}
+      ${e.url?`<a href="${escAttr(e.url)}" target="_blank" rel="noopener" class="tribe-btn tribe-btn-outline">Acro Insiders page</a>`:''}
+    </div>
+  `;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function closeModal(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+document.getElementById('modal-overlay').addEventListener('click',ev=>{ if(ev.target===document.getElementById('modal-overlay')) closeModal(); });
+document.addEventListener('keydown',ev=>{ if(ev.key==='Escape') closeModal(); });
+
+// ── Utils ─────────────────────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escAttr(s){ return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+loadEvents();
+</script>
+</body>
+</html>
