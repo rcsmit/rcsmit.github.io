@@ -46,6 +46,18 @@ a:hover { color: var(--p1); }
 .header-stats strong { color: var(--p2); }
 .header-right { display: flex; align-items: center; gap: 10px; }
 
+.header-logo {
+  position: fixed;
+  top: 20px;
+  left: 24px;
+  z-index: 10000;
+}
+
+.header-logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+}
 /* Search */
 .hdr-search { position: relative; }
 .hdr-search input {
@@ -59,7 +71,7 @@ a:hover { color: var(--p1); }
 
 /* View toggle */
 .view-toggle { display: flex; gap: 2px; background: var(--p8); border: 1px solid var(--p6); border-radius: 2px; padding: 2px; }
-.vt-btn {
+.vt-btn {Acr
   font-family: var(--font-body); font-size: 13px; font-weight: 600;
   padding: 4px 12px; border-radius: 2px; border: none;
   background: transparent; color: var(--p5);
@@ -292,6 +304,18 @@ a:hover { color: var(--p1); }
 .ov-msg { font-size: 14px; color: var(--p5); text-align: center; max-width: 300px; line-height: 1.5; }
 .ov-step { font-size: 12px; color: var(--p6); margin-top: 4px; }
 
+
+.ov-logo {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+}
+
+.ov-logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+}
 /* ── TOAST ───────────────────────────────────────────────── */
 .toast { position: fixed; bottom: 18px; right: 18px; background: var(--p3); color: var(--p9); font-size: 13px; font-family: var(--font-body); padding: 8px 14px; border-radius: 2px; box-shadow: 0 4px 20px rgba(0,0,0,.15); z-index: 9000; opacity: 0; transform: translateY(6px); transition: all .25s; pointer-events: none; max-width: calc(100vw - 36px); line-height: 1.4; }
 .toast.on { opacity: 1; transform: translateY(0); }
@@ -326,7 +350,8 @@ a:hover { color: var(--p1); }
 
 <!-- LOADING OVERLAY -->
 <div id="ov">
-  <div class="ov-title">Acro<span>map</span></div>
+  <div class="ov-title">Acro<span>insiders</span></div>
+  <!-- <div class-"ov-logo"><img src="logo.png"></div> -->
   <div class="ov-bar-w"><div class="ov-bar"></div></div>
   <div class="ov-msg" id="ov-msg">Loading…</div>
   <div class="ov-step" id="ov-step"></div>
@@ -335,7 +360,8 @@ a:hover { color: var(--p1); }
 <!-- HEADER -->
 <div id="masthead">
   <div class="header-inner">
-    <div class="site-logo-text">Acro<span>map</span></div>
+    <!-- <div class="header-logo"><img src="logo.png"></div> -->
+    <!-- <div class="site-logo-text">Acro<span>map</span></div> -->
     <div class="header-stats">
       <span><strong id="s-total">–</strong> total</span>
       <span><strong id="s-vis">–</strong> visible</span>
@@ -356,7 +382,7 @@ a:hover { color: var(--p1); }
           🗺 <span class="vt-label">Map</span>
         </button>
       </div>
-      <div class="hmenu-wrap" id="hmenu-wrap">
+      <!-- <div class="hmenu-wrap" id="hmenu-wrap">
         <div class="hbg" id="hbg" onclick="toggleMenu()">
           <span></span><span></span><span></span>
         </div>
@@ -364,7 +390,7 @@ a:hover { color: var(--p1); }
           <button onclick="openModal('info');closeMenu()"><span class="hmenu-icon">ℹ️</span> Info</button>
           <button onclick="openModal('credits');closeMenu()"><span class="hmenu-icon">🏅</span> Credits</button>
         </nav>
-      </div>
+      </div> -->
     </div>
   </div>
 </div>
@@ -388,7 +414,7 @@ a:hover { color: var(--p1); }
   </select>
   <div class="fb-sep"></div>
   <div class="fb-pills" id="et"></div>
-  <button class="fb-clear" onclick="clearAllFilters()">✕ Clear</button>
+  <!-- <button class="fb-clear" onclick="clearAllFilters()">✕ Clear</button> -->
 </div>
 
 <!-- INFO MODAL -->
@@ -626,7 +652,7 @@ function openEventModal(row) {
     ${sl ? `<div class="tribe-single-shortlisted">⭐ Shortlisted by AcroInsiders</div>` : ''}
     ${descHtml ? `<div class="tribe-single-desc">${descHtml}</div>` : ''}
     <div class="tribe-single-actions">
-      <button class="tribe-btn tribe-btn-outline" onclick="closeEventModal()">← Back to list</button>
+      <button class="tribe-btn tribe-btn-outline" onclick="closeEventModal()">← Back</button>
     </div>
   `;
 
@@ -703,7 +729,7 @@ document.getElementById('date-to').addEventListener('change',   function() { dat
    GEO FILTERS
    ═══════════════════════════════════════════════════════════ */
 
-// Rows that pass the hideEnded + actET check (but ignore geo/search),
+// Rows that pass hideEnded + actET (but ignore geo/search/date filters),
 // used to build continent/country dropdowns so only relevant options show.
 function rowsForDropdowns() {
   const today = dateOnly(new Date());
@@ -712,8 +738,40 @@ function rowsForDropdowns() {
       const endDate = parseDate(row[CONFIG.COL_END]) || parseDate(row[CONFIG.COL_START]);
       if (endDate && dateOnly(endDate) < today) return false;
     }
+    if (actET.size > 0 && !actET.has((row[CONFIG.COL_CATEGORY]||'').trim())) return false;
     return true;
   });
+}
+
+function refreshGeoDropdowns() {
+  // Rebuild continent + country dropdowns based on current hideEnded + actET state,
+  // preserving current selections if still valid.
+  const prevContinent = filterContinent;
+  const prevCountry   = filterCountry;
+  const base = rowsForDropdowns();
+
+  // Rebuild continent dropdown
+  const cSet = new Set();
+  base.forEach(r => { const c=(r[CONFIG.COL_CONTINENT]||'').trim(); if(c) cSet.add(c); });
+  const cSel = document.getElementById('filter-continent');
+  cSel.innerHTML = '<option value="">All continents</option>';
+  Array.from(cSet).sort().forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; cSel.appendChild(o); });
+  // Restore selection if still valid
+  filterContinent = cSet.has(prevContinent) ? prevContinent : '';
+  cSel.value = filterContinent;
+
+  // Rebuild country dropdown filtered by current continent
+  const ctrSet = new Set();
+  base.forEach(r => {
+    if (!filterContinent || (r[CONFIG.COL_CONTINENT]||'').trim() === filterContinent) {
+      const c=(r[CONFIG.COL_COUNTRY]||'').trim(); if(c) ctrSet.add(c);
+    }
+  });
+  const ctrSel = document.getElementById('filter-country');
+  ctrSel.innerHTML = '<option value="">All countries</option>';
+  Array.from(ctrSet).sort().forEach(c => { const o=document.createElement('option'); o.value=c; o.textContent=c; ctrSel.appendChild(o); });
+  filterCountry = ctrSet.has(prevCountry) ? prevCountry : '';
+  ctrSel.value = filterCountry;
 }
 
 function buildGeoFilters() {
@@ -859,6 +917,7 @@ function buildEventTypes() {
     if (!locked) btn.addEventListener('click', () => {
       if (actET.has(type)) { actET.delete(type); btn.classList.remove('on'); }
       else                 { actET.add(type);    btn.classList.add('on'); }
+      refreshGeoDropdowns();
       redraw();
     });
     wrap.appendChild(btn);
@@ -917,7 +976,7 @@ function renderList() {
   grid.innerHTML = '';
 
   if (!vis.length) {
-    grid.innerHTML = `<div class="no-results"><div class="nr-icon">🌍</div><h3>No events found</h3><p>Try adjusting your filters or date range.</p></div>`;
+    grid.innerHTML = `<div class="no-results"><div class="nr-icon">🤸</div><h3>No events found</h3><p>No upcoming events match your current filters.<br>Try a different event type, continent, or wider date range.</p></div>`;
   } else {
     slice.forEach(row => {
       const c   = lColors[row._layer] || '#f19072';
@@ -992,6 +1051,16 @@ function renderCalendar() {
   const firstDay = new Date(calYear,calMonth,1), lastDay = new Date(calYear,calMonth+1,0);
   const startOffset = (firstDay.getDay()+6)%7;
   const today = new Date(), todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
+
+  // No events at all — show message below the day headers
+  const _allVis = visibleRows();
+  if (!_allVis.length) {
+    const msg = document.createElement('div');
+    msg.style.cssText = 'grid-column:1/-1;text-align:center;padding:3rem 1rem;color:var(--p5);';
+    msg.innerHTML = '<div style="font-size:2rem;margin-bottom:.75rem">🤸</div><div style="font-family:var(--font-heading);font-size:1.1rem;font-weight:700;color:var(--p3);margin-bottom:.4rem">No events in this chosen month</div><div style="font-size:13px">Try navigating to another month or widening your filters.</div>';
+    grid.appendChild(msg);
+    return;
+  }
 
   // Build event map for the month
   const evMap = {};
@@ -1130,6 +1199,29 @@ function processData(data) {
   document.getElementById('s-vis').textContent   = rows.length;
   redraw();
 }
+
+// ===== USING WITH WORKER
+// async function init() {
+//   setMsg('Fetching event data…');
+//   let rawData;
+//   try {
+//     const res = await fetch('https://YOUR-WORKER.workers.dev/events');
+//     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+//     const json = await res.json();
+//     rawData = json.rows;  // ← note: .rows, not the array directly
+//   } catch(e) {
+//     setMsg('❌ Could not load data: ' + e.message);
+//     setStep('Check the Worker URL');
+//     return;
+//   }
+//   if (!rawData.length) { setMsg('No data found.'); return; }
+//   processData(rawData);
+//   hideOv();
+// }
+
+// ==================
+
+
 
 async function init() {
   setMsg('Fetching event data…');
