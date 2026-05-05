@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KaraokeEvents – World Karaoke Calendar</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="ov">
+  <div class="ov-title">Karaoke<span>Events</span></div>
+  <div class="ov-bar-w"><div class="ov-bar"></div></div>
+  <div class="ov-msg" id="ov-msg">Loading…</div>
+  <div class="ov-step" id="ov-step"></div>
+</div>
+
+<!-- HEADER -->
+<div id="masthead">
+  <div class="header-inner">
+    <div class="header-stats">
+      <span><strong id="s-total">–</strong> total</span>
+      <span><strong id="s-vis">–</strong> visible</span>
+    </div>
+    <div class="header-right">
+      <div class="hdr-search">
+        <span class="hdr-search-icon">🔍</span>
+        <input type="text" id="q" placeholder="Search event or city…" autocomplete="off">
+      </div>
+      <div class="view-toggle">
+        <button class="vt-btn active" id="vt-list" onclick="setView('list')" title="List">
+          ☰ <span class="vt-label">List</span>
+        </button>
+        <button class="vt-btn" id="vt-cal" onclick="setView('cal')" title="Calendar">
+          📅 <span class="vt-label">Calendar</span>
+        </button>
+        <button class="vt-btn" id="vt-map" onclick="setView('map')" title="Map">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px;vertical-align:middle"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span class="vt-label">Map</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <div class="fb-date-group">
+    <label for="date-from">From</label>
+    <input type="date" id="date-from">
+  </div>
+  <div class="fb-date-group">
+    <label for="date-to">To</label>
+    <input type="date" id="date-to">
+  </div>
+  <div class="fb-sep"></div>
+  <select class="fb-select" id="filter-continent" onchange="onContinentChange()">
+    <option value="">All continents</option>
+  </select>
+  <select class="fb-select" id="filter-country" onchange="onFilterChange()">
+    <option value="">All countries</option>
+  </select>
+  <div class="fb-sep"></div>
+  <div class="fb-pills" id="et"></div>
+  <div class="fb-pills" id="pill-deals-wrap" style="display:none">
+    <span class="et" id="pill-deals" data-et="deals" title="Only show events with Special Offers"
+      onclick="filterDeals=!filterDeals;this.classList.toggle('on',filterDeals);redraw()">
+      🏷️ Has offers
+    </span>
+  </div>
+  <button class="fb-clear" id="btn-clear" onclick="clearAllFilters()" style="display:none">✕ Clear</button>
+</div>
+
+<!-- INFO MODAL -->
+<div class="modal-bg" id="modal-info" onclick="closeModalBg(event,'info')">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>About KaraokeEvents</h2>
+      <button class="modal-close" onclick="closeModal('info')">✕</button>
+    </div>
+    <div class="modal-body">
+      <h3>What is this?</h3>
+      <p>An interactive world overview of karaoke events, competitions, bar nights, and festivals.</p>
+      <p>Use the filter bar to narrow events by date, continent, country or event type. Click any event to see full details.</p>
+      <h3>How to use</h3>
+      <ul>
+        <li>Click any event card to see full details</li>
+        <li>Filter by continent and country using the dropdowns</li>
+        <li>Toggle event types using the pill buttons</li>
+        <li>Use date pickers to narrow to a specific period</li>
+        <li>Past events are hidden by default</li>
+        <li>Switch to <strong>Calendar</strong> for a monthly overview</li>
+        <li>Switch to <strong>Map</strong> to see events on a world map</li>
+      </ul>
+      <h3>About the map</h3>
+      <p>Map pins are geocoded from city and country name — they show the approximate area, not the exact venue address.</p>
+      <ul>
+        <li>Small towns may be pinned to the nearest known city</li>
+        <li>Events with missing location data do not appear on the map</li>
+        <li>Always check the event details for the precise venue</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- CREDITS MODAL -->
+<div class="modal-bg" id="modal-credits" onclick="closeModalBg(event,'credits')">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Credits</h2>
+      <button class="modal-close" onclick="closeModal('credits')">✕</button>
+    </div>
+    <div class="modal-body">
+      <h3>Built by</h3>
+      <div class="author-block">
+        <div class="author-avatar">👤</div>
+        <div>
+          <div class="author-name">René Smit</div>
+          <div class="author-links"><a href="https://rene-smit.com" target="_blank">rene-smit.com</a></div>
+        </div>
+      </div>
+      <h3>Technology</h3>
+      <ul>
+        <li><a href="https://leafletjs.com" target="_blank">Leaflet.js</a> — mapping library</li>
+        <li><a href="https://carto.com" target="_blank">CartoDB Voyager</a> — map tiles</li>
+        <li>Data: Google Sheets</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT DETAIL MODAL -->
+<div class="tribe-modal-overlay" id="event-modal" onclick="closeEventModalBg(event)">
+  <div class="tribe-modal">
+    <div class="tribe-modal-head">
+      <span class="tribe-modal-back" onclick="closeEventModal()">← All events</span>
+      <button class="tribe-modal-close" onclick="closeEventModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="tribe-modal-body" id="event-modal-body"></div>
+  </div>
+</div>
+
+<!-- CALENDAR POPUP -->
+<div class="cal-popup" id="cal-popup">
+  <button class="cal-popup-close" onclick="closeCalPopup()">✕</button>
+  <div id="cal-popup-content"></div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <div class="mw hidden" id="view-map">
+    <div id="map"></div>
+    <div class="map-disclaimer">📍 Map pins show approximate city-level location, not the exact venue.</div>
+  </div>
+
+  <div class="list-view" id="view-list">
+    <div class="lv-inner" id="lv-inner">
+      <div class="lv-grid" id="lv-grid"></div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+
+  <div class="cal-view hidden" id="view-cal">
+    <div class="cal-header">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calPrev()">‹</button>
+        <div class="cal-month-title" id="cal-month-title">–</div>
+        <button class="cal-nav-btn" onclick="calNext()">›</button>
+      </div>
+      <button class="cal-today-btn" onclick="calGoToday()">Today</button>
+    </div>
+    <div class="cal-inner">
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/data.js"></script>
+<script src="js/map.js"></script>
+<script src="js/list.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
