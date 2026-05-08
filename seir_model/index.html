@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SEIR Epidemic Model</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+
+    :root {
+      --bg: #ffffff;
+      --surface: #eaf4ff;
+      --surface2: #e3effd;
+      --border: #1e2d3d;
+      --accent-s: #c70d8f;
+      --accent-e: #ffb74d;
+      --accent-i: #ef5350;
+      --accent-r: #66bb6a;
+      --text: #154764;
+      --muted: #071929;
+      --label: #3a5570;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 17px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Grid noise texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(30,45,61,0.3) 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(30,45,61,0.3) 40px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    header {
+      margin-bottom: 48px;
+      border-left: 3px solid var(--accent-i);
+      padding-left: 20px;
+    }
+
+    header .tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--accent-i);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    header h1 {
+      font-family: 'Space Mono', monospace;
+      font-size: clamp(22px, 4vw, 36px);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    header p {
+      color: var(--muted);
+      font-style: italic;
+      font-size: 16px;
+      margin-top: 6px;
+    }
+
+    /* SEIR flow diagram */
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 40px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px 28px;
+      overflow-x: auto;
+    }
+
+    .compartment-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 80px;
+    }
+
+    .compartment-box .letter {
+      font-family: 'Space Mono', monospace;
+      font-size: 26px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .compartment-box .name {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin-top: 4px;
+    }
+
+    .s .letter { color: var(--accent-s); }
+    .e .letter { color: var(--accent-e); }
+    .i .letter { color: var(--accent-i); }
+    .r .letter { color: var(--accent-r); }
+
+    .arrow {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--label);
+      font-family: 'Space Mono', monospace;
+      font-size: 20px;
+      min-width: 40px;
+    }
+
+    /* Layout: two columns */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 720px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Panel */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 24px;
+    }
+
+    .panel h2 {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .param-group {
+      margin-bottom: 18px;
+    }
+
+    .param-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .param-label .sym {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      color: var(--accent-s);
+    }
+
+    .param-label .meaning {
+      font-size: 12px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .param-label .val {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      color: var(--text);
+      min-width: 80px;
+      text-align: right;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent-s);
+      border: 2px solid var(--bg);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent-s);
+      border: 2px solid var(--bg);
+      cursor: pointer;
+    }
+
+    /* Method selector */
+    .method-selector {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .method-btn {
+      flex: 1;
+      padding: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .method-btn.active {
+      background: var(--label);
+      color: var(--surface);
+      border-color: var(--accent-s);
+    }
+
+    .method-btn:hover:not(.active) {
+      border-color: var(--muted);
+      color: var(--text);
+    }
+
+    /* R0 indicator */
+    .r0-indicator {
+      margin-top: 20px;
+      padding: 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      text-align: center;
+    }
+
+    .r0-indicator .label {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'Space Mono', monospace;
+    }
+
+    .r0-indicator .value {
+      font-family: 'Space Mono', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 4px 0 2px;
+      transition: color 0.3s;
+    }
+
+    .r0-indicator .verdict {
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    .r0-epidemic { color: var(--accent-i); }
+    .r0-control  { color: var(--accent-r); }
+
+    /* Chart area */
+    .chart-container {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 24px;
+    }
+
+    .chart-container canvas {
+      width: 100% !important;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 500px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 14px 16px;
+      text-align: center;
+    }
+
+    .stat-card .sc-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+
+    .stat-card .sc-val {
+      font-family: 'Space Mono', monospace;
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .sc-s .sc-val { color: var(--accent-s); }
+    .sc-e .sc-val { color: var(--accent-e); }
+    .sc-i .sc-val { color: var(--accent-i); }
+    .sc-r .sc-val { color: var(--accent-r); }
+
+    /* ODE equations */
+    .equations  {
+      margin-top: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px 24px;
+    }
+
+    .equations h2 {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    
+    .eq-line {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      color: #8bb8d4;
+      line-height: 2;
+    }
+
+    .eq-line span { color: var(--text); }
+
+    /* ODE equations */
+    .source  {
+      margin-top: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px 24px;
+    }
+
+    .source h2 {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .sourcetxt {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      
+      line-height: 2;
+   color: var(--text); }
+
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="tag">Epidemiological Simulation</div>
+    <h1>SEIR Epidemic Model</h1>
+    <p>Susceptible · Exposed · Infectious · Recovered</p>
+  </header>
+
+  <!-- Flow diagram -->
+  <div class="flow-diagram">
+    <div class="compartment-box s">
+      <div class="letter">S</div>
+      <div class="name">Susceptible</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="compartment-box e">
+      <div class="letter">E</div>
+      <div class="name">Exposed</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="compartment-box i">
+      <div class="letter">I</div>
+      <div class="name">Infectious</div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="compartment-box r">
+      <div class="letter">R</div>
+      <div class="name">Recovered</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+
+    <!-- Left: controls -->
+    <div>
+      <div class="panel">
+        <h2>Parameters</h2>
+
+        <!-- Beta -->
+        <div class="param-group">
+          <div class="param-label">
+            <span class="sym">β</span>
+            <span class="meaning">Transmission rate</span>
+            <span class="val" id="val-beta">0.080 /day</span>
+          </div>
+          <input type="range" id="slider-beta" min="0.01" max="0.5" step="0.001" value="0.08">
+        </div>
+
+        <!-- Sigma -->
+        <div class="param-group">
+          <div class="param-label">
+            <span class="sym">σ</span>
+            <span class="meaning">Progression rate</span>
+            <span class="val" id="val-sigma">1/18 /day</span>
+          </div>
+          <input type="range" id="slider-sigma" min="0.01" max="1" step="0.001" value="0.0556">
+        </div>
+
+        <!-- Gamma -->
+        <div class="param-group">
+          <div class="param-label">
+            <span class="sym">γ</span>
+            <span class="meaning">Recovery rate</span>
+            <span class="val" id="val-gamma">1/12 /day</span>
+          </div>
+          <input type="range" id="slider-gamma" min="0.01" max="1" step="0.001" value="0.0833">
+        </div>
+
+        <!-- Horizon -->
+        <div class="param-group">
+          <div class="param-label">
+            <span class="sym">T</span>
+            <span class="meaning">Horizon</span>
+            <span class="val" id="val-horizon">365 days</span>
+          </div>
+          <input type="range" id="slider-horizon" min="30" max="730" step="1" value="365">
+        </div>
+
+        <!-- I0 -->
+        <div class="param-group">
+          <div class="param-label">
+            <span class="sym">I₀</span>
+            <span class="meaning">Initial infectious</span>
+            <span class="val" id="val-i0">1</span>
+          </div>
+          <input type="range" id="slider-i0" min="1" max="1000" step="1" value="1">
+        </div>
+
+        <!-- E0 -->
+        <div class="param-group">
+          <div class="param-label">
+            <span class="sym">E₀</span>
+            <span class="meaning">Initial exposed</span>
+            <span class="val" id="val-e0">10</span>
+          </div>
+          <input type="range" id="slider-e0" min="0" max="1000" step="1" value="10">
+        </div>
+
+        <h2 style="margin-top:24px;">Integrator</h2>
+        <div class="method-selector">
+          <button class="method-btn" id="btn-euler" onclick="setMethod('euler')">Euler</button>
+          <button class="method-btn active" id="btn-rk4" onclick="setMethod('rk4')">RK4</button>
+        </div>
+
+        <!-- R0 -->
+        <div class="r0-indicator">
+          <div class="label">R₀ = β / γ</div>
+          <div class="value" id="r0-value">0.96</div>
+          <div class="verdict" id="r0-verdict">Outbreak self-limits</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: chart -->
+    <div>
+      <div class="chart-container">
+        <canvas id="seirChart" height="320"></canvas>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card sc-s">
+          <div class="sc-label">PEAK S</div>
+          <div class="sc-val" id="stat-s">—</div>
+        </div>
+        <div class="stat-card sc-e">
+          <div class="sc-label">PEAK E</div>
+          <div class="sc-val" id="stat-e">—</div>
+        </div>
+        <div class="stat-card sc-i">
+          <div class="sc-label">PEAK I</div>
+          <div class="sc-val" id="stat-i">—</div>
+        </div>
+        <div class="stat-card sc-r">
+          <div class="sc-label">FINAL R</div>
+          <div class="sc-val" id="stat-r">—</div>
+        </div>
+      </div>
+
+      <!-- ODE display -->
+      <div class="equations">
+        <h2>Governing ODEs</h2>
+        <div class="eq-line">dS/dt = <span>-β · S · I / N</span></div>
+        <div class="eq-line">dE/dt = <span> β · S · I / N  −  σ · E</span></div>
+        <div class="eq-line">dI/dt = <span> σ · E          −  γ · I</span></div>
+        <div class="eq-line">dR/dt = <span> γ · I</span></div>
+      </div>
+    <div class="source">
+      <h2>Source parameters/ODEs</h2>
+      <p class="sourcetxt"><a href="https://github.com/trevortomesh/hantavirus-model" target="_blank">
+      https://github.com/trevortomesh/hantavirus-model</a></p>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const N = 157_000_000;
+  const dt = 0.1;
+
+  let method = 'rk4';
+  let params = { beta: 0.08, sigma: 1/18, gamma: 1/12, horizon: 365, I0: 1, E0: 10 };
+
+  function setMethod(m) {
+    method = m;
+    document.getElementById('btn-euler').classList.toggle('active', m === 'euler');
+    document.getElementById('btn-rk4').classList.toggle('active', m === 'rk4');
+    run();
+  }
+
+  function derivatives(S, E, I, R) {
+    const dS = -params.beta * S * I / N;
+    const dE =  params.beta * S * I / N - params.sigma * E;
+    const dI =  params.sigma * E - params.gamma * I;
+    const dR =  params.gamma * I;
+    return [dS, dE, dI, dR];
+  }
+
+  function simulate() {
+    const steps = Math.round(params.horizon / dt);
+    let S = N - params.I0 - params.E0;
+    let E = params.E0;
+    let I = params.I0;
+    let R = 0;
+
+    const ds = [], de = [], di = [], dr = [], ts = [];
+    const skip = Math.max(1, Math.floor(steps / 500)); // downsample for chart
+
+    for (let step = 0; step <= steps; step++) {
+      if (step % skip === 0) {
+        ds.push(S);
+        de.push(E);
+        di.push(I);
+        dr.push(R);
+        ts.push(+(step * dt).toFixed(1));
+      }
+
+      if (method === 'euler') {
+        const [dS, dE, dI, dR] = derivatives(S, E, I, R);
+        S += dS * dt;
+        E += dE * dt;
+        I += dI * dt;
+        R += dR * dt;
+      } else {
+        // RK4
+        const [k1S, k1E, k1I, k1R] = derivatives(S, E, I, R);
+        const [k2S, k2E, k2I, k2R] = derivatives(S + 0.5*dt*k1S, E + 0.5*dt*k1E, I + 0.5*dt*k1I, R + 0.5*dt*k1R);
+        const [k3S, k3E, k3I, k3R] = derivatives(S + 0.5*dt*k2S, E + 0.5*dt*k2E, I + 0.5*dt*k2I, R + 0.5*dt*k2R);
+        const [k4S, k4E, k4I, k4R] = derivatives(S + dt*k3S, E + dt*k3E, I + dt*k3I, R + dt*k3R);
+        S += dt/6 * (k1S + 2*k2S + 2*k3S + k4S);
+        E += dt/6 * (k1E + 2*k2E + 2*k3E + k4E);
+        I += dt/6 * (k1I + 2*k2I + 2*k3I + k4I);
+        R += dt/6 * (k1R + 2*k2R + 2*k3R + k4R);
+      }
+    }
+    return { ts, ds, de, di, dr };
+  }
+
+  function fmt(v) {
+    if (v >= 1e6) return (v/1e6).toFixed(2) + 'M';
+    if (v >= 1e3) return (v/1e3).toFixed(1) + 'K';
+    return Math.round(v).toString();
+  }
+
+  let chart;
+
+  function buildChart(data) {
+    const ctx = document.getElementById('seirChart').getContext('2d');
+    // Preserve hidden state across rebuilds; S hidden by default
+    const hidden = chart
+      ? chart.data.datasets.map((_, i) => !chart.isDatasetVisible(i))
+      : [true, false, false, false];
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: data.ts,
+        datasets: [
+          { label: 'S – Susceptible', data: data.ds, borderColor: '#4fc3f7', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, hidden: hidden[0] },
+          { label: 'E – Exposed',     data: data.de, borderColor: '#ffb74d', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, hidden: hidden[1] },
+          { label: 'I – Infectious',  data: data.di, borderColor: '#ef5350', borderWidth: 2.5, pointRadius: 0, tension: 0.3, fill: false, hidden: hidden[2] },
+          { label: 'R – Recovered',   data: data.dr, borderColor: '#66bb6a', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, hidden: hidden[3] },
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            labels: { color: '#8bb8d4', font: { family: 'Space Mono', size: 11 }, boxWidth: 16 }
+          },
+          tooltip: {
+            backgroundColor: '#17202b',
+            borderColor: '#1e2d3d',
+            borderWidth: 1,
+            titleColor: '#d0e4f0',
+            bodyColor: '#8bb8d4',
+            titleFont: { family: 'Space Mono', size: 11 },
+            bodyFont: { family: 'Space Mono', size: 11 },
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label.split(' ')[0]}: ${fmt(ctx.parsed.y)}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#3a5570', font: { family: 'Space Mono', size: 10 }, maxTicksLimit: 10 },
+            grid: { color: 'rgba(30,45,61,0.6)' },
+            title: { display: true, text: 'Day', color: '#3a5570', font: { family: 'Space Mono', size: 11 } }
+          },
+          y: {
+            ticks: { color: '#3a5570', font: { family: 'Space Mono', size: 10 }, callback: v => fmt(v) },
+            grid: { color: 'rgba(30,45,61,0.6)' },
+            title: { display: true, text: 'Population', color: '#3a5570', font: { family: 'Space Mono', size: 11 } }
+          }
+        }
+      }
+    });
+  }
+
+  function updateStats(data) {
+    const peakS = Math.max(...data.ds);
+    const peakE = Math.max(...data.de);
+    const peakI = Math.max(...data.di);
+    const finalR = data.dr[data.dr.length - 1];
+    document.getElementById('stat-s').textContent = fmt(peakS);
+    document.getElementById('stat-e').textContent = fmt(peakE);
+    document.getElementById('stat-i').textContent = fmt(peakI);
+    document.getElementById('stat-r').textContent = fmt(finalR);
+  }
+
+  function updateR0() {
+    const R0 = params.beta / params.gamma;
+    const el = document.getElementById('r0-value');
+    const verd = document.getElementById('r0-verdict');
+    el.textContent = R0.toFixed(2);
+    if (R0 > 1) {
+      el.className = 'value r0-epidemic';
+      verd.textContent = 'Epidemic growth';
+    } else {
+      el.className = 'value r0-control';
+      verd.textContent = 'Outbreak self-limits';
+    }
+  }
+
+  function run() {
+    updateR0();
+    const data = simulate();
+    buildChart(data);
+    updateStats(data);
+  }
+
+  // Slider wiring
+  function wire(id, key, display, formatFn) {
+    document.getElementById(id).addEventListener('input', function() {
+      params[key] = +this.value;
+      document.getElementById(display).textContent = formatFn(+this.value);
+      run();
+    });
+  }
+
+  wire('slider-beta',   'beta',    'val-beta',    v => v.toFixed(3) + ' /day');
+  wire('slider-gamma',  'gamma',   'val-gamma',   v => {
+    const days = Math.round(1/v);
+    return `1/${days} /day`;
+  });
+  wire('slider-sigma',  'sigma',   'val-sigma',   v => {
+    const days = Math.round(1/v);
+    return `1/${days} /day`;
+  });
+  wire('slider-horizon','horizon', 'val-horizon', v => v + ' days');
+  wire('slider-i0',     'I0',      'val-i0',      v => Math.round(v).toString());
+  wire('slider-e0',     'E0',      'val-e0',      v => Math.round(v).toString());
+
+  // Initial run
+  run();
+</script>
+</body>
+</html>

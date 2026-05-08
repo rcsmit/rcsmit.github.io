@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ColorCode</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --surface: #fdd700;
+      --panel: #faf5af;
+      --choice: #f7eb4d;
+      --border: #2a2a35;
+      --text: #000070;
+      --muted: #5a5a72;
+      --accent: #2c1d00;
+      --correct: #50e890;
+      --wrong: #e85050;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 40px;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    h1 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2.4rem, 8vw, 4rem);
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      text-shadow: 0 0 30px rgba(240,192,96,0.4);
+      margin-bottom: 4px;
+    }
+
+    .tagline {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    /* ── Setup ── */
+    #setup {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .setup-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .num-select {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .num-btn {
+      width: 44px; height: 44px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      font-family: 'Space Mono', monospace;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .num-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .num-btn.active {
+      border-color: var(--accent);
+      background:var(--choice);
+      color: var(--accent);
+      box-shadow: 0 0 12px rgba(240,192,96,0.25);
+    }
+
+    .mode-toggle {
+      display: flex;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .mode-btn {
+      padding: 10px 24px;
+      background: var(--panel);
+      color: var(--text);
+      border: none;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .mode-btn:first-child { border-right: 1px solid var(--border); }
+    .mode-btn .mi { font-size: 1.2rem; }
+    .mode-btn.active {
+      background: var(--choice);
+      color: var(--text);
+    }
+
+    .start-btn {
+      padding: 14px 48px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.15em;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: 0 0 20px rgba(240,192,96,0.3);
+    }
+    .start-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 28px rgba(240,192,96,0.5); }
+
+    /* ── Game ── */
+    #game { display: none; width: 100%; max-width: 560px; flex-direction: column; align-items: center; gap: 16px; }
+
+    .game-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .stat { font-size: 0.95rem; letter-spacing: 0.15em; color: var(--text); }
+    .stat span { color: var(--accent); font-size: 1rem; display: block; }
+
+    .restart-btn {
+      padding: 6px 14px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .restart-btn:hover { color: var(--wrong); border-color: var(--wrong); }
+
+    .solve-btn {
+      padding: 6px 14px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .solve-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+    /* Solution reveal banner */
+    #solution-reveal {
+      display: none;
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(240,192,96,0.08);
+      border: 1px solid rgba(240,192,96,0.3);
+      border-radius: 8px;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    #solution-reveal .sol-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    #solution-reveal .sol-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    #solution-reveal .sol-chip {
+      width: 36px; height: 36px;
+      border-radius: 6px;
+      border: 2px solid rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+    body.emoji-mode #solution-reveal .sol-chip { background: #f5f5f5 !important; border-color: rgba(0,0,0,0.1); }
+
+    .section-label {
+      font-size: 0.62rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+      align-self: flex-start;
+    }
+
+    #palette {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 14px 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 100%;
+    }
+
+    /* ── Chips ── */
+    .chip {
+      width: 52px; height: 52px;
+      border-radius: 8px;
+      cursor: grab;
+      border: 2px solid rgba(255,255,255,0.14);
+      transition: transform 0.12s, box-shadow 0.12s, opacity 0.15s;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+      user-select: none;
+      position: relative;
+    }
+    .chip:active { cursor: grabbing; }
+    .chip:hover { transform: scale(1.1); box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+    .chip.dragging { opacity: 0.3; transform: scale(0.95); }
+
+    /* emoji mode overrides */
+    body.emoji-mode .chip {
+      background: #f5f5f5 !important;
+      border-color: rgba(0,0,0,0.1);
+    }
+
+    /* ── Slots ── */
+    #answer-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 14px 16px;
+      background: var(--panel);
+      border: 2px solid var(--accent);
+      border-radius: 8px;
+      width: 100%;
+      box-shadow: 0 0 16px rgba(240,192,96,0.1);
+    }
+
+    .slot {
+      width: 52px; height: 52px;
+      border-radius: 8px;
+      border: 2px dashed var(--border);
+      background: rgba(255,255,255,0.03);
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+      user-select: none;
+    }
+    .slot.drag-over {
+      border-color: var(--accent);
+      background: rgba(240,192,96,0.08);
+      transform: scale(1.06);
+    }
+    .slot.filled { border-style: solid; border-color: rgba(255,255,255,0.2); }
+    body.emoji-mode .slot.filled {
+      background: #f5f5f5 !important;
+      border-color: rgba(0,0,0,0.12);
+    }
+
+    .slot .remove-x {
+      display: none;
+      position: absolute;
+      top: -6px; right: -6px;
+      width: 17px; height: 17px;
+      background: var(--wrong);
+      border-radius: 50%;
+      font-size: 10px;
+      color: white;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+    }
+    .slot.filled:hover .remove-x { display: flex; }
+
+    .check-btn {
+      padding: 12px 40px;
+      background: transparent;
+      color: var(--accent);
+      border: 2px solid var(--accent);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.3rem;
+      letter-spacing: 0.15em;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .check-btn:hover:not(:disabled) {
+      background: rgba(240,192,96,0.12);
+      box-shadow: 0 0 20px rgba(240,192,96,0.3);
+    }
+    .check-btn:disabled { opacity: 0.3; cursor: default; }
+
+    /* ── History ── */
+    #history { width: 100%; display: flex; flex-direction: column; gap: 6px; }
+
+    .history-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      animation: slideIn 0.2s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .history-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .h-chip {
+      width: 30px; height: 30px;
+      border-radius: 5px;
+      border: 1.5px solid rgba(255,255,255,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    body.emoji-mode .h-chip {
+      background: #f5f5f5 !important;
+      border-color: rgba(0,0,0,0.1);
+    }
+
+    .history-score {
+      margin-left: auto;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+    .score-correct { color: var(--correct); }
+    .score-wrong   { color: var(--wrong); }
+
+    /* ── Win ── */
+    #win-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      text-align: center;
+    }
+    .win-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(2rem, 10vw, 3.5rem);
+      color: var(--correct);
+      text-shadow: 0 0 30px rgba(80,232,144,0.5);
+      letter-spacing: 0.1em;
+    }
+    .win-sub { color: var(--muted); font-size: 0.75rem; letter-spacing: 0.15em; }
+    .win-solution {
+      display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .win-chip {
+      width: 52px; height: 52px;
+      border-radius: 8px;
+      border: 2px solid rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+    }
+    body.emoji-mode .win-chip { background: #f5f5f5 !important; border-color: rgba(0,0,0,0.1); }
+
+    .play-again-btn {
+      padding: 14px 48px;
+      background: var(--correct);
+      color: #0d0d0f;
+      border: none;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.4rem;
+      letter-spacing: 0.15em;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      box-shadow: 0 0 20px rgba(80,232,144,0.3);
+    }
+    .play-again-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 28px rgba(80,232,144,0.5); }
+
+    /* ── Ghost ── */
+    #drag-ghost {
+      position: fixed;
+      pointer-events: none;
+      z-index: 10000;
+      width: 52px; height: 52px;
+      border-radius: 8px;
+      opacity: 0.88;
+      transform: translate(-50%, -50%) scale(1.15);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+    }
+
+    @media (max-width: 400px) {
+      .chip, .slot, .win-chip { width: 42px; height: 42px; font-size: 1.4rem; }
+      .h-chip { width: 26px; height: 26px; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body class="color-mode">
+
+<h1>ColorGuess</h1>
+<p class="tagline">Crack the sequence</p>
+
+<!-- Setup -->
+<div id="setup">
+  <div>
+    <div class="setup-label">How many?</div>
+    <div class="num-select" id="num-select"></div>
+  </div>
+  <div>
+    <div class="setup-label">Mode</div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-emoji" onclick="setMode('emoji')">
+        <span class="mi">😀</span> Emoji
+      </button>
+       <button class="mode-btn" id="btn-color" onclick="setMode('color')">
+        <span class="mi">🎨</span> Colors
+      </button>
+     
+    </div>
+  </div>
+  <button class="start-btn" id="start-btn">Start Game</button>
+</div>
+
+<!-- Game -->
+<div id="game">
+  <div class="game-header">
+    <div class="stat">ATTEMPT<span id="try-count">0</span></div>
+    <div class="stat">COUNT<span id="color-count">-</span></div>
+    <button class="solve-btn" id="solve-btn">💡 Solution</button>
+    <button class="restart-btn" id="restart-btn">↩ Restart</button>
+  </div>
+  <div id="solution-reveal">
+    <span class="sol-label">Solution</span>
+    <div class="sol-chips" id="sol-chips"></div>
+  </div>
+  <div class="section-label">Available — drag to slots</div>
+  <div id="palette"></div>
+  <div class="section-label">Your Guess — drop here</div>
+  <div id="answer-row"></div>
+  <button class="check-btn" id="check-btn" disabled>Check Guess</button>
+  <div id="history"></div>
+</div>
+
+<!-- Win -->
+<div id="win-screen">
+  <div class="win-title">Cracked It!</div>
+  <div class="win-sub" id="win-sub"></div>
+  <div class="win-solution" id="win-solution"></div>
+  <button class="play-again-btn" id="play-again-btn">Play Again</button>
+</div>
+
+<div id="drag-ghost"></div>
+
+<script>
+  // ── Data: 8 items, each has a color AND an emoji ──────────────────────────
+  const ITEMS = [
+    { hex: '#e84040', emoji: '🍎' },
+    { hex: '#f0a020', emoji: '🍊' },
+    { hex: '#f0e020', emoji: '⭐' },
+    { hex: '#60d040', emoji: '🐸' },
+    { hex: '#20c8e8', emoji: '🐬' },
+    { hex: '#9060e8', emoji: '🦄' },
+    { hex: '#e860a0', emoji: '🌸' },
+    { hex: '#40d8a0', emoji: '🌿' },
+  ];
+
+  let numColors    = 4;
+  let gameMode     = 'color';   // 'color' | 'emoji'
+  let secret       = [];        // array of ITEMS indices
+  let tries        = 0;
+  let currentGuess = [];        // array of ITEMS index or null
+  let dragItem     = null;      // { id, fromSlot }
+
+  // ── Setup ─────────────────────────────────────────────────────────────────
+  const numSelect = document.getElementById('num-select');
+  for (let i = 1; i <= 8; i++) {
+    const b = document.createElement('button');
+    b.className = 'num-btn' + (i === 4 ? ' active' : '');
+    b.textContent = i;
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.num-btn').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      numColors = i;
+    });
+    numSelect.appendChild(b);
+  }
+
+  function setMode(mode) {
+    gameMode = mode;
+    document.getElementById('btn-color').classList.toggle('active', mode === 'color');
+    document.getElementById('btn-emoji').classList.toggle('active', mode === 'emoji');
+    document.body.className = mode + '-mode';
+  }
+
+  document.getElementById('start-btn').addEventListener('click', startGame);
+  document.getElementById('check-btn').addEventListener('click', checkGuess);
+  document.getElementById('solve-btn').addEventListener('click', giveSolution);
+  document.getElementById('restart-btn').addEventListener('click', () => {
+    document.getElementById('game').style.display = 'none';
+    document.getElementById('setup').style.display = 'flex';
+  });
+  document.getElementById('play-again-btn').addEventListener('click', () => {
+    document.getElementById('win-screen').style.display = 'none';
+    document.getElementById('setup').style.display = 'flex';
+  });
+
+  // ── Game logic ────────────────────────────────────────────────────────────
+  function startGame() {
+    const indices = [...Array(ITEMS.length).keys()].sort(() => Math.random() - 0.5);
+    secret       = indices.slice(0, numColors);
+    tries        = 0;
+    currentGuess = new Array(numColors).fill(null);
+
+    document.getElementById('setup').style.display = 'none';
+    document.getElementById('win-screen').style.display = 'none';
+    document.getElementById('solution-reveal').style.display = 'none';
+    document.getElementById('game').style.display = 'flex';
+    document.getElementById('try-count').textContent = tries;
+    document.getElementById('color-count').textContent = numColors;
+    document.getElementById('history').innerHTML = '';
+
+    buildPalette();
+    buildAnswerRow();
+    updateCheckBtn();
+  }
+
+  function chipStyle(el, id) {
+    const item = ITEMS[id];
+    if (gameMode === 'color') {
+      el.style.background = item.hex;
+      el.textContent = '';
+    } else {
+      el.style.background = '#f5f5f5';
+      el.textContent = item.emoji;
+    }
+  }
+
+  function buildPalette() {
+    const pal = document.getElementById('palette');
+    pal.innerHTML = '';
+    [...secret].sort(() => Math.random() - 0.5).forEach(id => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.dataset.id = id;
+      chip.draggable = true;
+      chipStyle(chip, id);
+      addDragListeners(chip, id, null);
+      pal.appendChild(chip);
+    });
+
+    // Palette accepts drops: return a chip from a slot back to palette
+    pal.addEventListener('dragover',  e => { e.preventDefault(); pal.style.borderColor = 'rgba(240,192,96,0.5)'; });
+    pal.addEventListener('dragleave', () => { pal.style.borderColor = ''; });
+    pal.addEventListener('drop', e => {
+      e.preventDefault();
+      pal.style.borderColor = '';
+      if (dragItem === null || dragItem.fromSlot === null) return; // only from slots
+      currentGuess[dragItem.fromSlot] = null;
+      refreshSlot(dragItem.fromSlot);
+      updateCheckBtn();
+      refreshPaletteUsed();
+    });
+
+    refreshPaletteUsed();
+  }
+
+  function giveSolution() {
+    const rev = document.getElementById('solution-reveal');
+    const chips = document.getElementById('sol-chips');
+    chips.innerHTML = '';
+    secret.forEach(id => {
+      const c = document.createElement('div');
+      c.className = 'sol-chip';
+      chipStyle(c, id);
+      chips.appendChild(c);
+    });
+    rev.style.display = 'flex';
+  }
+
+  function refreshPaletteUsed() {
+    const used = new Set(currentGuess.filter(x => x !== null));
+    document.querySelectorAll('#palette .chip').forEach(chip => {
+      const taken = used.has(parseInt(chip.dataset.id));
+      chip.style.opacity       = taken ? '0.22' : '1';
+      chip.style.pointerEvents = taken ? 'none' : 'auto';
+      chip.draggable           = !taken;
+    });
+  }
+
+  function buildAnswerRow() {
+    const row = document.getElementById('answer-row');
+    row.innerHTML = '';
+    for (let i = 0; i < numColors; i++) row.appendChild(createSlot(i));
+  }
+
+  function createSlot(index) {
+    const slot = document.createElement('div');
+    const id   = currentGuess[index];
+    slot.className = 'slot' + (id !== null ? ' filled' : '');
+    slot.dataset.index = index;
+
+    if (id !== null) {
+      chipStyle(slot, id);
+      slot.draggable = true;
+      slot.addEventListener('dragstart', e => {
+        dragItem = { id, fromSlot: index };
+        slot.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.stopPropagation();
+      });
+      slot.addEventListener('dragend', () => {
+        slot.classList.remove('dragging');
+        dragItem = null;
+      });
+      const x = document.createElement('div');
+      x.className = 'remove-x';
+      x.textContent = '×';
+      x.addEventListener('click', e => {
+        e.stopPropagation();
+        currentGuess[index] = null;
+        refreshSlot(index);
+        updateCheckBtn();
+        refreshPaletteUsed();
+      });
+      slot.appendChild(x);
+    }
+
+    slot.addEventListener('dragover',  e => { e.preventDefault(); slot.classList.add('drag-over'); });
+    slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
+    slot.addEventListener('drop', e => {
+      e.preventDefault();
+      slot.classList.remove('drag-over');
+      if (dragItem === null) return;
+
+      if (dragItem.fromSlot !== null) {
+        // Slot-to-slot: swap the two values
+        const src = dragItem.fromSlot;
+        if (src === index) return; // dropped on itself
+        const tmp = currentGuess[index];
+        currentGuess[index] = dragItem.id;
+        currentGuess[src]   = tmp;
+        refreshSlot(src);
+        refreshSlot(index);
+      } else {
+        // From palette: block if already used elsewhere
+        const alreadyAt = currentGuess.indexOf(dragItem.id);
+        if (alreadyAt !== -1 && alreadyAt !== index) return;
+        currentGuess[index] = dragItem.id;
+        refreshSlot(index);
+      }
+      updateCheckBtn();
+      refreshPaletteUsed();
+    });
+
+    return slot;
+  }
+
+  function refreshSlot(index) {
+    const row   = document.getElementById('answer-row');
+    const slots = row.querySelectorAll('.slot');
+    row.replaceChild(createSlot(index), slots[index]);
+  }
+
+  function addDragListeners(el, id, fromSlot) {
+    el.addEventListener('dragstart', e => {
+      dragItem = { id, fromSlot };
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'copy';
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      dragItem = null;
+    });
+  }
+
+  function updateCheckBtn() {
+    document.getElementById('check-btn').disabled =
+      currentGuess.filter(x => x !== null).length < numColors;
+  }
+
+  function checkGuess() {
+    tries++;
+    document.getElementById('try-count').textContent = tries;
+
+    let correct = 0;
+    for (let i = 0; i < numColors; i++) {
+      if (currentGuess[i] === secret[i]) correct++;
+    }
+
+    addHistoryRow([...currentGuess], correct);
+
+    if (correct === numColors) {
+      showWin();
+    } else {
+      // Keep the guess in place — player adjusts and tries again
+      refreshPaletteUsed();
+    }
+  }
+
+  function addHistoryRow(guess, correct) {
+    const history = document.getElementById('history');
+    const row     = document.createElement('div');
+    row.className = 'history-row';
+
+    const chips = document.createElement('div');
+    chips.className = 'history-chips';
+    guess.forEach(id => {
+      const c = document.createElement('div');
+      c.className = 'h-chip';
+      if (id !== null) chipStyle(c, id);
+      else c.style.background = '#333';
+      chips.appendChild(c);
+    });
+
+    const score = document.createElement('div');
+    score.className = 'history-score';
+    score.innerHTML = `<span class="score-correct">✓ ${correct}</span> <span class="score-wrong">✗ ${numColors - correct}</span>`;
+
+    row.appendChild(chips);
+    row.appendChild(score);
+    history.prepend(row);
+  }
+
+  function showWin() {
+    document.getElementById('game').style.display = 'none';
+    const win = document.getElementById('win-screen');
+    win.style.display = 'flex';
+    document.getElementById('win-sub').textContent =
+      `Solved in ${tries} ${tries === 1 ? 'attempt' : 'attempts'} · ${numColors} items`;
+
+    const sol = document.getElementById('win-solution');
+    sol.innerHTML = '';
+    secret.forEach(id => {
+      const c = document.createElement('div');
+      c.className = 'win-chip';
+      chipStyle(c, id);
+      sol.appendChild(c);
+    });
+  }
+
+  // ── Touch drag ────────────────────────────────────────────────────────────
+  const ghost     = document.getElementById('drag-ghost');
+  let touchId     = null;
+  let touchFrom   = null;
+
+  document.addEventListener('touchstart', e => {
+    const chip = e.target.closest('.chip');
+    if (chip && chip.style.pointerEvents !== 'none') {
+      touchId   = parseInt(chip.dataset.id);
+      touchFrom = null;
+      styleGhost(touchId);
+      movGhost(e.touches[0]);
+      e.preventDefault();
+      return;
+    }
+    const slot = e.target.closest('.slot.filled');
+    if (slot && !e.target.closest('.remove-x')) {
+      const idx = parseInt(slot.dataset.index);
+      touchId   = currentGuess[idx];
+      touchFrom = idx;
+      styleGhost(touchId);
+      movGhost(e.touches[0]);
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchmove', e => {
+    if (touchId !== null) { movGhost(e.touches[0]); e.preventDefault(); }
+  }, { passive: false });
+
+  document.addEventListener('touchend', e => {
+    if (touchId === null) return;
+    ghost.style.display = 'none';
+    const touch = e.changedTouches[0];
+    const el    = document.elementFromPoint(touch.clientX, touch.clientY);
+    const slot  = el && el.closest('.slot');
+    const pal   = el && el.closest('#palette');
+
+    if (slot) {
+      const idx = parseInt(slot.dataset.index);
+      if (touchFrom !== null) {
+        // Slot-to-slot swap
+        if (idx !== touchFrom) {
+          const tmp = currentGuess[idx];
+          currentGuess[idx]      = touchId;
+          currentGuess[touchFrom] = tmp;
+          refreshSlot(touchFrom);
+          refreshSlot(idx);
+          updateCheckBtn();
+          refreshPaletteUsed();
+        }
+      } else {
+        // From palette — block duplicate
+        const alreadyAt = currentGuess.indexOf(touchId);
+        if (alreadyAt !== -1 && alreadyAt !== idx) { touchId = null; touchFrom = null; return; }
+        currentGuess[idx] = touchId;
+        refreshSlot(idx);
+        updateCheckBtn();
+        refreshPaletteUsed();
+      }
+    } else if (pal && touchFrom !== null) {
+      // Return to palette
+      currentGuess[touchFrom] = null;
+      refreshSlot(touchFrom);
+      updateCheckBtn();
+      refreshPaletteUsed();
+    }
+    touchId = null;
+    touchFrom = null;
+  });
+
+  function styleGhost(id) {
+    const item = ITEMS[id];
+    if (gameMode === 'color') {
+      ghost.style.background = item.hex;
+      ghost.textContent = '';
+    } else {
+      ghost.style.background = '#f5f5f5';
+      ghost.textContent = item.emoji;
+    }
+    ghost.style.display = 'flex';
+  }
+
+  function movGhost(t) {
+    ghost.style.left = t.clientX + 'px';
+    ghost.style.top  = t.clientY + 'px';
+  }
+</script>
+</body>
+</html>

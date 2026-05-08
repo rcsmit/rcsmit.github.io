@@ -234,11 +234,37 @@ function buildDealsFilter() {
 
 /* ── Process raw CSV rows ────────────────────────────────── */
 
+/* ── Date shifting ───────────────────────────────────────── */
+
+/**
+ * The CSV dates were authored relative to 2026-05-05.
+ * Calculate how many days have passed since then and shift
+ * every event's start/end date forward by that amount —
+ * so events are always in the future, no matter when viewed.
+ */
+const DATE_BASE         = new Date(2026, 4, 5); // 5 May 2026 (month is 0-indexed)
+const DATE_OFFSET_DAYS  = Math.round((new Date() - DATE_BASE) / 86400000);
+
+function shiftDateStr(str) {
+  if (!str || !str.trim()) return str;
+  const d = parseDate(str);
+  if (!d) return str;
+  d.setDate(d.getDate() + DATE_OFFSET_DAYS);
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dy = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dy}`;
+}
+
 function processData(data) {
   // Debug: log all column keys from the first row so you can verify COL_INSIDER_DEALS matches.
-  if (data.length) console.log('[AcroMap] Column keys:', Object.keys(data[0]));
+  if (data.length) console.log('[KaraokeEvents] Column keys:', Object.keys(data[0]));
+  if (data.length) console.log(`[KaraokeEvents] Shifting dates by ${Math.round(DATE_OFFSET_DAYS)} days`);
   const lSet = new Set();
   data.forEach(row => {
+    // Shift start and end dates forward so events stay in the future.
+    row[CONFIG.COL_START] = shiftDateStr(row[CONFIG.COL_START]);
+    row[CONFIG.COL_END]   = shiftDateStr(row[CONFIG.COL_END]);
     row._layer = (row[CONFIG.COL_LAYER] || 'Other').trim() || 'Other';
     row._lat   = parseFloat((row[CONFIG.COL_LAT] || '').replace(',', '.'));
     row._lon   = parseFloat((row[CONFIG.COL_LON] || '').replace(',', '.'));
