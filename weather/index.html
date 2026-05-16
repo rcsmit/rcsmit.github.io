@@ -109,16 +109,10 @@
       box-shadow: 2px 0 16px rgba(0,0,0,.12);
     }
     #sidebar.collapsed {
-      width: 0;
-      min-width: 0;
-      padding: 0;
-      border-right: none;
-      box-shadow: none;
+      width: var(--toggle-w);
+      min-width: var(--toggle-w);
+      padding: 20px 0;
     }
-    #sidebar.collapsed #sidebar-toggle {
-      display: none;
-    }
-    /* Show hamburger in tab-bar only on mobile when sidebar is closed */
     #mobile-open-btn {
       display: flex !important;
     }
@@ -577,7 +571,6 @@
 <!-- ═══════════════════ MAIN ═══════════════════ -->
 <div id="main">
   <div id="tab-bar">
-    <button id="mobile-open-btn" title="Open sidebar">☰</button>
     <button class="tab-btn active" data-tab="weatherspark">At a glance</button>
     <button class="tab-btn" data-tab="data">Data</button>
     <button class="tab-btn" data-tab="month">Specific Month</button>
@@ -1653,12 +1646,10 @@ function feelsLike(row) {
 //  SIDEBAR TOGGLE
 // ════════════════════════════════════════════════════════════════
 (function () {
-  const sidebar   = document.getElementById('sidebar');
-  const toggle    = document.getElementById('sidebar-toggle');
-  const mobileBtn = document.getElementById('mobile-open-btn');
-  const overlay   = document.getElementById('sidebar-overlay');
-  const main      = document.getElementById('main');
-  const isMobile  = () => window.innerWidth <= 640;
+  const sidebar = document.getElementById('sidebar');
+  const toggle  = document.getElementById('sidebar-toggle');
+  const overlay = document.getElementById('sidebar-overlay');
+  const main    = document.getElementById('main');
 
   function collapse() {
     sidebar.classList.add('collapsed');
@@ -1675,27 +1666,24 @@ function feelsLike(row) {
     document.body.classList.remove('sidebar-collapsed');
     toggle.innerHTML = '&#x25C4;';
     toggle.title = 'Collapse sidebar';
-    if (isMobile()) overlay.classList.remove('hidden');
+    if (window.innerWidth <= 640) overlay.classList.remove('hidden');
   }
 
-  toggle.addEventListener('click', () => {
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
     sidebar.classList.contains('collapsed') ? expand() : collapse();
   });
 
-  mobileBtn.addEventListener('click', expand);
-
-  // Close on overlay click (mobile backdrop)
   overlay.addEventListener('click', collapse);
 
-  // Close on main area click on mobile
-  main.addEventListener('click', (e) => {
-    if (isMobile() && !sidebar.classList.contains('collapsed')) {
+  main.addEventListener('click', () => {
+    if (window.innerWidth <= 640 && !sidebar.classList.contains('collapsed')) {
       collapse();
     }
   });
 
-  // Auto-collapse on mobile on first load
-  if (isMobile()) collapse();
+  // Auto-collapse on small screens on first load
+  if (window.innerWidth <= 640) collapse();
 })();
 </script>
 </body>
