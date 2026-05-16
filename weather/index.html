@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather Explorer — Open-Meteo</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+
+<!-- Plotly -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<!-- Simple Stats (linear regression, etc.) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/simple-statistics/7.8.3/simple-statistics.min.js"></script>
+
+<style>
+  /* ─── Design tokens ─── */
+  :root {
+    --bg:        #f5f6f8;
+    --surface:   #ffffff;
+    --border:    #e2e5ea;
+    --accent:    #2563eb;
+    --accent2:   #dc2626;
+    --text:      #1e2330;
+    --muted:     #6b7280;
+    --radius:    8px;
+    --sidebar-w: 270px;
+    --font-body: 'Lato', 'Segoe UI', sans-serif;
+    --font-head: 'Montserrat', 'Segoe UI', sans-serif;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Montserrat:wght@500;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ─── Sidebar ─── */
+  #sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  #sidebar h2 {
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: .04em;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent);
+    margin-bottom: 4px;
+  }
+  .ctrl-group { display: flex; flex-direction: column; gap: 4px; }
+  .ctrl-group label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+  }
+  .ctrl-group select,
+  .ctrl-group input[type=text],
+  .ctrl-group input[type=number] {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 8px;
+    font-size: .85rem;
+    background: var(--bg);
+    color: var(--text);
+    width: 100%;
+    outline: none;
+    transition: border-color .15s;
+  }
+  .ctrl-group select:focus,
+  .ctrl-group input:focus { border-color: var(--accent); }
+
+  .range-row { display: flex; gap: 6px; }
+  .range-row input { flex: 1; min-width: 0; }
+
+  #fetch-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 10px 16px;
+    font-family: var(--font-head);
+    font-size: .88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+    width: 100%;
+    margin-top: 4px;
+  }
+  #fetch-btn:hover { background: #1d4ed8; }
+  #fetch-btn:active { transform: scale(.97); }
+
+  #status {
+    font-size: .78rem;
+    color: var(--muted);
+    text-align: center;
+    min-height: 18px;
+  }
+
+  /* ─── Main content ─── */
+  #main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ─── Tabs ─── */
+  #tab-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    overflow-x: auto;
+    flex-shrink: 0;
+    padding: 0 16px;
+    gap: 2px;
+  }
+  .tab-btn {
+    padding: 13px 18px 11px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: none;
+    font-family: var(--font-head);
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    letter-spacing: .04em;
+    transition: color .15s, border-color .15s;
+  }
+  .tab-btn:hover { color: var(--accent); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ─── Tab panels ─── */
+  #content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 24px 40px;
+    position: relative;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── Cards / sections ─── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 20px 16px;
+    margin-bottom: 20px;
+  }
+  .card h3 {
+    font-family: var(--font-head);
+    font-size: .95rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+  .card h4 {
+    font-family: var(--font-head);
+    font-size: .82rem;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+
+  /* ─── Metrics row ─── */
+  .metrics-row {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    min-width: 130px;
+    flex: 1;
+  }
+  .metric .m-label { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .metric .m-value { font-family: var(--font-head); font-size: 1.6rem; font-weight: 700; color: var(--accent); margin-top: 2px; }
+
+  /* ─── Table ─── */
+  .tbl-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .8rem;
+  }
+  th {
+    background: var(--bg);
+    padding: 6px 10px;
+    text-align: right;
+    font-weight: 700;
+    font-size: .72rem;
+    letter-spacing: .04em;
+    border-bottom: 2px solid var(--border);
+    white-space: nowrap;
+  }
+  th:first-child { text-align: left; }
+  td {
+    padding: 5px 10px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+  }
+  td:first-child { text-align: left; font-weight: 600; }
+  tr:hover td { background: var(--bg); }
+
+  /* ─── Info box ─── */
+  .info-box {
+    background: #eff6ff;
+    border-left: 4px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 10px 14px;
+    font-size: .82rem;
+    color: #1e40af;
+    margin-bottom: 14px;
+  }
+  .warn-box {
+    background: #fefce8;
+    border-left: 4px solid #ca8a04;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 10px 14px;
+    font-size: .82rem;
+    color: #854d0e;
+    margin-bottom: 14px;
+  }
+
+  /* ─── Map ─── */
+  #map { height: 460px; border-radius: var(--radius); border: 1px solid var(--border); }
+
+  /* ─── Chart containers ─── */
+  .chart-wrap { width: 100%; min-height: 340px; }
+
+  /* ─── Month dashboard grid ─── */
+  .month-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  .month-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+  }
+  .month-card h4 { font-size: .8rem; color: var(--accent); margin-bottom: 8px; }
+  .month-stat { font-size: .78rem; margin: 3px 0; color: var(--muted); }
+  .month-stat span { font-weight: 700; color: var(--text); }
+
+  /* ─── Spinner ─── */
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 3px solid #dbeafe;
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── Legend table ─── */
+  .legend-tbl th { text-align: left; }
+  .legend-tbl td { text-align: left; }
+
+  /* ─── Trend badge ─── */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: .72rem;
+    font-weight: 700;
+  }
+  .badge.sig { background: #dcfce7; color: #166534; }
+  .badge.insig { background: #fee2e2; color: #991b1b; }
+  .badge.up { background: #fef3c7; color: #92400e; }
+  .badge.down { background: #ede9fe; color: #5b21b6; }
+
+  /* ─── Heatmap helper ─── */
+  .heatmap-wrap { overflow-x: auto; }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+  /* ─── Empty state ─── */
+  #empty-state {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-w);
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    background: rgba(245,246,248,0.97);
+    z-index: 10;
+    pointer-events: none;
+  }
+  #empty-state.hidden { display: none; }
+  .empty-icon {
+    font-size: 3.2rem;
+    line-height: 1;
+    animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50%      { transform: translateY(-10px); }
+  }
+  .empty-title {
+    font-family: var(--font-head);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .empty-sub {
+    font-size: .9rem;
+    color: var(--muted);
+    text-align: center;
+    max-width: 320px;
+    line-height: 1.6;
+  }
+  .empty-arrow {
+    font-size: .85rem;
+    color: var(--accent);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: pulse-arrow 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse-arrow {
+    0%,100% { opacity: 1; transform: translateX(0); }
+    50%      { opacity: .6; transform: translateX(-6px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+<aside id="sidebar">
+  <h2>⛅ Weather Explorer</h2>
+
+  <div class="ctrl-group">
+    <label>Location</label>
+    <select id="sel-location"></select>
+  </div>
+
+  <div class="ctrl-group">
+    <label>Start date</label>
+    <input type="text" id="inp-from" placeholder="yyyy-mm-dd">
+  </div>
+  <div class="ctrl-group">
+    <label>End date</label>
+    <input type="text" id="inp-until" placeholder="yyyy-mm-dd">
+  </div>
+
+  <div class="ctrl-group">
+    <label>Months (start – end)</label>
+    <div class="range-row">
+      <input type="number" id="inp-mfrom" value="1" min="1" max="12">
+      <input type="number" id="inp-mto"   value="12" min="1" max="12">
+    </div>
+  </div>
+
+  <div class="ctrl-group">
+    <label>Variable to show</label>
+    <select id="sel-var">
+      <option value="rain_sum">rain_sum</option>
+      <option value="temp_mean">temp_mean</option>
+      <option value="temp_max">temp_max</option>
+      <option value="temp_min">temp_min</option>
+      <option value="precipitation_hours">precipitation_hours</option>
+      <option value="precipitation_sum">precipitation_sum</option>
+      <option value="visibility_mean">visibility_mean</option>
+      <option value="visibility_min">visibility_min</option>
+      <option value="visibility_max">visibility_max</option>
+      <option value="rel_humidity_mean">rel_humidity_mean</option>
+      <option value="rel_humidity_max">rel_humidity_max</option>
+      <option value="rel_humidity_min">rel_humidity_min</option>
+      <option value="wind_max">wind_max</option>
+      <option value="sunshine_duration">sunshine_duration</option>
+      <option value="Feels_Like">Feels_Like</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group">
+    <label>SMA window (days)</label>
+    <input type="number" id="inp-sma" value="7" min="1" max="365">
+  </div>
+
+  <div class="ctrl-group">
+    <label>Y-axis starts at zero</label>
+    <select id="sel-yzero">
+      <option value="0">No</option>
+      <option value="1">Yes</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group">
+    <label>Threshold value</label>
+    <input type="number" id="inp-thresh" value="0.1" step="0.1">
+  </div>
+  <div class="ctrl-group">
+    <label>Threshold direction</label>
+    <select id="sel-above">
+      <option value="above">above (≥)</option>
+      <option value="equal">equal (=)</option>
+      <option value="below">below (≤)</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group">
+    <label>Month (for "Specific Month" tab)</label>
+    <select id="sel-month">
+      <option value="1">January</option><option value="2">February</option>
+      <option value="3">March</option><option value="4">April</option>
+      <option value="5">May</option><option value="6">June</option>
+      <option value="7">July</option><option value="8">August</option>
+      <option value="9">September</option><option value="10">October</option>
+      <option value="11">November</option><option value="12">December</option>
+    </select>
+  </div>
+  <div class="ctrl-group">
+    <label>Day range</label>
+    <div class="range-row">
+      <input type="number" id="inp-dmin" value="1"  min="1" max="31">
+      <input type="number" id="inp-dmax" value="31" min="1" max="31">
+    </div>
+  </div>
+
+  <button id="fetch-btn">🔄 Load Data</button>
+  <div id="status"></div>
+</aside>
+
+<!-- ═══════════════════ MAIN ═══════════════════ -->
+<div id="main">
+  <div id="tab-bar">
+    <button class="tab-btn active" data-tab="weatherspark">At a glance</button>
+    <button class="tab-btn" data-tab="data">Data</button>
+    <button class="tab-btn" data-tab="month">Specific Month</button>
+    <button class="tab-btn" data-tab="trends">Trends</button>
+    <button class="tab-btn" data-tab="threshold">Threshold</button>
+    <button class="tab-btn" data-tab="dashboard">Location Dashboard</button>
+    <button class="tab-btn" data-tab="locations">Locations</button>
+    <button class="tab-btn" data-tab="legend">Source &amp; Legend</button>
+  </div>
+
+  <div id="content">
+    <!-- Empty state shown until data is loaded -->
+    <div id="empty-state">
+      <div class="empty-icon">🌤️</div>
+      <div class="empty-title">No data loaded yet</div>
+      <div class="empty-sub">Select a location and date range in the sidebar, then click <strong>Load Data</strong> to get started.</div>
+      <div class="empty-arrow">← Click "Load Data"</div>
+    </div>
+    <!-- TAB: DATA -->
+    <div class="tab-panel" id="tab-data">
+      <div id="metrics-data" class="metrics-row"></div>
+      <div class="card"><h3 id="data-title">Time Series with SMA</h3><div class="chart-wrap" id="chart-line"></div></div>
+      <div class="card"><h3>Monthly Average Heatmap</h3><div class="chart-wrap" id="chart-monthly-heat"></div></div>
+      <div class="card"><h3>Monthly Averages — Trend Through Years</h3><div class="chart-wrap" id="chart-monthly-trend"></div></div>
+    </div>
+
+    <!-- TAB: SPECIFIC MONTH -->
+    <div class="tab-panel" id="tab-month">
+      <div id="metrics-month" class="metrics-row"></div>
+      <div class="card"><h3 id="month-title">Daily values by year</h3><div class="chart-wrap" id="chart-month-line"></div></div>
+      <div class="card"><h3>Daily values heatmap (Year × Day)</h3><div class="chart-wrap" id="chart-month-heat"></div></div>
+      <div class="card"><h3>Cumulative frequency distribution</h3><div class="chart-wrap" id="chart-month-cum"></div></div>
+      <div class="card"><h3>Histogram</h3><div class="chart-wrap" id="chart-month-hist"></div></div>
+    </div>
+
+    <!-- TAB: TRENDS -->
+    <div class="tab-panel" id="tab-trends">
+      <div class="card"><h3 id="trend-year-title">Yearly total trend</h3><div class="chart-wrap" id="chart-trend-year"></div></div>
+      <div id="trend-stats"></div>
+      <div class="card"><h3>Monthly trend through years</h3><div class="chart-wrap" id="chart-trend-month"></div></div>
+      <div id="month-trend-stats"></div>
+    </div>
+
+    <!-- TAB: THRESHOLD -->
+    <div class="tab-panel" id="tab-threshold">
+      <div class="card"><h3 id="thresh-year-title">Days per year above/below threshold</h3><div class="chart-wrap" id="chart-thresh-year"></div></div>
+      <div id="thresh-year-stats"></div>
+      <div class="card"><h3 id="thresh-month-title">Days per month (heatmap)</h3><div class="chart-wrap" id="chart-thresh-heat"></div></div>
+      <div class="card"><h3>Monthly trend scatter</h3><div class="chart-wrap" id="chart-thresh-scatter"></div></div>
+    </div>
+
+    <!-- TAB: LOCATION DASHBOARD -->
+    <div class="tab-panel" id="tab-dashboard">
+      <div id="dashboard-grid"></div>
+    </div>
+
+    <!-- TAB: WEATHERSPARK -->
+    <div class="tab-panel active" id="tab-weatherspark">
+      <div class="card"><h3 id="ws-temp-title">Temperature History</h3><div class="chart-wrap" id="chart-ws-temp"></div></div>
+      <div class="card"><h3 id="ws-prec-title">Precipitation History</h3><div class="chart-wrap" id="chart-ws-prec"></div></div>
+      <div class="card"><h3>Precipitation Spaghetti</h3><div class="chart-wrap" id="chart-ws-spag"></div></div>
+      <div class="card"><h3 id="ws-chance-title">Precipitation Chance Through the Year</h3><div class="chart-wrap" id="chart-ws-chance"></div></div>
+      <div class="card">Inspired by <a href="https://weatherspark.com" target="_blank">WeatherSpark.com</a>, which provides detailed historical weather data and visualizations for thousands of locations worldwide. The "At a glance" tab replicates some of their popular charts, such as the temperature and precipitation history, as well as the precipitation chance throughout the year.</div>
+    </div>
+
+    <!-- TAB: LOCATIONS -->
+    <div class="tab-panel" id="tab-locations">
+      <div class="card" style="padding-bottom:8px">
+        <h3>World Locations Map</h3>
+        <div id="map"></div>
+      </div>
+    </div>
+
+    <!-- TAB: LEGEND -->
+    <div class="tab-panel" id="tab-legend">
+      <div class="info-box">Source: <a href="https://open-meteo.com/en/docs/historical-weather-api" target="_blank">Open-Meteo Historical Weather API</a></div>
+      <div class="card"><h3>Daily Variables</h3>
+        <div class="tbl-wrap">
+          <table class="legend-tbl">
+            <thead><tr><th>Variable</th><th>Unit</th><th>Description</th></tr></thead>
+            <tbody id="legend-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Citation</h3>
+        <p style="font-size:.82rem;line-height:1.6;color:var(--muted)">
+          Zippenfenig, P. (2023). Open-Meteo.com Weather API. Zenodo. https://doi.org/10.5281/ZENODO.7970649<br>
+          Hersbach et al. (2023). ERA5 hourly data on single levels from 1940 to present. ECMWF. https://doi.org/10.24381/cds.adbb2d47<br>
+          Muñoz Sabater, J. (2019). ERA5-Land hourly data from 2001 to present. ECMWF. https://doi.org/10.24381/CDS.E2161BAC<br>
+          Schimanke et al. (2021). CERRA sub-daily regional reanalysis data for Europe. ECMWF. https://doi.org/10.24381/CDS.622A565A
+        </p>
+      </div>
+    </div>
+  </div><!-- #content -->
+</div><!-- #main -->
+
+<!-- ═══════════════════ SCRIPT ═══════════════════ -->
+<script>
+// ════════════════════════════════════════════════════════════════
+//  LOCATIONS
+// ════════════════════════════════════════════════════════════════
+const LOCATIONS = [
+  
+  {name:"De Bilt",        lat:52.1092717,  lon:5.1809676,    timezone:"Europe/Amsterdam"},
+  {name:"Koh Phangan",      lat:9.7551,   lon:99.9609,   timezone:"Asia/Bangkok"},
+  {name:"Koh Chang",        lat:12.1036,  lon:102.3519,  timezone:"Asia/Bangkok"},
+  {name:"Chiang Mai",       lat:18.7932,  lon:98.9774,   timezone:"Asia/Bangkok"},
+  {name:"Da Nang",          lat:16.0471,  lon:108.2062,  timezone:"Asia/Ho_Chi_Minh"},
+  {name:"Ubud",             lat:-8.4960,  lon:115.2248,  timezone:"auto"},
+  {name:"Amsterdam",        lat:52.3676,  lon:4.9041,    timezone:"Europe/Amsterdam"},
+  {name:"Lisbon",           lat:38.7169,  lon:-9.1399,   timezone:"Europe/Lisbon"},
+  {name:"Rome",             lat:41.9102,  lon:12.3712,   timezone:"Europe/Rome"},
+  {name:"Venezia",          lat:45.4408,  lon:12.3155,   timezone:"Europe/Rome"},
+  {name:"Hoi An",           lat:15.8801,  lon:108.3380,  timezone:"Asia/Ho_Chi_Minh"},
+  {name:"Ho Chi Minh City", lat:10.7769,  lon:106.7009,  timezone:"Asia/Ho_Chi_Minh"},
+  {name:"Hanoi",            lat:21.0285,  lon:105.8542,  timezone:"Asia/Bangkok"},
+  {name:"Manila",           lat:14.5995,  lon:120.9842,  timezone:"Asia/Manila"},
+  {name:"Taipei",           lat:25.0330,  lon:121.5654,  timezone:"Asia/Taipei"},
+  {name:"Kathmandu",        lat:27.7172,  lon:85.3240,   timezone:"Asia/Kathmandu"},
+  {name:"Colombo",          lat:6.9271,   lon:79.8612,   timezone:"Asia/Colombo"},
+  {name:"London",           lat:51.5072,  lon:-0.1276,   timezone:"Europe/London"},
+  {name:"New York",         lat:40.7128,  lon:-74.0060,  timezone:"America/New_York"},
+  {name:"Tokyo",            lat:35.6762,  lon:139.6503,  timezone:"Asia/Tokyo"},
+  {name:"Sydney",           lat:-33.8688, lon:151.2093,  timezone:"Australia/Sydney"},
+  {name:"Cape Town",        lat:-33.9249, lon:18.4241,   timezone:"Africa/Johannesburg"},
+  {name:"São Paulo",        lat:-23.5505, lon:-46.6333,  timezone:"America/Sao_Paulo"},
+  {name:"Istanbul",         lat:41.0082,  lon:28.9784,   timezone:"Europe/Istanbul"},
+];
+
+const LEGEND_DATA = [
+  ["weather_code","WMO code","Most severe weather condition on a given day"],
+  ["temperature_2m_max","°C","Maximum daily air temperature at 2 meters"],
+  ["temperature_2m_min","°C","Minimum daily air temperature at 2 meters"],
+  ["apparent_temperature_max","°C","Maximum daily apparent temperature"],
+  ["apparent_temperature_min","°C","Minimum daily apparent temperature"],
+  ["precipitation_sum","mm","Sum of daily precipitation"],
+  ["rain_sum","mm","Sum of daily rain"],
+  ["snowfall_sum","cm","Sum of daily snowfall"],
+  ["precipitation_hours","hours","Number of hours with rain"],
+  ["sunrise","iso8601","Sunrise time"],
+  ["sunset","iso8601","Sunset time"],
+  ["sunshine_duration","seconds","Total sunshine duration per day"],
+  ["daylight_duration","seconds","Total daylight duration per day"],
+  ["wind_speed_10m_max","km/h","Max wind speed on a day"],
+  ["wind_gusts_10m_max","km/h","Max wind gusts on a day"],
+  ["wind_direction_10m_dominant","°","Dominant wind direction"],
+  ["shortwave_radiation_sum","MJ/m²","Daily solar radiation sum"],
+  ["et0_fao_evapotranspiration","mm","Daily evapotranspiration (ET₀)"],
+];
+
+const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+// ════════════════════════════════════════════════════════════════
+//  GLOBAL STATE
+// ════════════════════════════════════════════════════════════════
+let DF = [];       // raw fetched records (one per day)
+let DF_PREP = [];  // filtered + enriched
+
+// ════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════
+(function init() {
+  // Populate location selector
+  const selLoc = document.getElementById('sel-location');
+  LOCATIONS.forEach((l, i) => {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = l.name;
+    selLoc.appendChild(o);
+  });
+
+  // Default dates: until = today, from = Jan 1 ten years ago
+  const todayDate = new Date();
+  document.getElementById('inp-until').value = todayDate.toISOString().slice(0,10);
+  const tenYearsAgo = new Date(todayDate.getFullYear() - 10, 0, 1);
+  document.getElementById('inp-from').value = tenYearsAgo.toISOString().slice(0,10);
+
+  // Tab switching
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      // Rebuild map when switching to that tab
+      if (btn.dataset.tab === 'locations') initMap();
+    });
+  });
+
+  // Fetch button
+  document.getElementById('fetch-btn').addEventListener('click', fetchAndRender);
+
+  // Legend
+  const tbody = document.getElementById('legend-tbody');
+  LEGEND_DATA.forEach(([v,u,d]) => {
+    tbody.innerHTML += `<tr><td>${v}</td><td>${u}</td><td>${d}</td></tr>`;
+  });
+})();
+
+// ════════════════════════════════════════════════════════════════
+//  DATA FETCHING
+// ════════════════════════════════════════════════════════════════
+async function fetchAndRender() {
+  const locIdx  = +document.getElementById('sel-location').value;
+  const loc     = LOCATIONS[locIdx];
+  const from    = document.getElementById('inp-from').value.trim();
+  const until   = document.getElementById('inp-until').value.trim();
+
+  if (!from.match(/^\d{4}-\d{2}-\d{2}$/) || !until.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    setStatus('⚠ Invalid date format (use yyyy-mm-dd)'); return;
+  }
+  if (from >= until) { setStatus('⚠ End date must be after start date'); return; }
+
+  setStatus('<span class="spinner"></span> Fetching data…');
+  document.getElementById('fetch-btn').disabled = true;
+
+  const daily_vars = [
+    "rain_sum","temperature_2m_mean","temperature_2m_max","temperature_2m_min",
+    "precipitation_hours","precipitation_sum",
+    "visibility_mean","visibility_min","visibility_max",
+    "relative_humidity_2m_mean","relative_humidity_2m_max","relative_humidity_2m_min",
+    "wind_speed_10m_max","sunshine_duration"
+  ].join(',');
+
+  const tz  = loc.timezone.replace('/','%2F');
+  const url = `https://archive-api.open-meteo.com/v1/archive`
+    + `?latitude=${loc.lat}&longitude=${loc.lon}`
+    + `&start_date=${from}&end_date=${until}`
+    + `&daily=${daily_vars}&timezone=${tz}`;
+
+  try {
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const d    = json.daily;
+
+    DF = d.time.map((t, i) => {
+      const date = new Date(t);
+      return {
+        date,
+        dateStr:              t,
+        day:                  date.getDate(),
+        month:                date.getMonth() + 1,
+        year:                 date.getFullYear(),
+        doy:                  dayOfYear(date),
+        temp_max:             d.temperature_2m_max[i],
+        temp_min:             d.temperature_2m_min[i],
+        temp_mean:            d.temperature_2m_mean[i],
+        rain_sum:             d.rain_sum[i],
+        precipitation_hours:  d.precipitation_hours[i],
+        precipitation_sum:    d.precipitation_sum[i],
+        visibility_mean:      d.visibility_mean[i],
+        visibility_min:       d.visibility_min[i],
+        visibility_max:       d.visibility_max[i],
+        rel_humidity_mean:    d.relative_humidity_2m_mean[i],
+        rel_humidity_max:     d.relative_humidity_2m_max[i],
+        rel_humidity_min:     d.relative_humidity_2m_min[i],
+        wind_max:             d.wind_speed_10m_max[i],
+        sunshine_duration:    d.sunshine_duration[i] != null ? d.sunshine_duration[i] / 3600 : null,
+      };
+    });
+
+    // compute Feels_Like
+    DF.forEach(r => { r.Feels_Like = feelsLike(r); });
+
+    renderAll(loc.name);
+    setStatus(`✓ ${DF.length} days loaded for ${loc.name}`);
+    document.getElementById('empty-state').classList.add('hidden');
+  } catch(e) {
+    setStatus(`✗ Error: ${e.message}`);
+  }
+  document.getElementById('fetch-btn').disabled = false;
+}
+
+function setStatus(html) {
+  document.getElementById('status').innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PREPARE DATAFRAME (filter months)
+// ════════════════════════════════════════════════════════════════
+function prepareDF() {
+  const mFrom = +document.getElementById('inp-mfrom').value;
+  const mTo   = +document.getElementById('inp-mto').value;
+  return DF.filter(r => r.month >= mFrom && r.month <= mTo);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER ALL TABS
+// ════════════════════════════════════════════════════════════════
+function renderAll(where) {
+  DF_PREP = prepareDF();
+  const toShow = document.getElementById('sel-var').value;
+
+  renderDataTab(where, toShow);
+  renderMonthTab(where, toShow);
+  renderTrendsTab(where, toShow);
+  renderThresholdTab(where, toShow);
+  renderDashboard(where);
+  renderWeatherspark(where);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TAB 1: DATA
+// ════════════════════════════════════════════════════════════════
+function renderDataTab(where, toShow) {
+  document.getElementById('data-title').textContent = `${toShow} over time — ${where}`;
+  const df = DF_PREP.filter(r => r[toShow] != null);
+  if (!df.length) return;
+
+  const sma = +document.getElementById('inp-sma').value;
+  const yzero = document.getElementById('sel-yzero').value === '1';
+
+  // Metrics
+  const vals = df.map(r => r[toShow]);
+  const mean = avg(vals), mn = Math.min(...vals), mx = Math.max(...vals);
+  document.getElementById('metrics-data').innerHTML =
+    metric('Mean', mean.toFixed(2)) + metric('Min', mn.toFixed(2)) + metric('Max', mx.toFixed(2)) +
+    metric('Days', df.length);
+
+  // SMA
+  const smaVals = vals.map((_, i) => {
+    const slice = vals.slice(Math.max(0,i-sma+1), i+1);
+    return avg(slice);
+  });
+
+  const layout = baseLayout(toShow, 'Date', toShow);
+  if (yzero) layout.yaxis.rangemode = 'tozero';
+
+  Plotly.newPlot('chart-line', [
+    {x: df.map(r=>r.dateStr), y: vals,    name: toShow, type:'scatter', mode:'lines',
+     line:{color:'rgba(37,99,235,0.5)', width:1}},
+    {x: df.map(r=>r.dateStr), y: smaVals, name:`SMA(${sma})`, type:'scatter', mode:'lines',
+     line:{color:'rgba(220,38,38,0.9)', width:2}},
+  ], layout, {responsive:true, displayModeBar:false});
+
+  // Monthly average heatmap
+  renderMonthlyHeatmap(df, toShow, 'chart-monthly-heat');
+  renderMonthlyTrendChart(df, toShow, where, 'chart-monthly-trend');
+}
+
+function renderMonthlyHeatmap(df, toShow, divId) {
+  const years  = uniqueSorted(df.map(r => r.year));
+  const months = [1,2,3,4,5,6,7,8,9,10,11,12];
+  const zData  = months.map(m =>
+    years.map(y => {
+      const sub = df.filter(r => r.month===m && r.year===y && r[toShow]!=null);
+      return sub.length ? avg(sub.map(r=>r[toShow])) : null;
+    })
+  );
+  Plotly.newPlot(divId, [{
+    z: zData, x: years, y: MONTH_NAMES,
+    type: 'heatmap', colorscale: 'RdBu', reversescale: true,
+    text: zData.map(row => row.map(v => v!=null ? v.toFixed(1) : '')),
+    texttemplate: '%{text}',
+    hovertemplate: 'Year %{x} — %{y}: %{z:.1f}<extra></extra>',
+  }], Object.assign(baseLayout('Monthly Avg ' + toShow,'Year','Month'), {margin:{l:90,r:20,t:40,b:60}}),
+  {responsive:true, displayModeBar:false});
+}
+
+function renderMonthlyTrendChart(df, toShow, where, divId) {
+  const years  = uniqueSorted(df.map(r => r.year));
+  const months = uniqueSorted(df.map(r => r.month));
+  const traces = [];
+  months.forEach(m => {
+    const pts = years.map(y => {
+      const sub = df.filter(r => r.month===m && r.year===y && r[toShow]!=null);
+      return sub.length ? avg(sub.map(r=>r[toShow])) : null;
+    });
+    const {slope,intercept} = linReg(years, pts);
+    traces.push({x:years, y:pts, name:`Month ${m}`, mode:'markers', type:'scatter',
+      marker:{size:5}, hovertemplate:`M${m} %{x}: %{y:.1f}<extra></extra>`});
+    traces.push({x:years, y:years.map(y=>slope*y+intercept), name:`Trend M${m}`, mode:'lines',
+      line:{width:1.5}, showlegend:false,
+      hovertemplate:`Trend M${m} %{x}: %{y:.1f}<extra></extra>`});
+  });
+  Plotly.newPlot(divId, traces,
+    baseLayout(`Monthly avg ${toShow} through years — ${where}`, 'Year', toShow),
+    {responsive:true, displayModeBar:false});
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TAB 2: SPECIFIC MONTH
+// ════════════════════════════════════════════════════════════════
+function renderMonthTab(where, toShow) {
+  const month  = +document.getElementById('sel-month').value;
+  const dayMin = +document.getElementById('inp-dmin').value;
+  const dayMax = +document.getElementById('inp-dmax').value;
+
+  const df = DF_PREP.filter(r =>
+    r.month === month &&
+    r.day >= dayMin && r.day <= dayMax &&
+    r[toShow] != null
+  );
+
+  document.getElementById('month-title').textContent =
+    `${toShow} in ${MONTH_NAMES[month-1]} (day ${dayMin}–${dayMax}) — ${where}`;
+
+  if (!df.length) {
+    document.getElementById('metrics-month').innerHTML = '<div class="warn-box">No data for selected month/range.</div>';
+    return;
+  }
+
+  const vals = df.map(r => r[toShow]);
+  const mean = avg(vals);
+  document.getElementById('metrics-month').innerHTML =
+    metric('Mean', mean.toFixed(2)) + metric('Days', df.length);
+
+  const years = uniqueSorted(df.map(r=>r.year));
+
+  // Line per year
+  const lineTraces = years.map(y => {
+    const sub = df.filter(r=>r.year===y);
+    return {x:sub.map(r=>r.day), y:sub.map(r=>r[toShow]), name:String(y), mode:'lines', type:'scatter',
+      hovertemplate:`${y} Day %{x}: %{y:.1f}<extra></extra>`};
+  });
+  Plotly.newPlot('chart-month-line', lineTraces,
+    baseLayout(`${toShow} — ${MONTH_NAMES[month-1]} per day`, 'Day', toShow),
+    {responsive:true, displayModeBar:false});
+
+  // Heatmap: Year × Day
+  const days = uniqueSorted(df.map(r=>r.day));
+  const zHeat = years.map(y => days.map(d => {
+    const row = df.find(r=>r.year===y && r.day===d);
+    return row ? row[toShow] : null;
+  }));
+  Plotly.newPlot('chart-month-heat', [{
+    z:zHeat, x:days, y:years.map(String),
+    type:'heatmap', colorscale:'Blues',
+    text: zHeat.map(row=>row.map(v=>v!=null?v.toFixed(0):'')),
+    texttemplate:'%{text}',
+    hovertemplate:'Year %{y} Day %{x}: %{z:.1f}<extra></extra>',
+  }], Object.assign(baseLayout('Year × Day heatmap','Day','Year'), {margin:{l:60,r:20,t:40,b:40}}),
+  {responsive:true, displayModeBar:false});
+
+  // Cumulative freq
+  const sorted = [...vals].sort((a,b)=>a-b);
+  const cumPct = sorted.map((_,i) => (i+1)/sorted.length*100);
+  Plotly.newPlot('chart-month-cum', [{x:sorted, y:cumPct, type:'scatter', mode:'lines',
+    line:{color:'rgba(37,99,235,0.8)', width:2},
+    hovertemplate:`%{x:.1f}: %{y:.0f}%<extra></extra>`}],
+    baseLayout('Cumulative frequency', toShow, 'Cumulative %'),
+    {responsive:true, displayModeBar:false});
+
+  // Histogram
+  Plotly.newPlot('chart-month-hist', [{x:vals, type:'histogram',
+    marker:{color:'rgba(37,99,235,0.6)', line:{color:'rgba(37,99,235,1)',width:1}},
+    hovertemplate:'%{x}: %{y}<extra></extra>'}],
+    baseLayout('Histogram', toShow, 'Count'),
+    {responsive:true, displayModeBar:false});
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TAB 3: TRENDS
+// ════════════════════════════════════════════════════════════════
+function renderTrendsTab(where, toShow) {
+  const df = DF_PREP.filter(r => r[toShow] != null);
+  if (!df.length) return;
+
+  document.getElementById('trend-year-title').textContent =
+    `Yearly total of ${toShow} — ${where}`;
+
+  // Yearly sum
+  const years = uniqueSorted(df.map(r=>r.year));
+  const yVals = years.map(y => sum(df.filter(r=>r.year===y).map(r=>r[toShow])));
+
+  const {slope,intercept,r2,p} = linRegFull(years, yVals);
+  const trendLine = years.map(y => slope*y+intercept);
+
+  Plotly.newPlot('chart-trend-year', [
+    {x:years, y:yVals, type:'scatter', mode:'markers+lines',
+     name:toShow, line:{color:'rgba(37,99,235,0.7)',width:2},
+     hovertemplate:`%{x}: %{y:.1f}<extra></extra>`},
+    {x:years, y:trendLine, name:'Trendline', mode:'lines',
+     line:{color:'rgba(220,38,38,0.8)',width:2,dash:'dot'},
+     hovertemplate:`Trend %{x}: %{y:.1f}<extra></extra>`},
+  ], baseLayout(`Yearly total ${toShow}`, 'Year', toShow), {responsive:true, displayModeBar:false});
+
+  const dir = slope>0?'↑ Rising':slope<0?'↓ Falling':'→ Flat';
+  const sig = p<0.05;
+  document.getElementById('trend-stats').innerHTML = `
+    <div class="card">
+      <h4>Trend Statistics</h4>
+      <p>Slope: <strong>${slope.toFixed(3)}</strong> per year &nbsp;|&nbsp;
+         R²: <strong>${r2.toFixed(3)}</strong> &nbsp;|&nbsp;
+         p: <strong>${p.toFixed(4)}</strong> &nbsp;
+         <span class="badge ${dir.includes('↑')?'up':'down'}">${dir}</span>
+         <span class="badge ${sig?'sig':'insig'}">${sig?'Significant':'Not significant'} (α=0.05)</span>
+      </p>
+    </div>`;
+
+  // Monthly trend
+  const months = [1,2,3,4,5,6,7,8,9,10,11,12];
+  const traces2 = [];
+  let mStatsHtml = '<div class="card"><h4>Monthly Trend Statistics</h4><div class="tbl-wrap"><table><thead><tr><th>Month</th><th>Slope</th><th>R²</th><th>p</th><th>Direction</th><th>Significant?</th></tr></thead><tbody>';
+  months.forEach(m => {
+    const pts = years.map(y => {
+      const sub = df.filter(r=>r.month===m && r.year===y);
+      return sub.length ? avg(sub.map(r=>r[toShow])) : null;
+    });
+    const yy = years.filter((_,i)=>pts[i]!=null);
+    const vv = pts.filter(v=>v!=null);
+    if (vv.length < 2) return;
+    const {slope:s,intercept:ic,r2:r,p:pv} = linRegFull(yy,vv);
+    traces2.push({x:yy, y:vv, name:`${MONTH_NAMES[m-1].slice(0,3)} data`,
+      mode:'markers', type:'scatter', marker:{size:4},
+      hovertemplate:`M${m} %{x}: %{y:.1f}<extra></extra>`});
+    traces2.push({x:yy, y:yy.map(y=>s*y+ic), name:`${MONTH_NAMES[m-1].slice(0,3)} trend`,
+      mode:'lines', line:{width:1.5}, showlegend:false,
+      hovertemplate:`Trend M${m} %{x}: %{y:.1f}<extra></extra>`});
+    const sd = s>0?'↑':s<0?'↓':'→';
+    const sv = pv<0.05;
+    mStatsHtml += `<tr><td>${MONTH_NAMES[m-1].slice(0,3)}</td><td>${s.toFixed(3)}</td><td>${r.toFixed(3)}</td>
+      <td>${pv.toFixed(4)}</td>
+      <td><span class="badge ${s>0?'up':'down'}">${sd}</span></td>
+      <td><span class="badge ${sv?'sig':'insig'}">${sv?'Yes':'No'}</span></td></tr>`;
+  });
+  mStatsHtml += '</tbody></table></div></div>';
+  document.getElementById('month-trend-stats').innerHTML = mStatsHtml;
+
+  Plotly.newPlot('chart-trend-month', traces2,
+    baseLayout(`Monthly avg ${toShow} trend — ${where}`,'Year',toShow),
+    {responsive:true, displayModeBar:false});
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TAB 4: THRESHOLD
+// ════════════════════════════════════════════════════════════════
+function renderThresholdTab(where, toShow) {
+  const thresh    = +document.getElementById('inp-thresh').value;
+  const direction = document.getElementById('sel-above').value;
+  const df        = DF_PREP.filter(r => r[toShow] != null);
+  if (!df.length) return;
+
+  let filtered, auTxt;
+  if (direction === 'above') { filtered = df.filter(r => r[toShow] >= thresh); auTxt = '≥'; }
+  else if (direction === 'equal') { filtered = df.filter(r => Math.abs(r[toShow]-thresh)<0.001); auTxt = '='; }
+  else { filtered = df.filter(r => r[toShow] <= thresh); auTxt = '≤'; }
+
+  const title = `Days per year where ${toShow} ${auTxt} ${thresh} — ${where}`;
+  document.getElementById('thresh-year-title').textContent = title;
+  document.getElementById('thresh-month-title').textContent =
+    `Days per month where ${toShow} ${auTxt} ${thresh} — ${where}`;
+
+  // Per year
+  const years = uniqueSorted(df.map(r=>r.year));
+  const yCount = years.map(y => filtered.filter(r=>r.year===y).length);
+
+  const {slope,intercept,r2,p} = linRegFull(years, yCount);
+  const tLine = years.map(y=>slope*y+intercept);
+
+  Plotly.newPlot('chart-thresh-year', [
+    {x:years, y:yCount, type:'bar', name:'Days',
+     marker:{color:'rgba(37,99,235,0.6)'},
+     hovertemplate:`%{x}: %{y} days<extra></extra>`},
+    {x:years, y:tLine, type:'scatter', mode:'lines', name:'Trend',
+     line:{color:'rgba(220,38,38,0.9)',width:2,dash:'dot'},
+     hovertemplate:`Trend %{x}: %{y:.1f}<extra></extra>`},
+  ], baseLayout(title,'Year','Days'), {responsive:true, displayModeBar:false});
+
+  const dir = slope>0?'↑ Rising':slope<0?'↓ Falling':'→ Flat';
+  const sig = p<0.05;
+  document.getElementById('thresh-year-stats').innerHTML = `
+    <div class="card">
+      <h4>Trend Statistics</h4>
+      <p>Slope: <strong>${slope.toFixed(3)}</strong> days/year &nbsp;|&nbsp;
+         R²: <strong>${r2.toFixed(3)}</strong> &nbsp;|&nbsp;
+         p: <strong>${p.toFixed(4)}</strong> &nbsp;
+         <span class="badge ${dir.includes('↑')?'up':'down'}">${dir}</span>
+         <span class="badge ${sig?'sig':'insig'}">${sig?'Significant':'Not significant'} (α=0.05)</span>
+      </p>
+    </div>`;
+
+  // Per month heatmap
+  const months = [1,2,3,4,5,6,7,8,9,10,11,12];
+  const zData = months.map(m =>
+    years.map(y => filtered.filter(r=>r.month===m && r.year===y).length)
+  );
+  Plotly.newPlot('chart-thresh-heat', [{
+    z:zData, x:years, y:MONTH_NAMES,
+    type:'heatmap', colorscale:'Blues',
+    text: zData.map(row=>row.map(v=>v.toFixed(0))),
+    texttemplate:'%{text}',
+    hovertemplate:'Year %{x} — %{y}: %{z} days<extra></extra>',
+  }], Object.assign(baseLayout('Threshold days heatmap','Year','Month'),{margin:{l:90,r:20,t:40,b:60}}),
+  {responsive:true, displayModeBar:false});
+
+  // Monthly scatter/trend
+  const traces = [];
+  months.forEach(m => {
+    const yy = years;
+    const vv = years.map(y => filtered.filter(r=>r.month===m && r.year===y).length);
+    if (vv.reduce((a,b)=>a+b,0)===0) return;
+    const {slope:s,intercept:ic} = linRegFull(yy,vv);
+    traces.push({x:yy, y:vv, name:`${MONTH_NAMES[m-1].slice(0,3)} data`,
+      mode:'markers', type:'scatter', marker:{size:4},
+      hovertemplate:`M${m} %{x}: %{y} days<extra></extra>`});
+    traces.push({x:yy, y:yy.map(y=>s*y+ic), name:`${MONTH_NAMES[m-1].slice(0,3)} trend`,
+      mode:'lines', line:{width:1.5}, showlegend:false,
+      hovertemplate:`Trend M${m} %{x}: %{y:.1f}<extra></extra>`});
+  });
+  Plotly.newPlot('chart-thresh-scatter', traces,
+    baseLayout('Monthly threshold trend','Year','Days'),
+    {responsive:true, displayModeBar:false});
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TAB 5: LOCATION DASHBOARD
+// ════════════════════════════════════════════════════════════════
+function renderDashboard(where) {
+  const thresh = +document.getElementById('inp-thresh').value;
+  const df = DF_PREP.map(r => ({
+    ...r,
+    rain_day: (r.rain_sum != null && r.rain_sum >= thresh) ? 1 : 0,
+    dry_day:  (r.rain_sum != null && r.rain_sum < thresh)  ? 1 : 0,
+  }));
+
+  const vars = ['temp_max','rain_day','rain_sum','precipitation_hours','sunshine_duration'];
+  const varLabels = {
+    temp_max:'Max Temp (°C)', rain_day:'Rain Day (%)', rain_sum:'Rain (mm)',
+    precipitation_hours:'Prec. Hours', sunshine_duration:'Sun Hours'
+  };
+
+  let html = '';
+  MONTH_NAMES.forEach((mName, mi) => {
+    const m = mi + 1;
+    const sub = df.filter(r => r.month === m);
+    html += `<div class="card"><h4>${mName}</h4>`;
+    if (!sub.length) { html += '<p style="color:var(--muted);font-size:.8rem">No data</p></div>'; return; }
+    html += '<div style="display:flex;flex-wrap:wrap;gap:10px">';
+    vars.forEach(v => {
+      const vals = sub.map(r=>r[v]).filter(x=>x!=null);
+      if (!vals.length) return;
+      let display;
+      if (v === 'rain_day' || v === 'dry_day') display = (avg(vals)*100).toFixed(0)+'%';
+      else if (v === 'sunshine_duration') display = avg(vals).toFixed(1)+' h';
+      else if (v === 'precipitation_hours') display = avg(vals).toFixed(1)+' h';
+      else display = avg(vals).toFixed(1);
+      html += `<div class="metric" style="min-width:110px;padding:10px 12px">
+        <div class="m-label">${varLabels[v]||v}</div>
+        <div class="m-value" style="font-size:1.1rem">${display}</div>
+      </div>`;
+    });
+    html += '</div></div>';
+  });
+  document.getElementById('dashboard-grid').innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  TAB 6: WEATHERSPARK
+// ════════════════════════════════════════════════════════════════
+function renderWeatherspark(where) {
+  const df = DF;  // use full unfiltered data for climatology
+  if (!df.length) return;
+
+  const thisYear = new Date().getFullYear();
+  const thresh   = +document.getElementById('inp-thresh').value;
+  const toShow   = document.getElementById('sel-var').value;
+
+  document.getElementById('ws-temp-title').textContent  = `Temperature History — ${where}`;
+  document.getElementById('ws-prec-title').textContent  = `Precipitation History — ${where}`;
+  document.getElementById('ws-chance-title').textContent = `Precipitation Chance — ${where}`;
+
+  // Helper: doy → fake timestamp string for x-axis
+  function doyToStr(doy) {
+    const base = new Date(2001, 0, 1);
+    base.setDate(base.getDate() + doy - 1);
+    return base.toISOString().slice(0,10);
+  }
+
+  const monthTicks  = [1,32,60,91,121,152,182,213,244,274,305,335].map(d=>doyToStr(d));
+  const monthLabels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  const baseWs = {
+    plot_bgcolor:'#fff', paper_bgcolor:'#fff',
+    xaxis:{tickvals:monthTicks, ticktext:monthLabels, showgrid:false, zeroline:false},
+    margin:{l:60,r:60,t:50,b:70},
+    height:420, hovermode:'x unified',
+  };
+
+  // ── Temperature ──
+  const tempDf = df.filter(r => r.temp_max!=null && r.temp_min!=null);
+
+  // Group by doy
+  const doyMap = {};
+  tempDf.forEach(r => {
+    if (!doyMap[r.doy]) doyMap[r.doy] = {tmax:[], tmin:[]};
+    doyMap[r.doy].tmax.push(r.temp_max);
+    doyMap[r.doy].tmin.push(r.temp_min);
+  });
+
+  const doys = Object.keys(doyMap).map(Number).sort((a,b)=>a-b);
+  const clim = doys.map(d => {
+    const tm = doyMap[d].tmax.filter(x=>x!=null).sort((a,b)=>a-b);
+    const tn = doyMap[d].tmin.filter(x=>x!=null).sort((a,b)=>a-b);
+    return {
+      doy:d, xd:doyToStr(d),
+      p10mx:pct(tm,10), p25mx:pct(tm,25), p75mx:pct(tm,75), p90mx:pct(tm,90), avgMx:avg(tm),
+      p10mn:pct(tn,10), p25mn:pct(tn,25), p75mn:pct(tn,75), p90mn:pct(tn,90), avgMn:avg(tn),
+    };
+  });
+
+  // Smooth 14-day rolling
+  function smooth(arr, key, w=14) {
+    return arr.map((_,i) => {
+      const sl = arr.slice(Math.max(0,i-w+1),i+1).map(x=>x[key]).filter(x=>x!=null);
+      return sl.length ? avg(sl) : null;
+    });
+  }
+  const xClim = clim.map(c=>c.xd);
+  const p90mx=smooth(clim,'p90mx'), p10mx=smooth(clim,'p10mx');
+  const p75mx=smooth(clim,'p75mx'), p25mx=smooth(clim,'p25mx');
+  const avgMx=smooth(clim,'avgMx');
+  const p90mn=smooth(clim,'p90mn'), p10mn=smooth(clim,'p10mn');
+  const p75mn=smooth(clim,'p75mn'), p25mn=smooth(clim,'p25mn');
+  const avgMn=smooth(clim,'avgMn');
+
+  const curr = df.filter(r=>r.year===thisYear && r.temp_max!=null && r.temp_min!=null)
+    .sort((a,b)=>a.doy-b.doy);
+
+  const tempTraces = [
+    band(xClim, p90mx, p10mx, 'rgba(220,130,135,0.25)', 'High 10–90%'),
+    band(xClim, p75mx, p25mx, 'rgba(200,80,88,0.35)',   'High 25–75%'),
+    {x:xClim, y:avgMx, type:'scatter', mode:'lines', name:'Avg High',
+     line:{color:'rgba(192,57,63,0.7)',width:2}, showlegend:false,
+     hovertemplate:'Avg High: %{y:.1f}°C<extra></extra>'},
+    band(xClim, p90mn, p10mn, 'rgba(130,150,220,0.25)', 'Low 10–90%'),
+    band(xClim, p75mn, p25mn, 'rgba(70,90,190,0.35)',   'Low 25–75%'),
+    {x:xClim, y:avgMn, type:'scatter', mode:'lines', name:'Avg Low',
+     line:{color:'rgba(58,78,170,0.7)',width:2}, showlegend:false,
+     hovertemplate:'Avg Low: %{y:.1f}°C<extra></extra>'},
+  ];
+  if (curr.length) {
+    // Per-day vertical lines from temp_min to temp_max
+    // Use a single scatter trace with gaps (null) between each day segment
+    const xDayBars = [];
+    const yDayBars = [];
+    curr.forEach(r => {
+      const xd = doyToStr(r.doy);
+      xDayBars.push(xd, xd, xd);
+      yDayBars.push(r.temp_min, r.temp_max, null);
+    });
+    tempTraces.push({
+      x: xDayBars,
+      y: yDayBars,
+      type: 'scatter',
+      mode: 'lines',
+      name: `${thisYear} daily range`,
+      line: {color:'rgba(40,40,40,0.65)', width:1.5},
+      connectgaps: false,
+      hoverinfo: 'skip',
+      showlegend: true,
+    });
+    // Invisible hover trace with real date in customdata
+    tempTraces.push({
+      x: curr.map(r => doyToStr(r.doy)),
+      y: curr.map(r => (r.temp_max + r.temp_min) / 2),
+      type: 'scatter',
+      mode: 'markers',
+      name: String(thisYear),
+      marker: {size: 6, color: 'rgba(40,40,40,0)', line: {width: 0}},
+      customdata: curr.map(r => [r.temp_max, r.temp_min, r.dateStr]),
+      hovertemplate: '<b>%{customdata[2]}</b><br>High: %{customdata[0]:.1f}°C<br>Low: %{customdata[1]:.1f}°C<extra></extra>',
+      showlegend: false,
+    });
+  }
+
+  const todayDoy  = dayOfYear(new Date());
+  const todayStr  = doyToStr(todayDoy);
+
+  Plotly.newPlot('chart-ws-temp', tempTraces, {
+    ...baseWs,
+    hovermode: 'closest',
+    title:{text:`Temperature History — ${where}`, font:{size:14}, x:0.5},
+    yaxis:{showgrid:true, gridcolor:'#e8e8e8', zeroline:false, ticksuffix:'°C'},
+    shapes:[{type:'line', x0:todayStr, x1:todayStr, y0:0, y1:1,
+      yref:'paper', line:{color:'#cc2222',width:1.5}}],
+  }, {responsive:true, displayModeBar:false});
+
+  // ── Precipitation ──
+  const precDf = df.filter(r => r.precipitation_sum != null);
+  const doyMapP = {};
+  precDf.forEach(r => {
+    if (!doyMapP[r.doy]) doyMapP[r.doy] = [];
+    doyMapP[r.doy].push(r.precipitation_sum);
+  });
+  const doysP = Object.keys(doyMapP).map(Number).sort((a,b)=>a-b);
+  const climP = doysP.map(d => {
+    const vals = doyMapP[d].filter(x=>x!=null).sort((a,b)=>a-b);
+    return {doy:d, xd:doyToStr(d),
+      p10:pct(vals,10), p25:pct(vals,25), p75:pct(vals,75), p90:pct(vals,90),
+      avgV:avg(vals), medV:median(vals)};
+  });
+
+  const xClimP = climP.map(c=>c.xd);
+  const p90p=smooth(climP,'p90'), p10p=smooth(climP,'p10');
+  const p75p=smooth(climP,'p75'), p25p=smooth(climP,'p25');
+  const avgPr=smooth(climP,'avgV'), medPr=smooth(climP,'medV');
+
+  const currP = df.filter(r=>r.year===thisYear && r.precipitation_sum!=null).sort((a,b)=>a.doy-b.doy);
+
+  const precTraces = [
+    band(xClimP, p90p, p10p, 'rgba(130,150,220,0.25)', 'Prec 10–90%'),
+    band(xClimP, p75p, p25p, 'rgba(70,90,190,0.35)',   'Prec 25–75%'),
+    {x:xClimP, y:avgPr, type:'scatter', mode:'lines', name:'Avg',
+     line:{color:'rgba(192,57,63,0.35)',width:2}, showlegend:true,
+     hovertemplate:'Avg: %{y:.1f}mm<extra></extra>'},
+    {x:xClimP, y:medPr, type:'scatter', mode:'lines', name:'Median',
+     line:{color:'rgba(192,30,90,0.7)',width:2}, showlegend:true,
+     hovertemplate:'Median: %{y:.1f}mm<extra></extra>'},
+  ];
+  if (currP.length) {
+    precTraces.push({
+      x: currP.map(r => doyToStr(r.doy)),
+      y: currP.map(r => r.precipitation_sum),
+      type: 'scatter', mode: 'lines', name: String(thisYear),
+      line: {color: 'rgba(80,80,80,0.8)', width: 1.5},
+      customdata: currP.map(r => [r.precipitation_sum, r.dateStr]),
+      hovertemplate: '<b>%{customdata[1]}</b><br>Precipitation: %{customdata[0]:.1f}mm<extra></extra>',
+    });
+  }
+  Plotly.newPlot('chart-ws-prec', precTraces, {
+    ...baseWs,
+    title:{text:`Precipitation History — ${where}`, font:{size:14}, x:0.5},
+    yaxis:{showgrid:true, gridcolor:'#e8e8e8', zeroline:false, ticksuffix:'mm'},
+    shapes:[{type:'line', x0:todayStr, x1:todayStr, y0:0, y1:1,
+      yref:'paper', line:{color:'#cc2222',width:1.5}}],
+  }, {responsive:true, displayModeBar:false});
+
+  // ── Spaghetti ──
+  const years = uniqueSorted(df.map(r=>r.year));
+  const spagTraces = [];
+  const nY = years.length;
+  years.forEach((y, yi) => {
+    if (y === thisYear) return;
+    const sub = df.filter(r=>r.year===y && r.precipitation_sum!=null).sort((a,b)=>a.doy-b.doy);
+    const alpha = (0.15 + 0.1*yi/Math.max(nY-1,1)).toFixed(2);
+    spagTraces.push({
+      x: sub.map(r => doyToStr(r.doy)),
+      y: sub.map(r => r.precipitation_sum),
+      type: 'scatter', mode: 'lines', name: String(y),
+      line: {color: `rgba(160,160,160,${alpha})`, width: 1},
+      showlegend: false,
+      customdata: sub.map(r => [r.precipitation_sum, r.dateStr]),
+      hovertemplate: `<b>${y}</b> %{customdata[1]}: %{customdata[0]:.1f}mm<extra></extra>`,
+    });
+  });
+  // Median reference
+  spagTraces.push({x:xClimP, y:medPr, type:'scatter', mode:'lines', name:'Median (smoothed)',
+    line:{color:'rgba(192,57,63,0.7)',width:2,dash:'dot'},
+    hovertemplate:'Median: %{y:.1f}mm<extra></extra>'});
+  // Highlighted year
+  if (currP.length) {
+    spagTraces.push({
+      x: currP.map(r => doyToStr(r.doy)),
+      y: currP.map(r => r.precipitation_sum),
+      type: 'scatter', mode: 'lines', name: String(thisYear),
+      line: {color: 'rgba(30,100,200,0.9)', width: 2.5},
+      customdata: currP.map(r => [r.precipitation_sum, r.dateStr]),
+      hovertemplate: `<b>${thisYear}</b> %{customdata[1]}: %{customdata[0]:.1f}mm<extra></extra>`,
+    });
+  }
+  Plotly.newPlot('chart-ws-spag', spagTraces, {
+    ...baseWs,
+    title:{text:`Precipitation Spaghetti — ${where}`, font:{size:14}, x:0.5},
+    yaxis:{showgrid:true, gridcolor:'#e8e8e8', zeroline:false, ticksuffix:'mm'},
+    shapes:[{type:'line', x0:todayStr, x1:todayStr, y0:0, y1:1,
+      yref:'paper', line:{color:'#cc2222',width:1.5}}],
+  }, {responsive:true, displayModeBar:false});
+
+  // ── Precipitation chance ──
+  const whatDf = df.filter(r => r[toShow] != null);
+  const doyChance = {};
+  whatDf.forEach(r => {
+    if (!doyChance[r.doy]) doyChance[r.doy] = [];
+    doyChance[r.doy].push(r[toShow] > thresh ? 1 : 0);
+  });
+  const doysC = Object.keys(doyChance).map(Number).sort((a,b)=>a-b);
+  const rawChance = doysC.map(d => avg(doyChance[d]));
+  const smChance  = rawChance.map((_,i) => {
+    const sl = rawChance.slice(Math.max(0,i-7),i+7+1);
+    return avg(sl)*100;
+  });
+  const xChance = doysC.map(doyToStr);
+
+  Plotly.newPlot('chart-ws-chance', [
+    {x:[...xChance,...[...xChance].reverse()], y:[...smChance,...smChance.map(()=>0)],
+     fill:'toself', fillcolor:'rgba(70,130,200,0.2)', line:{width:0},
+     hoverinfo:'skip', showlegend:false},
+    {x:xChance, y:smChance, type:'scatter', mode:'lines', name:`${toShow}>${thresh}`,
+     line:{color:'rgba(50,110,185,0.9)',width:2.5},
+     hovertemplate:'%{x}: <b>%{y:.0f}%</b><extra></extra>'},
+  ], {
+    ...baseWs,
+    title:{text:`Chance of ${toShow} > ${thresh} — ${where}`, font:{size:14}, x:0.5},
+    yaxis:{range:[0,100], tickvals:[0,20,40,60,80,100], ticktext:['0%','20%','40%','60%','80%','100%'],
+      showgrid:true, gridcolor:'#e8e8e8', zeroline:false},
+  }, {responsive:true, displayModeBar:false});
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MAP
+// ════════════════════════════════════════════════════════════════
+let map = null;
+function initMap() {
+  if (map) return;
+  map = L.map('map').setView([15, 80], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'© OpenStreetMap contributors', maxZoom:18
+  }).addTo(map);
+  LOCATIONS.forEach(loc => {
+    L.circleMarker([loc.lat, loc.lon], {radius:7, color:'#2563eb', fillColor:'#93c5fd', fillOpacity:0.85, weight:2})
+      .bindTooltip(loc.name, {permanent:false, direction:'top'})
+      .addTo(map);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════════════
+function avg(arr) {
+  const v = arr.filter(x=>x!=null);
+  return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null;
+}
+function sum(arr) {
+  return arr.filter(x=>x!=null).reduce((a,b)=>a+b,0);
+}
+function median(arr) {
+  const s = [...arr].filter(x=>x!=null).sort((a,b)=>a-b);
+  if (!s.length) return null;
+  const m = Math.floor(s.length/2);
+  return s.length%2 ? s[m] : (s[m-1]+s[m])/2;
+}
+function pct(sorted, p) {
+  if (!sorted.length) return null;
+  const idx = (p/100)*(sorted.length-1);
+  const lo = Math.floor(idx), hi = Math.ceil(idx);
+  return sorted[lo] + (sorted[hi]-sorted[lo])*(idx-lo);
+}
+function uniqueSorted(arr) { return [...new Set(arr)].sort((a,b)=>a-b); }
+
+function dayOfYear(date) {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const diff  = date - start;
+  return Math.floor(diff / 86400000);
+}
+
+// Linear regression → {slope, intercept, r2, p}
+function linRegFull(xs, ys) {
+  const pairs = xs.map((x,i)=>[x,ys[i]]).filter(([,y])=>y!=null);
+  if (pairs.length < 2) return {slope:0,intercept:0,r2:0,p:1};
+  const xx = pairs.map(p=>p[0]), yy = pairs.map(p=>p[1]);
+  const n = xx.length;
+  const sumX=xx.reduce((a,b)=>a+b,0), sumY=yy.reduce((a,b)=>a+b,0);
+  const sumXX=xx.reduce((a,b)=>a+b*b,0), sumXY=xx.reduce((a,b,i)=>a+b*yy[i],0);
+  const slope = (n*sumXY - sumX*sumY) / (n*sumXX - sumX*sumX);
+  const intercept = (sumY - slope*sumX) / n;
+  const yMean = sumY/n;
+  const ssTot = yy.reduce((a,b)=>a+(b-yMean)**2,0);
+  const ssRes = yy.reduce((a,b,i)=>a+(b-(slope*xx[i]+intercept))**2,0);
+  const r2 = ssTot>0 ? 1-ssRes/ssTot : 0;
+  // t-test for slope
+  const se2 = ssRes/(n-2);
+  const sxx = sumXX - sumX*sumX/n;
+  const tStat = sxx>0 ? slope/Math.sqrt(se2/sxx) : 0;
+  const p = tDist(Math.abs(tStat), n-2);
+  return {slope, intercept, r2, p};
+}
+function linReg(xs, ys) { return linRegFull(xs,ys); }
+
+// Approximate two-tailed p from t distribution (Abramowitz & Stegun)
+function tDist(t, df) {
+  const x = df / (df + t*t);
+  // incomplete beta regularized → p-value approximation
+  let p = betaInc(x, df/2, 0.5);
+  return Math.min(1, Math.max(0, p));
+}
+function betaInc(x, a, b) {
+  // Simple continued fraction (accurate for df≥2)
+  if (x <= 0) return 1;
+  if (x >= 1) return 0;
+  const lbeta = lgamma(a)+lgamma(b)-lgamma(a+b);
+  const front = Math.exp(Math.log(x)*a + Math.log(1-x)*b - lbeta)/a;
+  // Lentz continued fraction
+  const cf = betaCF(x, a, b);
+  return front*cf > 1 ? 1 : front*cf;
+}
+function betaCF(x,a,b) {
+  const MAXIT=200, EPS=3e-7;
+  let qab=a+b, qap=a+1, qam=a-1;
+  let c=1, d=1-qab*x/qap;
+  if (Math.abs(d)<1e-30) d=1e-30;
+  d=1/d; let h=d;
+  for (let m=1;m<=MAXIT;m++) {
+    let m2=2*m, aa=m*(b-m)*x/((qam+m2)*(a+m2));
+    d=1+aa*d; if(Math.abs(d)<1e-30)d=1e-30;
+    c=1+aa/c; if(Math.abs(c)<1e-30)c=1e-30;
+    d=1/d; h*=d*c;
+    aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));
+    d=1+aa*d; if(Math.abs(d)<1e-30)d=1e-30;
+    c=1+aa/c; if(Math.abs(c)<1e-30)c=1e-30;
+    d=1/d; let del=d*c; h*=del;
+    if(Math.abs(del-1)<EPS) break;
+  }
+  return h;
+}
+function lgamma(x) {
+  // Stirling approx
+  const c=[76.18009172947146,-86.50532032941677,24.01409824083091,-1.231739572450155,0.1208650973866179e-2,-0.5395239384953e-5];
+  let y=x, tmp=x+5.5;
+  tmp -= (x+0.5)*Math.log(tmp);
+  let ser=1.000000000190015;
+  for(let j=0;j<6;j++) ser+=c[j]/++y;
+  return -tmp+Math.log(2.5066282746310005*ser/x);
+}
+
+function band(x, y1, y2, color, name) {
+  return {
+    x:[...x,...[...x].reverse()],
+    y:[...y1,...[...y2].reverse()],
+    fill:'toself', fillcolor:color, line:{width:0},
+    hoverinfo:'skip', showlegend:true, name,
+    type:'scatter',
+  };
+}
+
+function baseLayout(title, xTitle, yTitle) {
+  return {
+    title:{text:title, font:{size:14,color:'#1e2330'}, x:0.5, xanchor:'center'},
+    xaxis:{title:xTitle, showgrid:false, zeroline:false},
+    yaxis:{title:yTitle, showgrid:true, gridcolor:'#e8e8e8', zeroline:false},
+    plot_bgcolor:'#fff', paper_bgcolor:'#fff',
+    margin:{l:60,r:30,t:50,b:60},
+    height:380,
+    legend:{bgcolor:'rgba(255,255,255,0.7)', borderwidth:0},
+    font:{family:'Lato, Segoe UI, sans-serif', size:12, color:'#1e2330'},
+  };
+}
+
+function metric(label, value) {
+  return `<div class="metric"><div class="m-label">${label}</div><div class="m-value">${value}</div></div>`;
+}
+
+// Feels-Like temperature (mirrors Python logic)
+function feelsLike(row) {
+  const Tc = row.temp_mean;
+  const RH = row.rel_humidity_mean;
+  const Vkm = row.wind_max;
+  if (Tc==null||RH==null||Vkm==null) return Tc;
+  const Tf = Tc*9/5+32;
+  const Vmph = Vkm*0.621371;
+  let flF;
+  if (Tf >= 80) {
+    flF = -42.379 + 2.04901523*Tf + 10.14333127*RH
+        - 0.22475541*Tf*RH - 0.00683783*Tf**2
+        - 0.05481717*RH**2 + 0.00122874*Tf**2*RH
+        + 0.00085282*Tf*RH**2 - 0.00000199*Tf**2*RH**2;
+  } else if (Tf <= 50 && Vmph >= 3) {
+    flF = 35.74 + 0.6215*Tf - 35.75*(Vmph**0.16) + 0.4275*Tf*(Vmph**0.16);
+  } else {
+    flF = Tf;
+  }
+  return (flF - 32)*5/9;
+}
+</script>
+</body>
+</html>
