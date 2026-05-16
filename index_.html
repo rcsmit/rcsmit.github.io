@@ -287,34 +287,12 @@ async function getRepoDirs() {
   }
 }
 
-function parseCSV(text) {
-  const lines = text.trim().split("\n");
-  const headers = lines[0].split(",").map(h => h.trim());
-  return lines.slice(1).map(line => {
-    // Split on commas, but respect quoted fields
-    const cols = [];
-    let current = "";
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQuotes = !inQuotes; }
-      else if (ch === "," && !inQuotes) { cols.push(current); current = ""; }
-      else { current += ch; }
-    }
-    cols.push(current);
-    const obj = {};
-    headers.forEach((h, i) => obj[h] = (cols[i] || "").trim());
-    return obj;
-  });
-}
-
 async function init() {
   const [itemsRes, repoDirs] = await Promise.all([
-    fetch("items.csv"),
+    fetch("items.json"),
     getRepoDirs()
   ]);
-  const csvText = await itemsRes.text();
-  const items = parseCSV(csvText);
+  const items = await itemsRes.json();
 
   // Collect all directories already listed in items.json
   const listedDirs = new Set(items.map(i => i.directory));
