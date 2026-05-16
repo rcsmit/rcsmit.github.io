@@ -28,6 +28,7 @@
     --sidebar-w: 270px;
     --font-body: 'Lato', 'Segoe UI', sans-serif;
     --font-head: 'Montserrat', 'Segoe UI', sans-serif;
+    --toggle-w:  28px;
   }
 
   @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Montserrat:wght@500;700&display=swap');
@@ -50,9 +51,109 @@
     border-right: 1px solid var(--border);
     padding: 20px 16px;
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     gap: 14px;
+    transition: width .25s ease, min-width .25s ease, padding .25s ease;
+    position: relative;
+    flex-shrink: 0;
+  }
+  #sidebar.collapsed {
+    width: var(--toggle-w);
+    min-width: var(--toggle-w);
+    padding: 20px 0;
+    overflow: hidden;
+  }
+  #sidebar.collapsed > *:not(#sidebar-toggle) {
+    display: none;
+  }
+
+  /* ─── Sidebar toggle button ─── */
+  #sidebar-toggle {
+    position: absolute;
+    top: 10px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--muted);
+    font-size: .9rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .15s, color .15s;
+    z-index: 5;
+    flex-shrink: 0;
+  }
+  #sidebar-toggle:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* Collapsed: center the toggle */
+  #sidebar.collapsed #sidebar-toggle {
+    right: 3px;
+    top: 10px;
+  }
+
+  /* ─── Mobile overlay sidebar ─── */
+  @media (max-width: 640px) {
+    #sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 100;
+      box-shadow: 2px 0 16px rgba(0,0,0,.12);
+    }
+    #sidebar.collapsed {
+      width: 0;
+      min-width: 0;
+      padding: 0;
+      border-right: none;
+      box-shadow: none;
+    }
+    #sidebar.collapsed #sidebar-toggle {
+      display: none;
+    }
+    #mobile-open-btn {
+      display: flex !important;
+    }
+    #sidebar-overlay {
+      display: block;
+    }
+    #sidebar-overlay.hidden { display: none; }
+  }
+
+  /* Mobile open button (hamburger) — hidden on desktop */
+  #mobile-open-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-size: 1.1rem;
+    cursor: pointer;
+    z-index: 200;
+    box-shadow: 0 2px 8px rgba(37,99,235,.35);
+  }
+
+  /* Overlay backdrop */
+  #sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    z-index: 99;
   }
   #sidebar h2 {
     font-family: var(--font-head);
@@ -324,6 +425,13 @@
     background: rgba(245,246,248,0.97);
     z-index: 10;
     pointer-events: none;
+    transition: left .25s ease;
+  }
+  body.sidebar-collapsed #empty-state {
+    left: var(--toggle-w);
+  }
+  @media (max-width: 640px) {
+    #empty-state { left: 0; }
   }
   #empty-state.hidden { display: none; }
   .empty-icon {
@@ -367,6 +475,7 @@
 
 <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
 <aside id="sidebar">
+  <button id="sidebar-toggle" title="Collapse sidebar">&#x25C4;</button>
   <h2>⛅ Weather Explorer</h2>
 
   <div class="ctrl-group">
@@ -460,6 +569,10 @@
   <button id="fetch-btn">🔄 Load Data</button>
   <div id="status"></div>
 </aside>
+
+<!-- Mobile open button & overlay -->
+<button id="mobile-open-btn" title="Open sidebar">☰</button>
+<div id="sidebar-overlay" class="hidden"></div>
 
 <!-- ═══════════════════ MAIN ═══════════════════ -->
 <div id="main">
@@ -1534,6 +1647,56 @@ function feelsLike(row) {
   }
   return (flF - 32)*5/9;
 }
+
+// ════════════════════════════════════════════════════════════════
+//  SIDEBAR TOGGLE
+// ════════════════════════════════════════════════════════════════
+(function () {
+  const sidebar   = document.getElementById('sidebar');
+  const toggle    = document.getElementById('sidebar-toggle');
+  const mobileBtn = document.getElementById('mobile-open-btn');
+  const overlay   = document.getElementById('sidebar-overlay');
+  const isMobile  = () => window.innerWidth <= 640;
+
+  function collapse() {
+    sidebar.classList.add('collapsed');
+    document.body.classList.add('sidebar-collapsed');
+    toggle.innerHTML = '&#x25BA;';
+    toggle.title = 'Expand sidebar';
+    if (isMobile()) {
+      overlay.classList.add('hidden');
+      mobileBtn.style.display = 'flex';
+    }
+  }
+
+  function expand() {
+    sidebar.classList.remove('collapsed');
+    document.body.classList.remove('sidebar-collapsed');
+    toggle.innerHTML = '&#x25C4;';
+    toggle.title = 'Collapse sidebar';
+    if (isMobile()) {
+      overlay.classList.remove('hidden');
+      mobileBtn.style.display = 'none';
+    }
+  }
+
+  toggle.addEventListener('click', () => {
+    sidebar.classList.contains('collapsed') ? expand() : collapse();
+  });
+
+  mobileBtn.addEventListener('click', expand);
+  overlay.addEventListener('click', collapse);
+
+  // Auto-collapse on mobile on first load
+  if (isMobile()) collapse();
+
+  // Re-evaluate on resize
+  window.addEventListener('resize', () => {
+    if (isMobile() && !sidebar.classList.contains('collapsed')) {
+      overlay.classList.remove('hidden');
+    }
+  });
+})();
 </script>
 </body>
 </html>
