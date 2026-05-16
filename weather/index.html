@@ -118,8 +118,12 @@
     #sidebar.collapsed #sidebar-toggle {
       display: none;
     }
+    /* Show hamburger in tab-bar only on mobile when sidebar is closed */
     #mobile-open-btn {
       display: flex !important;
+    }
+    body.sidebar-open #mobile-open-btn {
+      display: none !important;
     }
     #sidebar-overlay {
       display: block;
@@ -127,25 +131,23 @@
     #sidebar-overlay.hidden { display: none; }
   }
 
-  /* Mobile open button (hamburger) — hidden on desktop */
+  /* Mobile open button (hamburger) — hidden on desktop, inline in tab-bar on mobile */
   #mobile-open-btn {
     display: none;
     align-items: center;
     justify-content: center;
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    width: 36px;
-    height: 36px;
-    background: var(--accent);
-    color: #fff;
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    background: none;
+    color: var(--accent);
     border: none;
-    border-radius: var(--radius);
-    font-size: 1.1rem;
+    border-bottom: 3px solid transparent;
+    font-size: 1.2rem;
     cursor: pointer;
-    z-index: 200;
-    box-shadow: 0 2px 8px rgba(37,99,235,.35);
+    padding: 0 6px;
   }
+  #mobile-open-btn:hover { color: var(--accent); background: var(--bg); }
 
   /* Overlay backdrop */
   #sidebar-overlay {
@@ -570,13 +572,12 @@
   <div id="status"></div>
 </aside>
 
-<!-- Mobile open button & overlay -->
-<button id="mobile-open-btn" title="Open sidebar">☰</button>
 <div id="sidebar-overlay" class="hidden"></div>
 
 <!-- ═══════════════════ MAIN ═══════════════════ -->
 <div id="main">
   <div id="tab-bar">
+    <button id="mobile-open-btn" title="Open sidebar">☰</button>
     <button class="tab-btn active" data-tab="weatherspark">At a glance</button>
     <button class="tab-btn" data-tab="data">Data</button>
     <button class="tab-btn" data-tab="month">Specific Month</button>
@@ -1656,28 +1657,25 @@ function feelsLike(row) {
   const toggle    = document.getElementById('sidebar-toggle');
   const mobileBtn = document.getElementById('mobile-open-btn');
   const overlay   = document.getElementById('sidebar-overlay');
+  const main      = document.getElementById('main');
   const isMobile  = () => window.innerWidth <= 640;
 
   function collapse() {
     sidebar.classList.add('collapsed');
+    document.body.classList.remove('sidebar-open');
     document.body.classList.add('sidebar-collapsed');
     toggle.innerHTML = '&#x25BA;';
     toggle.title = 'Expand sidebar';
-    if (isMobile()) {
-      overlay.classList.add('hidden');
-      mobileBtn.style.display = 'flex';
-    }
+    overlay.classList.add('hidden');
   }
 
   function expand() {
     sidebar.classList.remove('collapsed');
+    document.body.classList.add('sidebar-open');
     document.body.classList.remove('sidebar-collapsed');
     toggle.innerHTML = '&#x25C4;';
     toggle.title = 'Collapse sidebar';
-    if (isMobile()) {
-      overlay.classList.remove('hidden');
-      mobileBtn.style.display = 'none';
-    }
+    if (isMobile()) overlay.classList.remove('hidden');
   }
 
   toggle.addEventListener('click', () => {
@@ -1685,17 +1683,19 @@ function feelsLike(row) {
   });
 
   mobileBtn.addEventListener('click', expand);
+
+  // Close on overlay click (mobile backdrop)
   overlay.addEventListener('click', collapse);
+
+  // Close on main area click on mobile
+  main.addEventListener('click', (e) => {
+    if (isMobile() && !sidebar.classList.contains('collapsed')) {
+      collapse();
+    }
+  });
 
   // Auto-collapse on mobile on first load
   if (isMobile()) collapse();
-
-  // Re-evaluate on resize
-  window.addEventListener('resize', () => {
-    if (isMobile() && !sidebar.classList.contains('collapsed')) {
-      overlay.classList.remove('hidden');
-    }
-  });
 })();
 </script>
 </body>
