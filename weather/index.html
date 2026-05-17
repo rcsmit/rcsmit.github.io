@@ -385,6 +385,38 @@
   .legend-tbl th { text-align: left; }
   .legend-tbl td { text-align: left; }
 
+  /* ─── Location Dashboard table ─── */
+  .dash-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .85rem;
+  }
+  .dash-table th, .dash-table td {
+    padding: 7px 10px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .dash-table th {
+    background: var(--bg);
+    color: var(--muted);
+    font-weight: 600;
+    font-size: .75rem;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    text-align: right;
+    position: sticky;
+    top: 0;
+  }
+  .dash-table th:first-child,
+  .dash-table td:first-child { text-align: left; }
+  .dash-table td.dash-month {
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: .03em;
+  }
+  .dash-table tbody tr:hover td { background: rgba(37,99,235,0.05) !important; }
+
   /* ─── Trend badge ─── */
   .badge {
     display: inline-block;
@@ -509,11 +541,7 @@
       <option value="precipitation_hours">precipitation_hours</option>
       <option value="precipitation_sum">precipitation_sum</option>
       <option value="visibility_mean">visibility_mean</option>
-      <option value="visibility_min">visibility_min</option>
-      <option value="visibility_max">visibility_max</option>
       <option value="rel_humidity_mean">rel_humidity_mean</option>
-      <option value="rel_humidity_max">rel_humidity_max</option>
-      <option value="rel_humidity_min">rel_humidity_min</option>
       <option value="wind_max">wind_max</option>
       <option value="sunshine_duration">sunshine_duration</option>
       <option value="Feels_Like">Feels_Like</option>
@@ -543,6 +571,14 @@
       <option value="above">above (≥)</option>
       <option value="equal">equal (=)</option>
       <option value="below">below (≤)</option>
+    </select>
+  </div>
+
+  <div class="ctrl-group">
+    <label>Trends &amp; Threshold: complete years only</label>
+    <select id="sel-complete-years">
+      <option value="1">Yes (default)</option>
+      <option value="0">No</option>
     </select>
   </div>
 
@@ -753,10 +789,8 @@ let CURRENT_LOC = '';  // location name of currently loaded data
   // Default dates: until = today, from = Jan 1 ten years ago
   const todayDate = new Date();
   document.getElementById('inp-until').value = todayDate.toISOString().slice(0,10);
-  // const tenYearsAgo = new Date(todayDate.getFullYear() - 10, 0, 2);
-  const y = todayDate.getFullYear() - 30;
-  const tenYearsAgo = `${y}-01-01`;
-  document.getElementById('inp-from').value = tenYearsAgo.toISOString().slice(0,10);
+  const thirtyYearsAgo = `${todayDate.getFullYear() - 30}-01-01`;
+  document.getElementById('inp-from').value = thirtyYearsAgo;
 
   // Tab switching
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -776,7 +810,7 @@ let CURRENT_LOC = '';  // location name of currently loaded data
   // Auto-rerender when any non-fetch control changes (no data reload needed)
   const rerenderIds = [
     'sel-var', 'inp-sma', 'sel-yzero',
-    'inp-thresh', 'sel-above',
+    'inp-thresh', 'sel-above', 'sel-complete-years',
     'sel-month', 'inp-dmin', 'inp-dmax',
     'inp-mfrom', 'inp-mto',
   ];
@@ -837,8 +871,8 @@ async function fetchAndRender() {
   const daily_vars = [
     "rain_sum","temperature_2m_mean","temperature_2m_max","temperature_2m_min",
     "precipitation_hours","precipitation_sum",
-    "visibility_mean","visibility_min","visibility_max",
-    "relative_humidity_2m_mean","relative_humidity_2m_max","relative_humidity_2m_min",
+    "visibility_mean",
+    "relative_humidity_2m_mean",
     "wind_speed_10m_max","sunshine_duration"
   ].join(',');
 
@@ -850,6 +884,10 @@ async function fetchAndRender() {
 
   try {
     const res  = await fetch(url);
+    if (res.status === 429) {
+      startRetryCountdown(60);
+      return;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     const d    = json.daily;
@@ -870,11 +908,7 @@ async function fetchAndRender() {
         precipitation_hours:  d.precipitation_hours[i],
         precipitation_sum:    d.precipitation_sum[i],
         visibility_mean:      d.visibility_mean[i],
-        visibility_min:       d.visibility_min[i],
-        visibility_max:       d.visibility_max[i],
         rel_humidity_mean:    d.relative_humidity_2m_mean[i],
-        rel_humidity_max:     d.relative_humidity_2m_max[i],
-        rel_humidity_min:     d.relative_humidity_2m_min[i],
         wind_max:             d.wind_speed_10m_max[i],
         sunshine_duration:    d.sunshine_duration[i] != null ? d.sunshine_duration[i] / 3600 : null,
       };
@@ -897,6 +931,24 @@ function setStatus(html) {
   document.getElementById('status').innerHTML = html;
 }
 
+function startRetryCountdown(seconds) {
+  const btn = document.getElementById('fetch-btn');
+  btn.disabled = true;
+  let remaining = seconds;
+  function tick() {
+    setStatus(`⚠ Rate limited (429) — retrying in ${remaining}s…`);
+    if (remaining <= 0) {
+      setStatus('🔄 Retrying…');
+      btn.disabled = false;
+      fetchAndRender();
+      return;
+    }
+    remaining--;
+    setTimeout(tick, 1000);
+  }
+  tick();
+}
+
 // ════════════════════════════════════════════════════════════════
 //  PREPARE DATAFRAME (filter months)
 // ════════════════════════════════════════════════════════════════
@@ -907,8 +959,30 @@ function prepareDF() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  RENDER ALL TABS
+//  COMPLETE YEARS FILTER
 // ════════════════════════════════════════════════════════════════
+function filterCompleteYears(df) {
+  if (document.getElementById('sel-complete-years').value !== '1') return df;
+
+  // Find the min/max date in the full raw DF to know which years are partial
+  const allYears = uniqueSorted(DF.map(r => r.year));
+  const firstYear = allYears[0];
+  const lastYear  = allYears[allYears.length - 1];
+
+  // A year is complete if it is not the first or last year of the loaded range
+  // (edge case: if first/last year has all 365/366 days it could be complete,
+  //  but checking boundary years is the safe default)
+  const firstYearDays = DF.filter(r => r.year === firstYear).length;
+  const lastYearDays  = DF.filter(r => r.year === lastYear).length;
+  const expectedFirst = (firstYear % 4 === 0 && (firstYear % 100 !== 0 || firstYear % 400 === 0)) ? 366 : 365;
+  const expectedLast  = (lastYear  % 4 === 0 && (lastYear  % 100 !== 0 || lastYear  % 400 === 0)) ? 366 : 365;
+
+  const incompleteYears = new Set();
+  if (firstYearDays < expectedFirst) incompleteYears.add(firstYear);
+  if (lastYearDays  < expectedLast)  incompleteYears.add(lastYear);
+
+  return df.filter(r => !incompleteYears.has(r.year));
+}
 function renderAll(where) {
   DF_PREP = prepareDF();
   const toShow = document.getElementById('sel-var').value;
@@ -1075,7 +1149,7 @@ function renderMonthTab(where, toShow) {
 //  TAB 3: TRENDS
 // ════════════════════════════════════════════════════════════════
 function renderTrendsTab(where, toShow) {
-  const df = DF_PREP.filter(r => r[toShow] != null);
+  const df = filterCompleteYears(DF_PREP.filter(r => r[toShow] != null));
   if (!df.length) return;
 
   document.getElementById('trend-year-title').textContent =
@@ -1150,7 +1224,7 @@ function renderTrendsTab(where, toShow) {
 function renderThresholdTab(where, toShow) {
   const thresh    = +document.getElementById('inp-thresh').value;
   const direction = document.getElementById('sel-above').value;
-  const df        = DF_PREP.filter(r => r[toShow] != null);
+  const df        = filterCompleteYears(DF_PREP.filter(r => r[toShow] != null));
   if (!df.length) return;
 
   let filtered, auTxt;
@@ -1236,35 +1310,88 @@ function renderDashboard(where) {
     dry_day:  (r.rain_sum != null && r.rain_sum < thresh)  ? 1 : 0,
   }));
 
-  const vars = ['temp_max','rain_day','rain_sum','precipitation_hours','sunshine_duration'];
-  const varLabels = {
-    temp_max:'Max Temp (°C)', rain_day:'Rain Day (%)', rain_sum:'Rain (mm)',
-    precipitation_hours:'Prec. Hours', sunshine_duration:'Sun Hours'
-  };
+  const cols = [
+    { key: 'temp_max',             label: 'Max Temp',   unit: '°C',  fmt: v => v.toFixed(1) },
+    { key: 'temp_mean',            label: 'Avg Temp',   unit: '°C',  fmt: v => v.toFixed(1) },
+    { key: 'temp_min',             label: 'Min Temp',   unit: '°C',  fmt: v => v.toFixed(1) },
+    { key: 'rain_day',             label: 'Rain Days',  unit: '%',   fmt: v => (v*100).toFixed(0)+'%' },
+    { key: 'rain_sum',             label: 'Rain',       unit: 'mm',  fmt: v => v.toFixed(1) },
+    { key: 'precipitation_hours',  label: 'Prec. Hrs',  unit: 'h',   fmt: v => v.toFixed(1) },
+    { key: 'sunshine_duration',    label: 'Sun Hrs',    unit: 'h',   fmt: v => v.toFixed(1) },
+    { key: 'rel_humidity_mean',    label: 'Humidity',   unit: '%',   fmt: v => v.toFixed(0)+'%' },
+    { key: 'wind_max',             label: 'Wind Max',   unit: 'km/h',fmt: v => v.toFixed(1) },
+  ];
 
-  let html = '';
-  MONTH_NAMES.forEach((mName, mi) => {
-    const m = mi + 1;
+  // Build per-month averages
+  const rows = MONTH_NAMES.map((mName, mi) => {
+    const m   = mi + 1;
     const sub = df.filter(r => r.month === m);
-    html += `<div class="card"><h4>${mName}</h4>`;
-    if (!sub.length) { html += '<p style="color:var(--muted);font-size:.8rem">No data</p></div>'; return; }
-    html += '<div style="display:flex;flex-wrap:wrap;gap:10px">';
-    vars.forEach(v => {
-      const vals = sub.map(r=>r[v]).filter(x=>x!=null);
-      if (!vals.length) return;
-      let display;
-      if (v === 'rain_day' || v === 'dry_day') display = (avg(vals)*100).toFixed(0)+'%';
-      else if (v === 'sunshine_duration') display = avg(vals).toFixed(1)+' h';
-      else if (v === 'precipitation_hours') display = avg(vals).toFixed(1)+' h';
-      else display = avg(vals).toFixed(1);
-      html += `<div class="metric" style="min-width:110px;padding:10px 12px">
-        <div class="m-label">${varLabels[v]||v}</div>
-        <div class="m-value" style="font-size:1.1rem">${display}</div>
-      </div>`;
+    const vals = cols.map(c => {
+      const v = sub.map(r => r[c.key]).filter(x => x != null);
+      return v.length ? avg(v) : null;
     });
-    html += '</div></div>';
+    return { mName, vals };
   });
-  document.getElementById('dashboard-grid').innerHTML = html;
+
+  // Compute column min/max for heatmap colouring (skip rain_day % col)
+  const colRanges = cols.map((c, ci) => {
+    const all = rows.map(r => r.vals[ci]).filter(x => x != null);
+    return { min: Math.min(...all), max: Math.max(...all) };
+  });
+
+  function cellBg(ci, val) {
+    if (val == null) return '';
+    const { min, max } = colRanges[ci];
+    if (max === min) return '';
+    const t = (val - min) / (max - min);   // 0 → 1
+    // Warm columns (temps, sun, wind): blue→red; cool/rain columns: white→blue
+    const warmCols = new Set([0,1,2,6,8]);  // temp_max, temp_mean, temp_min, sunshine, wind
+    let r, g, b;
+    if (warmCols.has(ci)) {
+      // white(low) → accent-blue(mid) → red(high)
+      if (t < 0.5) {
+        const tt = t * 2;
+        r = Math.round(255 - tt*(255-37));
+        g = Math.round(255 - tt*(255-99));
+        b = Math.round(255 - tt*(255-235));
+      } else {
+        const tt = (t - 0.5) * 2;
+        r = Math.round(37  + tt*(220-37));
+        g = Math.round(99  + tt*(38-99));
+        b = Math.round(235 + tt*(38-235));
+      }
+    } else {
+      // white(low) → blue(high)
+      r = Math.round(255 - t*(255-37));
+      g = Math.round(255 - t*(255-99));
+      b = Math.round(255 - t*(255-235));
+    }
+    const textColor = t > 0.55 ? '#fff' : 'var(--text)';
+    return `background:rgba(${r},${g},${b},0.25);color:${textColor};`;
+  }
+
+  const thead = `<thead><tr>
+    <th>Month</th>
+    ${cols.map(c => `<th>${c.label}<br><span style="font-weight:400;font-size:.7rem;color:var(--muted)">${c.unit}</span></th>`).join('')}
+  </tr></thead>`;
+
+  const tbody = `<tbody>${rows.map(({mName, vals}) =>
+    `<tr>
+      <td class="dash-month">${mName}</td>
+      ${cols.map((c, ci) => {
+        const v = vals[ci];
+        const bg = cellBg(ci, v);
+        const display = v != null ? c.fmt(v) : '—';
+        return `<td style="${bg}">${display}</td>`;
+      }).join('')}
+    </tr>`
+  ).join('')}</tbody>`;
+
+  document.getElementById('dashboard-grid').innerHTML = `
+    <div class="card" style="overflow-x:auto">
+      <h3>Location Dashboard — ${where}</h3>
+      <table class="dash-table">${thead}${tbody}</table>
+    </div>`;
 }
 
 // ════════════════════════════════════════════════════════════════
