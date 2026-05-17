@@ -488,6 +488,9 @@
     <input type="text" id="inp-until" placeholder="yyyy-mm-dd">
   </div>
 
+  <button id="fetch-btn">🔄 Load Data</button>
+  <div id="status"></div>
+
   <div class="ctrl-group">
     <label>Months (start – end)</label>
     <div class="range-row">
@@ -562,8 +565,6 @@
     </div>
   </div>
 
-  <button id="fetch-btn">🔄 Load Data</button>
-  <div id="status"></div>
 </aside>
 
 <div id="sidebar-overlay" class="hidden"></div>
@@ -587,7 +588,7 @@
       <div class="empty-icon">🌤️</div>
       <div class="empty-title">No data loaded yet</div>
       <div class="empty-sub">Select a location and date range in the sidebar, then click <strong>Load Data</strong> to get started.</div>
-      <div class="empty-arrow">← Click "Load Data"</div>
+      <div class="empty-arrow" id="empty-arrow">← Click "Load Data"</div>
     </div>
     <!-- TAB: DATA -->
     <div class="tab-panel" id="tab-data">
@@ -734,6 +735,7 @@ const MONTH_NAMES = ["January","February","March","April","May","June","July","A
 // ════════════════════════════════════════════════════════════════
 let DF = [];       // raw fetched records (one per day)
 let DF_PREP = [];  // filtered + enriched
+let CURRENT_LOC = '';  // location name of currently loaded data
 
 // ════════════════════════════════════════════════════════════════
 //  INIT
@@ -751,7 +753,9 @@ let DF_PREP = [];  // filtered + enriched
   // Default dates: until = today, from = Jan 1 ten years ago
   const todayDate = new Date();
   document.getElementById('inp-until').value = todayDate.toISOString().slice(0,10);
-  const tenYearsAgo = new Date(todayDate.getFullYear() - 10, 0, 1);
+  // const tenYearsAgo = new Date(todayDate.getFullYear() - 10, 0, 2);
+  const y = todayDate.getFullYear() - 30;
+  const tenYearsAgo = `${y}-01-01`;
   document.getElementById('inp-from').value = tenYearsAgo.toISOString().slice(0,10);
 
   // Tab switching
@@ -769,10 +773,47 @@ let DF_PREP = [];  // filtered + enriched
   // Fetch button
   document.getElementById('fetch-btn').addEventListener('click', fetchAndRender);
 
+  // Auto-rerender when any non-fetch control changes (no data reload needed)
+  const rerenderIds = [
+    'sel-var', 'inp-sma', 'sel-yzero',
+    'inp-thresh', 'sel-above',
+    'sel-month', 'inp-dmin', 'inp-dmax',
+    'inp-mfrom', 'inp-mto',
+  ];
+  rerenderIds.forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      if (DF.length && CURRENT_LOC) renderAll(CURRENT_LOC);
+    });
+  });
+
   // Legend
   const tbody = document.getElementById('legend-tbody');
   LEGEND_DATA.forEach(([v,u,d]) => {
     tbody.innerHTML += `<tr><td>${v}</td><td>${u}</td><td>${d}</td></tr>`;
+  });
+
+  // Empty-state: on mobile tap opens sidebar; update arrow hint accordingly
+  const emptyState = document.getElementById('empty-state');
+  const emptyArrow = document.getElementById('empty-arrow');
+  function updateEmptyArrow() {
+    if (window.innerWidth <= 640) {
+      emptyArrow.textContent = '☰ Tap here to open settings';
+      emptyState.style.cursor = 'pointer';
+    } else {
+      emptyArrow.textContent = '← Click "Load Data"';
+      emptyState.style.cursor = '';
+    }
+  }
+  updateEmptyArrow();
+  window.addEventListener('resize', updateEmptyArrow);
+  emptyState.addEventListener('click', () => {
+    if (window.innerWidth <= 640) {
+      document.getElementById('sidebar').classList.remove('collapsed');
+      document.body.classList.add('sidebar-open');
+      document.body.classList.remove('sidebar-collapsed');
+      document.getElementById('sidebar-toggle').innerHTML = '&#x25C4;';
+      document.getElementById('sidebar-overlay').classList.remove('hidden');
+    }
   });
 })();
 
@@ -843,6 +884,7 @@ async function fetchAndRender() {
     DF.forEach(r => { r.Feels_Like = feelsLike(r); });
 
     renderAll(loc.name);
+    CURRENT_LOC = loc.name;
     setStatus(`✓ ${DF.length} days loaded for ${loc.name}`);
     document.getElementById('empty-state').classList.add('hidden');
   } catch(e) {
@@ -1253,8 +1295,10 @@ function renderWeatherspark(where) {
   const baseWs = {
     plot_bgcolor:'#fff', paper_bgcolor:'#fff',
     xaxis:{tickvals:monthTicks, ticktext:monthLabels, showgrid:false, zeroline:false},
-    margin:{l:60,r:60,t:50,b:70},
+    margin:{l:60,r:20,t:50,b:100},
     height:420, hovermode:'x unified',
+    legend:{orientation:'h', x:0, y:-0.22, xanchor:'left', yanchor:'top', bgcolor:'rgba(255,255,255,0.7)', borderwidth:0},
+    font:{family:'Lato, Segoe UI, sans-serif', size:12, color:'#1e2330'},
   };
 
   // ── Temperature ──
@@ -1609,9 +1653,9 @@ function baseLayout(title, xTitle, yTitle) {
     xaxis:{title:xTitle, showgrid:false, zeroline:false},
     yaxis:{title:yTitle, showgrid:true, gridcolor:'#e8e8e8', zeroline:false},
     plot_bgcolor:'#fff', paper_bgcolor:'#fff',
-    margin:{l:60,r:30,t:50,b:60},
+    margin:{l:60,r:30,t:50,b:100},
     height:380,
-    legend:{bgcolor:'rgba(255,255,255,0.7)', borderwidth:0},
+    legend:{bgcolor:'rgba(255,255,255,0.7)', borderwidth:0, orientation:'h', x:0, y:-0.18, xanchor:'left', yanchor:'top'},
     font:{family:'Lato, Segoe UI, sans-serif', size:12, color:'#1e2330'},
   };
 }
