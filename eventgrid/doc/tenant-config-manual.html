@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tenant Config Manual</title>
+  <style>
+    :root {
+      --primary: #f19072;
+      --secondary: #12807a;
+      --background: #fef6f4;
+      --text: #2a2a2a;
+      --muted: #7a7a7a;
+      --border: #e0d4cf;
+      --light: #fcdacf;
+      --card-bg: #ffffff;
+    }
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: var(--background);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+    
+    .container {
+      max-width: 950px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 3rem 2.5rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+    }
+    
+    h1 {
+      font-size: 2.8rem;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+      font-weight: 700;
+    }
+    
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.1rem;
+      margin-bottom: 2rem;
+      font-weight: 400;
+    }
+    
+    h2 {
+      font-size: 1.9rem;
+      color: var(--secondary);
+      margin-top: 2.5rem;
+      margin-bottom: 1.2rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 3px solid var(--light);
+      font-weight: 700;
+    }
+    
+    h2:first-of-type {
+      margin-top: 1.5rem;
+    }
+    
+    h3 {
+      font-size: 1.3rem;
+      color: var(--primary);
+      margin-top: 1.8rem;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+    }
+    
+    h4 {
+      font-size: 1.05rem;
+      color: var(--text);
+      margin-top: 1.2rem;
+      margin-bottom: 0.6rem;
+      font-weight: 600;
+    }
+    
+    p {
+      margin-bottom: 1rem;
+      line-height: 1.8;
+      color: var(--text);
+    }
+    
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: "Monaco", "Courier New", monospace;
+      font-size: 0.9em;
+      color: #d63384;
+    }
+    
+    pre {
+      background: #f5f5f5;
+      border-left: 4px solid var(--primary);
+      padding: 1.2rem;
+      overflow-x: auto;
+      margin: 1.2rem 0;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    
+    pre code {
+      background: none;
+      padding: 0;
+      color: var(--text);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.2rem 0;
+      font-size: 0.95rem;
+    }
+    
+    table th {
+      background: var(--light);
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid var(--border);
+    }
+    
+    table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    table tr:nth-child(even) {
+      background: #fafafa;
+    }
+    
+    table tr:hover {
+      background: #f5f5f5;
+    }
+    
+    strong {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    
+    em {
+      font-style: italic;
+    }
+    
+    hr {
+      border: none;
+      border-top: 2px solid var(--light);
+      margin: 2.5rem 0;
+    }
+    
+    ul, ol {
+      margin-left: 2rem;
+      margin-bottom: 1.2rem;
+    }
+    
+    li {
+      margin-bottom: 0.6rem;
+      line-height: 1.8;
+      color: var(--text);
+    }
+    
+    .checklist {
+      list-style: none;
+      margin-left: 0;
+    }
+    
+    .checklist li {
+      padding: 0.8rem 1rem;
+      margin-bottom: 0.5rem;
+      background: #fafafa;
+      border-radius: 4px;
+      border-left: 3px solid var(--secondary);
+    }
+    
+    .checklist li:before {
+      content: "☐ ";
+      color: var(--primary);
+      font-weight: bold;
+      margin-right: 0.5rem;
+    }
+    
+    a {
+      color: var(--secondary);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--secondary);
+    }
+    
+    a:hover {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+    
+    .status-good {
+      color: #27ae60;
+      font-weight: 600;
+    }
+    
+    .status-bad {
+      color: #e74c3c;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+<h1>Tenant Config Manual</h1>
+<p class="subtitle">How to create a config file for a new event listing site on this platform.</p>
+
+<hr>
+
+<h2>Overview</h2>
+
+<p>Every site (tenant) is defined by a single JSON file: <code>[tenantid].config.json</code>.<br>
+This file controls everything — branding, data source, categories, labels, sharing, and more.<br>
+No code changes are needed to launch a new tenant; only <code>config.js</code> needs one line updated to point to the new file.</p>
+
+<h2>Step 1 — Name your tenant</h2>
+
+<h3><code>tenant.name</code> — CamelCase two-word compound, required</h3>
+
+<p>The tenant name <strong>must</strong> be a CamelCase compound of exactly two words joined together, with no space. Examples:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Good ✅</th>
+      <th>Bad ❌</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>AcroInsiders</code></td>
+      <td><code>Acro Insiders</code> (space)</td>
+    </tr>
+    <tr>
+      <td><code>BailaConmigo</code></td>
+      <td><code>bailaconmigo</code> (no capitals)</td>
+    </tr>
+    <tr>
+      <td><code>KaraokeEvents</code></td>
+      <td><code>Karaoke_Events</code> (underscore)</td>
+    </tr>
+    <tr>
+      <td><code>SalsaNights</code></td>
+      <td><code>SalsaNightsWorld</code> (three words)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Why:</strong> The loading overlay splits the name on the second capital letter to render it in two colours — e.g. <code>Acro</code> in white and <code>Insiders</code> in a dimmed tint. A name with no second capital, or with more than two parts, will display incorrectly.</p>
+
+<h3><code>tenant.id</code> — lowercase, no spaces</h3>
+
+<p>Used internally in console logs and ICS file UIDs. Typically the name lowercased: <code>acroinsiders</code>, <code>bailaconmigo</code>.</p>
+
+<h2>Step 2 — Fill in the full <code>tenant</code> block</h2>
+
+<pre><code>{
+  "tenant": {
+    "id": "acroinsiders",
+    "name": "AcroInsiders",
+    "tagline": "Find acroyoga events worldwide",
+    "status": "active",
+    "plan": "pro",
+    "created_at": "2026-05-01",
+    "custom_domain": "acroinsiders.com",
+    "subdomain": "acroinsiders"
+  }
+}</code></pre>
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>id</code></td>
+      <td>Lowercase identifier, used in logs and ICS files</td>
+    </tr>
+    <tr>
+      <td><code>name</code></td>
+      <td>Display name — <strong>must be CamelCase two-word compound</strong> (see above)</td>
+    </tr>
+    <tr>
+      <td><code>tagline</code></td>
+      <td>Short description shown in the browser tab title</td>
+    </tr>
+    <tr>
+      <td><code>status</code></td>
+      <td><code>active</code> or <code>inactive</code></td>
+    </tr>
+    <tr>
+      <td><code>plan</code></td>
+      <td>For your own records; not used by the platform</td>
+    </tr>
+    <tr>
+      <td><code>created_at</code></td>
+      <td>ISO date, for your own records</td>
+    </tr>
+    <tr>
+      <td><code>custom_domain</code></td>
+      <td>Used to build deep links and the back-to-events URL</td>
+    </tr>
+    <tr>
+      <td><code>subdomain</code></td>
+      <td>Fallback if <code>custom_domain</code> is not set</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Step 3 — Branding</h2>
+
+<pre><code>{
+  "branding": {
+    "colors": {
+      "primary":         "#f19072",
+      "secondary":       "#12807a",
+      "background":      "#fef6f4",
+      "text":            "#2a2a2a",
+      "muted":           "#7a7a7a",
+      "border":          "#e0d4cf",
+      "primary_light":   "#fcdacf",
+      "secondary_dark":  "#0d5f5a",
+      "card_background": "#ffffff"
+    },
+    "fonts": {
+      "heading": "Corben",
+      "body":    "Josefin Sans"
+    },
+    "logo_url":    "https://yourdomain.com/logo.png",
+    "favicon_url": "https://yourdomain.com/favicon.ico",
+    "dark_mode":   false
+  }
+}</code></pre>
+
+<p>All color values are hex. They map to CSS variables used throughout the site:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Field</th>
+      <th>CSS var</th>
+      <th>Used for</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>primary</code></td>
+      <td><code>--p1</code></td>
+      <td>Header background, accents, CTA hover</td>
+    </tr>
+    <tr>
+      <td><code>secondary</code></td>
+      <td><code>--p2</code></td>
+      <td>Dates, links, secondary buttons</td>
+    </tr>
+    <tr>
+      <td><code>background</code></td>
+      <td><code>--p8</code></td>
+      <td>Page background</td>
+    </tr>
+    <tr>
+      <td><code>card_background</code></td>
+      <td><code>--p9</code></td>
+      <td>Event card and modal background</td>
+    </tr>
+    <tr>
+      <td><code>primary_light</code></td>
+      <td><code>--p7</code></td>
+      <td>Hover tints, filter backgrounds</td>
+    </tr>
+    <tr>
+      <td><code>secondary_dark</code></td>
+      <td><code>--p2-dark</code></td>
+      <td>Darker secondary accents</td>
+    </tr>
+    <tr>
+      <td><code>muted</code></td>
+      <td><code>--p5</code></td>
+      <td>Subdued text (locations, counts)</td>
+    </tr>
+    <tr>
+      <td><code>border</code></td>
+      <td><code>--p6</code></td>
+      <td>Card borders, dividers</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Fonts</strong> must be valid Google Fonts names. They are loaded automatically — no <code>&lt;link&gt;</code> tag needed. Use the exact name as it appears on fonts.google.com, e.g. <code>"Josefin Sans"</code>, <code>"Corben"</code>, <code>"Righteous"</code>, <code>"Nunito"</code>.</p>
+
+<h2>Step 4 — Content labels</h2>
+
+<pre><code>{
+  "content": {
+    "language":    "en",
+    "timezone":    "UTC",
+    "currency":    "EUR",
+    "date_format": "DD MMM YYYY",
+    "labels": {
+      "events":               "Events",
+      "submit_event":         "Submit an Event",
+      "no_events":            "No events found",
+      "search_placeholder":   "Search events…",
+      "all_categories":       "All types",
+      "all_continents":       "All continents",
+      "all_countries":        "All countries",
+      "load_more":            "Load more",
+      "list_view":            "List",
+      "calendar_view":        "Calendar",
+      "map_view":             "Map",
+      "share_whatsapp":       "💬 Share on WhatsApp",
+      "add_to_calendar":      "📅 Add to Google Calendar",
+      "copy_link":            "🔗 Copy link",
+      "visit_website":        "🔗 Visit website →",
+      "back_to_events":       "← All Events",
+      "past_event":           "Past event",
+      "ongoing_event":        "Ongoing"
+    }
+  }
+}</code></pre>
+
+<p>All labels can be translated or customised. They appear in filter dropdowns, buttons, and the event modal.</p>
+
+<h2>Step 5 — Categories</h2>
+
+<p>Each category gets an id, a display label, an emoji icon, and a colour used for badges.</p>
+
+<pre><code>{
+  "categories": [
+    { "id": "festival",   "label": "Festival",   "icon": "🎪", "color": "#f19072" },
+    { "id": "retreat",    "label": "Retreat",    "icon": "🏕️", "color": "#12807a" },
+    { "id": "intensive",  "label": "Intensive",  "icon": "🔥", "color": "#f59e0b" },
+    { "id": "event",      "label": "Event",      "icon": "📍", "color": "#ef4444" },
+    { "id": "training",   "label": "Training",   "icon": "🎓", "color": "#8b5cf6" }
+  ]
+}</code></pre>
+
+<ul>
+  <li>The order here determines the order of filter pills in the UI.</li>
+  <li><code>label</code> must exactly match what appears in the data spreadsheet's category column.</li>
+  <li><code>id</code> is lowercase, used internally only.</li>
+  <li>Add or remove categories freely — the UI builds from this list.</li>
+</ul>
+
+<h2>Step 6 — Locations</h2>
+
+<pre><code>{
+  "locations": {
+    "mode": "continents",
+    "regions": [
+      "Africa", "Asia", "Europe",
+      "North America", "Oceania", "South America"
+    ]
+  }
+}</code></pre>
+
+<p><code>regions</code> defines which continent filter options appear. Values must match what is used in the spreadsheet's continent column.</p>
+
+<h2>Step 7 — Views</h2>
+
+<pre><code>{
+  "views": {
+    "default":   "list",
+    "available": ["list", "calendar", "map"],
+    "list": {
+      "page_size":                  9,
+      "min_page_size":              9,
+      "card_min_width_px":          320,
+      "min_rows":                   3,
+      "show_cat_picks":             true,
+      "cat_picks_label":            "Cat's Picks",
+      "cat_picks_field":            "sticky",
+      "cat_picks_icon":             "⭐",
+      "show_featured_image":        true,
+      "show_description_truncated": true,
+      "show_tags":                  false,
+      "show_venue":                 true,
+      "show_visible_count":         true
+    },
+    "calendar": {
+      "start_day":               "monday",
+      "show_empty_month_message": true
+    },
+    "map": {
+      "default_lat":  20.0,
+      "default_lon":  10.0,
+      "default_zoom": 2
+    }
+  }
+}</code></pre>
+
+<h4>List view notes:</h4>
+<ul>
+  <li><code>page_size</code> — number of cards per page on desktop</li>
+  <li><code>min_page_size</code> — minimum cards shown (used by the preview widget)</li>
+  <li><code>cat_picks_label</code> — the heading shown above highlighted events (e.g. "Cat's Picks", "Staff Picks", "Miguel's Picks")</li>
+  <li><code>cat_picks_field</code> — the spreadsheet column that marks an event as picked (truthy value = shown in picks strip)</li>
+  <li><code>show_featured_image</code> — set <code>false</code> if your data has no images</li>
+</ul>
+
+<h4>Map view notes:</h4>
+<ul>
+  <li><code>default_lat</code> / <code>default_lon</code> — where the map centres on first load</li>
+  <li><code>default_zoom</code> — 2 shows the whole world; increase to zoom in on a region</li>
+</ul>
+
+<h2>Step 8 — Submission</h2>
+
+<pre><code>{
+  "submission": {
+    "enabled":                true,
+    "requires_approval":      true,
+    "duplicate_check":        true,
+    "duplicate_check_fields": ["name", "start_date"],
+    "notification_email":     "hello@yourdomain.com",
+    "confirmation_message":   "Thanks! Your event will appear after review.",
+    "allowed_submitters":     "anyone",
+    "google_sheet_id":        "YOUR_SHEET_ID_HERE",
+    "google_sheet_tab":       "data"
+  }
+}</code></pre>
+
+<p>Set <code>enabled: false</code> to hide the submit form entirely.</p>
+
+<h2>Step 9 — Sharing</h2>
+
+<pre><code>{
+  "sharing": {
+    "whatsapp":           true,
+    "whatsapp_template":  "Check out this event!\n{name}\n{start_date} – {end_date}\n📍 {city}, {country}\n{url}",
+    "gcal":               true,
+    "copy_link":          true,
+    "copy_link_template": "https://yourdomain.com/show-event/?id={slug}"
+  }
+}</code></pre>
+
+<p>Available placeholders in <code>whatsapp_template</code>: <code>{name}</code>, <code>{start_date}</code>, <code>{end_date}</code>, <code>{city}</code>, <code>{country}</code>, <code>{url}</code>.</p>
+
+<p><code>copy_link_template</code> uses <code>{slug}</code> (auto-generated from event name + date). Set <code>whatsapp</code>, <code>gcal</code>, or <code>copy_link</code> to <code>false</code> to hide those buttons in the event modal.</p>
+
+<h2>Step 10 — Data source</h2>
+
+<pre><code>{
+  "data_source": {
+    "type":               "sheets",
+    "worker_url":         "https://your-worker.workers.dev/events",
+    "fallback_type":      "csv",
+    "fallback_sheet_id":  "YOUR_GOOGLE_SHEET_ID",
+    "fallback_sheet_tab": "data",
+    "columns": {
+      "url":            "URL",
+      "name":           "EVENT NAME",
+      "venue":          "EVENT VENUE NAME",
+      "start_date":     "EVENT START DATE",
+      "end_date":       "EVENT END DATE",
+      "all_day":        "ALL DAY EVENT",
+      "timezone":       "TIMEZONE",
+      "category":       "EVENT CATEGORY",
+      "continent":      "CONTINENT",
+      "tags":           "EVENT TAGS",
+      "featured_image": "EVENT FEATURED IMAGE",
+      "website":        "EVENT WEBSITE",
+      "description":    "EVENT DESCRIPTION",
+      "city":           "CITY",
+      "state":          "STATE",
+      "country":        "COUNTRY",
+      "sticky":         "STICKY IN MONTH VIEW",
+      "lat":            "LAT",
+      "lon":            "LON",
+      "insider_deals":  "INSIDER DEAL"
+    }
+  }
+}</code></pre>
+
+<ul>
+  <li><code>worker_url</code> — the Cloudflare Worker endpoint that returns <code>{ rows: [...] }</code>. Leave as <code>""</code> if not using a worker; the platform will go straight to the CSV fallback.</li>
+  <li><code>fallback_sheet_id</code> — the Google Sheets ID from the URL: <code>docs.google.com/spreadsheets/d/</code><strong><code>THIS_PART</code></strong><code>/edit</code></li>
+  <li><code>fallback_sheet_tab</code> — the tab name (default: <code>data</code>)</li>
+  <li><code>columns</code> — maps internal field names to your actual spreadsheet column headers. <strong>The right-hand values must exactly match your sheet's header row</strong>, including capitalisation and spaces.</li>
+</ul>
+
+<p>The sheet must be shared as <strong>"Anyone with the link can view"</strong>.</p>
+
+<h2>Step 11 — Activate the tenant</h2>
+
+<p>In <code>config.js</code>, change the one line at the top:</p>
+
+<pre><code>const TENANT_CONFIG_FILE = 'yourtenant.config.json';</code></pre>
+
+<p>That's it. All scripts read <code>TENANT_CONFIG_FILE</code> on load — no other file needs touching.</p>
+
+<h2>Quick checklist</h2>
+
+<ul class="checklist">
+  <li><code>tenant.name</code> is a CamelCase two-word compound (e.g. <code>SalsaNights</code>)</li>
+  <li><code>tenant.custom_domain</code> is set (used for deep links and back-to-events URL)</li>
+  <li>All <code>categories[].label</code> values match what appears in the spreadsheet</li>
+  <li><code>data_source.columns</code> values match the spreadsheet header row exactly</li>
+  <li>Google Sheet is shared as "Anyone with the link can view"</li>
+  <li><code>TENANT_CONFIG_FILE</code> in <code>config.js</code> points to the new file</li>
+</ul>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Submit an Event – AcroInsiders</title>
+<link href="https://fonts.googleapis.com/css2?family=Corben:wght@400;700&family=Josefin+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fef6f4;
+    --p1: #f19072;
+    --p2: #12807a;
+    --p2-dark: #0d5f5a;
+    --p1-light: #fde8e0;
+    --text: #2a2a2a;
+    --muted: #7a7a7a;
+    --border: #e0d4cf;
+    --white: #ffffff;
+    --error: #c0392b;
+    --warn-bg: #fff8e1;
+    --warn-border: #f0b429;
+    --success-bg: #e6f7f6;
+    --success-border: #12807a;
+    --radius: 10px;
+    --shadow: 0 2px 16px rgba(18,128,122,0.10);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); font-family: 'Josefin Sans', sans-serif; color: var(--text); min-height: 100vh; padding: 0 0 60px; }
+
+  /* Header */
+  .site-header { background: var(--white); border-bottom: 2px solid var(--p1-light); padding: 18px 24px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 8px rgba(241,144,114,0.08); }
+  .logo-mark { width: 42px; height: 42px; background: var(--p1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Corben', serif; color: white; font-size: 18px; font-weight: 700; flex-shrink: 0; }
+  .site-header h1 { font-family: 'Corben', serif; font-size: 1.4rem; color: var(--p2); line-height: 1.1; }
+  .site-header h1 span { color: var(--p1); }
+  .site-header p { font-size: 0.75rem; color: var(--muted); margin-top: 2px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+  /* Layout */
+  .page-wrap { max-width: 700px; margin: 40px auto 0; padding: 0 20px; }
+  .intro { margin-bottom: 28px; text-align: center; }
+  .intro h2 { font-family: 'Corben', serif; font-size: 1.7rem; color: var(--p2); margin-bottom: 8px; }
+  .intro p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+  .card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); padding: 32px 28px; }
+
+  /* Form section titles */
+  .form-section-title { font-family: 'Corben', serif; font-size: 0.95rem; color: var(--p2); border-bottom: 1.5px solid var(--p1-light); padding-bottom: 6px; margin-bottom: 0; grid-column: 1 / -1; }
+
+  /* Form grid */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  label { display: block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--p2); margin-bottom: 6px; }
+  label .req { color: var(--p1); margin-left: 2px; }
+  input, select, textarea { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 7px; padding: 10px 13px; font-family: 'Josefin Sans', sans-serif; font-size: 0.9rem; color: var(--text); transition: border-color 0.18s, box-shadow 0.18s; outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: var(--p2); box-shadow: 0 0 0 3px rgba(18,128,122,0.10); }
+  textarea { resize: vertical; min-height: 90px; }
+  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2312807a' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .hint { font-size: 0.73rem; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+
+  /* Autocomplete */
+  .ac-wrap { position: relative; }
+  .ac-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 100; background: var(--white); border: 1.5px solid var(--p2); border-top: none; border-radius: 0 0 7px 7px; max-height: 200px; overflow-y: auto; box-shadow: 0 4px 16px rgba(18,128,122,0.13); }
+  .ac-dropdown.open { display: block; }
+  .ac-item { padding: 9px 13px; font-size: 0.87rem; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.12s; line-height: 1.35; }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover, .ac-item.sel { background: var(--p1-light); }
+  .ac-item strong { color: var(--p2-dark); display: block; }
+  .ac-item span { font-size: 0.78rem; color: var(--muted); }
+  .ac-wrap input.open { border-radius: 7px 7px 0 0; border-bottom-color: var(--p2); }
+
+  /* Auto-fill badge */
+  .af-badge { display: none; align-items: center; gap: 3px; font-size: 0.68rem; color: var(--p2); background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; font-weight: 600; }
+
+  /* Duplicate warning */
+  #duplicateSection { display: none; }
+  .warn-box { background: var(--warn-bg); border: 1.5px solid var(--warn-border); border-radius: var(--radius); padding: 18px 20px; }
+  .warn-title { display: flex; align-items: center; gap: 8px; font-family: 'Corben', serif; font-size: 1rem; color: #8a6200; margin-bottom: 10px; }
+  .warn-box p { font-size: 0.85rem; color: #6b4f00; margin-bottom: 12px; line-height: 1.5; }
+  .similar-list { list-style: none; margin-bottom: 14px; }
+  .similar-list li { background: white; border: 1px solid var(--warn-border); border-radius: 6px; padding: 10px 13px; margin-bottom: 8px; font-size: 0.83rem; line-height: 1.5; }
+  .similar-list li strong { color: var(--p2-dark); display: block; margin-bottom: 2px; }
+  .similar-list li span { color: var(--muted); }
+  .confirm-question { font-size: 0.88rem; font-weight: 600; color: #6b4f00; margin-bottom: 12px; }
+  .confirm-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: none; border-radius: 7px; padding: 11px 22px; font-family: 'Josefin Sans', sans-serif; font-size: 0.88rem; font-weight: 600; letter-spacing: 0.04em; cursor: pointer; transition: background 0.18s, transform 0.12s, box-shadow 0.18s; text-decoration: none; }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--p1); color: white; box-shadow: 0 3px 12px rgba(241,144,114,0.30); }
+  .btn-primary:hover { background: #e07a5a; }
+  .btn-primary:disabled { background: #ddd; box-shadow: none; cursor: not-allowed; }
+  .btn-teal { background: var(--p2); color: white; box-shadow: 0 3px 12px rgba(18,128,122,0.25); }
+  .btn-teal:hover { background: var(--p2-dark); }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1.5px solid var(--border); }
+  .btn-ghost:hover { background: var(--p1-light); color: var(--text); border-color: var(--p1); }
+  .btn-full { width: 100%; margin-top: 24px; padding: 14px; font-size: 0.95rem; }
+
+  /* Status messages */
+  .status-msg { border-radius: var(--radius); padding: 14px 18px; font-size: 0.87rem; line-height: 1.5; display: none; margin-top: 20px; }
+  .status-msg.error { background: #fdecea; border: 1.5px solid var(--error); color: var(--error); }
+
+  /* Spinner */
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.65s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Steps */
+  .steps { display: flex; align-items: center; justify-content: center; margin-bottom: 28px; }
+  .step { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .step.active { color: var(--p2); }
+  .step.done { color: var(--p1); }
+  .step-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; border: 2px solid currentColor; flex-shrink: 0; }
+  .step.done .step-num { background: var(--p1); border-color: var(--p1); color: white; }
+  .step.active .step-num { background: var(--p2); border-color: var(--p2); color: white; }
+  .step-line { width: 40px; height: 2px; background: var(--border); margin: 0 4px; }
+  .step-line.done { background: var(--p1); }
+
+  /* Success */
+  #successState { display: none; }
+  .success-hero { text-align: center; padding: 36px 20px 28px; }
+  .checkmark { width: 70px; height: 70px; background: var(--p2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; animation: popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275); }
+  @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .success-hero h3 { font-family: 'Corben', serif; color: var(--p2); font-size: 1.5rem; margin-bottom: 8px; }
+  .success-hero p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+
+  /* Next steps */
+  .next-steps { border-top: 1.5px solid var(--border); padding: 24px 28px 28px; }
+  .next-steps h4 { font-family: 'Corben', serif; color: var(--p2); font-size: 1.05rem; margin-bottom: 16px; }
+  .nsteps-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+  .nsteps-list li { display: flex; align-items: flex-start; gap: 13px; font-size: 0.87rem; line-height: 1.5; }
+  .ns-icon { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; margin-top: 1px; }
+  .ns-icon.ora { background: var(--p1-light); }
+  .ns-icon.tea { background: var(--success-bg); }
+  .nsteps-list b { color: var(--p2-dark); display: block; margin-bottom: 2px; font-weight: 600; }
+  .nsteps-list span { color: var(--muted); }
+  .success-actions { display: flex; gap: 10px; flex-wrap: wrap; padding: 4px 28px 28px; }
+
+  /* Submit error / email fallback */
+  #submitError { display: none; }
+  .err-box { background: #fdecea; border: 1.5px solid var(--error); border-radius: var(--radius); padding: 20px 22px; }
+  .err-title { display: flex; align-items: center; gap: 8px; font-family: 'Corben', serif; font-size: 1rem; color: var(--error); margin-bottom: 10px; }
+  .err-box > p { font-size: 0.85rem; color: #7a1a1a; margin-bottom: 14px; line-height: 1.5; }
+  .err-box a { color: var(--error); font-weight: 600; }
+  .copy-label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: #7a1a1a; margin-bottom: 6px; }
+  .copy-block-wrap { position: relative; margin-bottom: 14px; }
+  .copy-block {
+    background: white; border: 1px solid #f5c6c6; border-radius: 7px;
+    padding: 13px 16px 13px 16px; font-family: 'Courier New', monospace; font-size: 0.78rem;
+    line-height: 1.9; color: #2a2a2a; white-space: pre; overflow-x: auto;
+    max-height: 300px; overflow-y: auto; user-select: all;
+  }
+  .copy-block .col-label { color: var(--muted); font-size: 0.72rem; }
+  .copy-btn {
+    display: block; width: 100%; margin-top: 8px;
+    background: var(--error); color: white; border: none; border-radius: 6px;
+    padding: 9px; font-family: 'Josefin Sans', sans-serif;
+    font-size: 0.82rem; font-weight: 600; cursor: pointer; letter-spacing: 0.04em;
+    transition: background 0.15s; text-align: center;
+  }
+  .copy-btn:hover { background: #a93226; }
+  .copy-btn.copied { background: var(--p2); }
+  .err-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+
+  @media (max-width: 520px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid .full { grid-column: 1; }
+    .card { padding: 22px 16px; }
+    .step span:not(.step-num) { display: none; }
+    .next-steps, .success-actions { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+
+
+<div class="page-wrap">
+  <div class="intro">
+    <h2>DO NOT USE !!!! TEST ONLY || Submit an Event</h2>
+    <p>Share your acroyoga event with the global community.<br>We'll check for duplicates before adding it to the calendar.</p>
+  </div>
+
+  <div class="steps" id="stepIndicator">
+    <div class="step active" id="step1ind"><span class="step-num">1</span><span>Details</span></div>
+    <div class="step-line" id="line1"></div>
+    <div class="step" id="step2ind"><span class="step-num">2</span><span>Verify</span></div>
+    <div class="step-line" id="line2"></div>
+    <div class="step" id="step3ind"><span class="step-num">3</span><span>Submit</span></div>
+  </div>
+
+  <div class="card">
+
+    <!-- ══ FORM ══ -->
+    <div id="formSection">
+      <div class="form-grid">
+
+        <div class="full"><div class="form-section-title">Event Details</div></div>
+
+        <div class="full">
+          <label>Event Name <span class="req">*</span></label>
+          <input type="text" id="eventName" placeholder="e.g. Berlin Acro Jam Summer Edition" />
+        </div>
+        <div>
+          <label>Start Date <span class="req">*</span></label>
+          <input type="date" id="startDate" />
+        </div>
+        <div>
+          <label>End Date</label>
+          <input type="date" id="endDate" />
+        </div>
+        <div>
+          <label>Category</label>
+          <select id="category">
+            <option value="">Select…</option>
+            <option>Festival</option><option>Retreat</option><option>Intensive</option>
+            <option>Event</option><option>Training</option>
+          </select>
+        </div>
+        <div>
+          <label>Event Website / Tickets</label>
+          <input type="url" id="website" placeholder="https://…" />
+          <div class="hint">Must start with https:// or http://</div>
+        </div>
+        <div class="full">
+          <label>Description</label>
+          <textarea id="description" placeholder="Briefly describe the event…"></textarea>
+          <div class="hint">Optional — helps with search and discovery on AcroInsiders.</div>
+        </div>
+
+        <!-- Venue -->
+        <div class="full"><div class="form-section-title">Venue</div></div>
+
+        <div class="full">
+          <label>Venue Name <span class="req">*</span> <span class="af-badge" id="badge_venueName">✓ auto-filled</span></label>
+          <div class="ac-wrap">
+            <input type="text" id="venueName" placeholder="e.g. Tempodrom" autocomplete="off"
+              oninput="acInput('venueName')" onkeydown="acKey(event,'venueName')"
+              onfocus="acInput('venueName')" onblur="acBlur('venueName')" />
+            <div class="ac-dropdown" id="dd_venueName"></div>
+          </div>
+          <div class="hint">Start typing — we'll suggest venues already in our database.</div>
+        </div>
+
+        <div class="full">
+          <label>Venue City <span class="req">*</span> <span class="af-badge" id="badge_venueCity">✓ auto-filled</span></label>
+          <div class="ac-wrap">
+            <input type="text" id="venueCity" placeholder="e.g. Berlin" autocomplete="off"
+              oninput="acInput('venueCity')" onkeydown="acKey(event,'venueCity')"
+              onfocus="acInput('venueCity')" onblur="acBlur('venueCity')" />
+            <div class="ac-dropdown" id="dd_venueCity"></div>
+          </div>
+        </div>
+
+        <div>
+          <label>Venue State / Province</label>
+          <div class="ac-wrap">
+            <input type="text" id="venueState" placeholder="e.g. Bavaria" autocomplete="off"
+              oninput="acInput('venueState')" onkeydown="acKey(event,'venueState')"
+              onfocus="acInput('venueState')" onblur="acBlur('venueState')" />
+            <div class="ac-dropdown" id="dd_venueState"></div>
+          </div>
+        </div>
+
+        <div>
+          <label>Venue Country <span class="req">*</span> <span class="af-badge" id="badge_venueCountry">✓ auto-filled</span></label>
+          <div class="ac-wrap">
+            <input type="text" id="venueCountry" placeholder="e.g. Germany" autocomplete="off"
+              oninput="acInput('venueCountry')" onkeydown="acKey(event,'venueCountry')"
+              onfocus="acInput('venueCountry')" onblur="acBlur('venueCountry')" />
+            <div class="ac-dropdown" id="dd_venueCountry"></div>
+          </div>
+        </div>
+
+        <div>
+          <label>Venue Continent <span class="req">*</span> <span class="af-badge" id="badge_venueContinent">✓ auto-filled</span></label>
+          <select id="venueContinent">
+            <option value="">Select…</option>
+            <option>Europe</option><option>North America</option><option>South America</option>
+            <option>Asia</option><option>Africa</option><option>Oceania</option><option>Middle East</option>
+          </select>
+        </div>
+
+        <!-- Submitter -->
+        <div class="full"><div class="form-section-title">Your Details</div></div>
+        <div>
+          <label>Your Name / Organizer</label>
+          <input type="text" id="submitterName" placeholder="Your name or org" />
+        </div>
+        <div>
+          <label>Contact Email</label>
+          <input type="email" id="submitterEmail" placeholder="you@example.com" />
+          <div class="hint">Only used to follow up on your submission.</div>
+        </div>
+
+      </div><!-- /form-grid -->
+
+      <div id="formError" class="status-msg error"></div>
+      <button class="btn btn-primary btn-full" id="checkBtn" onclick="checkDuplicates()">
+        Check &amp; Continue →
+      </button>
+    </div><!-- /formSection -->
+
+    <!-- ══ DUPLICATE CHECK ══ -->
+    <div id="duplicateSection">
+      <div class="warn-box">
+        <div class="warn-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f0b429" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Similar events found
+        </div>
+        <p id="warnText"></p>
+        <ul class="similar-list" id="similarList"></ul>
+        <div class="confirm-question">Are you sure your event is different and unique?</div>
+        <div class="confirm-buttons">
+          <button class="btn btn-teal" onclick="confirmUnique()">Yes, it's a different event — submit anyway</button>
+          <button class="btn btn-ghost" onclick="goBack()">← Go back and edit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SUBMIT ERROR ══ -->
+    <div id="submitError">
+      <div class="err-box">
+        <div class="err-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Submission failed
+        </div>
+        <p>Something went wrong sending your event to our system. No worries — copy the details below and email them to <a href="mailto:hello@acroinsiders.com">hello@acroinsiders.com</a> and Cat will add it manually.</p>
+        <div class="copy-label">Your event data — ready to paste into email</div>
+        <div class="copy-block-wrap">
+          <pre class="copy-block" id="copyBlock"></pre>
+        </div>
+        <button class="copy-btn" id="copyBtn" onclick="copyData()">📋 Copy to clipboard</button>
+        <div class="err-actions">
+          <a class="btn btn-ghost" id="mailtoBtn" href="#">✉️ Open in email app</a>
+          <button class="btn btn-ghost" onclick="goBackFromError()">← Go back and try again</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SUCCESS ══ -->
+    <div id="successState">
+      <div class="success-hero">
+        <div class="checkmark">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h3>Event Submitted!</h3>
+        <p>Thanks! Your event has been added to our review queue.<br>We typically review submissions within 48 hours.</p>
+      </div>
+
+      <div class="next-steps">
+        <h4>What happens next?</h4>
+        <ul class="nsteps-list">
+          <li>
+            <div class="ns-icon ora">📋</div>
+            <div><b>Review (within 48 hours)</b><span>Our team checks your event for completeness and makes sure it fits the AcroInsiders community.</span></div>
+          </li>
+          <li>
+            <div class="ns-icon tea">✉️</div>
+            <div><b>Confirmation email</b><span>If you provided an email address, we'll let you know once your event goes live — or reach out if we need more info.</span></div>
+          </li>
+          <li>
+            <div class="ns-icon ora">🗓️</div>
+            <div><b>Your event goes live</b><span>It will appear in the calendar, map view, and search results — visible to the global acroyoga community.</span></div>
+          </li>
+          <li>
+            <div class="ns-icon tea">🔗</div>
+            <div><b>Share the link</b><span>Once live, share your event URL with participants and on social media to spread the word!</span></div>
+          </li>
+          <li>
+            <div class="ns-icon ora">✏️</div>
+            <div><b>Need to make changes?</b><span>Email us at <a href="mailto:hello@acroinsiders.com" style="color:var(--p2)">hello@acroinsiders.com</a> with the event name and the update you need.</span></div>
+          </li>
+        </ul>
+      </div>
+
+      <div class="success-actions">
+        <button class="btn btn-primary" onclick="resetForm()">Submit Another Event</button>
+        <a class="btn btn-ghost" href="https://www.acroinsiders.com" target="_blank">← Back to Calendar</a>
+      </div>
+    </div>
+
+  </div><!-- /card -->
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────────────
+const EVENTS_ENDPOINT = 'https://tiny-recipe-c86a.be-nomadicated.workers.dev/events';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPQw-q72VYxT4F41SCRFet-hjpK5XoajvGmYahn_456blvZOYD8lIocDrkziOEJb0Jr0vA/exec';
+
+const SHEET_ID  = '132gCPu46DkXTJk1Yy5RmuKcijMBm7_PPqQjRm_7AbG4';
+const SHEET_TAB = 'data';
+
+// ── STATE ───────────────────────────────────────────────
+let allEvents  = [];
+let venueIndex = [];  // [{name, city, state, country, continent}, ...]
+let acIdx      = {};  // keyboard cursor per field
+let acMatches  = {};  // current match list per field
+
+// ── CSV PARSER (RFC 4180 compliant) ─────────────────────
+function parseCSV(raw) {
+  const rows = [];
+  let headers = null;
+  let i = 0;
+  const len = raw.length;
+
+  function parseField() {
+    if (i < len && raw[i] === '"') {
+      // quoted field
+      i++; // skip opening quote
+      let val = '';
+      while (i < len) {
+        if (raw[i] === '"' && raw[i+1] === '"') { val += '"'; i += 2; }
+        else if (raw[i] === '"') { i++; break; }
+        else { val += raw[i++]; }
+      }
+      return val;
+    }
+    // unquoted field — read until comma or newline
+    let val = '';
+    while (i < len && raw[i] !== ',' && raw[i] !== '\n' && raw[i] !== '\r') {
+      val += raw[i++];
+    }
+    return val;
+  }
+
+  while (i < len) {
+    const row = [];
+    // parse one row
+    while (true) {
+      row.push(parseField());
+      if (i >= len || raw[i] === '\n' || raw[i] === '\r') break;
+      if (raw[i] === ',') i++; // skip comma between fields
+    }
+    // skip \r\n or \n
+    if (i < len && raw[i] === '\r') i++;
+    if (i < len && raw[i] === '\n') i++;
+
+    if (!headers) {
+      headers = row.map(h => h.trim());
+    } else if (row.length > 1 || row[0] !== '') {
+      const obj = {};
+      headers.forEach((h, idx) => { obj[h] = (row[idx] || '').trim(); });
+      rows.push(obj);
+    }
+  }
+  return rows;
+}
+
+// ── PREFETCH: worker → CSV fallback ─────────────────────
+(async () => {
+  console.log('📡 Fetching event data from worker…');
+  let loaded = false;
+
+  // 1️⃣ Primary: Cloudflare Worker
+  try {
+    const res = await fetch(EVENTS_ENDPOINT, { mode: 'cors' });
+    if (!res.ok) throw new Error(`Worker HTTP ${res.status}`);
+    const json = await res.json();
+    const rows = Array.isArray(json) ? json : (json.events || json.data || []);
+    if (!rows.length) throw new Error('Worker returned empty array');
+    allEvents = rows;
+    buildVenueIndex();
+    loaded = true;
+    console.log(`✅ Worker: ${allEvents.length} events loaded`);
+  } catch (workerErr) {
+    console.warn('⚠️ Worker failed:', workerErr.message);
+  }
+
+  // 2️⃣ Fallback: Google Sheets CSV
+  if (!loaded) {
+    console.log('📄 Trying Google Sheets CSV fallback…');
+    try {
+      const csvURL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
+      const res = await fetch(csvURL);
+      if (!res.ok) throw new Error(`CSV HTTP ${res.status}`);
+      const raw = await res.text();
+      const rows = parseCSV(raw);
+      if (!rows.length) throw new Error('No rows parsed from CSV');
+      allEvents = rows;
+      buildVenueIndex();
+      console.log(`✅ CSV fallback: ${allEvents.length} events loaded`);
+    } catch (csvErr) {
+      console.error('❌ CSV fallback also failed:', csvErr.message);
+      console.log('Check that the sheet is shared as "Anyone can view"');
+    }
+  }
+})();
+
+function buildVenueIndex() {
+  // ── Diagnostic: log the actual keys from the first event ──
+  if (allEvents.length) {
+    console.log('🔍 First event keys:', Object.keys(allEvents[0]));
+    console.log('🔍 First event sample:', allEvents[0]);
+  }
+
+  const seen = new Map();
+  allEvents.forEach(ev => {
+    // Cast all keys to a normalised lookup so casing/spacing differences don't break matching
+    const lookup = {};
+    Object.keys(ev).forEach(k => { lookup[k.trim().toUpperCase()] = (ev[k] || '').trim(); });
+
+    const name      = lookup['VENUE NAME']  || lookup['EVENT VENUE NAME'] || '';
+    const city      = lookup['CITY']        || lookup['VENUE CITY']       || '';
+    const state     = lookup['STATE']       || lookup['VENUE STATE/PROVINCE'] || '';
+    const country   = lookup['COUNTRY']     || lookup['VENUE COUNTRY']    || '';
+    const continent = lookup['CONTINENT']   || lookup['VENUE CONTINENT']  || '';
+
+    if (!name) return;
+    const key = (name + '|' + city + '|' + country).toLowerCase();
+    if (!seen.has(key)) seen.set(key, { name, city, state, country, continent });
+  });
+  venueIndex = [...seen.values()];
+  console.log(`🏟️  Venue index built: ${venueIndex.length} unique venues`);
+  if (venueIndex.length) console.log('🏟️  Sample venues:', venueIndex.slice(0, 3));
+}
+
+// ── AUTOCOMPLETE CONFIG ─────────────────────────────────
+// Each field: what to search, what to show, what to do on pick
+const AC = {
+  venueName: {
+    items: () => venueIndex,
+    test:  (v, q) => v.name.toLowerCase().includes(q),
+    main:  v => v.name,
+    sub:   v => [v.city, v.country].filter(Boolean).join(', '),
+    pick:  v => {
+      set('venueName', v.name);
+      if (v.city)      { set('venueCity',    v.city);      badge('venueCity'); }
+      if (v.state)       set('venueState',   v.state);
+      if (v.country)   { set('venueCountry', v.country);   badge('venueCountry'); }
+      if (v.continent)   setContinent(v.continent);
+      badge('venueName');
+    },
+  },
+  venueCity: {
+    items: () => uniq(venueIndex, 'city'),
+    test:  (v, q) => v.city.toLowerCase().includes(q),
+    main:  v => v.city,
+    sub:   v => v.country,
+    pick:  v => { set('venueCity', v.city); badge('venueCity'); },
+  },
+  venueState: {
+    items: () => uniq(venueIndex.filter(v => v.state), 'state'),
+    test:  (v, q) => v.state.toLowerCase().includes(q),
+    main:  v => v.state,
+    sub:   v => v.country,
+    pick:  v => set('venueState', v.state),
+  },
+  venueCountry: {
+    items: () => uniq(venueIndex, 'country'),
+    test:  (v, q) => v.country.toLowerCase().includes(q),
+    main:  v => v.country,
+    sub:   v => v.continent,
+    pick:  v => {
+      set('venueCountry', v.country);
+      if (v.continent) setContinent(v.continent);
+      badge('venueCountry');
+    },
+  },
+};
+
+function uniq(arr, key) {
+  const seen = new Set();
+  return arr.filter(v => { const k = (v[key]||'').toLowerCase(); if (!k || seen.has(k)) return false; seen.add(k); return true; });
+}
+
+// ── AUTOCOMPLETE EVENTS ─────────────────────────────────
+function acInput(id) {
+  const cfg = AC[id]; if (!cfg) return;
+  const q = document.getElementById(id).value.trim().toLowerCase();
+  const dd = document.getElementById('dd_' + id);
+  acIdx[id] = -1;
+  if (!q) { closeDd(id); return; }
+
+  const matches = cfg.items().filter(v => cfg.test(v, q)).slice(0, 10);
+  acMatches[id] = matches;
+  if (!matches.length) { closeDd(id); return; }
+
+  dd.innerHTML = '';
+  matches.forEach((v, i) => {
+    const d = document.createElement('div');
+    d.className = 'ac-item';
+    d.innerHTML = `<strong>${esc(cfg.main(v))}</strong><span>${esc(cfg.sub ? cfg.sub(v) : '')}</span>`;
+    d.onmousedown = e => { e.preventDefault(); cfg.pick(v); closeDd(id); };
+    dd.appendChild(d);
+  });
+  openDd(id);
+}
+
+function acKey(e, id) {
+  const dd = document.getElementById('dd_' + id);
+  if (!dd.classList.contains('open')) return;
+  const items = dd.querySelectorAll('.ac-item');
+  const n = items.length;
+  if (e.key === 'ArrowDown')  { e.preventDefault(); acIdx[id] = Math.min((acIdx[id]||0)+1, n-1); hilite(id, items); }
+  else if (e.key === 'ArrowUp')    { e.preventDefault(); acIdx[id] = Math.max((acIdx[id]||0)-1, 0);    hilite(id, items); }
+  else if (e.key === 'Enter' || e.key === 'Tab') {
+    const m = acMatches[id]; const i = acIdx[id];
+    if (m && i >= 0 && m[i]) { e.preventDefault(); AC[id].pick(m[i]); closeDd(id); }
+  } else if (e.key === 'Escape') closeDd(id);
+}
+
+function acBlur(id) { setTimeout(() => closeDd(id), 160); }
+function hilite(id, items) { items.forEach((el, i) => el.classList.toggle('sel', i === acIdx[id])); }
+function openDd(id)  { document.getElementById('dd_'+id).classList.add('open');    document.getElementById(id).classList.add('open'); }
+function closeDd(id) { document.getElementById('dd_'+id).classList.remove('open'); document.getElementById(id).classList.remove('open'); }
+
+// ── HELPERS ─────────────────────────────────────────────
+function set(id, val)   { document.getElementById(id).value = val; }
+function badge(fieldId) { document.getElementById('badge_'+fieldId).style.display = 'inline-flex'; }
+function setContinent(val) {
+  const sel = document.getElementById('venueContinent');
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].text.toLowerCase() === val.toLowerCase()) { sel.selectedIndex = i; break; }
+  }
+  badge('venueContinent');
+}
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function hide(id)  { document.getElementById(id).style.display = 'none'; }
+function show(id)  { document.getElementById(id).style.display = ''; }
+function showB(id) { document.getElementById(id).style.display = 'block'; }
+
+function setStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('step'+i+'ind').className = 'step'+(i<n?' done':i===n?' active':'');
+    if (i < 3) document.getElementById('line'+i).className = 'step-line'+(i<n?' done':'');
+  });
+}
+
+// ── SANITISATION ────────────────────────────────────────
+// Strip any HTML/script tags and null bytes from a plain-text field
+function sanitizeText(s) {
+  return (s || '')
+    .trim()
+    .replace(/\0/g, '')                     // null bytes
+    .replace(/<[^>]*>/g, '')                // any HTML/XML tags
+    .replace(/javascript\s*:/gi, '')        // javascript: protocol
+    .replace(/data\s*:/gi, '')              // data: protocol
+    .replace(/on\w+\s*=/gi, '')             // inline event handlers (onclick= etc.)
+    .trim();
+}
+
+// Only allow http:// or https:// URLs, nothing else
+function sanitizeUrl(s) {
+  const raw = (s || '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(raw);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return '';
+    // Reject javascript: / data: smuggled via redirect tricks
+    if (/javascript/i.test(url.href)) return '';
+    // Max length guard
+    if (url.href.length > 500) return '';
+    return url.href;
+  } catch (_) {
+    return ''; // unparseable → discard
+  }
+}
+
+// Validate an email address looks legitimate
+function isValidEmail(s) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
+function getData() {
+  return {
+    name:           sanitizeText(document.getElementById('eventName').value),
+    startDate:      document.getElementById('startDate').value,
+    endDate:        document.getElementById('endDate').value,
+    category:       document.getElementById('category').value,
+    website:        sanitizeUrl(document.getElementById('website').value),
+    description:    sanitizeText(document.getElementById('description').value),
+    venueName:      sanitizeText(document.getElementById('venueName').value),
+    venueCity:      sanitizeText(document.getElementById('venueCity').value),
+    venueState:     sanitizeText(document.getElementById('venueState').value),
+    venueCountry:   sanitizeText(document.getElementById('venueCountry').value),
+    venueContinent: document.getElementById('venueContinent').value,
+    submitterName:  sanitizeText(document.getElementById('submitterName').value),
+    submitterEmail: sanitizeText(document.getElementById('submitterEmail').value),
+  };
+}
+
+function validate(d) {
+  if (!d.name)           return 'Please enter an event name.';
+  if (d.name.length > 200) return 'Event name is too long (max 200 characters).';
+  if (!d.startDate)      return 'Please enter a start date.';
+  if (!d.venueName)      return 'Please enter a venue name.';
+  if (!d.venueCity)      return 'Please enter the venue city.';
+  if (!d.venueCountry)   return 'Please enter the venue country.';
+  if (!d.venueContinent) return 'Please select a continent.';
+  const rawUrl = document.getElementById('website').value.trim();
+  if (rawUrl && !d.website) return 'Please enter a valid URL starting with https:// or http://';
+  if (d.submitterEmail && !isValidEmail(d.submitterEmail)) return 'Please enter a valid email address.';
+  if (d.description.length > 2000) return 'Description is too long (max 2000 characters).';
+  return null;
+}
+
+// ── DUPLICATE CHECK ──────────────────────────────────────
+function norm(s) { return (s||'').toLowerCase().replace(/[^a-z0-9 ]/g,' ').replace(/\s+/g,' ').trim(); }
+function overlap(a, b) {
+  const wa = new Set(norm(a).split(' ').filter(w => w.length > 2));
+  const wb = new Set(norm(b).split(' ').filter(w => w.length > 2));
+  if (!wa.size || !wb.size) return 0;
+  let n = 0; wa.forEach(w => { if (wb.has(w)) n++; });
+  return n / Math.min(wa.size, wb.size);
+}
+function datesClose(d1, d2) {
+  if (!d1 || !d2) return false;
+  return Math.abs(new Date(d1) - new Date(d2)) <= 7 * 86400000;
+}
+
+// ── STEP 1: check duplicates ─────────────────────────────
+async function checkDuplicates() {
+  const d = getData();
+  const err = validate(d);
+  const errEl = document.getElementById('formError');
+  errEl.style.display = 'none';
+  if (err) { errEl.textContent = err; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('checkBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Checking for duplicates…';
+
+  try {
+    // If prefetch didn't populate (e.g. slow connection), try again now
+    if (!allEvents.length) {
+      try {
+        const res = await fetch(EVENTS_ENDPOINT, { mode: 'cors' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const rows = Array.isArray(json) ? json : (json.events || json.data || []);
+        if (!rows.length) throw new Error('empty');
+        allEvents = rows;
+        buildVenueIndex();
+      } catch (workerErr) {
+        // CSV fallback
+        try {
+          const csvURL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
+          const res2 = await fetch(csvURL);
+          if (!res2.ok) throw new Error(`CSV HTTP ${res2.status}`);
+          const rows = parseCSV(await res2.text());
+          allEvents = rows;
+          buildVenueIndex();
+        } catch (csvErr) {
+          console.warn('Both sources unavailable:', csvErr.message);
+          // Continue without duplicate check — don't block submission
+        }
+      }
+    }
+
+    const similar = allEvents.filter(ev => {
+      const score = overlap(d.name, ev['EVENT NAME'] || '');
+      const start = (ev['EVENT START DATE'] || '').slice(0, 10);
+      return score >= 0.5 && datesClose(d.startDate, start);
+    });
+
+    setStep(2);
+    hide('formSection');
+
+    if (similar.length) {
+      document.getElementById('warnText').textContent =
+        `We found ${similar.length} event${similar.length > 1 ? 's' : ''} that look${similar.length === 1 ? 's' : ''} similar based on name and dates:`;
+      const list = document.getElementById('similarList');
+      list.innerHTML = '';
+      similar.forEach(ev => {
+        const name  = ev['EVENT NAME'] || '(unnamed)';
+        const venue = ev['VENUE NAME'] || ev['EVENT VENUE NAME'] || '';
+        const city  = ev['CITY'] || ev['VENUE CITY'] || '';
+        const start = (ev['EVENT START DATE'] || '').slice(0, 10);
+        const end   = (ev['EVENT END DATE']   || '').slice(0, 10);
+        const dates = end && end !== start ? `${start} – ${end}` : start;
+        const loc   = [venue, city].filter(Boolean).join(', ');
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${esc(name)}</strong><span>${esc(loc)}${loc && dates ? ' · ' : ''}${esc(dates)}</span>`;
+        list.appendChild(li);
+      });
+      showB('duplicateSection');
+    } else {
+      await doSubmit(d);
+    }
+  } catch(e) {
+    errEl.textContent = 'Something went wrong. Please try again.';
+    errEl.style.display = 'block';
+    setStep(1); show('formSection');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Check &amp; Continue →';
+  }
+}
+
+// ── STEP 2: user confirms ────────────────────────────────
+async function confirmUnique() {
+  hide('duplicateSection');
+  await doSubmit(getData());
+}
+function goBack() { hide('duplicateSection'); show('formSection'); setStep(1); }
+
+// ── STEP 3: submit ───────────────────────────────────────
+async function doSubmit(d) {
+  setStep(3);
+
+  // Generate EVENTNAME_STARTDATE slug: "lorem-ipsum-2026-05-15"
+  const slug = d.name.toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    + '-' + d.startDate;
+
+  const payload = {
+    // Columns in sheet order:
+    // EVENT NAME | EVENT START DATE | EVENT END DATE | STICKY IN MONTH VIEW
+    // EVENT CATEGORY | VENUE NAME | CITY | STATE | COUNTRY | CONTINENT
+    // LAT | LON | INSIDER DEAL | URL | EVENT DESCRIPTION | EVENTNAME_STARTDATE
+    eventName:      d.name,
+    startDate:      d.startDate,
+    endDate:        d.endDate,
+    sticky:         'FALSE',
+    category:       d.category,
+    venueName:      d.venueName,
+    city:           d.venueCity,
+    state:          d.venueState,
+    country:        d.venueCountry,
+    continent:      d.venueContinent,
+    lat:            '',
+    lon:            '',
+    insiderDeal:    '',
+    url:            d.website,
+    description:    d.description,
+    slug:           slug,
+    // Extra metadata not in the main sheet — stored for admin use
+    submitterName:  d.submitterName,
+    submitterEmail: d.submitterEmail,
+    status:         'pending',
+    timestamp:      new Date().toISOString(),
+  };
+
+  // if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbzjDhdl73Gj12MY5QeYajhk7CfmRtRXJLBqfFOIRoFf9WIzH4n1hRVFLXhDzA9gz9NLUNOS/exec') {
+  //   console.log('📋 [DEV] Payload:', payload);
+  //   showSuccess(); return;
+  // }
+  try {
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    showSuccess();
+  } catch(e) {
+    showSubmitError(payload);
+  }
+}
+
+function showSuccess() {
+  hide('formSection'); hide('duplicateSection'); hide('submitError');
+  showB('successState');
+  setStep(3);
+  document.getElementById('step3ind').className = 'step done';
+}
+
+// ── SUBMIT ERROR — formatted copy block ─────────────────
+function showSubmitError(payload) {
+  hide('formSection'); hide('duplicateSection');
+
+  // Build column-ordered text block matching sheet headers exactly
+  const lines = [
+    ['EVENT NAME',          payload.eventName],
+    ['EVENT START DATE',    payload.startDate],
+    ['EVENT END DATE',      payload.endDate    || ''],
+    ['STICKY IN MONTH VIEW','FALSE'],
+    ['EVENT CATEGORY',      payload.category   || ''],
+    ['VENUE NAME',          payload.venueName  || ''],
+    ['CITY',                payload.city       || ''],
+    ['STATE',               payload.state      || ''],
+    ['COUNTRY',             payload.country    || ''],
+    ['CONTINENT',           payload.continent  || ''],
+    ['LAT',                 ''],
+    ['LON',                 ''],
+    ['INSIDER DEAL',        ''],
+    ['URL',                 payload.url        || ''],
+    ['EVENT DESCRIPTION',   payload.description|| ''],
+    ['EVENTNAME_STARTDATE', payload.slug       || ''],
+    ['—', ''],
+    ['SUBMITTER NAME',      payload.submitterName  || ''],
+    ['SUBMITTER EMAIL',     payload.submitterEmail || ''],
+  ];
+
+  const pad = 22;
+  const text = lines.map(([label, val]) =>
+    label === '—'
+      ? '─'.repeat(40)
+      : label.padEnd(pad) + val
+  ).join('\n');
+
+  document.getElementById('copyBlock').textContent = text;
+
+  // Build mailto link
+  const subject = encodeURIComponent(`Event submission: ${payload.eventName}`);
+  const body = encodeURIComponent(
+    `Hi Cat,\n\nPlease add this event to AcroInsiders:\n\n${text}\n\nThanks!`
+  );
+  document.getElementById('mailtoBtn').href =
+    `mailto:hello@acroinsiders.com?subject=${subject}&body=${body}`;
+
+  showB('submitError');
+}
+
+function copyData() {
+  const text = document.getElementById('copyBlock').textContent;
+  const btn  = document.getElementById('copyBtn');
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✅ Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '📋 Copy to clipboard';
+      btn.classList.remove('copied');
+    }, 2500);
+  }).catch(() => {
+    // Fallback for browsers without clipboard API
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(document.getElementById('copyBlock'));
+    sel.removeAllRanges();
+    sel.addRange(range);
+    btn.textContent = '✅ Selected — press Ctrl+C / ⌘+C';
+  });
+}
+
+function goBackFromError() {
+  hide('submitError');
+  show('formSection');
+  setStep(1);
+}
+
+// ── RESET ────────────────────────────────────────────────
+function resetForm() {
+  ['eventName','startDate','endDate','website','description',
+   'venueName','venueCity','venueState','venueCountry',
+   'submitterName','submitterEmail'].forEach(id => set(id, ''));
+  ['category','venueContinent'].forEach(id => document.getElementById(id).value = '');
+  ['venueName','venueCity','venueCountry','venueContinent']
+    .forEach(f => document.getElementById('badge_'+f).style.display = 'none');
+  hide('successState'); hide('duplicateSection'); show('formSection');
+  setStep(1);
+}
+
+document.getElementById('startDate').min = new Date().toISOString().slice(0, 10);
+</script>
+
+<!--
+════════════════════════════════════════════════════════════
+  GOOGLE APPS SCRIPT
+════════════════════════════════════════════════════════════
+
+Paste this into Extensions → Apps Script in your submissions sheet.
+Deploy as Web App: Execute as Me, Anyone can access.
+
+────────────────────────────────────────────────────────────
+
+function doPost(e) {
+  const ss = SpreadsheetApp.openById('YOUR_SHEET_ID');
+  let sheet = ss.getSheetByName('Submissions') || ss.insertSheet('Submissions');
+  const d = JSON.parse(e.postData.contents);
+
+  // Write header row on first use — matches your exact column order
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      'EVENT NAME',
+      'EVENT START DATE',
+      'EVENT END DATE',
+      'STICKY IN MONTH VIEW',
+      'EVENT CATEGORY',
+      'VENUE NAME',
+      'CITY',
+      'STATE',
+      'COUNTRY',
+      'CONTINENT',
+      'LAT',
+      'LON',
+      'INSIDER DEAL',
+      'URL',
+      'EVENT DESCRIPTION',
+      'EVENTNAME_STARTDATE',
+      // Admin columns (not in main sheet, useful for review)
+      'SUBMITTER NAME',
+      'SUBMITTER EMAIL',
+      'STATUS',
+      'SUBMITTED AT'
+    ]);
+  }
+
+  sheet.appendRow([
+    d.eventName,
+    d.startDate,
+    d.endDate,
+    d.sticky        || 'FALSE',
+    d.category      || '',
+    d.venueName     || '',
+    d.city          || '',
+    d.state         || '',
+    d.country       || '',
+    d.continent     || '',
+    d.lat           || '',
+    d.lon           || '',
+    d.insiderDeal   || '',
+    d.url           || '',
+    d.description   || '',
+    d.slug          || '',
+    d.submitterName  || '',
+    d.submitterEmail || '',
+    d.status        || 'pending',
+    d.timestamp     || new Date().toISOString()
+  ]);
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+────────────────────────────────────────────────────────────
+Deploy → New deployment → Web app
+  Execute as: Me
+  Who has access: Anyone
+Copy the Web App URL → paste as APPS_SCRIPT_URL at the top of this file.
+════════════════════════════════════════════════════════════
+-->
+</body>
+</html>

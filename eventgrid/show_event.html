@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <!-- TEST SCRIPT/PAGE FOR DEEPLINKS. THIS IS NOT USED IN A WORDPRESS SITE
+
+* make a new page show-event, or whatever you want. just not event to avoid problems with the calendar plugin
+
+* enter this as html (choose code editor instead of visual editor):
+
+<div id="event-detail-root"></div>
+<link rel="stylesheet" href="https://rcsmit.github.io/acroinsiders_events/css/style.css">
+<style>
+#event-modal { opacity: 1; pointer-events: all; position: relative; inset: auto; background: none; padding: 2rem 1rem; }
+</style>
+<script src="https://rcsmit.github.io/acroinsiders_events/js/config.js"></script>
+<script src="https://rcsmit.github.io/acroinsiders_events/js/utils.js"></script>
+<script src="https://rcsmit.github.io/acroinsiders_events/js/modal.js"></script>
+<script src="https://rcsmit.github.io/acroinsiders_events/js/eventdetail-wp.js"></script>
+
+(the link to github is the real link of course)
+
+link will be www.acroinsiders.com/show-event/?id=sofia-intensive-2026-05-09
+
+NOTE: The WordPress snippet above loads config.js which calls loadTenantConfig()
+automatically via the DOMContentLoaded listener, so no extra init call is needed
+in the WP page itself.
+-->
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Google Fonts are injected dynamically by loadTenantConfig() from config.js -->
+<link rel="stylesheet" href="css/style.css">
+
+</head>
+<script src="https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.9/js/iframeResizer.contentWindow.min.js"></script>
+
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="ov">
+  <div class="ov-title" id="ov-title">Events</div>
+  <div class="ov-bar-w"><div class="ov-bar"></div></div>
+  <div class="ov-msg" id="ov-msg">Loading…</div>
+  <div class="ov-step" id="ov-step"></div>
+</div>
+
+<div id="event-detail-root"></div>
+<style>
+  html, body { height: auto; overflow-y: auto; }
+  #event-modal { opacity: 1; pointer-events: all; position: relative; inset: auto; background: none; padding: 2rem 1rem; }
+</style>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/eventdetail-wp.js"></script>
+</body>
+</html>

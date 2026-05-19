@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events Preview</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- EVENT DETAIL MODAL -->
+<div class="tribe-modal-overlay" id="event-modal" onclick="closeEventModalBg(event)">
+  <div class="tribe-modal">
+    <div class="tribe-modal-head">
+      <span class="tribe-modal-back" onclick="closeEventModal()">← All events</span>
+      <button class="tribe-modal-close" onclick="closeEventModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="tribe-modal-body" id="event-modal-body"></div>
+  </div>
+</div>
+
+<!-- LIST ONLY — no header, no filter bar, no calendar -->
+<div class="main">
+  <div class="list-view" id="view-list">
+    <div class="lv-inner" id="lv-inner">
+      <div id="cat-picks-strip"></div>
+      <div class="lv-grid" id="lv-grid"></div>
+    </div>
+    <div class="pagination" id="pagination" style="display:none"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- config + utils first, then list + modal (no data.js, no map.js, no calendar.js) -->
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/list.js"></script>
+<script src="js/modal.js"></script>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   REQUIRED STUBS
+   These functions are called by list.js / modal.js but live
+   in data.js / map.js / calendar.js which we don't load here.
+   ══════════════════════════════════════════════════════════ */
+
+/** No pagination in preview — just show exactly calcPageSize() cards. */
+function renderPagination() {}
+
+/**
+ * Preview list render: show Cat's Picks strip then exactly
+ * calcPageSize() event cards — no pagination controls.
+ */
+function renderList() {
+  const vis = visibleRows().slice().sort((a, b) => {
+    const da = parseDate(a[CONFIG.COL_START]);
+    const db = parseDate(b[CONFIG.COL_START]);
+    return (da ? da.getTime() : Infinity) - (db ? db.getTime() : Infinity);
+  });
+
+  // Cat's Picks strip
+  renderCatPicks(vis);
+
+  const slice = vis.slice(0, calcPageSize());
+  const grid  = document.getElementById('lv-grid');
+  grid.innerHTML = '';
+
+  if (!vis.length) {
+    grid.innerHTML = `<div class="no-results">
+      <div class="nr-icon">🤸</div>
+      <h3>No upcoming events found</h3>
+      <p>Check back soon!</p>
+    </div>`;
+    return;
+  }
+
+  slice.forEach(row => {
+    const c   = lColors[row._layer] || CONFIG.SL_COLOR || '#f19072';
+    const n   = (row[CONFIG.COL_NAME]      || '').trim() || '(unnamed)';
+    const cty = (row[CONFIG.COL_CITY]      || '').trim();
+    const ctr = (row[CONFIG.COL_COUNTRY]   || '').trim();
+    const prv = (row[CONFIG.COL_PROVINCE]  || '').trim();
+    const cnt = (row[CONFIG.COL_CONTINENT] || '').trim();
+    const cat = (row[CONFIG.COL_CATEGORY]  || '').trim();
+    const rem = (row[CONFIG.COL_REMARKS]   || '').trim();
+    const sl  = ['yes','1','true','x','✓'].includes(String(row[CONFIG.COL_SHORTLIST]||'').toLowerCase());
+    const loc = [cty, prv, ctr, cnt].filter(Boolean).join(', ');
+    const dr  = fmtDateRange(row);
+
+    const card = document.createElement('div');
+    card.className = 'ev-card';
+    card.innerHTML = `
+      <div class="ev-card-badges">
+        ${cnt ? `<span class="ev-card-badge" style="background:${c}22;color:${c}">${escHtml(cnt)}</span>` : ''}
+        ${cat ? `<span class="ev-card-cat">${etIcon(cat)} ${escHtml(cat)}</span>` : ''}
+      </div>
+      <div class="ev-card-name">${escHtml(n)}</div>
+      ${loc ? `<div class="ev-card-loc">📍 ${escHtml(loc)}</div>` : ''}
+      ${dr  ? `<div class="ev-card-date">📅 ${escHtml(dr)}</div>` : ''}
+      ${sl  ? `<div class="ev-card-sl">⭐ Shortlisted</div>`       : ''}
+    `;
+    card.addEventListener('click', () => openEventModal(row));
+    grid.appendChild(card);
+  });
+}
+
+/** Return all loaded rows unfiltered — no filter UI in preview. */
+function visibleRows() { return rows; }
+
+/** No map to redraw. */
+function redrawMap() {}
+
+/** No clear button in preview. */
+function updateClearButton() {}
+
+/** No calendar in preview. */
+function renderCalendar() {}
+
+/** Redraw just re-renders the list. */
+function redraw() { listPage = 1; renderList(); }
+
+/** How many events to show based on column count:
+ *  1-3 cols → 6 events, 4 cols → 8 events, 5+ cols → 10 events */
+function calcPageSize() {
+  const grid = document.getElementById('lv-grid');
+  if (!grid) return 6;
+  const inner     = grid.parentElement;
+  const style     = window.getComputedStyle(inner);
+  const padL      = parseFloat(style.paddingLeft)  || 0;
+  const padR      = parseFloat(style.paddingRight) || 0;
+  const gridWidth = (inner.clientWidth || grid.clientWidth) - padL - padR;
+  const cols = Math.max(1, Math.floor((gridWidth + CARD_GAP) / (CARD_MIN_WIDTH + CARD_GAP)));
+  if (cols <= 3) return 6;
+  if (cols === 4) return 8;
+  return 10;
+}
+
+/* Stub DOM ids that list.js writes to but don't exist in preview */
+const _realGetById = document.getElementById.bind(document);
+document.getElementById = function(id) {
+  if (id === 's-total' || id === 's-vis') return { set textContent(_){} };
+  return _realGetById(id);
+};
+
+/* ══════════════════════════════════════════════════════════
+   DATA LOADING  — worker first, CSV fallback
+   ══════════════════════════════════════════════════════════ */
+
+async function initPreview() {
+  // Primary: Cloudflare Worker
+  if (CONFIG.WORKER_URL) {
+    try {
+      const ctrl = new AbortController();
+      const tid  = setTimeout(() => ctrl.abort(), 5000);
+      const res  = await fetch(CONFIG.WORKER_URL, { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const ct = res.headers.get('content-type') || '';
+      if (!ct.includes('json')) throw new Error(`Non-JSON response (${ct.split(';')[0].trim()})`);
+      const json = await res.json();
+      if (!json.rows || !json.rows.length) throw new Error('Empty response');
+      bootPreview(json.rows);
+      return;
+    } catch (e) {
+      console.warn('Worker failed, falling back to CSV:', e.message);
+    }
+  }
+
+  // Fallback: Google Sheets CSV
+  try {
+    const csvURL = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID_ENC}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(CONFIG.SHEET_TAB_ENC)}`;
+    const res    = await fetch(csvURL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data   = parseCSV(await res.text());
+    if (!data.length) throw new Error('No rows parsed');
+    bootPreview(data);
+  } catch (e) {
+    document.getElementById('lv-grid').innerHTML =
+      `<div class="no-results"><div class="nr-icon">⚠️</div>
+       <h3>Could not load data</h3><p>${e.message}</p></div>`;
+  }
+}
+
+function bootPreview(data) {
+  const today = dateOnly(new Date());
+
+  // Filter to upcoming events only, sorted by start date asc.
+  const upcoming = data
+    .filter(row => {
+      const end = parseDate(row[CONFIG.COL_END]) || parseDate(row[CONFIG.COL_START]);
+      return !end || dateOnly(end) >= today;
+    })
+    .sort((a, b) => {
+      const da = parseDate(a[CONFIG.COL_START]);
+      const db = parseDate(b[CONFIG.COL_START]);
+      return (da ? da.getTime() : Infinity) - (db ? db.getTime() : Infinity);
+    });
+
+  // Attach _layer / _lat / _lon (same as data.js processData).
+  const lSet = new Set();
+  upcoming.forEach(row => {
+    row._layer = (row[CONFIG.COL_LAYER] || 'Other').trim() || 'Other';
+    row._lat   = parseFloat((row[CONFIG.COL_LAT] || '').replace(',', '.'));
+    row._lon   = parseFloat((row[CONFIG.COL_LON] || '').replace(',', '.'));
+    lSet.add(row._layer);
+  });
+
+  rows = upcoming;
+  const layers = Array.from(lSet).sort();
+  assignColors(layers);
+  actL = new Set(layers);
+
+  renderList();
+}
+
+/* ── Boot ─────────────────────────────────────────────────── */
+loadTenantConfig().then(() => initPreview());
+</script>
+</body>
+</html>

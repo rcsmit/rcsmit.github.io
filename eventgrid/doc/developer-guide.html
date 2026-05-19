@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acromap — Developer Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Corben:wght@400;700&family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --p1: #f19072;
+  --p2: #12807a;
+  --p3: #3d3d3e;
+  --p4: #5c5c5c;
+  --p5: #bbbdbf;
+  --p6: #d7dbde;
+  --p7: #fcdacf;
+  --p8: #fef6f4;
+  --p9: #ffffff;
+  --dev: #3B6EA5;      /* dev accent — blue */
+  --dev-light: #E8F0F9;
+  --font-body: 'Josefin Sans', sans-serif;
+  --font-heading: 'Corben', cursive;
+  --max: 860px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-body); font-size: 15px; line-height: 1.85; color: var(--p4); background: var(--p8); }
+
+/* ── HEADER ── */
+.site-header {
+  background: var(--p3); border-bottom: 3px solid var(--dev);
+  padding: 1.5rem 2rem; position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,.18);
+}
+.site-header-inner { max-width: var(--max); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.site-title { font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; color: #fff; }
+.site-title span { color: var(--p1); }
+.site-badge {
+  background: var(--dev); color: #fff; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em; padding: 4px 10px;
+  border-radius: 2px;
+}
+.site-subtitle { font-size: 13px; color: var(--p5); margin-top: 2px; }
+
+/* ── LAYOUT ── */
+.page { max-width: var(--max); margin: 0 auto; padding: 2.5rem 2rem 5rem; display: grid; grid-template-columns: 210px 1fr; gap: 3rem; align-items: start; }
+@media (max-width: 700px) { .page { grid-template-columns: 1fr; padding: 1.5rem 1.25rem 4rem; } }
+
+/* ── TOC ── */
+.toc { position: sticky; top: 90px; }
+.toc-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--p5); margin-bottom: .75rem; }
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 2px; }
+.toc-list a { font-size: 13px; color: var(--p5); text-decoration: none; display: block; padding: 3px 8px; border-left: 2px solid transparent; border-radius: 0 2px 2px 0; transition: all .15s; line-height: 1.4; }
+.toc-list a:hover { color: var(--dev); border-left-color: var(--dev); background: var(--dev-light); }
+.toc-list a.active { color: var(--dev); border-left-color: var(--dev); font-weight: 600; }
+.toc-list .toc-sub { padding-left: 18px; font-size: 12px; }
+@media (max-width: 700px) { .toc { display: none; } }
+
+/* ── CONTENT ── */
+.content { min-width: 0; }
+
+/* intro box */
+.intro-box {
+  background: var(--p9); border: 1px solid var(--p6); border-radius: 4px;
+  padding: 1.5rem 1.75rem; margin-bottom: 2.5rem;
+}
+.intro-box p { color: var(--p4); margin-bottom: .5rem; }
+.intro-box p:last-child { margin-bottom: 0; }
+.intro-box ul { padding-left: 1.25rem; margin-top: .5rem; }
+.intro-box ul li { margin-bottom: .3rem; }
+
+/* flow diagram */
+.flow {
+  background: var(--p3); color: #e8e8e8; border-radius: 4px;
+  padding: 1.25rem 1.75rem; margin: 1.25rem 0;
+  font-family: monospace; font-size: 13px; line-height: 2.1;
+}
+.flow .fh { color: var(--p1); font-weight: 700; }
+.flow .fn { color: var(--p5); font-size: 12px; }
+.flow .fd { color: var(--dev); font-weight: 600; }
+
+/* Sections */
+.section { margin-bottom: 3rem; scroll-margin-top: 90px; }
+.section-header {
+  display: flex; align-items: center; gap: .75rem;
+  border-bottom: 2px solid var(--dev); padding-bottom: .6rem; margin-bottom: 1.5rem;
+}
+.section-num {
+  background: var(--dev); color: #fff; font-family: var(--font-heading);
+  font-size: .85rem; font-weight: 700; width: 32px; height: 32px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.section-title { font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; color: var(--p3); }
+
+/* subsections */
+.subsection { margin-bottom: 1.75rem; scroll-margin-top: 90px; }
+.subsection-title {
+  font-family: var(--font-heading); font-size: 1rem; font-weight: 700;
+  color: var(--dev); margin-bottom: .75rem;
+  display: flex; align-items: center; gap: .5rem;
+}
+.subsection-title::before {
+  content: ''; display: block; width: 3px; height: 1em;
+  background: var(--p1); border-radius: 2px; flex-shrink: 0;
+}
+
+/* Steps */
+ol.steps { padding-left: 0; list-style: none; counter-reset: step; }
+ol.steps > li {
+  counter-increment: step; display: flex; gap: .75rem;
+  margin-bottom: .65rem; align-items: flex-start;
+}
+ol.steps > li::before {
+  content: counter(step); background: var(--dev-light); color: var(--dev);
+  font-weight: 700; font-size: 12px; min-width: 22px; height: 22px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  margin-top: 2px; flex-shrink: 0;
+}
+ol.steps > li > div { flex: 1; min-width: 0; }
+.sub-steps { margin-top: .5rem; padding-left: .25rem; }
+.sub-steps li::before { background: var(--p6) !important; color: var(--p4) !important; font-size: 11px !important; min-width: 18px !important; height: 18px !important; }
+
+/* VS Code specific steps */
+.vscode-step {
+  background: #1e1e1e; border-radius: 4px; padding: .6rem .9rem;
+  margin: .4rem 0; display: flex; align-items: center; gap: .6rem;
+}
+.vscode-step .vs-icon { font-size: 15px; flex-shrink: 0; }
+.vscode-step .vs-text { font-family: 'Courier New', monospace; font-size: 12.5px; color: #d4d4d4; }
+.vscode-step .vs-label { font-size: 12px; color: #9cdcfe; font-style: italic; margin-left: auto; flex-shrink: 0; }
+
+/* kbd key */
+kbd {
+  background: var(--p6); color: var(--p3); font-family: var(--font-body);
+  font-size: 11px; font-weight: 700; padding: 2px 6px;
+  border-radius: 3px; border: 1px solid var(--p5);
+  box-shadow: 0 1px 0 var(--p5); white-space: nowrap;
+}
+
+/* inline code */
+code {
+  background: var(--p7); color: var(--p2); font-family: 'Courier New', monospace;
+  font-size: .85em; padding: 1px 5px; border-radius: 2px;
+}
+code.dev { background: var(--dev-light); color: var(--dev); }
+
+/* code blocks */
+pre {
+  background: #1e1e1e; color: #d4d4d4;
+  border-radius: 4px; padding: 1.25rem 1.5rem;
+  overflow-x: auto; font-family: 'Courier New', monospace;
+  font-size: 12.5px; line-height: 1.65; margin: .75rem 0 1.25rem;
+  position: relative;
+}
+pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+.pre-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--dev); margin-bottom: .4rem; display: block; }
+.copy-btn {
+  position: absolute; top: 10px; right: 12px;
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+  color: #999; font-family: var(--font-body); font-size: 11px; font-weight: 600;
+  padding: 3px 8px; border-radius: 2px; cursor: pointer; transition: all .15s;
+}
+.copy-btn:hover { background: rgba(255,255,255,.16); color: #fff; }
+.copy-btn.copied { background: var(--p2); color: #fff; border-color: var(--p2); }
+
+/* syntax colours in pre */
+.kw { color: #569cd6; }
+.st { color: #ce9178; }
+.cm { color: #6a9955; font-style: italic; }
+.fn { color: #dcdcaa; }
+.nm { color: #9cdcfe; }
+
+/* warn / tip / info */
+.warn { background: #fff8f0; border-left: 3px solid var(--p1); border-radius: 0 4px 4px 0; padding: .75rem 1rem; margin: .75rem 0 1rem; font-size: 14px; color: var(--p3); }
+.warn strong { color: var(--p1); }
+.tip  { background: #f0faf9; border-left: 3px solid var(--p2); border-radius: 0 4px 4px 0; padding: .75rem 1rem; margin: .75rem 0 1rem; font-size: 14px; color: var(--p3); }
+.tip  strong { color: var(--p2); }
+.info { background: var(--dev-light); border-left: 3px solid var(--dev); border-radius: 0 4px 4px 0; padding: .75rem 1rem; margin: .75rem 0 1rem; font-size: 14px; color: var(--p3); }
+.info strong { color: var(--dev); }
+
+/* table */
+table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.25rem; font-size: 13.5px; }
+th { background: var(--dev-light); color: var(--dev); font-weight: 700; text-align: left; padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--p6); color: var(--p4); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+td code { font-size: .8em; }
+
+/* summary */
+.summary-box { background: var(--p9); border: 1px solid var(--dev); border-radius: 4px; padding: 1.5rem 1.75rem; }
+.summary-box h3 { font-family: var(--font-heading); font-size: 1rem; color: var(--p3); margin-bottom: .75rem; }
+
+.content p { margin-bottom: .75rem; }
+strong { color: var(--p3); font-weight: 700; }
+a { color: var(--dev); }
+a:hover { color: var(--p1); }
+
+/* checklist */
+.checklist { list-style: none; padding: 0; }
+.checklist li { display: flex; gap: .6rem; align-items: flex-start; margin-bottom: .4rem; font-size: 14px; }
+.checklist li::before { content: '☐'; color: var(--dev); font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+/* terminal block */
+.terminal {
+  background: #0d1117; color: #58a6ff; border-radius: 4px;
+  padding: 1rem 1.25rem; font-family: 'Courier New', monospace; font-size: 13px;
+  line-height: 1.8; margin: .75rem 0 1.25rem; position: relative;
+}
+.terminal .prompt { color: #3fb950; }
+.terminal .out { color: #8b949e; }
+.terminal-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #8b949e; margin-bottom: .4rem; display: flex; align-items: center; gap: .5rem; }
+.terminal-label::before { content: '●'; color: #f85149; } 
+.terminal-label::after { content: '● ●'; color: #3fb950; margin-left: -3px; }
+
+/* footer */
+.site-footer { background: var(--p3); border-top: 2px solid var(--dev); padding: 1.25rem 2rem; text-align: center; font-size: 13px; color: var(--p5); }
+.site-footer a { color: var(--dev); }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div>
+      <div class="site-title">Acro<span>map</span> — Developer Guide</div>
+      <div class="site-subtitle">Sending updates to the map owner via VS Code + GitHub</div>
+    </div>
+    <div class="site-badge">For developers</div>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- TOC -->
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#intro">Introduction</a></li>
+      <li><a href="#s1">1 · One-time setup</a></li>
+      <li><a class="toc-sub" href="#s11">1.1 Fork the repository</a></li>
+      <li><a class="toc-sub" href="#s12">1.2 Clone to VS Code</a></li>
+      <li><a class="toc-sub" href="#s13">1.3 Set up the upstream remote</a></li>
+      <li><a href="#s2">2 · Making changes</a></li>
+      <li><a class="toc-sub" href="#s21">2.1 Edit the file</a></li>
+      <li><a class="toc-sub" href="#s22">2.2 Commit your changes</a></li>
+      <li><a class="toc-sub" href="#s23">2.3 Push to your fork</a></li>
+      <li><a href="#s3">3 · Sending a Pull Request</a></li>
+      <li><a class="toc-sub" href="#s31">3.1 Open the PR on GitHub</a></li>
+      <li><a class="toc-sub" href="#s32">3.2 Describe your changes</a></li>
+      <li><a class="toc-sub" href="#s33">3.3 What happens next</a></li>
+      <li><a href="#s4">4 · Staying in sync</a></li>
+      <li><a class="toc-sub" href="#s41">4.1 Pull owner changes</a></li>
+      <li><a href="#s5">5 · The Worker URL rule</a></li>
+      <li><a href="#s6">6 · Workflow cheatsheet</a></li>
+    </ul>
+  </nav>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- INTRO -->
+    <section id="intro" class="section">
+      <div class="intro-box">
+        <p>This guide explains how to work on <code>index.html</code> in <strong>Visual Studio Code</strong>, push your changes to GitHub, and send them to the map owner via a <strong>Pull Request</strong> — so she can accept them with one click.</p>
+        <p>The map owner has her own repository. You work on a <strong>fork</strong> (your own copy) and propose changes back to her. She reviews and merges. Her live site updates automatically.</p>
+        <ul>
+          <li>You need: VS Code with the GitHub extension, a GitHub account, and Git installed</li>
+          <li>This guide assumes you already have those — if not, see the setup notes at the end</li>
+        </ul>
+      </div>
+
+      <div class="subsection-title">How the workflow looks</div>
+      <div class="flow">
+        <div><span class="fd">Owner's repo</span> <span class="fn">(github.com/owner/acromap)</span></div>
+        <div style="padding-left:1.5rem;color:#555">↓ you fork it once</div>
+        <div><span class="fh">Your fork</span> <span class="fn">(github.com/yourname/acromap)</span></div>
+        <div style="padding-left:1.5rem;color:#555">↓ you clone to your machine</div>
+        <div><span class="fh">VS Code</span> <span class="fn">(local copy on your computer)</span></div>
+        <div style="padding-left:1.5rem;color:#555">↓ you edit, commit, push</div>
+        <div><span class="fh">Your fork on GitHub</span></div>
+        <div style="padding-left:1.5rem;color:#555">↓ you open a Pull Request</div>
+        <div><span class="fd">Owner reviews &amp; merges</span> <span class="fn">→ live site updates</span></div>
+      </div>
+    </section>
+
+    <!-- SECTION 1 -->
+    <section id="s1" class="section">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <div class="section-title">One-time setup</div>
+      </div>
+      <p style="margin-bottom:1.25rem">You only do this once. After that you go straight to Section 2 each time you make changes.</p>
+
+      <div id="s11" class="subsection">
+        <div class="subsection-title">1.1 Fork the owner's repository</div>
+        <p>Forking creates your own copy on GitHub that you can freely edit.</p>
+        <ol class="steps">
+          <li><div>Go to the owner's GitHub repository — for example:<br><code>https://github.com/ownername/acromap</code></div></li>
+          <li><div>Click the <strong>Fork</strong> button at the top right</div></li>
+          <li><div>Leave all settings as-is and click <strong>Create fork</strong></div></li>
+          <li><div>You now have a copy at <code>https://github.com/yourname/acromap</code></div></li>
+        </ol>
+        <div class="info"><strong>ℹ️ A fork is not a branch.</strong> It is a completely separate repository on your own GitHub account. Changes you make here do not affect the owner's repo until she accepts a Pull Request.</div>
+      </div>
+
+      <div id="s12" class="subsection">
+        <div class="subsection-title">1.2 Clone your fork to VS Code</div>
+        <p>Cloning downloads the repository to your computer so you can edit it locally.</p>
+        <ol class="steps">
+          <li><div>Open VS Code</div></li>
+          <li><div>Press <kbd>Ctrl+Shift+P</kbd> (or <kbd>Cmd+Shift+P</kbd> on Mac) to open the Command Palette</div></li>
+          <li><div>Type <code>Git: Clone</code> and press <kbd>Enter</kbd></div></li>
+          <li><div>Paste your fork URL: <code>https://github.com/yourname/acromap</code></div></li>
+          <li><div>Choose a folder on your computer where the project should live — for example <code>Documents/acromap</code></div></li>
+          <li><div>Click <strong>Open</strong> when VS Code asks if you want to open the cloned repo</div></li>
+          <li><div>You will see the project files in the left panel, including <code>index.html</code></div></li>
+        </ol>
+        <div class="tip"><strong>Alternative:</strong> You can also clone via the GitHub extension. Click the GitHub icon in the left sidebar → Clone Repository → paste your fork URL.</div>
+      </div>
+
+      <div id="s13" class="subsection">
+        <div class="subsection-title">1.3 Set up the upstream remote</div>
+        <p>This connects your local copy to the owner's repository so you can pull their changes later (Section 4). You only do this once.</p>
+        <p>Open the VS Code terminal: <kbd>Ctrl+`</kbd> (backtick) or go to <strong>Terminal → New Terminal</strong>. Then run:</p>
+        <div class="terminal-label">VS Code Terminal</div>
+        <div class="terminal">
+          <div><span class="prompt">$</span> git remote add upstream https://github.com/ownername/acromap.git</div>
+          <div><span class="prompt">$</span> git remote -v</div>
+          <div class="out">origin    https://github.com/yourname/acromap.git (fetch)</div>
+          <div class="out">origin    https://github.com/yourname/acromap.git (push)</div>
+          <div class="out">upstream  https://github.com/ownername/acromap.git (fetch)</div>
+          <div class="out">upstream  https://github.com/ownername/acromap.git (push)</div>
+        </div>
+        <p>Replace <code>ownername</code> with the owner's actual GitHub username. The second command just confirms both remotes exist.</p>
+      </div>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section id="s2" class="section">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <div class="section-title">Making changes</div>
+      </div>
+      <p style="margin-bottom:1.25rem">This is your regular working cycle each time you update the map.</p>
+
+      <div id="s21" class="subsection">
+        <div class="subsection-title">2.1 Edit the file</div>
+        <ol class="steps">
+          <li><div>In the VS Code file explorer (left panel), click <code>index.html</code> to open it</div></li>
+          <li><div>Make your changes — bug fixes, new features, design updates, etc.</div></li>
+          <li><div>Save the file: <kbd>Ctrl+S</kbd> (or <kbd>Cmd+S</kbd> on Mac)</div></li>
+        </ol>
+        <div class="warn">
+          <strong>⚠️ Important: do not change the Worker URL.</strong><br>
+          The owner has her own Worker URL in the file pointing to her private Google Sheet. If your development version has a different URL, always revert that specific line before committing. Her line looks like:<br>
+          <code>fetch('https://acromap-worker.HER-NAME.workers.dev/events')</code><br>
+          You can change everything else — just leave that URL alone.
+        </div>
+      </div>
+
+      <div id="s22" class="subsection">
+        <div class="subsection-title">2.2 Commit your changes in VS Code</div>
+        <p>A commit is a saved snapshot of your changes with a description of what you did.</p>
+        <ol class="steps">
+          <li><div>Click the <strong>Source Control</strong> icon in the left sidebar (the branching icon, or press <kbd>Ctrl+Shift+G</kbd>)</div></li>
+          <li><div>You will see your changed files listed under "Changes"</div></li>
+          <li><div>Hover over <code>index.html</code> and click the <strong>+</strong> icon to stage it<br><small style="color:var(--p5)">Staging means: "include this file in the commit"</small></div></li>
+          <li><div>In the <strong>Message</strong> box at the top, type a short description of what you changed. Be specific — for example:
+            <div style="margin-top:.5rem;display:flex;flex-direction:column;gap:4px">
+              <div class="vscode-step"><span class="vs-icon">✅</span><span class="vs-text">Fix continent dropdown not updating on event type change</span></div>
+              <div class="vscode-step"><span class="vs-icon">✅</span><span class="vs-text">Add no-results message to calendar view</span></div>
+              <div class="vscode-step"><span class="vs-icon">✅</span><span class="vs-text">Improve mobile layout for filter bar</span></div>
+              <div class="vscode-step"><span class="vs-icon">❌</span><span class="vs-text">update</span><span class="vs-label">too vague</span></div>
+              <div class="vscode-step"><span class="vs-icon">❌</span><span class="vs-text">changes</span><span class="vs-label">useless</span></div>
+            </div>
+          </div></li>
+          <li><div>Click the <strong>✓ Commit</strong> button (or press <kbd>Ctrl+Enter</kbd>)</div></li>
+        </ol>
+        <div class="tip"><strong>Tip: commit often.</strong> One logical change per commit is much easier to review and easier to undo if something goes wrong. Don't bundle ten unrelated fixes into one commit.</div>
+      </div>
+
+      <div id="s23" class="subsection">
+        <div class="subsection-title">2.3 Push to your fork on GitHub</div>
+        <p>Pushing uploads your local commits to GitHub so they are visible online.</p>
+        <ol class="steps">
+          <li><div>Still in the Source Control panel, click the <strong>⋯</strong> menu (three dots) at the top right</div></li>
+          <li><div>Click <strong>Push</strong></div></li>
+          <li><div>Or use the keyboard shortcut: open the Command Palette (<kbd>Ctrl+Shift+P</kbd>), type <code>Git: Push</code> and press <kbd>Enter</kbd></div></li>
+          <li><div>VS Code may ask you to sign in to GitHub the first time — follow the prompts</div></li>
+        </ol>
+        <div class="info"><strong>ℹ️ Push vs. Sync:</strong> "Push" sends your commits to GitHub. "Sync" does both a pull (download any new changes) and a push. Either works here — use Push if you just want to upload.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section id="s3" class="section">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <div class="section-title">Sending a Pull Request</div>
+      </div>
+      <p style="margin-bottom:1.25rem">A Pull Request (PR) is how you ask the owner to accept your changes into her repository. She will receive an email notification and can merge it with one click.</p>
+
+      <div id="s31" class="subsection">
+        <div class="subsection-title">3.1 Open the Pull Request on GitHub</div>
+        <ol class="steps">
+          <li><div>Go to <strong>your fork</strong> on GitHub: <code>https://github.com/yourname/acromap</code></div></li>
+          <li><div>GitHub will usually show a yellow bar saying <em>"This branch is ahead of ownername:main"</em> — click <strong>Contribute → Open pull request</strong></div></li>
+          <li><div>If the bar is not showing, click the <strong>Pull requests</strong> tab → <strong>New pull request</strong></div></li>
+          <li><div>Make sure the settings at the top say:
+            <table style="margin-top:.5rem;font-size:13px">
+              <tr><th>Base repository</th><td><code>ownername/acromap</code> — branch: <code>main</code></td></tr>
+              <tr><th>Head repository</th><td><code>yourname/acromap</code> — branch: <code>main</code></td></tr>
+            </table>
+          </div></li>
+          <li><div>You will see a diff showing exactly what you changed (green = added, red = removed). Review it to make sure everything looks right.</div></li>
+          <li><div>Click <strong>Create pull request</strong></div></li>
+        </ol>
+      </div>
+
+      <div id="s32" class="subsection">
+        <div class="subsection-title">3.2 Write a clear description</div>
+        <p>A good PR description helps the owner understand what changed and why — even if she is not technical.</p>
+        <table>
+          <tr><th>Field</th><th>What to write</th></tr>
+          <tr>
+            <td><strong>Title</strong></td>
+            <td>Short summary — e.g. <code>Fix dropdown filters + add no-results message</code></td>
+          </tr>
+          <tr>
+            <td><strong>Description</strong></td>
+            <td>
+              Explain in plain language:
+              <ul style="margin-top:.4rem;padding-left:1.2rem;font-size:13px">
+                <li>What was the problem or what is new</li>
+                <li>What exactly you changed</li>
+                <li>Anything she needs to do after merging (usually: nothing)</li>
+              </ul>
+            </td>
+          </tr>
+        </table>
+        <p>Example description:</p>
+        <pre><code>## What changed
+- Continent and country dropdowns now update correctly when an event
+  type pill is toggled (previously showed countries with no events)
+- Calendar view now shows a "no events found" message instead of
+  an empty grid when no events match the current filters
+
+## How to test
+After merging, go to the map, select "Retreat" from the event type
+pills, and check that only countries with Retreats appear in the
+country dropdown.
+
+## Worker URL
+I have not changed the Worker URL — it still points to the
+production endpoint.</code></pre>
+        <ol class="steps" style="margin-top:1rem">
+          <li><div>Click <strong>Create pull request</strong> to submit</div></li>
+          <li><div>The owner receives an email notification from GitHub immediately</div></li>
+        </ol>
+      </div>
+
+      <div id="s33" class="subsection">
+        <div class="subsection-title">3.3 What happens next</div>
+        <ol class="steps">
+          <li><div>The owner reviews the PR on GitHub and can leave comments or questions</div></li>
+          <li><div>If she requests changes, make them in VS Code, commit, and push — the PR updates automatically</div></li>
+          <li><div>When she is happy, she clicks <strong>Merge pull request</strong> — the changes go live within 1–2 minutes</div></li>
+          <li><div>GitHub will send you a notification when it is merged</div></li>
+        </ol>
+        <div class="tip"><strong>The PR stays open</strong> until she merges or closes it. You can keep adding commits to the same PR — they appear automatically.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section id="s4" class="section">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <div class="section-title">Staying in sync with the owner's repo</div>
+      </div>
+      <p style="margin-bottom:1.25rem">The owner may make small edits directly on GitHub — for example updating the Worker URL or editing event data. Before you start working on a new feature, always pull the latest version from her repository.</p>
+
+      <div id="s41" class="subsection">
+        <div class="subsection-title">4.1 Pull owner's latest changes into your fork</div>
+        <p>Open the VS Code terminal (<kbd>Ctrl+`</kbd>) and run these two commands:</p>
+        <div class="terminal-label">VS Code Terminal</div>
+        <div class="terminal">
+          <div><span class="prompt">$</span> git fetch upstream</div>
+          <div class="out">From https://github.com/ownername/acromap</div>
+          <div class="out">   a1b2c3d..e4f5g6h  main -> upstream/main</div>
+          <div style="margin-top:.4rem"><span class="prompt">$</span> git merge upstream/main</div>
+          <div class="out">Updating a1b2c3d..e4f5g6h</div>
+          <div class="out">Fast-forward</div>
+          <div class="out"> index.html | 12 +++---</div>
+        </div>
+        <p>Then push the update to your fork so GitHub is also up to date:</p>
+        <div class="terminal-label">VS Code Terminal</div>
+        <div class="terminal">
+          <div><span class="prompt">$</span> git push origin main</div>
+        </div>
+        <div class="warn"><strong>Do this before you start any new work.</strong> If you forget and your fork gets out of date, you may get a merge conflict when you open the next PR.</div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">What to do if you get a merge conflict</div>
+        <p>A merge conflict happens when both you and the owner edited the same line. VS Code shows conflicts clearly:</p>
+        <ol class="steps">
+          <li><div>VS Code highlights conflicting lines in <code>index.html</code> with <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code>, and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> markers</div></li>
+          <li><div>Click <strong>Accept Current Change</strong>, <strong>Accept Incoming Change</strong>, or <strong>Accept Both</strong> above each conflict — choose whichever is correct</div></li>
+          <li><div>Save the file, then stage and commit: <code>Resolve merge conflict</code></div></li>
+          <li><div>Push to your fork</div></li>
+        </ol>
+        <div class="tip">Most conflicts are easy to resolve because the file is a single <code>index.html</code> — conflicts usually only happen if both of you edited the same JavaScript function.</div>
+      </div>
+    </section>
+
+    <!-- SECTION 5 -->
+    <section id="s5" class="section">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <div class="section-title">The Worker URL rule</div>
+      </div>
+      <p style="margin-bottom:1rem">This is the single most important rule when working on this project.</p>
+
+      <div class="warn">
+        <strong>⚠️ Never commit the owner's Worker URL.</strong><br><br>
+        The owner has a secret Worker URL that connects to her private Google Sheet:<br>
+        <code>fetch('https://acromap-worker.HER-NAME.workers.dev/events')</code><br><br>
+        If you are developing locally with your own test Worker, you will have a different URL in your local file. <strong>Always revert this line to her URL before committing and pushing.</strong>
+      </div>
+
+      <p>The cleanest way to handle this is to keep a comment in the file:</p>
+      <pre><code><span class="cm">// PRODUCTION URL — do not change this line</span>
+<span class="kw">const</span> <span class="nm">res</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="st">'https://acromap-worker.HER-NAME.workers.dev/events'</span>);</code></pre>
+
+      <p>For your own local testing, you can temporarily swap the URL but always revert before committing. Use VS Code's Source Control diff view to double-check before every commit — the URL line will be highlighted in red/green if it changed.</p>
+
+      <div class="info"><strong>Alternative: use a config constant.</strong> You could define the URL as a constant at the top of the <code>CONFIG</code> block (<code>WORKER_URL: '...'</code>), which makes it easy to see and easy to check before committing.</div>
+    </section>
+
+    <!-- SECTION 6 -->
+    <section id="s6" class="section">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <div class="section-title">Workflow cheatsheet</div>
+      </div>
+
+      <div class="subsection-title">Every time you make changes</div>
+      <ul class="checklist">
+        <li>Pull latest from upstream first (<code>git fetch upstream &amp;&amp; git merge upstream/main</code>)</li>
+        <li>Edit <code>index.html</code> in VS Code</li>
+        <li>Check the Worker URL is still the owner's URL (not yours)</li>
+        <li>Stage changes in Source Control panel</li>
+        <li>Write a meaningful commit message — what changed and why</li>
+        <li>Commit (<kbd>Ctrl+Enter</kbd>)</li>
+        <li>Push to your fork (Source Control → ⋯ → Push)</li>
+        <li>Open a Pull Request on GitHub with a plain-language description</li>
+        <li>Wait for the owner to merge — she gets an email notification</li>
+      </ul>
+
+      <div style="margin-top:1.5rem" class="subsection-title">Quick command reference</div>
+      <table>
+        <tr><th>What you want to do</th><th>Terminal command</th></tr>
+        <tr><td>Pull owner's latest changes</td><td><code>git fetch upstream &amp;&amp; git merge upstream/main</code></td></tr>
+        <tr><td>Check what has changed</td><td><code>git status</code></td></tr>
+        <tr><td>See the diff</td><td><code>git diff</code></td></tr>
+        <tr><td>Stage everything</td><td><code>git add index.html</code></td></tr>
+        <tr><td>Commit with message</td><td><code>git commit -m "Your message here"</code></td></tr>
+        <tr><td>Push to your fork</td><td><code>git push origin main</code></td></tr>
+        <tr><td>Undo last commit (keep changes)</td><td><code>git reset --soft HEAD~1</code></td></tr>
+        <tr><td>Discard all local changes</td><td><code>git checkout -- index.html</code></td></tr>
+      </table>
+
+      <div style="margin-top:1.5rem" class="subsection-title">VS Code shortcut reference</div>
+      <table>
+        <tr><th>Action</th><th>Shortcut</th></tr>
+        <tr><td>Command Palette</td><td><kbd>Ctrl+Shift+P</kbd> / <kbd>Cmd+Shift+P</kbd></td></tr>
+        <tr><td>Open Source Control</td><td><kbd>Ctrl+Shift+G</kbd></td></tr>
+        <tr><td>Open terminal</td><td><kbd>Ctrl+`</kbd></td></tr>
+        <tr><td>Save file</td><td><kbd>Ctrl+S</kbd> / <kbd>Cmd+S</kbd></td></tr>
+        <tr><td>Commit staged changes</td><td><kbd>Ctrl+Enter</kbd> in the commit message box</td></tr>
+        <tr><td>Find in file</td><td><kbd>Ctrl+F</kbd> / <kbd>Cmd+F</kbd></td></tr>
+        <tr><td>Find &amp; replace in file</td><td><kbd>Ctrl+H</kbd> / <kbd>Cmd+H</kbd></td></tr>
+      </table>
+
+      <div style="margin-top:2rem" class="summary-box">
+        <h3>Prerequisites — if not already installed</h3>
+        <table>
+          <tr><th>Tool</th><th>Where to get it</th></tr>
+          <tr><td>Git</td><td><a href="https://git-scm.com/downloads" target="_blank">git-scm.com/downloads</a> — install with all defaults</td></tr>
+          <tr><td>VS Code</td><td><a href="https://code.visualstudio.com" target="_blank">code.visualstudio.com</a></td></tr>
+          <tr><td>GitHub Pull Requests extension</td><td>VS Code Extensions panel → search <code>GitHub Pull Requests</code> → Install</td></tr>
+          <tr><td>GitHub account</td><td><a href="https://github.com/signup" target="_blank">github.com/signup</a></td></tr>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="site-footer">
+  Acromap · Developer Guide · For questions contact the project owner
+</footer>
+
+<script>
+function copyCode(preId, btn) {
+  const pre = document.getElementById(preId);
+  const code = pre.querySelector('code').innerText;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+const sections = document.querySelectorAll('[id]');
+const tocLinks = document.querySelectorAll('.toc-list a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      tocLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`.toc-list a[href="#${entry.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-80px 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

@@ -1,0 +1,189 @@
+{
+  "tenant": {
+    "id": "karaokeevents",
+    "name": "KaraokeEvents",
+    "tagline": "Find karaoke events worldwide",
+    "status": "active",
+    "plan": "pro",
+    "created_at": "2026-05-18",
+    "custom_domain": "karaokeevents.com",
+    "subdomain": "karaokeevents"
+  },
+
+ 
+  "branding": {
+    "colors": {
+      "primary":          "#c850c0",
+      "secondary":        "#7b2ff7",
+      "background":       "#fafafe",
+      "text":             "#4a4a6a",
+      "muted":            "#9b9bc0",
+      "border":           "#e0d7f0",
+      "primary_light":    "#f0d6ff",
+      "secondary_dark":   "#faf5ff",
+      "card_background":  "#ffffff"
+    },
+    "fonts": {
+      "heading": "Righteous",
+      "body":    "Nunito"
+    },
+    "logo_url":    "https://karaokeevents.com/wp-content/uploads/logo.png",
+    "favicon_url": "https://karaokeevents.com/favicon.ico",
+    "dark_mode":   true
+  },
+
+  "content": {
+    "language":    "en",
+    "timezone":    "UTC",
+    "currency":    "USD",
+    "date_format": "DD MMM YYYY",
+    "labels": {
+      "events":               "Events",
+      "submit_event":         "Submit an Event",
+      "no_events":            "No karaoke events found",
+      "search_placeholder":   "Search event or city…",
+      "all_categories":       "All types",
+      "all_continents":       "All continents",
+      "all_countries":        "All countries",
+      "load_more":            "Load more",
+      "list_view":            "List",
+      "calendar_view":        "Calendar",
+      "map_view":             "Map",
+      "share_whatsapp":       "💬 Share on WhatsApp",
+      "add_to_calendar":      "📅 Add to Google Calendar",
+      "copy_link":            "🔗 Copy link",
+      "visit_website":        "🔗 Visit website →",
+      "back_to_events":       "← All events",
+      "past_event":           "Past event",
+      "ongoing_event":        "Ongoing"
+    }
+  },
+
+  "categories": [
+    { "id": "competition",    "label": "Competition",    "icon": "🏆", "color": "#ffd93d" },
+    { "id": "open_mic",       "label": "Open Mic",       "icon": "🎤", "color": "#c850c0" },
+    { "id": "bar_night",      "label": "Bar Night",      "icon": "🍺", "color": "#7b2ff7" },
+    { "id": "festival",       "label": "Festival",       "icon": "🎉", "color": "#ff6b6b" },
+    { "id": "private_event",  "label": "Private Event",  "icon": "🎊", "color": "#6bcb77" }
+  ],
+
+  "locations": {
+    "mode": "continents",
+    "regions": [
+      "Africa",
+      "Asia",
+      "Europe",
+      "North America",
+      "Oceania",
+      "South America"
+    ]
+  },
+
+  "fields": {
+    "core": {
+      "name":        true,
+      "start_date":  true,
+      "end_date":    true,
+      "all_day":     true,
+      "category":    true,
+      "description": true,
+      "timezone":    false,
+      "sticky":      true
+    },
+    "location": {
+      "venue_name":      false,
+      "city":            true,
+      "country":         true,
+      "state":           true,
+      "continent":       true,
+      "lat_lon":         true,
+      "google_maps_link": true
+    },
+    "media": {
+      "featured_image": false,
+      "website_url":    true
+    },
+    "custom": []
+  },
+
+  "views": {
+    "default":   "list",
+    "available": ["list", "calendar", "map"],
+    "list": {
+      "page_size":                12,
+      "min_page_size":            9,
+      "card_min_width_px":        320,
+      "min_rows":                 3,
+      "show_cat_picks":           true,
+      "cat_picks_label":          "Staff Picks",
+      "cat_picks_field":          "sticky",
+      "cat_picks_icon":           "🎤",
+      "show_featured_image":      false,
+      "show_description_truncated": true,
+      "show_tags":                false,
+      "show_venue":               false,
+      "show_visible_count":       true
+    },
+    "calendar": {
+      "start_day":              "monday",
+      "show_empty_month_message": true
+    },
+    "map": {
+      "default_lat":  20.0,
+      "default_lon":  10.0,
+      "default_zoom": 2
+    }
+  },
+
+  "submission": {
+    "enabled":                true,
+    "requires_approval":      true,
+    "duplicate_check":        true,
+    "duplicate_check_fields": ["name", "start_date"],
+    "notification_email":     "hello@karaokeevents.com",
+    "confirmation_message":   "Thanks! Your event will appear after review.",
+    "allowed_submitters":     "anyone",
+    "google_sheet_id":        "1NPhe1oeFG0LvlyJ8O6N9ZeUlLmdS5TrEfcbwl087PKo",
+    "google_sheet_tab":       "data"
+  },
+
+  "sharing": {
+    "whatsapp":           true,
+    "whatsapp_template":  "🎤 Check out this karaoke event!\n{name}\n{start_date} – {end_date}\n📍 {city}, {country}\n{url}",
+    "gcal":               true,
+    "copy_link":          true,
+    "copy_link_template": "https://karaokeevents.com/show-event/?id={slug}-{start_date}"
+  },
+
+  "embed": {
+    "allowed_domains":  ["karaokeevents.com"],
+    "default_height":   "auto",
+    "show_header":      true,
+    "show_filters":     true,
+    "iframe_resizer":   true
+  },
+
+  "data_source": {
+    "type":               "sheets",
+    "worker_url":         "https://tiny-recipe-c86a.be-nomadicated.workers.dev/events",
+    "fallback_type":      "csv",
+    "fallback_sheet_id":  "1NPhe1oeFG0LvlyJ8O6N9ZeUlLmdS5TrEfcbwl087PKo",
+    "fallback_sheet_tab": "data",
+    "columns": {
+      "name":            "EVENT NAME",
+      "description":     "EVENT DESCRIPTION",
+      "continent":       "CONTINENT",
+      "country":         "COUNTRY",
+      "state":           "STATE",
+      "city":            "CITY",
+      "lat":             "LAT",
+      "lon":             "LON",
+      "start_date":      "EVENT START DATE",
+      "end_date":        "EVENT END DATE",
+      "category":        "EVENT CATEGORY",
+      "sticky":          "FEATURED",
+      "insider_deals":   "SPECIAL OFFER",
+      "url":             "URL"
+    }
+  }
+}

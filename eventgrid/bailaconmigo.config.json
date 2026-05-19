@@ -1,0 +1,251 @@
+{
+  "tenant": {
+    "id": "bailaconmigo",
+    "name": "BailaConmigo",
+    "tagline": "Find Latin dance events worldwide",
+    "status": "active",
+    "plan": "pro",
+    "created_at": "2026-05-18",
+    "custom_domain": "bailaconmigo.com",
+    "subdomain": "bailaconmigo"
+  },
+  "branding": {
+     "colors": {
+      "primary": "#c0392b",
+      "secondary": "#e6920a",
+      "background": "#fffbea",
+      "text": "#2a1a0a",
+      "muted": "#8a6a50",
+      "border": "#f5e4a0",
+      "primary_light": "#fef3c7",
+      "secondary_dark": "#b37200",
+      "card_background": "#fffef5"
+    },
+    "fonts": {
+      "heading": "Salsa",
+      "body": "Nunito"
+    },
+    "logo_url": "https://bailaconmigo.com/logo.png",
+    "favicon_url": "https://bailaconmigo.com/favicon.ico",
+    "dark_mode": false
+  },
+  "content": {
+    "language": "en",
+    "timezone": "UTC",
+    "currency": "EUR",
+    "date_format": "DD MMM YYYY",
+    "labels": {
+      "events": "Events",
+      "submit_event": "Submit an Event",
+      "no_events": "No Latin dance events found",
+      "search_placeholder": "Search events or cities…",
+      "all_categories": "All styles",
+      "all_continents": "All continents",
+      "all_countries": "All countries",
+      "load_more": "Load more",
+      "list_view": "List",
+      "calendar_view": "Calendar",
+      "map_view": "Map",
+      "share_whatsapp": "💬 Share on WhatsApp",
+      "add_to_calendar": "📅 Add to Google Calendar",
+      "copy_link": "🔗 Copy link",
+      "visit_website": "🔗 Visit website →",
+      "back_to_events": "← All Events",
+      "past_event": "Past event",
+      "ongoing_event": "Ongoing"
+    }
+  },
+  "categories": [
+    {
+      "id": "salsa",
+      "label": "Salsa",
+      "icon": "💃",
+      "color": "#e63946"
+    },
+    {
+      "id": "bachata",
+      "label": "Bachata",
+      "icon": "🌹",
+      "color": "#f4a200"
+    },
+    {
+      "id": "kizomba",
+      "label": "Kizomba",
+      "icon": "🔥",
+      "color": "#c0392b"
+    },
+    {
+      "id": "zouk",
+      "label": "Zouk",
+      "icon": "🌊",
+      "color": "#8e44ad"
+    },
+    {
+      "id": "merengue",
+      "label": "Merengue",
+      "icon": "🎺",
+      "color": "#d4ac0d"
+    },
+    {
+      "id": "cumbia",
+      "label": "Cumbia",
+      "icon": "🪗",
+      "color": "#27ae60"
+    },
+    {
+      "id": "festival",
+      "label": "Festival",
+      "icon": "🎪",
+      "color": "#e74c3c"
+    },
+    {
+      "id": "workshop",
+      "label": "Workshop",
+      "icon": "🎓",
+      "color": "#2980b9"
+    },
+    {
+      "id": "social",
+      "label": "Social",
+      "icon": "🎶",
+      "color": "#16a085"
+    }
+  ],
+  "locations": {
+    "mode": "continents",
+    "regions": [
+      "Africa",
+      "Asia",
+      "Europe",
+      "North America",
+      "Oceania",
+      "South America"
+    ]
+  },
+  "fields": {
+    "core": {
+      "name": true,
+      "start_date": true,
+      "end_date": true,
+      "all_day": true,
+      "category": true,
+      "description": true,
+      "timezone": false,
+      "sticky": true
+    },
+    "location": {
+      "venue_name": true,
+      "city": true,
+      "country": true,
+      "state": true,
+      "continent": true,
+      "lat_lon": true,
+      "google_maps_link": true
+    },
+    "media": {
+      "featured_image": false,
+      "website_url": true
+    },
+    "custom": [
+      {
+        "id": "level",
+        "label": "Level",
+        "type": "select",
+        "options": [
+          "All levels",
+          "Beginner",
+          "Intermediate",
+          "Advanced"
+        ],
+        "show_in_card": true,
+        "show_in_filter": false
+      }
+    ]
+  },
+  "views": {
+    "default": "list",
+    "available": [
+      "list",
+      "calendar",
+      "map"
+    ],
+    "list": {
+      "page_size": 9,
+      "min_page_size": 9,
+      "card_min_width_px": 320,
+      "min_rows": 3,
+      "show_cat_picks": true,
+      "cat_picks_label": "Miguel's Picks",
+      "cat_picks_field": "sticky",
+      "cat_picks_icon": "🌶️",
+      "show_featured_image": false,
+      "show_description_truncated": true,
+      "show_tags": false,
+      "show_venue": true,
+      "show_visible_count": true
+    },
+    "calendar": {
+      "start_day": "monday",
+      "show_empty_month_message": true
+    },
+    "map": {
+      "default_lat": 15.0,
+      "default_lon": -30.0,
+      "default_zoom": 2
+    }
+  },
+  "submission": {
+    "enabled": true,
+    "requires_approval": true,
+    "duplicate_check": true,
+    "duplicate_check_fields": [
+      "name",
+      "start_date"
+    ],
+    "notification_email": "miguel@bailaconmigo.com",
+    "confirmation_message": "¡Gracias! Your event will appear after review.",
+    "allowed_submitters": "anyone",
+    "google_sheet_id": "YOUR_SHEET_ID_HERE",
+    "google_sheet_tab": "data"
+  },
+  "sharing": {
+    "whatsapp": true,
+    "whatsapp_template": "💃 Check out this Latin dance event!\n{name}\n{start_date} – {end_date}\n📍 {city}, {country}\n{url}",
+    "gcal": true,
+    "copy_link": true,
+    "copy_link_template": "https://bailaconmigo.com/show-event/?id={slug}"
+  },
+  "embed": {
+    "allowed_domains": [
+      "bailaconmigo.com"
+    ],
+    "default_height": "auto",
+    "show_header": true,
+    "show_filters": true,
+    "iframe_resizer": true
+  },
+  "data_source": {
+    "type": "sheets",
+    "worker_url": "",
+    "fallback_type": "csv",
+    "fallback_sheet_id": "1tF-oyBwFCvTTaUIJjNDUjkkfVpxusy3UIWYr3MvUAz0",
+    "fallback_sheet_tab": "data",
+    "columns": {
+      "url": "URL",
+      "name": "EVENT NAME",
+      "description": "EVENT DESCRIPTION",
+      "continent": "CONTINENT",
+      "country": "COUNTRY",
+      "state": "STATE",
+      "city": "CITY",
+      "lat": "LAT",
+      "lon": "LON",
+      "start_date": "EVENT START DATE",
+      "end_date": "EVENT END DATE",
+      "category": "EVENT CATEGORY",
+      "sticky": "FEATURED",
+      "insider_deals": "SPECIAL OFFER",
+      "level": "LEVEL"
+    }
+  }
+}

@@ -1,0 +1,103 @@
+Yes — a **Cloudflare Worker**. It's the cleanest solution: free, no server needed, 
+runs at the edge, and keeps your API key out of the browser.
+
+---
+
+**The Worker** — create at [workers.cloudflare.com](https://workers.cloudflare.com):
+
+```javascript
+export default {
+  async fetch(request, env) {
+    // CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET',
+        }
+      });
+    }
+
+    const SHEET_ID = '132gCPu46DkXTJk1Yy5RmuKcijMBm7_PPqQjRm_7AbG4';
+    const RANGE    = 'data!A:Z';
+    const API_KEY  = env.GOOGLE_API_KEY;  // set in Worker environment variables
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      return new Response(JSON.stringify({ error: 'Upstream error ' + res.status }), {
+        status: 502,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const data = await res.json();
+    const rows = data.values ?? [];
+
+    if (rows.length < 2) {
+      return new Response('[]', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        }
+      });
+    }
+
+    const headers = rows[0];
+    const result  = rows.slice(1).map(row => {
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = row[i] ?? ''; });
+      return obj;
+    });
+
+    return new Response(JSON.stringify(result), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',  // lock to your domain in production
+      }
+    });
+  }
+};
+```
+
+---
+
+**Setup steps:**
+
+1. Create a new Worker, paste the code above
+2. Go to **Settings → Variables → Environment Variables** and add:
+   - Key: `GOOGLE_API_KEY`
+   - Value: your Google API key (mark it as **secret**)
+3. Deploy — you get a URL like `https://acromap-data.yourname.workers.dev`
+
+---
+
+**In `index.html`**, update `init()`:
+
+```javascript
+async function init() {
+  setMsg('Fetching event data…');
+  let rawData;
+  try {
+    const res = await fetch('https://acromap-data.yourname.workers.dev');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    rawData = await res.json();
+  } catch(e) {
+    setMsg('❌ Could not load data: ' + e.message);
+    setStep('Check the Worker URL');
+    return;
+  }
+  if (!rawData.length) { setMsg('No data found.'); return; }
+  processData(rawData);
+  hideOv();
+}
+```
+
+---
+
+**Why this is better than PHP:**
+- No server to maintain
+- API key never touches the browser
+- Free up to 100,000 requests/day
+- You can also add **caching** with one line — `Cache-Control: max-age=300` — so it only hits Google Sheets every 5 minutes instead of on every page load

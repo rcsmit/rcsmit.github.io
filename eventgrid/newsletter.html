@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upcoming Events</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Google Fonts injected dynamically once tenant config is loaded -->
+<style>
+  :root {
+    /* Defaults — overwritten by applyNewsletterTheme() once config loads */
+    --p1: #f19072; --p2: #12807a;
+    --p3: #3d3d3e; --p4: #5c5c5c;
+    --p5: #bbbdbf; --p6: #d7dbde;
+    --p7: #fcdacf; --p8: #fef6f4; --p9: #ffffff;
+    --font-body:    'Josefin Sans', sans-serif;
+    --font-heading: 'Corben', cursive;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-body); background: var(--p8); color: var(--p4); line-height: 1.6; padding: 2rem 1rem 3rem; }
+
+  .digest { max-width: 640px; margin: 0 auto; background: var(--p9); border: 1px solid var(--p7); border-radius: 4px; overflow: hidden; }
+
+  /* Header */
+  .digest-header { background: var(--p1); padding: 1.5rem 2rem 1.2rem; border-bottom: 3px solid color-mix(in srgb, var(--p1) 80%, #000); }
+  .digest-header-label { font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,255,255,.75); margin-bottom: 4px; }
+  .digest-header-title { font-family: var(--font-heading); font-size: 1.7rem; font-weight: 700; color: #fff; line-height: 1.2; }
+  .digest-header-title span { color: rgba(255,255,255,.65); }
+  .digest-header-sub { font-size: 12px; color: rgba(255,255,255,.7); margin-top: 6px; font-weight: 400; letter-spacing: .03em; }
+
+  /* Filter bar */
+  .filter-bar { padding: 1rem 2rem .9rem; border-bottom: 1px solid var(--p7); background: var(--p9); }
+  .filter-row { display: flex; flex-wrap: wrap; gap: .6rem 1.4rem; align-items: flex-start; margin-bottom: .65rem; }
+  .filter-row:last-child { margin-bottom: 0; }
+  .filter-section { display: flex; flex-direction: column; gap: 4px; }
+  .filter-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--p5);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .filter-clear {
+    font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--p2); cursor: pointer; background: none; border: none; padding: 0;
+    font-family: var(--font-body); opacity: 0; pointer-events: none; transition: opacity .15s;
+  }
+  .filter-clear.visible { opacity: 1; pointer-events: auto; }
+  .filter-clear:hover { color: var(--p1); }
+  .filter-toggles { display: flex; flex-wrap: wrap; gap: 5px; }
+  .ftog {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--font-body); font-size: 11px; font-weight: 600; letter-spacing: .03em;
+    padding: 3px 10px; border-radius: 20px; border: 1.5px solid var(--p6);
+    background: var(--p9); color: var(--p4); cursor: pointer;
+    transition: all .12s; white-space: nowrap; user-select: none;
+  }
+  .ftog:hover { border-color: var(--p5); color: var(--p3); }
+  .ftog.active { background: var(--p2); border-color: var(--p2); color: #fff; }
+  .ftog.active:hover { background: var(--p2); filter: brightness(0.9); }
+  .ftog-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+
+  .filter-select {
+    font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--p4);
+    background: var(--p9); border: 1.5px solid var(--p6); border-radius: 20px;
+    padding: 3px 26px 3px 11px; appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23bbbdbf'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 9px center;
+    cursor: pointer; outline: none; transition: border-color .12s;
+  }
+  .filter-select:hover, .filter-select:focus { border-color: var(--p5); }
+
+  /* Grouping row */
+  .group-row { display: flex; flex-wrap: wrap; gap: 6px 1rem; align-items: center; padding: .7rem 2rem; border-bottom: 1px solid var(--p7); background: var(--p8); }
+  .group-label { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--p5); white-space: nowrap; }
+  .group-level { display: flex; align-items: center; gap: 5px; }
+  .group-num { font-size: 10px; font-weight: 700; color: var(--p5); letter-spacing: .06em; }
+
+  .filter-count { font-size: 11px; color: var(--p5); padding: .4rem 2rem .1rem; min-height: 1.4em; }
+
+  /* Event list */
+  .digest-body { padding: 0 2rem 1.5rem; }
+  ul.ev-list { list-style: none; margin: 0; padding: 0; }
+
+  /* Group headers */
+  .grp-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 8px; margin: 1.1rem -2rem 0; padding-left: 2rem; padding-right: 2rem;
+    border-bottom: 1px solid var(--p7);
+  }
+  .grp-head-1 { background: var(--p1); margin-top: 0; }
+  .grp-head-1 .grp-name { font-family: var(--font-heading); font-size: .9rem; font-weight: 700; color: #fff; letter-spacing: .04em; text-transform: uppercase; }
+  .grp-head-1 .grp-count { font-size: 10px; color: rgba(255,255,255,.7); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+
+  .grp-head-2 { background: var(--p8); border-left: 3px solid var(--p2); }
+  .grp-head-2 .grp-name { font-family: var(--font-heading); font-size: .78rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .grp-head-2 .grp-count { font-size: 10px; color: var(--p5); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+
+  .grp-head-3 { background: transparent; border-bottom: 1px dashed var(--p6); margin-top: .6rem; }
+  .grp-head-3 .grp-name { font-family: var(--font-body); font-size: .72rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--p5); }
+  .grp-head-3 .grp-count { font-size: 10px; color: var(--p6); font-weight: 700; letter-spacing: .04em; }
+
+  /* Event row */
+  .ev { display: flex; align-items: baseline; gap: 0; padding: 7px 0; border-bottom: 1px solid var(--p8); transition: background .12s; }
+  .ev:last-child { border-bottom: none; }
+  .ev:hover { background: var(--p8); margin: 0 -2rem; padding-left: 2rem; padding-right: 2rem; }
+  .ev-date { font-size: 11px; font-weight: 700; color: var(--p2); white-space: nowrap; min-width: 88px; flex-shrink: 0; letter-spacing: .02em; padding-top: 1px; }
+  .ev-body { flex: 1; min-width: 0; }
+  .ev-name { font-family: var(--font-body); font-size: 13.5px; font-weight: 600; color: var(--p3); text-decoration: none; line-height: 1.35; display: inline; }
+  .ev-name:hover { color: var(--p1); text-decoration: underline; text-underline-offset: 3px; }
+  .ev-loc { font-size: 11.5px; color: var(--p5); font-weight: 400; margin-top: 1px; }
+  .ev-icons { flex-shrink: 0; font-size: 14px; padding-left: 10px; white-space: nowrap; line-height: 1; padding-top: 2px; }
+
+  .digest-loading { display: flex; align-items: center; gap: 10px; padding: 2rem 0; color: var(--p5); font-size: 13px; }
+  .digest-spinner { width: 16px; height: 16px; border: 2px solid var(--p6); border-top-color: var(--p2); border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .digest-empty { padding: 1.5rem 0; color: var(--p5); font-size: 13px; text-align: center; }
+
+  /* CTA / guide / footer */
+  .digest-cta { display: block; margin: 1.2rem 2rem 0; padding: 11px 18px; background: var(--p2); color: #fff; text-align: center; font-family: var(--font-body); font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; text-decoration: none; border-radius: 2px; transition: background .15s; }
+  .digest-cta:hover { filter: brightness(0.9); color: #fff; }
+  .digest-guide { margin: 1.5rem 2rem 0; background: var(--p8); border: 1px solid var(--p7); border-radius: 3px; padding: .9rem 1.1rem; }
+  .digest-guide-title { font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--p5); margin-bottom: 7px; }
+  .guide-row { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+  .guide-item { font-size: 12px; color: var(--p4); white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+  .guide-item .gi { font-size: 14px; }
+  .digest-footer { padding: 1rem 2rem; margin-top: 1.5rem; border-top: 1px solid var(--p7); font-size: 11px; color: var(--p5); text-align: center; letter-spacing: .03em; }
+  .digest-footer a { color: var(--p2); text-decoration: none; }
+  .digest-footer a:hover { color: var(--p1); }
+
+  @media (max-width: 500px) {
+    .digest-body { padding: 0 1.1rem 1rem; }
+    .digest-header, .filter-bar { padding-left: 1.1rem; padding-right: 1.1rem; }
+    .group-row { padding-left: 1.1rem; padding-right: 1.1rem; }
+    .filter-count { padding-left: 1.1rem; }
+    .digest-cta, .digest-guide { margin-left: 1.1rem; margin-right: 1.1rem; }
+    .digest-footer { padding: 1rem 1.1rem; }
+    .ev-date { min-width: 74px; font-size: 10px; }
+    .ev-name { font-size: 12.5px; }
+    .ev:hover { margin: 0 -1.1rem; padding-left: 1.1rem; padding-right: 1.1rem; }
+    .grp-head { margin-left: -1.1rem; margin-right: -1.1rem; padding-left: 1.1rem; padding-right: 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Tenant config must load before we render ───────────────────────── -->
+<!-- TENANT_CONFIG_FILE is set in config.js; we use the same loadTenantConfig()
+     function so newsletter always tracks the active tenant. -->
+<script src="js/config.js"></script>
+
+<div class="digest">
+
+  <!-- Header — content filled by applyNewsletterTheme() -->
+  <div class="digest-header">
+    <div class="digest-header-label" id="nl-header-label">Events</div>
+    <div class="digest-header-title" id="nl-header-title">Events</div>
+    <div class="digest-header-sub" id="nl-header-sub"></div>
+  </div>
+
+  <!-- Filter bar — category + continent toggles built from config -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <div class="filter-section">
+        <div class="filter-label">
+          Category
+          <button class="filter-clear" id="clear-cat" onclick="clearFilter('cat')">Clear</button>
+        </div>
+        <div class="filter-toggles" id="cat-filters">
+          <!-- populated by buildCategoryFilters() -->
+        </div>
+      </div>
+    </div>
+    <div class="filter-row">
+      <div class="filter-section">
+        <div class="filter-label">
+          Continent
+          <button class="filter-clear" id="clear-cont" onclick="clearFilter('cont')">Clear</button>
+        </div>
+        <div class="filter-toggles" id="cont-filters">
+          <!-- populated by buildContinentFilters() -->
+        </div>
+      </div>
+      <div class="filter-section">
+        <div class="filter-label">Show up to</div>
+        <select class="filter-select" id="filter-months" onchange="applyFilters()">
+          <option value="1">This month</option>
+          <option value="2">2 months</option>
+          <option value="3">3 months</option>
+          <option value="6" selected>6 months</option>
+          <option value="12">12 months</option>
+          <option value="0">All future</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grouping controls -->
+  <div class="group-row">
+    <span class="group-label">Group by</span>
+    <div class="group-level">
+      <span class="group-num">1</span>
+      <select class="filter-select" id="grp1" onchange="applyFilters()">
+        <option value="none">— nothing —</option>
+        <option value="continent" selected>Continent</option>
+        <option value="category">Category</option>
+        <option value="month">Month</option>
+      </select>
+    </div>
+    <div class="group-level">
+      <span class="group-num">2</span>
+      <select class="filter-select" id="grp2" onchange="applyFilters()">
+        <option value="none">— nothing —</option>
+        <option value="continent">Continent</option>
+        <option value="category">Category</option>
+        <option value="month" selected>Month</option>
+      </select>
+    </div>
+    <div class="group-level">
+      <span class="group-num">3</span>
+      <select class="filter-select" id="grp3" onchange="applyFilters()">
+        <option value="none" selected>— nothing —</option>
+        <option value="continent">Continent</option>
+        <option value="category">Category</option>
+        <option value="month">Month</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="filter-count" id="filter-count"></div>
+
+  <!-- Unified event list -->
+  <div class="digest-body" id="event-list">
+    <div class="digest-loading"><div class="digest-spinner"></div>Fetching events…</div>
+  </div>
+
+  <!-- CTA — href filled by applyNewsletterTheme() -->
+  <a class="digest-cta" id="nl-cta" href="#">
+    <span>👉</span> View Full Calendar
+  </a>
+
+  <!-- Symbol guide — built from config categories -->
+  <div class="digest-guide">
+    <div class="digest-guide-title">Symbol Guide</div>
+    <div class="guide-row" id="nl-guide-row">
+      <!-- populated by buildSymbolGuide() -->
+      <div class="guide-item"><span class="gi">⭐</span> Popular</div>
+      <div class="guide-item"><span class="gi">😿</span> Sold Out</div>
+      <div class="guide-item"><span class="gi">🎟️</span> Has Offers</div>
+    </div>
+  </div>
+
+  <div class="digest-footer" id="nl-footer">
+    <!-- filled by applyNewsletterTheme() -->
+  </div>
+
+</div><!-- /digest -->
+
+<!-- HTML source viewer -->
+<div style="max-width:640px;margin:2rem auto 0;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+    <span style="font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#bbbdbf;">Generated HTML</span>
+    <button id="copy-btn" onclick="copyHtml()" style="font-family:var(--font-body);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--p2);color:#fff;border:none;border-radius:2px;padding:5px 12px;cursor:pointer;">Copy</button>
+  </div>
+  <textarea id="html-source" readonly style="width:100%;height:260px;font-family:monospace;font-size:11px;line-height:1.5;background:#1e1e1e;color:#d4d4d4;border:1px solid #333;border-radius:3px;padding:12px;resize:vertical;outline:none;white-space:pre;" placeholder="HTML will appear here once events load…"></textarea>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════
+   NEWSLETTER — driven entirely by CONFIG (set by loadTenantConfig)
+   ════════════════════════════════════════════════════════════ */
+
+const MONTHS = ['January','February','March','April','May','June',
+                'July','August','September','October','November','December'];
+
+/* ── Runtime state ─────────────────────────────────────────── */
+let ALL_ROWS  = [];
+let NL_CATS   = [];   // [{id, label, icon, color}, …] from config
+let NL_CONTS  = [];   // [{key, color}, …] derived from config locations + COLORS
+const filters = { cat: new Set(), cont: new Set(), months: 6 };
+
+/* ── Apply tenant branding + labels to newsletter chrome ───── */
+function applyNewsletterTheme(cfg) {
+  const b   = cfg.branding;
+  const t   = cfg.tenant;
+  const root = document.documentElement;
+
+  // CSS vars (mirrors _applyCSSVars in config.js but targets newsletter's own var names)
+  root.style.setProperty('--p1', b.colors.primary);
+  root.style.setProperty('--p2', b.colors.secondary);
+  root.style.setProperty('--p5', b.colors.muted);
+  root.style.setProperty('--p6', b.colors.border);
+  root.style.setProperty('--p7', b.colors.primary_light);
+  root.style.setProperty('--p8', b.colors.background);
+  root.style.setProperty('--p9', b.colors.card_background);
+  root.style.setProperty('--font-heading', `'${b.fonts.heading}', serif`);
+  root.style.setProperty('--font-body',    `'${b.fonts.body}', sans-serif`);
+
+  // Google Fonts
+  const encHead = b.fonts.heading.replace(/ /g, '+');
+  const encBody = b.fonts.body.replace(/ /g, '+');
+  const href = `https://fonts.googleapis.com/css2?family=${encHead}:ital,wght@0,400;0,700;1,400&family=${encBody}:wght@300;400;600;700&display=swap`;
+  if (!document.querySelector(`link[href="${href}"]`)) {
+    const lnk = document.createElement('link');
+    lnk.rel = 'stylesheet'; lnk.href = href;
+    document.head.appendChild(lnk);
+  }
+
+  // Page title
+  document.title = `Upcoming ${t.name} Events`;
+
+  // Header
+  document.getElementById('nl-header-label').textContent = `${t.name} · Upcoming Events`;
+  document.getElementById('nl-header-title').textContent = t.name;
+  document.getElementById('nl-header-sub').textContent   = t.tagline || '';
+
+  // CTA link
+  const domain = t.custom_domain || t.subdomain + '.com';
+  document.getElementById('nl-cta').href = `https://${domain}/events/`;
+
+  // Footer
+  document.getElementById('nl-footer').innerHTML =
+    `Curated by <a href="https://${domain}">${t.name}</a>`;
+}
+
+/* ── Build category filter pills from config ──────────────── */
+function buildCategoryFilters() {
+  NL_CATS = CONFIG.CATEGORIES || [];
+  const wrap = document.getElementById('cat-filters');
+  wrap.innerHTML = '';
+  NL_CATS.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = 'ftog';
+    btn.dataset.filter = 'cat';
+    btn.dataset.val    = cat.label;
+    btn.innerHTML = `${cat.icon || ''} ${esc(cat.label)}`;
+    btn.addEventListener('click', () => toggleFilter(btn));
+    wrap.appendChild(btn);
+  });
+}
+
+/* ── Build continent filter pills from config locations ─────── */
+function buildContinentFilters() {
+  // Use the regions declared in the config + assign colours from CONFIG.COLORS
+  const regions = (CONFIG.VIEWS && CONFIG.VIEWS.map) ? [] : [];
+  // Pull from raw config — stored on window as _rawCfg by init()
+  const rawRegions = (window._rawCfg && window._rawCfg.locations && window._rawCfg.locations.regions) || [];
+  NL_CONTS = rawRegions.map((r, i) => ({
+    key:   r,
+    color: (CONFIG.COLORS || [])[i] || '#bbbdbf',
+  }));
+
+  const wrap = document.getElementById('cont-filters');
+  wrap.innerHTML = '';
+  NL_CONTS.forEach(cont => {
+    const btn = document.createElement('button');
+    btn.className = 'ftog';
+    btn.dataset.filter = 'cont';
+    btn.dataset.val    = cont.key;
+    btn.innerHTML = `<span class="ftog-dot" style="background:${cont.color}"></span>${esc(cont.key)}`;
+    btn.addEventListener('click', () => toggleFilter(btn));
+    wrap.appendChild(btn);
+  });
+}
+
+/* ── Symbol guide from config categories ─────────────────────── */
+function buildSymbolGuide() {
+  const row = document.getElementById('nl-guide-row');
+  // Keep the static extras (popular, sold out, offers) and prepend category symbols
+  const staticItems = row.innerHTML;
+  const catItems = NL_CATS.map(cat =>
+    `<div class="guide-item"><span class="gi">${cat.icon || ''}</span> ${esc(cat.label)}</div>`
+  ).join('');
+  row.innerHTML = catItems + staticItems;
+}
+
+/* ════════════════════════════════════════════════
+   HELPERS
+   ════════════════════════════════════════════════ */
+function parseDate(str) {
+  if (!str || !str.trim()) return null;
+  const iso = str.trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (iso) return new Date(+iso[1], +iso[2]-1, +iso[3]);
+  const us  = str.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (us)  return new Date(+us[3], +us[1]-1, +us[2]);
+  const d = new Date(str); return isNaN(d) ? null : d;
+}
+
+function fmtDate(row) {
+  const s = parseDate(row[CONFIG.COL_START]);
+  const e = parseDate(row[CONFIG.COL_END]);
+  if (!s) return '';
+  const day = d => d.getDate();
+  const mon = d => MONTHS[d.getMonth()].slice(0, 3);
+  if (!e || s.toDateString() === e.toDateString()) return `${mon(s)} ${day(s)}`;
+  if (s.getMonth() === e.getMonth()) return `${mon(s)} ${day(s)}\u2013${day(e)}`;
+  return `${mon(s)} ${day(s)} \u2013 ${mon(e)} ${day(e)}`;
+}
+
+function catIcon(catLabel) {
+  const cat = (CONFIG.CATEGORIES || []).find(c => c.label === catLabel);
+  return cat ? (cat.icon || '') : '';
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function makeEventUrl(row) {
+  // Use copy_link_template from sharing config if available
+  const tmpl = CONFIG.SHARING && CONFIG.SHARING.copy_link_template;
+  const name  = (row[CONFIG.COL_NAME]  || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const start = (row[CONFIG.COL_START] || '').trim();
+  if (tmpl) {
+    return tmpl
+      .replace('{slug}',       name)
+      .replace('{start_date}', start);
+  }
+  // Fallback: use COL_URL field or build a generic link
+  const w = (row[CONFIG.COL_URL] || '').trim();
+  if (w) return w;
+  const domain = (CONFIG.TENANT && CONFIG.TENANT.custom_domain) || 'example.com';
+  return `https://${domain}/show-event/?id=${name}-${start}`;
+}
+
+function rowKey(row, dim) {
+  if (dim === 'continent') return (row[CONFIG.COL_CONTINENT] || '').trim() || 'Other';
+  if (dim === 'category')  return (row[CONFIG.COL_CATEGORY]  || '').trim() || 'Other';
+  if (dim === 'month') {
+    const s = parseDate(row[CONFIG.COL_START]);
+    return s ? `${MONTHS[s.getMonth()]} ${s.getFullYear()}` : 'Unknown';
+  }
+  return null;
+}
+
+function sortKey(key, dim) {
+  if (dim === 'continent') {
+    const idx = NL_CONTS.findIndex(c => c.key === key);
+    return (idx === -1 ? 99 : idx).toString().padStart(2, '0');
+  }
+  if (dim === 'category') {
+    const idx = NL_CATS.findIndex(c => c.label === key);
+    return (idx === -1 ? 99 : idx).toString().padStart(2, '0');
+  }
+  if (dim === 'month') {
+    const [m, y] = key.split(' ');
+    const mi = MONTHS.indexOf(m);
+    return `${y}${String(mi).padStart(2, '0')}`;
+  }
+  return key;
+}
+
+function contColor(key) {
+  return (NL_CONTS.find(c => c.key === key) || {}).color || '#bbbdbf';
+}
+
+/* ════════════════════════════════════════════════
+   FILTER CONTROLS
+   ════════════════════════════════════════════════ */
+function toggleFilter(btn) {
+  const type = btn.dataset.filter, val = btn.dataset.val, set = filters[type];
+  if (set.has(val)) { set.delete(val); btn.classList.remove('active'); }
+  else              { set.add(val);    btn.classList.add('active'); }
+  document.getElementById(`clear-${type}`).classList.toggle('visible', set.size > 0);
+  applyFilters();
+}
+
+function clearFilter(type) {
+  filters[type].clear();
+  document.querySelectorAll(`[data-filter="${type}"]`).forEach(b => b.classList.remove('active'));
+  document.getElementById(`clear-${type}`).classList.remove('visible');
+  applyFilters();
+}
+
+function applyFilters() {
+  filters.months = parseInt(document.getElementById('filter-months').value, 10);
+  renderList(ALL_ROWS);
+  populateSource();
+}
+
+/* ════════════════════════════════════════════════
+   RENDER
+   ════════════════════════════════════════════════ */
+function renderList(allRows) {
+  const now    = new Date();
+  const today  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const winEnd = filters.months === 0
+    ? new Date(9999, 11, 31)
+    : new Date(now.getFullYear(), now.getMonth() + filters.months, 0);
+
+  const visRows = allRows.filter(row => {
+    const s = parseDate(row[CONFIG.COL_START]);
+    const e = parseDate(row[CONFIG.COL_END]) || s;
+    if (!s || e < today || s > winEnd) return false;
+    if (filters.cat.size  > 0 && !filters.cat.has((row[CONFIG.COL_CATEGORY]  || '').trim())) return false;
+    if (filters.cont.size > 0 && !filters.cont.has((row[CONFIG.COL_CONTINENT] || '').trim())) return false;
+    return true;
+  }).sort((a, b) => (parseDate(a[CONFIG.COL_START]) || 0) - (parseDate(b[CONFIG.COL_START]) || 0));
+
+  document.getElementById('filter-count').textContent =
+    visRows.length ? `${visRows.length} event${visRows.length !== 1 ? 's' : ''} shown` : '';
+
+  const el = document.getElementById('event-list');
+  if (!visRows.length) {
+    el.innerHTML = '<div class="digest-empty">No events match the current filters.</div>';
+    return;
+  }
+
+  const rawLevels = [
+    document.getElementById('grp1').value,
+    document.getElementById('grp2').value,
+    document.getElementById('grp3').value,
+  ];
+  const levels = [];
+  rawLevels.forEach(v => { if (v !== 'none' && !levels.includes(v)) levels.push(v); });
+
+  el.innerHTML = buildGroupHtml(visRows, levels, 0);
+}
+
+function buildGroupHtml(rowsIn, levels, depth) {
+  if (depth >= levels.length) {
+    let html = '<ul class="ev-list">';
+    rowsIn.forEach(row => { html += buildRow(row); });
+    html += '</ul>';
+    return html;
+  }
+
+  const dim        = levels[depth];
+  const levelClass = `grp-head-${depth + 1}`;
+  const groups     = {};
+  rowsIn.forEach(row => {
+    const k = rowKey(row, dim) || 'Other';
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(row);
+  });
+
+  const keys = Object.keys(groups).sort((a, b) => {
+    const sa = sortKey(a, dim), sb = sortKey(b, dim);
+    return sa < sb ? -1 : sa > sb ? 1 : 0;
+  });
+
+  let html = '';
+  keys.forEach(key => {
+    const grpRows = groups[key];
+    const count   = grpRows.length;
+    const colorStyle = dim === 'continent' ? `border-left-color:${contColor(key)};` : '';
+    const nameStyle  = dim === 'continent' ? `color:${contColor(key)};` : '';
+    html += `<div class="${levelClass} grp-head" style="${colorStyle}">
+      <span class="grp-name" style="${nameStyle}">${esc(key)}</span>
+      <span class="grp-count">${count} event${count !== 1 ? 's' : ''}</span>
+    </div>`;
+    html += buildGroupHtml(grpRows, levels, depth + 1);
+  });
+  return html;
+}
+
+function buildRow(row) {
+  const n   = (row[CONFIG.COL_NAME]      || '').trim() || '(unnamed)';
+  const cat = (row[CONFIG.COL_CATEGORY]  || '').trim();
+  const cty = (row[CONFIG.COL_CITY]      || '').trim();
+  const st  = (row[CONFIG.COL_PROVINCE]  || '').trim();
+  const ctr = (row[CONFIG.COL_COUNTRY]   || '').trim();
+  const loc = [cty, st, ctr].filter(Boolean).join(', ');
+  const dr  = fmtDate(row);
+  const ic  = catIcon(cat);
+  const sl  = ['yes','1','true','x','✓'].includes((row[CONFIG.COL_SHORTLIST]     || '').toLowerCase().trim());
+  const hd  = !!(row[CONFIG.COL_INSIDER_DEALS] || '').trim();
+  const so  = ['yes','1','true','x','✓'].includes((row['SOLD OUT']               || '').toLowerCase().trim());
+  const href   = makeEventUrl(row);
+  const icons  = `${ic}${sl ? ' ⭐' : ''}${hd ? ' 🎟️' : ''}${so ? ' 😿' : ''}`;
+
+  return `<li>
+    <b>${esc(dr)}</b>&nbsp;<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(n)}</a>&nbsp;
+    ${loc ? `${esc(loc)}` : ''} ${icons}
+  </li>`;
+}
+
+/* ════════════════════════════════════════════════
+   CSV PARSER  (self-contained, no dependency on utils.js)
+   ════════════════════════════════════════════════ */
+function parseCSV(csv) {
+  const text = csv.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = []; let field = '', row = [], inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"' && text[i+1] === '"') { field += '"'; i++; }
+      else if (ch === '"') { inQ = false; }
+      else { field += ch; }
+    } else {
+      if (ch === '"') { inQ = true; }
+      else if (ch === ',') { row.push(field); field = ''; }
+      else if (ch === '\n') { row.push(field); field = ''; if (row.some(Boolean)) lines.push(row); row = []; }
+      else { field += ch; }
+    }
+  }
+  if (field || row.length) { row.push(field); if (row.some(Boolean)) lines.push(row); }
+  if (lines.length < 2) return [];
+  const headers = lines[0].map(h => h.trim());
+  return lines.slice(1).map(cols => {
+    const obj = {}; headers.forEach((h, i) => { obj[h] = (cols[i] || '').trim(); }); return obj;
+  });
+}
+
+/* ════════════════════════════════════════════════
+   FETCH
+   ════════════════════════════════════════════════ */
+async function fetchRows() {
+  if (CONFIG.WORKER_URL) {
+    try {
+      const ctrl = new AbortController();
+      const tid  = setTimeout(() => ctrl.abort(), 5000);
+      const res  = await fetch(CONFIG.WORKER_URL, { signal: ctrl.signal });
+      clearTimeout(tid);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (json.rows && json.rows.length) return json.rows;
+      throw new Error('empty');
+    } catch (e) { console.warn('Worker failed, falling back:', e.message); }
+  }
+  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID_ENC}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(CONFIG.SHEET_TAB_ENC)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`CSV HTTP ${res.status}`);
+  const parsed = parseCSV(await res.text());
+  if (!parsed.length) throw new Error('no rows');
+  return parsed;
+}
+
+/* ════════════════════════════════════════════════
+   INIT
+   ════════════════════════════════════════════════ */
+async function init() {
+  // Load tenant config first — this populates CONFIG and applies CSS vars / fonts
+  let rawCfg;
+  try {
+    rawCfg = await loadTenantConfig();
+    window._rawCfg = rawCfg;   // stash for continent region lookup
+  } catch (err) {
+    console.error('Config load error:', err);
+  }
+
+  // Apply newsletter-specific theming
+  if (rawCfg) {
+    applyNewsletterTheme(rawCfg);
+    buildCategoryFilters();
+    buildContinentFilters();
+    buildSymbolGuide();
+  }
+
+  // Fetch + render events
+  try {
+    ALL_ROWS = await fetchRows();
+    renderList(ALL_ROWS);
+    populateSource();
+  } catch (err) {
+    console.error('AcroInsiders load error:', err);
+    document.getElementById('event-list').innerHTML =
+      '<div class="digest-empty">Could not load event data. Please try again later.</div>';
+  }
+}
+
+function populateSource() {
+  const ta = document.getElementById('html-source');
+  if (!ta) return;
+  ta.value = document.querySelector('.digest').outerHTML;
+}
+
+function copyHtml() {
+  const ta  = document.getElementById('html-source');
+  if (!ta) return;
+  ta.select(); ta.setSelectionRange(0, 99999);
+  navigator.clipboard.writeText(ta.value).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+  }).catch(() => document.execCommand('copy'));
+}
+
+init();
+
+setTimeout(() => { if (window.parentIFrame) window.parentIFrame.size(); }, 1000);
+setTimeout(() => { if (window.parentIFrame) window.parentIFrame.size(); }, 3000);
+</script>
+</body>
+</html>

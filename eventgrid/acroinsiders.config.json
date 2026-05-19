@@ -1,0 +1,226 @@
+{
+  "tenant": {
+    "id": "acroinsiders",
+    "name": "AcroInsiders",
+    "tagline": "Find acroyoga events worldwide",
+    "status": "active",
+    "plan": "pro",
+    "created_at": "2026-05-01",
+    "custom_domain": "acroinsiders.com",
+    "subdomain": "acroinsiders"
+  },
+  "branding": {
+    "colors": {
+      "primary": "#f19072",
+      "secondary": "#12807a",
+      "background": "#fef6f4",
+      "text": "#2a2a2a",
+      "muted": "#7a7a7a",
+      "border": "#e0d4cf",
+      "primary_light": "#fcdacf",
+      "secondary_dark": "#0d5f5a",
+      "card_background": "#ffffff"
+    },
+    "fonts": {
+      "heading": "Corben",
+      "body": "Josefin Sans"
+    },
+    "logo_url": "https://acroinsiders.com/wp-content/uploads/logo.png",
+    "favicon_url": "https://acroinsiders.com/favicon.ico",
+    "dark_mode": false
+  },
+  "content": {
+    "language": "en",
+    "timezone": "UTC",
+    "currency": "EUR",
+    "date_format": "DD MMM YYYY",
+    "labels": {
+      "events": "Events",
+      "submit_event": "Submit an Event",
+      "no_events": "No acroyoga events found",
+      "search_placeholder": "Search events...",
+      "all_categories": "All types",
+      "all_continents": "All continents",
+      "all_countries": "All countries",
+      "load_more": "Load more",
+      "list_view": "List",
+      "calendar_view": "Calendar",
+      "map_view": "Map",
+      "share_whatsapp": "Share on WhatsApp",
+      "add_to_calendar": "Add to Google Calendar",
+      "copy_link": "Copy link",
+      "visit_website": "Visit website →",
+      "back_to_events": "« All Events",
+      "past_event": "Past event",
+      "ongoing_event": "Ongoing"
+    }
+  },
+  "categories": [
+    {
+      "id": "festival",
+      "label": "Festival",
+      "icon": "🎪",
+      "color": "#f19072"
+    },
+    {
+      "id": "retreat",
+      "label": "Retreat",
+      "icon": "🏕️",
+      "color": "#12807a"
+    },
+    {
+      "id": "intensive",
+      "label": "Intensive",
+      "icon": "🔥",
+      "color": "#f59e0b"
+    },
+    {
+      "id": "event",
+      "label": "Event",
+      "icon": "📍",
+      "color": "#ef4444"
+    },
+    {
+      "id": "training",
+      "label": "Training",
+      "icon": "🎓",
+      "color": "#8b5cf6"
+    }
+  ],
+  "locations": {
+    "mode": "continents",
+    "regions": [
+      "Africa",
+      "Asia",
+      "Europe",
+      "North America",
+      "Oceania",
+      "South America"
+    ]
+  },
+  "fields": {
+    "core": {
+      "name": true,
+      "start_date": true,
+      "end_date": true,
+      "all_day": true,
+      "category": true,
+      "description": true,
+      "timezone": true,
+      "sticky": true
+    },
+    "location": {
+      "venue_name": true,
+      "city": true,
+      "country": true,
+      "state": true,
+      "continent": true,
+      "lat_lon": true,
+      "google_maps_link": true
+    },
+    "media": {
+      "featured_image": true,
+      "website_url": true
+    },
+    "custom": [
+      {
+        "id": "tags",
+        "label": "Tags",
+        "type": "tags",
+        "show_in_card": true,
+        "show_in_filter": false
+      }
+    ]
+  },
+  "views": {
+    "default": "list",
+    "available": [
+      "list",
+      "calendar",
+      "map"
+    ],
+    "list": {
+      "page_size": 9,
+      "min_page_size": 9,
+      "card_min_width_px": 320,
+      "min_rows": 3,
+      "show_cat_picks": true,
+      "cat_picks_label": "Cat's Picks",
+      "cat_picks_field": "sticky",
+      "cat_picks_icon": "⭐",
+      "show_featured_image": true,
+      "show_description_truncated": true,
+      "show_tags": true,
+      "show_venue": true,
+      "show_visible_count": true
+    },
+    "calendar": {
+      "start_day": "monday",
+      "show_empty_month_message": true
+    },
+    "map": {
+      "default_lat": 20.0,
+      "default_lon": 10.0,
+      "default_zoom": 2
+    }
+  },
+  "submission": {
+    "enabled": true,
+    "requires_approval": true,
+    "duplicate_check": true,
+    "duplicate_check_fields": [
+      "name",
+      "start_date"
+    ],
+    "notification_email": "hello@acroinsiders.com",
+    "confirmation_message": "Thanks! Your event will appear after review.",
+    "allowed_submitters": "anyone",
+    "google_sheet_id": "132gCPu46DkXTJk1Yy5RmuKcijMBm7_PPqQjRm_7AbG4",
+    "google_sheet_tab": "data"
+  },
+  "sharing": {
+    "whatsapp": true,
+    "whatsapp_template": "Look at this event! {name}, {start_date} - {end_date}, {city}, {country}. {url}",
+    "gcal": true,
+    "copy_link": true,
+    "copy_link_template": "https://acroinsiders.com/show-event/?id={slug}"
+  },
+  "embed": {
+    "allowed_domains": [
+      "acroinsiders.com"
+    ],
+    "default_height": "auto",
+    "show_header": true,
+    "show_filters": true,
+    "iframe_resizer": true
+  },
+  "data_source": {
+    "type": "sheets",
+    "worker_url": "https://tiny-recipe-c86a.be-nomadicated.workers.dev/events",
+    "fallback_type": "csv",
+    "fallback_sheet_id": "132gCPu46DkXTJk1Yy5RmuKcijMBm7_PPqQjRm_7AbG4",
+    "fallback_sheet_tab": "data",
+    "columns": {
+      "url": "URL",
+      "name": "EVENT NAME",
+      "venue": "EVENT VENUE NAME",
+      "start_date": "EVENT START DATE",
+      "end_date": "EVENT END DATE",
+      "all_day": "ALL DAY EVENT",
+      "timezone": "TIMEZONE",
+      "category": "EVENT CATEGORY",
+      "continent": "CONTINENT",
+      "tags": "EVENT TAGS",
+      "featured_image": "EVENT FEATURED IMAGE",
+      "website": "EVENT WEBSITE",
+      "description": "EVENT DESCRIPTION",
+      "city": "CITY",
+      "state": "STATE",
+      "country": "COUNTRY",
+      "sticky": "STICKY IN MONTH VIEW",
+      "lat": "LAT",
+      "lon": "LON",
+      "insider_deals": "INSIDER DEAL"
+    }
+  }
+}

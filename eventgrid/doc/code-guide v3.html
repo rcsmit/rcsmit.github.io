@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code Guide — Multi-tenant Event Platform</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Corben:wght@400;700&family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --p1: #f19072;
+  --p2: #12807a;
+  --p3: #3d3d3e;
+  --p4: #5c5c5c;
+  --p5: #bbbdbf;
+  --p6: #d7dbde;
+  --p7: #fcdacf;
+  --p8: #fef6f4;
+  --p9: #ffffff;
+  --c-data:   #2980B9;
+  --c-filter: #8E44AD;
+  --c-render: #12807a;
+  --c-map:    #D35400;
+  --c-modal:  #f19072;
+  --c-util:   #5c5c5c;
+  --c-wp:     #21759b;
+  --c-new:    #1E8449;
+  --font-body: 'Josefin Sans', sans-serif;
+  --font-heading: 'Corben', cursive;
+  --max: 960px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--font-body); font-size: 15px; line-height: 1.85; color: var(--p4); background: var(--p8); }
+
+/* ── HEADER ── */
+.site-header { background: var(--p3); border-bottom: 3px solid var(--p1); padding: 1.5rem 2rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,.2); }
+.site-header-inner { max-width: var(--max); margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.site-title { font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; color: #fff; }
+.site-title span { color: var(--p1); }
+.site-subtitle { font-size: 13px; color: var(--p5); margin-top: 2px; }
+.header-badge { background: var(--p2); color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: 4px 10px; border-radius: 2px; }
+.header-version { background: var(--p1); color: #fff; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; padding: 4px 10px; border-radius: 2px; margin-left: .5rem; }
+
+/* ── LAYOUT ── */
+.page { max-width: var(--max); margin: 0 auto; padding: 2.5rem 2rem 5rem; display: grid; grid-template-columns: 210px 1fr; gap: 3rem; align-items: start; }
+@media (max-width: 720px) { .page { grid-template-columns: 1fr; padding: 1.5rem 1.25rem 4rem; } }
+
+/* ── TOC ── */
+.toc { position: sticky; top: 90px; }
+.toc-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--p5); margin-bottom: .75rem; }
+.toc-list { list-style: none; }
+.toc-list li { margin-bottom: 2px; }
+.toc-list a { font-size: 12.5px; color: var(--p5); text-decoration: none; display: block; padding: 3px 8px; border-left: 2px solid transparent; border-radius: 0 2px 2px 0; transition: all .15s; line-height: 1.4; }
+.toc-list a:hover { color: var(--p2); border-left-color: var(--p2); background: rgba(18,128,122,.05); }
+.toc-list a.active { color: var(--p1); border-left-color: var(--p1); font-weight: 600; }
+.toc-list .toc-sub { padding-left: 16px; font-size: 11.5px; }
+@media (max-width: 720px) { .toc { display: none; } }
+
+/* ── SECTIONS ── */
+.content { min-width: 0; }
+.section { margin-bottom: 3rem; scroll-margin-top: 90px; }
+.section-header { display: flex; align-items: center; gap: .75rem; border-bottom: 2px solid var(--p1); padding-bottom: .6rem; margin-bottom: 1.5rem; }
+.section-num { background: var(--p1); color: #fff; font-family: var(--font-heading); font-size: .85rem; font-weight: 700; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.section-title { font-family: var(--font-heading); font-size: 1.35rem; font-weight: 700; color: var(--p3); }
+.subsection { margin-bottom: 1.75rem; scroll-margin-top: 90px; }
+.subsection-title { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; color: var(--p2); margin-bottom: .75rem; display: flex; align-items: center; gap: .5rem; }
+.subsection-title::before { content: ''; display: block; width: 3px; height: 1em; background: var(--p1); border-radius: 2px; flex-shrink: 0; }
+.content p { margin-bottom: .75rem; }
+strong { color: var(--p3); font-weight: 700; }
+a { color: var(--p2); }
+a:hover { color: var(--p1); }
+ol, ul { padding-left: 1.25rem; font-size: 14px; line-height: 1.9; }
+
+/* ── CODE ── */
+code { background: var(--p7); color: var(--p2); font-family: 'Courier New', monospace; font-size: .85em; padding: 1px 5px; border-radius: 2px; }
+pre { background: #1e1e1e; color: #d4d4d4; border-radius: 4px; padding: 1.25rem 1.5rem; overflow-x: auto; font-family: 'Courier New', monospace; font-size: 12.5px; line-height: 1.65; margin: .75rem 0 1.25rem; position: relative; }
+pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+.pre-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--p5); margin-bottom: .4rem; display: block; }
+.kw { color: #569cd6; } .st { color: #ce9178; } .cm { color: #6a9955; font-style: italic; } .fn-col { color: #dcdcaa; } .nm { color: #9cdcfe; } .tg { color: #4ec9b0; }
+
+/* ── TIPS / WARNS ── */
+.warn { background: #fff8f0; border-left: 3px solid var(--p1); border-radius: 0 4px 4px 0; padding: .75rem 1rem; margin: .75rem 0 1rem; font-size: 14px; color: var(--p3); }
+.warn strong { color: var(--p1); }
+.tip  { background: #f0faf9; border-left: 3px solid var(--p2); border-radius: 0 4px 4px 0; padding: .75rem 1rem; margin: .75rem 0 1rem; font-size: 14px; color: var(--p3); }
+.tip  strong { color: var(--p2); }
+.info { background: #f0f4ff; border-left: 3px solid #3B6EA5; border-radius: 0 4px 4px 0; padding: .75rem 1rem; margin: .75rem 0 1rem; font-size: 14px; color: var(--p3); }
+.info strong { color: #3B6EA5; }
+.new  { background: #f0fff5; border-left: 3px solid var(--c-new); border-radius: 0 4px 4px 0; padding: .75rem 1rem; margin: .75rem 0 1rem; font-size: 14px; color: var(--p3); }
+.new  strong { color: var(--c-new); }
+.wp   { background: #f0f7ff; border-left: 3px solid var(--c-wp); border-radius: 0 4px 4px 0; padding: .75rem 1rem; margin: .75rem 0 1rem; font-size: 14px; color: var(--p3); }
+.wp   strong { color: var(--c-wp); }
+
+/* ── TABLES ── */
+table { width: 100%; border-collapse: collapse; margin: .75rem 0 1.25rem; font-size: 13.5px; }
+th { background: var(--p7); color: var(--p2); font-weight: 700; text-align: left; padding: 8px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+td { padding: 8px 12px; border-bottom: 1px solid var(--p6); color: var(--p4); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+td code { font-size: .8em; }
+td.fn-name { font-family: 'Courier New', monospace; font-size: 13px; color: var(--p3); font-weight: 700; white-space: nowrap; }
+.badge-new { background: var(--c-new); color: #fff; font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 1px 5px; border-radius: 2px; margin-left: 4px; }
+
+/* ── FUNCTION CARDS ── */
+.fn-group { margin-bottom: 2rem; }
+.fn-group-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: 3px; display: inline-block; margin-bottom: .75rem; }
+.fn-card { background: var(--p9); border: 1px solid var(--p6); border-radius: 4px; margin-bottom: 8px; overflow: hidden; }
+.fn-card-head { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; user-select: none; }
+.fn-card-head:hover { background: var(--p8); }
+.fn-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.fn-card-name { font-family: 'Courier New', monospace; font-size: 13.5px; font-weight: 700; color: var(--p3); flex: 1; }
+.fn-card-desc { font-size: 13px; color: var(--p5); }
+.fn-card-body { padding: 0 14px 12px; font-size: 13.5px; color: var(--p4); line-height: 1.7; border-top: 1px solid var(--p6); display: none; }
+.fn-card-body.open { display: block; padding-top: 10px; }
+.fn-tag { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 1px 6px; border-radius: 2px; margin-right: 4px; margin-bottom: 4px; }
+.fn-calls { font-size: 12px; color: var(--p5); margin-top: 6px; }
+.fn-calls span { color: var(--p2); font-family: 'Courier New', monospace; font-size: 12px; }
+.toggle-hint { font-size: 11px; color: var(--p5); margin-left: auto; flex-shrink: 0; }
+
+/* ── FLOWCHART ── */
+.flowchart { background: var(--p9); border: 1px solid var(--p6); border-radius: 4px; padding: 1.5rem; margin: 1rem 0 1.5rem; overflow-x: auto; }
+.fc { display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 580px; }
+.fc-row { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 4px 0; }
+.fc-box {
+  border-radius: 4px; padding: 7px 14px; font-family: 'Courier New', monospace;
+  font-size: 12px; font-weight: 700; text-align: center; white-space: nowrap;
+  min-width: 140px; border: 2px solid transparent;
+}
+.fc-box.start { background: var(--p3); color: #fff; border-color: var(--p3); border-radius: 20px; font-family: var(--font-body); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; min-width: 100px; }
+.fc-box.end { background: var(--p3); color: #fff; border-color: var(--p3); border-radius: 20px; font-family: var(--font-body); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; min-width: 100px; }
+.fc-box.data   { background: rgba(41,128,185,.12);  border-color: var(--c-data);   color: var(--c-data); }
+.fc-box.filter { background: rgba(142,68,173,.10); border-color: var(--c-filter); color: var(--c-filter); }
+.fc-box.render { background: rgba(18,128,122,.10);  border-color: var(--c-render); color: var(--c-render); }
+.fc-box.map    { background: rgba(211,84,0,.10);    border-color: var(--c-map);    color: var(--c-map); }
+.fc-box.modal  { background: rgba(241,144,114,.15); border-color: var(--c-modal);  color: #b5622a; }
+.fc-box.wp-box { background: rgba(33,117,155,.12);  border-color: var(--c-wp);     color: var(--c-wp); }
+.fc-box.util   { background: var(--p8);             border-color: var(--p6);       color: var(--p4); font-family: var(--font-body); font-size: 11px; }
+.fc-box.decision { border-radius: 0; background: #fffbf0; border-color: #e6a817; color: #8a5e00; font-family: var(--font-body); font-size: 11px; }
+.fc-arrow { color: var(--p5); font-size: 18px; flex-shrink: 0; }
+.fc-arrow-down { color: var(--p5); font-size: 18px; line-height: 1; text-align: center; margin: 0; }
+.fc-label { font-size: 11px; color: var(--p5); font-style: italic; }
+.fc-branch { display: flex; align-items: flex-start; gap: 2rem; justify-content: center; margin: 4px 0; width: 100%; }
+.fc-branch-col { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.fc-branch-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--p5); margin-bottom: 4px; }
+
+/* ── FILE CHIPS ── */
+.file-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 1rem 0 1.25rem; }
+.file-chip { display: flex; align-items: center; gap: 6px; background: var(--p9); border: 1px solid var(--p6); border-radius: 4px; padding: 6px 10px; font-family: 'Courier New', monospace; font-size: 12px; color: var(--p3); font-weight: 700; }
+.file-chip .chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.file-chip .chip-role { font-family: var(--font-body); font-size: 11px; font-weight: 400; color: var(--p5); margin-left: 2px; }
+
+/* ── LEGEND ── */
+.legend { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1rem; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--p4); }
+.legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── STATE TABLE ── */
+.state-table td:first-child { font-family: 'Courier New', monospace; font-size: 12.5px; color: var(--p3); white-space: nowrap; }
+.state-table td:nth-child(2) { font-size: 12px; color: var(--p2); white-space: nowrap; }
+
+/* ── STRUCTURE DIAGRAM ── */
+.struct { background: #1e1e1e; color: #d4d4d4; border-radius: 4px; padding: 1.25rem 1.5rem; font-family: 'Courier New', monospace; font-size: 12.5px; line-height: 1.9; margin: .75rem 0 1.25rem; }
+.struct .s-sec  { color: #9cdcfe; }
+.struct .s-fn   { color: #dcdcaa; }
+.struct .s-note { color: #6a9955; font-style: italic; }
+.struct .s-file { color: #f19072; font-weight: 700; }
+
+/* ── WP STEPS ── */
+.wp-steps { counter-reset: step; list-style: none; padding: 0; margin: .75rem 0 1.25rem; }
+.wp-steps li { counter-increment: step; display: flex; gap: .85rem; margin-bottom: .85rem; font-size: 14px; line-height: 1.7; }
+.wp-steps li::before { content: counter(step); background: var(--c-wp); color: #fff; font-family: var(--font-heading); font-size: 12px; font-weight: 700; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+
+/* ── FOOTER ── */
+.site-footer { background: var(--p3); border-top: 2px solid var(--p1); padding: 1.25rem 2rem; text-align: center; font-size: 13px; color: var(--p5); }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <div>
+      <div class="site-title">Code Guide <span>v3</span></div>
+      <div class="site-subtitle">Multi-tenant architecture and WordPress integration</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+      <div class="header-badge">For maintainers</div>
+      <div class="header-version">v3 · 19 May 2026</div>
+    </div>
+  </div>
+</header>
+
+<div class="page">
+
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <ul class="toc-list">
+      <li><a href="#s0">The big picture</a></li>
+      <li><a href="#s1">File structure</a></li>
+      <li><a class="toc-sub" href="#s1-files">All files</a></li>
+      <li><a class="toc-sub" href="#s1-load-order">Script load order</a></li>
+      <li><a href="#s2">State variables</a></li>
+      <li><a href="#s3">Startup flow</a></li>
+      <li><a href="#s4">Filter flow</a></li>
+      <li><a href="#s5">Function reference</a></li>
+      <li><a class="toc-sub" href="#fn-startup">Startup &amp; data</a></li>
+      <li><a class="toc-sub" href="#fn-filter">Filtering</a></li>
+      <li><a class="toc-sub" href="#fn-render">Rendering</a></li>
+      <li><a class="toc-sub" href="#fn-map">Map</a></li>
+      <li><a class="toc-sub" href="#fn-modal">Modals</a></li>
+      <li><a class="toc-sub" href="#fn-util">Utilities</a></li>
+      <li><a href="#s6">CONFIG reference</a></li>
+      <li><a href="#s7">WordPress: show-event page</a></li>
+      <li><a href="#s8">WordPress: main iframe</a></li>
+      <li><a href="#s9">Common tasks</a></li>
+      <li><a href="#s10">Things to watch out for</a></li>
+    </ul>
+  </nav>
+
+  <main class="content">
+
+    <!-- THE BIG PICTURE -->
+    <section id="s0" class="section">
+      <div class="section-header">
+        <div class="section-num" style="font-size:1rem">👋</div>
+        <div class="section-title">The big picture</div>
+      </div>
+
+      <div class="new">
+        <strong>✦ Version 3 — 19 May 2026.</strong> The platform now uses a <strong>multi-tenant configuration system</strong>. Each tenant (site) is defined by a JSON config file. A single codebase serves all tenants — no code changes needed to launch a new site. Only <code>TENANT_CONFIG_FILE</code> in <code>config.js</code> needs to point to the active tenant's config.
+      </div>
+
+      <p>This is a <strong>multi-tenant platform</strong>. Each site (tenant) is configured via a JSON file — no code changes needed. The app fetches events from either a <strong>Cloudflare Worker</strong> or a <strong>Google Sheets CSV fallback</strong> (both URLs come from the tenant config), parses them into an array called <code>rows</code>, and renders them in one of three views: List, Calendar, or Map. Every filter change calls <code>redraw()</code>, which re-renders the active view using the current filter state. All colours, labels, categories, and sharing templates come from the config file.</p>
+
+      <div class="info">
+        <strong>ℹ️ New: Tenant configuration system.</strong> Instead of hardcoding all settings in the JavaScript, everything is now defined in a JSON file like <code>bailaconmigo.config.json</code> or <code>karaokeevents.config.json</code>. See <strong>Section 6 (CONFIG reference)</strong> and the separate <strong>Tenant Config Manual</strong> for full details.
+      </div>
+
+      <p>There are <strong>three separate entry points</strong>, each a different HTML file:</p>
+
+      <table>
+        <tr><th>File</th><th>Purpose</th></tr>
+        <tr><td><code>index.html</code></td><td>Full application — List + Calendar + Map views, filter bar, all features. Embedded in WordPress via an iframe.</td></tr>
+        <tr><td><code>preview.html</code></td><td>Lightweight widget — card grid only, no filters, no map. Used for embedding a small events teaser elsewhere on the site.</td></tr>
+        <tr><td><code>show_event.html</code></td><td>Test harness for the WordPress deeplink page. The actual WP page uses inline HTML, not this file.</td></tr>
+      </table>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-data)"></div> Data &amp; startup</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-filter)"></div> Filtering</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-render)"></div> Rendering</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-map)"></div> Map</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-modal)"></div> Modals</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--p5)"></div> Utilities</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-wp)"></div> WordPress integration</div>
+      </div>
+
+      <div class="flowchart">
+        <div class="fc">
+          <div class="fc-row"><div class="fc-box start">index.html loads</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box data">init() in data.js</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box data">fetch Cloudflare Worker → JSON rows</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box data">processData() — add _layer, _lat, _lon</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row">
+            <div class="fc-box filter">buildGeoFilters()</div>
+            <div class="fc-arrow">+</div>
+            <div class="fc-box filter">buildEventTypes()</div>
+          </div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box render">redraw() in data.js</div><div class="fc-label">determines active view</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-branch">
+            <div class="fc-branch-col">
+              <div class="fc-branch-label">List</div>
+              <div class="fc-box render">renderList()</div>
+              <div class="fc-arrow-down" style="font-size:13px">↓</div>
+              <div class="fc-box render" style="font-size:11px">renderPagination()</div>
+            </div>
+            <div class="fc-branch-col">
+              <div class="fc-branch-label">Calendar</div>
+              <div class="fc-box render">renderCalendar()</div>
+            </div>
+            <div class="fc-branch-col">
+              <div class="fc-branch-label">Map</div>
+              <div class="fc-box map">initMap() <span style="font-size:10px">(once)</span></div>
+              <div class="fc-arrow-down" style="font-size:13px">↓</div>
+              <div class="fc-box map" style="font-size:11px">redrawMap() → addMarker()</div>
+            </div>
+          </div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box end">User sees the page</div></div>
+        </div>
+      </div>
+
+      <p><strong>When a filter changes</strong> — any pill click, dropdown change, date input, or search keystroke — it updates one or more state variables and calls <code>redraw()</code>. That's it. The rendering functions always read from <code>visibleRows()</code>, which applies all current filters every time it runs.</p>
+    </section>
+
+    <!-- FILE STRUCTURE -->
+    <section id="s1" class="section">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <div class="section-title">File structure</div>
+      </div>
+
+      <div id="s1-files" class="subsection">
+        <div class="subsection-title">All files at a glance</div>
+
+        <div class="struct">
+          <div><span class="s-file">acroinsiders_events/</span></div>
+          <div>&nbsp; <span class="s-file">index.html</span>          <span class="s-note">— main app (full: list + calendar + map)</span></div>
+          <div>&nbsp; <span class="s-file">preview.html</span>        <span class="s-note">— lightweight widget (cards only, no filters)</span></div>
+          <div>&nbsp; <span class="s-file">show_event.html</span>     <span class="s-note">— local test page for event deeplinks</span></div>
+          <div>&nbsp; <span class="s-file">newsletter.html</span>     <span class="s-note">— newsletter digest layout</span></div>
+          <div>&nbsp; <span class="s-file">code-guide.html</span>     <span class="s-note">— this document</span></div>
+          <div>&nbsp; <span class="s-file">tenant-config-manual.html</span> <span class="s-note">— how to create a config file</span></div>
+          <div>&nbsp;</div>
+          <div>&nbsp; <span class="s-file">[tenantid].config.json</span>  <span class="s-note">— tenant branding, data source, categories, labels (one per tenant)</span></div>
+          <div>&nbsp; <span class="s-file">acroinsiders.config.json</span> <span class="s-note">— example: acroyoga events</span></div>
+          <div>&nbsp; <span class="s-file">bailaconmigo.config.json</span> <span class="s-note">— example: latin dance events</span></div>
+          <div>&nbsp; <span class="s-file">karaokeevents.config.json</span> <span class="s-note">— example: karaoke events</span></div>
+          <div>&nbsp;</div>
+          <div>&nbsp; <span class="s-file">css/</span></div>
+          <div>&nbsp; &nbsp; <span class="s-fn">style.css</span>      <span class="s-note">— all visual styling, colour tokens, component styles</span></div>
+          <div>&nbsp;</div>
+          <div>&nbsp; <span class="s-file">js/</span></div>
+          <div>&nbsp; &nbsp; <span class="s-fn">config.js</span>      <span class="s-note">— loads tenant JSON, builds CONFIG object, sets CSS vars, all shared state</span></div>
+          <div>&nbsp; &nbsp; <span class="s-fn">utils.js</span>       <span class="s-note">— pure helper functions (escHtml, parseDate, rowID…)</span></div>
+          <div>&nbsp; &nbsp; <span class="s-fn">data.js</span>        <span class="s-note">— fetch, processData, filters, redraw, init()</span></div>
+          <div>&nbsp; &nbsp; <span class="s-fn">list.js</span>        <span class="s-note">— renderList, renderCatPicks, renderPagination</span></div>
+          <div>&nbsp; &nbsp; <span class="s-fn">calendar.js</span>    <span class="s-note">— renderCalendar, cal popup, calPrev/calNext</span></div>
+          <div>&nbsp; &nbsp; <span class="s-fn">map.js</span>         <span class="s-note">— Leaflet init, markers, clusters, labels</span></div>
+          <div>&nbsp; &nbsp; <span class="s-fn">modal.js</span>       <span class="s-note">— openEventModal, iCal/GCal helpers, WhatsApp share</span></div>
+          <div>&nbsp; &nbsp; <span class="s-fn">app.js</span>         <span class="s-note">— setView, search listener, keyboard shortcuts, boot</span></div>
+          <div>&nbsp; &nbsp; <span class="s-fn">eventdetail-wp.js</span> <span class="s-note">— standalone WP event detail renderer (deeplinks)</span></div>
+          <div>&nbsp;</div>
+          <div>&nbsp; <span class="s-file">worker.js</span>           <span class="s-note">— Cloudflare Worker (deploy separately, not served here)</span></div>
+        </div>
+      </div>
+
+      <div id="s1-load-order" class="subsection">
+        <div class="subsection-title">Script load order in index.html</div>
+        <p>Order matters — scripts rely on globals defined in earlier files:</p>
+        <table>
+          <tr><th>#</th><th>File</th><th>Why it must come here</th></tr>
+          <tr><td>1</td><td><code>config.js</code></td><td>Defines <code>CONFIG</code> and all state variables used by every other file.</td></tr>
+          <tr><td>2</td><td><code>utils.js</code></td><td>Pure helpers. Needed by data, list, map, modal.</td></tr>
+          <tr><td>3</td><td><code>data.js</code></td><td>Fetches data, defines <code>rows</code>, <code>visibleRows()</code>, <code>redraw()</code>.</td></tr>
+          <tr><td>4</td><td><code>map.js</code></td><td>Uses <code>rows</code>, <code>lColors</code>, <code>CONFIG</code>.</td></tr>
+          <tr><td>5</td><td><code>list.js</code></td><td>Uses <code>visibleRows()</code>, <code>openEventModal()</code>, <code>CONFIG</code>.</td></tr>
+          <tr><td>6</td><td><code>calendar.js</code></td><td>Uses <code>visibleRows()</code>, <code>openEventModal()</code>, <code>CONFIG</code>.</td></tr>
+          <tr><td>7</td><td><code>modal.js</code></td><td>Uses <code>lColors</code>, <code>CONFIG</code>, <code>rowID()</code> from utils.</td></tr>
+          <tr><td>8</td><td><code>app.js</code></td><td>Wires up event listeners and calls <code>init()</code> at the very end.</td></tr>
+        </table>
+
+        <div class="tip"><strong>preview.html uses a subset.</strong> It only loads <code>config.js</code>, <code>utils.js</code>, <code>list.js</code>, and <code>modal.js</code>. It stubs out <code>renderPagination()</code>, <code>visibleRows()</code>, <code>redrawMap()</code>, <code>renderCalendar()</code>, and <code>redraw()</code> inline — because those live in files it doesn't load.</div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">GitHub Pages URL base</div>
+        <p>The canonical public URL for all scripts and styles is:</p>
+        <pre><code>https://rcsmit.github.io/acroinsiders_events/</code></pre>
+        <p>So a script referenced from WordPress would be, for example:</p>
+        <pre><code>https://rcsmit.github.io/acroinsiders_events/js/config.js</code></pre>
+      </div>
+    </section>
+
+    <!-- STATE VARIABLES -->
+    <section id="s2" class="section">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <div class="section-title">State variables</div>
+      </div>
+      <p>All global state is declared in <code>config.js</code> — the second half of the file, after the CONFIG object. Every render function reads from these. They update automatically when filters change.</p>
+
+      <table class="state-table">
+        <tr><th>Variable</th><th>Type</th><th>What it holds</th></tr>
+        <tr><td><code>rows</code></td><td>Array</td><td>All events loaded from the sheet. Each row is an object with spreadsheet column names as keys, plus <code>_layer</code>, <code>_lat</code>, <code>_lon</code> added by <code>processData()</code>.</td></tr>
+        <tr><td><code>actL</code></td><td>Set</td><td>Active layers (continents). All layers are always active — leftover from earlier design. Safe to ignore.</td></tr>
+        <tr><td><code>actET</code></td><td>Set</td><td>Active event types (e.g. <code>{"Festival","Retreat"}</code>). Empty set = all types shown.</td></tr>
+        <tr><td><code>lColors</code></td><td>Object</td><td>Maps each continent name to a hex colour from <code>CONFIG.COLORS</code>.</td></tr>
+        <tr><td><code>qStr</code></td><td>String</td><td>Current search query text.</td></tr>
+        <tr><td><code>dateFrom</code> / <code>dateTo</code></td><td>Date|null</td><td>Active date range filter. Null = no filter on that end.</td></tr>
+        <tr><td><code>hideEnded</code></td><td>const Boolean</td><td>Always <code>true</code>. Past events are always hidden.</td></tr>
+        <tr><td><code>filterContinent</code> / <code>filterCountry</code></td><td>String</td><td>Currently selected values. Empty string = no filter.</td></tr>
+        <tr><td><code>filterDeals</code></td><td>Boolean</td><td><code>true</code> = only show events that have an Insider Deal entry.</td></tr>
+        <tr><td><code>listPage</code></td><td>Number</td><td>Current page number in list view. Resets to 1 on every <code>redraw()</code>.</td></tr>
+        <tr><td><code>calYear</code> / <code>calMonth</code></td><td>Number</td><td>Currently displayed year and month in calendar view (month 0-indexed).</td></tr>
+        <tr><td><code>currentView</code></td><td>String</td><td><code>'list'</code>, <code>'cal'</code>, or <code>'map'</code>.</td></tr>
+        <tr><td><code>map</code> / <code>cluster</code> / <code>labelLayer</code></td><td>Leaflet objects</td><td>Only populated after the Map tab is clicked for the first time. <code>null</code> before that.</td></tr>
+        <tr><td><code>mapInitialized</code></td><td>Boolean</td><td>Guard flag — prevents Leaflet from initialising twice.</td></tr>
+        <tr><td><code>markerLayerMap</code></td><td>WeakMap</td><td>Maps each Leaflet marker object → its layer (continent) string. Used by cluster colouring.</td></tr>
+      </table>
+    </section>
+
+    <!-- STARTUP FLOW -->
+    <section id="s3" class="section">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <div class="section-title">Startup flow</div>
+      </div>
+      <p>What happens in the first few seconds after the page opens. <code>init()</code> is defined in <code>data.js</code> and called by <code>app.js</code> at the very end of the script chain.</p>
+
+      <div class="flowchart">
+        <div class="fc">
+          <div class="fc-row"><div class="fc-box start">Browser opens index.html</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box data">app.js calls init()</div><div class="fc-label">last script to load</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box data">fetch(WORKER_URL + '/events')</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-branch">
+            <div class="fc-branch-col">
+              <div class="fc-branch-label" style="color:#c0392b">Worker fails</div>
+              <div class="fc-box" style="background:#fff5f5;border-color:#e74c3c;color:#c0392b;font-family:var(--font-body);font-size:11px">Fallback: Google Sheets CSV</div>
+              <div class="fc-arrow-down" style="font-size:13px">↓</div>
+              <div class="fc-box" style="background:#fff5f5;border-color:#e74c3c;color:#c0392b;font-family:var(--font-body);font-size:11px">parseCSV() → processData()</div>
+            </div>
+            <div class="fc-branch-col">
+              <div class="fc-branch-label" style="color:var(--p2)">Worker succeeds</div>
+              <div class="fc-box data">json.rows → processData()</div>
+            </div>
+          </div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box data" style="font-size:11px">Add _layer, _lat, _lon · assignColors()</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box filter" style="font-size:11px">buildGeoFilters() · buildEventTypes() · buildDealsFilter()</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box render">redraw() → renderList()</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box render" style="font-size:11px">hideOv() — remove loading overlay</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box end">User sees the event list</div></div>
+        </div>
+      </div>
+
+      <div class="tip"><strong>The map is lazy.</strong> Leaflet is not initialised at startup — only when the user clicks the Map tab. This keeps the initial load fast. <code>initMap()</code> runs only once, guarded by the <code>mapInitialized</code> flag.</div>
+    </section>
+
+    <!-- FILTER FLOW -->
+    <section id="s4" class="section">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <div class="section-title">Filter flow</div>
+      </div>
+      <p>Every user interaction that changes what events are shown follows the same pattern. It doesn't matter whether the user typed in the search box, clicked a pill, or changed the date — the chain is always the same.</p>
+
+      <div class="flowchart">
+        <div class="fc">
+          <div class="fc-row">
+            <div class="fc-box filter" style="font-size:11px">Search</div>
+            <div class="fc-arrow">+</div>
+            <div class="fc-box filter" style="font-size:11px">Pill click</div>
+            <div class="fc-arrow">+</div>
+            <div class="fc-box filter" style="font-size:11px">Dropdown</div>
+            <div class="fc-arrow">+</div>
+            <div class="fc-box filter" style="font-size:11px">Date picker</div>
+          </div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box filter">Update state variable(s)</div><div class="fc-label">e.g. qStr, actET, filterContinent…</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box render">redraw()</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-row"><div class="fc-box filter">visibleRows()</div><div class="fc-label">applies ALL filters to rows[], returns matching subset</div></div>
+          <div class="fc-arrow-down">↓</div>
+          <div class="fc-branch">
+            <div class="fc-branch-col">
+              <div class="fc-branch-label">list</div>
+              <div class="fc-box render">renderList()</div>
+            </div>
+            <div class="fc-branch-col">
+              <div class="fc-branch-label">cal</div>
+              <div class="fc-box render">renderCalendar()</div>
+            </div>
+            <div class="fc-branch-col">
+              <div class="fc-branch-label">map</div>
+              <div class="fc-box map">redrawMap()</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection-title" style="margin-top:1.5rem">What visibleRows() checks — in order</div>
+      <table>
+        <tr><th>#</th><th>Check</th><th>State variable</th></tr>
+        <tr><td>1</td><td>Layer (continent) is active</td><td><code>actL</code></td></tr>
+        <tr><td>2</td><td>Event has not ended</td><td><code>hideEnded</code> (always true)</td></tr>
+        <tr><td>3</td><td>Event type matches selected pills</td><td><code>actET</code></td></tr>
+        <tr><td>4</td><td>Continent matches dropdown</td><td><code>filterContinent</code></td></tr>
+        <tr><td>5</td><td>Country matches dropdown</td><td><code>filterCountry</code></td></tr>
+        <tr><td>6</td><td>Name/location contains search text</td><td><code>qStr</code></td></tr>
+        <tr><td>7</td><td>Event overlaps with date range</td><td><code>dateFrom</code> / <code>dateTo</code></td></tr>
+        <tr><td>8</td><td>Has an Insider Deal entry</td><td><code>filterDeals</code></td></tr>
+      </table>
+      <p>A row must pass <em>all</em> checks. The first failure short-circuits — the row is excluded immediately.</p>
+    </section>
+
+    <!-- FUNCTION REFERENCE -->
+    <section id="s5" class="section">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <div class="section-title">Function reference</div>
+      </div>
+      <p>Click any function to see more detail. The file where each function lives is noted in the card.</p>
+
+      <!-- STARTUP & DATA -->
+      <div id="fn-startup" class="fn-group">
+        <div class="fn-group-title" style="background:rgba(41,128,185,.12);color:var(--c-data)">🔵 Startup &amp; Data — <code style="font-size:11px">data.js</code></div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-data)"></div>
+            <div class="fn-card-name">init()</div>
+            <div class="fn-card-desc">Fetches data and boots the app</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            The entry point. Tries the Cloudflare Worker first (5-second timeout). On failure, falls back to the public Google Sheets CSV URL. Both paths call <code>processData()</code>, then <code>hideOv()</code>. Called by <code>app.js</code> at the bottom of the script chain.
+            <div class="fn-calls">Calls: <span>processData()</span>, <span>hideOv()</span>, <span>parseCSV()</span>, <span>setMsg()</span></div>
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-data)"></div>
+            <div class="fn-card-name">processData(data)</div>
+            <div class="fn-card-desc">Prepares raw rows and initialises the UI</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Adds <code>_layer</code>, <code>_lat</code>, <code>_lon</code> to each row. Assigns colours to layers. Builds the geo dropdowns, event type pills, and deals filter. Updates the header event count. Calls <code>redraw()</code>.
+            <div class="fn-calls">Calls: <span>assignColors()</span>, <span>buildGeoFilters()</span>, <span>buildEventTypes()</span>, <span>buildDealsFilter()</span>, <span>redraw()</span></div>
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-data)"></div>
+            <div class="fn-card-name">redraw()</div>
+            <div class="fn-card-desc">Central dispatcher — re-renders the active view</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Called after every filter change. Updates the "visible" count in the header, calls the appropriate render function for <code>currentView</code>, updates the ✕ Clear button, and calls <code>parentIFrame.size()</code> to notify the WordPress iframe resizer.
+            <div class="fn-calls">Calls: <span>visibleRows()</span>, <span>renderList()</span> or <span>renderCalendar()</span> or <span>redrawMap()</span>, <span>updateClearButton()</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTERING -->
+      <div id="fn-filter" class="fn-group">
+        <div class="fn-group-title" style="background:rgba(142,68,173,.10);color:var(--c-filter)">🟣 Filtering — <code style="font-size:11px">data.js</code></div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-filter)"></div>
+            <div class="fn-card-name">visible(row)</div>
+            <div class="fn-card-desc">Returns true if a row passes all current filters</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            The single source of truth for row visibility. Checks 8 conditions in order (see filter flow above). If something is showing or hiding unexpectedly, start here.
+            <div class="fn-calls">Calls: <span>parseDate()</span>, <span>dateOnly()</span></div>
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-filter)"></div>
+            <div class="fn-card-name">visibleRows()</div>
+            <div class="fn-card-desc">Returns filtered rows array</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Calls <code>rows.filter(visible)</code>. Called by every render function. In <code>preview.html</code>, this is overridden with a stub that simply returns <code>rows</code> unfiltered (no filter UI in the preview).
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-filter)"></div>
+            <div class="fn-card-name">buildDealsFilter()</div>
+            <div class="fn-card-desc">Shows/hides the "Has deals" pill</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Checks if any non-ended row has an Insider Deal value. If none exist, the pill is hidden. If at least one exists, the pill appears. Called once by <code>processData()</code>.
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-filter)"></div>
+            <div class="fn-card-name">clearAllFilters()</div>
+            <div class="fn-card-desc">Resets everything to the default state</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Clears dates, resets both geo dropdowns, clears <code>actET</code>, resets <code>filterDeals</code>, clears the search box, and calls <code>redraw()</code>.
+          </div>
+        </div>
+      </div>
+
+      <!-- RENDERING -->
+      <div id="fn-render" class="fn-group">
+        <div class="fn-group-title" style="background:rgba(18,128,122,.10);color:var(--c-render)">🟢 Rendering — <code style="font-size:11px">list.js · calendar.js · app.js</code></div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-render)"></div>
+            <div class="fn-card-name">renderList() <span style="font-family:var(--font-body);font-size:11px;color:var(--p5)">list.js</span></div>
+            <div class="fn-card-desc">Renders the event card grid</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Gets <code>visibleRows()</code>, sorts by start date, slices to the current page, builds event card elements. Calls <code>renderCatPicks()</code> first to show the ⭐ strip. If no events match, shows the "no events found" empty state. Calls <code>renderPagination()</code> at the end.
+            <div class="fn-calls">Calls: <span>visibleRows()</span>, <span>renderCatPicks()</span>, <span>openEventOrNavigate()</span>, <span>renderPagination()</span></div>
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-render)"></div>
+            <div class="fn-card-name">renderCatPicks(vis) <span style="font-family:var(--font-body);font-size:11px;color:var(--p5)">list.js</span></div>
+            <div class="fn-card-desc">Renders the ⭐ Cat's Picks horizontal strip</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Filters visible rows for those with <code>STICKY IN MONTH VIEW</code> set. Renders them as horizontally-scrolling cards above the main grid. Hidden when <code>CAT_PICKS_STICKY = false</code> or no shortlisted events are visible.
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-render)"></div>
+            <div class="fn-card-name">calcPageSize() <span style="font-family:var(--font-body);font-size:11px;color:var(--p5)">list.js</span></div>
+            <div class="fn-card-desc">Calculates how many cards fit on screen</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Reads the actual rendered width of the grid and calculates the column count using the same formula as the CSS auto-fill. Page size = columns × rows, minimum 9 cards total, minimum 3 rows. Re-calculated on every <code>resize</code> event.
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-render)"></div>
+            <div class="fn-card-name">renderCalendar() <span style="font-family:var(--font-body);font-size:11px;color:var(--p5)">calendar.js</span></div>
+            <div class="fn-card-desc">Renders the monthly calendar grid</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Builds a 7-column Mon–Sun grid for the current <code>calYear</code>/<code>calMonth</code>. For each day, finds all visible events spanning that day. Shows up to 3 coloured dots per cell; more → "+N more" popup. If no events in the month, shows an empty state message.
+            <div class="fn-calls">Calls: <span>visibleRows()</span>, <span>parseDate()</span>, <span>openEventModal()</span>, <span>showCalPopupMulti()</span></div>
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-render)"></div>
+            <div class="fn-card-name">setView(v) <span style="font-family:var(--font-body);font-size:11px;color:var(--p5)">app.js</span></div>
+            <div class="fn-card-desc">Switches between list, calendar, and map</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Shows/hides the three view containers, updates active state on toggle buttons, and triggers the appropriate render or initialisation.
+          </div>
+        </div>
+      </div>
+
+      <!-- MAP -->
+      <div id="fn-map" class="fn-group">
+        <div class="fn-group-title" style="background:rgba(211,84,0,.10);color:var(--c-map)">🟠 Map — <code style="font-size:11px">map.js</code></div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-map)"></div>
+            <div class="fn-card-name">initMap()</div>
+            <div class="fn-card-desc">Creates the Leaflet map — runs only once</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Sets up Leaflet map, tile layer, marker cluster group, and label layer. Cluster group uses a custom <code>iconCreateFunction</code> that colours clusters by dominant continent. Once done, calls <code>redrawMap()</code>. Guarded by <code>mapInitialized</code>.
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-map)"></div>
+            <div class="fn-card-name">redrawMap()</div>
+            <div class="fn-card-desc">Clears and redraws all markers</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Clears all layers. Uses a jitter algorithm to spread markers that share the same coordinates (events in the same city) in a spiral so they don't pile on top of each other. Calls <code>addMarker()</code> for each visible row.
+            <div class="fn-calls">Calls: <span>visibleRows()</span>, <span>addMarker()</span>, <span>syncLabels()</span></div>
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-map)"></div>
+            <div class="fn-card-name">addMarker(row)</div>
+            <div class="fn-card-desc">Adds one marker + label to the map</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Creates a dot marker. Binds a compact popup via <code>mkMapPopupHtml()</code>. Adds a text label to <code>labelLayer</code> (separate layer — putting labels in the cluster caused double dots, a previous bug). Shortlisted events get a larger, orange dot.
+          </div>
+        </div>
+      </div>
+
+      <!-- MODALS -->
+      <div id="fn-modal" class="fn-group">
+        <div class="fn-group-title" style="background:rgba(241,144,114,.15);color:#b5622a">🟡 Modals &amp; sharing — <code style="font-size:11px">modal.js</code></div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-modal)"></div>
+            <div class="fn-card-name">openEventModal(row)</div>
+            <div class="fn-card-desc">Opens the full event detail overlay</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Builds the event detail HTML and injects it into <code>#event-modal-body</code>, adds the <code>open</code> class, and locks page scroll. Includes WhatsApp share, Google Calendar, .ics download, and "Copy link" buttons. The deeplink URL uses <code>rowID(row)</code>.
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-modal)"></div>
+            <div class="fn-card-name">openEventOrNavigate(row) <span style="font-family:var(--font-body);font-size:11px;color:var(--p5)">list.js</span></div>
+            <div class="fn-card-desc">Opens modal OR navigates parent page</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Called from every card click. If <code>EVENTS_DETAIL_URL</code> is set to a non-empty string, it navigates <code>window.parent</code> to that URL + <code>?id=SLUG</code> (for WordPress deeplink mode). Otherwise, opens the modal. Currently the modal is always used (<code>EVENTS_DETAIL_URL = ''</code>).
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-modal)"></div>
+            <div class="fn-card-name">shareWhatsApp(text)</div>
+            <div class="fn-card-desc">Opens WhatsApp share cross-platform</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            On iOS uses the native <code>whatsapp://</code> scheme, falling back to <code>wa.me</code> if the app isn't installed. On other platforms opens <code>wa.me</code> directly. The share text includes event name, city, dates, and the shareable deeplink.
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--c-modal)"></div>
+            <div class="fn-card-name">buildICS() / buildGCalURL()</div>
+            <div class="fn-card-desc">Generates calendar export data</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            <code>buildICS()</code> generates a valid RFC 5545 <code>.ics</code> file string with proper line folding. <code>buildGCalURL()</code> creates a Google Calendar "Add event" URL. Both treat events as all-day. Google Calendar end date is exclusive so +1 day is added. Both functions are also used by <code>eventdetail-wp.js</code>.
+          </div>
+        </div>
+      </div>
+
+      <!-- UTILITIES -->
+      <div id="fn-util" class="fn-group">
+        <div class="fn-group-title" style="background:var(--p8);color:var(--p4);border:1px solid var(--p6)">⚪ Utilities — <code style="font-size:11px">utils.js</code></div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--p5)"></div>
+            <div class="fn-card-name">rowID(row)</div>
+            <div class="fn-card-desc">Generates a stable slug for a row</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Returns a URL-safe slug like <code>sofia-intensive-2026-05-09</code> from the event name and start date. Used for shareable deeplinks (<code>?id=SLUG</code>). Defined in both <code>utils.js</code> (used by modal.js) and <code>eventdetail-wp.js</code> (slightly different — strips trailing hyphens). The utils.js version is the canonical one.
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--p5)"></div>
+            <div class="fn-card-name">parseDate(str)</div>
+            <div class="fn-card-desc">Parses a date string into a JS Date</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Accepts <code>YYYY-MM-DD</code> (ISO, recommended) and <code>MM/DD/YYYY</code> (US). Returns <code>null</code> for empty or unparseable strings. Falls back to <code>new Date(str)</code> as a last resort.
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--p5)"></div>
+            <div class="fn-card-name">escHtml(s)</div>
+            <div class="fn-card-desc">Escapes a string for safe HTML insertion</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Replaces <code>&amp;</code>, <code>&lt;</code>, <code>&gt;</code>, and <code>"</code> with HTML entities. <strong>Always use this</strong> when inserting spreadsheet data into HTML strings. Skipping it is an XSS risk and causes display bugs with special characters.
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--p5)"></div>
+            <div class="fn-card-name">parseCSV(csv)</div>
+            <div class="fn-card-desc">Parses raw CSV text into row objects</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            RFC-compliant CSV parser handling quoted fields, escaped quotes, CRLF/LF/CR. Only active when the Worker fails and the app falls back to the public Google Sheets CSV URL.
+          </div>
+        </div>
+
+        <div class="fn-card">
+          <div class="fn-card-head" onclick="toggleFn(this)">
+            <div class="fn-dot" style="background:var(--p5)"></div>
+            <div class="fn-card-name">assignColors(layers)</div>
+            <div class="fn-card-desc">Maps each continent to a colour</div>
+            <div class="toggle-hint">click to expand</div>
+          </div>
+          <div class="fn-card-body">
+            Assigns each continent name a colour from <code>CONFIG.COLORS</code> in alphabetical order, cycling if there are more than 30 continents. Result stored in the global <code>lColors</code> object.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONFIG REFERENCE -->
+    <section id="s6" class="section">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <div class="section-title">CONFIG reference — <code style="font-size:1rem">config.js</code></div>
+      </div>
+      <p>The <code>CONFIG</code> object is <strong>no longer hardcoded</strong>. Instead, it is built dynamically from the active tenant's JSON config file when <code>loadTenantConfig()</code> runs.</p>
+
+      <div class="tip">
+        <strong>✓ How to change settings:</strong> Edit the tenant's JSON config file (e.g. <code>bailaconmigo.config.json</code>), not the JavaScript. All settings — colours, labels, categories, column names, data sources — live in the config.
+      </div>
+
+      <p>The <code>CONFIG</code> object has these main groups:</p>
+
+      <table>
+        <tr><th>Field</th><th>Source</th><th>What it does</th></tr>
+        <tr><td><code>TENANT</code></td><td><code>tenant.*</code> in JSON</td><td>Tenant metadata: id, name, custom_domain, tagline.</td></tr>
+        <tr><td><code>SHEET_ID_ENC</code> / <code>SHEET_TAB_ENC</code></td><td><code>data_source.fallback_sheet_id/tab</code></td><td>Google Sheet credentials for CSV fallback.</td></tr>
+        <tr><td><code>WORKER_URL</code></td><td><code>data_source.worker_url</code></td><td>Cloudflare Worker endpoint (primary data source). Empty string skips worker, uses CSV fallback.</td></tr>
+        <tr><td><code>COL_*</code></td><td><code>data_source.columns</code></td><td>Exact spreadsheet column header names. Built from the JSON mapping.</td></tr>
+        <tr><td><code>CATEGORIES</code></td><td><code>categories[]</code></td><td>Array of {id, label, icon, color} for event type filters.</td></tr>
+        <tr><td><code>LABELS</code></td><td><code>content.labels</code></td><td>All UI text: button labels, placeholders, back links, etc.</td></tr>
+        <tr><td><code>COLORS</code></td><td><code>branding.colors.*</code></td><td>CSS colour values (primary, secondary, background, etc). Also injected as CSS variables.</td></tr>
+        <tr><td><code>SHARING</code></td><td><code>sharing</code></td><td>WhatsApp template, Google Calendar, copy link settings and templates.</td></tr>
+        <tr><td><code>VIEWS</code></td><td><code>views</code></td><td>List page size, map defaults, calendar start day, cat picks label, etc.</td></tr>
+      </table>
+
+      <div class="warn">
+        <strong>⚠️ To launch a new tenant:</strong> Create a new JSON config file (see <em>Tenant Config Manual</em> for details), then change ONE line in <code>config.js</code>: <code>const TENANT_CONFIG_FILE = 'yourtenant.config.json';</code>
+      </div>
+    </section>
+
+    <!-- WORDPRESS: SHOW-EVENT PAGE -->
+    <section id="s7" class="section">
+      <div class="section-header">
+        <div class="section-num">7</div>
+        <div class="section-title">WordPress: setting up the show-event page</div>
+      </div>
+
+      <p>The <strong>show-event page</strong> is a standalone WordPress page that displays a single event's full details. It is reached via a shareable deeplink like:</p>
+      <pre><code>https://www.acroinsiders.com/show-event/?id=sofia-intensive-2026-05-09</code></pre>
+
+      <p>When someone clicks "Share on WhatsApp" or "Copy link" on an event, this is the URL they get. The page loads the full event dataset, finds the matching row by slug, and renders it without needing the full calendar app.</p>
+
+      <div class="warn">
+        <strong>⚠️ Do not name the page "event".</strong> WordPress's The Events Calendar plugin reserves that slug. Use <strong>show-event</strong> or anything else that doesn't conflict.
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Step-by-step setup in WordPress</div>
+
+        <ol class="wp-steps">
+          <li>Go to <strong>Pages → Add New</strong> in the WordPress admin.</li>
+          <li>Give the page any title, e.g. <em>Event Detail</em>. Set the slug (permalink) to <strong>show-event</strong>.</li>
+          <li>Switch the editor to <strong>Code Editor</strong> mode (the three-dot menu → Code Editor, or click the HTML block button).</li>
+          <li>Paste the following HTML block as the entire page content — replace any existing content:</li>
+        </ol>
+
+        <span class="pre-label">Paste this into the WordPress Code Editor (HTML block)</span>
+        <pre><code><span class="tg">&lt;div</span> <span class="nm">id</span>=<span class="st">"event-detail-root"</span><span class="tg">&gt;&lt;/div&gt;</span>
+
+<span class="tg">&lt;link</span> <span class="nm">rel</span>=<span class="st">"stylesheet"</span> <span class="nm">href</span>=<span class="st">"https://rcsmit.github.io/acroinsiders_events/css/style.css"</span><span class="tg">&gt;</span>
+
+<span class="tg">&lt;style&gt;</span>
+<span class="nm">#event-modal</span> {
+  opacity: 1;
+  pointer-events: all;
+  position: relative;
+  inset: auto;
+  background: none;
+  padding: 2rem 1rem;
+}
+<span class="tg">&lt;/style&gt;</span>
+
+<span class="tg">&lt;script</span> <span class="nm">src</span>=<span class="st">"https://rcsmit.github.io/acroinsiders_events/js/config.js"</span><span class="tg">&gt;&lt;/script&gt;</span>
+<span class="tg">&lt;script</span> <span class="nm">src</span>=<span class="st">"https://rcsmit.github.io/acroinsiders_events/js/utils.js"</span><span class="tg">&gt;&lt;/script&gt;</span>
+<span class="tg">&lt;script</span> <span class="nm">src</span>=<span class="st">"https://rcsmit.github.io/acroinsiders_events/js/modal.js"</span><span class="tg">&gt;&lt;/script&gt;</span>
+<span class="tg">&lt;script</span> <span class="nm">src</span>=<span class="st">"https://rcsmit.github.io/acroinsiders_events/js/eventdetail-wp.js"</span><span class="tg">&gt;&lt;/script&gt;</span></code></pre>
+
+        <ol class="wp-steps" start="5">
+          <li>Publish the page. The URL should be <code>https://www.acroinsiders.com/show-event/</code>.</li>
+          <li>Test it by visiting:<br><code>https://www.acroinsiders.com/show-event/?id=sofia-intensive-2026-05-09</code><br>(replace the slug with a real event ID from your sheet).</li>
+        </ol>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">How it works under the hood</div>
+        <div class="flowchart">
+          <div class="fc" style="min-width:400px">
+            <div class="fc-row"><div class="fc-box start">Browser visits /show-event/?id=SLUG</div></div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-row"><div class="fc-box wp-box">eventdetail-wp.js reads ?id= from URL</div></div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-row"><div class="fc-box data">fetch Cloudflare Worker /events</div></div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-branch">
+              <div class="fc-branch-col">
+                <div class="fc-branch-label" style="color:#c0392b">Worker fails</div>
+                <div class="fc-box" style="background:#fff5f5;border-color:#e74c3c;color:#c0392b;font-family:var(--font-body);font-size:11px">Fallback: CSV</div>
+              </div>
+              <div class="fc-branch-col">
+                <div class="fc-branch-label" style="color:var(--p2)">Success</div>
+                <div class="fc-box data" style="font-size:11px">json.rows returned</div>
+              </div>
+            </div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-row"><div class="fc-box wp-box">findRow(data, SLUG) — match by rowID()</div></div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-branch">
+              <div class="fc-branch-col">
+                <div class="fc-branch-label" style="color:#c0392b">Not found</div>
+                <div class="fc-box" style="background:#fff5f5;border-color:#e74c3c;color:#c0392b;font-family:var(--font-body);font-size:11px">renderNotFound()</div>
+              </div>
+              <div class="fc-branch-col">
+                <div class="fc-branch-label" style="color:var(--p2)">Found</div>
+                <div class="fc-box wp-box" style="font-size:11px">renderEventDetail(row)</div>
+              </div>
+            </div>
+            <div class="fc-arrow-down">↓</div>
+            <div class="fc-row"><div class="fc-box end">Full event detail visible on WP page</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">What the show-event page renders</div>
+        <p>The rendered event detail includes everything from the modal, plus some extras specific to this standalone page:</p>
+        <ul style="margin-bottom:.75rem">
+          <li>Event name, category badge, continent badge</li>
+          <li>Date range, location, Google Maps link (estimated city-level)</li>
+          <li>⭐ Shortlisted badge (if applicable)</li>
+          <li>🏷️ Insider Deal block (if applicable)</li>
+          <li>⚠️ "Event has already taken place" warning for past events</li>
+          <li>🎪 "Event has already started" notice for ongoing events</li>
+          <li>Description paragraphs</li>
+          <li>Action buttons: Visit website, Add to Google Calendar, Download .ics, Share on WhatsApp, Copy link, ← Back to all events</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">How event slug IDs work</div>
+        <p>The slug is generated from the event name and start date:</p>
+        <pre><code><span class="cm">// rowID() in utils.js</span>
+<span class="st">"Sofia Intensive"</span> + <span class="st">"2026-05-09"</span>
+→ <span class="st">"sofia-intensive-2026-05-09"</span>
+→ URL: <span class="st">/show-event/?id=sofia-intensive-2026-05-09</span></code></pre>
+        <p>Spaces and special characters become hyphens; uppercase becomes lowercase. The slug is stable as long as the event name and start date don't change in the sheet.</p>
+
+        <div class="warn">
+          <strong>⚠️ Slug stability.</strong> If you rename an event or change its start date in the Google Sheet, any previously shared links will break — the old slug will no longer match any row. Avoid renaming events after they've been shared publicly.
+        </div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Testing locally (show_event.html)</div>
+        <p>The file <code>show_event.html</code> in the repo is a local test harness. Open it in a browser with a URL parameter to test without WordPress:</p>
+        <pre><code>file:///path/to/acroinsiders_events/show_event.html?id=sofia-intensive-2026-05-09</code></pre>
+        <p>It loads the same JS files as the WordPress page but from the local <code>js/</code> folder instead of GitHub Pages URLs. It is <strong>not</strong> deployed or used in production — it's for development only.</p>
+      </div>
+    </section>
+
+    <!-- WORDPRESS: MAIN IFRAME -->
+    <section id="s8" class="section">
+      <div class="section-header">
+        <div class="section-num">8</div>
+        <div class="section-title">WordPress: main iframe (events calendar page)</div>
+      </div>
+
+      <p>The main events calendar (<code>index.html</code>) is embedded on the WordPress site as an <strong>iframe</strong>. The iframe auto-resizes to match its content height using the <a href="https://github.com/davidjbradshaw/iframe-resizer" target="_blank">iframe-resizer</a> library.</p>
+
+      <div class="wp">
+        <strong>ℹ️ WordPress iframe embed snippet</strong><br>
+        Paste this into a WordPress HTML block on the events page:
+      </div>
+
+      <pre><code><span class="tg">&lt;iframe</span>
+  <span class="nm">src</span>=<span class="st">"https://rcsmit.github.io/acroinsiders_events/index.html"</span>
+  <span class="nm">id</span>=<span class="st">"events-frame"</span>
+  <span class="nm">style</span>=<span class="st">"width:100%;border:none;display:block;"</span>
+  <span class="nm">scrolling</span>=<span class="st">"no"</span>
+<span class="tg">&gt;&lt;/iframe&gt;</span>
+<span class="tg">&lt;script</span> <span class="nm">src</span>=<span class="st">"https://cdn.jsdelivr.net/npm/iframe-resizer@4.3.9/js/iframeResizer.min.js"</span><span class="tg">&gt;&lt;/script&gt;</span>
+<span class="tg">&lt;script&gt;</span>
+  <span class="fn-col">iFrameResize</span>({ <span class="nm">log</span>: <span class="kw">false</span>, <span class="nm">checkOrigin</span>: <span class="kw">false</span> }, <span class="st">'#events-frame'</span>);
+<span class="tg">&lt;/script&gt;</span></code></pre>
+
+      <p>The iframe content (<code>index.html</code>) loads <code>iframeResizer.contentWindow.min.js</code> from its own <code>&lt;head&gt;</code>, and calls <code>window.parentIFrame.size()</code> after every redraw and on a timeout after load to ensure the height stays correct.</p>
+
+      <div class="tip">
+        <strong>✓ The ALLOWED_ORIGINS list in worker.js</strong> must include the WordPress domain (<code>https://acroinsiders.com</code>) and the GitHub Pages domain (<code>https://rcsmit.github.io</code>) for CORS to pass. It currently does.
+      </div>
+    </section>
+
+    <!-- COMMON TASKS -->
+    <section id="s9" class="section">
+      <div class="section-header">
+        <div class="section-num">9</div>
+        <div class="section-title">Common tasks</div>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Add a new event type (e.g. "Workshop")</div>
+        <p>In <code>data.js</code>, find <code>ET_ORDER</code> and add the new type:</p>
+        <pre><code><span class="kw">const</span> <span class="nm">ET_ORDER</span> = [<span class="st">'Festival'</span>, <span class="st">'Retreat'</span>, <span class="st">'Intensive'</span>, <span class="st">'Event'</span>, <span class="st">'Training'</span>, <span class="st">'Workshop'</span>];</code></pre>
+        <p>Then add it to <code>etIcon()</code> in <code>utils.js</code>:</p>
+        <pre><code><span class="fn-col">function</span> <span class="fn-col">etIcon</span>(t) {
+  <span class="kw">return</span> { ..., <span class="st">'Workshop'</span>: <span class="st">'🛠️'</span> }[t] || <span class="st">''</span>;
+}</code></pre>
+        <p>The name must match exactly what appears in the <code>EVENT CATEGORY</code> column in the sheet.</p>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Add a new column / field to the event detail</div>
+        <ol>
+          <li>Add the column to the Google Sheet.</li>
+          <li>Add the column name to the <code>columns</code> array in <code>worker.js</code> (the Cloudflare Worker), otherwise it will be stripped before reaching the app.</li>
+          <li>Add a <code>COL_*</code> entry to <code>CONFIG</code> in <code>config.js</code>.</li>
+          <li>In <code>modal.js → openEventModal()</code> extract the value: <code>const myField = (row[CONFIG.COL_MYFIELD] || '').trim();</code></li>
+          <li>Add it to the HTML template string in the same function.</li>
+          <li>If it should also appear on the standalone WP page, repeat step 4–5 in <code>eventdetail-wp.js → renderEventDetail()</code>.</li>
+        </ol>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Change the Worker URL</div>
+        <p>The Worker URL appears in three places — update all three if you change it:</p>
+        <ul>
+          <li><code>data.js</code> → inside <code>init()</code></li>
+          <li><code>preview.html</code> → inside <code>initPreview()</code></li>
+          <li><code>eventdetail-wp.js</code> → inside <code>loadAndRender()</code></li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Add a new Worker secret (column group)</div>
+        <p>If you add a second sheet tab (e.g. venues), add a new route to the <code>ROUTES</code> object in <code>worker.js</code>, add the matching secrets in the Cloudflare dashboard, and fetch the new route from a new init function in the app.</p>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Disable Cat's Picks strip</div>
+        <p>In <code>list.js</code>, set <code>CAT_PICKS_STICKY = false</code>. The strip will be hidden even if shortlisted events exist.</p>
+      </div>
+
+      <div class="subsection">
+        <div class="subsection-title">Switch event clicks from modal to WP deeplink</div>
+        <p>In <code>list.js</code>, change <code>EVENTS_DETAIL_URL</code> from <code>''</code> to the WordPress show-event URL:</p>
+        <pre><code><span class="kw">const</span> <span class="nm">EVENTS_DETAIL_URL</span> = <span class="st">'https://www.acroinsiders.com/show-event/'</span>;</code></pre>
+        <p>Clicking a card will then navigate <code>window.parent</code> (the WP page) to the deeplink instead of opening the modal inside the iframe.</p>
+      </div>
+    </section>
+
+    <!-- WATCH OUT FOR -->
+    <section id="s10" class="section">
+      <div class="section-header">
+        <div class="section-num">10</div>
+        <div class="section-title">Things to watch out for</div>
+      </div>
+
+      <div class="warn">
+        <strong>⚠️ Always use escHtml() when inserting sheet data into HTML.</strong><br>
+        Event descriptions can contain <code>&lt;</code>, <code>&amp;</code>, quotes, and other characters that break HTML. If you add new fields to the popup or cards, wrap them in <code>escHtml()</code>. Skipping this is an XSS risk and will cause display bugs.
+      </div>
+
+      <div class="warn">
+        <strong>⚠️ The map is null until the Map tab is clicked.</strong><br>
+        If you write code that references <code>map</code>, <code>cluster</code>, or <code>labelLayer</code>, check <code>if (!mapInitialized) return;</code> first. Otherwise you'll get a null reference error on page load.
+      </div>
+
+      <div class="warn">
+        <strong>⚠️ Labels go on labelLayer, not cluster.</strong><br>
+        Adding text labels to the cluster group causes each event to render as two dots. Text labels must always go on <code>labelLayer</code>.
+      </div>
+
+      <div class="warn">
+        <strong>⚠️ Worker strips columns.</strong><br>
+        The Cloudflare Worker only passes through the columns listed in its <code>columns</code> array. If you add a new column to the sheet and want to use it in the app, you must also add it to the Worker's route config — otherwise it arrives as an empty string.
+      </div>
+
+      <div class="warn">
+        <strong>⚠️ preview.html stubs override list.js functions.</strong><br>
+        <code>preview.html</code> redefines <code>calcPageSize()</code>, <code>visibleRows()</code>, <code>renderPagination()</code>, <code>redraw()</code>, and several others inline after loading list.js. The stub versions are simpler and don't need the full filter state. Be careful if you add new functions to list.js that preview.html calls — you may need to add stubs there too.
+      </div>
+
+      <div class="info">
+        <strong>ℹ️ Date format matters.</strong><br>
+        <code>parseDate()</code> handles <code>YYYY-MM-DD</code> and <code>MM/DD/YYYY</code>. Stick to <code>YYYY-MM-DD</code> in the sheet — it's unambiguous and parses correctly across all browsers.
+      </div>
+
+      <div class="info">
+        <strong>ℹ️ rowID() is defined twice — utils.js and eventdetail-wp.js.</strong><br>
+        Both generate the same slug format. The <code>utils.js</code> version is used in the main app; <code>eventdetail-wp.js</code> has its own copy because it doesn't load utils.js in all contexts. If you change the slug format, update both.
+      </div>
+
+      <div class="info">
+        <strong>ℹ️ hideEnded is a constant.</strong><br>
+        Past events are always hidden. It is declared as <code>const hideEnded = true</code>. To make it toggleable, change it to <code>let</code>, add a UI toggle, and call <code>redraw()</code>.
+      </div>
+
+      <div class="tip">
+        <strong>✓ Safe places to add things.</strong><br>
+        The easiest places to extend the app: <code>renderList()</code> in list.js (add something to cards), <code>openEventModal()</code> in modal.js (add something to the detail view), <code>renderEventDetail()</code> in eventdetail-wp.js (add something to the WP standalone page). All three are self-contained and follow a clear pattern.
+      </div>
+
+      <div class="tip">
+        <strong>✓ Finding functions fast.</strong><br>
+        Every section in the JavaScript files starts with a comment banner like <code>/* ═══ SECTION NAME ═══ */</code>. In VS Code, press <kbd>Ctrl+Shift+F</kbd> to search across all files.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="site-footer">
+  Code Guide · v3 · 19 May 2026 · Multi-tenant vanilla JS platform
+</footer>
+
+<script>
+function toggleFn(head) {
+  const body = head.nextElementSibling;
+  const hint = head.querySelector('.toggle-hint');
+  body.classList.toggle('open');
+  hint.textContent = body.classList.contains('open') ? 'click to collapse' : 'click to expand';
+}
+
+const sections = document.querySelectorAll('[id]');
+const tocLinks = document.querySelectorAll('.toc-list a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      tocLinks.forEach(l => l.classList.remove('active'));
+      const link = document.querySelector(`.toc-list a[href="#${entry.target.id}"]`);
+      if (link) link.classList.add('active');
+    }
+  });
+}, { rootMargin: '-80px 0px -60% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
