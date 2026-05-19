@@ -202,6 +202,21 @@ h1 .accent2 { color: var(--p2); }
 
 /* ── SECTION COMMON ── */
 section { padding: 90px 6%; }
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 6%;
+}
+
+img,
+iframe,
+video {
+  max-width: 100%;
+  display: block;
+}
+
 .section-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--p1); margin-bottom: 12px; }
 .section-title { font-family: var(--font-head); font-size: clamp(1.9rem, 3.5vw, 2.8rem); line-height: 1.15; color: var(--text); margin-bottom: 14px; }
 .section-sub { font-size: 0.95rem; color: var(--text2); line-height: 1.75; font-weight: 300; max-width: 520px; }
@@ -412,6 +427,24 @@ footer {
   .ct-head div:nth-child(5), .ct-row div:nth-child(5) { display: none; }
   footer { flex-direction: column; text-align: center; }
   .hero-badge { display: none; }
+
+  .container {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .hero,
+  .how-inner,
+  .pricing-grid,
+  .feat-grid,
+  .testi-grid {
+    width: 100%;
+  }
+
+  .compare-table {
+    overflow-x: auto;
+  }
+
 }
 </style>
 </head>
@@ -432,7 +465,7 @@ footer {
 </nav>
 
 <!-- HERO -->
-<div style="max-width:1200px;margin:0 auto;">
+<div class="container">
 <div class="hero">
   <div class="hero-left">
     <div class="hero-eyebrow"><span class="dot"></span> Now in open beta</div>
@@ -543,7 +576,8 @@ footer {
 
 <!-- LIVE DEMO IFRAME -->
  <section class="demo" id="demo">
-  <div class="live-demo" style="padding: 0 6% 60px; max-width: 1200px; margin: 0 auto;">
+  <div class="live-demo" style="padding:0 0 60px;">
+    <div class="container">
     <div style="text-align:center; margin-bottom: 24px;">
       <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--p1);margin-bottom:8px;">Live demo</div>
       <h2 style="font-family:var(--font-head);font-size:clamp(1.6rem,3vw,2.2rem);color:var(--text);">Try it yourself — this is the real thing</h2>
@@ -565,6 +599,7 @@ footer {
     <div style="border-radius:20px;overflow:hidden;border:1.5px solid var(--border);box-shadow:var(--shadow-lg);position:relative;">
       <iframe id="iframe-karaoke" src="index_.html?config=karaokeevents" width="100%" height="700" style="display:block;border:none;" loading="lazy" title="Karaoke Events Demo"></iframe>
       <iframe id="iframe-baila"   src="index_.html?config=bailaconmigo"  width="100%" height="700" style="display:none;border:none;"  loading="lazy" title="Baila Con Migo Demo"></iframe>
+    </div>
     </div>
   </div>
 </section>
