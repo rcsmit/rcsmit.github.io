@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>GPX Navigator</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="/gpxnav/manifest.json">
   <meta name="theme-color" content="#00966a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="GPX Nav">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="/gpxnav/icon-192.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -988,7 +988,7 @@ document.addEventListener('DOMContentLoaded', () => {
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
+      navigator.serviceWorker.register('/gpxnav/sw.js')
         .then(r => console.log('SW registered', r.scope))
         .catch(e => console.log('SW error', e));
     });
