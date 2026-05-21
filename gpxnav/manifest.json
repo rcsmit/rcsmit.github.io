@@ -2,7 +2,7 @@
   "name": "GPX Navigator",
   "short_name": "GPX Nav",
   "description": "GPX route navigator with live GPS tracking",
-  "start_url": "rcsmit.github.io/gpxnav",
+  "start_url": "index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f0f2f5",
