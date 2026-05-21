@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>GPX Nav</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00966a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="GPX Nav">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── THEME TOKENS ── */
+    :root,
+    [data-theme="light"] {
+      --bg:        #f0f2f5;
+      --surface:   #ffffff;
+      --panel:     #f7f8fa;
+      --border:    #d1d5db;
+      --accent:    #00966a;
+      --accent2:   #e05a20;
+      --text:      #111827;
+      --muted:     #6b7280;
+      --danger:    #dc2626;
+      --radius:    12px;
+      --map-bg:    #e8edf2;
+      --tile-filter: brightness(1.05) saturate(0.9);
+      --shadow:    0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    [data-theme="dark"] {
+      --bg:        #0a0c10;
+      --surface:   #13161d;
+      --panel:     #1a1e28;
+      --border:    #2a2f3e;
+      --accent:    #00e5a0;
+      --accent2:   #ff6b35;
+      --text:      #e8eaf0;
+      --muted:     #6b7280;
+      --danger:    #ff4757;
+      --map-bg:    #0d1117;
+      --tile-filter: none;
+      --shadow:    0 2px 8px rgba(0,0,0,0.5);
+    }
+
+    html, body {
+      height: 100%; width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      overflow: hidden;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* ── HEADER ── */
+    #header {
+      flex-shrink: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 16px;
+      padding-top: max(10px, env(safe-area-inset-top));
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 1000;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    #header h1 {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--accent);
+      flex: 1;
+    }
+    #header h1 span { color: var(--text); }
+
+    /* ── THEME TOGGLE ── */
+    #theme-btn {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      color: var(--muted);
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+    #theme-btn:hover { color: var(--text); border-color: var(--accent); }
+    #theme-btn .theme-icon { font-size: 15px; }
+
+    /* ── UPLOAD ZONE ── */
+    #upload-zone {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      z-index: 900;
+      gap: 20px;
+      padding: 32px;
+      transition: opacity 0.4s ease, background 0.3s;
+    }
+    #upload-zone.hidden { opacity: 0; pointer-events: none; }
+
+    .upload-icon {
+      width: 80px; height: 80px;
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      color: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,229,160,0.3); }
+      50%       { box-shadow: 0 0 0 16px rgba(0,229,160,0); }
+    }
+    #upload-zone h2 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; text-align: center; }
+    #upload-zone p  { color: var(--muted); font-size: 14px; font-family: 'JetBrains Mono', monospace; text-align: center; }
+
+    #drop-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 40px 60px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      max-width: 400px; width: 100%;
+    }
+    #drop-area:hover, #drop-area.drag-over {
+      border-color: var(--accent);
+      background: rgba(0,229,160,0.05);
+    }
+    #drop-area p      { color: var(--muted); font-size: 14px; }
+    #drop-area strong { color: var(--accent); }
+    #file-input { display: none; }
+
+    /* ── MAP ── */
+    #map-wrapper { flex: 1; position: relative; overflow: hidden; }
+    #map {
+      width: 100%; height: 100%;
+      background: var(--map-bg);
+    }
+    /* Apply tile filter for light mode */
+    [data-theme="light"] .leaflet-tile { filter: var(--tile-filter); }
+
+    /* ── PROGRESS BAR (flex row, between map and info bar) ── */
+    #progress-bar-wrap {
+      flex-shrink: 0;
+      z-index: 1000;
+      background: var(--surface);
+      border-top: 2px solid var(--border);
+      padding: 7px 16px 8px;
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    #progress-bar-wrap.visible { display: flex; }
+
+    .prog-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .prog-done {
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+    }
+    .prog-left {
+      font-size: 13px;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent2);
+    }
+    .prog-pct {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--muted);
+      text-align: center;
+    }
+    .prog-track {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .prog-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+
+    /* ── CONTROLS (right side) ── */
+    #controls {
+      position: absolute;
+      top: 16px; right: 12px;
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: calc(100% - 140px);
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    #controls::-webkit-scrollbar { display: none; }
+
+    .ctrl-btn {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      white-space: nowrap;
+      box-shadow: var(--shadow);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ctrl-btn:hover   { background: var(--border); }
+    .ctrl-btn.active  { background: rgba(0,229,160,0.15); border-color: var(--accent); color: var(--accent); }
+    [data-theme="light"] .ctrl-btn.active { background: rgba(0,150,106,0.12); }
+    .ctrl-btn .icon   { font-size: 16px; }
+
+    /* Rotate toggle track */
+    #rotate-btn .toggle-track {
+      width: 28px; height: 16px;
+      background: var(--border);
+      border-radius: 8px;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    #rotate-btn.active .toggle-track { background: var(--accent); }
+    #rotate-btn .toggle-thumb {
+      width: 12px; height: 12px;
+      background: var(--text);
+      border-radius: 50%;
+      position: absolute;
+      top: 2px; left: 2px;
+      transition: left 0.2s;
+    }
+    #rotate-btn.active .toggle-thumb { left: 14px; }
+
+    /* ── BIG ZOOM BUTTONS (bottom-right, touch friendly) ── */
+    #zoom-btns {
+      position: absolute;
+      bottom: 68px; right: 12px;
+      z-index: 500;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .zoom-btn {
+      width: 52px; height: 52px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 26px;
+      font-weight: 300;
+      line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .zoom-btn:hover   { background: var(--border); }
+    .zoom-btn:active  { transform: scale(0.93); background: rgba(0,229,160,0.15); border-color: var(--accent); color: var(--accent); }
+
+    /* ── COMPASS ── */
+    #compass {
+      position: absolute;
+      bottom: 68px; left: 12px;
+      width: 54px; height: 54px;
+      z-index: 500;
+      pointer-events: all;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #compass svg {
+      width: 100%; height: 100%;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+      transition: transform 0.3s ease;
+    }
+    #compass.active svg {
+      filter: drop-shadow(0 0 6px var(--accent)) drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+    }
+    #compass:active { transform: scale(0.9); }
+
+    /* ── INFO BAR ── */
+    #info-bar {
+      flex-shrink: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 8px 16px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      overflow-x: auto;
+      z-index: 1000;
+      transition: background 0.3s, border-color 0.3s;
+      scrollbar-width: none;
+    }
+    #info-bar::-webkit-scrollbar { display: none; }
+
+    .info-item   { display: flex; flex-direction: column; min-width: 70px; }
+    .info-label  { font-size: 9px; font-family: 'JetBrains Mono', monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-value  { font-size: 15px; font-weight: 600; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+    .info-value.accent { color: var(--accent); }
+    .info-value.warn   { color: var(--accent2); }
+    .info-sep    { width: 1px; height: 28px; background: var(--border); flex-shrink: 0; }
+
+    /* ── GPS STATUS ── */
+    #gps-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    #gps-dot.searching { background: var(--accent2); animation: blink 1s infinite; }
+    #gps-dot.locked    { background: var(--accent);  animation: none; }
+    #gps-dot.error     { background: var(--danger);  animation: none; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── TOAST ── */
+    #toast {
+      position: absolute;
+      top: 64px; left: 50%; transform: translateX(-50%);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 9px 18px;
+      font-size: 13px;
+      color: var(--text);
+      z-index: 700;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+      box-shadow: var(--shadow);
+    }
+    #toast.show { opacity: 1; }
+    #toast.ok   { border-color: var(--accent);  color: var(--accent);  }
+    #toast.warn { border-color: var(--accent2); color: var(--accent2); }
+    #toast.err  { border-color: var(--danger);  color: var(--danger);  }
+
+    /* Waypoint label */
+    .waypoint-label {
+      background: rgba(255,107,53,0.9);
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    /* Leaflet zoom control hidden (we have custom) */
+    .leaflet-control-zoom { display: none !important; }
+    /* Leaflet attribution - tiny so it does not block UI */
+    .leaflet-control-attribution {
+      font-size: 8px !important;
+      opacity: 0.5;
+      max-width: 160px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 480px) {
+      .prog-done, .prog-left { font-size: 11px; }
+      .info-value { font-size: 13px; }
+      #header h1  { font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <h1>GPX<span>Nav</span></h1>
+    <div id="gps-dot" title="GPS status"></div>
+    <span id="gps-label" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted)">No GPS</span>
+    <!-- Light/Dark toggle -->
+    <button id="theme-btn" title="Toggle light/dark">
+      <span class="theme-icon" id="theme-icon">🌙</span>
+      <span id="theme-label">Dark</span>
+    </button>
+  </div>
+
+  <!-- UPLOAD ZONE -->
+  <div id="upload-zone">
+    <div class="upload-icon">⬆</div>
+    <h2>Load your GPX route</h2>
+    <p>Drop a .gpx file or click to browse</p>
+    <div id="drop-area">
+      <p>Drag &amp; drop <strong>.gpx</strong> here<br>or <strong>click to upload</strong></p>
+      <input type="file" id="file-input" accept=".gpx,.kml" />
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div id="map-wrapper">
+    <div id="map"></div>
+
+    <!-- CONTROLS (right) -->
+    <div id="controls">
+      <button class="ctrl-btn" id="center-btn" title="Toggle: follow me / show full route">
+        <span class="icon" id="center-icon">◎</span>
+        <span id="center-label">Center</span>
+      </button>
+      <button class="ctrl-btn" id="rotate-btn" title="Toggle heading-up mode">
+        <span class="icon">🧭</span>
+        <span>Rotate</span>
+        <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      </button>
+      <button class="ctrl-btn" id="load-btn" title="Load a different GPX">
+        <span class="icon">📂</span> GPX
+      </button>
+    </div>
+
+    <!-- BIG ZOOM BUTTONS -->
+    <div id="zoom-btns">
+      <button class="zoom-btn" id="zoom-in"  title="Zoom in">+</button>
+      <button class="zoom-btn" id="zoom-out" title="Zoom out">−</button>
+    </div>
+
+    <!-- COMPASS ROSE (bottom-left) -->
+    <div id="compass">
+      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="24" r="22" fill="var(--panel)" stroke="var(--border)" stroke-width="1.5"/>
+        <polygon points="24,4 20,24 24,21 28,24" fill="#00e5a0"/>
+        <polygon points="24,44 20,24 24,27 28,24" fill="#4a5060"/>
+        <text x="24" y="13" text-anchor="middle" font-size="7" font-family="Syne,sans-serif" font-weight="800" fill="#00e5a0">N</text>
+        <circle cx="24" cy="24" r="2.5" fill="#e8eaf0"/>
+      </svg>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast"></div>
+  </div>
+
+  <!-- PROGRESS BAR -->
+  <div id="progress-bar-wrap">
+    <div class="prog-labels">
+      <span class="prog-done" id="prog-done">0 m done</span>
+      <span class="prog-pct"  id="prog-pct">0%</span>
+      <span class="prog-left" id="prog-left">— to go</span>
+    </div>
+    <div class="prog-track">
+      <div class="prog-fill" id="prog-fill"></div>
+    </div>
+  </div>
+
+  <!-- INFO BAR -->
+  <div id="info-bar">
+    <div class="info-item">
+      <span class="info-label">Speed</span>
+      <span class="info-value accent" id="val-speed">—</span>
+    </div>
+    <div class="info-sep"></div>
+    <div class="info-item">
+      <span class="info-label">Heading</span>
+      <span class="info-value" id="val-heading">—</span>
+    </div>
+    <div class="info-sep"></div>
+    <div class="info-item">
+      <span class="info-label">Next WP</span>
+      <span class="info-value warn" id="val-nextwp">—</span>
+    </div>
+    <div class="info-sep"></div>
+    <div class="info-item">
+      <span class="info-label">Accuracy</span>
+      <span class="info-value" id="val-accuracy">—</span>
+    </div>
+  </div>
+
+</div>
+
+<input type="file" id="file-input-reload" accept=".gpx,.kml" style="display:none" />
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const state = {
+  map: null,
+  tileLayer: null,
+  userMarker: null,
+  userLat: null, userLng: null,
+  userHeading: 0,
+  rotateMode: false,
+  isDark: false,
+  routePoints: [],
+  routePolyline: null,
+  progressPolyline: null,
+  waypointMarkers: [],
+  waypointData: [],
+  startMarker: null,
+  endMarker: null,
+  totalDist: 0,
+  distDone: 0,
+  watchId: null,
+};
+
+// Tile URL sets
+const TILES = {
+  dark:  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+};
+
+// ─── MAP INIT ─────────────────────────────────────────────────────────────────
+function initMap() {
+  state.map = L.map('map', {
+    zoomControl: false,
+    attributionControl: true,
+  }).setView([20, 10], 3);
+
+  state.tileLayer = L.tileLayer(TILES.light, {
+    attribution: '© OpenStreetMap © CARTO',
+    subdomains: 'abcd', maxZoom: 19
+  }).addTo(state.map);
+}
+
+// ─── THEME TOGGLE ─────────────────────────────────────────────────────────────
+function applyTheme(dark) {
+  state.isDark = dark;
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  document.getElementById('theme-icon').textContent  = dark ? '☀️' : '🌙';
+  document.getElementById('theme-label').textContent = dark ? 'Light' : 'Dark';
+  // Swap tile layer
+  if (state.tileLayer) state.map.removeLayer(state.tileLayer);
+  state.tileLayer = L.tileLayer(dark ? TILES.dark : TILES.light, {
+    attribution: '© OpenStreetMap © CARTO',
+    subdomains: 'abcd', maxZoom: 19
+  }).addTo(state.map);
+  // Make sure route is on top
+  if (state.routePolyline)   state.routePolyline.bringToFront();
+  if (state.progressPolyline) state.progressPolyline.bringToFront();
+}
+
+// ─── USER MARKER ──────────────────────────────────────────────────────────────
+function makeUserIcon(heading) {
+  const a = heading || 0;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <g transform="rotate(${a},20,20)">
+      <polygon points="20,2 14,18 20,15 26,18" fill="rgba(0,229,160,0.85)"/>
+    </g>
+    <circle cx="20" cy="20" r="7" fill="#00e5a0" stroke="#0a0c10" stroke-width="2.5"/>
+    <circle cx="20" cy="20" r="3"  fill="#0a0c10"/>
+  </svg>`;
+  return L.divIcon({ html: svg, iconSize:[40,40], iconAnchor:[20,20], className:'' });
+}
+
+function updateUserMarker(lat, lng, heading) {
+  if (!state.userMarker) {
+    state.userMarker = L.marker([lat,lng], { icon: makeUserIcon(heading), zIndexOffset: 1000 }).addTo(state.map);
+  } else {
+    state.userMarker.setLatLng([lat,lng]);
+    state.userMarker.setIcon(makeUserIcon(heading));
+  }
+}
+
+// ─── ACCURACY CIRCLE ──────────────────────────────────────────────────────────
+let accuracyCircle = null;
+function updateAccuracyCircle(lat, lng, acc) {
+  if (!accuracyCircle) {
+    accuracyCircle = L.circle([lat,lng], {
+      radius: acc, color:'#00e5a0', fillColor:'#00e5a0',
+      fillOpacity:0.06, weight:1, opacity:0.4
+    }).addTo(state.map);
+  } else {
+    accuracyCircle.setLatLng([lat,lng]).setRadius(acc);
+  }
+}
+
+// ─── GPS ──────────────────────────────────────────────────────────────────────
+function startGPS() {
+  if (!('geolocation' in navigator)) {
+    setGpsStatus('error','GPS N/A');
+    showToast('Geolocation not supported.','err');
+    return;
+  }
+  setGpsStatus('searching','Searching…');
+  state.watchId = navigator.geolocation.watchPosition(onPosition, onGpsError,
+    { enableHighAccuracy:true, maximumAge:1000, timeout:15000 });
+}
+
+function onPosition(pos) {
+  const { latitude:lat, longitude:lng, accuracy, heading, speed } = pos.coords;
+  const isFirst = (state.userLat === null);
+  state.userLat = lat; state.userLng = lng;
+  const hdg = (heading !== null && !isNaN(heading)) ? heading : state.userHeading;
+  state.userHeading = hdg;
+
+  setGpsStatus('locked','GPS locked');
+  updateUserMarker(lat, lng, hdg);
+  updateAccuracyCircle(lat, lng, accuracy);
+
+  // On first fix: fly to user at street level
+  if (isFirst) {
+    state.map.setView([lat, lng], 16);
+  }
+
+  if (state.rotateMode) { applyMapRotation(hdg); updateCompassRose(hdg); }
+
+  document.getElementById('val-speed').textContent =
+    speed !== null ? (speed*3.6).toFixed(1)+' km/h' : '0.0 km/h';
+  document.getElementById('val-heading').textContent =
+    hdg !== null ? Math.round(hdg)+'°' : '—';
+  document.getElementById('val-accuracy').textContent =
+    accuracy !== null ? Math.round(accuracy)+' m' : '—';
+
+  updateNavigation(lat, lng);
+  // Keep map on user if follow mode is on
+  if (state.followMode) {
+    state.map.setView([lat, lng], state.map.getZoom(), {animate: true});
+  }
+}
+
+function onGpsError(err) {
+  setGpsStatus('error','GPS error');
+  showToast('GPS: '+err.message,'err');
+}
+
+// ─── MAP ROTATION ─────────────────────────────────────────────────────────────
+function applyMapRotation(heading) {
+  document.getElementById('map').style.transformOrigin = '50% 50%';
+  document.getElementById('map').style.transform = `rotate(${-heading}deg)`;
+}
+function resetMapRotation() {
+  document.getElementById('map').style.transform = '';
+  updateCompassRose(0);
+}
+function updateCompassRose(heading) {
+  document.querySelector('#compass svg').style.transform = `rotate(${heading}deg)`;
+}
+
+// ─── CENTER ───────────────────────────────────────────────────────────────────
+// 'follow' mode = true means map tracks user; false = route overview
+state.followMode = false;
+
+function setCenterMode(follow) {
+  state.followMode = follow;
+  const icon  = document.getElementById('center-icon');
+  const label = document.getElementById('center-label');
+  const btn   = document.getElementById('center-btn');
+  if (follow) {
+    // NOW in follow mode → button shows what next tap will do: fit route
+    icon.textContent  = '⧉';
+    label.textContent = 'Route';
+    btn.classList.add('active');
+    if (state.userLat !== null) state.map.setView([state.userLat, state.userLng], 18);
+    else showToast('Waiting for GPS fix…', 'warn');
+  } else {
+    // NOW in overview mode → button shows what next tap will do: follow me
+    icon.textContent  = '◎';
+    label.textContent = 'Follow';
+    btn.classList.remove('active');
+    if (state.routePolyline) state.map.fitBounds(state.routePolyline.getBounds(), {padding:[40,40]});
+    else if (state.userLat !== null) state.map.setView([state.userLat, state.userLng], 14);
+    else showToast('No route loaded yet.', 'warn');
+  }
+}
+
+function centerOnUser() {
+  setCenterMode(!state.followMode);
+}
+
+// ─── GPX PARSE ────────────────────────────────────────────────────────────────
+function parseGPX(text) {
+  const xml = new DOMParser().parseFromString(text, 'application/xml');
+  if (xml.querySelector('parsererror')) throw new Error('Invalid GPX/XML.');
+
+  const points = [], waypoints = [];
+
+  xml.querySelectorAll('trkpt').forEach(pt => {
+    const lat = parseFloat(pt.getAttribute('lat'));
+    const lng = parseFloat(pt.getAttribute('lon'));
+    if (!isNaN(lat) && !isNaN(lng)) points.push({lat,lng});
+  });
+  if (!points.length) {
+    xml.querySelectorAll('rtept').forEach(pt => {
+      const lat = parseFloat(pt.getAttribute('lat'));
+      const lng = parseFloat(pt.getAttribute('lon'));
+      if (!isNaN(lat) && !isNaN(lng)) points.push({lat,lng});
+    });
+  }
+  xml.querySelectorAll('wpt').forEach(wpt => {
+    const lat = parseFloat(wpt.getAttribute('lat'));
+    const lng = parseFloat(wpt.getAttribute('lon'));
+    const el  = wpt.querySelector('name');
+    if (!isNaN(lat) && !isNaN(lng)) waypoints.push({lat,lng,name:el?el.textContent.trim():''});
+  });
+  return { points, waypoints };
+}
+
+// ─── ROUTE DISPLAY ────────────────────────────────────────────────────────────
+function displayRoute(points, waypoints) {
+  if (state.routePolyline)   state.map.removeLayer(state.routePolyline);
+  if (state.progressPolyline) state.map.removeLayer(state.progressPolyline);
+  if (state.startMarker)     state.map.removeLayer(state.startMarker);
+  if (state.endMarker)       state.map.removeLayer(state.endMarker);
+  state.waypointMarkers.forEach(m => state.map.removeLayer(m));
+  state.waypointMarkers = [];
+
+  if (points.length < 2) { showToast('GPX has fewer than 2 points.','warn'); return; }
+
+  state.routePoints  = points;
+  state.waypointData = waypoints;
+
+  state.routePolyline = L.polyline(
+    points.map(p=>[p.lat,p.lng]),
+    { color:'#00e5a0', weight:3, opacity:0.55, dashArray:'7 6' }
+  ).addTo(state.map);
+
+  state.progressPolyline = L.polyline([],
+    { color:'#e53935', weight:5, opacity:0.9 }
+  ).addTo(state.map);
+
+  // Start
+  state.startMarker = L.circleMarker([points[0].lat,points[0].lng],
+    { radius:8, color:'#00e5a0', fillColor:'#00e5a0', fillOpacity:1, weight:2 }
+  ).bindTooltip('Start',{permanent:false}).addTo(state.map);
+
+  // End
+  const last = points[points.length-1];
+  state.endMarker = L.circleMarker([last.lat,last.lng],
+    { radius:8, color:'#ff6b35', fillColor:'#ff6b35', fillOpacity:1, weight:2 }
+  ).bindTooltip('Finish',{permanent:false}).addTo(state.map);
+
+  // Waypoints
+  waypoints.forEach((wpt,i) => {
+    const icon = L.divIcon({
+      html:`<div class="waypoint-label">${wpt.name||'WP'+(i+1)}</div>`,
+      iconAnchor:[0,0], className:''
+    });
+    state.waypointMarkers.push(L.marker([wpt.lat,wpt.lng],{icon}).addTo(state.map));
+  });
+
+  state.totalDist = computeTotalDist(points);
+  state.distDone  = 0;
+
+  // Show progress bar
+  document.getElementById('progress-bar-wrap').classList.add('visible');
+  updateProgressBar(0, state.totalDist);
+
+  state.map.fitBounds(state.routePolyline.getBounds(),{padding:[40,40]});
+  showToast(`Route loaded — ${points.length} pts · ${formatDist(state.totalDist)}`,'ok');
+}
+
+// ─── PROGRESS BAR UPDATE ──────────────────────────────────────────────────────
+function updateProgressBar(done, left) {
+  const total = done + left;
+  const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('prog-done').textContent = formatDist(done) + ' done';
+  document.getElementById('prog-left').textContent = formatDist(left) + ' to go';
+  document.getElementById('prog-pct').textContent  = pct + '%';
+  document.getElementById('prog-fill').style.width = pct + '%';
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────────────────────────
+function updateNavigation(lat, lng) {
+  if (state.routePoints.length < 2) return;
+
+  let minDist = Infinity, closestIdx = 0;
+  state.routePoints.forEach((pt,i) => {
+    const d = haversine(lat,lng,pt.lat,pt.lng);
+    if (d < minDist) { minDist=d; closestIdx=i; }
+  });
+
+  // Progress polyline
+  const travelled = state.routePoints.slice(0,closestIdx+1).map(p=>[p.lat,p.lng]);
+  state.progressPolyline.setLatLngs(travelled);
+
+  // Distances
+  const done = computeTotalDist(state.routePoints.slice(0,closestIdx+1));
+  const left = computeTotalDist(state.routePoints.slice(closestIdx));
+  state.distDone = done;
+
+  updateProgressBar(done, left);
+
+  // Next waypoint
+  if (state.waypointData.length > 0) {
+    let nextWP=null, nextDist=Infinity;
+    state.waypointData.forEach(wpt => {
+      const d = haversine(lat,lng,wpt.lat,wpt.lng);
+      if (d<nextDist) { nextDist=d; nextWP=wpt; }
+    });
+    if (nextWP) document.getElementById('val-nextwp').textContent =
+      (nextWP.name||'WP')+' '+formatDist(nextDist);
+  } else {
+    const end = state.routePoints[state.routePoints.length-1];
+    document.getElementById('val-nextwp').textContent =
+      'Finish '+formatDist(haversine(lat,lng,end.lat,end.lng));
+  }
+}
+
+// ─── MATH ─────────────────────────────────────────────────────────────────────
+function haversine(lat1,lon1,lat2,lon2) {
+  const R=6371000;
+  const φ1=lat1*Math.PI/180, φ2=lat2*Math.PI/180;
+  const Δφ=(lat2-lat1)*Math.PI/180, Δλ=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(Δφ/2)**2+Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function computeTotalDist(pts) {
+  let d=0;
+  for(let i=1;i<pts.length;i++) d+=haversine(pts[i-1].lat,pts[i-1].lng,pts[i].lat,pts[i].lng);
+  return d;
+}
+function formatDist(m) {
+  return m>=1000 ? (m/1000).toFixed(2)+' km' : Math.round(m)+' m';
+}
+
+// ─── GPS STATUS ───────────────────────────────────────────────────────────────
+function setGpsStatus(s, label) {
+  const dot = document.getElementById('gps-dot');
+  dot.className = s;
+  document.getElementById('gps-label').textContent = label;
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let _toastTimer=null;
+function showToast(msg,type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show '+type;
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(()=>{ el.className=''; },3500);
+}
+
+// ─── FILE ─────────────────────────────────────────────────────────────────────
+function handleFile(file) {
+  if (!file) return;
+  if (!file.name.match(/\.(gpx|kml)$/i)) { showToast('Please upload a .gpx file.','err'); return; }
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const { points, waypoints } = parseGPX(e.target.result);
+      if (!points.length) { showToast('No track points found in GPX.','err'); return; }
+      displayRoute(points, waypoints);
+      document.getElementById('upload-zone').classList.add('hidden');
+    } catch(err) { showToast('Parse error: '+err.message,'err'); }
+  };
+  r.readAsText(file);
+}
+
+// ─── DEVICE ORIENTATION ───────────────────────────────────────────────────────
+function requestDeviceOrientation() {
+  if (typeof DeviceOrientationEvent!=='undefined' &&
+      typeof DeviceOrientationEvent.requestPermission==='function') {
+    DeviceOrientationEvent.requestPermission()
+      .then(r=>{ if(r==='granted') bindOrientation(); }).catch(()=>{});
+  } else if (window.DeviceOrientationEvent) { bindOrientation(); }
+}
+function bindOrientation() {
+  window.addEventListener('deviceorientationabsolute', onOrientation, true);
+  window.addEventListener('deviceorientation', onOrientation, true);
+}
+function onOrientation(e) {
+  let heading=null;
+  if (e.absolute && e.alpha!==null)          heading = 360-e.alpha;
+  else if (e.webkitCompassHeading!==undefined) heading = e.webkitCompassHeading;
+  else if (e.alpha!==null)                    heading = 360-e.alpha;
+  if (heading===null) return;
+  state.userHeading = heading;
+  if (state.userLat!==null) updateUserMarker(state.userLat,state.userLng,heading);
+  if (state.rotateMode) { applyMapRotation(heading); updateCompassRose(heading); }
+  document.getElementById('val-heading').textContent = Math.round(heading)+'°';
+}
+
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  startGPS();
+  requestDeviceOrientation();
+
+  // Upload zone
+  const dropArea  = document.getElementById('drop-area');
+  const fileInput = document.getElementById('file-input');
+  dropArea.addEventListener('click', ()=>fileInput.click());
+  fileInput.addEventListener('change', e=>handleFile(e.target.files[0]));
+  dropArea.addEventListener('dragover',  e=>{ e.preventDefault(); dropArea.classList.add('drag-over'); });
+  dropArea.addEventListener('dragleave', ()=>dropArea.classList.remove('drag-over'));
+  dropArea.addEventListener('drop', e=>{ e.preventDefault(); dropArea.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+
+  // Load GPX button
+  const reload = document.getElementById('file-input-reload');
+  document.getElementById('load-btn').addEventListener('click', ()=>reload.click());
+  reload.addEventListener('change', e=>handleFile(e.target.files[0]));
+
+  // Center
+  document.getElementById('center-btn').addEventListener('click', centerOnUser);
+
+  // Rotate
+  // Shared toggle function used by both rotate-btn and compass
+  function toggleRotate() {
+    state.rotateMode = !state.rotateMode;
+    document.getElementById('rotate-btn').classList.toggle('active', state.rotateMode);
+    document.getElementById('compass').classList.toggle('active', state.rotateMode);
+    if (state.rotateMode) {
+      applyMapRotation(state.userHeading);
+      updateCompassRose(state.userHeading);
+      showToast('Heading-up ON','ok');
+    } else {
+      resetMapRotation();
+      showToast('North-up','');
+    }
+  }
+  document.getElementById('rotate-btn').addEventListener('click', toggleRotate);
+  document.getElementById('compass').addEventListener('click', toggleRotate);
+
+  // Theme toggle
+  document.getElementById('theme-btn').addEventListener('click', ()=>{
+    applyTheme(!state.isDark);
+  });
+
+  // Big zoom buttons — zoom around user position if known
+  document.getElementById('zoom-in').addEventListener('click', () => {
+    if (state.userLat !== null) {
+      state.map.setView([state.userLat, state.userLng], state.map.getZoom() + 1);
+    } else {
+      state.map.zoomIn();
+    }
+  });
+  document.getElementById('zoom-out').addEventListener('click', () => {
+    if (state.userLat !== null) {
+      state.map.setView([state.userLat, state.userLng], state.map.getZoom() - 1);
+    } else {
+      state.map.zoomOut();
+    }
+  });
+});
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(r => console.log('SW registered', r.scope))
+        .catch(e => console.log('SW error', e));
+    });
+  }
+</script>
+</body>
+</html>

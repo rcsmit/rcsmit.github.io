@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog Viewer</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+
+  <!-- Plotly -->
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <!-- Papa Parse for CSV -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Design tokens ─────────────────────────────────────── */
+    :root {
+      --bg:          #f8f6f2;
+      --sidebar-bg:  #f0ede8;
+      --surface:     #ffffff;
+      --border:      #e0dbd3;
+      --accent:      #2a9d8f;
+      --accent-dark: #1f7a6e;
+      --text:        #1a1714;
+      --muted:       #7a736a;
+      --danger:      #c0392b;
+      --font-head:   'Playfair Display', Georgia, serif;
+      --font-body:   'Source Serif 4', Georgia, serif;
+      --sidebar-w:   280px;
+      --radius:      10px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    /* ── Layout ────────────────────────────────────────────── */
+    #app { display: flex; min-height: 100vh; }
+
+    #sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 1.25rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    #main {
+      flex: 1;
+      padding: 2rem 2.5rem;
+      max-width: 900px;
+    }
+
+    /* ── Sidebar components ────────────────────────────────── */
+    .sidebar-title {
+      font-family: var(--font-head);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: .25rem;
+    }
+
+    .sidebar-section { display: flex; flex-direction: column; gap: .4rem; }
+
+    .sidebar-label {
+      font-size: .78rem;
+      font-weight: 600;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    select, input[type="text"], input[type="number"] {
+      font-family: var(--font-body);
+      font-size: .88rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .45rem .65rem;
+      color: var(--text);
+      width: 100%;
+      transition: border-color .2s;
+    }
+    select:focus, input:focus { outline: none; border-color: var(--accent); }
+
+    .checkbox-list {
+      display: flex;
+      flex-direction: column;
+      gap: .3rem;
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .5rem;
+      background: var(--surface);
+    }
+    .checkbox-list label {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .85rem;
+      cursor: pointer;
+    }
+    .checkbox-list input[type="checkbox"] { accent-color: var(--accent); }
+
+    .btn-link {
+      background: none;
+      border: none;
+      color: var(--accent);
+      font-size: .78rem;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+    }
+    .btn-row { display: flex; gap: .75rem; }
+
+    hr.divider { border: none; border-top: 1px solid var(--border); }
+
+    .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: .72rem;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: .1em .55em;
+      vertical-align: middle;
+    }
+
+    /* ── Page title ────────────────────────────────────────── */
+    .page-title {
+      font-family: var(--font-head);
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    /* ── Tabs ──────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      font-family: var(--font-body);
+      font-size: .9rem;
+      font-weight: 600;
+      padding: .6rem 1.25rem;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: color .2s, border-color .2s;
+    }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Article card ──────────────────────────────────────── */
+    .article-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      transition: box-shadow .2s;
+    }
+    .article-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,.07); }
+
+    .article-title {
+      font-family: var(--font-head);
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: .4rem;
+    }
+
+    .article-meta {
+      color: var(--muted);
+      font-size: .82rem;
+      margin-bottom: .85rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      align-items: center;
+    }
+
+    .article-meta .tag {
+      background: #eef7f5;
+      color: var(--accent-dark);
+      border-radius: 4px;
+      padding: .1em .5em;
+      font-size: .78rem;
+    }
+
+    .article-img {
+      max-width: 480px;
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .article-body { font-size: .95rem; line-height: 1.75; }
+    .article-body img { max-width: 100%; border-radius: 6px; }
+    .article-body a { color: var(--accent); }
+
+    .link-btns { display: flex; gap: .75rem; margin-top: 1rem; flex-wrap: wrap; }
+    .link-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .4rem 1rem;
+      border-radius: 6px;
+      background: #eef7f5;
+      color: var(--accent-dark);
+      font-size: .83rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid #c8e6e3;
+      transition: background .2s;
+    }
+    .link-btn:hover { background: #d6efec; }
+
+    /* ── Pagination ────────────────────────────────────────── */
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .pagination button {
+      padding: .35rem .85rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      font-family: var(--font-body);
+      font-size: .85rem;
+      cursor: pointer;
+      color: var(--text);
+      transition: background .2s, border-color .2s;
+    }
+    .pagination button:hover:not(:disabled) { background: #eef7f5; border-color: var(--accent); }
+    .pagination button:disabled { opacity: .4; cursor: default; }
+    .pagination button.current { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .pagination-info { color: var(--muted); font-size: .83rem; }
+
+    /* ── Statistics ────────────────────────────────────────── */
+    .stats-section { margin-bottom: 2rem; }
+    .stats-section h2 {
+      font-family: var(--font-head);
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      text-align: center;
+    }
+    .kpi-value {
+      font-family: var(--font-head);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .kpi-label { font-size: .78rem; color: var(--muted); margin-top: .2rem; }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .chart-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .75rem;
+      min-height: 380px;
+    }
+    .chart-box.full {
+      grid-column: 1 / -1;
+      min-height: 420px;
+    }
+
+    /* ── Error / loading ───────────────────────────────────── */
+    .error-msg {
+      background: #fdecea;
+      border: 1px solid #f5c6c2;
+      color: var(--danger);
+      border-radius: 8px;
+      padding: .75rem 1rem;
+      font-size: .9rem;
+      margin-bottom: 1rem;
+    }
+    .loading {
+      color: var(--muted);
+      font-size: .9rem;
+      padding: 1rem 0;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ────────────────────────────────────────── */
+    @media (max-width: 720px) {
+      #sidebar { display: none; }
+      #main { padding: 1.25rem; }
+      .chart-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <aside id="sidebar">
+    <div class="sidebar-title">📰 Blog Viewer</div>
+    <hr class="divider" />
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Select blogs</div>
+      <div class="checkbox-list" id="blog-filter"></div>
+      <div class="btn-row">
+        <button class="btn-link" onclick="selectAllBlogs()">All</button>
+        <button class="btn-link" onclick="selectNoneBlogs()">None</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section" id="cat-section" style="display:none">
+      <div class="sidebar-label">Categories</div>
+      <div class="checkbox-list" id="cat-filter"></div>
+      <div class="btn-row">
+        <button class="btn-link" onclick="selectAllCats()">All</button>
+        <button class="btn-link" onclick="selectNoneCats()">None</button>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Search</div>
+      <input type="text" id="search-input" placeholder="Zoeken…" oninput="applyFilters()" />
+    </div>
+
+    <hr class="divider" />
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Posts per page</div>
+      <select id="per-page" onchange="applyFilters()">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="25">25</option>
+        <option value="50">50</option>
+      </select>
+    </div>
+
+    <div id="sidebar-count" style="font-size:.8rem;color:var(--muted);margin-top:.25rem;"></div>
+  </aside>
+
+  <!-- ═══════════════ MAIN ═══════════════ -->
+  <main id="main">
+    <div class="page-title">📰 Blog Viewer</div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('articles', this)">📄 Articles</button>
+      <button class="tab-btn" onclick="switchTab('stats', this)">📊 Statistics</button>
+    </div>
+
+    <!-- Articles tab -->
+    <div id="tab-articles" class="tab-panel active">
+      <div id="loading-msg" class="loading"><div class="spinner"></div>Loading articles…</div>
+      <div id="error-msg" class="error-msg" style="display:none"></div>
+      <div id="articles-caption" class="pagination-info" style="margin-bottom:.75rem"></div>
+      <div id="articles-container"></div>
+      <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Stats tab -->
+    <div id="tab-stats" class="tab-panel">
+      <div id="stats-container">
+        <div class="loading"><div class="spinner"></div>Charts will render once data is loaded…</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════════ SCRIPT ═══════════════ -->
+<script>
+/* ── Config ──────────────────────────────────────── */
+const SHEET_ID   = "1R5YDxVqpT1brUHz1P-Zjoyz0iHgLBJUIsSrbH9IfW5c";
+const SHEET_NAME = "gegevens";
+const CSV_URL    = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}`;
+
+const RSS_FEEDS = [
+  { url: "https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/main/input/crazywaiter.xml", name: "crazywaiter" },
+  { url: "https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/main/input/yepyoga.xml",    name: "yepyoga" },
+   { url: "https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/main/input/renesmit_weblogs.xml",    name: "rs_weblogs" },
+  // { url: "https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/main/input/renesmit_posts.xml",    name: "rs_posts" },
+  { url: "https://rene-smit.com/feed/?posts_per_page=100",                                                   name: "rene-smit.com" },
+];
+
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DAY_ORDER   = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const TEAL_SCALE  = [[0,"#c7ede9"],[0.5,"#2a9d8f"],[1,"#1a5c55"]];
+
+/* ── State ───────────────────────────────────────── */
+let allRows      = [];   // all loaded rows
+let filteredRows = [];   // after filters
+let currentPage  = 1;
+let statsDrawn   = false;
+
+/* ── Helpers ─────────────────────────────────────── */
+function parseDate(str) {
+  if (!str || str === "_") return null;
+  // dd-mm-yyyy
+  const m1 = str.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (m1) return new Date(+m1[3], +m1[2]-1, +m1[1]);
+  // ISO / RFC
+  const d = new Date(str);
+  return isNaN(d) ? null : d;
+}
+
+function fmtDate(d) {
+  if (!d) return "";
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+function cleanArtikel(text) {
+  if (!text) return "";
+  return text
+    .replace(/_x000D_/g, "")
+    .replace(/http:\/\/www\.yepcheck\.com\/printbak\//g,
+      "https://github.com/rcsmit/streamlit_scripts/tree/main/printbak/")
+    .replace(/<P>/gi, "")
+    .replace(/<\/P>/gi, "<br>");
+}
+
+function parseCats(str) {
+  if (!str || str === "_") return [];
+  return str.split(",").map(s => s.trim()).filter(s => s && s !== "_");
+}
+
+function wordCount(html) {
+  const text = html.replace(/<[^>]+>/g, " ");
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+/* ── CSV loader ──────────────────────────────────── */
+async function loadCSV() {
+  return new Promise((resolve, reject) => {
+    Papa.parse(CSV_URL, {
+      download: true, header: false, skipEmptyLines: true,
+      complete({ data }) {
+        const rows = [];
+        const headers = ["id","id_entry_original","titel","kopfoto","artikel",
+                         "datum","afbeelding","link","blog","categorie"];
+        for (let i = 1; i < data.length; i++) {
+          const r = {};
+          headers.forEach((h, j) => r[h] = (data[i][j] || "").trim());
+          if (r.blog === "CrazyWaiter" || r.blog === "YepYoga") continue;
+          r.datum     = parseDate(r.datum);
+          r.cats      = parseCats(r.categorie);
+          r.wordCount = wordCount(cleanArtikel(r.artikel));
+          rows.push(r);
+        }
+        resolve(rows);
+      },
+      error: reject,
+    });
+  });
+}
+
+/* ── RSS loader ──────────────────────────────────── */
+async function loadRSS(url, blogName) {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(resp.status);
+    const text = await resp.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, "application/xml");
+    const items = Array.from(xml.querySelectorAll("item"));
+    return items.map((item, i) => {
+      const get = tag => item.querySelector(tag)?.textContent?.trim() || "";
+      const title    = get("title");
+      const link     = get("link");
+      const pubDate  = get("pubDate");
+      const encoded  = item.getElementsByTagNameNS("http://purl.org/rss/1.0/modules/content/","encoded")[0]?.textContent || "";
+      const desc     = get("description");
+      const content  = encoded || desc;
+
+      let imageUrl = "_";
+      const media = item.getElementsByTagNameNS("http://search.yahoo.com/mrss/","content")[0];
+      if (media) imageUrl = media.getAttribute("url") || "_";
+      if (imageUrl === "_") {
+        const enc = item.querySelector("enclosure");
+        if (enc) imageUrl = enc.getAttribute("url") || "_";
+      }
+      if (imageUrl === "_") {
+        const m = content.match(/<img[^>]+src=["'](https?:\/\/[^"']+)['"]/);
+        if (m) imageUrl = m[1];
+      }
+
+      const cats = Array.from(item.querySelectorAll("category"))
+        .map(c => c.textContent.trim()).filter(Boolean);
+
+      return {
+        id: `rss_${blogName}_${i}`,
+        id_entry_original: "_",
+        titel: title,
+        kopfoto: "_",
+        artikel: cleanArtikel(content),
+        datum: parseDate(pubDate),
+        afbeelding: imageUrl,
+        link,
+        blog: blogName,
+        categorie: cats.join(", ") || "_",
+        cats,
+        wordCount: wordCount(cleanArtikel(content)),
+      };
+    });
+  } catch(e) {
+    console.warn(`RSS feed ${blogName} failed:`, e);
+    return [];
+  }
+}
+
+/* ── Bootstrap ───────────────────────────────────── */
+async function bootstrap() {
+  try {
+    const [csvRows, ...rssResults] = await Promise.all([
+      loadCSV(),
+      ...RSS_FEEDS.map(f => loadRSS(f.url, f.name)),
+    ]);
+
+    allRows = [...csvRows, ...rssResults.flat()];
+    allRows.forEach(r => {
+      r.artikel = cleanArtikel(r.artikel);
+    });
+    allRows.sort((a, b) => {
+      if (!a.datum && !b.datum) return 0;
+      if (!a.datum) return 1;
+      if (!b.datum) return -1;
+      return b.datum - a.datum;
+    });
+
+    buildBlogFilter();
+    applyFilters();
+    document.getElementById("loading-msg").style.display = "none";
+  } catch(e) {
+    document.getElementById("loading-msg").style.display = "none";
+    showError("Failed to load data: " + e.message);
+  }
+}
+
+/* ── Blog filter ─────────────────────────────────── */
+function buildBlogFilter() {
+  const blogs = [...new Set(allRows.map(r => r.blog))].sort();
+  const container = document.getElementById("blog-filter");
+  container.innerHTML = blogs.map(b => `
+    <label>
+      <input type="checkbox" class="blog-cb" value="${escHtml(b)}" checked
+             onchange="applyFilters()" />
+      ${escHtml(b)}
+    </label>`).join("");
+}
+
+function getSelectedBlogs() {
+  return Array.from(document.querySelectorAll(".blog-cb:checked")).map(cb => cb.value);
+}
+
+function selectAllBlogs() {
+  document.querySelectorAll(".blog-cb").forEach(cb => cb.checked = true);
+  applyFilters();
+}
+function selectNoneBlogs() {
+  document.querySelectorAll(".blog-cb").forEach(cb => cb.checked = false);
+  applyFilters();
+}
+
+/* ── Category filter ─────────────────────────────── */
+function buildCatFilter(rows) {
+  const selectedBlogs = getSelectedBlogs();
+  const showCat = selectedBlogs.length === 1 &&
+    ["crazywaiter","yepyoga","rs_blogs","rene-smit.com"].includes(selectedBlogs[0]);
+  const section = document.getElementById("cat-section");
+  section.style.display = showCat ? "flex" : "none";
+  if (!showCat) return;
+
+  const allCats = [...new Set(rows.flatMap(r => r.cats))].sort();
+  const container = document.getElementById("cat-filter");
+  const prev = new Set(Array.from(document.querySelectorAll(".cat-cb:checked")).map(cb => cb.value));
+  container.innerHTML = allCats.map(c => `
+    <label>
+      <input type="checkbox" class="cat-cb" value="${escHtml(c)}"
+             ${(prev.size === 0 || prev.has(c)) ? "checked" : ""}
+             onchange="applyFilters()" />
+      ${escHtml(c)}
+    </label>`).join("");
+}
+
+function getSelectedCats() {
+  return Array.from(document.querySelectorAll(".cat-cb:checked")).map(cb => cb.value);
+}
+
+function selectAllCats() {
+  document.querySelectorAll(".cat-cb").forEach(cb => cb.checked = true);
+  applyFilters();
+}
+function selectNoneCats() {
+  document.querySelectorAll(".cat-cb").forEach(cb => cb.checked = false);
+  applyFilters();
+}
+
+/* ── Filter pipeline ─────────────────────────────── */
+function applyFilters() {
+  const selectedBlogs = getSelectedBlogs();
+  if (selectedBlogs.length === 0) {
+    showError("Select one or more blogs.");
+    document.getElementById("articles-container").innerHTML = "";
+    document.getElementById("pagination").innerHTML = "";
+    return;
+  }
+  clearError();
+
+  let rows = allRows.filter(r => selectedBlogs.includes(r.blog));
+  buildCatFilter(rows);
+
+  const selectedCats = getSelectedCats();
+  const showCat = document.getElementById("cat-section").style.display !== "none";
+  if (showCat && selectedCats.length > 0) {
+    rows = rows.filter(r => r.cats.some(c => selectedCats.includes(c)));
+  }
+
+  const q = document.getElementById("search-input").value.trim().toLowerCase();
+  if (q) {
+    rows = rows.filter(r =>
+      (r.titel || "").toLowerCase().includes(q) ||
+      (r.artikel || "").toLowerCase().includes(q) ||
+      (r.categorie || "").toLowerCase().includes(q)
+    );
+  }
+
+  filteredRows = rows;
+  currentPage  = 1;
+  document.getElementById("sidebar-count").textContent = `${rows.length} article(s) found`;
+  renderArticles();
+}
+
+/* ── Article rendering ───────────────────────────── */
+function renderArticles() {
+  const perPage  = parseInt(document.getElementById("per-page").value);
+  const total    = filteredRows.length;
+  const nPages   = Math.max(1, Math.ceil(total / perPage));
+  currentPage    = Math.min(currentPage, nPages);
+
+  const start    = (currentPage - 1) * perPage;
+  const pageRows = filteredRows.slice(start, start + perPage);
+
+  document.getElementById("articles-caption").textContent =
+    `Page ${currentPage} of ${nPages} · ${total} article(s) in filter`;
+
+  const container = document.getElementById("articles-container");
+  if (pageRows.length === 0) {
+    container.innerHTML = `<div class="error-msg">No articles found.</div>`;
+    document.getElementById("pagination").innerHTML = "";
+    return;
+  }
+
+  container.innerHTML = pageRows.map(renderCard).join("");
+  renderPagination(nPages);
+}
+
+function renderCard(r) {
+  const dateStr  = r.datum ? fmtDate(r.datum) : "—";
+  const tagHtml  = r.cats.map(c => `<span class="tag">${escHtml(c)}</span>`).join(" ");
+  const thumb    = r.kopfoto !== "_"
+    ? `https://raw.githubusercontent.com/rcsmit/streamlit_scripts/main/printbak/thumbnails/${escHtml(r.kopfoto)}`
+    : (r.afbeelding !== "_" && r.afbeelding.startsWith("http") ? r.afbeelding : null);
+
+  const imgHtml = thumb ? `<img class="article-img" src="${escAttr(thumb)}" alt="" loading="lazy" />` : "";
+
+  const linkBtns = [
+    r.afbeelding !== "_" && r.afbeelding.startsWith("http")
+      ? `<a class="link-btn" href="${escAttr(r.afbeelding)}" target="_blank">🖼 Afbeelding</a>` : "",
+    r.link !== "_" && r.link
+      ? `<a class="link-btn" href="${escAttr(r.link)}" target="_blank">🔗 Link</a>` : "",
+  ].filter(Boolean).join("");
+
+  return `
+  <div class="article-card">
+    <div class="article-title">${escHtml(r.titel)}</div>
+    <div class="article-meta">
+      📅 ${dateStr}
+      ${tagHtml ? `· ${tagHtml}` : ""}
+    </div>
+    ${imgHtml}
+    <div class="article-body">${r.artikel}</div>
+    ${linkBtns ? `<div class="link-btns">${linkBtns}</div>` : ""}
+  </div>`;
+}
+
+function renderPagination(nPages) {
+  const pag = document.getElementById("pagination");
+  if (nPages <= 1) { pag.innerHTML = ""; return; }
+
+  const MAX_VISIBLE = 7;
+  let pages = [];
+  if (nPages <= MAX_VISIBLE) {
+    pages = Array.from({length: nPages}, (_, i) => i + 1);
+  } else {
+    pages = [1];
+    let lo = Math.max(2, currentPage - 2);
+    let hi = Math.min(nPages - 1, currentPage + 2);
+    if (lo > 2) pages.push("…");
+    for (let p = lo; p <= hi; p++) pages.push(p);
+    if (hi < nPages - 1) pages.push("…");
+    pages.push(nPages);
+  }
+
+  pag.innerHTML =
+    `<button onclick="gotoPage(${currentPage-1})" ${currentPage===1?"disabled":""}>← Prev</button>` +
+    pages.map(p => typeof p === "string"
+      ? `<span style="padding:.35rem .4rem;color:var(--muted)">…</span>`
+      : `<button class="${p===currentPage?"current":""}" onclick="gotoPage(${p})">${p}</button>`
+    ).join("") +
+    `<button onclick="gotoPage(${currentPage+1})" ${currentPage===nPages?"disabled":""}>Next →</button>`;
+}
+
+function gotoPage(p) {
+  currentPage = p;
+  renderArticles();
+  document.getElementById("tab-articles").scrollIntoView({behavior:"smooth", block:"start"});
+}
+
+/* ── Statistics ──────────────────────────────────── */
+function buildStats() {
+  const df = allRows.filter(r => r.datum);
+  if (df.length === 0) return;
+
+  const container = document.getElementById("stats-container");
+  container.innerHTML = `
+    <div class="stats-section">
+      <h2>Overview</h2>
+      <div class="kpi-grid" id="kpi-grid"></div>
+    </div>
+    <div class="stats-section">
+      <div class="chart-box full" id="chart-year"></div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box" id="chart-blog"></div>
+      <div class="chart-box" id="chart-month"></div>
+    </div>
+    <div class="stats-section">
+      <div class="chart-box full" id="chart-cum"></div>
+    </div>
+    <div class="chart-row">
+      <div class="chart-box" id="chart-cats"></div>
+      <div class="chart-box" id="chart-day"></div>
+    </div>
+    <div class="stats-section">
+      <div class="chart-box full" id="chart-words"></div>
+    </div>
+    <div class="stats-section">
+      <div class="chart-box full" id="chart-heat"></div>
+    </div>
+  `;
+
+  // KPIs
+  const allCats = df.flatMap(r => r.cats);
+  const uniqueCats = new Set(allCats);
+  const years = new Set(df.map(r => r.datum.getFullYear()));
+  const avgWords = Math.round(df.reduce((s, r) => s + r.wordCount, 0) / df.length);
+  document.getElementById("kpi-grid").innerHTML = [
+    ["Total posts",       df.length],
+    ["Blogs / sources",   new Set(df.map(r=>r.blog)).size],
+    ["Unique categories", uniqueCats.size],
+    ["Years active",      years.size],
+    ["Avg words / post",  avgWords],
+  ].map(([label, val]) => `
+    <div class="kpi-card">
+      <div class="kpi-value">${val}</div>
+      <div class="kpi-label">${label}</div>
+    </div>`).join("");
+
+  const BG = "rgba(0,0,0,0)";
+  const PLOTLY_FONT = { family: "'Source Serif 4', Georgia, serif", color: "#1a1714" };
+  const base = { paper_bgcolor: BG, plot_bgcolor: BG, height: 360, autosize: true,
+                 font: PLOTLY_FONT,
+                 margin: {t: 40, r: 20, b: 40, l: 60} };
+  /* Posts per year stacked by blog */
+  const yearBlogMap = {};
+  df.forEach(r => {
+    const y = String(r.datum.getFullYear());
+    if (!yearBlogMap[y]) yearBlogMap[y] = {};
+    yearBlogMap[y][r.blog] = (yearBlogMap[y][r.blog] || 0) + 1;
+  });
+  const blogs = [...new Set(df.map(r => r.blog))].sort();
+  const years_ = Object.keys(yearBlogMap).sort();
+  const COLORS = ["#2a9d8f","#e9c46a","#e76f51","#264653","#a8dadc","#f4a261"];
+  Plotly.newPlot("chart-year",
+    blogs.map((b, i) => ({
+      type: "bar", name: b,
+      x: years_,
+      y: years_.map(y => yearBlogMap[y][b] || 0),
+      marker: { color: COLORS[i % COLORS.length] },
+    })),
+    { ...base, title: { text: "Posts per year, per blog", font: {...PLOTLY_FONT, size: 14} },
+      barmode: "stack",
+      xaxis: { title: "Year" }, yaxis: { title: "Posts" } },
+    { responsive: true }
+  );
+
+  /* Posts per blog — donut */
+  const blogCounts = {};
+  df.forEach(r => blogCounts[r.blog] = (blogCounts[r.blog] || 0) + 1);
+  Plotly.newPlot("chart-blog",
+    [{ type: "pie", hole: 0.45,
+       labels: Object.keys(blogCounts), values: Object.values(blogCounts),
+       textposition: "inside", textinfo: "percent+label",
+       marker: { colors: COLORS } }],
+    { ...base, title: { text: "Posts per blog", font: {...PLOTLY_FONT, size: 14} },
+      margin: {t:40,r:20,b:20,l:20} },
+    { responsive: true }
+  );
+
+  /* Seasonal posting — polar bar */
+  const monthCounts = Array(12).fill(0);
+  df.forEach(r => monthCounts[r.datum.getMonth()]++);
+  Plotly.newPlot("chart-month",
+    [{ type: "barpolar",
+       r: monthCounts, theta: MONTH_NAMES,
+       marker: { color: monthCounts, colorscale: TEAL_SCALE, showscale: false } }],
+    { ...base, title: { text: "Seasonal posting pattern", font: {...PLOTLY_FONT, size: 14} },
+      polar: { radialaxis: { visible: true } } },
+    { responsive: true }
+  );
+
+  /* Cumulative */
+  const sorted = [...df].sort((a,b) => a.datum - b.datum);
+  const cumX = [], cumY = [];
+  sorted.forEach((r, i) => { cumX.push(r.datum); cumY.push(i + 1); });
+  Plotly.newPlot("chart-cum",
+    [{ type: "scatter", mode: "lines", fill: "tozeroy",
+       x: cumX, y: cumY,
+       line: { color: "#2a9d8f" }, fillcolor: "rgba(42,157,143,.15)" }],
+    { ...base, title: { text: "Cumulative posts over time", font: {...PLOTLY_FONT, size: 14} },
+      xaxis: { title: "Date" }, yaxis: { title: "Total posts" } },
+    { responsive: true }
+  );
+
+  /* Top 15 categories */
+  const catMap = {};
+  allCats.forEach(c => catMap[c] = (catMap[c] || 0) + 1);
+  const top15 = Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,15).reverse();
+  Plotly.newPlot("chart-cats",
+    [{ type: "bar", orientation: "h",
+       x: top15.map(d=>d[1]), y: top15.map(d=>d[0]),
+       marker: { color: top15.map(d=>d[1]), colorscale: TEAL_SCALE, showscale: false } }],
+    { ...base, title: { text: "Top 15 categories", font: {...PLOTLY_FONT, size: 14} },
+      xaxis: { title: "Posts" }, yaxis: { automargin: true } },
+    { responsive: true }
+  );
+
+  /* Posts by day of week */
+  const dayMap = {};
+  DAY_ORDER.forEach(d => dayMap[d] = 0);
+  df.forEach(r => {
+    const day = r.datum.toLocaleDateString("en-GB", { weekday: "long" });
+    if (day in dayMap) dayMap[day]++;
+  });
+  Plotly.newPlot("chart-day",
+    [{ type: "bar",
+       x: DAY_ORDER, y: DAY_ORDER.map(d => dayMap[d]),
+       marker: { color: DAY_ORDER.map(d=>dayMap[d]), colorscale: TEAL_SCALE, showscale: false } }],
+    { ...base, title: { text: "Posts by day of week", font: {...PLOTLY_FONT, size: 14} },
+      xaxis: { title: "" }, yaxis: { title: "Posts" } },
+    { responsive: true }
+  );
+
+  /* Word count distribution */
+  const p95 = df.map(r=>r.wordCount).sort((a,b)=>a-b)[Math.floor(df.length*.95)];
+  const wc_per_blog = {};
+  df.forEach(r => {
+    if (r.wordCount < p95) {
+      if (!wc_per_blog[r.blog]) wc_per_blog[r.blog] = [];
+      wc_per_blog[r.blog].push(r.wordCount);
+    }
+  });
+  Plotly.newPlot("chart-words",
+    blogs.filter(b=>wc_per_blog[b]).map((b,i) => ({
+      type: "histogram", name: b, x: wc_per_blog[b],
+      opacity: 0.7, nbinsx: 40,
+      marker: { color: COLORS[i % COLORS.length] },
+    })),
+    { ...base, title: { text: "Post length distribution (word count, excl. top 5%)", font: {...PLOTLY_FONT, size: 14} },
+      barmode: "overlay",
+      xaxis: { title: "Words" }, yaxis: { title: "Posts" } },
+    { responsive: true }
+  );
+
+  /* Heatmap year × month */
+  const heatMap = {};
+  df.forEach(r => {
+    const y = r.datum.getFullYear();
+    const m = r.datum.getMonth();
+    if (!heatMap[y]) heatMap[y] = Array(12).fill(0);
+    heatMap[y][m]++;
+  });
+  const hYears = Object.keys(heatMap).map(Number).sort();
+  const zData  = MONTH_NAMES.map((_, mi) => hYears.map(y => heatMap[y][mi] || 0));
+  Plotly.newPlot("chart-heat",
+    [{ type: "heatmap",
+       z: zData, x: hYears.map(String), y: MONTH_NAMES,
+       colorscale: TEAL_SCALE,
+       hoverongaps: false }],
+    { ...base, title: { text: "Posts heatmap — month × year", font: {...PLOTLY_FONT, size: 14} },
+      xaxis: { title: "Year" }, yaxis: { title: "Month" } },
+    { responsive: true }
+  );
+}
+
+/* ── Tab switching ────────────────────────────────── */
+function switchTab(name, btn) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("tab-" + name).classList.add("active");
+  if (name === "stats" && !statsDrawn && allRows.length > 0) {
+    buildStats();
+    statsDrawn = true;
+  }
+}
+
+/* ── Utility ──────────────────────────────────────── */
+function showError(msg) {
+  const el = document.getElementById("error-msg");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+function clearError() {
+  const el = document.getElementById("error-msg");
+  el.style.display = "none";
+}
+function escHtml(s) {
+  return String(s || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function escAttr(s) {
+  return String(s || "").replace(/"/g,"&quot;");
+}
+
+/* ── Init ─────────────────────────────────────────── */
+bootstrap();
+</script>
+</body>
+</html>
