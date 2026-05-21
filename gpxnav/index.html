@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>GPX Nav</title>
+  <title>GPX Navigator</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#00966a">
@@ -417,7 +417,7 @@
 
   <!-- HEADER -->
   <div id="header">
-    <h1>GPX<span>Nav</span></h1>
+    <h1>GPX <span>Navigator</span></h1>
     <div id="gps-dot" title="GPS status"></div>
     <span id="gps-label" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--muted)">No GPS</span>
     <!-- Light/Dark toggle -->
@@ -537,6 +537,7 @@ const state = {
   endMarker: null,
   totalDist: 0,
   distDone: 0,
+  lastRouteIdx: 0,   // monotone: never go back on the route
   watchId: null,
 };
 
@@ -777,6 +778,7 @@ function displayRoute(points, waypoints) {
 
   state.totalDist = computeTotalDist(points);
   state.distDone  = 0;
+  state.lastRouteIdx = 0;
 
   // Show progress bar
   document.getElementById('progress-bar-wrap').classList.add('visible');
@@ -800,11 +802,24 @@ function updateProgressBar(done, left) {
 function updateNavigation(lat, lng) {
   if (state.routePoints.length < 2) return;
 
-  let minDist = Infinity, closestIdx = 0;
-  state.routePoints.forEach((pt,i) => {
-    const d = haversine(lat,lng,pt.lat,pt.lng);
-    if (d < minDist) { minDist=d; closestIdx=i; }
-  });
+  // Only search forward from lastRouteIdx (never go back = handles loops)
+  // Search a window: from lastRouteIdx up to end, but also allow
+  // small look-behind (10 pts) in case GPS jitter nudged us slightly back
+  const searchFrom = Math.max(0, state.lastRouteIdx - 10);
+  let minDist = Infinity, closestIdx = searchFrom;
+  for (let i = searchFrom; i < state.routePoints.length; i++) {
+    const d = haversine(lat, lng, state.routePoints[i].lat, state.routePoints[i].lng);
+    if (d < minDist) { minDist = d; closestIdx = i; }
+    // Stop looking forward once we are clearly moving away again
+    // (distance growing for 20 consecutive points means we passed it)
+    if (i > closestIdx + 20) break;
+  }
+  // Monotone: only advance, never retreat more than the look-behind window
+  if (closestIdx >= state.lastRouteIdx) {
+    state.lastRouteIdx = closestIdx;
+  } else {
+    closestIdx = state.lastRouteIdx;
+  }
 
   // Progress polyline
   const travelled = state.routePoints.slice(0,closestIdx+1).map(p=>[p.lat,p.lng]);
