@@ -1,207 +1,138 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SEIR Epidemic Model</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <title>SEIR Vergelijkingsmodel</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Nunito:wght@400;600;700;800&display=swap');
 
     :root {
-      --bg: #ffffff;
-      --surface: #eaf4ff;
-      --surface2: #e3effd;
-      --border: #1e2d3d;
-      --accent-s: #c70d8f;
-      --accent-e: #ffb74d;
-      --accent-i: #ef5350;
-      --accent-r: #66bb6a;
-      --text: #154764;
-      --muted: #071929;
-      --label: #3a5570;
+      --bg:        #f5f2ec;
+      --bg2:       #ede9e1;
+      --surface:   #ffffff;
+      --border:    #d8d2c6;
+      --border2:   #c8c1b5;
+      --text:      #2c2825;
+      --muted:     #7a726a;
+      --accent:    #c0392b;   /* warm red */
+      --accent2:   #2980b9;   /* steel blue */
+      --accent3:   #27ae60;   /* forest green */
+
+      /* scenario colours */
+      --col-base:  #2c3e50;   /* dark slate  – geen maatregelen */
+      --col-x:     #e67e22;   /* amber       – maatregelen op dag X */
+      --col-y:     #8e44ad;   /* plum        – maatregelen op dag Y */
+
+      --shadow:    0 2px 12px rgba(0,0,0,0.08);
+      --radius:    10px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
+      font-family: 'Nunito', sans-serif;
       background: var(--bg);
       color: var(--text);
-      font-family: 'Crimson Pro', Georgia, serif;
-      font-size: 17px;
-      line-height: 1.6;
       min-height: 100vh;
     }
 
-    /* Grid noise texture overlay */
+    /* subtle dot-grid background */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(30,45,61,0.3) 40px),
-        repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(30,45,61,0.3) 40px);
+      background-image: radial-gradient(circle, #bfb8ae 1px, transparent 1px);
+      background-size: 28px 28px;
+      opacity: 0.35;
       pointer-events: none;
       z-index: 0;
     }
 
-    .container {
+    .app {
       position: relative;
       z-index: 1;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 40px 24px 80px;
-    }
-
-    header {
-      margin-bottom: 48px;
-      border-left: 3px solid var(--accent-i);
-      padding-left: 20px;
-    }
-
-    header .tag {
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      color: var(--accent-i);
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    header h1 {
-      font-family: 'Space Mono', monospace;
-      font-size: clamp(22px, 4vw, 36px);
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: -0.02em;
-      line-height: 1.2;
-    }
-
-    header p {
-      color: var(--muted);
-      font-style: italic;
-      font-size: 16px;
-      margin-top: 6px;
-    }
-
-    /* SEIR flow diagram */
-    .flow-diagram {
-      display: flex;
-      align-items: center;
-      gap: 0;
-      margin-bottom: 40px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 20px 28px;
-      overflow-x: auto;
-    }
-
-    .compartment-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-width: 80px;
-    }
-
-    .compartment-box .letter {
-      font-family: 'Space Mono', monospace;
-      font-size: 26px;
-      font-weight: 700;
-      line-height: 1;
-    }
-
-    .compartment-box .name {
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 0.05em;
-      margin-top: 4px;
-    }
-
-    .s .letter { color: var(--accent-s); }
-    .e .letter { color: var(--accent-e); }
-    .i .letter { color: var(--accent-i); }
-    .r .letter { color: var(--accent-r); }
-
-    .arrow {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--label);
-      font-family: 'Space Mono', monospace;
-      font-size: 20px;
-      min-width: 40px;
-    }
-
-    /* Layout: two columns */
-    .main-grid {
       display: grid;
-      grid-template-columns: 300px 1fr;
-      gap: 24px;
-      align-items: start;
+      grid-template-columns: 320px 1fr;
+      min-height: 100vh;
     }
 
-    @media (max-width: 720px) {
-      .main-grid { grid-template-columns: 1fr; }
-    }
-
-    /* Panel */
-    .panel {
+    /* ── SIDEBAR ── */
+    .sidebar {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 24px;
+      border-right: 2px solid var(--border);
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+      padding-bottom: 32px;
     }
 
-    .panel h2 {
-      font-family: 'Space Mono', monospace;
-      font-size: 12px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
+    .sidebar-header {
+      padding: 24px 20px 18px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(160deg, #faf7f2, #f0ebe1);
+    }
+
+    .sidebar-header h1 {
+      font-family: 'Lora', serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .sidebar-header p {
+      font-size: 11px;
       color: var(--muted);
-      margin-bottom: 20px;
-      padding-bottom: 10px;
+      margin-top: 5px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .param-section {
+      padding: 16px 20px;
       border-bottom: 1px solid var(--border);
     }
 
-    .param-group {
-      margin-bottom: 18px;
+    .section-label {
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 14px;
     }
 
-    .param-label {
+    .param-row { margin-bottom: 13px; }
+
+    .param-row label {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      margin-bottom: 6px;
-    }
-
-    .param-label .sym {
-      font-family: 'Space Mono', monospace;
-      font-size: 13px;
-      color: var(--accent-s);
-    }
-
-    .param-label .meaning {
       font-size: 12px;
-      color: var(--muted);
-      font-style: italic;
+      color: var(--text);
+      margin-bottom: 5px;
+      font-weight: 600;
     }
 
-    .param-label .val {
-      font-family: 'Space Mono', monospace;
-      font-size: 13px;
-      color: var(--text);
-      min-width: 80px;
-      text-align: right;
+    .param-row label span {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      background: #fdf0ee;
+      padding: 1px 6px;
+      border-radius: 4px;
     }
 
     input[type="range"] {
-      -webkit-appearance: none;
       width: 100%;
-      height: 3px;
-      background: var(--border);
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--bg2);
       border-radius: 2px;
       outline: none;
       cursor: pointer;
@@ -209,530 +140,837 @@
 
     input[type="range"]::-webkit-slider-thumb {
       -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
+      width: 15px; height: 15px;
       border-radius: 50%;
-      background: var(--accent-s);
-      border: 2px solid var(--bg);
+      background: var(--accent);
       cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
     }
 
-    input[type="range"]::-moz-range-thumb {
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--accent-s);
-      border: 2px solid var(--bg);
-      cursor: pointer;
+    input[type="number"] {
+      width: 100%;
+      background: var(--bg2);
+      border: 1px solid var(--border2);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      padding: 7px 10px;
+      outline: none;
+      transition: border-color 0.2s;
     }
+    input[type="number"]:focus { border-color: var(--accent); }
 
-    /* Method selector */
-    .method-selector {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-
-    .method-btn {
-      flex: 1;
-      padding: 8px;
-      background: var(--surface2);
+    /* Maatregelen blok */
+    .measure-block {
+      background: var(--bg2);
+      border-radius: 8px;
+      padding: 12px 14px;
       border: 1px solid var(--border);
-      border-radius: 3px;
+    }
+
+    .measure-note {
+      font-size: 11px;
       color: var(--muted);
-      font-family: 'Space Mono', monospace;
-      font-size: 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .run-btn {
+      display: block;
+      width: calc(100% - 40px);
+      margin: 16px 20px 0;
+      padding: 12px;
+      background: var(--accent);
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
       cursor: pointer;
-      transition: all 0.15s;
+      transition: background 0.2s, transform 0.1s;
+      box-shadow: 0 2px 8px rgba(192,57,43,0.3);
+    }
+    .run-btn:hover { background: #a93226; transform: translateY(-1px); }
+    .run-btn:active { transform: translateY(0); }
+
+    /* ── MAIN ── */
+    .main {
+      padding: 28px 28px 48px;
+      overflow-y: auto;
     }
 
-    .method-btn.active {
-      background: var(--label);
-      color: var(--surface);
-      border-color: var(--accent-s);
+    .page-title {
+      font-family: 'Lora', serif;
+      font-size: 26px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .page-sub {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+      margin-bottom: 24px;
     }
 
-    .method-btn:hover:not(.active) {
-      border-color: var(--muted);
+    /* Scenario legend pills */
+    .legend-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .leg-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: var(--shadow);
+    }
+
+    .leg-swatch {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* Formula bar */
+    .formula-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 20px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      box-shadow: var(--shadow);
+    }
+    .formula-bar b { color: var(--accent); }
+
+    /* 3 charts side by side */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .chart-card-title {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .chart-scenario-label {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 4px;
+      padding: 1px 7px;
+      margin-bottom: 10px;
+      color: white;
+    }
+
+    .chart-card canvas {
+      max-height: 220px;
+    }
+
+    /* Reff charts */
+    .reff-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    /* Section heading */
+    .section-heading {
+      font-family: 'Lora', serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 14px;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--border2);
+    }
+
+    /* Comparison table */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead tr {
+      background: var(--bg2);
+    }
+
+    th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 2px solid var(--border2);
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
       color: var(--text);
     }
 
-    /* R0 indicator */
-    .r0-indicator {
-      margin-top: 20px;
-      padding: 14px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 3px;
-      text-align: center;
-    }
+    tr:last-child td { border-bottom: none; }
 
-    .r0-indicator .label {
-      font-size: 12px;
-      color: var(--muted);
-      font-family: 'Space Mono', monospace;
-    }
+    tr:hover td { background: #faf7f2; }
 
-    .r0-indicator .value {
-      font-family: 'Space Mono', monospace;
-      font-size: 28px;
+    .scenario-cell {
       font-weight: 700;
-      margin: 4px 0 2px;
-      transition: color 0.3s;
-    }
-
-    .r0-indicator .verdict {
+      font-family: 'Nunito', sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-size: 13px;
-      font-style: italic;
     }
 
-    .r0-epidemic { color: var(--accent-i); }
-    .r0-control  { color: var(--accent-r); }
-
-    /* Chart area */
-    .chart-container {
-      position: relative;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 24px;
+    .cell-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: inline-block;
     }
 
-    .chart-container canvas {
-      width: 100% !important;
-    }
+    .better { color: var(--accent3); font-weight: 700; }
+    .worse  { color: var(--accent);  font-weight: 700; }
 
-    /* Stats row */
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-top: 16px;
-    }
-
-    @media (max-width: 500px) {
-      .stats-row { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 14px 16px;
-      text-align: center;
-    }
-
-    .stat-card .sc-label {
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.1em;
+    .footer-note {
+      font-size: 10px;
       color: var(--muted);
+      font-family: 'IBM Plex Mono', monospace;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      line-height: 1.7;
     }
 
-    .stat-card .sc-val {
-      font-family: 'Space Mono', monospace;
-      font-size: 18px;
-      font-weight: 700;
-      margin-top: 4px;
+    @media (max-width: 1100px) {
+      .charts-grid, .reff-grid { grid-template-columns: 1fr; }
     }
-
-    .sc-s .sc-val { color: var(--accent-s); }
-    .sc-e .sc-val { color: var(--accent-e); }
-    .sc-i .sc-val { color: var(--accent-i); }
-    .sc-r .sc-val { color: var(--accent-r); }
-
-    /* ODE equations */
-    .equations  {
-      margin-top: 24px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 20px 24px;
+    @media (max-width: 800px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { height: auto; position: static; }
     }
-
-    .equations h2 {
-      font-family: 'Space Mono', monospace;
-      font-size: 12px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 14px;
-    }
-
-    
-    .eq-line {
-      font-family: 'Space Mono', monospace;
-      font-size: 13px;
-      color: #8bb8d4;
-      line-height: 2;
-    }
-
-    .eq-line span { color: var(--text); }
-
-    /* ODE equations */
-    .source  {
-      margin-top: 24px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 20px 24px;
-    }
-
-    .source h2 {
-      font-family: 'Space Mono', monospace;
-      font-size: 12px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 14px;
-    }
-
-    .sourcetxt {
-      font-family: 'Space Mono', monospace;
-      font-size: 13px;
-      
-      line-height: 2;
-   color: var(--text); }
-
   </style>
 </head>
 <body>
-<div class="container">
+<div class="app">
 
-  <header>
-    <div class="tag">Epidemiological Simulation</div>
-    <h1>SEIR Epidemic Model</h1>
-    <p>Susceptible · Exposed · Infectious · Recovered</p>
-  </header>
-
-  <!-- Flow diagram -->
-  <div class="flow-diagram">
-    <div class="compartment-box s">
-      <div class="letter">S</div>
-      <div class="name">Susceptible</div>
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>SEIR Vergelijkings&shy;model</h1>
+      <p>3 scenario's · maatregelen vs. geen</p>
     </div>
-    <div class="arrow">→</div>
-    <div class="compartment-box e">
-      <div class="letter">E</div>
-      <div class="name">Exposed</div>
-    </div>
-    <div class="arrow">→</div>
-    <div class="compartment-box i">
-      <div class="letter">I</div>
-      <div class="name">Infectious</div>
-    </div>
-    <div class="arrow">→</div>
-    <div class="compartment-box r">
-      <div class="letter">R</div>
-      <div class="name">Recovered</div>
-    </div>
-  </div>
 
-  <div class="main-grid">
+    <!-- BASIS -->
+    <div class="param-section">
+      <div class="section-label">Epidemie parameters</div>
 
-    <!-- Left: controls -->
-    <div>
-      <div class="panel">
-        <h2>Parameters</h2>
-
-        <!-- Beta -->
-        <div class="param-group">
-          <div class="param-label">
-            <span class="sym">β</span>
-            <span class="meaning">Transmission rate</span>
-            <span class="val" id="val-beta">0.080 /day</span>
-          </div>
-          <input type="range" id="slider-beta" min="0.01" max="0.5" step="0.001" value="0.08">
-        </div>
-
-        <!-- Sigma -->
-        <div class="param-group">
-          <div class="param-label">
-            <span class="sym">σ</span>
-            <span class="meaning">Progression rate</span>
-            <span class="val" id="val-sigma">1/18 /day</span>
-          </div>
-          <input type="range" id="slider-sigma" min="0.01" max="1" step="0.001" value="0.0556">
-        </div>
-
-        <!-- Gamma -->
-        <div class="param-group">
-          <div class="param-label">
-            <span class="sym">γ</span>
-            <span class="meaning">Recovery rate</span>
-            <span class="val" id="val-gamma">1/12 /day</span>
-          </div>
-          <input type="range" id="slider-gamma" min="0.01" max="1" step="0.001" value="0.0833">
-        </div>
-
-        <!-- Horizon -->
-        <div class="param-group">
-          <div class="param-label">
-            <span class="sym">T</span>
-            <span class="meaning">Horizon</span>
-            <span class="val" id="val-horizon">365 days</span>
-          </div>
-          <input type="range" id="slider-horizon" min="30" max="730" step="1" value="365">
-        </div>
-
-        <!-- I0 -->
-        <div class="param-group">
-          <div class="param-label">
-            <span class="sym">I₀</span>
-            <span class="meaning">Initial infectious</span>
-            <span class="val" id="val-i0">1</span>
-          </div>
-          <input type="range" id="slider-i0" min="1" max="1000" step="1" value="1">
-        </div>
-
-        <!-- E0 -->
-        <div class="param-group">
-          <div class="param-label">
-            <span class="sym">E₀</span>
-            <span class="meaning">Initial exposed</span>
-            <span class="val" id="val-e0">10</span>
-          </div>
-          <input type="range" id="slider-e0" min="0" max="1000" step="1" value="10">
-        </div>
-
-        <h2 style="margin-top:24px;">Integrator</h2>
-        <div class="method-selector">
-          <button class="method-btn" id="btn-euler" onclick="setMethod('euler')">Euler</button>
-          <button class="method-btn active" id="btn-rk4" onclick="setMethod('rk4')">RK4</button>
-        </div>
-
-        <!-- R0 -->
-        <div class="r0-indicator">
-          <div class="label">R₀ = β / γ</div>
-          <div class="value" id="r0-value">0.96</div>
-          <div class="verdict" id="r0-verdict">Outbreak self-limits</div>
-        </div>
+      <div class="param-row">
+        <label>R₀ getal <span id="val-r0">2.50</span></label>
+        <input type="range" id="r0" min="0.1" max="10" step="0.05" value="2.5">
+      </div>
+      <div class="param-row">
+        <label>Incubatietijd 1/α (dagen) <span id="val-incub">6</span></label>
+        <input type="range" id="incub" min="1" max="30" step="1" value="6">
+      </div>
+      <div class="param-row">
+        <label>Besmettelijke periode 1/γ (dagen) <span id="val-infect">7</span></label>
+        <input type="range" id="infect" min="1" max="30" step="1" value="7">
+      </div>
+      <div class="param-row">
+        <label>IFR (%) <span id="val-ifr">0.60</span></label>
+        <input type="range" id="ifr" min="0" max="10" step="0.05" value="0.6">
+      </div>
+      <div class="param-row">
+        <label>Aantal simulatiedagen <span id="val-days">300</span></label>
+        <input type="range" id="days" min="30" max="730" step="5" value="300">
+      </div>
+      <div class="param-row">
+        <label>Generatietijd Tg voor Reff <span id="val-tg">4.0</span></label>
+        <input type="range" id="tg" min="2" max="11" step="0.5" value="4">
       </div>
     </div>
 
-    <!-- Right: chart -->
-    <div>
-      <div class="chart-container">
-        <canvas id="seirChart" height="320"></canvas>
+    <!-- POPULATIE -->
+    <div class="param-section">
+      <div class="section-label">Populatie</div>
+      <div class="param-row">
+        <label>Totale populatie</label>
+        <input type="number" id="pop" value="10000000" step="100000">
       </div>
-
-      <div class="stats-row">
-        <div class="stat-card sc-s">
-          <div class="sc-label">PEAK S</div>
-          <div class="sc-val" id="stat-s">—</div>
-        </div>
-        <div class="stat-card sc-e">
-          <div class="sc-label">PEAK E</div>
-          <div class="sc-val" id="stat-e">—</div>
-        </div>
-        <div class="stat-card sc-i">
-          <div class="sc-label">PEAK I</div>
-          <div class="sc-val" id="stat-i">—</div>
-        </div>
-        <div class="stat-card sc-r">
-          <div class="sc-label">FINAL R</div>
-          <div class="sc-val" id="stat-r">—</div>
-        </div>
+      <div class="param-row">
+        <label>Geïnfecteerd op dag 0</label>
+        <input type="number" id="i0" value="100" step="10">
       </div>
-
-      <!-- ODE display -->
-      <div class="equations">
-        <h2>Governing ODEs</h2>
-        <div class="eq-line">dS/dt = <span>-β · S · I / N</span></div>
-        <div class="eq-line">dE/dt = <span> β · S · I / N  −  σ · E</span></div>
-        <div class="eq-line">dI/dt = <span> σ · E          −  γ · I</span></div>
-        <div class="eq-line">dR/dt = <span> γ · I</span></div>
-      </div>
-    <div class="source">
-      <h2>Source parameters/ODEs</h2>
-      <p class="sourcetxt"><a href="https://github.com/trevortomesh/hantavirus-model" target="_blank">
-      https://github.com/trevortomesh/hantavirus-model</a></p>
     </div>
 
-  </div>
+    <!-- MAATREGELEN -->
+    <div class="param-section">
+      <div class="section-label">Maatregelen (zelfde ingreep)</div>
+
+      <div class="measure-block">
+        <div class="param-row">
+          <label>Dag X — vroeg ingrijpen <span id="val-mx" style="background:#fff3e0;color:#e67e22">3</span></label>
+          <input type="range" id="mx" min="1" max="50" step="1" value="3">
+        </div>
+        <div class="param-row" style="margin-bottom:0">
+          <label>Dag Y — laat ingrijpen <span id="val-my" style="background:#f5eef8;color:#8e44ad">6</span></label>
+          <input type="range" id="my" min="1" max="50" step="1" value="6">
+        </div>
+        <p class="measure-note">
+          Maatregel X = maatregel op dag X (oranje)<br>
+          Maatregel Y = maatregel op dag Y (paars)<br>
+          Geen maatregel = blauw
+        </p>
+      </div>
+
+      <div class="param-row" style="margin-top:14px">
+        <label>Kracht van de maatregel Z (%) <span id="val-mz">50</span></label>
+        <input type="range" id="mz" min="0" max="100" step="1" value="50">
+      </div>
+      <p style="font-size:10.5px;color:var(--muted);font-family:'IBM Plex Mono',monospace;margin-top:-4px;line-height:1.5">
+        Z% reductie op β (effectief contactgetal).<br>
+        De maatregel blijft voor de rest van de simulatie van kracht.
+      </p>
+    </div>
+
+    <!-- VACCINATIE -->
+    <div class="param-section">
+      <div class="section-label">Vaccinatie (optioneel)</div>
+      <div class="param-row">
+        <label>Startdag vaccinatie <span id="val-vaxday">730</span></label>
+        <input type="range" id="vaxday" min="1" max="730" step="1" value="730">
+      </div>
+      <div class="param-row">
+        <label>Duur vaccinatiecampagne (dagen) <span id="val-vaxdur">365</span></label>
+        <input type="range" id="vaxdur" min="30" max="1095" step="5" value="365">
+      </div>
+    </div>
+
+    <button class="run-btn" onclick="runAll()">▶ Simuleer alle scenario's</button>
+
+    <div style="padding:14px 20px 0;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace;line-height:1.7">
+      Euler-integratie · dt = 0.25 dag<br>
+      Gebaseerd op klassiek SEIR-model<br>
+      Reff = (Cnew[t]/Cnew[t−1])^(Tg/1)
+    </div>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+    <div class="page-title">SEIR Scenario Vergelijking</div>
+    <div class="page-sub">Drie scenario's naast elkaar: geen maatregel · maatregel op dag X · maatregel op dag Y</div>
+
+    <!-- Legend -->
+    <div class="legend-row">
+      <div class="leg-pill"><span class="leg-swatch" style="background:var(--col-base)"></span> Geen maatregel (referentie)</div>
+      <div class="leg-pill"><span class="leg-swatch" style="background:var(--col-x)"></span> Maatregel op dag X (<span id="leg-mx">3</span>)</div>
+      <div class="leg-pill"><span class="leg-swatch" style="background:var(--col-y)"></span> Maatregel op dag Y (<span id="leg-my">6</span>)</div>
+    </div>
+
+    <!-- Formula bar -->
+    <div class="formula-bar" id="formula-bar">
+      α = <b id="fb-alfa">—</b>&nbsp;&nbsp;
+      β₀ (R₀ * γ) = <b id="fb-beta">—</b>&nbsp;&nbsp;
+      γ = <b id="fb-gamma">—</b>&nbsp;&nbsp;
+      R₀ = <b id="fb-r0">—</b>&nbsp;&nbsp;
+      HIT = <b id="fb-hit">—</b>%&nbsp;&nbsp;
+      Kracht Z = <b id="fb-mz">—</b>%&nbsp;&nbsp;
+      β na maatregel = <b id="fb-betaz">—</b>
+    </div>
+
+    <!-- 3 SEIR CHARTS -->
+    <div class="section-heading">SEIR compartimenten per scenario</div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-card-title">Scenario 1</div>
+        <span class="chart-scenario-label" style="background:var(--col-base)">Geen maatregel</span>
+        <canvas id="chart-s1"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Scenario 2</div>
+        <span class="chart-scenario-label" style="background:var(--col-x)">Maatregel op dag X (<span id="lbl-mx2">50</span>)</span>
+        <canvas id="chart-s2"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-title">Scenario 3</div>
+        <span class="chart-scenario-label" style="background:var(--col-y)">Maatregel op dag Y (<span id="lbl-my2">120</span>)</span>
+        <canvas id="chart-s3"></canvas>
+      </div>
+    </div>
+
+    <!-- 3 NIEUWE GEVALLEN CHARTS -->
+    <div class="section-heading">Nieuwe gevallen per dag per scenario</div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <span class="chart-scenario-label" style="background:var(--col-base)">Geen maatregel</span>
+        <canvas id="chart-c1"></canvas>
+      </div>
+      <div class="chart-card">
+        <span class="chart-scenario-label" style="background:var(--col-x)">Maatregel dag X</span>
+        <canvas id="chart-c2"></canvas>
+      </div>
+      <div class="chart-card">
+        <span class="chart-scenario-label" style="background:var(--col-y)">Maatregel dag Y</span>
+        <canvas id="chart-c3"></canvas>
+      </div>
+    </div>
+
+    <!-- Reff charts -->
+    <div class="section-heading">Effectief reproductiegetal R<sub>eff</sub> per scenario</div>
+    <div class="reff-grid">
+      <div class="chart-card">
+        <span class="chart-scenario-label" style="background:var(--col-base)">Geen maatregel</span>
+        <canvas id="chart-r1"></canvas>
+      </div>
+      <div class="chart-card">
+        <span class="chart-scenario-label" style="background:var(--col-x)">Maatregel dag X</span>
+        <canvas id="chart-r2"></canvas>
+      </div>
+      <div class="chart-card">
+        <span class="chart-scenario-label" style="background:var(--col-y)">Maatregel dag Y</span>
+        <canvas id="chart-r3"></canvas>
+      </div>
+    </div>
+
+    <!-- VERGELIJKINGSTABEL -->
+    <div class="section-heading">Eindresultaten vergelijking</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Scenario</th>
+            <th>Attack rate (%)</th>
+            <th>Totaal geïnf.</th>
+            <th>Piek geïnf. (dag)</th>
+            <th>Max nieuwe gev./dag</th>
+            <th>Totaal doden</th>
+            <th>Doden (%)</th>
+            <th>Nog susceptible</th>
+          </tr>
+        </thead>
+        <tbody id="results-tbody">
+          <tr><td colspan="8" style="text-align:center;color:var(--muted)">Klik op Simuleer…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer-note">
+      Klassiek SEIR-model met Euler-integratie (dt=0.25). Vaccinatie modelleert een lineaire afname van de susceptibele pool.
+      De maatregel reduceert β permanent vanaf de ingangsdatum (geen opheffing).
+      Bron: Willemijn Coene / Hobbeland · github.com/rcsmit
+    </div>
+  </main>
 </div>
 
 <script>
-  const N = 157_000_000;
-  const dt = 0.1;
+// ── SLIDER SYNC ──
+const sliderMap = {
+  'r0':     v => parseFloat(v).toFixed(2),
+  'incub':  v => parseInt(v),
+  'infect': v => parseInt(v),
+  'ifr':    v => parseFloat(v).toFixed(2),
+  'days':   v => parseInt(v),
+  'tg':     v => parseFloat(v).toFixed(1),
+  'mx':     v => parseInt(v),
+  'my':     v => parseInt(v),
+  'mz':     v => parseInt(v),
+  'vaxday': v => parseInt(v),
+  'vaxdur': v => parseInt(v),
+};
 
-  let method = 'rk4';
-  let params = { beta: 0.08, sigma: 1/18, gamma: 1/12, horizon: 365, I0: 1, E0: 10 };
+Object.keys(sliderMap).forEach(id => {
+  const el = document.getElementById(id);
+  const lbl = document.getElementById('val-' + id);
+  if (!el) return;
+  const update = () => { if (lbl) lbl.textContent = sliderMap[id](el.value); };
+  el.addEventListener('input', update);
+  update();
+});
 
-  function setMethod(m) {
-    method = m;
-    document.getElementById('btn-euler').classList.toggle('active', m === 'euler');
-    document.getElementById('btn-rk4').classList.toggle('active', m === 'rk4');
-    run();
-  }
+// ── MODEL ──
+function seirSimulate({ N, I0, R0, alfa, gamma, ifr, DAYS, vaxDay, vaxDur, measureDay }) {
+  const beta0 = R0 * gamma;
+  const mz    = parseFloat(document.getElementById('mz').value) / 100;
+  const zulu  = 1 / vaxDur;
+  const dt    = 0.25;
+  const steps = Math.round(DAYS / dt);
 
-  function derivatives(S, E, I, R) {
-    const dS = -params.beta * S * I / N;
-    const dE =  params.beta * S * I / N - params.sigma * E;
-    const dI =  params.sigma * E - params.gamma * I;
-    const dR =  params.gamma * I;
-    return [dS, dE, dI, dR];
-  }
+  let S = N - I0, E = 0, I = I0, Rec = 0, V = 0, D = 0, C = I0;
 
-  function simulate() {
-    const steps = Math.round(params.horizon / dt);
-    let S = N - params.I0 - params.E0;
-    let E = params.E0;
-    let I = params.I0;
-    let R = 0;
+  const ts=[], Ss=[], Es=[], Is=[], Rs=[], Vs=[], Ds=[], Cs=[];
+  const Cnew=[null], repr=[null];
+  let dayIdx = 0;
 
-    const ds = [], de = [], di = [], dr = [], ts = [];
-    const skip = Math.max(1, Math.floor(steps / 500)); // downsample for chart
+  for (let step = 0; step <= steps; step++) {
+    const t = step * dt;
 
-    for (let step = 0; step <= steps; step++) {
-      if (step % skip === 0) {
-        ds.push(S);
-        de.push(E);
-        di.push(I);
-        dr.push(R);
-        ts.push(+(step * dt).toFixed(1));
+    const betaEff = (measureDay !== null && t >= measureDay) ? beta0 * (1 - mz) : beta0;
+    const force   = betaEff * I / N;
+    const dVdt    = (V < N && t >= vaxDay) ? zulu * N : 0;
+
+    const dSdt = S <= 0 ? 0 : -force * S - dVdt;
+    const dEdt = force * S - alfa * E;
+    const dIdt = alfa * E - gamma * I;
+    const dCdt = alfa * E;
+    const dDdt = ifr * gamma * I;
+    const dRdt = gamma * I - ifr * gamma * I;
+
+    S   = Math.max(0, S   + dSdt * dt);
+    E   = Math.max(0, E   + dEdt * dt);
+    I   = Math.max(0, I   + dIdt * dt);
+    Rec = Math.max(0, Rec + dRdt * dt);
+    V   = Math.min(N, Math.max(0, V + dVdt * dt));
+    D   = Math.max(0, D   + dDdt * dt);
+    C   = Math.max(0, C   + dCdt * dt);
+
+    if (step % (1 / dt) === 0) {
+      const day = Math.round(t);
+      ts.push(day); Ss.push(S); Es.push(E); Is.push(I);
+      Rs.push(Rec); Vs.push(V); Ds.push(D); Cs.push(C);
+
+      if (dayIdx > 0) {
+        const nc = C - Cs[dayIdx - 1];
+        Cnew.push(nc > 0 ? nc : 0);
+        const prev = Cnew[dayIdx - 1];
+        const Tg  = parseFloat(document.getElementById('tg').value);
+        const r   = (prev && prev > 0 && nc > 0) ? Math.pow(nc / prev, Tg) : null;
+        repr.push(r !== null && isFinite(r) ? Math.min(r, 12) : null);
       }
-
-      if (method === 'euler') {
-        const [dS, dE, dI, dR] = derivatives(S, E, I, R);
-        S += dS * dt;
-        E += dE * dt;
-        I += dI * dt;
-        R += dR * dt;
-      } else {
-        // RK4
-        const [k1S, k1E, k1I, k1R] = derivatives(S, E, I, R);
-        const [k2S, k2E, k2I, k2R] = derivatives(S + 0.5*dt*k1S, E + 0.5*dt*k1E, I + 0.5*dt*k1I, R + 0.5*dt*k1R);
-        const [k3S, k3E, k3I, k3R] = derivatives(S + 0.5*dt*k2S, E + 0.5*dt*k2E, I + 0.5*dt*k2I, R + 0.5*dt*k2R);
-        const [k4S, k4E, k4I, k4R] = derivatives(S + dt*k3S, E + dt*k3E, I + dt*k3I, R + dt*k3R);
-        S += dt/6 * (k1S + 2*k2S + 2*k3S + k4S);
-        E += dt/6 * (k1E + 2*k2E + 2*k3E + k4E);
-        I += dt/6 * (k1I + 2*k2I + 2*k3I + k4I);
-        R += dt/6 * (k1R + 2*k2R + 2*k3R + k4R);
-      }
+      dayIdx++;
     }
-    return { ts, ds, de, di, dr };
   }
 
-  function fmt(v) {
-    if (v >= 1e6) return (v/1e6).toFixed(2) + 'M';
-    if (v >= 1e3) return (v/1e3).toFixed(1) + 'K';
-    return Math.round(v).toString();
-  }
+  return { ts, Ss, Es, Is, Rs, Vs, Ds, Cs, Cnew, repr };
+}
 
-  let chart;
+// ── CHART HELPERS ──
+const chartInstances = {};
 
-  function buildChart(data) {
-    const ctx = document.getElementById('seirChart').getContext('2d');
-    // Preserve hidden state across rebuilds; S hidden by default
-    const hidden = chart
-      ? chart.data.datasets.map((_, i) => !chart.isDatasetVisible(i))
-      : [true, false, false, false];
-    if (chart) chart.destroy();
+function destroyChart(id) {
+  if (chartInstances[id]) { chartInstances[id].destroy(); delete chartInstances[id]; }
+}
 
-    chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: data.ts,
-        datasets: [
-          { label: 'S – Susceptible', data: data.ds, borderColor: '#4fc3f7', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, hidden: hidden[0] },
-          { label: 'E – Exposed',     data: data.de, borderColor: '#ffb74d', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, hidden: hidden[1] },
-          { label: 'I – Infectious',  data: data.di, borderColor: '#ef5350', borderWidth: 2.5, pointRadius: 0, tension: 0.3, fill: false, hidden: hidden[2] },
-          { label: 'R – Recovered',   data: data.dr, borderColor: '#66bb6a', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, hidden: hidden[3] },
-        ]
+const SEIR_COLORS = {
+  S: '#3498db', E: '#9b59b6', I: '#e74c3c',
+  R: '#27ae60', V: '#f39c12', D: '#7f8c8d'
+};
+
+function buildSeirChart(canvasId, data, measureDay, color) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const labels = data.ts.map(String);
+  const maxY   = Math.max(...data.Ss);
+
+  // vertical line dataset for measure day
+  const vline = measureDay !== null
+    ? data.ts.map((t, i) => t === Math.round(measureDay) ? maxY : null)
+    : data.ts.map(() => null);
+
+  chartInstances[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        mkDs('S', data.Ss, SEIR_COLORS.S, true),
+        mkDs('E', data.Es, SEIR_COLORS.E),
+        mkDs('I', data.Is, SEIR_COLORS.I),
+        mkDs('R', data.Rs, SEIR_COLORS.R),
+        mkDs('V', data.Vs, SEIR_COLORS.V),
+        mkDs('D', data.Ds, SEIR_COLORS.D),
+        { label: measureDay !== null ? `Maatregel dag ${Math.round(measureDay)}` : '',
+          data: vline, borderColor: color, borderWidth: 2, borderDash: [5,3],
+          pointRadius: 0, tension: 0, fill: false,
+          backgroundColor: 'transparent', hidden: measureDay === null }
+      ]
+    },
+    options: chartOpts('Dag', 'Personen', false)
+  });
+}
+
+function buildCasesChart(canvasId, data, measureDay, color) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const labels = data.ts.map(String);
+  const maxY   = Math.max(...data.Cnew.map(v => v||0), ...data.Is);
+  const vline  = measureDay !== null
+    ? data.ts.map(t => t === Math.round(measureDay) ? maxY : null)
+    : data.ts.map(() => null);
+
+  chartInstances[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Nieuwe gev./dag', data: data.Cnew, borderColor: color, backgroundColor: color+'22',
+          borderWidth: 2, pointRadius: 0, tension: 0.3, fill: true },
+        mkDs('Infected (I)', data.Is, SEIR_COLORS.I),
+        { label: measureDay !== null ? `Dag ${Math.round(measureDay)}` : '',
+          data: vline, borderColor: color, borderWidth: 2, borderDash: [5,3],
+          pointRadius: 0, tension: 0, fill: false,
+          backgroundColor: 'transparent', hidden: measureDay === null }
+      ]
+    },
+    options: chartOpts('Dag', 'Personen', false)
+  });
+}
+
+function buildReffChart(canvasId, data, measureDay, color) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const labels = data.ts.map(String);
+  const vline  = measureDay !== null
+    ? data.ts.map(t => t === Math.round(measureDay) ? 10 : null)
+    : data.ts.map(() => null);
+
+  chartInstances[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Reff', data: data.repr, borderColor: color, backgroundColor: color+'18',
+          borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+        { label: 'R=1', data: data.ts.map(() => 1),
+          borderColor: '#e74c3c', borderWidth: 1, borderDash: [4,2],
+          pointRadius: 0, fill: false, backgroundColor: 'transparent' },
+        { label: measureDay !== null ? `Dag ${Math.round(measureDay)}` : '',
+          data: vline, borderColor: color, borderWidth: 2, borderDash: [5,3],
+          pointRadius: 0, tension: 0, fill: false,
+          backgroundColor: 'transparent', hidden: measureDay === null }
+      ]
+    },
+    options: chartOpts('Dag', 'Reff', true, { min: 0, max: 8 })
+  });
+}
+
+function mkDs(label, data, color, fill=false) {
+  return {
+    label, data, borderColor: color,
+    backgroundColor: fill ? color + '18' : 'transparent',
+    borderWidth: fill ? 1.5 : 1.5,
+    pointRadius: 0, tension: 0.3, fill
+  };
+}
+
+function chartOpts(xTitle, yTitle, isReff, yExtra={}) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 300 },
+    plugins: {
+      legend: {
+        labels: {
+          color: '#6b6560',
+          font: { family: 'IBM Plex Mono', size: 9 },
+          boxWidth: 12, padding: 8,
+          filter: item => item.text !== ''
+        }
       },
-      options: {
-        responsive: true,
-        interaction: { mode: 'index', intersect: false },
-        plugins: {
-          legend: {
-            labels: { color: '#8bb8d4', font: { family: 'Space Mono', size: 11 }, boxWidth: 16 }
-          },
-          tooltip: {
-            backgroundColor: '#17202b',
-            borderColor: '#1e2d3d',
-            borderWidth: 1,
-            titleColor: '#d0e4f0',
-            bodyColor: '#8bb8d4',
-            titleFont: { family: 'Space Mono', size: 11 },
-            bodyFont: { family: 'Space Mono', size: 11 },
-            callbacks: {
-              label: ctx => ` ${ctx.dataset.label.split(' ')[0]}: ${fmt(ctx.parsed.y)}`
-            }
-          }
-        },
-        scales: {
-          x: {
-            ticks: { color: '#3a5570', font: { family: 'Space Mono', size: 10 }, maxTicksLimit: 10 },
-            grid: { color: 'rgba(30,45,61,0.6)' },
-            title: { display: true, text: 'Day', color: '#3a5570', font: { family: 'Space Mono', size: 11 } }
-          },
-          y: {
-            ticks: { color: '#3a5570', font: { family: 'Space Mono', size: 10 }, callback: v => fmt(v) },
-            grid: { color: 'rgba(30,45,61,0.6)' },
-            title: { display: true, text: 'Population', color: '#3a5570', font: { family: 'Space Mono', size: 11 } }
-          }
+      tooltip: {
+        backgroundColor: '#ffffff',
+        borderColor: '#d8d2c6',
+        borderWidth: 1,
+        titleColor: '#2c2825',
+        bodyColor: '#7a726a',
+        titleFont: { family: 'IBM Plex Mono' },
+        bodyFont: { family: 'IBM Plex Mono', size: 10 },
+        callbacks: {
+          label: ctx => ` ${ctx.dataset.label}: ${isReff
+            ? (ctx.raw ?? '—')
+            : Math.round(ctx.raw ?? 0).toLocaleString('nl-NL')}`
         }
       }
-    });
-  }
-
-  function updateStats(data) {
-    const peakS = Math.max(...data.ds);
-    const peakE = Math.max(...data.de);
-    const peakI = Math.max(...data.di);
-    const finalR = data.dr[data.dr.length - 1];
-    document.getElementById('stat-s').textContent = fmt(peakS);
-    document.getElementById('stat-e').textContent = fmt(peakE);
-    document.getElementById('stat-i').textContent = fmt(peakI);
-    document.getElementById('stat-r').textContent = fmt(finalR);
-  }
-
-  function updateR0() {
-    const R0 = params.beta / params.gamma;
-    const el = document.getElementById('r0-value');
-    const verd = document.getElementById('r0-verdict');
-    el.textContent = R0.toFixed(2);
-    if (R0 > 1) {
-      el.className = 'value r0-epidemic';
-      verd.textContent = 'Epidemic growth';
-    } else {
-      el.className = 'value r0-control';
-      verd.textContent = 'Outbreak self-limits';
+    },
+    scales: {
+      x: {
+        ticks: { color: '#a09890', font: { family: 'IBM Plex Mono', size: 9 }, maxTicksLimit: 8 },
+        grid:  { color: '#ede9e1' },
+        title: { display: false }
+      },
+      y: {
+        ...yExtra,
+        ticks: {
+          color: '#a09890', font: { family: 'IBM Plex Mono', size: 9 },
+          callback: v => v >= 1e6 ? (v/1e6).toFixed(1)+'M'
+                       : v >= 1e3 ? (v/1e3).toFixed(0)+'K' : v
+        },
+        grid: { color: '#ede9e1' },
+        title: { display: false }
+      }
     }
-  }
+  };
+}
 
-  function run() {
-    updateR0();
-    const data = simulate();
-    buildChart(data);
-    updateStats(data);
-  }
+// ── RESULTS TABLE ──
+function buildTable(scenarios) {
+  const tbody = document.getElementById('results-tbody');
+  const cols  = [
+    { label: 'Geen maatregel', color: 'var(--col-base)' },
+    { label: 'Maatregel dag X', color: 'var(--col-x)' },
+    { label: 'Maatregel dag Y', color: 'var(--col-y)' },
+  ];
 
-  // Slider wiring
-  function wire(id, key, display, formatFn) {
-    document.getElementById(id).addEventListener('input', function() {
-      params[key] = +this.value;
-      document.getElementById(display).textContent = formatFn(+this.value);
-      run();
-    });
-  }
+  const N = parseFloat(document.getElementById('pop').value);
 
-  wire('slider-beta',   'beta',    'val-beta',    v => v.toFixed(3) + ' /day');
-  wire('slider-gamma',  'gamma',   'val-gamma',   v => {
-    const days = Math.round(1/v);
-    return `1/${days} /day`;
+  // compute reference values for comparison
+  const ref = scenarios[0];
+  const refAR    = ref.Cs[ref.Cs.length-1];
+  const refDeaths= ref.Ds[ref.Ds.length-1];
+  const refPeak  = Math.max(...ref.Is);
+  const refMaxC  = Math.max(...ref.Cnew.map(v=>v||0));
+
+  tbody.innerHTML = scenarios.map((d, i) => {
+    const finalC  = d.Cs[d.Cs.length - 1];
+    const finalD  = d.Ds[d.Ds.length - 1];
+    const finalS  = d.Ss[d.Ss.length - 1];
+    const peakI   = Math.max(...d.Is);
+    const peakDay = d.Is.indexOf(peakI);
+    const maxCnew = Math.max(...d.Cnew.map(v => v || 0));
+    const arPct   = (100 * finalC / N).toFixed(2);
+    const dPct    = (100 * finalD / N).toFixed(3);
+
+    const c = cols[i];
+
+    const arClass    = i===0 ? '' : (finalC  < refAR     ? 'better' : 'worse');
+    const dClass     = i===0 ? '' : (finalD  < refDeaths ? 'better' : 'worse');
+    const peakClass  = i===0 ? '' : (peakI   < refPeak   ? 'better' : 'worse');
+    const cnewClass  = i===0 ? '' : (maxCnew < refMaxC   ? 'better' : 'worse');
+
+    return `<tr>
+      <td><div class="scenario-cell"><span class="cell-dot" style="background:${c.color}"></span>${c.label}</div></td>
+      <td class="${arClass}">${arPct}%</td>
+      <td class="${arClass}">${fmtN(finalC)}</td>
+      <td class="${peakClass}">${fmtN(peakI)} (dag ${peakDay})</td>
+      <td class="${cnewClass}">${fmtN(maxCnew)}</td>
+      <td class="${dClass}">${fmtN(finalD)}</td>
+      <td class="${dClass}">${dPct}%</td>
+      <td>${fmtN(finalS)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── MAIN RUN ──
+function runAll() {
+  const N       = parseInt(document.getElementById('pop').value) || 10e6;
+  const I0      = parseInt(document.getElementById('i0').value) || 100;
+  const R0      = parseFloat(document.getElementById('r0').value);
+  const incub   = parseFloat(document.getElementById('incub').value);
+  const infect  = parseFloat(document.getElementById('infect').value);
+  const ifrPct  = parseFloat(document.getElementById('ifr').value);
+  const DAYS    = parseInt(document.getElementById('days').value);
+  const vaxDay  = parseFloat(document.getElementById('vaxday').value);
+  const vaxDur  = parseFloat(document.getElementById('vaxdur').value);
+  const mx      = parseFloat(document.getElementById('mx').value);
+  const my      = parseFloat(document.getElementById('my').value);
+  const mz      = parseFloat(document.getElementById('mz').value);
+
+  const alfa  = 1 / incub;
+  const gamma = 1 / infect;
+  const ifr   = ifrPct / 100;
+  const beta0 = R0 * gamma;
+
+  const params = { N, I0, R0, alfa, gamma, ifr, DAYS, vaxDay, vaxDur };
+
+  const d1 = seirSimulate({ ...params, measureDay: null });    // geen maatregel
+  const d2 = seirSimulate({ ...params, measureDay: mx });      // maatregel dag X
+  const d3 = seirSimulate({ ...params, measureDay: my });      // maatregel dag Y
+
+  // update labels
+  document.getElementById('leg-mx').textContent = mx;
+  document.getElementById('leg-my').textContent = my;
+  document.getElementById('lbl-mx2').textContent = mx;
+  document.getElementById('lbl-my2').textContent = my;
+
+  // formula bar
+  document.getElementById('fb-alfa').textContent  = alfa.toFixed(4);
+  document.getElementById('fb-beta').textContent  = beta0.toFixed(4);
+  document.getElementById('fb-gamma').textContent = gamma.toFixed(4);
+  document.getElementById('fb-r0').textContent    = R0.toFixed(2);
+  document.getElementById('fb-hit').textContent   = (100*(1-1/R0)).toFixed(1);
+  document.getElementById('fb-mz').textContent    = mz;
+  document.getElementById('fb-betaz').textContent = (beta0 * (1 - mz/100)).toFixed(4);
+
+  // SEIR charts
+  buildSeirChart('chart-s1', d1, null,   'var(--col-base)');
+  buildSeirChart('chart-s2', d2, mx,     '#e67e22');
+  buildSeirChart('chart-s3', d3, my,     '#8e44ad');
+
+  // Cases charts
+  buildCasesChart('chart-c1', d1, null,  'var(--col-base)');
+  buildCasesChart('chart-c2', d2, mx,    '#e67e22');
+  buildCasesChart('chart-c3', d3, my,    '#8e44ad');
+
+  // Reff charts
+  buildReffChart('chart-r1', d1, null,   'var(--col-base)');
+  buildReffChart('chart-r2', d2, mx,     '#e67e22');
+  buildReffChart('chart-r3', d3, my,     '#8e44ad');
+
+  // Table
+  buildTable([d1, d2, d3]);
+}
+
+function fmtN(n) {
+  return Math.round(n).toLocaleString('nl-NL');
+}
+
+// Auto-run on slider change (debounced)
+document.querySelectorAll('input').forEach(el => {
+  el.addEventListener('input', () => {
+    clearTimeout(el._t);
+    el._t = setTimeout(runAll, 180);
   });
-  wire('slider-sigma',  'sigma',   'val-sigma',   v => {
-    const days = Math.round(1/v);
-    return `1/${days} /day`;
-  });
-  wire('slider-horizon','horizon', 'val-horizon', v => v + ' days');
-  wire('slider-i0',     'I0',      'val-i0',      v => Math.round(v).toString());
-  wire('slider-e0',     'E0',      'val-e0',      v => Math.round(v).toString());
+  el.addEventListener('change', runAll);
+});
 
-  // Initial run
-  run();
+// Initial run
+runAll();
 </script>
 </body>
 </html>
