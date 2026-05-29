@@ -425,18 +425,18 @@
         <label>Locatie</label>
         <div class="field-row full">
           <select id="locSelect" onchange="onLocChange()">
-            <option value="52.047,5.177">De Bilt</option>
-            <option value="52.3676,4.9041">Amsterdam</option>
-            <option value="51.9225,4.4792">Rotterdam</option>
-            <option value="52.0705,4.3007">Den Haag</option>
-            <option value="51.4416,5.4697">Eindhoven</option>
-            <option value="53.2194,6.5665">Groningen</option>
-            <option value="51.5072,-0.1276">Londen</option>
-            <option value="48.8566,2.3522">Parijs</option>
-            <option value="41.9102,12.3712">Rome</option>
-            <option value="16.0471,108.2062">Da Nang</option>
-            <option value="18.7932,98.9774">Chiang Mai</option>
-            <option value="-8.4960,115.2248">Ubud</option>
+            <option value="52.047,5.177,Europe/Amsterdam">De Bilt</option>
+            <option value="52.3676,4.9041,Europe/Amsterdam">Amsterdam</option>
+            <option value="51.9225,4.4792,Europe/Amsterdam">Rotterdam</option>
+            <option value="52.0705,4.3007,Europe/Amsterdam">Den Haag</option>
+            <option value="51.4416,5.4697,Europe/Amsterdam">Eindhoven</option>
+            <option value="53.2194,6.5665,Europe/Amsterdam">Groningen</option>
+            <option value="51.5072,-0.1276,Europe/London">Londen</option>
+            <option value="48.8566,2.3522,Europe/Paris">Parijs</option>
+            <option value="41.9102,12.3712,Europe/Rome">Rome</option>
+            <option value="16.0471,108.2062,Asia/Ho_Chi_Minh">Da Nang</option>
+            <option value="18.7932,98.9774,Asia/Bangkok">Chiang Mai</option>
+            <option value="-8.4960,115.2248,Asia/Makassar">Ubud</option>
             <option value="custom">— eigen coördinaten —</option>
           </select>
         </div>
@@ -447,6 +447,42 @@
           <input type="text" id="customCoord" placeholder="52.047, 5.177" value="52.047, 5.177">
         </div>
       </div>
+      <div class="field" id="tzField" style="display:none">
+        <label>Tijdzone (UTC-offset)</label>
+        <div class="field-row full">
+          <select id="customTz" onchange="updateTzCaption()">
+            <option value="Etc/GMT+12">UTC−12</option>
+            <option value="Etc/GMT+11">UTC−11</option>
+            <option value="Etc/GMT+10">UTC−10</option>
+            <option value="Etc/GMT+9">UTC−9</option>
+            <option value="Etc/GMT+8">UTC−8</option>
+            <option value="Etc/GMT+7">UTC−7</option>
+            <option value="Etc/GMT+6">UTC−6</option>
+            <option value="Etc/GMT+5">UTC−5</option>
+            <option value="Etc/GMT+4">UTC−4</option>
+            <option value="Etc/GMT+3">UTC−3</option>
+            <option value="Etc/GMT+2">UTC−2</option>
+            <option value="Etc/GMT+1">UTC−1</option>
+            <option value="UTC">UTC±0</option>
+            <option value="Etc/GMT-1" selected>UTC+1</option>
+            <option value="Etc/GMT-2">UTC+2</option>
+            <option value="Etc/GMT-3">UTC+3</option>
+            <option value="Etc/GMT-4">UTC+4</option>
+            <option value="Etc/GMT-5">UTC+5</option>
+            <option value="Etc/GMT-5:30">UTC+5:30</option>
+            <option value="Etc/GMT-6">UTC+6</option>
+            <option value="Etc/GMT-7">UTC+7</option>
+            <option value="Etc/GMT-8">UTC+8</option>
+            <option value="Etc/GMT-9">UTC+9</option>
+            <option value="Etc/GMT-10">UTC+10</option>
+            <option value="Etc/GMT-11">UTC+11</option>
+            <option value="Etc/GMT-12">UTC+12</option>
+          </select>
+        </div>
+        <div style="font-size:0.62rem;color:var(--muted);margin-top:0.25rem">
+          Zomertijd niet automatisch verwerkt — kies de actuele offset.
+        </div>
+      </div>
       <div class="field">
         <label>Datum</label>
         <div class="field-row full">
@@ -454,10 +490,11 @@
         </div>
       </div>
       <div class="field">
-        <label>Tijd (UTC)</label>
+        <label id="tijdLabel">Tijd (lokaal)</label>
         <div class="field-row full">
-          <input type="time" id="tijd" value="13:00" step="900">
+          <input type="time" id="tijd" value="15:00" step="900">
         </div>
+        <div style="font-size:0.62rem;color:var(--muted);margin-top:0.25rem" id="tzCaption"></div>
       </div>
     </div>
   </div>
@@ -824,25 +861,83 @@ function wbgtRisico(wbgt) {
 /* ---- UI helpers ---- */
 function onLocChange() {
   const v = document.getElementById('locSelect').value;
-  document.getElementById('coordField').style.display = v === 'custom' ? 'block' : 'none';
-  if (document.getElementById('autoSolar').checked) updateSolarAuto();
+  const isCustom = v === 'custom';
+  document.getElementById('coordField').style.display = isCustom ? 'block' : 'none';
+  document.getElementById('tzField').style.display    = isCustom ? 'block' : 'none';
+  updateTzCaption();
+  if (solarMode === 'auto') updateSolarAutoLabel();
+  if (solarMode === 'clearsky') {
+    const slider = document.getElementById('wolkenSlider');
+    if (slider) onWolkenChange(slider.value);
+  }
+}
+
+function updateTzCaption() {
+  const el = document.getElementById('tzCaption');
+  if (!el) return;
+  const { tz } = getLatLon();
+  const sel = document.getElementById('customTz');
+  const label = sel ? sel.options[sel.selectedIndex]?.text : tz;
+  // Voor vaste-offset zones: toon de geselecteerde label direct
+  if (tz.startsWith('Etc/') || tz === 'UTC') {
+    el.textContent = `Tijdzone: ${label}`;
+  } else {
+    try {
+      const fmt = new Intl.DateTimeFormat('nl-NL', {
+        timeZone: tz, timeZoneName: 'short', hour: '2-digit', minute: '2-digit'
+      });
+      const tzName = fmt.formatToParts(new Date()).find(p => p.type === 'timeZoneName')?.value || tz;
+      el.textContent = `Tijdzone: ${tz} (${tzName})`;
+    } catch(e) {
+      el.textContent = `Tijdzone: ${tz}`;
+    }
+  }
 }
 
 function getLatLon() {
   const v = document.getElementById('locSelect').value;
   if (v === 'custom') {
     const parts = document.getElementById('customCoord').value.split(',').map(Number);
-    return { lat: parts[0] || 52.047, lon: parts[1] || 5.177 };
+    const tzRaw = document.getElementById('customTz').value.trim();
+    // Etc/GMT-5:30 is niet geldig IANA — map naar vaste-offset workaround
+    const tz = tzRaw === 'Etc/GMT-5:30' ? 'Asia/Kolkata' : (tzRaw || 'UTC');
+    return { lat: parts[0] || 52.047, lon: parts[1] || 5.177, tz };
   }
-  const [lat, lon] = v.split(',').map(Number);
-  return { lat, lon };
+  const parts = v.split(',');
+  return { lat: parseFloat(parts[0]), lon: parseFloat(parts[1]), tz: parts[2] };
 }
 
 function getDateUTC() {
-  const d = document.getElementById('datum').value;   // YYYY-MM-DD
-  const t = document.getElementById('tijd').value;    // HH:MM
+  const d  = document.getElementById('datum').value;  // YYYY-MM-DD
+  const t  = document.getElementById('tijd').value;   // HH:MM (lokale tijd)
   if (!d || !t) return new Date();
-  return new Date(d + 'T' + t + ':00Z');
+  const { tz } = getLatLon();
+  // Bouw lokale datetime string en interpreteer als die tijdzone via Intl
+  const localStr = `${d}T${t}:00`;
+  // Gebruik Temporal-vrije aanpak: maak een Date in de lokale tz via offset-berekening
+  try {
+    // Bereken UTC-offset voor dit moment in de gegeven tijdzone
+    const probe = new Date(`${d}T${t}:00Z`);
+    const tzFormatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false,
+    });
+    // Zoek offset via bisectie: verschil tussen "wat UTC zegt in tz" en wat we willen
+    // Eenvoudiger: bereken direct via getTimezoneOffset-equivalent
+    const parts = tzFormatter.formatToParts(probe);
+    const p = {};
+    parts.forEach(({type, value}) => p[type] = value);
+    const tzDate = new Date(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}Z`);
+    const offsetMs = probe - tzDate;  // UTC - localTime = -offsetMs
+    // Maak lokale datum als UTC, dan corrigeer met offset
+    const localAsUTC = new Date(`${localStr}Z`);
+    return new Date(localAsUTC.getTime() + offsetMs);
+  } catch(e) {
+    // Fallback: behandel als UTC
+    return new Date(`${localStr}Z`);
+  }
 }
 
 /* ---- Solar invoermodus ---- */
@@ -860,7 +955,10 @@ function setSolarMode(mode) {
   document.getElementById('modeMeting').style.display   = mode === 'meting'   ? 'block' : 'none';
 
   if (mode === 'auto') updateSolarAutoLabel();
-  if (mode === 'clearsky') onWolkenChange(document.getElementById('wolkenSlider').value);
+  if (mode === 'clearsky') {
+    const slider = document.getElementById('wolkenSlider');
+    if (slider) onWolkenChange(slider.value);
+  }
 }
 
 function updateSolarAutoLabel() {
@@ -895,7 +993,10 @@ function updateSolarAuto() {
   document.getElementById('solarSlider').value = ghi;
   document.getElementById('solarSliderVal').textContent = ghi + ' W/m²';
   if (solarMode === 'auto') updateSolarAutoLabel();
-  if (solarMode === 'clearsky') onWolkenChange(document.getElementById('wolkenSlider').value);
+  if (solarMode === 'clearsky') {
+    const slider = document.getElementById('wolkenSlider');
+    if (slider) onWolkenChange(slider.value);
+  }
 }
 
 function syncSlider(val) {
@@ -915,25 +1016,24 @@ function kastCzeplakCMF(okta) {
 }
 
 function onWolkenChange(val) {
-  const okta = parseInt(val);
-  const cmf  = kastCzeplakCMF(okta);
-  document.getElementById('wolkenVal').textContent = `${okta} okta — ${OKTA_LABELS[okta]}`;
+  // Alleen actief in clearsky-modus; elementen bestaan mogelijk niet anders
+  const wolkenValEl   = document.getElementById('wolkenVal');
+  const wolkenCmfEl   = document.getElementById('wolkenCmfLabel');
+  const solarNumEl    = document.getElementById('solarNum');
+  if (!wolkenValEl || !wolkenCmfEl || !solarNumEl) return;
 
-  // Bereken GHI voor label (clear-sky of handmatig)
-  let baseGHI;
-  if (document.getElementById('autoSolar').checked) {
-    const { lat, lon } = getLatLon();
-    baseGHI = clearSkyGHI(getDateUTC(), lat, lon);
-  } else {
-    baseGHI = parseFloat(document.getElementById('solarNum').value) || 0;
-  }
-  const ghiNa = Math.round(baseGHI * cmf);
-  document.getElementById('wolkenCmfLabel').textContent =
+  const okta = parseInt(val) || 0;
+  const cmf  = kastCzeplakCMF(okta);
+  wolkenValEl.textContent = `${okta} okta — ${OKTA_LABELS[okta]}`;
+
+  const baseGHI = parseFloat(solarNumEl.value) || 0;
+  const ghiNa   = Math.round(baseGHI * cmf);
+  wolkenCmfEl.textContent =
     `CMF = ${cmf.toFixed(3)}  ·  GHI na bewolkingscorrectie: ${ghiNa} W/m²`;
 }
 
 function bereken() {
-  const { lat, lon } = getLatLon();
+  const { lat, lon, tz } = getLatLon();
   const dtUTC = getDateUTC();
   const temp  = parseFloat(document.getElementById('temp').value);
   const rh    = parseFloat(document.getElementById('rh').value);
@@ -982,9 +1082,14 @@ function bereken() {
           ['GHI na bewolkingscorrectie', Math.round(ghi) + ' W/m²'],
         ];
 
+  const localTimeStr = document.getElementById('datum').value + ' ' + document.getElementById('tijd').value;
+  const utcStr = dtUTC.toISOString().slice(0,16) + ' UTC';
+
   const rows = [
     ['Locatie',                    `${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E`],
-    ['Datum/tijd (UTC)',           dtUTC.toISOString().slice(0,16)],
+    ['Tijdzone',                   tz],
+    ['Tijd (lokaal)',              localTimeStr],
+    ['Tijd (UTC)',                 utcStr],
     ['Temperatuur',                temp.toFixed(1) + ' °C'],
     ['Rel. vochtigheid',           rh.toFixed(0) + ' %'],
     ['Windsnelheid',               wind.toFixed(1) + ' m/s'],
@@ -1017,24 +1122,33 @@ function bereken() {
 (function init() {
   document.getElementById('versionTag').textContent = current_version;
 
+  // Datum op vandaag (lokale browsertijd)
   const today = new Date();
-  const yyyy = today.getUTCFullYear();
-  const mm   = String(today.getUTCMonth()+1).padStart(2,'0');
-  const dd   = String(today.getUTCDate()).padStart(2,'0');
+  const yyyy = today.getFullYear();
+  const mm   = String(today.getMonth()+1).padStart(2,'0');
+  const dd   = String(today.getDate()).padStart(2,'0');
   document.getElementById('datum').value = `${yyyy}-${mm}-${dd}`;
-  document.getElementById('tijd').value = '13:00';
+  document.getElementById('tijd').value = '15:00';
 
+  updateTzCaption();
   setSolarMode('auto');
 
   ['datum','tijd'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => {
+      updateTzCaption();
       if (solarMode === 'auto') updateSolarAutoLabel();
-      if (solarMode === 'clearsky') onWolkenChange(document.getElementById('wolkenSlider').value);
+      if (solarMode === 'clearsky') {
+        const slider = document.getElementById('wolkenSlider');
+        if (slider) onWolkenChange(slider.value);
+      }
     });
   });
   document.getElementById('customCoord').addEventListener('change', () => {
     if (solarMode === 'auto') updateSolarAutoLabel();
-    if (solarMode === 'clearsky') onWolkenChange(document.getElementById('wolkenSlider').value);
+  });
+  document.getElementById('customTz').addEventListener('change', () => {
+    updateTzCaption();
+    if (solarMode === 'auto') updateSolarAutoLabel();
   });
 })();
 </script>
