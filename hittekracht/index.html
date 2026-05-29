@@ -956,8 +956,17 @@ function setSolarMode(mode) {
 
   if (mode === 'auto') updateSolarAutoLabel();
   if (mode === 'clearsky') {
-    const slider = document.getElementById('wolkenSlider');
-    if (slider) onWolkenChange(slider.value);
+    // Vul de schuif met de berekende clear-sky GHI als startwaarde
+    const { lat, lon } = getLatLon();
+    const ghi = Math.round(clearSkyGHI(getDateUTC(), lat, lon));
+    const numEl    = document.getElementById('solarNum');
+    const sliderEl = document.getElementById('solarSlider');
+    const valEl    = document.getElementById('solarSliderVal');
+    if (numEl)    numEl.value = ghi;
+    if (sliderEl) sliderEl.value = ghi;
+    if (valEl)    valEl.textContent = ghi + ' W/m²';
+    const wolkenSlider = document.getElementById('wolkenSlider');
+    if (wolkenSlider) onWolkenChange(wolkenSlider.value);
   }
 }
 
