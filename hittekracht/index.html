@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hittekracht Calculator</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<!-- version history
+# version : 20260529-120000 - Initial version: Liljegren WBGT calculator, solar geometry, KNMI HK-schaal
+# version : 20260529-140000 - Bewolkingsschuif (Kasten & Czeplak 1980 CMF), live CMF-feedback, bloglink onderaan
+-->
+<script>const current_version = "20260529-140000";</script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #F5F2EC;
+    --surface:   #FFFDF8;
+    --border:    #D9D3C5;
+    --text:      #1A1714;
+    --muted:     #7A7268;
+    --accent:    #C0440A;
+    --accent2:   #2A6B4A;
+    --shadow:    0 2px 12px rgba(0,0,0,0.07);
+
+    --hk0:  #8FD14F; --hk1:  #8FD14F; --hk2:  #4A8A2A;
+    --hk3:  #E8D800; --hk4:  #F5B800; --hk5:  #F08000;
+    --hk6:  #C85A00; --hk7:  #A03000; --hk8:  #7A1A1A;
+    --hk9:  #4A0A0A; --hk10: #111111;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 2rem 1rem 4rem;
+  }
+
+  /* Subtle grid texture */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    max-width: 780px;
+    margin: 0 auto;
+    z-index: 1;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+    border-bottom: 2px solid var(--text);
+    padding-bottom: 1rem;
+  }
+  header .eyebrow {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    line-height: 1.1;
+    color: var(--text);
+  }
+  header h1 span { color: var(--accent); font-style: italic; }
+  header .subtitle {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* ---- Input card ---- */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1.8rem;
+    box-shadow: var(--shadow);
+    margin-bottom: 1.5rem;
+  }
+  .card-title {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+  @media (max-width: 560px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 0.35rem; }
+  .field label {
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .field-row { display: flex; align-items: center; gap: 0; }
+  .field-row input[type=number],
+  .field-row input[type=date],
+  .field-row input[type=time],
+  .field-row select {
+    flex: 1;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 2px 0 0 2px;
+    background: var(--bg);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+  }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  .field-row input:focus, .field-row select:focus { border-color: var(--accent); }
+  .unit {
+    padding: 0.55rem 0.6rem;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-left: none;
+    border-radius: 0 2px 2px 0;
+    font-size: 0.72rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  .field-row.full input, .field-row.full select {
+    border-radius: 2px;
+  }
+
+  /* Slider */
+  .slider-wrap { display: flex; align-items: center; gap: 0.6rem; }
+  input[type=range] {
+    flex: 1;
+    -webkit-appearance: none;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+  .slider-val {
+    font-size: 0.8rem;
+    min-width: 3.5rem;
+    text-align: right;
+    color: var(--text);
+  }
+
+  /* Solar toggle */
+  .solar-row {
+    display: flex; align-items: center; gap: 0.8rem;
+    margin-top: 0.8rem;
+  }
+  .toggle {
+    position: relative; width: 36px; height: 20px; cursor: pointer;
+  }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .slider-toggle {
+    position: absolute; inset: 0;
+    background: var(--border); border-radius: 20px;
+    transition: background 0.2s;
+  }
+  .slider-toggle::after {
+    content: ''; position: absolute;
+    left: 3px; top: 3px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: white;
+    transition: transform 0.2s;
+  }
+  .toggle input:checked + .slider-toggle { background: var(--accent2); }
+  .toggle input:checked + .slider-toggle::after { transform: translateX(16px); }
+  .toggle-label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.05em; }
+
+  /* Button */
+  .btn {
+    width: 100%;
+    padding: 0.85rem;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 0.5rem;
+  }
+  .btn:hover { background: var(--accent); }
+  .btn:active { transform: scale(0.99); }
+
+  /* ---- Result ---- */
+  #result { display: none; }
+  .result-main {
+    display: flex; gap: 1.2rem; align-items: stretch;
+    margin-bottom: 1.2rem;
+  }
+  @media (max-width: 560px) { .result-main { flex-direction: column; } }
+
+  .wbgt-box {
+    flex: 1;
+    background: var(--surface);
+    border: 2px solid var(--text);
+    border-radius: 2px;
+    padding: 1.4rem;
+    display: flex; flex-direction: column; justify-content: center;
+    box-shadow: 4px 4px 0 var(--text);
+  }
+  .wbgt-box .label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+  }
+  .wbgt-box .value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3.2rem;
+    line-height: 1;
+    color: var(--text);
+  }
+  .wbgt-box .value span { font-size: 1.2rem; color: var(--muted); }
+
+  .hk-box {
+    flex: 1;
+    border-radius: 2px;
+    padding: 1.4rem;
+    display: flex; flex-direction: column; justify-content: center;
+    color: white;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+    transition: background 0.4s;
+  }
+  .hk-box .label {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.8;
+    margin-bottom: 0.3rem;
+  }
+  .hk-box .hk-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3.2rem;
+    line-height: 1;
+  }
+  .hk-box .hk-risico {
+    font-size: 0.78rem;
+    margin-top: 0.4rem;
+    opacity: 0.9;
+    letter-spacing: 0.05em;
+  }
+
+  /* thermometer bar */
+  .thermo-wrap {
+    margin-bottom: 1.2rem;
+  }
+  .thermo-label {
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.5rem;
+  }
+  .thermo-bar {
+    height: 22px;
+    border-radius: 2px;
+    background: linear-gradient(to right,
+      #8FD14F 0%, #8FD14F 32%,
+      #E8D800 32%, #E8D800 40%,
+      #F08000 40%, #F08000 56%,
+      #C85A00 56%, #C85A00 64%,
+      #7A1A1A 64%, #7A1A1A 80%,
+      #111111 80%, #111111 100%
+    );
+    position: relative;
+    border: 1px solid var(--border);
+  }
+  .thermo-needle {
+    position: absolute;
+    top: -5px; bottom: -5px;
+    width: 3px;
+    background: var(--text);
+    border-radius: 2px;
+    transform: translateX(-50%);
+    transition: left 0.5s cubic-bezier(.4,0,.2,1);
+  }
+  .thermo-needle::after {
+    content: '';
+    position: absolute;
+    top: -4px; left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-bottom-color: var(--text);
+  }
+  .thermo-ticks {
+    display: flex; justify-content: space-between;
+    font-size: 0.58rem; color: var(--muted);
+    margin-top: 0.3rem;
+    padding: 0 1px;
+  }
+
+  /* Detail table */
+  .detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.75rem;
+  }
+  .detail-table tr { border-bottom: 1px solid var(--border); }
+  .detail-table tr:last-child { border-bottom: none; }
+  .detail-table td { padding: 0.45rem 0.5rem; }
+  .detail-table td:first-child { color: var(--muted); width: 55%; }
+  .detail-table td:last-child { text-align: right; font-weight: 500; }
+
+  /* HK legenda */
+  .hk-legenda {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+    gap: 0.4rem;
+    margin-top: 0.8rem;
+  }
+  .hk-badge {
+    padding: 0.3rem 0.4rem;
+    border-radius: 2px;
+    font-size: 0.65rem;
+    text-align: center;
+    color: white;
+    letter-spacing: 0.05em;
+    opacity: 0.6;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .hk-badge.active {
+    opacity: 1;
+    transform: scale(1.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .solar-mode-tabs {
+    display: flex; gap: 0.4rem; flex-wrap: wrap;
+    margin-top: 0.4rem;
+  }
+  .mode-tab {
+    padding: 0.35rem 0.75rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: var(--bg);
+    color: var(--muted);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .mode-tab:hover { border-color: var(--text); color: var(--text); }
+  .mode-tab.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
+
+  .blog-link {
+    display: block;
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 1.5rem;
+    letter-spacing: 0.05em;
+  }
+  .blog-link a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+  }
+  .blog-link a:hover { color: var(--text); }
+
+  .version-tag {
+    text-align: center;
+    font-size: 0.6rem;
+    color: var(--border);
+    margin-top: 2rem;
+    letter-spacing: 0.1em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="eyebrow">KNMI Hittestress — Liljegren 2008</div>
+    <h1>Hittekracht <span>Calculator</span></h1>
+    <div class="subtitle">WBGT buiten · ISO 7243 · Uitgebreide methode met iteratieve nat-bol / globe-temperatuur</div>
+  </header>
+
+  <!-- Input -->
+  <div class="card">
+    <div class="card-title">Locatie &amp; Tijd</div>
+    <div class="grid-2">
+      <div class="field">
+        <label>Locatie</label>
+        <div class="field-row full">
+          <select id="locSelect" onchange="onLocChange()">
+            <option value="52.047,5.177">De Bilt</option>
+            <option value="52.3676,4.9041">Amsterdam</option>
+            <option value="51.9225,4.4792">Rotterdam</option>
+            <option value="52.0705,4.3007">Den Haag</option>
+            <option value="51.4416,5.4697">Eindhoven</option>
+            <option value="53.2194,6.5665">Groningen</option>
+            <option value="51.5072,-0.1276">Londen</option>
+            <option value="48.8566,2.3522">Parijs</option>
+            <option value="41.9102,12.3712">Rome</option>
+            <option value="16.0471,108.2062">Da Nang</option>
+            <option value="18.7932,98.9774">Chiang Mai</option>
+            <option value="-8.4960,115.2248">Ubud</option>
+            <option value="custom">— eigen coördinaten —</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" id="coordField" style="display:none">
+        <label>Breedtegraad, Lengtegraad</label>
+        <div class="field-row full">
+          <input type="text" id="customCoord" placeholder="52.047, 5.177" value="52.047, 5.177">
+        </div>
+      </div>
+      <div class="field">
+        <label>Datum</label>
+        <div class="field-row full">
+          <input type="date" id="datum" value="">
+        </div>
+      </div>
+      <div class="field">
+        <label>Tijd (UTC)</label>
+        <div class="field-row full">
+          <input type="time" id="tijd" value="13:00" step="900">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Meteorologische invoer</div>
+    <div class="grid-3">
+      <div class="field">
+        <label>Temperatuur</label>
+        <div class="field-row">
+          <input type="number" id="temp" value="25" step="0.1" min="-20" max="55">
+          <span class="unit">°C</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Rel. vochtigheid</label>
+        <div class="field-row">
+          <input type="number" id="rh" value="60" step="1" min="1" max="100">
+          <span class="unit">%</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Windsnelheid (2 m)</label>
+        <div class="field-row">
+          <input type="number" id="wind" value="2.0" step="0.1" min="0" max="30">
+          <span class="unit">m/s</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:1.2rem">
+      <div class="field">
+        <label>Zonnestraling — invoermethode</label>
+        <div class="solar-mode-tabs" id="solarModeTabs">
+          <button class="mode-tab active" data-mode="auto"    onclick="setSolarMode('auto')">Clear-sky (berekend)</button>
+          <button class="mode-tab"        data-mode="clearsky" onclick="setSolarMode('clearsky')">Clear-sky + bewolking</button>
+          <button class="mode-tab"        data-mode="meting"  onclick="setSolarMode('meting')">KNMI-meting</button>
+        </div>
+      </div>
+
+      <!-- MODE: auto (alleen tonen, geen invoer) -->
+      <div id="modeAuto" style="margin-top:0.7rem">
+        <div style="font-size:0.72rem;color:var(--muted)" id="autoGhiLabel">Clear-sky GHI: — W/m²</div>
+      </div>
+
+      <!-- MODE: clearsky + bewolking -->
+      <div id="modeClearsky" style="margin-top:0.7rem;display:none">
+        <div class="field">
+          <label>Clear-sky GHI (handmatig)</label>
+          <div class="slider-wrap" id="solarSliderWrap">
+            <input type="range" id="solarSlider" min="0" max="1200" step="10" value="600"
+              oninput="document.getElementById('solarNum').value=this.value; document.getElementById('solarSliderVal').textContent=this.value+' W/m²'; onWolkenChange(document.getElementById('wolkenSlider').value)">
+            <span class="slider-val" id="solarSliderVal">600 W/m²</span>
+          </div>
+          <div class="field-row" style="margin-top:0.4rem">
+            <input type="number" id="solarNum" value="600" step="10" min="0" max="1400"
+              oninput="syncSlider(this.value); onWolkenChange(document.getElementById('wolkenSlider').value)">
+            <span class="unit">W/m²</span>
+          </div>
+        </div>
+        <div class="field" style="margin-top:0.8rem">
+          <label>Bewolking (okta)</label>
+          <div class="slider-wrap">
+            <input type="range" id="wolkenSlider" min="0" max="8" step="1" value="0"
+              oninput="onWolkenChange(this.value)">
+            <span class="slider-val" id="wolkenVal">0 okta — onbewolkt</span>
+          </div>
+          <div style="font-size:0.62rem;color:var(--muted);margin-top:0.3rem" id="wolkenCmfLabel">
+            CMF = 1.000 · GHI na correctie: — W/m²
+          </div>
+        </div>
+      </div>
+
+      <!-- MODE: KNMI meting -->
+      <div id="modeMeting" style="margin-top:0.7rem;display:none">
+        <div class="field">
+          <label>Gemeten GHI (bijv. uit KNMI-uurdata, kolom Q)</label>
+          <div class="field-row">
+            <input type="number" id="solarMeting" value="500" step="10" min="0" max="1400">
+            <span class="unit">W/m²</span>
+          </div>
+          <div style="font-size:0.62rem;color:var(--muted);margin-top:0.4rem">
+            Bewolking is al verdisconteerd in de meting — geen CMF-correctie nodig.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:1.2rem">
+      <div class="field">
+        <label>Luchtdruk</label>
+        <div class="field-row">
+          <input type="number" id="druk" value="1013" step="1" min="800" max="1080">
+          <span class="unit">hPa</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" onclick="bereken()">▶ Bereken WBGT &amp; Hittekracht</button>
+  </div>
+
+  <!-- Result -->
+  <div id="result">
+    <div class="result-main">
+      <div class="wbgt-box">
+        <div class="label">WBGT buiten (Liljegren)</div>
+        <div class="value" id="wbgtVal">—<span> °C</span></div>
+        <div style="font-size:0.68rem;color:var(--muted);margin-top:0.5rem" id="wbgtSub"></div>
+      </div>
+      <div class="hk-box" id="hkBox">
+        <div class="label">Hittekracht</div>
+        <div class="hk-value" id="hkVal">—</div>
+        <div class="hk-risico" id="hkRisico">—</div>
+      </div>
+    </div>
+
+    <div class="card thermo-wrap">
+      <div class="thermo-label">WBGT-schaal (0 – 50 °C)</div>
+      <div class="thermo-bar">
+        <div class="thermo-needle" id="thermoNeedle" style="left:0%"></div>
+      </div>
+      <div class="thermo-ticks">
+        <span>0</span><span>8</span><span>16</span><span>24</span><span>32</span><span>40</span><span>50</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Detail</div>
+      <table class="detail-table" id="detailTable"></table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Hittekracht-schaal (KNMI)</div>
+      <div class="hk-legenda" id="hkLegenda"></div>
+    </div>
+  </div>
+
+  <div class="blog-link">
+    Achtergrond, methode en bronnen: <a href="https://rene-smit.com/hitte-meet-je-niet-met-een-thermometer/" target="_blank" rel="noopener">Hitte meet je niet met een thermometer — rene-smit.com</a>
+  </div>
+  <div class="version-tag">v<span id="versionTag"></span></div>
+</div>
+
+<script>
+/* ==========================================================
+   Liljegren WBGT — volledig geport van Python naar JS
+   Liljegren et al. (2008), doi:10.2486/indhealth.46.99
+   ========================================================== */
+
+const SIGMA      = 5.6704e-8;
+const S0         = 1367.0;
+const M_WATER    = 0.018016;
+const M_AIR      = 0.028966;
+const R_GAS      = 8.314472;
+const D_WICK     = 0.007;
+const L_WICK     = 0.0254;
+const D_GLOBE    = 0.0508;
+const EPS_WICK   = 0.95;
+const ALPHA_WICK = 0.40;
+const EPS_GLOBE  = 0.95;
+const ALPHA_GLOBE= 0.05;
+const ALPHA_SFC  = 0.45;
+
+function dayOfYear(dt) {
+  const start = new Date(dt.getFullYear(), 0, 0);
+  const diff = dt - start;
+  return Math.floor(diff / 86400000);
+}
+
+function earthSunDistance(doy) {
+  const B = 2 * Math.PI * (doy - 1) / 365;
+  return 1.0 / Math.sqrt(
+    1.000110 + 0.034221*Math.cos(B) + 0.001280*Math.sin(B)
+    + 0.000719*Math.cos(2*B) + 0.000077*Math.sin(2*B)
+  );
+}
+
+function solarDeclination(doy) {
+  const B = 2 * Math.PI * (doy - 1) / 365;
+  return 0.006918 - 0.399912*Math.cos(B) + 0.070257*Math.sin(B)
+    - 0.006758*Math.cos(2*B) + 0.000907*Math.sin(2*B)
+    - 0.002697*Math.cos(3*B) + 0.00148*Math.sin(3*B);
+}
+
+function equationOfTime(doy) {
+  const B = 2 * Math.PI * (doy - 1) / 365;
+  return (0.000075 + 0.001868*Math.cos(B) - 0.032077*Math.sin(B)
+    - 0.014615*Math.cos(2*B) - 0.04089*Math.sin(2*B)) * (12 / Math.PI);
+}
+
+function solarZenithAngle(dtUTC, lat_deg, lon_deg) {
+  const doy  = dayOfYear(dtUTC);
+  const decl = solarDeclination(doy);
+  const eot  = equationOfTime(doy);
+  const utcH = dtUTC.getUTCHours() + dtUTC.getUTCMinutes()/60 + dtUTC.getUTCSeconds()/3600;
+  const solarTime = utcH + lon_deg / 15 + eot;
+  const hourAngle = (solarTime - 12) * 15 * Math.PI / 180;
+  const lat = lat_deg * Math.PI / 180;
+  let cosTheta = Math.sin(lat)*Math.sin(decl) + Math.cos(lat)*Math.cos(decl)*Math.cos(hourAngle);
+  cosTheta = Math.max(-1, Math.min(1, cosTheta));
+  return Math.acos(cosTheta);
+}
+
+function satVapPres(T_K) {
+  const T_C = T_K - 273.15;
+  return 100 * 6.1121 * Math.exp(17.368 * T_C / (238.88 + T_C));
+}
+
+function airProperties(T_film_K, P_Pa) {
+  const rho  = P_Pa * M_AIR / (R_GAS * T_film_K);
+  const mu   = 1.458e-6 * Math.pow(T_film_K, 1.5) / (T_film_K + 110.4);
+  const k    = 0.02624 * Math.pow(T_film_K / 300.0, 0.8646);
+  const cp   = 1005.0;
+  const Pr   = cp * mu / k;
+  const D_wv = 2.471e-5 * Math.pow(T_film_K / 313.15, 1.81) * (101325 / P_Pa);
+  return { rho, mu, k, cp, Pr, D_wv };
+}
+
+function fdir(S, theta, d_AU) {
+  if (theta >= 89.5*Math.PI/180 || S <= 0) return 0;
+  const S_max = S0 * Math.cos(theta) / (d_AU * d_AU);
+  if (S_max <= 0) return 0;
+  const S_star = Math.min(S / S_max, 1.0);
+  if (S_star <= 0) return 0;
+  const fd = Math.exp(3.0 - 1.34*S_star - 1.65/S_star);
+  return Math.max(0, Math.min(1, fd));
+}
+
+function globeTemp(T_a, wind_ms, S, fdirVal, theta, P_Pa, eps_a) {
+  let T_g = T_a;
+  const wind = Math.max(wind_ms, 0.5);
+  for (let i = 0; i < 100; i++) {
+    const T_film = 0.5 * (T_g + T_a);
+    const { rho, mu, k, cp, Pr } = airProperties(T_film, P_Pa);
+    const Re = rho * wind * D_GLOBE / mu;
+    const Nu = 2.0 + 0.6 * Math.pow(Re, 0.5) * Math.pow(Pr, 1/3);
+    const h  = k / D_GLOBE * Nu;
+    const cos_theta = theta < 89.5*Math.PI/180 ? Math.cos(theta) : 0;
+    const cos_clamped = Math.max(cos_theta, Math.cos(85*Math.PI/180));
+    const solar_term = (S / (2 * EPS_GLOBE * SIGMA)) * (1 - ALPHA_GLOBE) * (
+      1 + (1/(2*cos_clamped) - 1)*fdirVal + ALPHA_SFC
+    );
+    const T_g_base = (
+      0.5*(1 + eps_a)*Math.pow(T_a, 4)
+      - h/(EPS_GLOBE*SIGMA)*(T_g - T_a)
+      + solar_term
+    );
+    const T_g_new = Math.pow(Math.max(T_g_base, Math.pow(200, 4)), 0.25);
+    const T_g_next = 0.9*T_g + 0.1*T_g_new;
+    if (Math.abs(T_g_next - T_g) < 0.02) { T_g = T_g_next; break; }
+    T_g = T_g_next;
+  }
+  return T_g;
+}
+
+function natBolTemp(T_a, RH, wind_ms, S, fdirVal, theta, P_Pa, eps_a) {
+  RH = Math.max(RH, 0.001);
+  const e_a = RH * satVapPres(T_a);
+  const e_a_safe = Math.max(e_a, 1.0);
+  const ln_e = Math.log(e_a_safe / 611.2);
+  const T_dew = 273.15 + 238.88*ln_e / (17.368 - ln_e);
+  let T_w = Math.max(T_dew, T_a - 30);
+  const wind = Math.max(wind_ms, 0.5);
+
+  for (let i = 0; i < 200; i++) {
+    const T_film = 0.5*(T_w + T_a);
+    const { rho, mu, k, cp, Pr, D_wv } = airProperties(T_film, P_Pa);
+    const Sc = mu / (rho * D_wv);
+    const Re = rho * wind * D_WICK / mu;
+    const h  = k / D_WICK * 0.281 * Math.pow(Re, 0.6) * Math.pow(Pr, 0.44);
+    const H_vap = (2.501 - 0.00237*(T_w - 273.15)) * 1e6;
+    const e_w   = satVapPres(T_w);
+    const e_a_v = RH * satVapPres(T_a);
+
+    const rad_therm = SIGMA * EPS_WICK * (0.5*(1 + eps_a)*Math.pow(T_a,4) - Math.pow(T_w,4));
+    const theta_safe = Math.min(theta, 85*Math.PI/180);
+    const tan_theta  = theta < 89.5*Math.PI/180 ? Math.tan(theta_safe) : 0;
+    const cos_theta  = theta < 89.5*Math.PI/180 ? Math.cos(theta) : 0;
+    const D_over_4L  = D_WICK / (4 * L_WICK);
+    const rad_solar  = (1 - ALPHA_WICK) * S * (
+      (1 - fdirVal)*(1 + D_over_4L)
+      + fdirVal*(tan_theta/Math.PI + D_over_4L)
+      + ALPHA_SFC
+    );
+    const Fnet = rad_therm + rad_solar;
+    const psychro = (H_vap * M_WATER) / (cp * M_AIR) * Math.pow(Pr/Sc, 0.56);
+    const T_w_new = T_a - psychro*(e_w - e_a_v)/(P_Pa - e_w) + Fnet/h;
+    const T_w_next = 0.9*T_w + 0.1*T_w_new;
+    if (Math.abs(T_w_next - T_w) < 0.02) { T_w = T_w_next; break; }
+    T_w = T_w_next;
+  }
+  return T_w;
+}
+
+function wbgtLiljegren(temp_c, rh_pct, wind_ms, q_wm2, lat, lon, dtUTC, pressure_hpa=1013.25) {
+  const T_a  = temp_c + 273.15;
+  const RH   = rh_pct / 100;
+  const P_Pa = pressure_hpa * 100;
+  let S = Math.max(q_wm2, 0);
+  wind_ms = Math.max(wind_ms, 0.5);
+
+  const doy   = dayOfYear(dtUTC);
+  const d_AU  = earthSunDistance(doy);
+  const theta = solarZenithAngle(dtUTC, lat, lon);
+
+  if (theta >= 89.5*Math.PI/180) S = 0;
+  const fd = fdir(S, theta, d_AU);
+
+  const e_a    = RH * satVapPres(T_a);
+  const e_a_hPa = e_a / 100;
+  const eps_a  = 0.575 * Math.pow(e_a_hPa, 0.143);
+
+  const T_g = globeTemp(T_a, wind_ms, S, fd, theta, P_Pa, eps_a);
+  const T_w = natBolTemp(T_a, RH, wind_ms, S, fd, theta, P_Pa, eps_a);
+
+  const wbgt_K = 0.7*T_w + 0.2*T_g + 0.1*T_a;
+  return {
+    wbgt: wbgt_K - 273.15,
+    T_g_C: T_g - 273.15,
+    T_w_C: T_w - 273.15,
+    theta_deg: theta * 180 / Math.PI,
+    fd,
+    eps_a,
+    d_AU
+  };
+}
+
+/* ---- Clear-sky GHI (Bird 1984, vereenvoudigd Ineichen) ---- */
+function clearSkyGHI(dtUTC, lat_deg, lon_deg) {
+  const theta = solarZenithAngle(dtUTC, lat_deg, lon_deg);
+  if (theta >= Math.PI/2) return 0;
+  const elev = Math.PI/2 - theta;
+  const doy = dayOfYear(dtUTC);
+  const d_AU = earthSunDistance(doy);
+  const E0 = S0 / (d_AU*d_AU);
+  // Vereenvoudigd: transmissiviteit ~0.75
+  const T_atm = 0.75;
+  const ghi = E0 * T_atm * Math.sin(elev);
+  return Math.max(0, ghi);
+}
+
+/* ---- KNMI Hittekracht drempelwaarden ---- */
+const KNMI_HK = [
+  { max: 14, label: "HK 0",  risico: "Laag risico",       bg: "#8FD14F" },
+  { max: 16, label: "HK 1",  risico: "Laag risico",       bg: "#8FD14F" },
+  { max: 18, label: "HK 2",  risico: "Laag risico",       bg: "#4A8A2A" },
+  { max: 20, label: "HK 3",  risico: "Matig risico",      bg: "#E8D800", fg: "#333" },
+  { max: 22, label: "HK 4",  risico: "Matig risico",      bg: "#F5B800", fg: "#333" },
+  { max: 24, label: "HK 5",  risico: "Matig risico",      bg: "#F08000" },
+  { max: 26, label: "HK 6",  risico: "Hoog",              bg: "#C85A00" },
+  { max: 28, label: "HK 7",  risico: "Hoog",              bg: "#A03000" },
+  { max: 30, label: "HK 8",  risico: "Zeer hoog",         bg: "#7A1A1A" },
+  { max: 32, label: "HK 9",  risico: "Zeer hoog",         bg: "#4A0A0A" },
+  { max: Infinity, label: "HK 10", risico: "Gevaarlijk",  bg: "#111111" },
+];
+
+function wbgtRisico(wbgt) {
+  for (const z of KNMI_HK) {
+    if (wbgt < z.max) return z;
+  }
+  return KNMI_HK[KNMI_HK.length-1];
+}
+
+/* ---- UI helpers ---- */
+function onLocChange() {
+  const v = document.getElementById('locSelect').value;
+  document.getElementById('coordField').style.display = v === 'custom' ? 'block' : 'none';
+  if (document.getElementById('autoSolar').checked) updateSolarAuto();
+}
+
+function getLatLon() {
+  const v = document.getElementById('locSelect').value;
+  if (v === 'custom') {
+    const parts = document.getElementById('customCoord').value.split(',').map(Number);
+    return { lat: parts[0] || 52.047, lon: parts[1] || 5.177 };
+  }
+  const [lat, lon] = v.split(',').map(Number);
+  return { lat, lon };
+}
+
+function getDateUTC() {
+  const d = document.getElementById('datum').value;   // YYYY-MM-DD
+  const t = document.getElementById('tijd').value;    // HH:MM
+  if (!d || !t) return new Date();
+  return new Date(d + 'T' + t + ':00Z');
+}
+
+/* ---- Solar invoermodus ---- */
+let solarMode = 'auto';  // 'auto' | 'clearsky' | 'meting'
+
+function setSolarMode(mode) {
+  solarMode = mode;
+  // Tabs
+  document.querySelectorAll('.mode-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.mode === mode);
+  });
+  // Panelen
+  document.getElementById('modeAuto').style.display     = mode === 'auto'     ? 'block' : 'none';
+  document.getElementById('modeClearsky').style.display = mode === 'clearsky' ? 'block' : 'none';
+  document.getElementById('modeMeting').style.display   = mode === 'meting'   ? 'block' : 'none';
+
+  if (mode === 'auto') updateSolarAutoLabel();
+  if (mode === 'clearsky') onWolkenChange(document.getElementById('wolkenSlider').value);
+}
+
+function updateSolarAutoLabel() {
+  const { lat, lon } = getLatLon();
+  const dt  = getDateUTC();
+  const ghi = Math.round(clearSkyGHI(dt, lat, lon));
+  document.getElementById('autoGhiLabel').textContent = `Clear-sky GHI: ${ghi} W/m²  (bewolkingscorrectie niet van toepassing — gebruik modus "Clear-sky + bewolking" of "KNMI-meting")`;
+}
+
+function getEffectiveGHI() {
+  const { lat, lon } = getLatLon();
+  const dt = getDateUTC();
+  if (solarMode === 'auto') {
+    return { ghi: clearSkyGHI(dt, lat, lon), clearSky: clearSkyGHI(dt, lat, lon), cmf: 1, okta: 0, isMeting: false };
+  }
+  if (solarMode === 'meting') {
+    const ghi = parseFloat(document.getElementById('solarMeting').value) || 0;
+    return { ghi, clearSky: null, cmf: null, okta: null, isMeting: true };
+  }
+  // clearsky + bewolking
+  const clearSky = parseFloat(document.getElementById('solarNum').value) || 0;
+  const okta = parseInt(document.getElementById('wolkenSlider').value);
+  const cmf  = kastCzeplakCMF(okta);
+  return { ghi: clearSky * cmf, clearSky, cmf, okta, isMeting: false };
+}
+
+function updateSolarAuto() {
+  const { lat, lon } = getLatLon();
+  const dt = getDateUTC();
+  const ghi = Math.round(clearSkyGHI(dt, lat, lon));
+  document.getElementById('solarNum').value = ghi;
+  document.getElementById('solarSlider').value = ghi;
+  document.getElementById('solarSliderVal').textContent = ghi + ' W/m²';
+  if (solarMode === 'auto') updateSolarAutoLabel();
+  if (solarMode === 'clearsky') onWolkenChange(document.getElementById('wolkenSlider').value);
+}
+
+function syncSlider(val) {
+  document.getElementById('solarSlider').value = val;
+  document.getElementById('solarSliderVal').textContent = val + ' W/m²';
+}
+
+/* ---- Kasten & Czeplak (1980) bewolkingscorrectie ---- */
+const OKTA_LABELS = [
+  'onbewolkt', 'vrijwel onbewolkt', 'licht bewolkt', 'half bewolkt',
+  'half bewolkt', 'overwegend bewolkt', 'zwaar bewolkt', 'bijna bedekt', 'geheel bedekt'
+];
+
+function kastCzeplakCMF(okta) {
+  // Kasten & Czeplak (1980): CMF = 1 - 0.75 × (N/8)^3.4
+  return 1 - 0.75 * Math.pow(okta / 8, 3.4);
+}
+
+function onWolkenChange(val) {
+  const okta = parseInt(val);
+  const cmf  = kastCzeplakCMF(okta);
+  document.getElementById('wolkenVal').textContent = `${okta} okta — ${OKTA_LABELS[okta]}`;
+
+  // Bereken GHI voor label (clear-sky of handmatig)
+  let baseGHI;
+  if (document.getElementById('autoSolar').checked) {
+    const { lat, lon } = getLatLon();
+    baseGHI = clearSkyGHI(getDateUTC(), lat, lon);
+  } else {
+    baseGHI = parseFloat(document.getElementById('solarNum').value) || 0;
+  }
+  const ghiNa = Math.round(baseGHI * cmf);
+  document.getElementById('wolkenCmfLabel').textContent =
+    `CMF = ${cmf.toFixed(3)}  ·  GHI na bewolkingscorrectie: ${ghiNa} W/m²`;
+}
+
+function bereken() {
+  const { lat, lon } = getLatLon();
+  const dtUTC = getDateUTC();
+  const temp  = parseFloat(document.getElementById('temp').value);
+  const rh    = parseFloat(document.getElementById('rh').value);
+  const wind  = parseFloat(document.getElementById('wind').value);
+  const druk  = parseFloat(document.getElementById('druk').value);
+
+  const { ghi, clearSky, cmf, okta, isMeting } = getEffectiveGHI();
+
+  const res  = wbgtLiljegren(temp, rh, wind, ghi, lat, lon, dtUTC, druk);
+  const wbgt = res.wbgt;
+  const zone = wbgtRisico(wbgt);
+
+  // Toon result
+  document.getElementById('result').style.display = 'block';
+  document.getElementById('wbgtVal').innerHTML = wbgt.toFixed(1) + '<span> °C</span>';
+  document.getElementById('wbgtSub').textContent =
+    `Tnat = ${res.T_w_C.toFixed(1)} °C · Tglobe = ${res.T_g_C.toFixed(1)} °C · Ta = ${temp.toFixed(1)} °C`;
+
+  const hkBox = document.getElementById('hkBox');
+  hkBox.style.background = zone.bg;
+  hkBox.style.color = zone.fg || 'white';
+  document.getElementById('hkVal').textContent = zone.label;
+  document.getElementById('hkRisico').textContent = zone.risico;
+
+  // Thermonaald
+  const pct = Math.min(Math.max(wbgt / 50, 0), 1) * 100;
+  document.getElementById('thermoNeedle').style.left = pct + '%';
+
+  // Detail tabel — stralingssectie verschilt per modus
+  const modusLabel = { auto: 'Clear-sky (berekend)', clearsky: 'Clear-sky + bewolking (Kasten & Czeplak)', meting: 'KNMI-meting (gemeten GHI)' }[solarMode];
+  const solarRows = isMeting
+    ? [
+        ['Stralingsinvoer',          modusLabel],
+        ['Gemeten GHI (invoer)',     Math.round(ghi) + ' W/m²  <span style="color:var(--muted)">(bewolking verdisconteerd in meting)</span>'],
+      ]
+    : solarMode === 'auto'
+      ? [
+          ['Stralingsinvoer',          modusLabel],
+          ['Clear-sky GHI',            Math.round(ghi) + ' W/m²'],
+        ]
+      : [
+          ['Stralingsinvoer',          modusLabel],
+          ['Clear-sky GHI (invoer)',   Math.round(clearSky) + ' W/m²'],
+          ['Bewolking',                `${okta} okta — ${OKTA_LABELS[okta]}`],
+          ['CMF (Kasten &amp; Czeplak)', cmf.toFixed(3)],
+          ['GHI na bewolkingscorrectie', Math.round(ghi) + ' W/m²'],
+        ];
+
+  const rows = [
+    ['Locatie',                    `${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E`],
+    ['Datum/tijd (UTC)',           dtUTC.toISOString().slice(0,16)],
+    ['Temperatuur',                temp.toFixed(1) + ' °C'],
+    ['Rel. vochtigheid',           rh.toFixed(0) + ' %'],
+    ['Windsnelheid',               wind.toFixed(1) + ' m/s'],
+    ['Luchtdruk',                  druk.toFixed(0) + ' hPa'],
+    ...solarRows,
+    ['Zonzenithoek',               res.theta_deg.toFixed(1) + '°'],
+    ['Directe fractie (fdir)',     (res.fd * 100).toFixed(1) + ' %'],
+    ['Atm. emissiviteit',          res.eps_a.toFixed(4)],
+    ['Nat-bol temp. (Tw)',         res.T_w_C.toFixed(2) + ' °C'],
+    ['Globe-temp. (Tg)',           res.T_g_C.toFixed(2) + ' °C'],
+    ['<strong>WBGT buiten</strong>',  '<strong>' + wbgt.toFixed(2) + ' °C</strong>'],
+    ['<strong>Hittekracht</strong>',  '<strong>' + zone.label + ' — ' + zone.risico + '</strong>'],
+  ];
+  let html = '';
+  for (const [k,v] of rows) html += `<tr><td>${k}</td><td>${v}</td></tr>`;
+  document.getElementById('detailTable').innerHTML = html;
+
+  // Legenda badges
+  let badgeHtml = '';
+  for (const z of KNMI_HK) {
+    const active = z.label === zone.label ? ' active' : '';
+    badgeHtml += `<div class="hk-badge${active}" style="background:${z.bg};color:${z.fg||'white'}">${z.label}<br><span style="font-size:0.55rem;opacity:0.9">${z.max === Infinity ? '≥32' : '<'+z.max}°C</span></div>`;
+  }
+  document.getElementById('hkLegenda').innerHTML = badgeHtml;
+
+  document.getElementById('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ---- Init ---- */
+(function init() {
+  document.getElementById('versionTag').textContent = current_version;
+
+  const today = new Date();
+  const yyyy = today.getUTCFullYear();
+  const mm   = String(today.getUTCMonth()+1).padStart(2,'0');
+  const dd   = String(today.getUTCDate()).padStart(2,'0');
+  document.getElementById('datum').value = `${yyyy}-${mm}-${dd}`;
+  document.getElementById('tijd').value = '13:00';
+
+  setSolarMode('auto');
+
+  ['datum','tijd'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      if (solarMode === 'auto') updateSolarAutoLabel();
+      if (solarMode === 'clearsky') onWolkenChange(document.getElementById('wolkenSlider').value);
+    });
+  });
+  document.getElementById('customCoord').addEventListener('change', () => {
+    if (solarMode === 'auto') updateSolarAutoLabel();
+    if (solarMode === 'clearsky') onWolkenChange(document.getElementById('wolkenSlider').value);
+  });
+})();
+</script>
+</body>
+</html>
