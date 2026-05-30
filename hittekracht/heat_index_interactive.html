@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heat Index</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- version history
+  # version : 20260530-124000 - Initial version: heat index table with unit + scale toggles
+  # version : 20260530-124500 - Fix: lichte achtergrond
+  # version : 20260530-125000 - Fix: witte tekst actieve toggle, alles gecentreerd
+  # version : 20260530-125500 - Fix: wit vlak rechts van tabel (table-wrapper uit max-width block)
+  # version : 20260530-130000 - Fix: alles correct gecentreerd via fit-content wrapper
+  # version : 20260530-130500 - Fix: wit vlak blijft plakken, width reset na elke render
+  # version : 20260530-131000 - Fix: centering via display:table + margin:auto, geen fit-content meer
+  # version : 20260530-131500 - Fix: rest van pagina ook gecentreerd via text-align:center op wrapper
+  # version : 20260530-132000 - Fix: flex column + align-items:center, alles netjes midden
+  -->
+  <script>const current_version = "20260530-132000";</script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:      #f5f2eb;
+      --surface: #fffef9;
+      --border:  #d8d0c0;
+      --text:    #2a2520;
+      --muted:   #7a7060;
+      --active:  #2a2520;
+      --mono:    'DM Mono', monospace;
+      --sans:    'DM Sans', sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      padding: 2.5rem 2rem 3rem;
+      min-height: 100vh;
+    }
+
+    .page-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 auto;
+    }
+
+    header, .controls, .legend, .unit-note {
+      width: max-content;
+      text-align: left;
+    }
+
+    /* ── header ── */
+    header { margin-bottom: 2rem; }
+
+    h1 {
+      font-family: var(--mono);
+      font-size: 1.5rem;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      color: var(--active);
+    }
+
+    .subtitle {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+      font-family: var(--mono);
+    }
+
+    /* ── toggles ── */
+    .controls {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1.8rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .toggle-group {
+      display: flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .toggle-group label {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      padding: 0.45rem 0.9rem;
+      cursor: pointer;
+      color: var(--muted);
+      transition: background 0.15s, color 0.15s;
+      user-select: none;
+      border-right: 1px solid var(--border);
+    }
+    .toggle-group label:last-child { border-right: none; }
+
+    .toggle-group input[type=radio] { display: none; }
+    .toggle-group input[type=radio]:checked + label {
+      background: var(--active);
+      color: #ffffff;
+      font-weight: 500;
+    }
+
+    /* ── legend ── */
+    .legend {
+      display: flex;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.2rem;
+      align-items: center;
+    }
+
+    .legend-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-family: var(--mono);
+      color: var(--text);
+    }
+
+    .swatch {
+      width: 13px; height: 13px;
+      border-radius: 2px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    /* ── table ── */
+    .table-wrapper {
+      overflow-x: auto;
+      display: table;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin: 0 auto;
+    }
+
+    table {
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      white-space: nowrap;
+    }
+
+    th, td {
+      padding: 0.36rem 0.6rem;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    thead th {
+      background: #2a2520;
+      color: #f5f2eb;
+      font-weight: 500;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    thead th:first-child { z-index: 3; left: 0; background: #2a2520; }
+
+    tbody tr td:first-child {
+      background: #3d3530;
+      color: #f5f2eb;
+      font-weight: 500;
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+
+    tbody tr:hover td { filter: brightness(0.93); }
+
+    .unit-note {
+      font-size: 0.66rem;
+      color: var(--muted);
+      margin-top: 0.8rem;
+      font-family: var(--mono);
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-center">
+<header>
+  <h1>🌡 Heat Index</h1>
+  <p class="subtitle" id="subtitle">Feels-like temperature — Rothfusz formula (CDC/NWS)</p>
+</header>
+
+<div class="controls">
+  <!-- Unit toggle -->
+  <div class="toggle-group">
+    <input type="radio" name="unit" id="u-c" value="C" checked>
+    <label for="u-c">°C</label>
+    <input type="radio" name="unit" id="u-f" value="F">
+    <label for="u-f">°F</label>
+    <input type="radio" name="unit" id="u-k" value="K">
+    <label for="u-k">K</label>
+  </div>
+
+  <!-- Scale toggle -->
+  <div class="toggle-group">
+    <input type="radio" name="scale" id="s-abs" value="abs" checked>
+    <label for="s-abs">absoluut</label>
+    <input type="radio" name="scale" id="s-rel" value="rel">
+    <label for="s-rel">relatief %</label>
+  </div>
+</div>
+
+<div class="legend" id="legend"></div>
+
+<div class="table-wrapper">
+  <table id="hi-table"></table>
+</div>
+
+<p class="unit-note" id="unit-note"></p>
+</div>
+
+<script>
+// ── Rothfusz (°F in, °F out) ──────────────────────────────
+function heatIndexF(T, RH) {
+  return -42.379
+    + 2.04901523  * T
+    + 10.14333127 * RH
+    - 0.22475541  * T  * RH
+    - 0.00683783  * T  * T
+    - 0.05481717  * RH * RH
+    + 0.00122874  * T  * T  * RH
+    + 0.00085282  * T  * RH * RH
+    - 0.00000199  * T  * T  * RH * RH;
+}
+
+// ── unit conversions ─────────────────────────────────────
+function cToF(c) { return c * 9/5 + 32; }
+function fToC(f) { return (f - 32) * 5/9; }
+function cToK(c) { return c + 273.15; }
+
+// ── color helpers ─────────────────────────────────────────
+function lerp(a, b, t) {
+  const hex = s => [
+    parseInt(s.slice(1,3),16),
+    parseInt(s.slice(3,5),16),
+    parseInt(s.slice(5,7),16)
+  ];
+  const ca = hex(a), cb = hex(b);
+  return '#' + [0,1,2]
+    .map(i => Math.round(ca[i] + (cb[i]-ca[i]) * Math.max(0,Math.min(1,t))).toString(16).padStart(2,'0'))
+    .join('');
+}
+
+// absolute difference color: blue (cold) → yellow (0) → red (hot)
+// range: -15 to +30 units (°C / °F / K — same delta)
+function absColor(d) {
+  if (d <= -10) return '#4575b4';
+  if (d <    0) return lerp('#4575b4', '#ffffbf', (d + 10) / 10);
+  if (d <    5) return lerp('#ffffbf', '#fee090', d / 5);
+  if (d <   10) return lerp('#fee090', '#fc8d59', (d - 5) / 5);
+  if (d <   20) return lerp('#fc8d59', '#d73027', (d - 10) / 10);
+  return '#7f0000';
+}
+
+// relative % color (unchanged)
+function relColor(pct) {
+  if (pct <= -10) return '#4575b4';
+  if (pct <   -5) return lerp('#4575b4', '#91bfdb', (pct + 10) / 5);
+  if (pct <    0) return lerp('#91bfdb', '#ffffbf', (pct + 5)  / 5);
+  if (pct <    5) return lerp('#ffffbf', '#fee090', pct / 5);
+  if (pct <   10) return lerp('#fee090', '#fc8d59', (pct - 5)  / 5);
+  if (pct <   20) return lerp('#fc8d59', '#d73027', (pct - 10) / 10);
+  return '#7f0000';
+}
+
+function textColor(bg) {
+  const r = parseInt(bg.slice(1,3),16);
+  const g = parseInt(bg.slice(3,5),16);
+  const b = parseInt(bg.slice(5,7),16);
+  return (r*299 + g*587 + b*114) / 1000 > 140 ? '#1a1a1f' : '#e8e6f0';
+}
+
+// ── legend definitions ────────────────────────────────────
+const ABS_LEGEND = [
+  { bg: '#4575b4', label: '&le;&minus;10' },
+  { bg: '#91bfdb', label: '&minus;10–0' },
+  { bg: '#ffffbf', label: '0' },
+  { bg: '#fee090', label: '0–5' },
+  { bg: '#fc8d59', label: '5–10' },
+  { bg: '#d73027', label: '10–20' },
+  { bg: '#7f0000', label: '&gt;20' },
+];
+const REL_LEGEND = [
+  { bg: '#4575b4', label: '&le;&minus;10%' },
+  { bg: '#91bfdb', label: '&minus;10–0%' },
+  { bg: '#ffffbf', label: '0%' },
+  { bg: '#fee090', label: '0–5%' },
+  { bg: '#fc8d59', label: '5–10%' },
+  { bg: '#d73027', label: '10–20%' },
+  { bg: '#7f0000', label: '&gt;20%' },
+];
+
+function buildLegend(scale, unit) {
+  const items = scale === 'abs' ? ABS_LEGEND : REL_LEGEND;
+  const u = scale === 'abs' ? (unit === 'F' ? '°F' : unit === 'K' ? 'K' : '°C') : '';
+  const prefix = scale === 'abs'
+    ? `<span class="legend-label">HI&minus;T (${u}):</span>`
+    : `<span class="legend-label">% verschil (HI&minus;T)/T:</span>`;
+  return prefix + items.map(i =>
+    `<div class="legend-item"><div class="swatch" style="background:${i.bg};color:${textColor(i.bg)}"></div> ${i.label}</div>`
+  ).join('') + `<span class="legend-label" style="margin-left:.8rem">&middot; <b>vet</b> = HI &gt; T</span>`;
+}
+
+// ── table builder ─────────────────────────────────────────
+function buildTable(unit, scale) {
+  // temps in °C internally, displayed in chosen unit
+  // valid range: 80°F–95°F = ~26.7–35°C; use 27–35°C
+  const tempsC = Array.from({length: 9}, (_, i) => 27 + i);
+  const rhs    = Array.from({length: 11}, (_, i) => i * 10);
+
+  function display(c) {
+    if (unit === 'F') return (cToF(c)).toFixed(1);
+    if (unit === 'K') return (cToK(c)).toFixed(1);
+    return c.toFixed(1);
+  }
+  function unitLabel(c) {
+    if (unit === 'F') return cToF(c).toFixed(0) + '°F';
+    if (unit === 'K') return cToK(c).toFixed(0) + 'K';
+    return c + '°C';
+  }
+
+  const table = document.getElementById('hi-table');
+  table.innerHTML = '';
+
+  // header
+  const thead = table.createTHead();
+  const hr = thead.insertRow();
+  const th0 = document.createElement('th');
+  th0.textContent = 'RH \\ T';
+  hr.appendChild(th0);
+  tempsC.forEach(tc => {
+    const th = document.createElement('th');
+    th.textContent = unitLabel(tc);
+    hr.appendChild(th);
+  });
+
+  // body
+  const tbody = table.createTBody();
+  rhs.forEach(rh => {
+    const row = tbody.insertRow();
+    const rc = row.insertCell();
+    rc.textContent = rh + '%';
+
+    tempsC.forEach(tc => {
+      // compute HI in °C
+      const hiC = fToC(heatIndexF(cToF(tc), rh));
+
+      // delta in display units
+      let tDisp, hiDisp;
+      if (unit === 'F') { tDisp = cToF(tc); hiDisp = cToF(hiC); }
+      else if (unit === 'K') { tDisp = cToK(tc); hiDisp = cToK(hiC); }
+      else { tDisp = tc; hiDisp = hiC; }
+
+      const diff = hiDisp - tDisp;
+      const pct  = (hiDisp - tDisp) / tDisp * 100;
+
+      const bg = scale === 'abs' ? absColor(diff) : relColor(pct);
+      const cell = row.insertCell();
+      cell.textContent = display(hiC);
+      cell.style.background = bg;
+      cell.style.color = textColor(bg);
+      if (hiC > tc) cell.style.fontWeight = '700';
+    });
+  });
+}
+
+// ── note ──────────────────────────────────────────────────
+function updateNote(unit) {
+  const map = { C: '27–35°C', F: '80–95°F', K: '300–308 K' };
+  document.getElementById('unit-note').textContent =
+    `Valid range: T ≥ 80°F (${map[unit]}) · Rothfusz formula · v${current_version}`;
+}
+
+// ── render ────────────────────────────────────────────────
+function render() {
+  const unit  = document.querySelector('input[name=unit]:checked').value;
+  const scale = document.querySelector('input[name=scale]:checked').value;
+  document.getElementById('legend').innerHTML = buildLegend(scale, unit);
+  buildTable(unit, scale);
+  updateNote(unit);
+}
+
+document.querySelectorAll('input[name=unit], input[name=scale]')
+  .forEach(el => el.addEventListener('change', render));
+
+render();
+</script>
+</body>
+</html>
