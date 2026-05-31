@@ -25,8 +25,12 @@
 # version : 20260531-170000 - Added Save as DOCX and Save as PDF buttons; docx built client-side via docx.js CDN
 # version : 20260531-171000 - Remove 'Waiter' label text from Gantt bars
 # version : 20260531-172000 - Removed export buttons (save as docx/pdf)
+# version : 20260531-173000 - SHOW_HTML flag: renders save-as-HTML button with inlined CSS
+# version : 20260531-174000 - Fix mobile layout: sidebar single column, hide duplicate name in main
+# version : 20260531-175000 - Personal + Languages 50/50 grid on mobile
+# version : 20260531-176000 - Mobile: photo full-width white bg, nameblock white bg
 -->
-<script>const current_version = "20260531-172000";</script>
+<script>const current_version = "20260531-176000";</script>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -332,13 +336,72 @@ body {
 .loading { text-align: center; padding: 4rem 2rem; font-size: 15px; color: var(--ink-light); font-style: italic; }
 .error { background: #fff0f0; border: 1px solid #f5c0c0; border-radius: 6px; padding: 1rem 1.25rem; font-size: 15px; color: #a03030; }
 
-/* Responsive: stack on small screens */
+/* Personal + Languages side by side on mobile */
+@media (max-width: 640px) {
+  .sb-personal-lang-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 1rem;
+  }
+}
+/* On desktop sidebar they stay stacked (sidebar is narrow) */
+@media (min-width: 641px) {
+  .sb-personal-lang-grid {
+    display: contents;
+  
+  }
+  .sb-name {display:none;} 
+    .sb-tagline{display:none;}
+}
 @media (max-width: 640px) {
   body { padding: 0; }
   .cv-shell { flex-direction: column; border-radius: 0; }
-  .cv-sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; padding: 1.5rem; gap: 1.25rem; }
-  .photo-wrap { width: 100px; height: 100px; flex-shrink: 0; }
+  .cv-sidebar {
+    width: 100%;
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(0,0,0,0.13);
+  }
+  /* Photo: full width, white background, image left-aligned */
+  .photo-wrap {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: unset !important;
+    background: white !important;
+    border-radius: 0;
+    border: none;
+    padding: 1.25rem 1.5rem 0.75rem;
+    display: flex;
+    align-items: flex-start;
+  }
+  .photo-wrap img {
+    width: 90px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+  .photo-placeholder {
+    width: 90px;
+    height: 90px;
+  }
+  /* Name block: white background, full width */
+  .sb-section-nameblock {
+    background: white;
+    padding: 0.5rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+  /* Rest of sidebar sections: normal padding */
+  .sb-section:not(.sb-section-nameblock) {
+    padding: 1rem 1.5rem;
+  }
+  .sb-personal-lang-grid {
+    padding: 1rem 1.5rem;
+  }
+  .sb-name { font-size: 22px; }
   .cv-main { padding: 1.5rem; }
+  .main-header { display: none; }
   :root { --label-w: 80px; }
 }
 
@@ -380,6 +443,8 @@ const CV_URL = 'https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/
 // false = compact: summer jobs shown as "Summer YYYY, YYYY, …"
 // true  = uitgebreid: exact month–month dates for every entry
 const UITGEBREID = false;
+// true = show "Save as HTML" button at bottom of page
+const SHOW_HTML =false;
 // ─────────────────────────────────────────────────────────────
 
 const KNOWN_COLORS = {
@@ -499,10 +564,13 @@ function buildSidebar(data) {
   sidebar.appendChild(photoWrap);
 
   // Name + tagline block
-  const nameBlock = el('div', 'sb-section');
+  const nameBlock = el('div', 'sb-section sb-section-nameblock');
   nameBlock.appendChild(el('div', 'sb-name', data.basics.name));
   if (data.basics.summary) nameBlock.appendChild(el('div', 'sb-tagline', data.basics.summary));
   sidebar.appendChild(nameBlock);
+
+  // Personal + Languages: side-by-side on mobile, stacked on desktop
+  const plGrid = el('div', 'sb-personal-lang-grid');
 
   // Personal info
   const infoBlock = el('div', 'sb-section');
@@ -518,7 +586,7 @@ function buildSidebar(data) {
     infoBlock.appendChild(el('div', 'sb-info-label', label));
     infoBlock.appendChild(el('div', 'sb-info-val', val));
   });
-  sidebar.appendChild(infoBlock);
+  plGrid.appendChild(infoBlock);
 
   // Languages
   if (data.languages && data.languages.length) {
@@ -537,8 +605,10 @@ function buildSidebar(data) {
       row.appendChild(bg);
       langBlock.appendChild(row);
     });
-    sidebar.appendChild(langBlock);
+    plGrid.appendChild(langBlock);
   }
+
+  sidebar.appendChild(plGrid);
 
   // Skills
   const skillNames = (data.skills || []).map(s => s.name);
@@ -905,6 +975,75 @@ function buildPage(data) {
   main.appendChild(buildGanttSection(data.work));
 
   shell.appendChild(main);
+
+  // Save as HTML button
+  if (SHOW_HTML) {
+    const bar = document.createElement('div');
+    bar.id = 'html-export-bar';
+    bar.style.cssText = [
+      'position:fixed', 'bottom:0', 'left:0', 'right:0',
+      'background:rgba(250,248,245,0.96)',
+      'backdrop-filter:blur(8px)',
+      'border-top:1px solid rgba(0,0,0,0.10)',
+      'padding:0.65rem 2rem',
+      'display:flex', 'justify-content:center',
+      'z-index:500',
+      "font-family:'DM Sans',system-ui,sans-serif",
+    ].join(';');
+
+    const btn = document.createElement('button');
+    btn.textContent = '⬇ Save as HTML';
+    btn.style.cssText = [
+      'background:#1c1c1a', 'color:#fff',
+      'border:none', 'border-radius:4px',
+      'padding:9px 22px', 'font-size:13px', 'font-weight:500',
+      'cursor:pointer', "font-family:'DM Sans',system-ui,sans-serif",
+      'letter-spacing:0.02em',
+    ].join(';');
+    btn.onmouseover = () => btn.style.background = '#3a3a38';
+    btn.onmouseout  = () => btn.style.background = '#1c1c1a';
+    btn.onclick = saveAsHTML;
+    bar.appendChild(btn);
+
+    document.body.appendChild(bar);
+    // push page content so it isn't hidden behind bar
+    document.body.style.paddingBottom = '52px';
+  }
+}
+
+function saveAsHTML() {
+  // Collect all <style> blocks from the document
+  const styles = Array.from(document.querySelectorAll('style'))
+    .map(s => s.outerHTML).join('\n');
+
+  // Get current rendered HTML of the CV shell
+  const shellHTML = document.getElementById('cv-shell').outerHTML;
+
+  // Build a fully self-contained file — no external fetches, no JS
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CV — René Smit</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+${styles}
+</head>
+<body>
+${shellHTML}
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(blob);
+  a.download = 'cv_rene_smit_export.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
 }
 
 /* ════════════════════════
