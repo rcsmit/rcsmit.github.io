@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CV — René Smit</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-body:    'DM Sans', system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+
+  --bg:           #f2ede6;
+  --paper:        #ffffff;
+  --sidebar-bg:   #f0ece4;
+  --sidebar-text: #2a2a28;
+  --sidebar-mid:  #6a6a64;
+  --sidebar-rule: rgba(0,0,0,0.10);
+  --sidebar-accent: #8a6020;
+
+  --ink:          #1c1c1a;
+  --ink-mid:      #4a4a46;
+  --ink-light:    #8a8a84;
+  --accent:       #b5823a;
+  --accent-soft:  #f0e8d8;
+  --rule:         rgba(0,0,0,0.09);
+  --rule-strong:  rgba(0,0,0,0.18);
+
+  --sidebar-w:    240px;
+  --label-w:      130px;
+  --max-w:        1020px;
+}
+
+html, body {
+  background: var(--bg);
+  font-family: var(--font-body);
+  color: var(--ink);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+body {
+  padding: 2.5rem 1.5rem 5rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* ── OUTER SHELL ── */
+.cv-shell {
+  width: 100%;
+  max-width: var(--max-w);
+  display: flex;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.13);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════
+   SIDEBAR
+══════════════════════════════ */
+.cv-sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  padding: 2.5rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  border-right: 1px solid rgba(0,0,0,0.13);
+}
+
+/* Photo */
+.photo-wrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #ddd8ce;
+  border: 1px solid rgba(0,0,0,0.12);
+  position: relative;
+}
+.photo-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.photo-placeholder {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px;
+  color: var(--sidebar-mid);
+}
+.photo-placeholder svg {
+  width: 48px; height: 48px;
+  opacity: 0.35;
+}
+.photo-placeholder span {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.4;
+}
+
+/* Sidebar section */
+.sb-section { display: flex; flex-direction: column; gap: 0.6rem; }
+.sb-title {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sidebar-accent);
+  font-weight: 500;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--sidebar-rule);
+  margin-bottom: 0.25rem;
+}
+.sb-name {
+  font-family: var(--font-display);
+  font-size: 30px; font-weight: 700;
+  color: var(--ink);
+  line-height: 1.15;
+  margin-bottom: 0.15rem;
+}
+.sb-tagline {
+  font-size: 13.5px; font-weight: 300;
+  color: var(--sidebar-mid);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.sb-info-row {
+  display: flex; flex-direction: column; gap: 1px;
+}
+.sb-info-label {
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--sidebar-accent); margin-top: 0.6rem; margin-bottom: 1px;
+}
+.sb-info-val {
+  font-size: 14px; color: var(--sidebar-text); line-height: 1.5;
+}
+
+/* Language bars */
+.lang-row { margin-bottom: 6px; }
+.lang-name {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 14px; color: var(--sidebar-text); margin-bottom: 3px;
+}
+.lang-fluency { font-size: 12px; color: var(--sidebar-mid); }
+.lang-bar-bg {
+  height: 3px; background: rgba(0,0,0,0.12); border-radius: 2px; overflow: hidden;
+}
+.lang-bar-fill {
+  height: 100%; background: var(--sidebar-accent); border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+/* Skills pills (sidebar) */
+.sb-skills { display: flex; flex-wrap: wrap; gap: 5px; }
+.sb-skill {
+  font-size: 13px; color: var(--sidebar-mid);
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 2px; padding: 2px 8px; line-height: 1.6;
+}
+
+/* Certificates */
+.sb-cert {
+  font-size: 14px; color: var(--sidebar-mid); line-height: 1.6;
+  padding-left: 10px; position: relative;
+}
+.sb-cert::before { content: '—'; position: absolute; left: 0; color: var(--sidebar-accent); font-size: 11px; top: 3px; }
+
+/* ══════════════════════════════
+   MAIN
+══════════════════════════════ */
+.cv-main {
+  flex: 1;
+  background: var(--paper);
+  padding: 2.5rem 2.5rem 3rem;
+  min-width: 0;
+}
+
+.main-name {
+  font-family: var(--font-display);
+  font-size: 42px; font-weight: 600;
+  letter-spacing: -0.01em; color: var(--ink); line-height: 1.1;
+}
+.main-tagline {
+  margin-top: 0.4rem; font-size: 15px;
+  color: var(--ink-mid); font-weight: 300; letter-spacing: 0.02em;
+}
+.main-header {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+/* Section */
+.section { margin-bottom: 2.5rem; }
+.section-title {
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent); font-weight: 500;
+  margin-bottom: 1.1rem; padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--accent-soft);
+}
+
+/* Work entries */
+.work-entries { display: flex; flex-direction: column; gap: 1.5rem; }
+.work-entry {
+  display: grid; grid-template-columns: var(--label-w) 1fr;
+  gap: 0 1.25rem; align-items: start;
+}
+.work-meta { padding-top: 2px; text-align: right; }
+.work-period { font-size: 13px; color: var(--ink-light); line-height: 1.5; white-space: normal; word-break: break-word; }
+.work-seasons-badge { font-size: 12px; color: var(--ink-light); margin-top: 1px; }
+.work-title { font-size: 16px; font-weight: 500; color: var(--ink); line-height: 1.3; }
+.work-company { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; }
+.work-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.work-company-name { font-size: 14.5px; color: var(--ink-mid); font-weight: 400; }
+.work-loc { font-size: 13.5px; color: var(--ink-light); margin-top: 1px; }
+.work-sub-periods { font-size: 13px; color: var(--ink-light); margin-top: 3px; font-style: italic; }
+.work-highlights { margin-top: 5px; list-style: none; display: flex; flex-direction: column; gap: 1px; }
+.work-highlights li {
+  font-size: 14px; color: var(--ink-mid);
+  padding-left: 12px; position: relative; line-height: 1.5;
+}
+.work-highlights li::before {
+  content: '—'; position: absolute; left: 0;
+  color: var(--accent); font-size: 11px; top: 3px;
+}
+
+/* Education */
+.edu-entry { display: grid; grid-template-columns: var(--label-w) 1fr; gap: 0 1.25rem; }
+.edu-year { font-size: 13px; color: var(--ink-light); padding-top: 2px; text-align: right; }
+.edu-title { font-size: 16px; font-weight: 500; color: var(--ink); }
+.edu-inst  { font-size: 14px; color: var(--ink-mid); margin-top: 1px; }
+
+/* ── GANTT ── */
+.gantt-wrap { width: 100%; }
+.gantt-axis-row {
+  display: flex;
+  margin-left: var(--label-w);
+  border-bottom: 1px solid var(--rule-strong);
+}
+.gantt-axis-year {
+  flex-shrink: 0; font-size: 12px; color: var(--ink-light);
+  padding-bottom: 3px; padding-left: 3px;
+  border-left: 1px solid var(--rule);
+  font-family: var(--font-body);
+}
+.gantt-row {
+  display: flex; align-items: center;
+  min-height: 32px; border-bottom: 1px solid var(--rule);
+}
+.gantt-row:last-child { border-bottom: none; }
+.gantt-row.group-camping     { background: #fffef5; }
+.gantt-row.group-hospitality { background: #fff8f8; }
+.gantt-label {
+  flex-shrink: 0; width: var(--label-w);
+  padding-right: 8px; font-size: 12.5px; color: var(--ink-mid);
+  text-align: right; line-height: 1.3; font-family: var(--font-body);
+}
+.gantt-bars { flex: 1; position: relative; height: 32px; min-width: 0; }
+.gantt-grid-line {
+  position: absolute; top: 0; bottom: 0;
+  width: 1px; background: var(--rule); pointer-events: none;
+}
+.gantt-bar {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  height: 12px; border-radius: 6px;
+  cursor: pointer; transition: height 0.15s, filter 0.15s;
+  display: flex; align-items: center; overflow: hidden; min-width: 2px;
+}
+.gantt-bar:hover { height: 20px; filter: brightness(1.1); z-index: 10; }
+.gantt-bar-label {
+  font-size: 11px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: clip;
+  padding: 0 6px; pointer-events: none; font-family: var(--font-body);
+}
+.gantt-bar.too-narrow .gantt-bar-label { visibility: hidden; }
+
+/* Tooltip */
+.cv-tooltip {
+  position: fixed; background: var(--paper);
+  border: 1px solid var(--rule-strong); border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; line-height: 1.6;
+  z-index: 1000; min-width: 200px; max-width: 260px;
+  pointer-events: none; opacity: 0; transition: opacity 0.12s;
+  font-family: var(--font-body); box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+.cv-tooltip.visible { opacity: 1; }
+.cv-tooltip-title  { font-weight: 500; font-size: 15px; color: var(--ink); margin-bottom: 1px; }
+.cv-tooltip-sub    { color: var(--ink-mid); font-size: 14px; }
+.cv-tooltip-loc    { color: var(--ink-light); font-size: 13px; }
+.cv-tooltip-period { color: var(--ink-light); font-size: 13px; margin-top: 1px; }
+.cv-tooltip-hi     { margin-top: 7px; border-top: 1px solid var(--rule); padding-top: 6px; list-style: none; }
+.cv-tooltip-hi li  { color: var(--ink-mid); padding-left: 12px; position: relative; font-size: 13px; }
+.cv-tooltip-hi li::before { content: '·'; position: absolute; left: 3px; color: var(--ink-light); }
+
+@media (max-width: 768px) {
+  .cv-tooltip {
+    position: fixed; left: 50% !important; top: 50% !important;
+    transform: translate(-50%,-50%); max-width: 85vw; min-width: 220px;
+  }
+}
+
+/* Loading / error */
+.loading { text-align: center; padding: 4rem 2rem; font-size: 15px; color: var(--ink-light); font-style: italic; }
+.error { background: #fff0f0; border: 1px solid #f5c0c0; border-radius: 6px; padding: 1rem 1.25rem; font-size: 15px; color: #a03030; }
+
+/* Responsive: stack on small screens */
+@media (max-width: 640px) {
+  body { padding: 0; }
+  .cv-shell { flex-direction: column; border-radius: 0; }
+  .cv-sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; padding: 1.5rem; gap: 1.25rem; }
+  .photo-wrap { width: 100px; height: 100px; flex-shrink: 0; }
+  .cv-main { padding: 1.5rem; }
+  :root { --label-w: 80px; }
+}
+
+@media print {
+  body { background: white !important; padding: 0; }
+  .cv-shell { box-shadow: none; border-radius: 0; }
+  .cv-sidebar { background: white !important; -webkit-print-color-adjust: economy; print-color-adjust: economy; }
+  .cv-main { background: white !important; }
+  .gantt-row.group-camping, .gantt-row.group-hospitality { background: white !important; }
+  .photo-wrap { background: #eee !important; }
+  .cv-tooltip { display: none; }
+
+  /* 11pt body → scale everything relative to that */
+  .work-highlights li, .work-sub-periods, .work-loc      { font-size: 10pt !important; }
+  .work-period, .work-seasons-badge, .edu-year           { font-size: 9pt  !important; }
+  .work-title, .edu-title                                { font-size: 12pt !important; }
+  .work-company-name                                     { font-size: 11pt !important; }
+  .section-title                                         { font-size: 8pt  !important; }
+  .main-name                                             { font-size: 26pt !important; }
+  .main-tagline                                          { font-size: 10pt !important; }
+  .sb-name                                               { font-size: 18pt !important; }
+  .sb-tagline, .sb-info-val, .lang-name, .sb-skill       { font-size: 9pt  !important; }
+  .sb-title, .sb-info-label                              { font-size: 7pt  !important; }
+  .gantt-label, .gantt-axis-year, .gantt-bar-label       { font-size: 8pt  !important; }
+}
+</style>
+</head>
+<body>
+<div class="cv-shell" id="cv-shell"><div class="cv-sidebar"><div class="photo-wrap"><div class="photo-placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <circle cx="12" cy="8" r="4"></circle>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"></path>
+      </svg>
+      <span>photo.jpg</span></div></div><div class="sb-section"><div class="sb-name">René Smit</div><div class="sb-tagline">Customer-oriented hospitality professional with long-term experience in camping, tourism, and guest services across Europe.</div></div><div class="sb-section"><div class="sb-title">Personal</div><div class="sb-info-label">Nationality</div><div class="sb-info-val">Dutch</div><div class="sb-info-label">Born</div><div class="sb-info-val">23 August 1977</div><div class="sb-info-label">Location</div><div class="sb-info-val">NL</div></div><div class="sb-section"><div class="sb-title">Languages</div><div class="lang-row"><div class="lang-name">Dutch<span class="lang-fluency">C2</span></div><div class="lang-bar-bg"><div class="lang-bar-fill" style="width: 100%;"></div></div></div><div class="lang-row"><div class="lang-name">English<span class="lang-fluency">B2/C1</span></div><div class="lang-bar-bg"><div class="lang-bar-fill" style="width: 75%;"></div></div></div><div class="lang-row"><div class="lang-name">French<span class="lang-fluency">B2/C1</span></div><div class="lang-bar-bg"><div class="lang-bar-fill" style="width: 75%;"></div></div></div><div class="lang-row"><div class="lang-name">Italian<span class="lang-fluency">B1/B2</span></div><div class="lang-bar-bg"><div class="lang-bar-fill" style="width: 58.3333%;"></div></div></div><div class="lang-row"><div class="lang-name">German<span class="lang-fluency">B1/B2</span></div><div class="lang-bar-bg"><div class="lang-bar-fill" style="width: 58.3333%;"></div></div></div><div class="lang-row"><div class="lang-name">Spanish<span class="lang-fluency">A1/A2</span></div><div class="lang-bar-bg"><div class="lang-bar-fill" style="width: 25%;"></div></div></div></div><div class="sb-section"><div class="sb-title">Skills</div><div class="sb-skills"><span class="sb-skill">Customer oriented</span><span class="sb-skill">Versatile</span><span class="sb-skill">Team spirit</span><span class="sb-skill">Organizational capabilities</span><span class="sb-skill">Reliable</span><span class="sb-skill">Flexible</span><span class="sb-skill">Business intelligence</span><span class="sb-skill">Design / infographics</span></div></div><div class="sb-section"><div class="sb-title">Certificates</div><div class="sb-cert">Driver license B (car)</div></div></div><div class="cv-main"><div class="main-header"><div class="main-name">René Smit</div><div class="main-tagline">Customer-oriented hospitality professional with long-term experience in camping, tourism, and guest services across Europe.  ·  2001 – 2025</div></div><section class="section"><div class="section-title">Work Experience</div><div class="work-entries"><div class="work-entry"><div class="work-meta"><div class="work-period"><span style="display:block;font-size:0.85em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.7;">Summer</span><span style="display:block;">2024, 2025</span></div></div><div class="work-body"><div class="work-title">Camping representative</div><div class="work-company"><span class="work-dot" style="background: rgb(255, 173, 0);"></span><span class="work-company-name">Eurocamp</span></div><div class="work-loc">De Schatberg, Sevenum, Netherlands · Pra delle Torri, Caorle, Italy</div><ul class="work-highlights"><li>Checking and preparing accommodations</li><li>Guest check-in and check-out</li><li>Handling guest interactions and issues</li></ul></div></div><div class="work-entry"><div class="work-meta"><div class="work-period"><span style="display:block;font-size:0.85em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.7;">Summer</span><span style="display:block;">2017, 2018, 2020, 2020, 2021, 2022, 2023</span></div></div><div class="work-body"><div class="work-title">Camping host</div><div class="work-company"><span class="work-dot" style="background: rgb(20, 47, 94);"></span><span class="work-company-name">Vacansoleil</span></div><div class="work-loc">De Schatberg, Sevenum, Netherlands · De Twee Bruggen, Sevenum, Netherlands · Camping Village Fabulous, Rome, Italy</div><ul class="work-highlights"><li>Checking, preparing, and cleaning accommodations</li><li>Guest check-in and check-out</li><li>Handling guest interactions and issues</li><li>Assisting and replacing the supervisor</li></ul></div></div><div class="work-entry"><div class="work-meta"><div class="work-period"><span style="display:block;font-size:0.85em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.7;">Summer</span><span style="display:block;">2012, 2013</span></div></div><div class="work-body"><div class="work-title">Courier</div><div class="work-company"><span class="work-dot" style="background: rgb(168, 0, 59);"></span><span class="work-company-name">Selectcamp</span></div><div class="work-loc">Ca savio, Caorle, Italy · Pra delle Torri, Caorle, Italy</div><ul class="work-highlights"><li>Checking, preparing, and cleaning accommodations</li><li>Guest check-in and check-out</li><li>Handling guest interactions and issues</li><li>Assisting and replacing the supervisor</li></ul></div></div><div class="work-entry"><div class="work-meta"><div class="work-period"><span style="display:block;font-size:0.85em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.7;">Summer</span><span style="display:block;">2014, 2016, 2019</span></div></div><div class="work-body"><div class="work-title">Staff member info-point</div><div class="work-company"><span class="work-dot" style="background: rgb(149, 194, 37);"></span><span class="work-company-name">Camping Village Fabulous</span></div><div class="work-loc">Camping Village Fabulous, Rome, Italy</div><ul class="work-highlights"><li>Providing information about the campsite and Rome</li><li>Selling tickets and excursions</li><li>Assisting guests in unforeseen situations</li></ul></div></div><div class="work-entry"><div class="work-meta"><div class="work-period">Jun 2006 – Apr 2016</div><div class="work-seasons-badge">(2 seasons)</div></div><div class="work-body"><div class="work-title">Waiter</div><div class="work-company"><span class="work-dot" style="background: rgb(212, 83, 126);"></span><span class="work-company-name">Disneyland Paris</span></div><div class="work-loc">Paris, France</div><div class="work-sub-periods">Jun 2006 – Nov 2011 · Nov 2014 – Apr 2016</div><ul class="work-highlights"><li>Waiter at Disneyland Hotel (5*) and Hotel New York (4*)</li><li>Repeatedly cited as outstanding cast member by guests</li></ul></div></div><div class="work-entry"><div class="work-meta"><div class="work-period"><span style="display:block;font-size:0.85em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.7;">Winter</span><span style="display:block;">2004 – 2006</span><span style="display:block;">2012 – 2014</span></div></div><div class="work-body"><div class="work-title">Waiter / hospitality</div><div class="work-company" style="flex-wrap: wrap; gap: 6px;"><span class="work-dot" style="background: rgb(238, 114, 2);"></span><span class="work-company-name">Hotel Papendal</span> · <span class="work-dot" style="background: rgb(237, 23, 79);"></span><span class="work-company-name">68 Degrees</span> · <span class="work-dot" style="background: rgb(216, 90, 48);"></span><span class="work-company-name">JMW</span></div><div class="work-loc">Arnhem, Netherlands</div><ul class="work-highlights"><li>Events, banqueting, and party catering</li></ul></div></div><div class="work-entry"><div class="work-meta"><div class="work-period">Sep 2001 – Sep 2004</div></div><div class="work-body"><div class="work-title">QESH employee</div><div class="work-company"><span class="work-dot" style="background: rgb(159, 198, 72);"></span><span class="work-company-name">Koffiebranderij Peeze</span></div><div class="work-loc">Arnhem, Netherlands</div><ul class="work-highlights"><li>Quality management</li><li>Environment, Safety and Health</li><li>Hygiene and HACCP in coffee roasting</li></ul></div></div></div></section><section class="section"><div class="section-title">Education</div><div class="edu-entry"><div class="edu-year">1997 – 2001</div><div><div class="edu-title">BSc Food Technology</div><div class="edu-inst">Larenstein Velp · Quality management</div></div></div></section><section class="section"><div class="section-title">Career Timeline</div><div class="gantt-wrap"><div class="gantt-axis-row"><div class="gantt-axis-year" data-year="2001" style="width: 4%;">01</div><div class="gantt-axis-year" data-year="2002" style="width: 4%;">02</div><div class="gantt-axis-year" data-year="2003" style="width: 4%;">03</div><div class="gantt-axis-year" data-year="2004" style="width: 4%;">04</div><div class="gantt-axis-year" data-year="2005" style="width: 4%;">05</div><div class="gantt-axis-year" data-year="2006" style="width: 4%;">06</div><div class="gantt-axis-year" data-year="2007" style="width: 4%;">07</div><div class="gantt-axis-year" data-year="2008" style="width: 4%;">08</div><div class="gantt-axis-year" data-year="2009" style="width: 4%;">09</div><div class="gantt-axis-year" data-year="2010" style="width: 4%;">10</div><div class="gantt-axis-year" data-year="2011" style="width: 4%;">11</div><div class="gantt-axis-year" data-year="2012" style="width: 4%;">12</div><div class="gantt-axis-year" data-year="2013" style="width: 4%;">13</div><div class="gantt-axis-year" data-year="2014" style="width: 4%;">14</div><div class="gantt-axis-year" data-year="2015" style="width: 4%;">15</div><div class="gantt-axis-year" data-year="2016" style="width: 4%;">16</div><div class="gantt-axis-year" data-year="2017" style="width: 4%;">17</div><div class="gantt-axis-year" data-year="2018" style="width: 4%;">18</div><div class="gantt-axis-year" data-year="2019" style="width: 4%;">19</div><div class="gantt-axis-year" data-year="2020" style="width: 4%;">20</div><div class="gantt-axis-year" data-year="2021" style="width: 4%;">21</div><div class="gantt-axis-year" data-year="2022" style="width: 4%;">22</div><div class="gantt-axis-year" data-year="2023" style="width: 4%;">23</div><div class="gantt-axis-year" data-year="2024" style="width: 4%;">24</div><div class="gantt-axis-year" data-year="2025" style="width: 4%;">25</div></div><div class="gantt-row group-camping"><div class="gantt-label">Eurocamp</div><div class="gantt-bars"><div class="gantt-grid-line" style="left: 0%;"></div><div class="gantt-grid-line" style="left: 4%;"></div><div class="gantt-grid-line" style="left: 8%;"></div><div class="gantt-grid-line" style="left: 12%;"></div><div class="gantt-grid-line" style="left: 16%;"></div><div class="gantt-grid-line" style="left: 20%;"></div><div class="gantt-grid-line" style="left: 24%;"></div><div class="gantt-grid-line" style="left: 28%;"></div><div class="gantt-grid-line" style="left: 32%;"></div><div class="gantt-grid-line" style="left: 36%;"></div><div class="gantt-grid-line" style="left: 40%;"></div><div class="gantt-grid-line" style="left: 44%;"></div><div class="gantt-grid-line" style="left: 48%;"></div><div class="gantt-grid-line" style="left: 52%;"></div><div class="gantt-grid-line" style="left: 56%;"></div><div class="gantt-grid-line" style="left: 60%;"></div><div class="gantt-grid-line" style="left: 64%;"></div><div class="gantt-grid-line" style="left: 68%;"></div><div class="gantt-grid-line" style="left: 72%;"></div><div class="gantt-grid-line" style="left: 76%;"></div><div class="gantt-grid-line" style="left: 80%;"></div><div class="gantt-grid-line" style="left: 84%;"></div><div class="gantt-grid-line" style="left: 88%;"></div><div class="gantt-grid-line" style="left: 92%;"></div><div class="gantt-grid-line" style="left: 96%;"></div><div class="gantt-bar too-narrow" style="left: 97.3146%; width: 1.6658%; background: rgb(255, 173, 0);"><span class="gantt-bar-label" style="color: rgb(4, 44, 83);">Camping representative</span></div><div class="gantt-bar too-narrow" style="left: 94.0651%; width: 0.918%; background: rgb(255, 173, 0);"><span class="gantt-bar-label" style="color: rgb(4, 44, 83);">Camping representative</span></div></div></div><div class="gantt-row group-camping"><div class="gantt-label">Vacansoleil</div><div class="gantt-bars"><div class="gantt-grid-line" style="left: 0%;"></div><div class="gantt-grid-line" style="left: 4%;"></div><div class="gantt-grid-line" style="left: 8%;"></div><div class="gantt-grid-line" style="left: 12%;"></div><div class="gantt-grid-line" style="left: 16%;"></div><div class="gantt-grid-line" style="left: 20%;"></div><div class="gantt-grid-line" style="left: 24%;"></div><div class="gantt-grid-line" style="left: 28%;"></div><div class="gantt-grid-line" style="left: 32%;"></div><div class="gantt-grid-line" style="left: 36%;"></div><div class="gantt-grid-line" style="left: 40%;"></div><div class="gantt-grid-line" style="left: 44%;"></div><div class="gantt-grid-line" style="left: 48%;"></div><div class="gantt-grid-line" style="left: 52%;"></div><div class="gantt-grid-line" style="left: 56%;"></div><div class="gantt-grid-line" style="left: 60%;"></div><div class="gantt-grid-line" style="left: 64%;"></div><div class="gantt-grid-line" style="left: 68%;"></div><div class="gantt-grid-line" style="left: 72%;"></div><div class="gantt-grid-line" style="left: 76%;"></div><div class="gantt-grid-line" style="left: 80%;"></div><div class="gantt-grid-line" style="left: 84%;"></div><div class="gantt-grid-line" style="left: 88%;"></div><div class="gantt-grid-line" style="left: 92%;"></div><div class="gantt-grid-line" style="left: 96%;"></div><div class="gantt-bar too-narrow" style="left: 88.6466%; width: 2.3338%; background: rgb(20, 47, 94);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);">Camping host</span></div><div class="gantt-bar too-narrow" style="left: 85.7091%; width: 1.2712%; background: rgb(20, 47, 94);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);">Camping host</span></div><div class="gantt-bar too-narrow" style="left: 80.9858%; width: 1.9945%; background: rgb(20, 47, 94);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);">Camping host</span></div><div class="gantt-bar too-narrow" style="left: 78.7318%; width: 0.2514%; background: rgb(20, 47, 94);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);">Camping host</span></div><div class="gantt-bar too-narrow" style="left: 78.1963%; width: 0.5355%; background: rgb(20, 47, 94);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);">Camping host</span></div><div class="gantt-bar too-narrow" style="left: 68.9201%; width: 2.0603%; background: rgb(20, 47, 94);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);">Camping host</span></div><div class="gantt-bar too-narrow" style="left: 64.9858%; width: 1.9945%; background: rgb(20, 47, 94);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);">Camping host</span></div></div></div><div class="gantt-row group-camping"><div class="gantt-label">Selectcamp</div><div class="gantt-bars"><div class="gantt-grid-line" style="left: 0%;"></div><div class="gantt-grid-line" style="left: 4%;"></div><div class="gantt-grid-line" style="left: 8%;"></div><div class="gantt-grid-line" style="left: 12%;"></div><div class="gantt-grid-line" style="left: 16%;"></div><div class="gantt-grid-line" style="left: 20%;"></div><div class="gantt-grid-line" style="left: 24%;"></div><div class="gantt-grid-line" style="left: 28%;"></div><div class="gantt-grid-line" style="left: 32%;"></div><div class="gantt-grid-line" style="left: 36%;"></div><div class="gantt-grid-line" style="left: 40%;"></div><div class="gantt-grid-line" style="left: 44%;"></div><div class="gantt-grid-line" style="left: 48%;"></div><div class="gantt-grid-line" style="left: 52%;"></div><div class="gantt-grid-line" style="left: 56%;"></div><div class="gantt-grid-line" style="left: 60%;"></div><div class="gantt-grid-line" style="left: 64%;"></div><div class="gantt-grid-line" style="left: 68%;"></div><div class="gantt-grid-line" style="left: 72%;"></div><div class="gantt-grid-line" style="left: 76%;"></div><div class="gantt-grid-line" style="left: 80%;"></div><div class="gantt-grid-line" style="left: 84%;"></div><div class="gantt-grid-line" style="left: 88%;"></div><div class="gantt-grid-line" style="left: 92%;"></div><div class="gantt-grid-line" style="left: 96%;"></div><div class="gantt-bar too-narrow" style="left: 49.8845%; width: 0.9315%; background: rgb(168, 0, 59);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);">Courier</span></div><div class="gantt-bar too-narrow" style="left: 45.3657%; width: 1.7486%; background: rgb(168, 0, 59);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);">Courier</span></div></div></div><div class="gantt-row"><div class="gantt-label">Camping Village Fabulous</div><div class="gantt-bars"><div class="gantt-grid-line" style="left: 0%;"></div><div class="gantt-grid-line" style="left: 4%;"></div><div class="gantt-grid-line" style="left: 8%;"></div><div class="gantt-grid-line" style="left: 12%;"></div><div class="gantt-grid-line" style="left: 16%;"></div><div class="gantt-grid-line" style="left: 20%;"></div><div class="gantt-grid-line" style="left: 24%;"></div><div class="gantt-grid-line" style="left: 28%;"></div><div class="gantt-grid-line" style="left: 32%;"></div><div class="gantt-grid-line" style="left: 36%;"></div><div class="gantt-grid-line" style="left: 40%;"></div><div class="gantt-grid-line" style="left: 44%;"></div><div class="gantt-grid-line" style="left: 48%;"></div><div class="gantt-grid-line" style="left: 52%;"></div><div class="gantt-grid-line" style="left: 56%;"></div><div class="gantt-grid-line" style="left: 60%;"></div><div class="gantt-grid-line" style="left: 64%;"></div><div class="gantt-grid-line" style="left: 68%;"></div><div class="gantt-grid-line" style="left: 72%;"></div><div class="gantt-grid-line" style="left: 76%;"></div><div class="gantt-grid-line" style="left: 80%;"></div><div class="gantt-grid-line" style="left: 84%;"></div><div class="gantt-grid-line" style="left: 88%;"></div><div class="gantt-grid-line" style="left: 92%;"></div><div class="gantt-grid-line" style="left: 96%;"></div><div class="gantt-bar too-narrow" style="left: 73.1064%; width: 1.874%; background: rgb(149, 194, 37);"><span class="gantt-bar-label" style="color: rgb(65, 36, 2);">Staff member info-point</span></div><div class="gantt-bar too-narrow" style="left: 61.1034%; width: 1.8798%; background: rgb(149, 194, 37);"><span class="gantt-bar-label" style="color: rgb(65, 36, 2);">Staff member info-point</span></div><div class="gantt-bar too-narrow" style="left: 53.216%; width: 1.589%; background: rgb(149, 194, 37);"><span class="gantt-bar-label" style="color: rgb(65, 36, 2);">Staff member info-point</span></div></div></div><div class="gantt-row"><div class="gantt-label">Disneyland Paris</div><div class="gantt-bars"><div class="gantt-grid-line" style="left: 0%;"></div><div class="gantt-grid-line" style="left: 4%;"></div><div class="gantt-grid-line" style="left: 8%;"></div><div class="gantt-grid-line" style="left: 12%;"></div><div class="gantt-grid-line" style="left: 16%;"></div><div class="gantt-grid-line" style="left: 20%;"></div><div class="gantt-grid-line" style="left: 24%;"></div><div class="gantt-grid-line" style="left: 28%;"></div><div class="gantt-grid-line" style="left: 32%;"></div><div class="gantt-grid-line" style="left: 36%;"></div><div class="gantt-grid-line" style="left: 40%;"></div><div class="gantt-grid-line" style="left: 44%;"></div><div class="gantt-grid-line" style="left: 48%;"></div><div class="gantt-grid-line" style="left: 52%;"></div><div class="gantt-grid-line" style="left: 56%;"></div><div class="gantt-grid-line" style="left: 60%;"></div><div class="gantt-grid-line" style="left: 64%;"></div><div class="gantt-grid-line" style="left: 68%;"></div><div class="gantt-grid-line" style="left: 72%;"></div><div class="gantt-grid-line" style="left: 76%;"></div><div class="gantt-grid-line" style="left: 80%;"></div><div class="gantt-grid-line" style="left: 84%;"></div><div class="gantt-grid-line" style="left: 88%;"></div><div class="gantt-grid-line" style="left: 92%;"></div><div class="gantt-grid-line" style="left: 96%;"></div><div class="gantt-bar" style="left: 55.3315%; width: 5.6626%; background: rgb(212, 83, 126);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);"></span></div><div class="gantt-bar" style="left: 21.7749%; width: 21.8744%; background: rgb(212, 83, 126);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);"></span></div></div></div><div class="gantt-row group-hospitality"><div class="gantt-label">Hotel Papendal</div><div class="gantt-bars"><div class="gantt-grid-line" style="left: 0%;"></div><div class="gantt-grid-line" style="left: 4%;"></div><div class="gantt-grid-line" style="left: 8%;"></div><div class="gantt-grid-line" style="left: 12%;"></div><div class="gantt-grid-line" style="left: 16%;"></div><div class="gantt-grid-line" style="left: 20%;"></div><div class="gantt-grid-line" style="left: 24%;"></div><div class="gantt-grid-line" style="left: 28%;"></div><div class="gantt-grid-line" style="left: 32%;"></div><div class="gantt-grid-line" style="left: 36%;"></div><div class="gantt-grid-line" style="left: 40%;"></div><div class="gantt-grid-line" style="left: 44%;"></div><div class="gantt-grid-line" style="left: 48%;"></div><div class="gantt-grid-line" style="left: 52%;"></div><div class="gantt-grid-line" style="left: 56%;"></div><div class="gantt-grid-line" style="left: 60%;"></div><div class="gantt-grid-line" style="left: 64%;"></div><div class="gantt-grid-line" style="left: 68%;"></div><div class="gantt-grid-line" style="left: 72%;"></div><div class="gantt-grid-line" style="left: 76%;"></div><div class="gantt-grid-line" style="left: 80%;"></div><div class="gantt-grid-line" style="left: 84%;"></div><div class="gantt-grid-line" style="left: 88%;"></div><div class="gantt-grid-line" style="left: 92%;"></div><div class="gantt-grid-line" style="left: 96%;"></div><div class="gantt-bar" style="left: 47.4536%; width: 5.5213%; background: rgb(238, 114, 2);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);"></span></div></div></div><div class="gantt-row group-hospitality"><div class="gantt-label">68 Degrees</div><div class="gantt-bars"><div class="gantt-grid-line" style="left: 0%;"></div><div class="gantt-grid-line" style="left: 4%;"></div><div class="gantt-grid-line" style="left: 8%;"></div><div class="gantt-grid-line" style="left: 12%;"></div><div class="gantt-grid-line" style="left: 16%;"></div><div class="gantt-grid-line" style="left: 20%;"></div><div class="gantt-grid-line" style="left: 24%;"></div><div class="gantt-grid-line" style="left: 28%;"></div><div class="gantt-grid-line" style="left: 32%;"></div><div class="gantt-grid-line" style="left: 36%;"></div><div class="gantt-grid-line" style="left: 40%;"></div><div class="gantt-grid-line" style="left: 44%;"></div><div class="gantt-grid-line" style="left: 48%;"></div><div class="gantt-grid-line" style="left: 52%;"></div><div class="gantt-grid-line" style="left: 56%;"></div><div class="gantt-grid-line" style="left: 60%;"></div><div class="gantt-grid-line" style="left: 64%;"></div><div class="gantt-grid-line" style="left: 68%;"></div><div class="gantt-grid-line" style="left: 72%;"></div><div class="gantt-grid-line" style="left: 76%;"></div><div class="gantt-grid-line" style="left: 80%;"></div><div class="gantt-grid-line" style="left: 84%;"></div><div class="gantt-grid-line" style="left: 88%;"></div><div class="gantt-grid-line" style="left: 92%;"></div><div class="gantt-grid-line" style="left: 96%;"></div><div class="gantt-bar too-narrow" style="left: 50.8269%; width: 2.4877%; background: rgb(237, 23, 79);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);"></span></div><div class="gantt-bar too-narrow" style="left: 47.1689%; width: 2.0251%; background: rgb(237, 23, 79);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);"></span></div></div></div><div class="gantt-row group-hospitality"><div class="gantt-label">JMW</div><div class="gantt-bars"><div class="gantt-grid-line" style="left: 0%;"></div><div class="gantt-grid-line" style="left: 4%;"></div><div class="gantt-grid-line" style="left: 8%;"></div><div class="gantt-grid-line" style="left: 12%;"></div><div class="gantt-grid-line" style="left: 16%;"></div><div class="gantt-grid-line" style="left: 20%;"></div><div class="gantt-grid-line" style="left: 24%;"></div><div class="gantt-grid-line" style="left: 28%;"></div><div class="gantt-grid-line" style="left: 32%;"></div><div class="gantt-grid-line" style="left: 36%;"></div><div class="gantt-grid-line" style="left: 40%;"></div><div class="gantt-grid-line" style="left: 44%;"></div><div class="gantt-grid-line" style="left: 48%;"></div><div class="gantt-grid-line" style="left: 52%;"></div><div class="gantt-grid-line" style="left: 56%;"></div><div class="gantt-grid-line" style="left: 60%;"></div><div class="gantt-grid-line" style="left: 64%;"></div><div class="gantt-grid-line" style="left: 68%;"></div><div class="gantt-grid-line" style="left: 72%;"></div><div class="gantt-grid-line" style="left: 76%;"></div><div class="gantt-grid-line" style="left: 80%;"></div><div class="gantt-grid-line" style="left: 84%;"></div><div class="gantt-grid-line" style="left: 88%;"></div><div class="gantt-grid-line" style="left: 92%;"></div><div class="gantt-grid-line" style="left: 96%;"></div><div class="gantt-bar" style="left: 14.9941%; width: 6.6603%; background: rgb(216, 90, 48);"><span class="gantt-bar-label" style="color: rgb(255, 255, 255);"></span></div></div></div><div class="gantt-row"><div class="gantt-label">Koffiebranderij Peeze</div><div class="gantt-bars"><div class="gantt-grid-line" style="left: 0%;"></div><div class="gantt-grid-line" style="left: 4%;"></div><div class="gantt-grid-line" style="left: 8%;"></div><div class="gantt-grid-line" style="left: 12%;"></div><div class="gantt-grid-line" style="left: 16%;"></div><div class="gantt-grid-line" style="left: 20%;"></div><div class="gantt-grid-line" style="left: 24%;"></div><div class="gantt-grid-line" style="left: 28%;"></div><div class="gantt-grid-line" style="left: 32%;"></div><div class="gantt-grid-line" style="left: 36%;"></div><div class="gantt-grid-line" style="left: 40%;"></div><div class="gantt-grid-line" style="left: 44%;"></div><div class="gantt-grid-line" style="left: 48%;"></div><div class="gantt-grid-line" style="left: 52%;"></div><div class="gantt-grid-line" style="left: 56%;"></div><div class="gantt-grid-line" style="left: 60%;"></div><div class="gantt-grid-line" style="left: 64%;"></div><div class="gantt-grid-line" style="left: 68%;"></div><div class="gantt-grid-line" style="left: 72%;"></div><div class="gantt-grid-line" style="left: 76%;"></div><div class="gantt-grid-line" style="left: 80%;"></div><div class="gantt-grid-line" style="left: 84%;"></div><div class="gantt-grid-line" style="left: 88%;"></div><div class="gantt-grid-line" style="left: 92%;"></div><div class="gantt-grid-line" style="left: 96%;"></div><div class="gantt-bar too-narrow" style="left: 2.6626%; width: 12.3206%; background: rgb(159, 198, 72);"><span class="gantt-bar-label" style="color: rgb(44, 44, 42);">QESH employee</span></div></div></div></div></section></div></div>
+</body>
+</html>

@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work experience — René Smit</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font: 'DM Sans', system-ui, sans-serif;
+  --bg: #ffffff;
+  --bg-secondary: #f7f6f3;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555550;
+  --text-tertiary: #999994;
+  --border: rgba(0,0,0,0.10);
+  --border-strong: rgba(0,0,0,0.22);
+  --label-w: 120px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a1a1a;
+    --gantt: #f4f4f4;
+    --bg-secondary: #242424;
+    --text-primary: #e0e0da;
+    --text-secondary: #a0a09a;
+    --text-tertiary: #606060;
+    --border: rgba(0, 0, 0, 0.7);
+    --border-strong: rgba(0,0,0,0.9);
+  }
+
+  .gantt { background: var(--gantt); }
+}
+
+html, body { width: 100%; overflow-x: hidden; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-primary);
+  padding: 2rem 2rem 3rem;
+}
+
+.title-row { display: flex; align-items: baseline; gap: 14px; margin-bottom: 1.75rem; }
+.title-row h1 { font-size: 22px; font-weight: 500; color: var(--text-primary); }
+.title-row span { font-size: 13px; color: var(--text-tertiary); }
+
+.gantt { display: block; width: 100%; }
+
+.axis-row {
+  display: flex;
+  margin-left: var(--label-w);
+  border-bottom: 1px solid var(--border-strong);
+}
+.axis-year {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding-bottom: 5px;
+  border-left: 1px solid var(--border);
+  padding-left: 4px;
+  font-family: var(--font);
+}
+
+.row { display: flex; align-items: center; min-height: 40px; border-bottom: 1px solid var(--border); }
+.row:last-child { border-bottom: none; }
+
+.row-label {
+  flex-shrink: 0;
+  width: var(--label-w);
+  padding-right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.row-label img { max-width: 90px; max-height: 26px; object-fit: contain; display: block; }
+.row-label .fallback { font-size: 11px; color: var(--text-secondary); text-align: right; font-family: var(--font); }
+
+.bars-area { flex: 1; position: relative; height: 40px; min-width: 0; }
+
+.grid-line { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border); pointer-events: none; }
+
+.row.group-camping  { background: #fffdf0; }
+.row.group-hospitality { background: #fff5f5; }
+
+@media (prefers-color-scheme: dark) {
+  .row.group-camping     { background: #fefcd48c; }
+  .row.group-hospitality { background: #fefcd48c; }
+}
+
+.bar {
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  height: 16px; border-radius: 8px;
+  cursor: pointer;
+  transition: height 0.15s, filter 0.15s;
+  display: flex; align-items: center; overflow: hidden; min-width: 2px;
+}
+.bar:hover { height: 24px; filter: brightness(1.12); z-index: 10; }
+
+.bar-label {
+  font-size: 10px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: clip;
+  padding: 0 8px; pointer-events: none; font-family: var(--font);
+}
+.bar.too-narrow .bar-label { visibility: hidden; }
+
+.cv-section { margin-top: 3rem; border-top: 1px solid var(--border-strong); padding-top: 2rem; }
+.cv-section-title { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 1.5rem; font-family: var(--font); }
+.cv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; }
+@media (max-width: 600px) { .cv-grid { grid-template-columns: 1fr; } }
+.cv-group { margin-bottom: 2.25rem; break-inside: avoid; }
+.cv-group-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0.6rem; }
+.cv-group-dot { width: 12px; height: 12px; border-radius: 6px; flex-shrink: 0; }
+.cv-group-name { font-size: 16px; font-weight: 500; color: var(--text-primary); font-family: var(--font); }
+.cv-entries { margin-left: 22px; display: flex; flex-direction: column; gap: 0.9rem; }
+.cv-entry-period { font-size: 12px; color: var(--text-tertiary); font-family: var(--font); white-space: nowrap; }
+.cv-entry-title { font-size: 13px; font-weight: 500; color: var(--text-secondary); font-family: var(--font); }
+.cv-entry-loc { font-size: 12px; color: var(--text-tertiary); font-family: var(--font); }
+.cv-highlights { margin-top: 3px; list-style: none; }
+.cv-highlights li { font-size: 12px; color: var(--text-tertiary); padding-left: 12px; position: relative; line-height: 1.6; }
+.cv-highlights li::before { content: '·'; position: absolute; left: 3px; }
+
+.tooltip {
+  position: fixed;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12px; line-height: 1.6;
+  z-index: 1000; min-width: 210px; max-width: 270px;
+  pointer-events: none; opacity: 0; transition: opacity 0.12s;
+  font-family: var(--font);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+.tooltip.visible { opacity: 1; }
+.tooltip-title { font-weight: 500; font-size: 13px; color: var(--text-primary); margin-bottom: 2px; }
+.tooltip-sub { color: var(--text-secondary); }
+.tooltip-loc { color: var(--text-tertiary); font-size: 11px; }
+.tooltip-period { color: var(--text-tertiary); font-size: 11px; margin-top: 1px; }
+.tooltip-hi { margin-top: 7px; border-top: 1px solid var(--border); padding-top: 7px; list-style: none; }
+.tooltip-hi li { color: var(--text-secondary); padding-left: 12px; position: relative; font-size: 11px; }
+.tooltip-hi li::before { content: '·'; position: absolute; left: 3px; color: var(--text-tertiary); }
+
+/* Mobile: center tooltip on screen */
+@media (max-width: 768px) {
+  .tooltip {
+    position: fixed;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+    max-width: 85vw;
+    min-width: 240px;
+    pointer-events: none;
+  }
+}
+
+.footer-row { margin-top: 1.75rem; padding-left: var(--label-w); display: flex; gap: 2.5rem; flex-wrap: wrap; }
+.footer-block { display: flex; flex-direction: column; gap: 6px; }
+.footer-label { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); font-family: var(--font); }
+.lang-list { display: flex; gap: 10px; flex-wrap: wrap; }
+.lang-item { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; font-family: var(--font); }
+.lang-item img.flag { width: 16px; height: 11px; object-fit: cover; vertical-align: middle; flex-shrink: 0; }
+.lang-level { font-size: 10px; color: var(--text-tertiary); }
+</style>
+</head>
+<body>
+
+<div class="title-row">
+  <h1>Work experience — René Smit</h1>
+  <span>2001 – 2025</span>
+</div>
+
+<div class="gantt" id="gantt"></div>
+
+<div class="footer-row"></div>
+
+<div id="tooltip" class="tooltip"></div>
+
+<script>
+function toDecYear(str) {
+  const p = str.split('-').map(Number);
+  const y = p[0], m = (p[1]||1)-1, d = p[2]||1;
+  const date = new Date(y,m,d), s = new Date(y,0,1), e = new Date(y+1,0,1);
+  return y + (date-s)/(e-s);
+}
+
+const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(str) {
+  const p = str.split('-').map(Number);
+  if (p.length===1) return ''+p[0];
+  if (p.length===2) return MO[p[1]-1]+' '+p[0];
+  return MO[p[1]-1]+' '+p[2]+', '+p[0];
+}
+function fmtPeriod(s,e) { return fmtDate(s)+' – '+fmtDate(e); }
+
+const KNOWN_COLORS = {
+  'eurocamp':              { color:'#FFAD00', textColor:'#042C53' },
+  'vacansoleil':           { color:'#142F5E', textColor:'#04342C' },
+  'selectcamp':            { color:'#A8003B', textColor:'#26215C' },
+  'camping village fabulous': { color:'#95C225', textColor:'#412402' },
+  'fabulous':              { color:'#95C225', textColor:'#412402' },
+  'disneyland':            { color:'#D4537E', textColor:'#4B1528' },
+  'jmw':                   { color:'#D85A30', textColor:'#4A1B0C' },
+  'hotel papendal':        { color:'#EE7202', textColor:'#4A1B0C' },
+  '68 degrees':            { color:'#ED174F', textColor:'#4A1B0C' },
+  'peeze':                 { color:'#9FC648', textColor:'#2C2C2A' },
+};
+
+const FALLBACK = [
+  { color:'#639922', textColor:'#173404' },
+  { color:'#BA7517', textColor:'#412402' },
+  { color:'#993556', textColor:'#4B1528' },
+  { color:'#185FA5', textColor:'#042C53' },
+  { color:'#5F5E5A', textColor:'#2C2C2A' },
+];
+let fallbackIdx = 0;
+
+function slugify(name) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+}
+
+function getEmpColors(name) {
+  const lower = name.toLowerCase();
+  for (const key of Object.keys(KNOWN_COLORS)) {
+    if (lower.includes(key)) return KNOWN_COLORS[key];
+  }
+  return FALLBACK[fallbackIdx++ % FALLBACK.length];
+}
+
+const ROW_ORDER = ['eurocamp','vacansoleil','selectcamp','camping village fabulous','disneyland paris','hotel papendal','68 degrees','jmw','koffiebranderij peeze'];
+function rowSortKey(name) {
+  const lower = name.toLowerCase();
+  const i = ROW_ORDER.findIndex(k => lower.includes(k));
+  return i === -1 ? 999 : i;
+}
+
+const CV_ORDER = ['eurocamp','vacansoleil','selectcamp'];
+
+const gantt   = document.getElementById('gantt');
+const tooltip = document.getElementById('tooltip');
+
+fetch('https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/main/input/cv_rene_smit_json_resume.json')
+  .then(r => r.json())
+  .then(data => {
+    const empMap = {};
+    const rowMap = {};
+
+    data.work.forEach(job => {
+      const name  = job.name.trim();
+      const key   = slugify(name);
+      if (!empMap[key]) {
+        const colors = getEmpColors(name);
+        empMap[key] = {
+          key,
+          label: name,
+          logo: 'svg/' + key + '.svg',
+          color: colors.color,
+          textColor: colors.textColor,
+        };
+      }
+      if (!rowMap[key]) rowMap[key] = { emp: key, jobs: [] };
+      rowMap[key].jobs.push({
+        start: job.startDate,
+        end:   job.endDate,
+        title: job.position.trim(),
+        loc:   job.location || '',
+        hi:    (job.highlights || []).map(h => h.trim()),
+      });
+    });
+
+    const ROWS = Object.values(rowMap).sort((a,b) =>
+      rowSortKey(empMap[a.emp].label) - rowSortKey(empMap[b.emp].label)
+    );
+
+    const allYears = ROWS.flatMap(r => r.jobs.flatMap(j => [toDecYear(j.start), toDecYear(j.end)]));
+    const YEAR_START = Math.floor(Math.min(...allYears));
+    const YEAR_END = Math.ceil(Math.max(...allYears));
+    const YEAR_COUNT = YEAR_END - YEAR_START;
+
+    function pct(yr)    { return ((yr-YEAR_START)/YEAR_COUNT*100).toFixed(4)+'%'; }
+    function pctW(s,e)  { return ((e-s)/YEAR_COUNT*100).toFixed(4)+'%'; }
+
+    document.querySelector('.title-row span').textContent =
+      YEAR_START + ' – ' + (YEAR_END - 1);
+
+    buildFooter(data);
+
+    // Axis
+    const axisRow = document.createElement('div');
+    axisRow.className = 'axis-row';
+    for (let y = YEAR_START; y < YEAR_END; y++) {
+      const el = document.createElement('div');
+      el.className = 'axis-year';
+      el.style.width = (1/YEAR_COUNT*100).toFixed(4)+'%';
+      el.dataset.year = y;
+      axisRow.appendChild(el);
+    }
+    gantt.appendChild(axisRow);
+
+    function updateAxisLabels() {
+      const barsWidth = gantt.offsetWidth - 120;
+      const pxPerYear = barsWidth / YEAR_COUNT;
+      const useShort  = pxPerYear < 28;
+      const skipOdd   = pxPerYear < 18;
+      axisRow.querySelectorAll('.axis-year').forEach(el => {
+        const y = +el.dataset.year;
+        if (skipOdd && y % 2 !== 0) { el.textContent = ''; }
+        else { el.textContent = useShort ? String(y).slice(2) : String(y); }
+      });
+    }
+    updateAxisLabels();
+    window.addEventListener('resize', updateAxisLabels);
+
+    // Gantt rows
+    ROWS.forEach(row => {
+      const emp = empMap[row.emp];
+      const rowEl = document.createElement('div');
+      rowEl.className = 'row';
+
+      const lowerLabel = empMap[row.emp].label.toLowerCase();
+      const campingGroup    = ['eurocamp','vacansoleil','selectcamp'];
+      const hospitalityGroup = ['hotel papendal','68 degrees','jmw'];
+      if (campingGroup.some(k => lowerLabel.includes(k)))     rowEl.classList.add('group-camping');
+      if (hospitalityGroup.some(k => lowerLabel.includes(k))) rowEl.classList.add('group-hospitality');
+
+      const labelEl = document.createElement('div');
+      labelEl.className = 'row-label';
+      const img = document.createElement('img');
+      img.src = emp.logo; img.alt = emp.label; img.title = emp.label;
+      img.onerror = function() {
+        this.remove();
+        const fb = document.createElement('span');
+        fb.className = 'fallback'; fb.textContent = emp.label;
+        labelEl.appendChild(fb);
+      };
+      labelEl.appendChild(img);
+
+      const barsArea = document.createElement('div');
+      barsArea.className = 'bars-area';
+
+      for (let y = YEAR_START; y < YEAR_END; y++) {
+        const gl = document.createElement('div');
+        gl.className = 'grid-line'; gl.style.left = pct(y);
+        barsArea.appendChild(gl);
+      }
+
+      row.jobs.forEach(job => {
+        const s = toDecYear(job.start), e = toDecYear(job.end);
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.left = pct(s); bar.style.width = pctW(s,e);
+        bar.style.background = emp.color;
+
+        const lbl = document.createElement('span');
+        lbl.className = 'bar-label'; lbl.style.color = emp.textColor;
+        lbl.textContent = job.title;
+        bar.appendChild(lbl);
+
+        const ro = new ResizeObserver(() => {
+          bar.classList.toggle('too-narrow', bar.offsetWidth < lbl.scrollWidth + 16);
+        });
+        ro.observe(bar);
+
+        function showTooltip() {
+          tooltip.innerHTML = `
+            <div class="tooltip-title">${job.title}</div>
+            <div class="tooltip-sub">${emp.label}</div>
+            <div class="tooltip-loc">${job.loc}</div>
+            <div class="tooltip-period">${fmtPeriod(job.start, job.end)}</div>
+            <ul class="tooltip-hi">${job.hi.map(h=>`<li>${h}</li>`).join('')}</ul>`;
+          tooltip.classList.add('visible');
+        }
+
+        bar.addEventListener('mouseenter', ev => { showTooltip(); moveTooltip(ev); });
+        bar.addEventListener('mousemove', moveTooltip);
+        bar.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+
+        // Touch support for mobile
+        bar.addEventListener('touchstart', ev => {
+          ev.preventDefault();
+          showTooltip();
+        }, { passive: false });
+        bar.addEventListener('touchend', () => {
+          setTimeout(() => tooltip.classList.remove('visible'), 2500);
+        });
+
+        barsArea.appendChild(bar);
+      });
+
+      rowEl.appendChild(labelEl);
+      rowEl.appendChild(barsArea);
+      gantt.appendChild(rowEl);
+    });
+
+    // CV text section
+    const cvSection = document.createElement('div');
+    cvSection.className = 'cv-section';
+    const cvTitleEl = document.createElement('div');
+    cvTitleEl.className = 'cv-section-title';
+    cvTitleEl.textContent = 'Work experience';
+    cvSection.appendChild(cvTitleEl);
+
+    const cvGrid = document.createElement('div');
+    cvGrid.className = 'cv-grid';
+    cvSection.appendChild(cvGrid);
+
+    const campingKeys = CV_ORDER;
+    const otherRows   = ROWS.filter(r => !campingKeys.some(k => empMap[r.emp].label.toLowerCase().includes(k)));
+    const cvRows      = [
+      ...campingKeys.map(k => ROWS.find(r => empMap[r.emp].label.toLowerCase().includes(k))).filter(Boolean),
+      ...otherRows
+    ];
+
+    cvRows.forEach(row => {
+      const emp = empMap[row.emp];
+      const groups = [];
+      row.jobs.forEach(job => {
+        const g = groups.find(g => g.title === job.title);
+        if (g) g.entries.push(job);
+        else   groups.push({ title: job.title, entries: [job] });
+      });
+
+      const cvGroup = document.createElement('div');
+      cvGroup.className = 'cv-group';
+
+      const header = document.createElement('div');
+      header.className = 'cv-group-header';
+      const dot = document.createElement('div');
+      dot.className = 'cv-group-dot'; dot.style.background = emp.color;
+      const name = document.createElement('div');
+      name.className = 'cv-group-name'; name.textContent = emp.label;
+      header.appendChild(dot); header.appendChild(name);
+      cvGroup.appendChild(header);
+
+      const entries = document.createElement('div');
+      entries.className = 'cv-entries';
+
+      groups.forEach(g => {
+        const block = document.createElement('div');
+        const titleRow = document.createElement('div');
+        titleRow.style.cssText = 'display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;';
+        const titleEl = document.createElement('span');
+        titleEl.className = 'cv-entry-title'; titleEl.textContent = g.title;
+        titleRow.appendChild(titleEl);
+
+        if (g.entries.length > 1) {
+          const earliest = g.entries.reduce((a,b) => a.start < b.start ? a : b).start;
+          const latest   = g.entries.reduce((a,b) => a.end   > b.end   ? a : b).end;
+          const isDisney = emp.label.toLowerCase().includes('disneyland');
+          const span = document.createElement('span');
+          span.className = 'cv-entry-period';
+          span.textContent = fmtDate(earliest) + ' – ' + fmtDate(latest) +
+            (isDisney ? '' : ' (' + g.entries.length + ' seasons)');
+          titleRow.appendChild(span);
+        }
+        block.appendChild(titleRow);
+
+        g.entries.forEach(job => {
+          const entryRow = document.createElement('div');
+          entryRow.style.cssText = 'display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-top:2px;';
+          const period = document.createElement('span');
+          period.className = 'cv-entry-period'; period.textContent = fmtPeriod(job.start, job.end);
+          const loc = document.createElement('span');
+          loc.className = 'cv-entry-loc'; loc.textContent = job.loc;
+          entryRow.appendChild(period); entryRow.appendChild(loc);
+          block.appendChild(entryRow);
+        });
+
+        if (g.entries[0].hi && g.entries[0].hi.length) {
+          const ul = document.createElement('ul');
+          ul.className = 'cv-highlights';
+          g.entries[0].hi.forEach(h => {
+            const li = document.createElement('li'); li.textContent = h; ul.appendChild(li);
+          });
+          block.appendChild(ul);
+        }
+        entries.appendChild(block);
+      });
+
+      cvGroup.appendChild(entries);
+      cvGrid.appendChild(cvGroup);
+    });
+
+    document.body.appendChild(cvSection);
+  })
+  .catch(err => {
+    gantt.textContent = 'Could not load CV data: ' + err.message;
+  });
+
+function buildFooter(data) {
+  const footer = document.querySelector('.footer-row');
+  if (!footer) return;
+  footer.innerHTML = '';
+
+  // Languages
+  if (data.languages && data.languages.length) {
+    const flagFiles = { Dutch:'nl', English:'gb', French:'fr', Italian:'it', German:'de', Spanish:'es' };
+    const lb = document.createElement('div'); lb.className = 'footer-block';
+    const ll = document.createElement('div'); ll.className = 'footer-label'; ll.textContent = 'Languages';
+    const list = document.createElement('div'); list.className = 'lang-list';
+    data.languages.forEach(l => {
+      const item = document.createElement('div'); item.className = 'lang-item';
+      const flagCode = flagFiles[l.language] || '';
+      const flagHtml = flagCode
+        ? `<img class="flag" src="img/${flagCode}.gif" alt="${l.language}">`
+        : '';
+      item.innerHTML = flagHtml + ' ' + l.language +
+        ' <span class="lang-level">' + l.fluency + '</span>';
+      list.appendChild(item);
+    });
+    lb.appendChild(ll); lb.appendChild(list); footer.appendChild(lb);
+  }
+
+  // Education
+  if (data.education && data.education.length) {
+    const eb = document.createElement('div'); eb.className = 'footer-block';
+    const el = document.createElement('div'); el.className = 'footer-label'; el.textContent = 'Education';
+    data.education.forEach(e => {
+      const item = document.createElement('div'); item.className = 'lang-item';
+      item.textContent = e.studyType + ' ' + e.area + ' · ' + e.institution + ' · ' +
+        new Date(e.endDate).getFullYear();
+      eb.appendChild(item);
+    });
+    eb.prepend(el); footer.appendChild(eb);
+  }
+
+  // Skills
+  const sb = document.createElement('div'); sb.className = 'footer-block';
+  const sl = document.createElement('div'); sl.className = 'footer-label'; sl.textContent = 'Skills';
+  const skills = [
+    'Customer orientated',
+    'Versatile',
+    'Team spirit',
+    'Organizational capabilities',
+    'Reliable',
+    'Flexible',
+    'Business intelligence',
+    'Design / infographics',
+  ];
+  skills.forEach(s => {
+    const item = document.createElement('div'); item.className = 'lang-item';
+    item.textContent = s;
+    sb.appendChild(item);
+  });
+  sb.prepend(sl); footer.appendChild(sb);
+}
+
+function moveTooltip(e) {
+  if (window.innerWidth <= 768) return; // CSS handles centering on mobile
+  const tw = 280;
+  const left = e.clientX+16+tw > window.innerWidth ? e.clientX-tw-16 : e.clientX+16;
+  tooltip.style.left = left+'px';
+  tooltip.style.top  = (e.clientY+14)+'px';
+}
+</script>
+</body>
+</html>

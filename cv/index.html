@@ -3,216 +3,397 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Work experience — René Smit</title>
+<title>CV — René Smit</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+
+<!-- version history
+# version : 20260531-120000 - Initial version: single-column Word-ready CV (static)
+# version : 20260531-120500 - Merged Eurocamp seasons
+# version : 20260531-130000 - Fully dynamic from GitHub JSON
+# version : 20260531-140000 - Added Gantt chart section
+# version : 20260531-150000 - Two-column layout: sidebar (photo, info, languages, skills) + main (work, education, gantt)
+# version : 20260531-151000 - Neutral light sidebar background, divider line between columns
+# version : 20260531-152000 - Print: all backgrounds white, no color printing
+# version : 20260531-153000 - Larger font sizes throughout (~14px body online, 11pt on paper)
+# version : 20260531-154000 - UITGEBREID flag: compact shows "Summer YYYY, YYYY" for summer-only jobs
+# version : 20260531-155000 - Fix summer year overflow: split onto two lines, allow wrapping
+# version : 20260531-160000 - Compact mode: merge Hotel Papendal/68 Degrees/JMW into one Winter block
+# version : 20260531-161000 - Split winter block into contiguous clusters (2004-2006 and 2012-2014 separate)
+# version : 20260531-162000 - Winter: one block, two period lines stacked in date column
+# version : 20260531-170000 - Added Save as DOCX and Save as PDF buttons; docx built client-side via docx.js CDN
+# version : 20260531-171000 - Remove 'Waiter' label text from Gantt bars
+# version : 20260531-172000 - Removed export buttons (save as docx/pdf)
+-->
+<script>const current_version = "20260531-172000";</script>
+
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --font: 'DM Sans', system-ui, sans-serif;
-  --bg: #ffffff;
-  --bg-secondary: #f7f6f3;
-  --text-primary: #1a1a1a;
-  --text-secondary: #555550;
-  --text-tertiary: #999994;
-  --border: rgba(0,0,0,0.10);
-  --border-strong: rgba(0,0,0,0.22);
-  --label-w: 120px;
+  --font-body:    'DM Sans', system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+
+  --bg:           #f2ede6;
+  --paper:        #ffffff;
+  --sidebar-bg:   #f0ece4;
+  --sidebar-text: #2a2a28;
+  --sidebar-mid:  #6a6a64;
+  --sidebar-rule: rgba(0,0,0,0.10);
+  --sidebar-accent: #8a6020;
+
+  --ink:          #1c1c1a;
+  --ink-mid:      #4a4a46;
+  --ink-light:    #8a8a84;
+  --accent:       #b5823a;
+  --accent-soft:  #f0e8d8;
+  --rule:         rgba(0,0,0,0.09);
+  --rule-strong:  rgba(0,0,0,0.18);
+
+  --sidebar-w:    240px;
+  --label-w:      130px;
+  --max-w:        1020px;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1a1a1a;
-    --gantt: #f4f4f4;
-    --bg-secondary: #242424;
-    --text-primary: #e0e0da;
-    --text-secondary: #a0a09a;
-    --text-tertiary: #606060;
-    --border: rgba(0, 0, 0, 0.7);
-    --border-strong: rgba(0,0,0,0.9);
-  }
 
-  .gantt { background: var(--gantt); }
-}
-
-html, body { width: 100%; overflow-x: hidden; }
-
-body {
-  font-family: var(--font);
+html, body {
   background: var(--bg);
-  color: var(--text-primary);
-  padding: 2rem 2rem 3rem;
+  font-family: var(--font-body);
+  color: var(--ink);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+body {
+  padding: 2.5rem 1.5rem 5rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
-.title-row { display: flex; align-items: baseline; gap: 14px; margin-bottom: 1.75rem; }
-.title-row h1 { font-size: 22px; font-weight: 500; color: var(--text-primary); }
-.title-row span { font-size: 13px; color: var(--text-tertiary); }
+/* ── OUTER SHELL ── */
+.cv-shell {
+  width: 100%;
+  max-width: var(--max-w);
+  display: flex;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.13);
+  border-radius: 4px;
+  overflow: hidden;
+}
 
-.gantt { display: block; width: 100%; }
+/* ══════════════════════════════
+   SIDEBAR
+══════════════════════════════ */
+.cv-sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  padding: 2.5rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  border-right: 1px solid rgba(0,0,0,0.13);
+}
 
-.axis-row {
+/* Photo */
+.photo-wrap {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #ddd8ce;
+  border: 1px solid rgba(0,0,0,0.12);
+  position: relative;
+}
+.photo-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.photo-placeholder {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px;
+  color: var(--sidebar-mid);
+}
+.photo-placeholder svg {
+  width: 48px; height: 48px;
+  opacity: 0.35;
+}
+.photo-placeholder span {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.4;
+}
+
+/* Sidebar section */
+.sb-section { display: flex; flex-direction: column; gap: 0.6rem; }
+.sb-title {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sidebar-accent);
+  font-weight: 500;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--sidebar-rule);
+  margin-bottom: 0.25rem;
+}
+.sb-name {
+  font-family: var(--font-display);
+  font-size: 30px; font-weight: 700;
+  color: var(--ink);
+  line-height: 1.15;
+  margin-bottom: 0.15rem;
+}
+.sb-tagline {
+  font-size: 13.5px; font-weight: 300;
+  color: var(--sidebar-mid);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.sb-info-row {
+  display: flex; flex-direction: column; gap: 1px;
+}
+.sb-info-label {
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--sidebar-accent); margin-top: 0.6rem; margin-bottom: 1px;
+}
+.sb-info-val {
+  font-size: 14px; color: var(--sidebar-text); line-height: 1.5;
+}
+
+/* Language bars */
+.lang-row { margin-bottom: 6px; }
+.lang-name {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 14px; color: var(--sidebar-text); margin-bottom: 3px;
+}
+.lang-fluency { font-size: 12px; color: var(--sidebar-mid); }
+.lang-bar-bg {
+  height: 3px; background: rgba(0,0,0,0.12); border-radius: 2px; overflow: hidden;
+}
+.lang-bar-fill {
+  height: 100%; background: var(--sidebar-accent); border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+/* Skills pills (sidebar) */
+.sb-skills { display: flex; flex-wrap: wrap; gap: 5px; }
+.sb-skill {
+  font-size: 13px; color: var(--sidebar-mid);
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 2px; padding: 2px 8px; line-height: 1.6;
+}
+
+/* Certificates */
+.sb-cert {
+  font-size: 14px; color: var(--sidebar-mid); line-height: 1.6;
+  padding-left: 10px; position: relative;
+}
+.sb-cert::before { content: '—'; position: absolute; left: 0; color: var(--sidebar-accent); font-size: 11px; top: 3px; }
+
+/* ══════════════════════════════
+   MAIN
+══════════════════════════════ */
+.cv-main {
+  flex: 1;
+  background: var(--paper);
+  padding: 2.5rem 2.5rem 3rem;
+  min-width: 0;
+}
+
+.main-name {
+  font-family: var(--font-display);
+  font-size: 42px; font-weight: 600;
+  letter-spacing: -0.01em; color: var(--ink); line-height: 1.1;
+}
+.main-tagline {
+  margin-top: 0.4rem; font-size: 15px;
+  color: var(--ink-mid); font-weight: 300; letter-spacing: 0.02em;
+}
+.main-header {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+/* Section */
+.section { margin-bottom: 2.5rem; }
+.section-title {
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent); font-weight: 500;
+  margin-bottom: 1.1rem; padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--accent-soft);
+}
+
+/* Work entries */
+.work-entries { display: flex; flex-direction: column; gap: 1.5rem; }
+.work-entry {
+  display: grid; grid-template-columns: var(--label-w) 1fr;
+  gap: 0 1.25rem; align-items: start;
+}
+.work-meta { padding-top: 2px; text-align: right; }
+.work-period { font-size: 13px; color: var(--ink-light); line-height: 1.5; white-space: normal; word-break: break-word; }
+.work-seasons-badge { font-size: 12px; color: var(--ink-light); margin-top: 1px; }
+.work-title { font-size: 16px; font-weight: 500; color: var(--ink); line-height: 1.3; }
+.work-company { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; }
+.work-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.work-company-name { font-size: 14.5px; color: var(--ink-mid); font-weight: 400; }
+.work-loc { font-size: 13.5px; color: var(--ink-light); margin-top: 1px; }
+.work-sub-periods { font-size: 13px; color: var(--ink-light); margin-top: 3px; font-style: italic; }
+.work-highlights { margin-top: 5px; list-style: none; display: flex; flex-direction: column; gap: 1px; }
+.work-highlights li {
+  font-size: 14px; color: var(--ink-mid);
+  padding-left: 12px; position: relative; line-height: 1.5;
+}
+.work-highlights li::before {
+  content: '—'; position: absolute; left: 0;
+  color: var(--accent); font-size: 11px; top: 3px;
+}
+
+/* Education */
+.edu-entry { display: grid; grid-template-columns: var(--label-w) 1fr; gap: 0 1.25rem; }
+.edu-year { font-size: 13px; color: var(--ink-light); padding-top: 2px; text-align: right; }
+.edu-title { font-size: 16px; font-weight: 500; color: var(--ink); }
+.edu-inst  { font-size: 14px; color: var(--ink-mid); margin-top: 1px; }
+
+/* ── GANTT ── */
+.gantt-wrap { width: 100%; }
+.gantt-axis-row {
   display: flex;
   margin-left: var(--label-w);
-  border-bottom: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--rule-strong);
 }
-.axis-year {
-  flex-shrink: 0;
-  font-size: 11px;
-  color: var(--text-tertiary);
-  padding-bottom: 5px;
-  border-left: 1px solid var(--border);
-  padding-left: 4px;
-  font-family: var(--font);
+.gantt-axis-year {
+  flex-shrink: 0; font-size: 12px; color: var(--ink-light);
+  padding-bottom: 3px; padding-left: 3px;
+  border-left: 1px solid var(--rule);
+  font-family: var(--font-body);
 }
-
-.row { display: flex; align-items: center; min-height: 40px; border-bottom: 1px solid var(--border); }
-.row:last-child { border-bottom: none; }
-
-.row-label {
-  flex-shrink: 0;
-  width: var(--label-w);
-  padding-right: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+.gantt-row {
+  display: flex; align-items: center;
+  min-height: 32px; border-bottom: 1px solid var(--rule);
 }
-.row-label img { max-width: 90px; max-height: 26px; object-fit: contain; display: block; }
-.row-label .fallback { font-size: 11px; color: var(--text-secondary); text-align: right; font-family: var(--font); }
-
-.bars-area { flex: 1; position: relative; height: 40px; min-width: 0; }
-
-.grid-line { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border); pointer-events: none; }
-
-.row.group-camping  { background: #fffdf0; }
-.row.group-hospitality { background: #fff5f5; }
-
-@media (prefers-color-scheme: dark) {
-  .row.group-camping     { background: #fefcd48c; }
-  .row.group-hospitality { background: #fefcd48c; }
+.gantt-row:last-child { border-bottom: none; }
+.gantt-row.group-camping     { background: #fffef5; }
+.gantt-row.group-hospitality { background: #fff8f8; }
+.gantt-label {
+  flex-shrink: 0; width: var(--label-w);
+  padding-right: 8px; font-size: 12.5px; color: var(--ink-mid);
+  text-align: right; line-height: 1.3; font-family: var(--font-body);
 }
-
-.bar {
-  position: absolute;
-  top: 50%; transform: translateY(-50%);
-  height: 16px; border-radius: 8px;
-  cursor: pointer;
-  transition: height 0.15s, filter 0.15s;
+.gantt-bars { flex: 1; position: relative; height: 32px; min-width: 0; }
+.gantt-grid-line {
+  position: absolute; top: 0; bottom: 0;
+  width: 1px; background: var(--rule); pointer-events: none;
+}
+.gantt-bar {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  height: 12px; border-radius: 6px;
+  cursor: pointer; transition: height 0.15s, filter 0.15s;
   display: flex; align-items: center; overflow: hidden; min-width: 2px;
 }
-.bar:hover { height: 24px; filter: brightness(1.12); z-index: 10; }
-
-.bar-label {
-  font-size: 10px; font-weight: 500;
+.gantt-bar:hover { height: 20px; filter: brightness(1.1); z-index: 10; }
+.gantt-bar-label {
+  font-size: 11px; font-weight: 500;
   white-space: nowrap; overflow: hidden; text-overflow: clip;
-  padding: 0 8px; pointer-events: none; font-family: var(--font);
+  padding: 0 6px; pointer-events: none; font-family: var(--font-body);
 }
-.bar.too-narrow .bar-label { visibility: hidden; }
+.gantt-bar.too-narrow .gantt-bar-label { visibility: hidden; }
 
-.cv-section { margin-top: 3rem; border-top: 1px solid var(--border-strong); padding-top: 2rem; }
-.cv-section-title { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 1.5rem; font-family: var(--font); }
-.cv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2.5rem; }
-@media (max-width: 600px) { .cv-grid { grid-template-columns: 1fr; } }
-.cv-group { margin-bottom: 2.25rem; break-inside: avoid; }
-.cv-group-header { display: flex; align-items: center; gap: 10px; margin-bottom: 0.6rem; }
-.cv-group-dot { width: 12px; height: 12px; border-radius: 6px; flex-shrink: 0; }
-.cv-group-name { font-size: 16px; font-weight: 500; color: var(--text-primary); font-family: var(--font); }
-.cv-entries { margin-left: 22px; display: flex; flex-direction: column; gap: 0.9rem; }
-.cv-entry-period { font-size: 12px; color: var(--text-tertiary); font-family: var(--font); white-space: nowrap; }
-.cv-entry-title { font-size: 13px; font-weight: 500; color: var(--text-secondary); font-family: var(--font); }
-.cv-entry-loc { font-size: 12px; color: var(--text-tertiary); font-family: var(--font); }
-.cv-highlights { margin-top: 3px; list-style: none; }
-.cv-highlights li { font-size: 12px; color: var(--text-tertiary); padding-left: 12px; position: relative; line-height: 1.6; }
-.cv-highlights li::before { content: '·'; position: absolute; left: 3px; }
-
-.tooltip {
-  position: fixed;
-  background: var(--bg);
-  border: 1px solid var(--border-strong);
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 12px; line-height: 1.6;
-  z-index: 1000; min-width: 210px; max-width: 270px;
+/* Tooltip */
+.cv-tooltip {
+  position: fixed; background: var(--paper);
+  border: 1px solid var(--rule-strong); border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; line-height: 1.6;
+  z-index: 1000; min-width: 200px; max-width: 260px;
   pointer-events: none; opacity: 0; transition: opacity 0.12s;
-  font-family: var(--font);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  font-family: var(--font-body); box-shadow: 0 4px 16px rgba(0,0,0,0.10);
 }
-.tooltip.visible { opacity: 1; }
-.tooltip-title { font-weight: 500; font-size: 13px; color: var(--text-primary); margin-bottom: 2px; }
-.tooltip-sub { color: var(--text-secondary); }
-.tooltip-loc { color: var(--text-tertiary); font-size: 11px; }
-.tooltip-period { color: var(--text-tertiary); font-size: 11px; margin-top: 1px; }
-.tooltip-hi { margin-top: 7px; border-top: 1px solid var(--border); padding-top: 7px; list-style: none; }
-.tooltip-hi li { color: var(--text-secondary); padding-left: 12px; position: relative; font-size: 11px; }
-.tooltip-hi li::before { content: '·'; position: absolute; left: 3px; color: var(--text-tertiary); }
+.cv-tooltip.visible { opacity: 1; }
+.cv-tooltip-title  { font-weight: 500; font-size: 15px; color: var(--ink); margin-bottom: 1px; }
+.cv-tooltip-sub    { color: var(--ink-mid); font-size: 14px; }
+.cv-tooltip-loc    { color: var(--ink-light); font-size: 13px; }
+.cv-tooltip-period { color: var(--ink-light); font-size: 13px; margin-top: 1px; }
+.cv-tooltip-hi     { margin-top: 7px; border-top: 1px solid var(--rule); padding-top: 6px; list-style: none; }
+.cv-tooltip-hi li  { color: var(--ink-mid); padding-left: 12px; position: relative; font-size: 13px; }
+.cv-tooltip-hi li::before { content: '·'; position: absolute; left: 3px; color: var(--ink-light); }
 
-/* Mobile: center tooltip on screen */
 @media (max-width: 768px) {
-  .tooltip {
-    position: fixed;
-    left: 50% !important;
-    top: 50% !important;
-    transform: translate(-50%, -50%);
-    max-width: 85vw;
-    min-width: 240px;
-    pointer-events: none;
+  .cv-tooltip {
+    position: fixed; left: 50% !important; top: 50% !important;
+    transform: translate(-50%,-50%); max-width: 85vw; min-width: 220px;
   }
 }
 
-.footer-row { margin-top: 1.75rem; padding-left: var(--label-w); display: flex; gap: 2.5rem; flex-wrap: wrap; }
-.footer-block { display: flex; flex-direction: column; gap: 6px; }
-.footer-label { font-size: 10px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-tertiary); font-family: var(--font); }
-.lang-list { display: flex; gap: 10px; flex-wrap: wrap; }
-.lang-item { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; font-family: var(--font); }
-.lang-item img.flag { width: 16px; height: 11px; object-fit: cover; vertical-align: middle; flex-shrink: 0; }
-.lang-level { font-size: 10px; color: var(--text-tertiary); }
+/* Loading / error */
+.loading { text-align: center; padding: 4rem 2rem; font-size: 15px; color: var(--ink-light); font-style: italic; }
+.error { background: #fff0f0; border: 1px solid #f5c0c0; border-radius: 6px; padding: 1rem 1.25rem; font-size: 15px; color: #a03030; }
+
+/* Responsive: stack on small screens */
+@media (max-width: 640px) {
+  body { padding: 0; }
+  .cv-shell { flex-direction: column; border-radius: 0; }
+  .cv-sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; padding: 1.5rem; gap: 1.25rem; }
+  .photo-wrap { width: 100px; height: 100px; flex-shrink: 0; }
+  .cv-main { padding: 1.5rem; }
+  :root { --label-w: 80px; }
+}
+
+@media print {
+  body { background: white !important; padding: 0; }
+  .cv-shell { box-shadow: none; border-radius: 0; }
+  .cv-sidebar { background: white !important; -webkit-print-color-adjust: economy; print-color-adjust: economy; }
+  .cv-main { background: white !important; }
+  .gantt-row.group-camping, .gantt-row.group-hospitality { background: white !important; }
+  .photo-wrap { background: #eee !important; }
+  .cv-tooltip { display: none; }
+
+  /* 11pt body → scale everything relative to that */
+  .work-highlights li, .work-sub-periods, .work-loc      { font-size: 10pt !important; }
+  .work-period, .work-seasons-badge, .edu-year           { font-size: 9pt  !important; }
+  .work-title, .edu-title                                { font-size: 12pt !important; }
+  .work-company-name                                     { font-size: 11pt !important; }
+  .section-title                                         { font-size: 8pt  !important; }
+  .main-name                                             { font-size: 26pt !important; }
+  .main-tagline                                          { font-size: 10pt !important; }
+  .sb-name                                               { font-size: 18pt !important; }
+  .sb-tagline, .sb-info-val, .lang-name, .sb-skill       { font-size: 9pt  !important; }
+  .sb-title, .sb-info-label                              { font-size: 7pt  !important; }
+  .gantt-label, .gantt-axis-year, .gantt-bar-label       { font-size: 8pt  !important; }
+}
 </style>
 </head>
 <body>
 
-<div class="title-row">
-  <h1>Work experience — René Smit</h1>
-  <span>2001 – 2025</span>
+<div class="cv-shell" id="cv-shell">
+  <div class="loading" style="padding:4rem;width:100%;text-align:center;">Loading CV…</div>
 </div>
-
-<div class="gantt" id="gantt"></div>
-
-<div class="footer-row"></div>
-
-<div id="tooltip" class="tooltip"></div>
+<div id="cv-tooltip" class="cv-tooltip"></div>
 
 <script>
-function toDecYear(str) {
-  const p = str.split('-').map(Number);
-  const y = p[0], m = (p[1]||1)-1, d = p[2]||1;
-  const date = new Date(y,m,d), s = new Date(y,0,1), e = new Date(y+1,0,1);
-  return y + (date-s)/(e-s);
-}
+const CV_URL = 'https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/main/input/cv_rene_smit_json_resume.json';
 
-const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function fmtDate(str) {
-  const p = str.split('-').map(Number);
-  if (p.length===1) return ''+p[0];
-  if (p.length===2) return MO[p[1]-1]+' '+p[0];
-  return MO[p[1]-1]+' '+p[2]+', '+p[0];
-}
-function fmtPeriod(s,e) { return fmtDate(s)+' – '+fmtDate(e); }
+// ── DISPLAY MODE ─────────────────────────────────────────────
+// false = compact: summer jobs shown as "Summer YYYY, YYYY, …"
+// true  = uitgebreid: exact month–month dates for every entry
+const UITGEBREID = false;
+// ─────────────────────────────────────────────────────────────
 
 const KNOWN_COLORS = {
-  'eurocamp':              { color:'#FFAD00', textColor:'#042C53' },
-  'vacansoleil':           { color:'#142F5E', textColor:'#04342C' },
-  'selectcamp':            { color:'#A8003B', textColor:'#26215C' },
+  'eurocamp':                 { color:'#FFAD00', textColor:'#042C53' },
+  'vacansoleil':              { color:'#142F5E', textColor:'#ffffff' },
+  'selectcamp':               { color:'#A8003B', textColor:'#ffffff' },
   'camping village fabulous': { color:'#95C225', textColor:'#412402' },
-  'fabulous':              { color:'#95C225', textColor:'#412402' },
-  'disneyland':            { color:'#D4537E', textColor:'#4B1528' },
-  'jmw':                   { color:'#D85A30', textColor:'#4A1B0C' },
-  'hotel papendal':        { color:'#EE7202', textColor:'#4A1B0C' },
-  '68 degrees':            { color:'#ED174F', textColor:'#4A1B0C' },
-  'peeze':                 { color:'#9FC648', textColor:'#2C2C2A' },
+  'disneyland':               { color:'#D4537E', textColor:'#ffffff' },
+  'jmw':                      { color:'#D85A30', textColor:'#ffffff' },
+  'hotel papendal':           { color:'#EE7202', textColor:'#ffffff' },
+  '68 degrees':               { color:'#ED174F', textColor:'#ffffff' },
+  'peeze':                    { color:'#9FC648', textColor:'#2C2C2A' },
 };
-
-const FALLBACK = [
+const FALLBACK_COLORS = [
   { color:'#639922', textColor:'#173404' },
   { color:'#BA7517', textColor:'#412402' },
   { color:'#993556', textColor:'#4B1528' },
@@ -221,343 +402,522 @@ const FALLBACK = [
 ];
 let fallbackIdx = 0;
 
-function slugify(name) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
-}
-
-function getEmpColors(name) {
+function getColor(name) {
   const lower = name.toLowerCase();
   for (const key of Object.keys(KNOWN_COLORS)) {
     if (lower.includes(key)) return KNOWN_COLORS[key];
   }
-  return FALLBACK[fallbackIdx++ % FALLBACK.length];
+  return FALLBACK_COLORS[fallbackIdx++ % FALLBACK_COLORS.length];
 }
 
-const ROW_ORDER = ['eurocamp','vacansoleil','selectcamp','camping village fabulous','disneyland paris','hotel papendal','68 degrees','jmw','koffiebranderij peeze'];
-function rowSortKey(name) {
+// Map CEFR/fluency to 0-1 fill fraction
+const LANG_LEVEL_MAP = {
+  'A1':1/6,'A1/A2':1.5/6,'A2':2/6,'A2/B1':2.5/6,
+  'B1':3/6,'B1/B2':3.5/6,'B2':4/6,'B2/C1':4.5/6,
+  'C1':5/6,'C1/C2':5.5/6,'C2':1
+};
+function langFill(fluency) {
+  return (LANG_LEVEL_MAP[fluency] || 0.5) * 100;
+}
+
+const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function toDecYear(str) {
+  const p = str.split('-').map(Number);
+  const y=p[0], m=(p[1]||1)-1, d=p[2]||1;
+  const date=new Date(y,m,d), s=new Date(y,0,1), e=new Date(y+1,0,1);
+  return y+(date-s)/(e-s);
+}
+function fmtDate(str) {
+  const p = str.split('-').map(Number);
+  if (p.length===1) return ''+p[0];
+  return MO[p[1]-1]+' '+p[0];
+}
+function fmtPeriod(s,e) { return fmtDate(s)+' – '+fmtDate(e); }
+
+// Returns true when a job runs only within the Mar–Oct window of a single year
+function isSummerJob(job) {
+  const s = job.startDate.split('-').map(Number);
+  const e = job.endDate.split('-').map(Number);
+  if (!s[1] || !e[1]) return false;           // year-only dates → not summer
+  if (s[0] !== e[0]) return false;             // spans two calendar years → not summer
+  return s[1] >= 3 && e[1] <= 10;             // Mar–Oct within same year
+}
+
+// For a group of jobs: if compact mode AND all are summer jobs, return
+// "Summer YYYY, YYYY, …" — otherwise fall back to the normal period string.
+function fmtGroupPeriod(jobs) {
+  if (UITGEBREID) return null; // signal: use normal rendering
+  const sorted = [...jobs].sort((a,b) => a.startDate.localeCompare(b.startDate));
+  if (sorted.every(isSummerJob)) {
+    const years = sorted.map(j => j.startDate.split('-')[0]);
+    return 'Summer ' + years.join(', ');
+  }
+  return null; // not all summer → use normal rendering
+}
+
+const ROW_ORDER = [
+  'eurocamp','vacansoleil','selectcamp','camping village fabulous',
+  'disneyland paris','hotel papendal','68 degrees','jmw','koffiebranderij peeze'
+];
+function sortKey(name) {
   const lower = name.toLowerCase();
   const i = ROW_ORDER.findIndex(k => lower.includes(k));
-  return i === -1 ? 999 : i;
+  return i===-1 ? 999 : i;
 }
 
-const CV_ORDER = ['eurocamp','vacansoleil','selectcamp'];
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
 
-const gantt   = document.getElementById('gantt');
-const tooltip = document.getElementById('tooltip');
+/* ════════════════════════
+   SIDEBAR
+════════════════════════ */
+function buildSidebar(data) {
+  const sidebar = el('div', 'cv-sidebar');
 
-fetch('https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/main/input/cv_rene_smit_json_resume.json')
-  .then(r => r.json())
-  .then(data => {
-    const empMap = {};
-    const rowMap = {};
+  // Photo
+  const photoWrap = el('div', 'photo-wrap');
+  const img = document.createElement('img');
+  img.src = 'photo.jpg';
+  img.alt = data.basics.name;
+  img.onerror = function() {
+    this.remove();
+    const ph = el('div', 'photo-placeholder');
+    ph.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      <span>photo.jpg</span>`;
+    photoWrap.appendChild(ph);
+  };
+  photoWrap.appendChild(img);
+  sidebar.appendChild(photoWrap);
 
-    data.work.forEach(job => {
-      const name  = job.name.trim();
-      const key   = slugify(name);
-      if (!empMap[key]) {
-        const colors = getEmpColors(name);
-        empMap[key] = {
-          key,
-          label: name,
-          logo: 'svg/' + key + '.svg',
-          color: colors.color,
-          textColor: colors.textColor,
-        };
-      }
-      if (!rowMap[key]) rowMap[key] = { emp: key, jobs: [] };
-      rowMap[key].jobs.push({
-        start: job.startDate,
-        end:   job.endDate,
-        title: job.position.trim(),
-        loc:   job.location || '',
-        hi:    (job.highlights || []).map(h => h.trim()),
-      });
-    });
+  // Name + tagline block
+  const nameBlock = el('div', 'sb-section');
+  nameBlock.appendChild(el('div', 'sb-name', data.basics.name));
+  if (data.basics.summary) nameBlock.appendChild(el('div', 'sb-tagline', data.basics.summary));
+  sidebar.appendChild(nameBlock);
 
-    const ROWS = Object.values(rowMap).sort((a,b) =>
-      rowSortKey(empMap[a.emp].label) - rowSortKey(empMap[b.emp].label)
-    );
+  // Personal info
+  const infoBlock = el('div', 'sb-section');
+  infoBlock.appendChild(el('div', 'sb-title', 'Personal'));
 
-    const allYears = ROWS.flatMap(r => r.jobs.flatMap(j => [toDecYear(j.start), toDecYear(j.end)]));
-    const YEAR_START = Math.floor(Math.min(...allYears));
-    const YEAR_END = Math.ceil(Math.max(...allYears));
-    const YEAR_COUNT = YEAR_END - YEAR_START;
-
-    function pct(yr)    { return ((yr-YEAR_START)/YEAR_COUNT*100).toFixed(4)+'%'; }
-    function pctW(s,e)  { return ((e-s)/YEAR_COUNT*100).toFixed(4)+'%'; }
-
-    document.querySelector('.title-row span').textContent =
-      YEAR_START + ' – ' + (YEAR_END - 1);
-
-    buildFooter(data);
-
-    // Axis
-    const axisRow = document.createElement('div');
-    axisRow.className = 'axis-row';
-    for (let y = YEAR_START; y < YEAR_END; y++) {
-      const el = document.createElement('div');
-      el.className = 'axis-year';
-      el.style.width = (1/YEAR_COUNT*100).toFixed(4)+'%';
-      el.dataset.year = y;
-      axisRow.appendChild(el);
-    }
-    gantt.appendChild(axisRow);
-
-    function updateAxisLabels() {
-      const barsWidth = gantt.offsetWidth - 120;
-      const pxPerYear = barsWidth / YEAR_COUNT;
-      const useShort  = pxPerYear < 28;
-      const skipOdd   = pxPerYear < 18;
-      axisRow.querySelectorAll('.axis-year').forEach(el => {
-        const y = +el.dataset.year;
-        if (skipOdd && y % 2 !== 0) { el.textContent = ''; }
-        else { el.textContent = useShort ? String(y).slice(2) : String(y); }
-      });
-    }
-    updateAxisLabels();
-    window.addEventListener('resize', updateAxisLabels);
-
-    // Gantt rows
-    ROWS.forEach(row => {
-      const emp = empMap[row.emp];
-      const rowEl = document.createElement('div');
-      rowEl.className = 'row';
-
-      const lowerLabel = empMap[row.emp].label.toLowerCase();
-      const campingGroup    = ['eurocamp','vacansoleil','selectcamp'];
-      const hospitalityGroup = ['hotel papendal','68 degrees','jmw'];
-      if (campingGroup.some(k => lowerLabel.includes(k)))     rowEl.classList.add('group-camping');
-      if (hospitalityGroup.some(k => lowerLabel.includes(k))) rowEl.classList.add('group-hospitality');
-
-      const labelEl = document.createElement('div');
-      labelEl.className = 'row-label';
-      const img = document.createElement('img');
-      img.src = emp.logo; img.alt = emp.label; img.title = emp.label;
-      img.onerror = function() {
-        this.remove();
-        const fb = document.createElement('span');
-        fb.className = 'fallback'; fb.textContent = emp.label;
-        labelEl.appendChild(fb);
-      };
-      labelEl.appendChild(img);
-
-      const barsArea = document.createElement('div');
-      barsArea.className = 'bars-area';
-
-      for (let y = YEAR_START; y < YEAR_END; y++) {
-        const gl = document.createElement('div');
-        gl.className = 'grid-line'; gl.style.left = pct(y);
-        barsArea.appendChild(gl);
-      }
-
-      row.jobs.forEach(job => {
-        const s = toDecYear(job.start), e = toDecYear(job.end);
-        const bar = document.createElement('div');
-        bar.className = 'bar';
-        bar.style.left = pct(s); bar.style.width = pctW(s,e);
-        bar.style.background = emp.color;
-
-        const lbl = document.createElement('span');
-        lbl.className = 'bar-label'; lbl.style.color = emp.textColor;
-        lbl.textContent = job.title;
-        bar.appendChild(lbl);
-
-        const ro = new ResizeObserver(() => {
-          bar.classList.toggle('too-narrow', bar.offsetWidth < lbl.scrollWidth + 16);
-        });
-        ro.observe(bar);
-
-        function showTooltip() {
-          tooltip.innerHTML = `
-            <div class="tooltip-title">${job.title}</div>
-            <div class="tooltip-sub">${emp.label}</div>
-            <div class="tooltip-loc">${job.loc}</div>
-            <div class="tooltip-period">${fmtPeriod(job.start, job.end)}</div>
-            <ul class="tooltip-hi">${job.hi.map(h=>`<li>${h}</li>`).join('')}</ul>`;
-          tooltip.classList.add('visible');
-        }
-
-        bar.addEventListener('mouseenter', ev => { showTooltip(); moveTooltip(ev); });
-        bar.addEventListener('mousemove', moveTooltip);
-        bar.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
-
-        // Touch support for mobile
-        bar.addEventListener('touchstart', ev => {
-          ev.preventDefault();
-          showTooltip();
-        }, { passive: false });
-        bar.addEventListener('touchend', () => {
-          setTimeout(() => tooltip.classList.remove('visible'), 2500);
-        });
-
-        barsArea.appendChild(bar);
-      });
-
-      rowEl.appendChild(labelEl);
-      rowEl.appendChild(barsArea);
-      gantt.appendChild(rowEl);
-    });
-
-    // CV text section
-    const cvSection = document.createElement('div');
-    cvSection.className = 'cv-section';
-    const cvTitleEl = document.createElement('div');
-    cvTitleEl.className = 'cv-section-title';
-    cvTitleEl.textContent = 'Work experience';
-    cvSection.appendChild(cvTitleEl);
-
-    const cvGrid = document.createElement('div');
-    cvGrid.className = 'cv-grid';
-    cvSection.appendChild(cvGrid);
-
-    const campingKeys = CV_ORDER;
-    const otherRows   = ROWS.filter(r => !campingKeys.some(k => empMap[r.emp].label.toLowerCase().includes(k)));
-    const cvRows      = [
-      ...campingKeys.map(k => ROWS.find(r => empMap[r.emp].label.toLowerCase().includes(k))).filter(Boolean),
-      ...otherRows
-    ];
-
-    cvRows.forEach(row => {
-      const emp = empMap[row.emp];
-      const groups = [];
-      row.jobs.forEach(job => {
-        const g = groups.find(g => g.title === job.title);
-        if (g) g.entries.push(job);
-        else   groups.push({ title: job.title, entries: [job] });
-      });
-
-      const cvGroup = document.createElement('div');
-      cvGroup.className = 'cv-group';
-
-      const header = document.createElement('div');
-      header.className = 'cv-group-header';
-      const dot = document.createElement('div');
-      dot.className = 'cv-group-dot'; dot.style.background = emp.color;
-      const name = document.createElement('div');
-      name.className = 'cv-group-name'; name.textContent = emp.label;
-      header.appendChild(dot); header.appendChild(name);
-      cvGroup.appendChild(header);
-
-      const entries = document.createElement('div');
-      entries.className = 'cv-entries';
-
-      groups.forEach(g => {
-        const block = document.createElement('div');
-        const titleRow = document.createElement('div');
-        titleRow.style.cssText = 'display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;';
-        const titleEl = document.createElement('span');
-        titleEl.className = 'cv-entry-title'; titleEl.textContent = g.title;
-        titleRow.appendChild(titleEl);
-
-        if (g.entries.length > 1) {
-          const earliest = g.entries.reduce((a,b) => a.start < b.start ? a : b).start;
-          const latest   = g.entries.reduce((a,b) => a.end   > b.end   ? a : b).end;
-          const isDisney = emp.label.toLowerCase().includes('disneyland');
-          const span = document.createElement('span');
-          span.className = 'cv-entry-period';
-          span.textContent = fmtDate(earliest) + ' – ' + fmtDate(latest) +
-            (isDisney ? '' : ' (' + g.entries.length + ' seasons)');
-          titleRow.appendChild(span);
-        }
-        block.appendChild(titleRow);
-
-        g.entries.forEach(job => {
-          const entryRow = document.createElement('div');
-          entryRow.style.cssText = 'display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-top:2px;';
-          const period = document.createElement('span');
-          period.className = 'cv-entry-period'; period.textContent = fmtPeriod(job.start, job.end);
-          const loc = document.createElement('span');
-          loc.className = 'cv-entry-loc'; loc.textContent = job.loc;
-          entryRow.appendChild(period); entryRow.appendChild(loc);
-          block.appendChild(entryRow);
-        });
-
-        if (g.entries[0].hi && g.entries[0].hi.length) {
-          const ul = document.createElement('ul');
-          ul.className = 'cv-highlights';
-          g.entries[0].hi.forEach(h => {
-            const li = document.createElement('li'); li.textContent = h; ul.appendChild(li);
-          });
-          block.appendChild(ul);
-        }
-        entries.appendChild(block);
-      });
-
-      cvGroup.appendChild(entries);
-      cvGrid.appendChild(cvGroup);
-    });
-
-    document.body.appendChild(cvSection);
-  })
-  .catch(err => {
-    gantt.textContent = 'Could not load CV data: ' + err.message;
+  const fields = [
+    ['Nationality', data.basics.nationality],
+    ['Born', data.basics.birthDate ? new Date(data.basics.birthDate).toLocaleDateString('en-GB', {day:'numeric',month:'long',year:'numeric'}) : null],
+    ['Location', data.basics.location ? data.basics.location.countryCode : null],
+  ];
+  fields.forEach(([label, val]) => {
+    if (!val) return;
+    infoBlock.appendChild(el('div', 'sb-info-label', label));
+    infoBlock.appendChild(el('div', 'sb-info-val', val));
   });
-
-function buildFooter(data) {
-  const footer = document.querySelector('.footer-row');
-  if (!footer) return;
-  footer.innerHTML = '';
+  sidebar.appendChild(infoBlock);
 
   // Languages
   if (data.languages && data.languages.length) {
-    const flagFiles = { Dutch:'nl', English:'gb', French:'fr', Italian:'it', German:'de', Spanish:'es' };
-    const lb = document.createElement('div'); lb.className = 'footer-block';
-    const ll = document.createElement('div'); ll.className = 'footer-label'; ll.textContent = 'Languages';
-    const list = document.createElement('div'); list.className = 'lang-list';
+    const langBlock = el('div', 'sb-section');
+    langBlock.appendChild(el('div', 'sb-title', 'Languages'));
     data.languages.forEach(l => {
-      const item = document.createElement('div'); item.className = 'lang-item';
-      const flagCode = flagFiles[l.language] || '';
-      const flagHtml = flagCode
-        ? `<img class="flag" src="img/${flagCode}.gif" alt="${l.language}">`
-        : '';
-      item.innerHTML = flagHtml + ' ' + l.language +
-        ' <span class="lang-level">' + l.fluency + '</span>';
-      list.appendChild(item);
+      const row = el('div', 'lang-row');
+      const nameRow = el('div', 'lang-name');
+      nameRow.appendChild(document.createTextNode(l.language));
+      nameRow.appendChild(el('span', 'lang-fluency', l.fluency));
+      row.appendChild(nameRow);
+      const bg = el('div', 'lang-bar-bg');
+      const fill = el('div', 'lang-bar-fill');
+      fill.style.width = langFill(l.fluency) + '%';
+      bg.appendChild(fill);
+      row.appendChild(bg);
+      langBlock.appendChild(row);
     });
-    lb.appendChild(ll); lb.appendChild(list); footer.appendChild(lb);
-  }
-
-  // Education
-  if (data.education && data.education.length) {
-    const eb = document.createElement('div'); eb.className = 'footer-block';
-    const el = document.createElement('div'); el.className = 'footer-label'; el.textContent = 'Education';
-    data.education.forEach(e => {
-      const item = document.createElement('div'); item.className = 'lang-item';
-      item.textContent = e.studyType + ' ' + e.area + ' · ' + e.institution + ' · ' +
-        new Date(e.endDate).getFullYear();
-      eb.appendChild(item);
-    });
-    eb.prepend(el); footer.appendChild(eb);
+    sidebar.appendChild(langBlock);
   }
 
   // Skills
-  const sb = document.createElement('div'); sb.className = 'footer-block';
-  const sl = document.createElement('div'); sl.className = 'footer-label'; sl.textContent = 'Skills';
-  const skills = [
-    'Customer orientated',
-    'Versatile',
-    'Team spirit',
-    'Organizational capabilities',
-    'Reliable',
-    'Flexible',
-    'Business intelligence',
-    'Design / infographics',
-  ];
-  skills.forEach(s => {
-    const item = document.createElement('div'); item.className = 'lang-item';
-    item.textContent = s;
-    sb.appendChild(item);
-  });
-  sb.prepend(sl); footer.appendChild(sb);
+  const skillNames = (data.skills || []).map(s => s.name);
+  if (skillNames.length) {
+    const skillBlock = el('div', 'sb-section');
+    skillBlock.appendChild(el('div', 'sb-title', 'Skills'));
+    const pills = el('div', 'sb-skills');
+    skillNames.forEach(s => pills.appendChild(el('span', 'sb-skill', s)));
+    skillBlock.appendChild(pills);
+    sidebar.appendChild(skillBlock);
+  }
+
+  // Certificates
+  if (data.certificates && data.certificates.length) {
+    const certBlock = el('div', 'sb-section');
+    certBlock.appendChild(el('div', 'sb-title', 'Certificates'));
+    data.certificates.forEach(c => certBlock.appendChild(el('div', 'sb-cert', c.name)));
+    sidebar.appendChild(certBlock);
+  }
+
+  return sidebar;
 }
 
+/* ════════════════════════
+   WORK SECTION
+════════════════════════ */
+// Employers that get merged into one "Winter hospitality" block in compact mode
+const WINTER_KEYS = ['hotel papendal', '68 degrees', 'jmw'];
+function isWinterEmp(name) { return WINTER_KEYS.some(k => name.toLowerCase().includes(k)); }
+
+/* Render one work entry (shared by normal path and winter-merged path) */
+function renderEntry(jobs, empName, empColor, entries) {
+  const earliest   = jobs.reduce((a,b) => a.startDate < b.startDate ? a : b);
+  const latest     = jobs.reduce((a,b) => a.endDate   > b.endDate   ? a : b);
+  const isMulti    = jobs.length > 1;
+  const locs       = [...new Set(jobs.map(j=>(j.location||'').trim()).filter(Boolean))];
+  const highlights = (earliest.highlights||[]).map(h=>h.trim()).filter(Boolean);
+  const title      = jobs[0].position.trim();
+
+  const entry = el('div', 'work-entry');
+  const meta  = el('div', 'work-meta');
+
+  const summerStr = fmtGroupPeriod(jobs);
+  if (summerStr) {
+    const years = [...jobs].sort((a,b)=>a.startDate.localeCompare(b.startDate))
+      .map(j=>j.startDate.split('-')[0]);
+    const lbl = el('div', 'work-period');
+    lbl.innerHTML =
+      '<span style="display:block;font-size:0.85em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.7;">Summer</span>'
+      +'<span style="display:block;">'+years.join(', ')+'</span>';
+    meta.appendChild(lbl);
+  } else {
+    meta.appendChild(el('div', 'work-period', fmtPeriod(earliest.startDate, latest.endDate)));
+    if (isMulti) meta.appendChild(el('div', 'work-seasons-badge', `(${jobs.length} seasons)`));
+  }
+  entry.appendChild(meta);
+
+  const body = el('div', 'work-body');
+  body.appendChild(el('div', 'work-title', title));
+  const companyRow = el('div', 'work-company');
+  const dot = el('span', 'work-dot');
+  dot.style.background = empColor.color;
+  companyRow.appendChild(dot);
+  companyRow.appendChild(el('span', 'work-company-name', empName));
+  body.appendChild(companyRow);
+  if (locs.length) body.appendChild(el('div', 'work-loc', locs.join(' · ')));
+  if (isMulti && (UITGEBREID || !summerStr)) {
+    const sorted = [...jobs].sort((a,b)=>a.startDate.localeCompare(b.startDate));
+    body.appendChild(el('div', 'work-sub-periods',
+      sorted.map(j=>fmtPeriod(j.startDate, j.endDate)).join(' · ')
+    ));
+  }
+  if (highlights.length) {
+    const ul = el('ul', 'work-highlights');
+    highlights.forEach(h => ul.appendChild(el('li', null, h)));
+    body.appendChild(ul);
+  }
+  entry.appendChild(body);
+  entries.appendChild(entry);
+}
+
+/* Build merged "Winter hospitality" entry for compact mode */
+function renderWinterBlock(winterEmps, entries) {
+  // Collect all jobs sorted by start date
+  const allJobs = winterEmps.flatMap(emp =>
+    emp.jobs.map(j => ({ ...j, empName: emp.name, empColor: emp.color }))
+  ).sort((a,b) => a.startDate.localeCompare(b.startDate));
+
+  // Split into contiguous clusters to get the distinct year-range strings
+  const clusters = [];
+  allJobs.forEach(job => {
+    const startY = parseInt(job.startDate.split('-')[0]);
+    const last   = clusters[clusters.length - 1];
+    if (!last) { clusters.push([job]); return; }
+    const lastEndY = parseInt(last[last.length - 1].endDate.split('-')[0]);
+    if (startY - lastEndY > 1) clusters.push([job]);
+    else last.push(job);
+  });
+
+  const highlights = (allJobs[0].highlights||[]).map(h=>h.trim()).filter(Boolean);
+
+  const entry = el('div', 'work-entry');
+  const meta  = el('div', 'work-meta');
+
+  // One "WINTER" label + one line per cluster period
+  const periodLbl = el('div', 'work-period');
+  let html = '<span style="display:block;font-size:0.85em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.7;">Winter</span>';
+  clusters.forEach(cluster => {
+    const firstYear = cluster[0].startDate.split('-')[0];
+    const lastYear  = cluster[cluster.length - 1].endDate.split('-')[0];
+    const range = firstYear === lastYear ? firstYear : firstYear + ' – ' + lastYear;
+    html += '<span style="display:block;">' + range + '</span>';
+  });
+  periodLbl.innerHTML = html;
+  meta.appendChild(periodLbl);
+  entry.appendChild(meta);
+
+  const body = el('div', 'work-body');
+  body.appendChild(el('div', 'work-title', 'Waiter / hospitality'));
+
+  // All employers with their dots
+  const companyRow = el('div', 'work-company');
+  companyRow.style.flexWrap = 'wrap';
+  companyRow.style.gap = '6px';
+  winterEmps.forEach((emp, i) => {
+    if (i > 0) companyRow.appendChild(document.createTextNode(' · '));
+    const dot = el('span', 'work-dot');
+    dot.style.background = emp.color.color;
+    companyRow.appendChild(dot);
+    companyRow.appendChild(el('span', 'work-company-name', emp.name));
+  });
+  body.appendChild(companyRow);
+  body.appendChild(el('div', 'work-loc', 'Arnhem, Netherlands'));
+
+  if (highlights.length) {
+    const ul = el('ul', 'work-highlights');
+    highlights.forEach(h => ul.appendChild(el('li', null, h)));
+    body.appendChild(ul);
+  }
+
+  entry.appendChild(body);
+  entries.appendChild(entry);
+}
+
+function buildWorkSection(workData) {
+  const empMap = {};
+  workData.forEach(job => {
+    const name = job.name.trim();
+    if (!empMap[name]) empMap[name] = { name, color: getColor(name), jobs: [] };
+    empMap[name].jobs.push(job);
+  });
+  const employers = Object.values(empMap).sort((a,b) => sortKey(a.name) - sortKey(b.name));
+
+  const section = el('section', 'section');
+  section.appendChild(el('div', 'section-title', 'Work Experience'));
+  const entries = el('div', 'work-entries');
+
+  // In compact mode, extract winter employers and render them as one block
+  const winterEmps = !UITGEBREID ? employers.filter(e => isWinterEmp(e.name)) : [];
+  const normalEmps = !UITGEBREID ? employers.filter(e => !isWinterEmp(e.name)) : employers;
+  let winterInserted = false;
+
+  normalEmps.forEach(emp => {
+    // Insert the merged winter block at the position of the first winter employer in sort order
+    if (!UITGEBREID && !winterInserted && winterEmps.length > 0) {
+      const firstWinterIdx = employers.findIndex(e => isWinterEmp(e.name));
+      const currentIdx     = employers.indexOf(emp);
+      if (currentIdx > firstWinterIdx) {
+        renderWinterBlock(winterEmps, entries);
+        winterInserted = true;
+      }
+    }
+
+    // Group jobs by title within employer
+    const titleGroups = [];
+    emp.jobs.forEach(job => {
+      const title = job.position.trim();
+      let g = titleGroups.find(g => g.title === title);
+      if (!g) { g = { title, jobs:[] }; titleGroups.push(g); }
+      g.jobs.push(job);
+    });
+    titleGroups.forEach(group => renderEntry(group.jobs, emp.name, emp.color, entries));
+  });
+
+  // In case winter employers are last (or only employer) — append after loop
+  if (!UITGEBREID && !winterInserted && winterEmps.length > 0) {
+    renderWinterBlock(winterEmps, entries);
+  }
+
+  section.appendChild(entries);
+  return section;
+}
+
+/* ════════════════════════
+   EDUCATION SECTION
+════════════════════════ */
+function buildEducationSection(eduData) {
+  const section = el('section', 'section');
+  section.appendChild(el('div', 'section-title', 'Education'));
+  eduData.forEach(e => {
+    const entry = el('div', 'edu-entry');
+    const startY = e.startDate ? e.startDate.split('-')[0] : '';
+    const endY   = e.endDate   ? e.endDate.split('-')[0]   : '';
+    entry.appendChild(el('div', 'edu-year', startY + ' – ' + endY));
+    const body = el('div');
+    body.appendChild(el('div', 'edu-title', (e.studyType||'') + ' ' + (e.area||'')));
+    body.appendChild(el('div', 'edu-inst',
+      e.institution + (e.courses&&e.courses.length ? ' · '+e.courses.join(', ') : '')
+    ));
+    entry.appendChild(body);
+    section.appendChild(entry);
+  });
+  return section;
+}
+
+/* ════════════════════════
+   GANTT SECTION
+════════════════════════ */
+const tooltip = document.getElementById('cv-tooltip');
+
 function moveTooltip(e) {
-  if (window.innerWidth <= 768) return; // CSS handles centering on mobile
-  const tw = 280;
+  if (window.innerWidth <= 768) return;
+  const tw = 270;
   const left = e.clientX+16+tw > window.innerWidth ? e.clientX-tw-16 : e.clientX+16;
   tooltip.style.left = left+'px';
   tooltip.style.top  = (e.clientY+14)+'px';
 }
+
+function buildGanttSection(workData) {
+  const empMap = {};
+  workData.forEach(job => {
+    const name = job.name.trim();
+    if (!empMap[name]) empMap[name] = { name, color: getColor(name), jobs: [] };
+    empMap[name].jobs.push(job);
+  });
+  const rows = Object.values(empMap).sort((a,b) => sortKey(a.name) - sortKey(b.name));
+
+  const allYears = rows.flatMap(r => r.jobs.flatMap(j => [toDecYear(j.startDate), toDecYear(j.endDate)]));
+  const YEAR_START = Math.floor(Math.min(...allYears));
+  const YEAR_END   = Math.ceil(Math.max(...allYears));
+  const YEAR_COUNT = YEAR_END - YEAR_START;
+
+  function pct(yr)   { return ((yr-YEAR_START)/YEAR_COUNT*100).toFixed(4)+'%'; }
+  function pctW(s,e) { return ((e-s)/YEAR_COUNT*100).toFixed(4)+'%'; }
+
+  const section = el('section', 'section');
+  section.appendChild(el('div', 'section-title', 'Career Timeline'));
+  const wrap = el('div', 'gantt-wrap');
+
+  // Axis
+  const axisRow = el('div', 'gantt-axis-row');
+  for (let y = YEAR_START; y < YEAR_END; y++) {
+    const tick = el('div', 'gantt-axis-year');
+    tick.style.width = (1/YEAR_COUNT*100).toFixed(4)+'%';
+    tick.dataset.year = y;
+    axisRow.appendChild(tick);
+  }
+  wrap.appendChild(axisRow);
+
+  function updateAxisLabels() {
+    const labelW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--label-w')) || 110;
+    const barsWidth = wrap.offsetWidth - labelW;
+    const pxPerYear = barsWidth / YEAR_COUNT;
+    const useShort  = pxPerYear < 28;
+    const skipOdd   = pxPerYear < 18;
+    axisRow.querySelectorAll('.gantt-axis-year').forEach(el => {
+      const y = +el.dataset.year;
+      if (skipOdd && y%2!==0) el.textContent = '';
+      else el.textContent = useShort ? String(y).slice(2) : String(y);
+    });
+  }
+  setTimeout(updateAxisLabels, 0);
+  window.addEventListener('resize', updateAxisLabels);
+
+  const CAMPING_KEYS     = ['eurocamp','vacansoleil','selectcamp'];
+  const HOSPITALITY_KEYS = ['hotel papendal','68 degrees','jmw'];
+
+  rows.forEach(row => {
+    const rowEl = el('div', 'gantt-row');
+    const lower = row.name.toLowerCase();
+    if (CAMPING_KEYS.some(k=>lower.includes(k)))     rowEl.classList.add('group-camping');
+    if (HOSPITALITY_KEYS.some(k=>lower.includes(k))) rowEl.classList.add('group-hospitality');
+
+    rowEl.appendChild(el('div', 'gantt-label', row.name));
+
+    const barsArea = el('div', 'gantt-bars');
+    for (let y = YEAR_START; y < YEAR_END; y++) {
+      const gl = el('div', 'gantt-grid-line');
+      gl.style.left = pct(y);
+      barsArea.appendChild(gl);
+    }
+
+    row.jobs.forEach(job => {
+      const s = toDecYear(job.startDate);
+      const e = toDecYear(job.endDate);
+      const bar = el('div', 'gantt-bar');
+      bar.style.left       = pct(s);
+      bar.style.width      = pctW(s,e);
+      bar.style.background = row.color.color;
+
+      const lbl = el('span', 'gantt-bar-label', job.position.trim().replace(/^waiter.*/i, ''));
+      lbl.style.color = row.color.textColor;
+      bar.appendChild(lbl);
+
+      const ro = new ResizeObserver(() => {
+        bar.classList.toggle('too-narrow', bar.offsetWidth < lbl.scrollWidth + 12);
+      });
+      ro.observe(bar);
+
+      function showTip() {
+        tooltip.innerHTML =
+          `<div class="cv-tooltip-title">${job.position.trim()}</div>` +
+          `<div class="cv-tooltip-sub">${row.name}</div>` +
+          (job.location ? `<div class="cv-tooltip-loc">${job.location}</div>` : '') +
+          `<div class="cv-tooltip-period">${fmtPeriod(job.startDate, job.endDate)}</div>` +
+          ((job.highlights||[]).length
+            ? `<ul class="cv-tooltip-hi">${job.highlights.map(h=>`<li>${h.trim()}</li>`).join('')}</ul>`
+            : '');
+        tooltip.classList.add('visible');
+      }
+
+      bar.addEventListener('mouseenter', ev => { showTip(); moveTooltip(ev); });
+      bar.addEventListener('mousemove',  moveTooltip);
+      bar.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+      bar.addEventListener('touchstart', ev => { ev.preventDefault(); showTip(); }, {passive:false});
+      bar.addEventListener('touchend',   () => setTimeout(() => tooltip.classList.remove('visible'), 2500));
+
+      barsArea.appendChild(bar);
+    });
+
+    rowEl.appendChild(barsArea);
+    wrap.appendChild(rowEl);
+  });
+
+  section.appendChild(wrap);
+  return section;
+}
+
+/* ════════════════════════
+   PAGE BUILDER
+════════════════════════ */
+function buildPage(data) {
+  const shell = document.getElementById('cv-shell');
+  shell.innerHTML = '';
+
+  // Sidebar
+  shell.appendChild(buildSidebar(data));
+
+  // Main column
+  const main = el('div', 'cv-main');
+
+  // Main header (name + tagline repeated large in main area)
+  const header = el('div', 'main-header');
+  header.appendChild(el('div', 'main-name', data.basics.name));
+  const yearStart = data.work.reduce((min,j) => j.startDate<min ? j.startDate : min, '9999').split('-')[0];
+  const yearEnd   = data.work.reduce((max,j) => j.endDate  >max ? j.endDate   : max, '0000').split('-')[0];
+  const tagline = el('div', 'main-tagline');
+  tagline.textContent = (data.basics.summary||'') + '  ·  ' + yearStart + ' – ' + yearEnd;
+  header.appendChild(tagline);
+  main.appendChild(header);
+
+  main.appendChild(buildWorkSection(data.work));
+  if (data.education && data.education.length) main.appendChild(buildEducationSection(data.education));
+  main.appendChild(buildGanttSection(data.work));
+
+  shell.appendChild(main);
+}
+
+/* ════════════════════════
+   FETCH
+════════════════════════ */
+fetch(CV_URL)
+  .then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+  .then(data => buildPage(data))
+  .catch(err => {
+    document.getElementById('cv-shell').innerHTML =
+      `<div class="error" style="padding:2rem;">Could not load CV data: ${err.message}</div>`;
+  });
 </script>
+
 </body>
 </html>
