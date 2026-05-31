@@ -37,8 +37,9 @@
 # version : 20260531-182000 - Prevent date strings from wrapping mid-line (Sep 2001 – Sep 2004)
 # version : 20260531-183000 - Wrap only after en-dash using wbr, not mid-word
 # version : 20260531-184000 - Widen label column to 155px to prevent date wrapping on desktop
+# version : 20260531-185000 - Print page breaks before Skills (sidebar) and Education (main)
 -->
-<script>const current_version = "20260531-184000";</script>
+<script>const current_version = "20260531-185000";</script>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -445,6 +446,7 @@ body {
   .gantt-row.group-camping, .gantt-row.group-hospitality { background: white !important; }
   .photo-wrap { background: #eee !important; }
   .cv-tooltip { display: none; }
+  .print-break-before { break-before: page; }
 
   /* 11pt body → scale everything relative to that */
   .work-highlights li, .work-sub-periods, .work-loc      { font-size: 10pt !important; }
@@ -650,7 +652,7 @@ function buildSidebar(data) {
   // Skills
   const skillNames = (data.skills || []).map(s => s.name);
   if (skillNames.length) {
-    const skillBlock = el('div', 'sb-section');
+    const skillBlock = el('div', 'sb-section print-break-before');
     skillBlock.appendChild(el('div', 'sb-title', 'Skills'));
     const pills = el('div', 'sb-skills');
     skillNames.forEach(s => pills.appendChild(el('span', 'sb-skill', s)));
@@ -943,7 +945,7 @@ function buildWorkSection(workData) {
    EDUCATION SECTION
 ════════════════════════ */
 function buildEducationSection(eduData) {
-  const section = el('section', 'section');
+  const section = el('section', 'section print-break-before');
   section.appendChild(el('div', 'section-title', 'Education'));
   eduData.forEach(e => {
     const entry = el('div', 'edu-entry');
