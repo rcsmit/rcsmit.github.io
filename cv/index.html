@@ -29,8 +29,12 @@
 # version : 20260531-174000 - Fix mobile layout: sidebar single column, hide duplicate name in main
 # version : 20260531-175000 - Personal + Languages 50/50 grid on mobile
 # version : 20260531-176000 - Mobile: photo full-width white bg, nameblock white bg
+# version : 20260531-177000 - Group Eurocamp/Vacansoleil/Selectcamp as one camping block (like winter)
+# version : 20260531-178000 - Camping block: cluster-based ranges (2012-2013, 2016-2025) instead of all years
+# version : 20260531-179000 - Mobile: name+tagline right of photo in a flex row
+# version : 20260531-180000 - Mobile: keep original photo aspect ratio
 -->
-<script>const current_version = "20260531-176000";</script>
+<script>const current_version = "20260531-180000";</script>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -336,7 +340,23 @@ body {
 .loading { text-align: center; padding: 4rem 2rem; font-size: 15px; color: var(--ink-light); font-style: italic; }
 .error { background: #fff0f0; border: 1px solid #f5c0c0; border-radius: 6px; padding: 1rem 1.25rem; font-size: 15px; color: #a03030; }
 
-/* Personal + Languages side by side on mobile */
+/* Photo + name row */
+.photo-name-row {
+  display: contents; /* desktop: items flow normally in sidebar column */
+}
+
+@media (max-width: 640px) {
+  .photo-name-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    background: white;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    width: 100%;
+  }
+}
 @media (max-width: 640px) {
   .sb-personal-lang-grid {
     display: grid;
@@ -364,33 +384,34 @@ body {
     border-right: none;
     border-bottom: 1px solid rgba(0,0,0,0.13);
   }
-  /* Photo: full width, white background, image left-aligned */
+  /* Photo inside the row: natural ratio, fixed width */
   .photo-wrap {
-    width: 100% !important;
+    width: 80px !important;
     height: auto !important;
     aspect-ratio: unset !important;
-    background: white !important;
-    border-radius: 0;
-    border: none;
-    padding: 1.25rem 1.5rem 0.75rem;
-    display: flex;
-    align-items: flex-start;
+    background: #ddd8ce !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(0,0,0,0.10) !important;
+    padding: 0 !important;
+    flex-shrink: 0;
   }
   .photo-wrap img {
-    width: 90px;
-    height: 90px;
-    object-fit: cover;
+    width: 100%;
+    height: auto;
+    display: block;
     border-radius: 4px;
   }
   .photo-placeholder {
-    width: 90px;
-    height: 90px;
+    width: 100%;
+    height: 80px;
   }
-  /* Name block: white background, full width */
+  /* Name block: no extra background/padding — row handles it */
   .sb-section-nameblock {
-    background: white;
-    padding: 0.5rem 1.5rem 1rem;
-    border-bottom: 1px solid rgba(0,0,0,0.08);
+    background: transparent;
+    padding: 0;
+    border-bottom: none;
+    flex: 1;
+    min-width: 0;
   }
   /* Rest of sidebar sections: normal padding */
   .sb-section:not(.sb-section-nameblock) {
@@ -561,13 +582,18 @@ function buildSidebar(data) {
     photoWrap.appendChild(ph);
   };
   photoWrap.appendChild(img);
-  sidebar.appendChild(photoWrap);
+
+  // Photo + name side by side on mobile
+  const photoNameRow = el('div', 'photo-name-row');
+  photoNameRow.appendChild(photoWrap);
 
   // Name + tagline block
   const nameBlock = el('div', 'sb-section sb-section-nameblock');
   nameBlock.appendChild(el('div', 'sb-name', data.basics.name));
   if (data.basics.summary) nameBlock.appendChild(el('div', 'sb-tagline', data.basics.summary));
-  sidebar.appendChild(nameBlock);
+  photoNameRow.appendChild(nameBlock);
+
+  sidebar.appendChild(photoNameRow);
 
   // Personal + Languages: side-by-side on mobile, stacked on desktop
   const plGrid = el('div', 'sb-personal-lang-grid');
@@ -636,10 +662,101 @@ function buildSidebar(data) {
    WORK SECTION
 ════════════════════════ */
 // Employers that get merged into one "Winter hospitality" block in compact mode
-const WINTER_KEYS = ['hotel papendal', '68 degrees', 'jmw'];
-function isWinterEmp(name) { return WINTER_KEYS.some(k => name.toLowerCase().includes(k)); }
+const WINTER_KEYS  = ['hotel papendal', '68 degrees', 'jmw'];
+const CAMPING_KEYS = ['eurocamp', 'vacansoleil', 'selectcamp'];
 
-/* Render one work entry (shared by normal path and winter-merged path) */
+function isWinterEmp(name)  { return WINTER_KEYS.some(k  => name.toLowerCase().includes(k)); }
+function isCampingEmp(name) { return CAMPING_KEYS.some(k => name.toLowerCase().includes(k)); }
+
+/* Generic grouped block renderer (camping reps, winter hospitality, etc.)
+   - label      : "Summer" | "Winter" | null (auto-detect from jobs)
+   - blockTitle : e.g. "Camping representative / courier"
+   - blockLoc   : e.g. "Italy · Netherlands"
+   - emps       : array of { name, color, jobs[] }
+*/
+function renderGroupBlock(emps, blockTitle, blockLoc, entries) {
+  const allJobs = emps.flatMap(emp =>
+    emp.jobs.map(j => ({ ...j, empName: emp.name, empColor: emp.color }))
+  ).sort((a,b) => a.startDate.localeCompare(b.startDate));
+
+  // Determine if all jobs are summer jobs
+  const allSummer = allJobs.every(isSummerJob);
+
+  // Split into contiguous year-clusters
+  const clusters = [];
+  allJobs.forEach(job => {
+    const startY = parseInt(job.startDate.split('-')[0]);
+    const last   = clusters[clusters.length - 1];
+    if (!last) { clusters.push([job]); return; }
+    const lastEndY = parseInt(last[last.length - 1].endDate.split('-')[0]);
+    if (startY - lastEndY > 1) clusters.push([job]);
+    else last.push(job);
+  });
+
+  const highlights = (allJobs[0].highlights||[]).map(h=>h.trim()).filter(Boolean);
+
+  const entry = el('div', 'work-entry');
+  const meta  = el('div', 'work-meta');
+
+  const periodLbl = el('div', 'work-period');
+  let html = '';
+
+  if (!UITGEBREID) {
+    // Always use cluster-based lines so gaps show as separate ranges
+    const labelWord = emps.every(e => isWinterEmp(e.name)) ? 'Winter' : 'Summer';
+    html = '<span style="display:block;font-size:0.85em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.7;">' + labelWord + '</span>';
+    clusters.forEach(cluster => {
+      const fy = cluster[0].startDate.split('-')[0];
+      const ly = cluster[cluster.length - 1].endDate.split('-')[0];
+      html += '<span style="display:block;">' + (fy === ly ? fy : fy + ' \u2013 ' + ly) + '</span>';
+    });
+  } else {
+    // UITGEBREID: exact earliest–latest with seasons badge
+    const earliest = allJobs[0];
+    const latest   = allJobs[allJobs.length - 1];
+    html = '<span style="display:block;">' + fmtPeriod(earliest.startDate, latest.endDate) + '</span>';
+    html += '<span style="display:block;font-size:0.9em;opacity:0.7;">(' + allJobs.length + ' seasons)</span>';
+  }
+
+  periodLbl.innerHTML = html;
+  meta.appendChild(periodLbl);
+  entry.appendChild(meta);
+
+  const body = el('div', 'work-body');
+  body.appendChild(el('div', 'work-title', blockTitle));
+
+  // Multi-dot company row
+  const companyRow = el('div', 'work-company');
+  companyRow.style.flexWrap = 'wrap';
+  companyRow.style.gap = '6px';
+  emps.forEach((emp, i) => {
+    if (i > 0) companyRow.appendChild(document.createTextNode(' · '));
+    const dot = el('span', 'work-dot');
+    dot.style.background = emp.color.color;
+    companyRow.appendChild(dot);
+    companyRow.appendChild(el('span', 'work-company-name', emp.name));
+  });
+  body.appendChild(companyRow);
+
+  if (blockLoc) body.appendChild(el('div', 'work-loc', blockLoc));
+
+  // In UITGEBREID mode: show per-employer sub-periods
+  if (UITGEBREID) {
+    const subLine = allJobs.map(j => fmtPeriod(j.startDate, j.endDate)).join(' · ');
+    body.appendChild(el('div', 'work-sub-periods', subLine));
+  }
+
+  if (highlights.length) {
+    const ul = el('ul', 'work-highlights');
+    highlights.forEach(h => ul.appendChild(el('li', null, h)));
+    body.appendChild(ul);
+  }
+
+  entry.appendChild(body);
+  entries.appendChild(entry);
+}
+
+
 function renderEntry(jobs, empName, empColor, entries) {
   const earliest   = jobs.reduce((a,b) => a.startDate < b.startDate ? a : b);
   const latest     = jobs.reduce((a,b) => a.endDate   > b.endDate   ? a : b);
@@ -690,67 +807,21 @@ function renderEntry(jobs, empName, empColor, entries) {
   entries.appendChild(entry);
 }
 
-/* Build merged "Winter hospitality" entry for compact mode */
+/* Thin wrappers for known groups */
 function renderWinterBlock(winterEmps, entries) {
-  // Collect all jobs sorted by start date
-  const allJobs = winterEmps.flatMap(emp =>
-    emp.jobs.map(j => ({ ...j, empName: emp.name, empColor: emp.color }))
-  ).sort((a,b) => a.startDate.localeCompare(b.startDate));
-
-  // Split into contiguous clusters to get the distinct year-range strings
-  const clusters = [];
-  allJobs.forEach(job => {
-    const startY = parseInt(job.startDate.split('-')[0]);
-    const last   = clusters[clusters.length - 1];
-    if (!last) { clusters.push([job]); return; }
-    const lastEndY = parseInt(last[last.length - 1].endDate.split('-')[0]);
-    if (startY - lastEndY > 1) clusters.push([job]);
-    else last.push(job);
-  });
-
-  const highlights = (allJobs[0].highlights||[]).map(h=>h.trim()).filter(Boolean);
-
-  const entry = el('div', 'work-entry');
-  const meta  = el('div', 'work-meta');
-
-  // One "WINTER" label + one line per cluster period
-  const periodLbl = el('div', 'work-period');
-  let html = '<span style="display:block;font-size:0.85em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.7;">Winter</span>';
-  clusters.forEach(cluster => {
-    const firstYear = cluster[0].startDate.split('-')[0];
-    const lastYear  = cluster[cluster.length - 1].endDate.split('-')[0];
-    const range = firstYear === lastYear ? firstYear : firstYear + ' – ' + lastYear;
-    html += '<span style="display:block;">' + range + '</span>';
-  });
-  periodLbl.innerHTML = html;
-  meta.appendChild(periodLbl);
-  entry.appendChild(meta);
-
-  const body = el('div', 'work-body');
-  body.appendChild(el('div', 'work-title', 'Waiter / hospitality'));
-
-  // All employers with their dots
-  const companyRow = el('div', 'work-company');
-  companyRow.style.flexWrap = 'wrap';
-  companyRow.style.gap = '6px';
-  winterEmps.forEach((emp, i) => {
-    if (i > 0) companyRow.appendChild(document.createTextNode(' · '));
-    const dot = el('span', 'work-dot');
-    dot.style.background = emp.color.color;
-    companyRow.appendChild(dot);
-    companyRow.appendChild(el('span', 'work-company-name', emp.name));
-  });
-  body.appendChild(companyRow);
-  body.appendChild(el('div', 'work-loc', 'Arnhem, Netherlands'));
-
-  if (highlights.length) {
-    const ul = el('ul', 'work-highlights');
-    highlights.forEach(h => ul.appendChild(el('li', null, h)));
-    body.appendChild(ul);
-  }
-
-  entry.appendChild(body);
-  entries.appendChild(entry);
+  renderGroupBlock(winterEmps, 'Waiter / hospitality', 'Arnhem, Netherlands', entries);
+}
+function renderCampingBlock(campingEmps, entries) {
+  const locs = [...new Set(
+    campingEmps.flatMap(e => e.jobs.map(j => (j.location||'').trim()).filter(Boolean))
+      .map(l => {
+        // Simplify to country/region
+        if (l.toLowerCase().includes('italy') || l.toLowerCase().includes('caorle') || l.toLowerCase().includes('rome')) return 'Italy';
+        if (l.toLowerCase().includes('netherlands') || l.toLowerCase().includes('nederland') || l.toLowerCase().includes('sevenum') || l.toLowerCase().includes('nunspeet')) return 'Netherlands';
+        return l;
+      })
+  )];
+  renderGroupBlock(campingEmps, 'Camping representative / courier', locs.join(' · '), entries);
 }
 
 function buildWorkSection(workData) {
@@ -766,36 +837,67 @@ function buildWorkSection(workData) {
   section.appendChild(el('div', 'section-title', 'Work Experience'));
   const entries = el('div', 'work-entries');
 
-  // In compact mode, extract winter employers and render them as one block
-  const winterEmps = !UITGEBREID ? employers.filter(e => isWinterEmp(e.name)) : [];
-  const normalEmps = !UITGEBREID ? employers.filter(e => !isWinterEmp(e.name)) : employers;
-  let winterInserted = false;
+  if (!UITGEBREID) {
+    const winterEmps  = employers.filter(e => isWinterEmp(e.name));
+    const campingEmps = employers.filter(e => isCampingEmp(e.name));
+    const normalEmps  = employers.filter(e => !isWinterEmp(e.name) && !isCampingEmp(e.name));
 
-  normalEmps.forEach(emp => {
-    // Insert the merged winter block at the position of the first winter employer in sort order
-    if (!UITGEBREID && !winterInserted && winterEmps.length > 0) {
-      const firstWinterIdx = employers.findIndex(e => isWinterEmp(e.name));
-      const currentIdx     = employers.indexOf(emp);
-      if (currentIdx > firstWinterIdx) {
+    let winterInserted  = false;
+    let campingInserted = false;
+
+    const firstWinterIdx  = employers.findIndex(e => isWinterEmp(e.name));
+    const firstCampingIdx = employers.findIndex(e => isCampingEmp(e.name));
+
+    normalEmps.forEach(emp => {
+      const currentIdx = employers.indexOf(emp);
+
+      if (!campingInserted && campingEmps.length && currentIdx > firstCampingIdx) {
+        renderCampingBlock(campingEmps, entries);
+        campingInserted = true;
+      }
+      if (!winterInserted && winterEmps.length && currentIdx > firstWinterIdx) {
         renderWinterBlock(winterEmps, entries);
         winterInserted = true;
       }
-    }
 
-    // Group jobs by title within employer
-    const titleGroups = [];
-    emp.jobs.forEach(job => {
-      const title = job.position.trim();
-      let g = titleGroups.find(g => g.title === title);
-      if (!g) { g = { title, jobs:[] }; titleGroups.push(g); }
-      g.jobs.push(job);
+      const titleGroups = [];
+      emp.jobs.forEach(job => {
+        const title = job.position.trim();
+        let g = titleGroups.find(g => g.title === title);
+        if (!g) { g = { title, jobs:[] }; titleGroups.push(g); }
+        g.jobs.push(job);
+      });
+      titleGroups.forEach(group => renderEntry(group.jobs, emp.name, emp.color, entries));
     });
-    titleGroups.forEach(group => renderEntry(group.jobs, emp.name, emp.color, entries));
-  });
 
-  // In case winter employers are last (or only employer) — append after loop
-  if (!UITGEBREID && !winterInserted && winterEmps.length > 0) {
-    renderWinterBlock(winterEmps, entries);
+    if (!campingInserted && campingEmps.length) renderCampingBlock(campingEmps, entries);
+    if (!winterInserted  && winterEmps.length)  renderWinterBlock(winterEmps, entries);
+
+  } else {
+    // UITGEBREID: render camping and winter as individual grouped blocks but with full dates
+    const winterEmps  = employers.filter(e => isWinterEmp(e.name));
+    const campingEmps = employers.filter(e => isCampingEmp(e.name));
+    const normalEmps  = employers.filter(e => !isWinterEmp(e.name) && !isCampingEmp(e.name));
+
+    let winterInserted = false, campingInserted = false;
+    const firstWinterIdx  = employers.findIndex(e => isWinterEmp(e.name));
+    const firstCampingIdx = employers.findIndex(e => isCampingEmp(e.name));
+
+    normalEmps.forEach(emp => {
+      const currentIdx = employers.indexOf(emp);
+      if (!campingInserted && campingEmps.length && currentIdx > firstCampingIdx) { renderCampingBlock(campingEmps, entries); campingInserted = true; }
+      if (!winterInserted  && winterEmps.length  && currentIdx > firstWinterIdx)  { renderWinterBlock(winterEmps, entries);  winterInserted  = true; }
+      const titleGroups = [];
+      emp.jobs.forEach(job => {
+        const title = job.position.trim();
+        let g = titleGroups.find(g => g.title === title);
+        if (!g) { g = { title, jobs:[] }; titleGroups.push(g); }
+        g.jobs.push(job);
+      });
+      titleGroups.forEach(group => renderEntry(group.jobs, emp.name, emp.color, entries));
+    });
+    if (!campingInserted && campingEmps.length) renderCampingBlock(campingEmps, entries);
+    if (!winterInserted  && winterEmps.length)  renderWinterBlock(winterEmps, entries);
   }
 
   section.appendChild(entries);
