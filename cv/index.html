@@ -33,8 +33,12 @@
 # version : 20260531-178000 - Camping block: cluster-based ranges (2012-2013, 2016-2025) instead of all years
 # version : 20260531-179000 - Mobile: name+tagline right of photo in a flex row
 # version : 20260531-180000 - Mobile: keep original photo aspect ratio
+# version : 20260531-181000 - Disneyland Paris: show each period on its own line in date column when gap > 1yr
+# version : 20260531-182000 - Prevent date strings from wrapping mid-line (Sep 2001 – Sep 2004)
+# version : 20260531-183000 - Wrap only after en-dash using wbr, not mid-word
+# version : 20260531-184000 - Widen label column to 155px to prevent date wrapping on desktop
 -->
-<script>const current_version = "20260531-180000";</script>
+<script>const current_version = "20260531-184000";</script>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -60,8 +64,8 @@
   --rule-strong:  rgba(0,0,0,0.18);
 
   --sidebar-w:    240px;
-  --label-w:      130px;
-  --max-w:        1020px;
+  --label-w:      155px;
+  --max-w:        1040px;
 }
 
 html, body {
@@ -243,7 +247,10 @@ body {
   gap: 0 1.25rem; align-items: start;
 }
 .work-meta { padding-top: 2px; text-align: right; }
-.work-period { font-size: 13px; color: var(--ink-light); line-height: 1.5; white-space: normal; word-break: break-word; }
+.work-period { font-size: 13px; color: var(--ink-light); line-height: 1.5; white-space: nowrap; }
+@media (max-width: 640px) {
+  .work-period { white-space: normal; word-break: break-word; }
+}
 .work-seasons-badge { font-size: 12px; color: var(--ink-light); margin-top: 1px; }
 .work-title { font-size: 16px; font-weight: 500; color: var(--ink); line-height: 1.3; }
 .work-company { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; }
@@ -417,6 +424,10 @@ body {
   .sb-section:not(.sb-section-nameblock) {
     padding: 1rem 1.5rem;
   }
+  /* Sections inside the personal/lang grid get padding from the grid itself */
+  .sb-personal-lang-grid .sb-section {
+    padding: 0;
+  }
   .sb-personal-lang-grid {
     padding: 1rem 1.5rem;
   }
@@ -519,7 +530,7 @@ function fmtDate(str) {
   if (p.length===1) return ''+p[0];
   return MO[p[1]-1]+' '+p[0];
 }
-function fmtPeriod(s,e) { return fmtDate(s)+' – '+fmtDate(e); }
+function fmtPeriod(s,e) { return fmtDate(s)+' \u2013 '+fmtDate(e); }
 
 // Returns true when a job runs only within the Mar–Oct window of a single year
 function isSummerJob(job) {
@@ -778,8 +789,25 @@ function renderEntry(jobs, empName, empColor, entries) {
       +'<span style="display:block;">'+years.join(', ')+'</span>';
     meta.appendChild(lbl);
   } else {
-    meta.appendChild(el('div', 'work-period', fmtPeriod(earliest.startDate, latest.endDate)));
-    if (isMulti) meta.appendChild(el('div', 'work-seasons-badge', `(${jobs.length} seasons)`));
+    const sorted = [...jobs].sort((a,b) => a.startDate.localeCompare(b.startDate));
+    // Detect gap > 1 year between any two consecutive jobs
+    const hasGap = sorted.some((job, i) => {
+      if (i === 0) return false;
+      return parseInt(job.startDate.split('-')[0]) - parseInt(sorted[i-1].endDate.split('-')[0]) > 1;
+    });
+
+    if (isMulti && hasGap) {
+      const lbl = el('div', 'work-period');
+      lbl.innerHTML = sorted
+        .map(j => '<span style="display:block;">' + fmtPeriod(j.startDate, j.endDate) + '</span>')
+        .join('');
+      meta.appendChild(lbl);
+    } else {
+      const lbl = el('div', 'work-period');
+      lbl.innerHTML = fmtPeriod(earliest.startDate, latest.endDate);
+      meta.appendChild(lbl);
+      if (isMulti) meta.appendChild(el('div', 'work-seasons-badge', `(${jobs.length} seasons)`));
+    }
   }
   entry.appendChild(meta);
 
@@ -793,10 +821,17 @@ function renderEntry(jobs, empName, empColor, entries) {
   body.appendChild(companyRow);
   if (locs.length) body.appendChild(el('div', 'work-loc', locs.join(' · ')));
   if (isMulti && (UITGEBREID || !summerStr)) {
-    const sorted = [...jobs].sort((a,b)=>a.startDate.localeCompare(b.startDate));
-    body.appendChild(el('div', 'work-sub-periods',
-      sorted.map(j=>fmtPeriod(j.startDate, j.endDate)).join(' · ')
-    ));
+    const sorted2 = [...jobs].sort((a,b)=>a.startDate.localeCompare(b.startDate));
+    const hasGap2 = sorted2.some((job, i) => {
+      if (i === 0) return false;
+      return parseInt(job.startDate.split('-')[0]) - parseInt(sorted2[i-1].endDate.split('-')[0]) > 1;
+    });
+    // Only show sub-periods in body when NOT already shown as separate lines in meta
+    if (!hasGap2) {
+      body.appendChild(el('div', 'work-sub-periods',
+        sorted2.map(j=>fmtPeriod(j.startDate, j.endDate)).join(' · ')
+      ));
+    }
   }
   if (highlights.length) {
     const ul = el('ul', 'work-highlights');
