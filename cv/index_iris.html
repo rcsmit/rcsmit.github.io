@@ -904,7 +904,8 @@ function buildGanttSection(workData) {
       bar.style.width      = pctW(s,e);
       bar.style.background = row.color.color;
 
-      const lbl = el('span', 'gantt-bar-label', job.position.trim());
+      // const lbl = el('span', 'gantt-bar-label', job.position.trim());
+      const lbl = el('span', 'gantt-bar-label', '');
       lbl.style.color = row.color.textColor;
       bar.appendChild(lbl);
 
@@ -958,7 +959,8 @@ function buildPage(data) {
   const yearStart = data.work.reduce((min,j) => j.startDate<min ? j.startDate : min, '9999').split('-')[0];
   const yearEnd   = data.work.reduce((max,j) => j.endDate  >max ? j.endDate   : max, '0000').split('-')[0];
   const tagline = el('div', 'main-tagline');
-  tagline.textContent = 'Kindergarten Teacher & Nanny  ·  ' + yearStart + ' – ' + yearEnd;
+  // tagline.textContent = 'Kindergarten Teacher & Nanny  ·  ' + yearStart + ' – ' + yearEnd;
+  tagline.textContent = 'Qualified Kindergarten Teacher and Nanny with 10+ years of childcare experience in kindergartens, private households, and international family settings. Experienced with newborns, toddlers, and school-aged children, offering calm, reliable, and emotionally attuned care. Adaptable and confident working with different family cultures, creating safe, structured, and nurturing daily routines. Multilingual and experienced with both group care and one-on-one childcare. · ' + yearStart + ' – ' + yearEnd;
   header.appendChild(tagline);
   main.appendChild(header);
 

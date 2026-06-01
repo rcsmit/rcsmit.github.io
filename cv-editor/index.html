@@ -412,7 +412,7 @@ body { padding: 0 1rem 8rem; display: flex; flex-direction: column; align-items:
   <!-- COFFEE -->
   <div class="coffee-footer">
     <div>Find this useful? Buy me a coffee ☕</div>
-    <a class="coffee-link" href="https://buymeacoffee.com" target="_blank" rel="noopener">
+    <a class="coffee-link" href="https://buymeacoffee.com/rcsmit" target="_blank" rel="noopener">
       ☕ Buy me a coffee
     </a>
   </div>
@@ -1023,6 +1023,7 @@ function renderAll() {
 }
 
 function loadDefault() {
+  
   data = JSON.parse(JSON.stringify(DEFAULT_DATA));
   renderAll();
   showToast('Demo CV loaded');
@@ -1041,17 +1042,26 @@ function wisAlles() {
 // ── FILE INPUT ────────────────────────────────────────────────
 document.getElementById('file-input').addEventListener('change', function() {
   const file = this.files[0];
-  this.value = ''; // reset so same file can be loaded again
+  this.value = '';
+
   if (!file) return;
+
   const reader = new FileReader();
+
   reader.onload = e => {
     try {
-      data = JSON.parse(e.target.result);
-      if (!data.basics) throw new Error('Geen basics gevonden');
+      const loadedData = JSON.parse(e.target.result);
+
+    
+      data = loadedData;
       renderAll();
-      showToast('JSON loaded ✓');
-    } catch(err) { alert('Error: ' + err.message); }
+      // alert("JSON loaded");
+    } catch(err) {
+      console.error(err);
+      alert(err.message);
+    }
   };
+
   reader.readAsText(file);
 });
 
