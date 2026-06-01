@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CV — Iris Kocks</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+
+<!-- version history
+# version : 20260601-120000 - Initial version for Iris Kocks, based on René Smit template
+# version : 20260601-121000 - Pastel purple color scheme
+# version : 20260601-122000 - Inline JSON, no GitHub fetch, no camping/winter grouping
+-->
+<script>const current_version = "20260601-122000";</script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-body:    'DM Sans', system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+
+  --bg:           #f0ecf7;
+  --paper:        #ffffff;
+  --sidebar-bg:   #ede8f5;
+  --sidebar-text: #2a2630;
+  --sidebar-mid:  #6a6272;
+  --sidebar-rule: rgba(90,60,140,0.12);
+  --sidebar-accent: #7c5cbf;
+
+  --ink:          #1c1820;
+  --ink-mid:      #4a4452;
+  --ink-light:    #9a90a8;
+  --accent:       #7c5cbf;
+  --accent-soft:  #ede8f5;
+  --rule:         rgba(90,60,140,0.09);
+  --rule-strong:  rgba(90,60,140,0.18);
+
+  --sidebar-w:    240px;
+  --label-w:      155px;
+  --max-w:        1040px;
+}
+
+html, body {
+  background: var(--bg);
+  font-family: var(--font-body);
+  color: var(--ink);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+body {
+  padding: 2.5rem 1.5rem 5rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* ── OUTER SHELL ── */
+.cv-shell {
+  width: 100%;
+  max-width: var(--max-w);
+  display: flex;
+  box-shadow: 0 4px 32px rgba(90,60,140,0.13);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════
+   SIDEBAR
+══════════════════════════════ */
+.cv-sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  padding: 2.5rem 1.5rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  border-right: 1px solid rgba(90,60,140,0.13);
+}
+
+/* Photo */
+.photo-wrap {
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #d8d0ea;
+  border: 1px solid rgba(90,60,140,0.15);
+  position: relative;
+}
+.photo-wrap img {
+  width: 100%; height: 100%;
+  object-fit: cover; display: block;
+}
+.photo-placeholder {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px;
+  color: var(--sidebar-mid);
+}
+.photo-placeholder svg {
+  width: 48px; height: 48px;
+  opacity: 0.35;
+}
+.photo-placeholder span {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.4;
+}
+
+/* Sidebar section */
+.sb-section { display: flex; flex-direction: column; gap: 0.6rem; }
+.sb-title {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--sidebar-accent);
+  font-weight: 500;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--sidebar-rule);
+  margin-bottom: 0.25rem;
+}
+.sb-name {
+  font-family: var(--font-display);
+  font-size: 30px; font-weight: 700;
+  color: var(--ink);
+  line-height: 1.15;
+  margin-bottom: 0.15rem;
+}
+.sb-tagline {
+  font-size: 13.5px; font-weight: 300;
+  color: var(--sidebar-mid);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+.sb-info-row {
+  display: flex; flex-direction: column; gap: 1px;
+}
+.sb-info-label {
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--sidebar-accent); margin-top: 0.6rem; margin-bottom: 1px;
+}
+.sb-info-val {
+  font-size: 14px; color: var(--sidebar-text); line-height: 1.5;
+}
+
+/* Language bars */
+.lang-row { margin-bottom: 6px; }
+.lang-name {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-size: 14px; color: var(--sidebar-text); margin-bottom: 3px;
+}
+.lang-fluency { font-size: 12px; color: var(--sidebar-mid); }
+.lang-bar-bg {
+  height: 3px; background: rgba(90,60,140,0.14); border-radius: 2px; overflow: hidden;
+}
+.lang-bar-fill {
+  height: 100%; background: var(--sidebar-accent); border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+/* Skills pills (sidebar) */
+.sb-skills { display: flex; flex-wrap: wrap; gap: 5px; }
+.sb-skill {
+  font-size: 13px; color: var(--sidebar-mid);
+  border: 1px solid rgba(90,60,140,0.18);
+  border-radius: 2px; padding: 2px 8px; line-height: 1.6;
+}
+
+/* Certificates */
+.sb-cert {
+  font-size: 14px; color: var(--sidebar-mid); line-height: 1.6;
+  padding-left: 10px; position: relative;
+}
+.sb-cert::before { content: '—'; position: absolute; left: 0; color: var(--sidebar-accent); font-size: 11px; top: 3px; }
+
+/* ══════════════════════════════
+   MAIN
+══════════════════════════════ */
+.cv-main {
+  flex: 1;
+  background: var(--paper);
+  padding: 2.5rem 2.5rem 3rem;
+  min-width: 0;
+}
+
+.main-name {
+  font-family: var(--font-display);
+  font-size: 42px; font-weight: 600;
+  letter-spacing: -0.01em; color: var(--ink); line-height: 1.1;
+}
+.main-tagline {
+  margin-top: 0.4rem; font-size: 15px;
+  color: var(--ink-mid); font-weight: 300; letter-spacing: 0.02em;
+}
+
+.main-header {
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+/* Section */
+.section { margin-bottom: 2.5rem; }
+.section-title {
+  font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--accent); font-weight: 500;
+  margin-bottom: 1.1rem; padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--accent-soft);
+}
+
+/* Work entries */
+.work-entries { display: flex; flex-direction: column; gap: 1.5rem; }
+.work-entry {
+  display: grid; grid-template-columns: var(--label-w) 1fr;
+  gap: 0 1.25rem; align-items: start;
+}
+.work-meta { padding-top: 2px; text-align: right; }
+.work-period { font-size: 13px; color: var(--ink-light); line-height: 1.5; white-space: nowrap; }
+@media (max-width: 640px) {
+  .work-period { white-space: normal; word-break: break-word; }
+}
+.work-title { font-size: 16px; font-weight: 500; color: var(--ink); line-height: 1.3; }
+.work-company { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; }
+.work-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.work-company-name { font-size: 14.5px; color: var(--ink-mid); font-weight: 400; }
+.work-loc { font-size: 13.5px; color: var(--ink-light); margin-top: 1px; }
+.work-highlights { margin-top: 5px; list-style: none; display: flex; flex-direction: column; gap: 1px; }
+.work-highlights li {
+  font-size: 14px; color: var(--ink-mid);
+  padding-left: 12px; position: relative; line-height: 1.5;
+}
+.work-highlights li::before {
+  content: '—'; position: absolute; left: 0;
+  color: var(--accent); font-size: 11px; top: 3px;
+}
+
+/* Education */
+.edu-entry { display: grid; grid-template-columns: var(--label-w) 1fr; gap: 0 1.25rem; margin-bottom: 1.25rem; }
+.edu-year { font-size: 13px; color: var(--ink-light); padding-top: 2px; text-align: right; }
+.edu-title { font-size: 16px; font-weight: 500; color: var(--ink); }
+.edu-inst  { font-size: 14px; color: var(--ink-mid); margin-top: 1px; }
+
+/* ── GANTT ── */
+.gantt-wrap { width: 100%; }
+.gantt-axis-row {
+  display: flex;
+  margin-left: var(--label-w);
+  border-bottom: 1px solid var(--rule-strong);
+}
+.gantt-axis-year {
+  flex-shrink: 0; font-size: 12px; color: var(--ink-light);
+  padding-bottom: 3px; padding-left: 3px;
+  border-left: 1px solid var(--rule);
+  font-family: var(--font-body);
+}
+.gantt-row {
+  display: flex; align-items: center;
+  min-height: 32px; border-bottom: 1px solid var(--rule);
+}
+.gantt-row:last-child { border-bottom: none; }
+.gantt-label {
+  flex-shrink: 0; width: var(--label-w);
+  padding-right: 8px; font-size: 12.5px; color: var(--ink-mid);
+  text-align: right; line-height: 1.3; font-family: var(--font-body);
+}
+.gantt-bars { flex: 1; position: relative; height: 32px; min-width: 0; }
+.gantt-grid-line {
+  position: absolute; top: 0; bottom: 0;
+  width: 1px; background: var(--rule); pointer-events: none;
+}
+.gantt-bar {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  height: 12px; border-radius: 6px;
+  cursor: pointer; transition: height 0.15s, filter 0.15s;
+  display: flex; align-items: center; overflow: hidden; min-width: 2px;
+}
+.gantt-bar:hover { height: 20px; filter: brightness(1.1); z-index: 10; }
+.gantt-bar-label {
+  font-size: 11px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: clip;
+  padding: 0 6px; pointer-events: none; font-family: var(--font-body);
+}
+.gantt-bar.too-narrow .gantt-bar-label { visibility: hidden; }
+
+/* Tooltip */
+.cv-tooltip {
+  position: fixed; background: var(--paper);
+  border: 1px solid var(--rule-strong); border-radius: 8px;
+  padding: 10px 14px; font-size: 13px; line-height: 1.6;
+  z-index: 1000; min-width: 200px; max-width: 260px;
+  pointer-events: none; opacity: 0; transition: opacity 0.12s;
+  font-family: var(--font-body); box-shadow: 0 4px 16px rgba(90,60,140,0.10);
+}
+.cv-tooltip.visible { opacity: 1; }
+.cv-tooltip-title  { font-weight: 500; font-size: 15px; color: var(--ink); margin-bottom: 1px; }
+.cv-tooltip-sub    { color: var(--ink-mid); font-size: 14px; }
+.cv-tooltip-loc    { color: var(--ink-light); font-size: 13px; }
+.cv-tooltip-period { color: var(--ink-light); font-size: 13px; margin-top: 1px; }
+.cv-tooltip-hi     { margin-top: 7px; border-top: 1px solid var(--rule); padding-top: 6px; list-style: none; }
+.cv-tooltip-hi li  { color: var(--ink-mid); padding-left: 12px; position: relative; font-size: 13px; }
+.cv-tooltip-hi li::before { content: '·'; position: absolute; left: 3px; color: var(--ink-light); }
+
+@media (max-width: 768px) {
+  .cv-tooltip {
+    position: fixed; left: 50% !important; top: 50% !important;
+    transform: translate(-50%,-50%); max-width: 85vw; min-width: 220px;
+  }
+}
+
+/* Loading / error */
+.loading { text-align: center; padding: 4rem 2rem; font-size: 15px; color: var(--ink-light); font-style: italic; }
+.error { background: #fdf0ff; border: 1px solid #d8b0f0; border-radius: 6px; padding: 1rem 1.25rem; font-size: 15px; color: #7030a0; }
+
+/* Photo + name row */
+.photo-name-row {
+  display: contents;
+}
+
+@media (max-width: 640px) {
+  .photo-name-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    background: white;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid rgba(90,60,140,0.08);
+    width: 100%;
+  }
+}
+@media (max-width: 640px) {
+  .sb-personal-lang-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 1rem;
+  }
+}
+@media (min-width: 641px) {
+  .sb-personal-lang-grid {
+    display: contents;
+  }
+  .sb-name { display: none; }
+  .sb-tagline { display: none; }
+}
+@media (max-width: 640px) {
+  body { padding: 0; }
+  .cv-shell { flex-direction: column; border-radius: 0; }
+  .cv-sidebar {
+    width: 100%;
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+    border-right: none;
+    border-bottom: 1px solid rgba(90,60,140,0.13);
+  }
+  .photo-wrap {
+    width: 80px !important;
+    height: auto !important;
+    aspect-ratio: unset !important;
+    background: #d8d0ea !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(90,60,140,0.10) !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+  }
+  .photo-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 4px;
+  }
+  .photo-placeholder {
+    width: 100%;
+    height: 80px;
+  }
+  .sb-section-nameblock {
+    background: transparent;
+    padding: 0;
+    border-bottom: none;
+    flex: 1;
+    min-width: 0;
+  }
+  .sb-section:not(.sb-section-nameblock) {
+    padding: 1rem 1.5rem;
+  }
+  .sb-personal-lang-grid .sb-section {
+    padding: 0;
+  }
+  .sb-personal-lang-grid {
+    padding: 1rem 1.5rem;
+  }
+  .sb-name { font-size: 22px; }
+  .cv-main { padding: 1.5rem; }
+  .main-header { display: none; }
+  :root { --label-w: 80px; }
+}
+
+@media print {
+  body { background: white !important; padding: 0; }
+  .cv-shell { box-shadow: none; border-radius: 0; }
+  .cv-sidebar { background: white !important; -webkit-print-color-adjust: economy; print-color-adjust: economy; }
+  .cv-main { background: white !important; }
+  .photo-wrap { background: #eee !important; }
+  .cv-tooltip { display: none; }
+  .print-break-before { break-before: page; }
+
+  .work-highlights li, .work-loc      { font-size: 10pt !important; }
+  .work-period, .edu-year             { font-size: 9pt  !important; }
+  .work-title, .edu-title             { font-size: 12pt !important; }
+  .work-company-name                  { font-size: 11pt !important; }
+  .section-title                      { font-size: 8pt  !important; }
+  .main-name                          { font-size: 26pt !important; }
+  .main-tagline                       { font-size: 10pt !important; }
+  .sb-name                            { font-size: 18pt !important; }
+  .sb-tagline, .sb-info-val, .lang-name, .sb-skill { font-size: 9pt !important; }
+  .sb-title, .sb-info-label           { font-size: 7pt  !important; }
+  .gantt-label, .gantt-axis-year, .gantt-bar-label { font-size: 8pt !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="cv-shell" id="cv-shell">
+  <div class="loading" style="padding:4rem;width:100%;text-align:center;">Loading CV…</div>
+</div>
+<div id="cv-tooltip" class="cv-tooltip"></div>
+
+<script>
+// ── INLINE CV DATA ────────────────────────────────────────────
+const CV_DATA = {
+  "basics": {
+    "name": "Iris Kocks",
+    "nationality": "Dutch/German",
+    "summary": "Qualified Kindergarten Teacher and Nanny with 10+ years of childcare experience in kindergartens, private households, and international family settings.",
+    "location": { "countryCode": "DE", "region": "Germany / Netherlands" },
+    "phone": "+0049 015221557217",
+    "email": "iriskocks39@gmail.com",
+    "profiles": []
+  },
+  "work": [
+    {
+      "name": "Careflex",
+      "position": "Kindergarten teacher (Agency-Based Assignments)",
+      "startDate": "2024-01-01",
+      "endDate": "2025-12-31",
+      "location": "Kiel, Germany",
+      "highlights": [
+        "Working with children in various daycare and kindergarten settings",
+        "Supporting emotional, social, and developmental needs",
+        "Creating structured, safe, and nurturing environments",
+        "Communicating closely with parents and care teams"
+      ]
+    },
+    {
+      "name": "Various families",
+      "position": "Babysitter / Nanny",
+      "startDate": "2020-01-01",
+      "endDate": "2023-12-31",
+      "location": "Thailand",
+      "highlights": [
+        "Cared for children of different ages in home settings",
+        "Assisted with household needs if required",
+        "Supported daily routines, playtime, rest, and emotional well-being",
+        "Adapted easily to different family cultures and parenting styles",
+        "Communicated confidently in English with parents and children"
+      ]
+    },
+    {
+      "name": "Careflex",
+      "position": "Kindergarten teacher (Agency-Based Assignments)",
+      "startDate": "2018-01-01",
+      "endDate": "2020-12-31",
+      "location": "Kiel, Germany",
+      "highlights": [
+        "Working with children in various daycare and kindergarten settings",
+        "Supporting emotional, social, and developmental needs",
+        "Creating structured, safe, and nurturing environments",
+        "Communicating closely with parents and care teams"
+      ]
+    },
+    {
+      "name": "Ev. Kindergarten Hasseldieksdamm",
+      "position": "Kindergarten teacher (Graduation Internship)",
+      "startDate": "2017-01-01",
+      "endDate": "2018-12-31",
+      "location": "Kiel, Germany",
+      "highlights": [
+        "Observed and documented children's emotional and developmental progress",
+        "Provided individualized educational and emotional support",
+        "Worked closely with parents and teaching staff"
+      ]
+    },
+    {
+      "name": "Marie Christian Heim",
+      "position": "Intern – Care for People with Disabilities",
+      "startDate": "2016-01-01",
+      "endDate": "2017-12-31",
+      "location": "Kiel, Germany",
+      "highlights": [
+        "Supported daily routines with a high level of responsibility and care",
+        "Developed patience, attentiveness, and strong caregiving skills",
+        "Assisted with social activities and daily support needs"
+      ]
+    },
+    {
+      "name": "KiGa Fusssteigkoppel",
+      "position": "Kindergarten teacher (Internship)",
+      "startDate": "2016-01-01",
+      "endDate": "2016-12-31",
+      "location": "Kronshagen, Germany",
+      "highlights": [
+        "Supported group activities, outdoor play, and creative learning",
+        "Observed child development and assisted teaching staff"
+      ]
+    },
+    {
+      "name": "Private Family",
+      "position": "Au-pair / Nanny",
+      "startDate": "2013-01-01",
+      "endDate": "2015-12-31",
+      "location": "Kronshagen, Germany",
+      "highlights": [
+        "Provided daily childcare in a home setting",
+        "Supported care for a newborn, including feeding routines, rest periods, and gentle daily structure",
+        "Balanced active play, rest, and age-appropriate learning activities",
+        "Ensured children's safety and emotional well-being",
+        "Supported with household needs and daily tasks"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "RBZ1 Kiel",
+      "area": "Kindergarten teacher",
+      "studyType": "Secondary education Level 6",
+      "startDate": "2015-09-01",
+      "endDate": "2018-06-30",
+      "location": "Kiel, Germany"
+    },
+    {
+      "institution": "C.S.G. Dingstede",
+      "area": "High School Diploma",
+      "studyType": "HAVO/VWO",
+      "startDate": "2005-09-01",
+      "endDate": "2011-06-30",
+      "location": "Meppel, Netherlands"
+    }
+  ],
+  "languages": [
+    { "language": "German", "fluency": "C2" },
+    { "language": "Dutch",  "fluency": "C2" },
+    { "language": "English","fluency": "B2/C1" }
+  ],
+  "skills": [
+    { "name": "Warm, emotionally attuned childcare" },
+    { "name": "Calm and reliable presence" },
+    { "name": "Structured yet flexible daily routines" },
+    { "name": "Newborn and infant care" },
+    { "name": "Emotional and social development support" },
+    { "name": "Creative play, music & storytelling" },
+    { "name": "Clear communication with parents" },
+    { "name": "Trustworthy, punctual, discreet" }
+  ],
+  "certificates": [
+    { "name": "First Aid (2025)" }
+  ]
+};
+
+// ── COLORS ────────────────────────────────────────────────────
+const KNOWN_COLORS = {
+  'careflex':                { color: '#9b6fd4', textColor: '#ffffff' },
+  'various families':        { color: '#c88fc8', textColor: '#ffffff' },
+  'ev. kindergarten':        { color: '#a87cc0', textColor: '#ffffff' },
+  'marie christian':         { color: '#7a9cc8', textColor: '#ffffff' },
+  'kiga':                    { color: '#89b4a0', textColor: '#ffffff' },
+  'private family':          { color: '#c8a07a', textColor: '#ffffff' },
+};
+const FALLBACK_COLORS = [
+  { color: '#9b6fd4', textColor: '#ffffff' },
+  { color: '#c88fc8', textColor: '#ffffff' },
+  { color: '#7a9cc8', textColor: '#ffffff' },
+  { color: '#89b4a0', textColor: '#ffffff' },
+  { color: '#c8a07a', textColor: '#ffffff' },
+];
+let fallbackIdx = 0;
+
+function getColor(name) {
+  const lower = name.toLowerCase();
+  for (const key of Object.keys(KNOWN_COLORS)) {
+    if (lower.includes(key)) return KNOWN_COLORS[key];
+  }
+  return FALLBACK_COLORS[fallbackIdx++ % FALLBACK_COLORS.length];
+}
+
+// ── LANG LEVELS ───────────────────────────────────────────────
+const LANG_LEVEL_MAP = {
+  'A1':1/6,'A1/A2':1.5/6,'A2':2/6,'A2/B1':2.5/6,
+  'B1':3/6,'B1/B2':3.5/6,'B2':4/6,'B2/C1':4.5/6,
+  'C1':5/6,'C1/C2':5.5/6,'C2':1
+};
+function langFill(fluency) { return (LANG_LEVEL_MAP[fluency] || 0.5) * 100; }
+
+const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function toDecYear(str) {
+  const p = str.split('-').map(Number);
+  const y=p[0], m=(p[1]||1)-1, d=p[2]||1;
+  const date=new Date(y,m,d), s=new Date(y,0,1), e=new Date(y+1,0,1);
+  return y+(date-s)/(e-s);
+}
+function fmtDate(str) {
+  const p = str.split('-').map(Number);
+  if (p.length===1) return ''+p[0];
+  return MO[p[1]-1]+' '+p[0];
+}
+function fmtPeriod(s,e) { return fmtDate(s)+' \u2013 '+fmtDate(e); }
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+/* ════════════════════════
+   SIDEBAR
+════════════════════════ */
+function buildSidebar(data) {
+  const sidebar = el('div', 'cv-sidebar');
+
+  // Photo
+  const photoWrap = el('div', 'photo-wrap');
+  const img = document.createElement('img');
+  img.src = 'photo.jpg';
+  img.alt = data.basics.name;
+  img.onerror = function() {
+    this.remove();
+    const ph = el('div', 'photo-placeholder');
+    ph.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      <span>photo.jpg</span>`;
+    photoWrap.appendChild(ph);
+  };
+  photoWrap.appendChild(img);
+
+  const photoNameRow = el('div', 'photo-name-row');
+  photoNameRow.appendChild(photoWrap);
+
+  const nameBlock = el('div', 'sb-section sb-section-nameblock');
+  nameBlock.appendChild(el('div', 'sb-name', data.basics.name));
+  if (data.basics.summary) nameBlock.appendChild(el('div', 'sb-tagline', data.basics.summary));
+  photoNameRow.appendChild(nameBlock);
+  sidebar.appendChild(photoNameRow);
+
+  const plGrid = el('div', 'sb-personal-lang-grid');
+
+  // Personal info
+  const infoBlock = el('div', 'sb-section');
+  infoBlock.appendChild(el('div', 'sb-title', 'Personal'));
+
+  const fields = [
+    ['Nationality', data.basics.nationality],
+    ['Location',    data.basics.location ? data.basics.location.region : null],
+    ['Phone',       data.basics.phone],
+    ['Email',       data.basics.email],
+  ];
+  fields.forEach(([label, val]) => {
+    if (!val) return;
+    infoBlock.appendChild(el('div', 'sb-info-label', label));
+    infoBlock.appendChild(el('div', 'sb-info-val', val));
+  });
+  plGrid.appendChild(infoBlock);
+
+  // Languages
+  if (data.languages && data.languages.length) {
+    const langBlock = el('div', 'sb-section');
+    langBlock.appendChild(el('div', 'sb-title', 'Languages'));
+    data.languages.forEach(l => {
+      const row = el('div', 'lang-row');
+      const nameRow = el('div', 'lang-name');
+      nameRow.appendChild(document.createTextNode(l.language));
+      nameRow.appendChild(el('span', 'lang-fluency', l.fluency));
+      row.appendChild(nameRow);
+      const bg = el('div', 'lang-bar-bg');
+      const fill = el('div', 'lang-bar-fill');
+      fill.style.width = langFill(l.fluency) + '%';
+      bg.appendChild(fill);
+      row.appendChild(bg);
+      langBlock.appendChild(row);
+    });
+    plGrid.appendChild(langBlock);
+  }
+
+  sidebar.appendChild(plGrid);
+
+  // Skills
+  const skillNames = (data.skills || []).map(s => s.name);
+  if (skillNames.length) {
+    const skillBlock = el('div', 'sb-section print-break-before');
+    skillBlock.appendChild(el('div', 'sb-title', 'Skills'));
+    const pills = el('div', 'sb-skills');
+    skillNames.forEach(s => pills.appendChild(el('span', 'sb-skill', s)));
+    skillBlock.appendChild(pills);
+    sidebar.appendChild(skillBlock);
+  }
+
+  // Certificates
+  if (data.certificates && data.certificates.length) {
+    const certBlock = el('div', 'sb-section');
+    certBlock.appendChild(el('div', 'sb-title', 'Certificates'));
+    data.certificates.forEach(c => certBlock.appendChild(el('div', 'sb-cert', c.name)));
+    sidebar.appendChild(certBlock);
+  }
+
+  return sidebar;
+}
+
+/* ════════════════════════
+   WORK SECTION
+════════════════════════ */
+function buildWorkSection(workData) {
+  // Group by employer name
+  const empMap = {};
+  workData.forEach(job => {
+    const name = job.name.trim();
+    if (!empMap[name]) empMap[name] = { name, color: getColor(name), jobs: [] };
+    empMap[name].jobs.push(job);
+  });
+  const employers = Object.values(empMap);
+
+  const section = el('section', 'section');
+  section.appendChild(el('div', 'section-title', 'Work Experience'));
+  const entries = el('div', 'work-entries');
+
+  employers.forEach(emp => {
+    // Group by position within employer
+    const titleGroups = [];
+    emp.jobs.forEach(job => {
+      const title = job.position.trim();
+      let g = titleGroups.find(g => g.title === title);
+      if (!g) { g = { title, jobs: [] }; titleGroups.push(g); }
+      g.jobs.push(job);
+    });
+
+    titleGroups.forEach(group => {
+      const jobs    = group.jobs;
+      const earliest = jobs.reduce((a,b) => a.startDate < b.startDate ? a : b);
+      const latest   = jobs.reduce((a,b) => a.endDate   > b.endDate   ? a : b);
+      const isMulti  = jobs.length > 1;
+      const locs     = [...new Set(jobs.map(j=>(j.location||'').trim()).filter(Boolean))];
+      const highlights = (earliest.highlights||[]).map(h=>h.trim()).filter(Boolean);
+
+      const entry = el('div', 'work-entry');
+      const meta  = el('div', 'work-meta');
+
+      const sorted = [...jobs].sort((a,b) => a.startDate.localeCompare(b.startDate));
+      const hasGap = sorted.some((job, i) => {
+        if (i === 0) return false;
+        return parseInt(job.startDate.split('-')[0]) - parseInt(sorted[i-1].endDate.split('-')[0]) > 1;
+      });
+
+      if (isMulti && hasGap) {
+        const lbl = el('div', 'work-period');
+        lbl.innerHTML = sorted
+          .map(j => '<span style="display:block;">' + fmtPeriod(j.startDate, j.endDate) + '</span>')
+          .join('');
+        meta.appendChild(lbl);
+      } else {
+        meta.appendChild(el('div', 'work-period', fmtPeriod(earliest.startDate, latest.endDate)));
+      }
+
+      entry.appendChild(meta);
+
+      const body = el('div', 'work-body');
+      body.appendChild(el('div', 'work-title', group.title));
+      const companyRow = el('div', 'work-company');
+      const dot = el('span', 'work-dot');
+      dot.style.background = emp.color.color;
+      companyRow.appendChild(dot);
+      companyRow.appendChild(el('span', 'work-company-name', emp.name));
+      body.appendChild(companyRow);
+      if (locs.length) body.appendChild(el('div', 'work-loc', locs.join(' · ')));
+      if (highlights.length) {
+        const ul = el('ul', 'work-highlights');
+        highlights.forEach(h => ul.appendChild(el('li', null, h)));
+        body.appendChild(ul);
+      }
+      entry.appendChild(body);
+      entries.appendChild(entry);
+    });
+  });
+
+  section.appendChild(entries);
+  return section;
+}
+
+/* ════════════════════════
+   EDUCATION SECTION
+════════════════════════ */
+function buildEducationSection(eduData) {
+  const section = el('section', 'section print-break-before');
+  section.appendChild(el('div', 'section-title', 'Education'));
+  eduData.forEach(e => {
+    const entry = el('div', 'edu-entry');
+    const startY = e.startDate ? e.startDate.split('-')[0] : '';
+    const endY   = e.endDate   ? e.endDate.split('-')[0]   : '';
+    entry.appendChild(el('div', 'edu-year', startY + ' – ' + endY));
+    const body = el('div');
+    body.appendChild(el('div', 'edu-title', (e.studyType||'') + ' ' + (e.area||'')));
+    body.appendChild(el('div', 'edu-inst',
+      e.institution + (e.location ? ' · ' + e.location : '')
+    ));
+    entry.appendChild(body);
+    section.appendChild(entry);
+  });
+  return section;
+}
+
+/* ════════════════════════
+   GANTT SECTION
+════════════════════════ */
+const tooltip = document.getElementById('cv-tooltip');
+
+function moveTooltip(e) {
+  if (window.innerWidth <= 768) return;
+  const tw = 270;
+  const left = e.clientX+16+tw > window.innerWidth ? e.clientX-tw-16 : e.clientX+16;
+  tooltip.style.left = left+'px';
+  tooltip.style.top  = (e.clientY+14)+'px';
+}
+
+function buildGanttSection(workData) {
+  const empMap = {};
+  workData.forEach(job => {
+    const name = job.name.trim();
+    if (!empMap[name]) empMap[name] = { name, color: getColor(name), jobs: [] };
+    empMap[name].jobs.push(job);
+  });
+  const rows = Object.values(empMap);
+
+  const allYears = rows.flatMap(r => r.jobs.flatMap(j => [toDecYear(j.startDate), toDecYear(j.endDate)]));
+  const YEAR_START = Math.floor(Math.min(...allYears));
+  const YEAR_END   = Math.ceil(Math.max(...allYears));
+  const YEAR_COUNT = YEAR_END - YEAR_START;
+
+  function pct(yr)   { return ((yr-YEAR_START)/YEAR_COUNT*100).toFixed(4)+'%'; }
+  function pctW(s,e) { return ((e-s)/YEAR_COUNT*100).toFixed(4)+'%'; }
+
+  const section = el('section', 'section');
+  section.appendChild(el('div', 'section-title', 'Career Timeline'));
+  const wrap = el('div', 'gantt-wrap');
+
+  // Axis
+  const axisRow = el('div', 'gantt-axis-row');
+  for (let y = YEAR_START; y < YEAR_END; y++) {
+    const tick = el('div', 'gantt-axis-year');
+    tick.style.width = (1/YEAR_COUNT*100).toFixed(4)+'%';
+    tick.dataset.year = y;
+    axisRow.appendChild(tick);
+  }
+  wrap.appendChild(axisRow);
+
+  function updateAxisLabels() {
+    const labelW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--label-w')) || 110;
+    const barsWidth = wrap.offsetWidth - labelW;
+    const pxPerYear = barsWidth / YEAR_COUNT;
+    const useShort  = pxPerYear < 28;
+    const skipOdd   = pxPerYear < 18;
+    axisRow.querySelectorAll('.gantt-axis-year').forEach(el => {
+      const y = +el.dataset.year;
+      if (skipOdd && y%2!==0) el.textContent = '';
+      else el.textContent = useShort ? String(y).slice(2) : String(y);
+    });
+  }
+  setTimeout(updateAxisLabels, 0);
+  window.addEventListener('resize', updateAxisLabels);
+
+  rows.forEach(row => {
+    const rowEl = el('div', 'gantt-row');
+    rowEl.appendChild(el('div', 'gantt-label', row.name));
+
+    const barsArea = el('div', 'gantt-bars');
+    for (let y = YEAR_START; y < YEAR_END; y++) {
+      const gl = el('div', 'gantt-grid-line');
+      gl.style.left = pct(y);
+      barsArea.appendChild(gl);
+    }
+
+    row.jobs.forEach(job => {
+      const s = toDecYear(job.startDate);
+      const e = toDecYear(job.endDate);
+      const bar = el('div', 'gantt-bar');
+      bar.style.left       = pct(s);
+      bar.style.width      = pctW(s,e);
+      bar.style.background = row.color.color;
+
+      const lbl = el('span', 'gantt-bar-label', job.position.trim());
+      lbl.style.color = row.color.textColor;
+      bar.appendChild(lbl);
+
+      const ro = new ResizeObserver(() => {
+        bar.classList.toggle('too-narrow', bar.offsetWidth < lbl.scrollWidth + 12);
+      });
+      ro.observe(bar);
+
+      function showTip() {
+        tooltip.innerHTML =
+          `<div class="cv-tooltip-title">${job.position.trim()}</div>` +
+          `<div class="cv-tooltip-sub">${row.name}</div>` +
+          (job.location ? `<div class="cv-tooltip-loc">${job.location}</div>` : '') +
+          `<div class="cv-tooltip-period">${fmtPeriod(job.startDate, job.endDate)}</div>` +
+          ((job.highlights||[]).length
+            ? `<ul class="cv-tooltip-hi">${job.highlights.map(h=>`<li>${h.trim()}</li>`).join('')}</ul>`
+            : '');
+        tooltip.classList.add('visible');
+      }
+
+      bar.addEventListener('mouseenter', ev => { showTip(); moveTooltip(ev); });
+      bar.addEventListener('mousemove',  moveTooltip);
+      bar.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
+      bar.addEventListener('touchstart', ev => { ev.preventDefault(); showTip(); }, {passive:false});
+      bar.addEventListener('touchend',   () => setTimeout(() => tooltip.classList.remove('visible'), 2500));
+
+      barsArea.appendChild(bar);
+    });
+
+    rowEl.appendChild(barsArea);
+    wrap.appendChild(rowEl);
+  });
+
+  section.appendChild(wrap);
+  return section;
+}
+
+/* ════════════════════════
+   PAGE BUILDER
+════════════════════════ */
+function buildPage(data) {
+  const shell = document.getElementById('cv-shell');
+  shell.innerHTML = '';
+
+  shell.appendChild(buildSidebar(data));
+
+  const main = el('div', 'cv-main');
+
+  const header = el('div', 'main-header');
+  header.appendChild(el('div', 'main-name', data.basics.name));
+  const yearStart = data.work.reduce((min,j) => j.startDate<min ? j.startDate : min, '9999').split('-')[0];
+  const yearEnd   = data.work.reduce((max,j) => j.endDate  >max ? j.endDate   : max, '0000').split('-')[0];
+  const tagline = el('div', 'main-tagline');
+  tagline.textContent = 'Kindergarten Teacher & Nanny  ·  ' + yearStart + ' – ' + yearEnd;
+  header.appendChild(tagline);
+  main.appendChild(header);
+
+  main.appendChild(buildWorkSection(data.work));
+  if (data.education && data.education.length) main.appendChild(buildEducationSection(data.education));
+  main.appendChild(buildGanttSection(data.work));
+
+  shell.appendChild(main);
+}
+
+// Build immediately from inline data
+buildPage(CV_DATA);
+</script>
+
+</body>
+</html>
