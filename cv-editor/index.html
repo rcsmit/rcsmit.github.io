@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CV Editor</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Mulish:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- version history
+# version : 20260601-130000 - Initial version: CV editor for Iris Kocks, inline JSON, add/delete work & education, download
+# version : 20260601-150000 - Fake acroyoga/handstand CV as demo, GDPR notice, buy me a coffee, load-your-own-JSON button
+# version : 20260601-160000 - Download CV as HTML: builds full CV page from editor data, inlines styles, saves as .html
+# version : 20260601-161000 - Added wis alles button with confirm dialog
+# version : 20260601-162000 - Added load JSON button in bottom bar
+# version : 20260601-163000 - Fixed load JSON: single shared input, reset after load, both buttons work
+# version : 20260601-164000 - Fix CV HTML: name visible in main-header desktop, sidebar mobile; correct display:none rules
+# version : 20260601-165000 - 8 color themes: Iris, René, Forest, Ocean, Rose, Slate, Terra, Midnight; live editor + CV output
+# version : 20260601-166000 - Download modal: choose HTML only or HTML + JSON after clicking download CV
+# version : 20260601-167000 - Modal: add photo.jpg instructions; fix placeholder uppercase → lowercase
+# version : 20260601-170000 - Full English translation of editor UI
+# version : 20260601-171000 - Editable filenames in download modal (HTML + JSON separately)
+# version : 20260601-172000 - Download JSON button also opens modal with editable filename
+-->
+<script>const current_version = "20260601-172000";</script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:          #f7f4fb;
+  --paper:       #ffffff;
+  --accent:      #7c5cbf;
+  --accent2:     #b897e8;
+  --accent-soft: #ede8f5;
+  --accent-mid:  #9b78d4;
+  --danger:      #c0557a;
+  --danger-soft: #fbeef4;
+  --ink:         #1e1828;
+  --ink-mid:     #4e4660;
+  --ink-light:   #9a8fb0;
+  --border:      rgba(120,80,200,0.18);
+  --border-focus:#7c5cbf;
+  --radius:      8px;
+  --font-body:   'Mulish', sans-serif;
+  --font-display:'Lora', Georgia, serif;
+}
+
+html, body { background: var(--bg); font-family: var(--font-body); color: var(--ink); min-height: 100vh; }
+body { padding: 0 1rem 8rem; display: flex; flex-direction: column; align-items: center; }
+
+/* ── GDPR BANNER ── */
+.gdpr-banner {
+  width: 100%;
+  background: linear-gradient(135deg, #f0ebfa 0%, #e8f4ee 100%);
+  border-bottom: 1px solid rgba(120,80,200,0.14);
+  padding: 0.7rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 13px;
+  color: var(--ink-mid);
+  flex-wrap: wrap;
+  margin-bottom: 0;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.gdpr-icon { font-size: 18px; flex-shrink: 0; }
+.gdpr-text strong { color: var(--accent); }
+.gdpr-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: white; border: 1px solid rgba(120,80,200,0.2);
+  border-radius: 20px; padding: 2px 10px;
+  font-size: 12px; font-weight: 600; color: var(--accent);
+  white-space: nowrap;
+}
+
+/* ── PAGE HEADER ── */
+.page-header {
+  width: 100%; max-width: 820px;
+  margin: 1.75rem 0 1.25rem;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: 1rem; flex-wrap: wrap;
+}
+.page-title { font-family: var(--font-display); font-size: 2rem; font-weight: 600; line-height: 1.15; }
+.page-title span { color: var(--accent); }
+.page-subtitle { font-size: 13px; color: var(--ink-light); margin-top: 3px; font-weight: 300; }
+.header-actions { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  padding: 8px 16px; border-radius: var(--radius); border: none;
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.btn-primary   { background: var(--accent); color: white; }
+.btn-primary:hover { background: var(--accent-mid); }
+.btn-outline   { background: white; color: var(--accent); border: 1.5px solid var(--accent); }
+.btn-outline:hover { background: var(--accent-soft); }
+.btn-ghost     { background: transparent; color: var(--ink-mid); border: 1.5px solid var(--border); padding: 6px 12px; font-size: 12px; }
+.btn-ghost:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.btn-danger    { background: transparent; color: var(--danger); border: 1.5px solid rgba(192,85,122,0.25); padding: 5px 10px; font-size: 12px; }
+.btn-danger:hover { background: var(--danger-soft); border-color: var(--danger); }
+.btn-add {
+  background: var(--accent-soft); color: var(--accent);
+  border: 1.5px dashed var(--accent2); width: 100%;
+  justify-content: center; padding: 10px; font-size: 13px;
+  border-radius: var(--radius); margin-top: 0.5rem;
+}
+.btn-add:hover { background: #e4daf5; border-style: solid; }
+
+/* ── CARD ── */
+.card { width: 100%; max-width: 820px; background: var(--paper); border-radius: 12px; box-shadow: 0 2px 16px rgba(90,60,140,0.08); margin-bottom: 1.5rem; overflow: hidden; }
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid var(--accent-soft); background: linear-gradient(135deg, #faf8ff 0%, #f3eefb 100%); }
+.card-title { font-family: var(--font-display); font-size: 1rem; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.card-title-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.card-body { padding: 1.25rem 1.5rem; }
+
+/* ── FORM GRID ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1rem; }
+.form-full { grid-column: 1 / -1; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-light); }
+.field input, .field textarea {
+  font-family: var(--font-body); font-size: 14px; color: var(--ink);
+  background: var(--bg); border: 1.5px solid var(--border); border-radius: 6px;
+  padding: 8px 10px; width: 100%; outline: none; resize: vertical;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.field input:focus, .field textarea:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(124,92,191,0.12); background: white; }
+.field textarea { min-height: 60px; }
+
+/* ── ENTRY BLOCK ── */
+.entry-block { border: 1.5px solid var(--border); border-radius: 10px; margin-bottom: 1rem; overflow: hidden; transition: border-color 0.15s; }
+.entry-block:hover { border-color: var(--accent2); }
+.entry-header { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 1rem; background: #faf8ff; cursor: pointer; user-select: none; gap: 0.5rem; }
+.entry-header-left { display: flex; flex-direction: column; min-width: 0; }
+.entry-label { font-size: 14px; font-weight: 600; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.entry-sublabel { font-size: 12px; color: var(--ink-light); }
+.entry-header-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.chevron { width: 18px; height: 18px; color: var(--ink-light); transition: transform 0.2s; flex-shrink: 0; }
+.entry-block.open .chevron { transform: rotate(180deg); }
+.entry-body { padding: 1rem; border-top: 1px solid var(--accent-soft); display: none; }
+.entry-block.open .entry-body { display: block; }
+
+/* ── HIGHLIGHTS ── */
+.highlights-list { display: flex; flex-direction: column; gap: 5px; margin-top: 6px; }
+.highlight-row { display: flex; gap: 6px; align-items: flex-start; }
+.highlight-row input { flex: 1; font-family: var(--font-body); font-size: 13px; color: var(--ink); background: var(--bg); border: 1.5px solid var(--border); border-radius: 6px; padding: 6px 9px; outline: none; transition: border-color 0.15s; }
+.highlight-row input:focus { border-color: var(--border-focus); background: white; }
+.highlight-bullet { margin-top: 9px; color: var(--accent); font-size: 14px; flex-shrink: 0; line-height: 1; }
+.btn-remove-hi { background: none; border: none; cursor: pointer; color: var(--ink-light); font-size: 16px; padding: 4px; line-height: 1; flex-shrink: 0; margin-top: 4px; transition: color 0.15s; }
+.btn-remove-hi:hover { color: var(--danger); }
+.section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-light); margin: 0.75rem 0 0.35rem; }
+
+/* ── LANG / SKILL / CERT ── */
+.lang-row-editor { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.5rem; align-items: center; margin-bottom: 6px; }
+.pill-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.pill-row input { flex: 1; font-family: var(--font-body); font-size: 13px; padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 6px; background: var(--bg); outline: none; transition: border-color 0.15s; }
+.pill-row input:focus { border-color: var(--border-focus); background: white; }
+.lang-input { font-family: var(--font-body); font-size: 14px; padding: 7px 10px; border: 1.5px solid var(--border); border-radius: 6px; background: var(--bg); outline: none; width: 100%; }
+.lang-input:focus { border-color: var(--border-focus); background: white; }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--ink); color: white; padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.2s, transform 0.2s; pointer-events: none; z-index: 999; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── BOTTOM BAR ── */
+.bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.96); backdrop-filter: blur(10px); border-top: 1px solid var(--border); padding: 0.75rem 2rem; display: flex; justify-content: center; gap: 0.75rem; z-index: 100; flex-wrap: wrap; }
+
+/* ── COFFEE FOOTER ── */
+.coffee-footer {
+  width: 100%; max-width: 820px;
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+  color: var(--ink-light);
+  font-size: 13px;
+}
+.coffee-link {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: #FFDD00; color: #1a1a1a;
+  font-weight: 600; font-size: 14px;
+  padding: 10px 20px; border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.1s;
+  margin-top: 0.75rem;
+  border: none; cursor: pointer; font-family: var(--font-body);
+}
+.coffee-link:hover { background: #f0cc00; transform: translateY(-1px); }
+
+/* ── FILE INPUT ── */
+.file-label {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  padding: 8px 16px; border-radius: var(--radius);
+  background: white; color: var(--accent);
+  border: 1.5px solid var(--accent);
+  cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.file-label:hover { background: var(--accent-soft); }
+.file-label input { display: none; }
+
+.dl-filename-group {
+  display: flex; flex-direction: column; gap: 8px;
+}
+.dl-filename-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.dl-filename-ext {
+  font-size: 13px; color: var(--ink-light); white-space: nowrap; flex-shrink: 0; font-weight: 600;
+}
+.dl-filename-input {
+  flex: 1; font-family: var(--font-body); font-size: 13px;
+  color: var(--ink); background: var(--bg);
+  border: 1.5px solid var(--border); border-radius: 6px;
+  padding: 7px 10px; outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.dl-filename-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(124,92,191,0.12);
+  background: white;
+}
+.dl-filename-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--ink-light); margin-bottom: 2px;
+}
+
+/* ── DOWNLOAD MODAL ── */
+.dl-modal-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(20,15,35,0.45);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  align-items: center; justify-content: center;
+}
+.dl-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  width: min(480px, 92vw);
+  box-shadow: 0 8px 40px rgba(90,60,140,0.18);
+  display: flex; flex-direction: column; gap: 1.25rem;
+}
+.dl-modal-title {
+  font-family: var(--font-display);
+  font-size: 1.35rem; font-weight: 600;
+  color: var(--ink); line-height: 1.2;
+}
+.dl-modal-sub {
+  font-size: 13.5px; color: var(--ink-mid); line-height: 1.6; margin-top: -0.5rem;
+}
+.dl-modal-options {
+  display: flex; flex-direction: column; gap: 0.6rem;
+}
+.dl-option {
+  display: flex; align-items: flex-start; gap: 0.75rem;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 0.85rem 1rem; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  background: var(--bg);
+}
+.dl-option:hover { border-color: var(--accent); background: var(--accent-soft); }
+.dl-option-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+.dl-option-label { font-size: 14px; font-weight: 600; color: var(--ink); }
+.dl-option-desc  { font-size: 12px; color: var(--ink-light); margin-top: 2px; }
+.dl-modal-cancel {
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-body); font-size: 13px;
+  color: var(--ink-light); text-align: center;
+  padding: 0.25rem; transition: color 0.15s;
+}
+.dl-modal-cancel:hover { color: var(--ink); }
+
+/* ── THEME SWITCHER ── */
+.theme-bar {
+  width: 100%; max-width: 820px;
+  margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+}
+.theme-bar-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--ink-light);
+  white-space: nowrap;
+}
+.theme-swatch {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer; transition: transform 0.15s, border-color 0.15s;
+  position: relative; flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.theme-swatch:hover { transform: scale(1.15); }
+.theme-swatch.active { border-color: var(--ink); transform: scale(1.12); }
+.theme-swatch::after {
+  content: attr(data-name);
+  position: absolute; bottom: -20px; left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px; color: var(--ink-light);
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; transition: opacity 0.15s;
+}
+.theme-swatch:hover::after { opacity: 1; }
+
+@media (max-width: 600px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .form-full { grid-column: 1; }
+  .page-header { flex-direction: column; align-items: flex-start; }
+  .gdpr-banner { font-size: 12px; padding: 0.6rem 1rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- GDPR NOTICE -->
+<div class="gdpr-banner" style="margin-left:-1rem;margin-right:-1rem;width:calc(100% + 2rem);">
+  <span class="gdpr-icon">🔒</span>
+  <span class="gdpr-text">
+    <strong>100% client-side</strong> — everything runs entirely in your browser.
+    No data is sent, stored, or shared.
+    Geen cookies &nbsp;·&nbsp; Geen tracking &nbsp;·&nbsp; GDPR-proof.
+  </span>
+  <span class="gdpr-badge">✓ No server</span>
+  <span class="gdpr-badge">✓ No cookies</span>
+  <span class="gdpr-badge">✓ No tracking</span>
+</div>
+
+<div class="page-header">
+  <div>
+    <div class="page-title">CV <span>Editor</span></div>
+    <div class="page-subtitle">Edit all fields · add or remove entries · download your JSON</div>
+  </div>
+  <div class="header-actions">
+    <button class="file-label" onclick="document.getElementById('file-input').click()">📂 Load JSON</button>
+    <input type="file" id="file-input" accept=".json" style="display:none;">
+  </div>
+</div>
+
+<div class="theme-bar" id="theme-bar">
+  <span class="theme-bar-label">Colour scheme</span>
+</div>
+
+<div id="editor-root" style="width:100%;max-width:820px;">
+
+  <!-- BASICS -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><div class="card-title-icon">👤</div>Personal details</div>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <div class="field"><label>Name</label><input id="b-name" type="text"></div>
+        <div class="field"><label>Nationality</label><input id="b-nationality" type="text"></div>
+        <div class="field"><label>Telefoon</label><input id="b-phone" type="text"></div>
+        <div class="field"><label>E-mail</label><input id="b-email" type="email"></div>
+        <div class="field"><label>Location / region</label><input id="b-region" type="text"></div>
+        <div class="field"><label>Country code</label><input id="b-countryCode" type="text" placeholder="NL / DE / TH"></div>
+        <div class="field form-full"><label>Summary</label><textarea id="b-summary" rows="3"></textarea></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORK -->
+  <div class="card">
+    <div class="card-header"><div class="card-title"><div class="card-title-icon">💼</div>Work Experience</div></div>
+    <div class="card-body">
+      <div id="work-list"></div>
+      <button class="btn btn-add" onclick="addWork()">＋ Add work experience</button>
+    </div>
+  </div>
+
+  <!-- EDUCATION -->
+  <div class="card">
+    <div class="card-header"><div class="card-title"><div class="card-title-icon">🎓</div>Education</div></div>
+    <div class="card-body">
+      <div id="edu-list"></div>
+      <button class="btn btn-add" onclick="addEdu()">＋ Add education</button>
+    </div>
+  </div>
+
+  <!-- LANGUAGES -->
+  <div class="card">
+    <div class="card-header"><div class="card-title"><div class="card-title-icon">🗣</div>Languages</div></div>
+    <div class="card-body">
+      <div id="lang-list"></div>
+      <button class="btn btn-add" onclick="addLang()">＋ Add language</button>
+    </div>
+  </div>
+
+  <!-- SKILLS -->
+  <div class="card">
+    <div class="card-header"><div class="card-title"><div class="card-title-icon">⭐</div>Skills</div></div>
+    <div class="card-body">
+      <div id="skill-list"></div>
+      <button class="btn btn-add" onclick="addSkill()">＋ Add skill</button>
+    </div>
+  </div>
+
+  <!-- CERTIFICATES -->
+  <div class="card">
+    <div class="card-header"><div class="card-title"><div class="card-title-icon">📜</div>Certificates</div></div>
+    <div class="card-body">
+      <div id="cert-list"></div>
+      <button class="btn btn-add" onclick="addCert()">＋ Add certificate</button>
+    </div>
+  </div>
+
+  <!-- COFFEE -->
+  <div class="coffee-footer">
+    <div>Find this useful? Buy me a coffee ☕</div>
+    <a class="coffee-link" href="https://buymeacoffee.com" target="_blank" rel="noopener">
+      ☕ Buy me a coffee
+    </a>
+  </div>
+
+</div>
+
+<!-- DOWNLOAD MODAL -->
+<div class="dl-modal-overlay" id="dl-modal" onclick="if(event.target===this)closeDownloadModal()">
+  <div class="dl-modal">
+    <div class="dl-modal-title" id="dl-modal-title">📥 Download your CV</div>
+    <div class="dl-modal-sub" id="dl-modal-sub">Want to save the JSON too? That way you can reload and edit your CV later.</div>
+
+    <div class="dl-filename-group">
+      <div class="dl-filename-label">📝 File names</div>
+      <div class="dl-filename-row" id="fn-html-row">
+        <input class="dl-filename-input" id="fn-html" type="text" spellcheck="false">
+        <span class="dl-filename-ext">.html</span>
+      </div>
+      <div class="dl-filename-row">
+        <input class="dl-filename-input" id="fn-json" type="text" spellcheck="false">
+        <span class="dl-filename-ext">.json</span>
+      </div>
+    </div>
+
+    <div class="dl-modal-options" id="dl-cv-options">
+      <div class="dl-option" onclick="dlHTMLonly()">
+        <div class="dl-option-icon">🌐</div>
+        <div>
+          <div class="dl-option-label">HTML only</div>
+          <div class="dl-option-desc">Static CV page, ready to share or print</div>
+        </div>
+      </div>
+      <div class="dl-option" onclick="dlHTMLandJSON()">
+        <div class="dl-option-icon">🌐 + 📄</div>
+        <div>
+          <div class="dl-option-label">HTML + JSON</div>
+          <div class="dl-option-desc">CV page + data file — so you can edit it again later</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="dl-json-btn" onclick="dlJSONconfirm()" style="display:none;width:100%;justify-content:center;">⬇ Download JSON</button>
+
+    <div id="dl-photo-note" style="background:#f7f4fb;border:1.5px solid var(--border);border-radius:8px;padding:0.85rem 1rem;font-size:13px;color:var(--ink-mid);line-height:1.6;">
+      📸 <strong style="color:var(--ink)">Add a photo?</strong> Place a file named <code style="background:white;border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:12px;">photo.jpg</code> in the same folder as the HTML file. The photo will appear automatically in the CV sidebar.
+    </div>
+    <button class="dl-modal-cancel" onclick="closeDownloadModal()">Cancel</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div class="bottom-bar">
+  <button class="btn btn-outline" onclick="loadDefault()">↩ Load demo CV</button>
+  <button class="btn btn-outline" onclick="document.getElementById('file-input').click()">📂 Load JSON</button>
+  <button class="btn btn-danger" style="padding:8px 16px;font-size:13px;" onclick="wisAlles()">🗑 Clear all</button>
+  <button class="btn btn-primary" style="background:#4a9e7a;" onclick="downloadCVasHTML()">⬇ Download CV as HTML</button>
+  <button class="btn btn-primary" onclick="downloadJSON()">⬇ Download JSON</button>
+</div>
+
+<script>
+// ── DEMO DATA: fake acroyoga/handstand instructeur ────────────
+const DEFAULT_DATA = {
+  "basics": {
+    "name": "Luna Vander Berg",
+    "nationality": "Dutch",
+    "summary": "Certified AcroYoga instructor and handstand coach with 8+ years of experience guiding students from their first flight to advanced washing machine flows. Passionate about creating safe, playful, and transformative movement spaces — from intimate studio sessions to large international festivals. Trained in therapeutic flying, spotting technique, and somatic movement principles.",
+    "location": { "countryCode": "NL", "region": "Amsterdam / Southeast Asia" },
+    "phone": "+31 6 12 34 56 78",
+    "email": "luna@lunamoves.com",
+    "profiles": []
+  },
+  "work": [
+    {
+      "name": "Freelance",
+      "position": "AcroYoga & Handstand Coach",
+      "startDate": "2019-01-01",
+      "endDate": "2026-01-01",
+      "location": "Amsterdam, Netherlands / Bali, Indonesia / Worldwide",
+      "highlights": [
+        "Teaching weekly AcroYoga jams and workshops in Amsterdam (20–40 participants)",
+        "Leading handstand intensives: foundation, conditioning, and freestanding press",
+        "Guest teacher at AcroFest Berlin, YogaMoves Bali, and AcroInsiders Da Nang",
+        "Developing progressive curriculum for beginner to advanced acroyoga students",
+        "One-on-one handstand coaching (online and in-person) with 60+ active clients"
+      ]
+    },
+    {
+      "name": "Samyak Yoga Shala",
+      "position": "Yoga & Movement Teacher",
+      "startDate": "2017-03-01",
+      "endDate": "2019-12-31",
+      "location": "Mysore, India",
+      "highlights": [
+        "Teaching Hatha and Vinyasa yoga classes in a traditional shala environment",
+        "Assisting in 200-hour teacher trainings (anatomy, alignment, philosophy modules)",
+        "Developing handstand and inversion workshops for intermediate yoga practitioners",
+        "Building and managing weekly community jam sessions"
+      ]
+    },
+    {
+      "name": "Circus Arts Amsterdam",
+      "position": "Acrobatics & Partner Work Instructor",
+      "startDate": "2015-06-01",
+      "endDate": "2017-02-28",
+      "location": "Amsterdam, Netherlands",
+      "highlights": [
+        "Teaching adult acrobatics, counterbalance, and low-flying techniques",
+        "Designing safe progressions for students with no prior movement background",
+        "Collaborating with physical therapists on injury-prevention protocols",
+        "Organizing and hosting monthly community play days"
+      ]
+    },
+    {
+      "name": "AcroHouse Da Nang",
+      "position": "Resident AcroYoga Instructor (seasonal)",
+      "startDate": "2021-11-01",
+      "endDate": "2022-03-31",
+      "location": "Da Nang, Vietnam",
+      "highlights": [
+        "Running daily AcroYoga sessions for an international community of 15–30 people",
+        "Hosting weekly washing machine jams and beginner intro nights",
+        "Coordinating visiting teachers and guest workshop slots",
+        "Building local community connections and outreach with Vietnamese practitioners"
+      ]
+    },
+    {
+      "name": "Various Festivals",
+      "position": "Guest Teacher & Workshop Facilitator",
+      "startDate": "2018-01-01",
+      "endDate": "2025-12-31",
+      "location": "Europe & Asia",
+      "highlights": [
+        "AcroFest Berlin 2019, 2022, 2024 — Handstand Lab and L-basing fundamentals",
+        "EcoYoga Gathering Portugal 2021 — Morning flows and partner acrobatics",
+        "AcroInsiders Southeast Asia 2023 — Therapeutic flying and shoulder care",
+        "YogaMoves Bali 2024 — Handstand conditioning and press-to-handstand masterclass"
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "AcroYoga Montreal",
+      "area": "AcroYoga Teacher Training",
+      "studyType": "Certification",
+      "startDate": "2016-07-01",
+      "endDate": "2016-08-31",
+      "location": "Montreal, Canada"
+    },
+    {
+      "institution": "Samyak Yoga",
+      "area": "Hatha Yoga Teacher Training",
+      "studyType": "RYS-200",
+      "startDate": "2016-10-01",
+      "endDate": "2016-12-15",
+      "location": "Mysore, India"
+    },
+    {
+      "institution": "BodyLogics Institute",
+      "area": "Somatic Movement & Injury Prevention",
+      "studyType": "Professional Certificate",
+      "startDate": "2020-01-01",
+      "endDate": "2020-06-30",
+      "location": "Online / Amsterdam"
+    },
+    {
+      "institution": "Hogeschool van Amsterdam",
+      "area": "Human Movement Sciences",
+      "studyType": "BSc (incomplete)",
+      "startDate": "2011-09-01",
+      "endDate": "2014-06-30",
+      "location": "Amsterdam, Netherlands"
+    }
+  ],
+  "languages": [
+    { "language": "Dutch",   "fluency": "C2" },
+    { "language": "English", "fluency": "C1" },
+    { "language": "Spanish", "fluency": "B1" },
+    { "language": "Indonesian (Bahasa)", "fluency": "A2" }
+  ],
+  "skills": [
+    { "name": "AcroYoga (lunar & solar)" },
+    { "name": "Handstand coaching (beginner–advanced)" },
+    { "name": "Therapeutic flying & restorative acro" },
+    { "name": "Spotting & safety culture" },
+    { "name": "Curriculum design & workshop planning" },
+    { "name": "Community building & event facilitation" },
+    { "name": "Anatomy & injury prevention" },
+    { "name": "Online course creation" }
+  ],
+  "certificates": [
+    { "name": "AcroYoga Montreal — Teacher Certification (2016)" },
+    { "name": "RYS-200 Yoga Alliance — Samyak Yoga Mysore (2016)" },
+    { "name": "First Aid & CPR — Rode Kruis Nederland (2024)" },
+    { "name": "Handstand Coach — Handstand Factory Level 2 (2021)" }
+  ]
+};
+
+// ── STATE ─────────────────────────────────────────────────────
+let data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+
+// ── THEMES ────────────────────────────────────────────────────
+const THEMES = [
+  {
+    id: 'iris',
+    name: 'Iris',
+    swatch: '#7c5cbf',
+    // editor
+    bg: '#f7f4fb', accent: '#7c5cbf', accent2: '#b897e8',
+    accentSoft: '#ede8f5', accentMid: '#9b78d4',
+    inkLight: '#9a8fb0', border: 'rgba(120,80,200,0.18)', borderFocus: '#7c5cbf',
+    cardHeaderBg: 'linear-gradient(135deg,#faf8ff 0%,#f3eefb 100%)',
+    // cv output
+    cvBg: '#f0ecf7', cvSidebarBg: '#ede8f5', cvSidebarAccent: '#7c5cbf',
+    cvAccent: '#7c5cbf', cvAccentSoft: '#ede8f5',
+    cvRule: 'rgba(90,60,140,0.09)', cvRuleStrong: 'rgba(90,60,140,0.18)',
+    cvShadow: 'rgba(90,60,140,0.13)', cvLangBar: 'rgba(90,60,140,0.14)'
+  },
+  {
+    id: 'rene',
+    name: 'René',
+    swatch: '#b5823a',
+    bg: '#f7f3ed', accent: '#b5823a', accent2: '#d4a86a',
+    accentSoft: '#f0e8d8', accentMid: '#c4922a',
+    inkLight: '#8a8a84', border: 'rgba(160,100,30,0.18)', borderFocus: '#b5823a',
+    cardHeaderBg: 'linear-gradient(135deg,#fffdf8 0%,#faf2e4 100%)',
+    cvBg: '#f2ede6', cvSidebarBg: '#f0ece4', cvSidebarAccent: '#8a6020',
+    cvAccent: '#b5823a', cvAccentSoft: '#f0e8d8',
+    cvRule: 'rgba(0,0,0,0.09)', cvRuleStrong: 'rgba(0,0,0,0.18)',
+    cvShadow: 'rgba(0,0,0,0.13)', cvLangBar: 'rgba(0,0,0,0.12)'
+  },
+  {
+    id: 'forest',
+    name: 'Forest',
+    swatch: '#4a7c59',
+    bg: '#f2f7f4', accent: '#4a7c59', accent2: '#7ab08a',
+    accentSoft: '#ddeee5', accentMid: '#5a9068',
+    inkLight: '#8aaa94', border: 'rgba(50,110,70,0.18)', borderFocus: '#4a7c59',
+    cardHeaderBg: 'linear-gradient(135deg,#f8fdf9 0%,#eef7f1 100%)',
+    cvBg: '#edf5ef', cvSidebarBg: '#ddeee5', cvSidebarAccent: '#3a6248',
+    cvAccent: '#4a7c59', cvAccentSoft: '#ddeee5',
+    cvRule: 'rgba(50,110,70,0.09)', cvRuleStrong: 'rgba(50,110,70,0.18)',
+    cvShadow: 'rgba(50,110,70,0.13)', cvLangBar: 'rgba(50,110,70,0.14)'
+  },
+  {
+    id: 'ocean',
+    name: 'Ocean',
+    swatch: '#2a6fa8',
+    bg: '#f2f6fb', accent: '#2a6fa8', accent2: '#6aaad4',
+    accentSoft: '#daeaf7', accentMid: '#3a80bc',
+    inkLight: '#8aaac0', border: 'rgba(30,90,150,0.18)', borderFocus: '#2a6fa8',
+    cardHeaderBg: 'linear-gradient(135deg,#f8fcff 0%,#e8f4fc 100%)',
+    cvBg: '#edf4fb', cvSidebarBg: '#daeaf7', cvSidebarAccent: '#1a5888',
+    cvAccent: '#2a6fa8', cvAccentSoft: '#daeaf7',
+    cvRule: 'rgba(30,90,150,0.09)', cvRuleStrong: 'rgba(30,90,150,0.18)',
+    cvShadow: 'rgba(30,90,150,0.13)', cvLangBar: 'rgba(30,90,150,0.14)'
+  },
+  {
+    id: 'rose',
+    name: 'Rose',
+    swatch: '#b84c6e',
+    bg: '#fdf4f7', accent: '#b84c6e', accent2: '#de8faa',
+    accentSoft: '#f7dde6', accentMid: '#c85c7e',
+    inkLight: '#c090a0', border: 'rgba(180,60,100,0.18)', borderFocus: '#b84c6e',
+    cardHeaderBg: 'linear-gradient(135deg,#fff8fa 0%,#fceef3 100%)',
+    cvBg: '#fdf0f4', cvSidebarBg: '#f7dde6', cvSidebarAccent: '#963a58',
+    cvAccent: '#b84c6e', cvAccentSoft: '#f7dde6',
+    cvRule: 'rgba(180,60,100,0.09)', cvRuleStrong: 'rgba(180,60,100,0.18)',
+    cvShadow: 'rgba(180,60,100,0.13)', cvLangBar: 'rgba(180,60,100,0.14)'
+  },
+  {
+    id: 'slate',
+    name: 'Slate',
+    swatch: '#4a5568',
+    bg: '#f4f5f7', accent: '#4a5568', accent2: '#8896aa',
+    accentSoft: '#e2e6ed', accentMid: '#5a6678',
+    inkLight: '#8896aa', border: 'rgba(60,70,90,0.18)', borderFocus: '#4a5568',
+    cardHeaderBg: 'linear-gradient(135deg,#f9fafb 0%,#edf0f4 100%)',
+    cvBg: '#eef0f4', cvSidebarBg: '#e2e6ed', cvSidebarAccent: '#3a4455',
+    cvAccent: '#4a5568', cvAccentSoft: '#e2e6ed',
+    cvRule: 'rgba(60,70,90,0.09)', cvRuleStrong: 'rgba(60,70,90,0.18)',
+    cvShadow: 'rgba(60,70,90,0.13)', cvLangBar: 'rgba(60,70,90,0.14)'
+  },
+  {
+    id: 'terracotta',
+    name: 'Terra',
+    swatch: '#c4603a',
+    bg: '#fdf6f2', accent: '#c4603a', accent2: '#e09478',
+    accentSoft: '#f7e4db', accentMid: '#d4704a',
+    inkLight: '#b89080', border: 'rgba(180,80,50,0.18)', borderFocus: '#c4603a',
+    cardHeaderBg: 'linear-gradient(135deg,#fffaf8 0%,#fef0e8 100%)',
+    cvBg: '#fdf0e8', cvSidebarBg: '#f7e4db', cvSidebarAccent: '#a04828',
+    cvAccent: '#c4603a', cvAccentSoft: '#f7e4db',
+    cvRule: 'rgba(180,80,50,0.09)', cvRuleStrong: 'rgba(180,80,50,0.18)',
+    cvShadow: 'rgba(180,80,50,0.13)', cvLangBar: 'rgba(180,80,50,0.14)'
+  },
+  {
+    id: 'midnight',
+    name: 'Midnight',
+    swatch: '#3d3580',
+    bg: '#f3f2fa', accent: '#3d3580', accent2: '#7b74c0',
+    accentSoft: '#e0dff5', accentMid: '#4d458f',
+    inkLight: '#9090b8', border: 'rgba(60,50,130,0.18)', borderFocus: '#3d3580',
+    cardHeaderBg: 'linear-gradient(135deg,#faf9ff 0%,#eeecfc 100%)',
+    cvBg: '#eceaf8', cvSidebarBg: '#e0dff5', cvSidebarAccent: '#2d2565',
+    cvAccent: '#3d3580', cvAccentSoft: '#e0dff5',
+    cvRule: 'rgba(60,50,130,0.09)', cvRuleStrong: 'rgba(60,50,130,0.18)',
+    cvShadow: 'rgba(60,50,130,0.13)', cvLangBar: 'rgba(60,50,130,0.14)'
+  }
+];
+
+let activeTheme = THEMES[0];
+
+function applyTheme(theme) {
+  activeTheme = theme;
+  const r = document.documentElement.style;
+  r.setProperty('--bg',          theme.bg);
+  r.setProperty('--accent',      theme.accent);
+  r.setProperty('--accent2',     theme.accent2);
+  r.setProperty('--accent-soft', theme.accentSoft);
+  r.setProperty('--accent-mid',  theme.accentMid);
+  r.setProperty('--ink-light',   theme.inkLight);
+  r.setProperty('--border',      theme.border);
+  r.setProperty('--border-focus',theme.borderFocus);
+  // card header gradient needs inline update — patch via a dynamic style tag
+  let dynStyle = document.getElementById('dyn-theme-style');
+  if (!dynStyle) { dynStyle = document.createElement('style'); dynStyle.id = 'dyn-theme-style'; document.head.appendChild(dynStyle); }
+  dynStyle.textContent = `.card-header { background: ${theme.cardHeaderBg} !important; } .entry-header { background: ${theme.accentSoft}22 !important; }`;
+  // update swatch active state
+  document.querySelectorAll('.theme-swatch').forEach(s => s.classList.toggle('active', s.dataset.id === theme.id));
+}
+
+function buildThemeBar() {
+  const bar = document.getElementById('theme-bar');
+  THEMES.forEach(t => {
+    const sw = document.createElement('button');
+    sw.className = 'theme-swatch' + (t.id === activeTheme.id ? ' active' : '');
+    sw.dataset.id   = t.id;
+    sw.dataset.name = t.name;
+    sw.style.background = t.swatch;
+    sw.title = t.name;
+    sw.onclick = () => applyTheme(t);
+    bar.appendChild(sw);
+  });
+}
+
+// ── HELPERS ───────────────────────────────────────────────────
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function val(id) { return document.getElementById(id)?.value || ''; }
+function setVal(id, v) { const e = document.getElementById(id); if (e) e.value = v || ''; }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── BASICS ────────────────────────────────────────────────────
+function renderBasics() {
+  const b = data.basics;
+  setVal('b-name',        b.name);
+  setVal('b-nationality', b.nationality);
+  setVal('b-phone',       b.phone);
+  setVal('b-email',       b.email);
+  setVal('b-region',      b.location?.region);
+  setVal('b-countryCode', b.location?.countryCode);
+  setVal('b-summary',     b.summary);
+}
+function readBasics() {
+  data.basics.name        = val('b-name');
+  data.basics.nationality = val('b-nationality');
+  data.basics.phone       = val('b-phone');
+  data.basics.email       = val('b-email');
+  data.basics.summary     = val('b-summary');
+  if (!data.basics.location) data.basics.location = {};
+  data.basics.location.region      = val('b-region');
+  data.basics.location.countryCode = val('b-countryCode');
+}
+
+// ── WORK ──────────────────────────────────────────────────────
+function renderWork() {
+  const list = document.getElementById('work-list');
+  list.innerHTML = '';
+  data.work.forEach((job, i) => list.appendChild(buildWorkBlock(job, i)));
+}
+function buildWorkBlock(job, i) {
+  const block = el('div', 'entry-block open');
+  block.dataset.index = i;
+  const hdr = el('div', 'entry-header');
+  hdr.onclick = () => block.classList.toggle('open');
+  const left = el('div', 'entry-header-left');
+  left.appendChild(el('div', 'entry-label', job.name || '(new)'));
+  left.appendChild(el('div', 'entry-sublabel', job.position || ''));
+  const right = el('div', 'entry-header-right');
+  const delBtn = el('button', 'btn btn-danger', '✕ Remove');
+  delBtn.onclick = e => { e.stopPropagation(); deleteWork(i); };
+  right.appendChild(delBtn);
+  right.innerHTML += `<svg class="chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg>`;
+  hdr.appendChild(left); hdr.appendChild(right);
+  block.appendChild(hdr);
+
+  const body = el('div', 'entry-body');
+  const grid = el('div', 'form-grid');
+  function f(lbl, id, v, full) {
+    const wrap = el('div', 'field' + (full ? ' form-full' : ''));
+    wrap.appendChild(el('label', null, lbl));
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.id = id; inp.value = v || '';
+    inp.addEventListener('input', () => syncHeader(block, i, 'w'));
+    wrap.appendChild(inp); return wrap;
+  }
+  grid.appendChild(f('Employer',  `w-${i}-name`,      job.name));
+  grid.appendChild(f('Position',    `w-${i}-position`,  job.position));
+  grid.appendChild(f('Start date', `w-${i}-startDate`, job.startDate));
+  grid.appendChild(f('End date',  `w-${i}-endDate`,   job.endDate));
+  grid.appendChild(f('Location',    `w-${i}-location`,  job.location, true));
+  body.appendChild(grid);
+
+  body.appendChild(el('div', 'section-label', 'Highlights'));
+  const hiList = el('div', 'highlights-list');
+  hiList.id = `w-${i}-highlights`;
+  (job.highlights || []).forEach((h, hi) => hiList.appendChild(hiRow(i, hi, h, 'w')));
+  body.appendChild(hiList);
+  const addHi = el('button', 'btn btn-ghost', '＋ highlight');
+  addHi.style.marginTop = '4px';
+  addHi.onclick = () => { collectWork(i); data.work[i].highlights.push(''); renderWork(); };
+  body.appendChild(addHi);
+  block.appendChild(body);
+  return block;
+}
+function hiRow(ei, hi, text, prefix) {
+  const row = el('div', 'highlight-row');
+  row.appendChild(el('span', 'highlight-bullet', '—'));
+  const inp = document.createElement('input');
+  inp.type = 'text'; inp.value = text; inp.id = `${prefix}-${ei}-hi-${hi}`;
+  const rem = el('button', 'btn-remove-hi', '×');
+  rem.onclick = () => {
+    if (prefix === 'w') { collectWork(ei); data.work[ei].highlights.splice(hi,1); renderWork(); }
+    else                { collectEdu(ei);  data.education[ei].highlights.splice(hi,1); renderEdu(); }
+  };
+  row.appendChild(inp); row.appendChild(rem); return row;
+}
+function syncHeader(block, i, prefix) {
+  const n = document.getElementById(`${prefix}-${i}-name`)?.value;
+  const p = document.getElementById(`${prefix}-${i}-position`)?.value || document.getElementById(`${prefix}-${i}-area`)?.value;
+  const lbl = block.querySelector('.entry-label');
+  const sub = block.querySelector('.entry-sublabel');
+  if (lbl) lbl.textContent = n || '(new)';
+  if (sub) sub.textContent = p || '';
+}
+function collectWork(i) {
+  const job = data.work[i];
+  job.name      = val(`w-${i}-name`);
+  job.position  = val(`w-${i}-position`);
+  job.startDate = val(`w-${i}-startDate`);
+  job.endDate   = val(`w-${i}-endDate`);
+  job.location  = val(`w-${i}-location`);
+  const hl = document.getElementById(`w-${i}-highlights`);
+  if (hl) job.highlights = [...hl.querySelectorAll('input')].map(x=>x.value).filter(Boolean);
+}
+function addWork() {
+  data.work.push({ name:'', position:'', startDate:'', endDate:'', location:'', highlights:[] });
+  renderWork();
+  const blocks = document.querySelectorAll('#work-list .entry-block');
+  blocks[blocks.length-1]?.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function deleteWork(i) {
+  if (!confirm('Remove this work experience?')) return;
+  data.work.splice(i,1); renderWork(); showToast('Removed');
+}
+
+// ── EDUCATION ─────────────────────────────────────────────────
+function renderEdu() {
+  const list = document.getElementById('edu-list');
+  list.innerHTML = '';
+  data.education.forEach((e, i) => list.appendChild(buildEduBlock(e, i)));
+}
+function buildEduBlock(edu, i) {
+  const block = el('div', 'entry-block open');
+  const hdr = el('div', 'entry-header');
+  hdr.onclick = () => block.classList.toggle('open');
+  const left = el('div', 'entry-header-left');
+  left.appendChild(el('div', 'entry-label', edu.institution || '(new)'));
+  left.appendChild(el('div', 'entry-sublabel', (edu.studyType||'') + ' ' + (edu.area||'')));
+  const right = el('div', 'entry-header-right');
+  const delBtn = el('button', 'btn btn-danger', '✕ Remove');
+  delBtn.onclick = e => { e.stopPropagation(); deleteEdu(i); };
+  right.appendChild(delBtn);
+  right.innerHTML += `<svg class="chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8l5 5 5-5"/></svg>`;
+  hdr.appendChild(left); hdr.appendChild(right);
+  block.appendChild(hdr);
+
+  const body = el('div', 'entry-body');
+  const grid = el('div', 'form-grid');
+  function f(lbl, id, v, full) {
+    const wrap = el('div', 'field' + (full ? ' form-full' : ''));
+    wrap.appendChild(el('label', null, lbl));
+    const inp = document.createElement('input');
+    inp.type='text'; inp.id=id; inp.value=v||'';
+    inp.addEventListener('input', () => syncHeader(block, i, 'e'));
+    wrap.appendChild(inp); return wrap;
+  }
+  grid.appendChild(f('Institution',    `e-${i}-name`,      edu.institution));
+  grid.appendChild(f('Field of study',`e-${i}-area`,      edu.area));
+  grid.appendChild(f('Degree type',          `e-${i}-studyType`, edu.studyType));
+  grid.appendChild(f('Location',       `e-${i}-location`,  edu.location));
+  grid.appendChild(f('Start date',    `e-${i}-startDate`, edu.startDate));
+  grid.appendChild(f('End date',     `e-${i}-endDate`,   edu.endDate));
+  body.appendChild(grid);
+  block.appendChild(body);
+  return block;
+}
+function collectEdu(i) {
+  const e = data.education[i];
+  e.institution = val(`e-${i}-name`);
+  e.area        = val(`e-${i}-area`);
+  e.studyType   = val(`e-${i}-studyType`);
+  e.location    = val(`e-${i}-location`);
+  e.startDate   = val(`e-${i}-startDate`);
+  e.endDate     = val(`e-${i}-endDate`);
+}
+function addEdu() {
+  data.education.push({ institution:'', area:'', studyType:'', startDate:'', endDate:'', location:'' });
+  renderEdu();
+  const blocks = document.querySelectorAll('#edu-list .entry-block');
+  blocks[blocks.length-1]?.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function deleteEdu(i) {
+  if (!confirm('Remove this education entry?')) return;
+  data.education.splice(i,1); renderEdu(); showToast('Removed');
+}
+
+// ── LANGUAGES ─────────────────────────────────────────────────
+function renderLangs() {
+  const list = document.getElementById('lang-list');
+  list.innerHTML = '';
+  (data.languages||[]).forEach((l, i) => {
+    const row = el('div', 'lang-row-editor');
+    const i1 = document.createElement('input');
+    i1.className='lang-input'; i1.type='text'; i1.value=l.language||''; i1.placeholder='Taal'; i1.id=`lang-${i}-lang`;
+    const i2 = document.createElement('input');
+    i2.className='lang-input'; i2.type='text'; i2.value=l.fluency||''; i2.placeholder='C2, B2/C1…'; i2.id=`lang-${i}-fluency`;
+    const del = el('button','btn btn-danger','✕');
+    del.onclick = () => { data.languages.splice(i,1); renderLangs(); };
+    row.appendChild(i1); row.appendChild(i2); row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+function addLang() { if (!data.languages) data.languages=[]; data.languages.push({language:'',fluency:''}); renderLangs(); }
+
+// ── SKILLS ────────────────────────────────────────────────────
+function renderSkills() {
+  const list = document.getElementById('skill-list');
+  list.innerHTML = '';
+  (data.skills||[]).forEach((s,i) => {
+    const row = el('div','pill-row');
+    const inp = document.createElement('input');
+    inp.type='text'; inp.value=s.name||''; inp.placeholder='Skill…'; inp.id=`skill-${i}`;
+    const del = el('button','btn btn-danger','✕');
+    del.onclick = () => { data.skills.splice(i,1); renderSkills(); };
+    row.appendChild(inp); row.appendChild(del); list.appendChild(row);
+  });
+}
+function addSkill() { if (!data.skills) data.skills=[]; data.skills.push({name:''}); renderSkills(); }
+
+// ── CERTIFICATES ──────────────────────────────────────────────
+function renderCerts() {
+  const list = document.getElementById('cert-list');
+  list.innerHTML = '';
+  (data.certificates||[]).forEach((c,i) => {
+    const row = el('div','pill-row');
+    const inp = document.createElement('input');
+    inp.type='text'; inp.value=c.name||''; inp.placeholder='Certificate…'; inp.id=`cert-${i}`;
+    const del = el('button','btn btn-danger','✕');
+    del.onclick = () => { data.certificates.splice(i,1); renderCerts(); };
+    row.appendChild(inp); row.appendChild(del); list.appendChild(row);
+  });
+}
+function addCert() { if (!data.certificates) data.certificates=[]; data.certificates.push({name:''}); renderCerts(); }
+
+// ── COLLECT ALL ───────────────────────────────────────────────
+function collectAll() {
+  readBasics();
+  data.work.forEach((_,i) => collectWork(i));
+  data.education.forEach((_,i) => collectEdu(i));
+  data.languages = (data.languages||[]).map((_,i) => ({
+    language: val(`lang-${i}-lang`), fluency: val(`lang-${i}-fluency`)
+  })).filter(l => l.language);
+  data.skills = (data.skills||[]).map((_,i) => ({ name: val(`skill-${i}`) })).filter(s => s.name);
+  data.certificates = (data.certificates||[]).map((_,i) => ({ name: val(`cert-${i}`) })).filter(c => c.name);
+}
+
+// ── DOWNLOAD ──────────────────────────────────────────────────
+function downloadJSON() {
+  collectAll();
+  const name = (data.basics?.name || 'cv').toLowerCase().replace(/\s+/g,'_');
+  showDownloadModal(name, 'json');
+}
+
+// ── RENDER ALL ────────────────────────────────────────────────
+function renderAll() {
+  renderBasics(); renderWork(); renderEdu(); renderLangs(); renderSkills(); renderCerts();
+}
+
+function loadDefault() {
+  data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  renderAll();
+  showToast('Demo CV loaded');
+}
+
+function wisAlles() {
+  if (!confirm('Are you sure you want to clear everything? This cannot be undone.')) return;
+  data = {
+    basics: { name:'', nationality:'', summary:'', location:{ countryCode:'', region:'' }, phone:'', email:'', profiles:[] },
+    work: [], education: [], languages: [], skills: [], certificates: []
+  };
+  renderAll();
+  showToast('All cleared');
+}
+
+// ── FILE INPUT ────────────────────────────────────────────────
+document.getElementById('file-input').addEventListener('change', function() {
+  const file = this.files[0];
+  this.value = ''; // reset so same file can be loaded again
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      data = JSON.parse(e.target.result);
+      if (!data.basics) throw new Error('Geen basics gevonden');
+      renderAll();
+      showToast('JSON loaded ✓');
+    } catch(err) { alert('Error: ' + err.message); }
+  };
+  reader.readAsText(file);
+});
+
+// Boot
+buildThemeBar();
+loadDefault();
+
+// ════════════════════════════════════════════════════════
+//  DOWNLOAD CV AS HTML
+// ════════════════════════════════════════════════════════
+function downloadCVasHTML() {
+  collectAll();
+
+  const t = activeTheme;
+  const cvStyles = `
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --font-body:    'DM Sans', system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --bg:           ${t.cvBg};
+  --paper:        #ffffff;
+  --sidebar-bg:   ${t.cvSidebarBg};
+  --sidebar-text: #2a2630;
+  --sidebar-mid:  #6a6272;
+  --sidebar-rule: ${t.cvRule};
+  --sidebar-accent: ${t.cvSidebarAccent};
+  --ink:          #1c1820;
+  --ink-mid:      #4a4452;
+  --ink-light:    #9a90a8;
+  --accent:       ${t.cvAccent};
+  --accent-soft:  ${t.cvAccentSoft};
+  --rule:         ${t.cvRule};
+  --rule-strong:  ${t.cvRuleStrong};
+  --sidebar-w:    240px;
+  --label-w:      155px;
+  --max-w:        1040px;
+}
+html, body { background: var(--bg); font-family: var(--font-body); color: var(--ink); line-height: 1.6; min-height: 100vh; }
+body { padding: 2.5rem 1.5rem 5rem; display: flex; justify-content: center; align-items: flex-start; }
+.cv-shell { width: 100%; max-width: var(--max-w); display: flex; box-shadow: 0 4px 32px ${t.cvShadow}; border-radius: 4px; overflow: hidden; }
+.cv-sidebar { width: var(--sidebar-w); flex-shrink: 0; background: var(--sidebar-bg); color: var(--sidebar-text); padding: 2.5rem 1.5rem 3rem; display: flex; flex-direction: column; gap: 2rem; border-right: 1px solid ${t.cvRule}; }
+.photo-wrap { width: 100%; border-radius: 4px; overflow: hidden; background: #d8d0ea; border: 1px solid rgba(90,60,140,0.15); }
+.photo-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo-placeholder { width: 100%; min-height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: var(--sidebar-mid); }
+.photo-placeholder svg { width: 48px; height: 48px; opacity: 0.35; }
+.photo-placeholder span { font-size: 12px; letter-spacing: 0.05em; opacity: 0.5; }
+.sb-section { display: flex; flex-direction: column; gap: 0.6rem; }
+.sb-title { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--sidebar-accent); font-weight: 500; padding-bottom: 0.35rem; border-bottom: 1px solid var(--sidebar-rule); margin-bottom: 0.25rem; }
+.sb-name { font-family: var(--font-display); font-size: 30px; font-weight: 700; color: var(--ink); line-height: 1.15; margin-bottom: 0.15rem; }
+.sb-tagline { font-size: 13.5px; font-weight: 300; color: var(--sidebar-mid); line-height: 1.5; font-style: italic; }
+.sb-info-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--sidebar-accent); margin-top: 0.6rem; margin-bottom: 1px; }
+.sb-info-val { font-size: 14px; color: var(--sidebar-text); line-height: 1.5; }
+.lang-row { margin-bottom: 6px; }
+.lang-name { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--sidebar-text); margin-bottom: 3px; }
+.lang-fluency { font-size: 12px; color: var(--sidebar-mid); }
+.lang-bar-bg { height: 3px; background: ${t.cvLangBar}; border-radius: 2px; overflow: hidden; }
+.lang-bar-fill { height: 100%; background: var(--sidebar-accent); border-radius: 2px; }
+.sb-skills { display: flex; flex-wrap: wrap; gap: 5px; }
+.sb-skill { font-size: 13px; color: var(--sidebar-mid); border: 1px solid rgba(90,60,140,0.18); border-radius: 2px; padding: 2px 8px; line-height: 1.6; }
+.sb-cert { font-size: 14px; color: var(--sidebar-mid); line-height: 1.6; padding-left: 10px; position: relative; }
+.sb-cert::before { content: '—'; position: absolute; left: 0; color: var(--sidebar-accent); font-size: 11px; top: 3px; }
+.cv-main { flex: 1; background: var(--paper); padding: 2.5rem 2.5rem 3rem; min-width: 0; }
+.main-name { font-family: var(--font-display); font-size: 42px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); line-height: 1.1; }
+.main-tagline { margin-top: 0.4rem; font-size: 15px; color: var(--ink-mid); font-weight: 300; letter-spacing: 0.02em; }
+.main-header { border-bottom: 2px solid var(--accent); padding-bottom: 1.25rem; margin-bottom: 2rem; }
+.section { margin-bottom: 2.5rem; }
+.section-title { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent); font-weight: 500; margin-bottom: 1.1rem; padding-bottom: 0.35rem; border-bottom: 1px solid var(--accent-soft); }
+.work-entries { display: flex; flex-direction: column; gap: 1.5rem; }
+.work-entry { display: grid; grid-template-columns: var(--label-w) 1fr; gap: 0 1.25rem; align-items: start; }
+.work-meta { padding-top: 2px; text-align: right; }
+.work-period { font-size: 13px; color: var(--ink-light); line-height: 1.5; }
+.work-title { font-size: 16px; font-weight: 500; color: var(--ink); line-height: 1.3; }
+.work-company { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; }
+.work-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--accent); }
+.work-company-name { font-size: 14.5px; color: var(--ink-mid); font-weight: 400; }
+.work-loc { font-size: 13.5px; color: var(--ink-light); margin-top: 1px; }
+.work-highlights { margin-top: 5px; list-style: none; display: flex; flex-direction: column; gap: 1px; }
+.work-highlights li { font-size: 14px; color: var(--ink-mid); padding-left: 12px; position: relative; line-height: 1.5; }
+.work-highlights li::before { content: '—'; position: absolute; left: 0; color: var(--accent); font-size: 11px; top: 3px; }
+.edu-entries { display: flex; flex-direction: column; gap: 1.25rem; }
+.edu-entry { display: grid; grid-template-columns: var(--label-w) 1fr; gap: 0 1.25rem; }
+.edu-year { font-size: 13px; color: var(--ink-light); padding-top: 2px; text-align: right; }
+.edu-title { font-size: 16px; font-weight: 500; color: var(--ink); }
+.edu-inst  { font-size: 14px; color: var(--ink-mid); margin-top: 1px; }
+@media (min-width: 641px) {
+  .sb-name { display: none; }
+  .sb-tagline { display: none; }
+}
+@media (max-width: 640px) {
+  body { padding: 0; }
+  .cv-shell { flex-direction: column; border-radius: 0; }
+  .cv-sidebar { width: 100%; padding: 1.5rem; border-right: none; border-bottom: 1px solid rgba(90,60,140,0.13); }
+  .cv-main { padding: 1.5rem; }
+  .main-header { display: none; }
+  :root { --label-w: 90px; }
+}
+@media print {
+  body { background: white !important; padding: 0; }
+  .cv-shell { box-shadow: none; border-radius: 0; }
+  .cv-sidebar { background: white !important; }
+  .cv-main { background: white !important; }
+}
+</style>`;
+
+  // ── Build sidebar HTML ──
+  const b = data.basics;
+  const LANG_LEVEL_MAP = {'A1':1/6,'A1/A2':1.5/6,'A2':2/6,'A2/B1':2.5/6,'B1':3/6,'B1/B2':3.5/6,'B2':4/6,'B2/C1':4.5/6,'C1':5/6,'C1/C2':5.5/6,'C2':1};
+  function langFill(f){ return ((LANG_LEVEL_MAP[f]||0.5)*100).toFixed(1)+'%'; }
+
+  const personalFields = [
+    ['Nationality', b.nationality],
+    ['Location',    b.location?.region],
+    ['Phone',       b.phone],
+    ['Email',       b.email],
+  ].filter(([,v])=>v).map(([l,v])=>
+    `<div class="sb-info-label">${l}</div><div class="sb-info-val">${esc(v)}</div>`
+  ).join('');
+
+  const langsHTML = (data.languages||[]).map(l=>`
+    <div class="lang-row">
+      <div class="lang-name">${esc(l.language)}<span class="lang-fluency">${esc(l.fluency)}</span></div>
+      <div class="lang-bar-bg"><div class="lang-bar-fill" style="width:${langFill(l.fluency)}"></div></div>
+    </div>`).join('');
+
+  const skillsHTML = (data.skills||[]).map(s=>`<span class="sb-skill">${esc(s.name)}</span>`).join('');
+  const certsHTML  = (data.certificates||[]).map(c=>`<div class="sb-cert">${esc(c.name)}</div>`).join('');
+
+  const sidebar = `
+<div class="cv-sidebar">
+  <div class="photo-wrap">
+    <div class="photo-placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span>photo.jpg</span>
+    </div>
+  </div>
+  <div class="sb-section">
+    <div class="sb-name">${esc(b.name)}</div>
+    ${b.summary ? `<div class="sb-tagline">${esc(b.summary)}</div>` : ''}
+  </div>
+  ${personalFields ? `<div class="sb-section"><div class="sb-title">Personal</div>${personalFields}</div>` : ''}
+  ${langsHTML ? `<div class="sb-section"><div class="sb-title">Languages</div>${langsHTML}</div>` : ''}
+  ${skillsHTML ? `<div class="sb-section"><div class="sb-title">Skills</div><div class="sb-skills">${skillsHTML}</div></div>` : ''}
+  ${certsHTML ? `<div class="sb-section"><div class="sb-title">Certificates</div>${certsHTML}</div>` : ''}
+</div>`;
+
+  // ── Build work HTML ──
+  const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function fmtDate(s){ const p=s.split('-').map(Number); if(!p[1]) return ''+p[0]; return MO[p[1]-1]+' '+p[0]; }
+  function fmtPeriod(s,e){ return fmtDate(s)+' – '+fmtDate(e); }
+
+  const workHTML = (data.work||[]).map(job=>{
+    const hiHTML = (job.highlights||[]).filter(Boolean).map(h=>`<li>${esc(h)}</li>`).join('');
+    return `
+    <div class="work-entry">
+      <div class="work-meta"><div class="work-period">${fmtPeriod(job.startDate||'',job.endDate||'')}</div></div>
+      <div>
+        <div class="work-title">${esc(job.position)}</div>
+        <div class="work-company"><span class="work-dot"></span><span class="work-company-name">${esc(job.name)}</span></div>
+        ${job.location ? `<div class="work-loc">${esc(job.location)}</div>` : ''}
+        ${hiHTML ? `<ul class="work-highlights">${hiHTML}</ul>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── Build education HTML ──
+  const eduHTML = (data.education||[]).map(e=>{
+    const sy = e.startDate ? e.startDate.split('-')[0] : '';
+    const ey = e.endDate   ? e.endDate.split('-')[0]   : '';
+    return `
+    <div class="edu-entry">
+      <div class="edu-year">${sy} – ${ey}</div>
+      <div>
+        <div class="edu-title">${esc((e.studyType||'')+' '+(e.area||''))}</div>
+        <div class="edu-inst">${esc(e.institution)}${e.location ? ' · '+esc(e.location) : ''}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const yearStart = (data.work||[]).reduce((m,j)=>j.startDate<m?j.startDate:m,'9999').split('-')[0];
+  const yearEnd   = (data.work||[]).reduce((m,j)=>j.endDate  >m?j.endDate  :m,'0000').split('-')[0];
+
+  const main = `
+<div class="cv-main">
+  <div class="main-header">
+    <div class="main-name">${esc(b.name)}</div>
+    <div class="main-tagline">${esc(b.summary||'')} · ${yearStart} – ${yearEnd}</div>
+  </div>
+  ${workHTML ? `<section class="section"><div class="section-title">Work Experience</div><div class="work-entries">${workHTML}</div></section>` : ''}
+  ${eduHTML  ? `<section class="section"><div class="section-title">Education</div><div class="edu-entries">${eduHTML}</div></section>` : ''}
+</div>`;
+
+  const name = (b.name||'cv').toLowerCase().replace(/\s+/g,'_');
+  const fullHTML = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CV — ${esc(b.name)}</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+${cvStyles}
+</head>
+<body>
+<div class="cv-shell">
+${sidebar}
+${main}
+</div>
+</body>
+</html>`;
+
+  // Store blob for modal to use
+  window._cvBlob     = new Blob([fullHTML], { type:'text/html;charset=utf-8' });
+  window._cvFilename = `cv_${name}.html`;
+  showDownloadModal(name);
+}
+
+function doDownloadHTML() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(window._cvBlob);
+  a.download = window._cvFilename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(a.href);
+}
+
+function showDownloadModal(name, mode) {
+  mode = mode || 'cv';
+  const base = name || 'cv';
+  document.getElementById('fn-html').value = `cv_${base}`;
+  document.getElementById('fn-json').value = `cv_${base}`;
+  // Toggle UI based on mode
+  const isCv = mode === 'cv';
+  document.getElementById('dl-modal-title').textContent = isCv ? '📥 Download your CV' : '📄 Download JSON';
+  document.getElementById('dl-modal-sub').textContent   = isCv
+    ? 'Want to save the JSON too? That way you can reload and edit your CV later.'
+    : 'Edit the filename below before downloading.';
+  document.getElementById('fn-html-row').style.display  = isCv ? 'flex' : 'none';
+  document.getElementById('dl-cv-options').style.display = isCv ? 'flex' : 'none';
+  document.getElementById('dl-json-btn').style.display   = isCv ? 'none' : 'flex';
+  document.getElementById('dl-photo-note').style.display = isCv ? 'block' : 'none';
+  document.getElementById('dl-modal').style.display = 'flex';
+  // Focus the relevant input
+  setTimeout(() => {
+    const inp = document.getElementById(isCv ? 'fn-html' : 'fn-json');
+    inp.focus(); inp.select();
+  }, 50);
+}
+
+function dlJSONconfirm() {
+  const { json } = getFilenames();
+  closeDownloadModal();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = json;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(a.href);
+  showToast('JSON downloaded ✓');
+}
+
+function getFilenames() {
+  const sanitize = s => (s.trim().replace(/[^a-zA-Z0-9_\-\.]/g, '_') || 'cv');
+  return {
+    html: sanitize(document.getElementById('fn-html').value) + '.html',
+    json: sanitize(document.getElementById('fn-json').value) + '.json',
+  };
+}
+
+function dlHTMLonly() {
+  const { html } = getFilenames();
+  closeDownloadModal();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(window._cvBlob);
+  a.download = html;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(a.href);
+  showToast('CV downloaded as HTML ✓');
+}
+
+function dlHTMLandJSON() {
+  const { html, json } = getFilenames();
+  closeDownloadModal();
+  // HTML
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(window._cvBlob);
+  a.download = html;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(a.href);
+  // JSON with custom filename
+  setTimeout(() => {
+    collectAll();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json;charset=utf-8' });
+    const b = document.createElement('a');
+    b.href = URL.createObjectURL(blob);
+    b.download = json;
+    document.body.appendChild(b); b.click();
+    document.body.removeChild(b); URL.revokeObjectURL(b.href);
+  }, 400);
+  showToast('HTML + JSON downloaded ✓');
+}
+
+function closeDownloadModal() {
+  document.getElementById('dl-modal').style.display = 'none';
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
