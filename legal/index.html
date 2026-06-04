@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voorwaarden — Website Development</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --font-body:    'DM Sans', system-ui, sans-serif;
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+
+  --bg:           #f2ede6;
+  --paper:        #ffffff;
+  --sidebar-bg:   #f0ece4;
+  --sidebar-text: #2a2a28;
+  --sidebar-mid:  #6a6a64;
+  --sidebar-rule: rgba(0,0,0,0.10);
+  --sidebar-accent: #8a6020;
+
+  --ink:          #1c1c1a;
+  --ink-mid:      #4a4a46;
+  --ink-light:    #8a8a84;
+  --accent:       #b5823a;
+  --accent-soft:  #f0e8d8;
+  --rule:         rgba(0,0,0,0.09);
+  --rule-strong:  rgba(0,0,0,0.18);
+
+  --max-w:        900px;
+}
+
+html, body {
+  background: var(--bg);
+  font-family: var(--font-body);
+  color: var(--ink);
+  line-height: 1.65;
+  min-height: 100vh;
+}
+
+body {
+  padding: 2.5rem 1.5rem 3rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: var(--max-w);
+  background: var(--paper);
+  box-shadow: 0 4px 32px rgba(0,0,0,0.13);
+  border-radius: 4px;
+  padding: 2.5rem;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Language toggle */
+.lang-toggle {
+  position: absolute;
+  top: 2rem;
+  right: 2rem;
+  display: flex;
+  gap: 0.5rem;
+  background: var(--accent-soft);
+  padding: 0.35rem;
+  border-radius: 3px;
+  border: 1px solid var(--rule);
+}
+
+.lang-btn {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink-mid);
+  letter-spacing: 0.05em;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+}
+
+.lang-btn.active {
+  background: var(--paper);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.lang-btn:hover:not(.active) {
+  color: var(--ink);
+}
+
+/* Header */
+h1 {
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+  padding-right: 100px;
+}
+
+.intro {
+  font-size: 15px;
+  color: var(--ink-mid);
+  font-weight: 300;
+  margin-bottom: 2.5rem;
+  line-height: 1.7;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Sections */
+section {
+  margin-bottom: 2rem;
+}
+
+h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.005em;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+p {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+/* Hidden content */
+.content { display: none; }
+.content.visible { display: block; }
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+    padding: 0;
+  }
+  .wrapper {
+    max-width: 100%;
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .lang-toggle { display: none; }
+  h1 {
+    page-break-after: avoid;
+  }
+  section {
+    page-break-inside: avoid;
+  }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  body {
+    padding: 1.5rem 1rem 2rem;
+  }
+  .wrapper {
+    padding: 1.5rem;
+  }
+  h1 {
+    font-size: 28px;
+    padding-right: 0;
+  }
+  .lang-toggle {
+    position: static;
+    width: fit-content;
+    margin-bottom: 1.5rem;
+  }
+  h2 {
+    font-size: 18px;
+  }
+  p {
+    font-size: 14px;
+  }
+}
+</style>
+
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="lang-toggle">
+    <button class="lang-btn active" data-lang="nl">NL</button>
+    <button class="lang-btn" data-lang="en">EN</button>
+  </div>
+
+  <!-- NEDERLANDS -->
+  <div id="content-nl" class="content visible">
+    <h1>Voorwaarden</h1>
+
+    <div class="intro">
+      <p><strong>Toegankelijke websites, voor een toegankelijke prijs.</strong> Daar sta ik voor. Geen poespas, geen torenhoge facturen — gewoon een goede, werkende site waar je mee vooruit kunt. Ik lever 80% perfectie in 20% van de tijd. De laatste 10 tot 20% zou vijf keer zo lang duren voor marginale verbeteringen, en dat zit niet in de prijs ingebakken. Dit is waar je beter en sneller vooruit komt.</p>
+    </div>
+
+    <section>
+      <h2>1. Oplevering "as is"</h2>
+      <p>Je krijgt de website opgeleverd zoals die op dat moment is. Ik optimaliseer en test niet voor alle mogelijke combinaties van browsers, apparaten, schermformaten en besturingssystemen. Dit kost de meeste tijd waardoor de prijs onevenredig omhoog zou gaan. Kleine verschillen in hoe de site eruitziet of werkt op het ene apparaat versus het andere horen daar gewoon bij en gelden niet als fout.</p>
+    </section>
+
+    <section>
+      <h2>2. Hoe ik werk</h2>
+      <p>De basis van de site bouw ik met AI-ondersteunde ontwikkeling (vibecoding). Ik controleer en pas de code aan voor zover dat binnen de afgesproken uren past, maar ik beloof niet dat alles handgeschreven is of dat de code tot in de puntjes perfect gestructureerd is. Het gaat erom dat de site doet wat-ie moet doen.</p>
+    </section>
+
+    <section>
+      <h2>3. Prijs en uren</h2>
+      <p>Je betaalt een vaste prijs voor een vooraf afgesproken, beperkt aantal uren werk. Loopt het werk daarover heen — bijvoorbeeld extra wijzigingen, uitbreidingen, nieuwe ideeën onderweg of extra testen — dan reken ik die uren los door tegen mijn uurtarief. Voordat ik extra uren maak, laat ik het je eerst weten, zodat je niet voor verrassingen komt te staan.</p>
+    </section>
+
+    <section>
+      <h2>4. Gebruiksrechten</h2>
+      <p>Zodra alles betaald is, is de site helemaal van jou. Je mag 'm onbeperkt gebruiken, aanpassen, verder laten ontwikkelen door iemand anders, of hergebruiken voor wat je maar wilt. Geen beperkingen.</p>
+    </section>
+
+    <section>
+      <h2>5. Aansprakelijkheid</h2>
+      <p>Ik doe mijn best om een goede, werkende site te leveren, maar ik ben niet aansprakelijk voor schade die voortkomt uit het gebruik van de site, storingen, dataverlies of fouten die later opduiken. Mijn aansprakelijkheid is in alle gevallen beperkt tot maximaal het bedrag dat je voor de opdracht hebt betaald.</p>
+    </section>
+
+    <section>
+      <h2>6. Onderhoud</h2>
+      <p>Onderhoud, updates en het oplossen van problemen die later ontstaan, zitten niet automatisch bij de prijs in. Wil je dat ik dat blijf doen, dan spreken we daar apart iets voor af.</p>
+    </section>
+
+    <section>
+      <h2>7. Hosting en domeinnaam</h2>
+      <p>Hosting en domeinnaam regel je zelf, tenzij we iets anders afspreken. Kosten daarvoor lopen rechtstreeks via je hostingpartij en staan los van mijn prijs. Ik kan je wel adviseren of helpen met opzetten (binnen de afgesproken uren).</p>
+    </section>
+
+    <section>
+      <h2>8. Content</h2>
+      <p>Teksten, foto's, logo's en ander materiaal lever je zelf aan, tenzij anders afgesproken. Je bent zelf verantwoordelijk dat je dat materiaal mag gebruiken (auteursrecht, licenties enzovoort).</p>
+    </section>
+
+    <section>
+      <h2>9. Betaling</h2>
+      <p>Tenzij we iets anders afspreken, betaal je een deel vooraf en de rest bij oplevering. Facturen graag binnen 14 dagen voldoen. De ongelimiteerde gebruiksrechten gaan pas in als alles betaald is.</p>
+    </section>
+  </div>
+
+  <!-- ENGLISH -->
+  <div id="content-en" class="content">
+    <h1>Terms</h1>
+
+    <div class="intro">
+      <p><strong>Accessible websites, at an accessible price.</strong> That's what I stand for. No fuss, no inflated bills — just a solid, working website that gets you ahead. I deliver 80% perfection in 20% of the time. The last 10 to 20% would take five times as long for marginal improvements, and that's not baked into the price. This is where you get better results, faster.</p>
+    </div>
+
+    <section>
+      <h2>1. Delivery "as is"</h2>
+      <p>You get the website as it is at the time of delivery. I don't optimize or test for every possible combination of browsers, devices, screen sizes, and operating systems. That's where most of the time goes, and it would drive the price up disproportionately. Small visual or functional differences between devices are normal and don't count as defects.</p>
+    </section>
+
+    <section>
+      <h2>2. How I work</h2>
+      <p>I build the foundation of your site using AI-assisted development (vibecoding). I review and adjust the code as much as the agreed-upon hours allow, but I don't promise everything is hand-written or perfectly structured down to the last detail. The goal is that the site does what it's supposed to do.</p>
+    </section>
+
+    <section>
+      <h2>3. Price and hours</h2>
+      <p>You pay a fixed price for an agreed-upon, limited number of working hours. If the work goes beyond that — for example, extra changes, additions, new ideas along the way, or extra testing — I bill those hours separately at my hourly rate. Before I spend extra hours, I'll check with you first so there are no surprises.</p>
+    </section>
+
+    <section>
+      <h2>4. Usage rights</h2>
+      <p>Once everything is paid, the site is entirely yours. You can use it without limit, modify it, have someone else develop it further, or repurpose it however you like. No restrictions.</p>
+    </section>
+
+    <section>
+      <h2>5. Liability</h2>
+      <p>I do my best to deliver a good, working site, but I'm not liable for damage arising from the site's use, outages, data loss, or bugs that emerge later. My liability is limited in all cases to no more than the amount you paid for the project.</p>
+    </section>
+
+    <section>
+      <h2>6. Maintenance</h2>
+      <p>Maintenance, updates, and fixing problems that come up later are not automatically included in the price. If you want me to handle that going forward, we'll arrange it separately.</p>
+    </section>
+
+    <section>
+      <h2>7. Hosting and domain name</h2>
+      <p>You arrange your own hosting and domain name, unless we agree otherwise. Those costs go directly to your hosting provider and are separate from my price. I can advise you or help with setup (within the agreed hours).</p>
+    </section>
+
+    <section>
+      <h2>8. Content</h2>
+      <p>You provide text, photos, logos, and other materials, unless we agree otherwise. You're responsible for having the right to use that material (copyright, licenses, etc.).</p>
+    </section>
+
+    <section>
+      <h2>9. Payment</h2>
+      <p>Unless we agree otherwise, you pay part upfront and the rest on delivery. Please settle invoices within 14 days. The unlimited usage rights take effect only once everything is paid.</p>
+    </section>
+  </div>
+
+</div>
+
+<script>
+const langBtns = document.querySelectorAll('.lang-btn');
+const contents = {
+  nl: document.getElementById('content-nl'),
+  en: document.getElementById('content-en')
+};
+
+// Get saved language or default to Dutch
+const savedLang = localStorage.getItem('site-language') || 'nl';
+setLanguage(savedLang);
+
+langBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const lang = btn.dataset.lang;
+    setLanguage(lang);
+    localStorage.setItem('site-language', lang);
+  });
+});
+
+function setLanguage(lang) {
+  // Hide all content
+  Object.values(contents).forEach(content => content.classList.remove('visible'));
+  
+  // Show selected language
+  if (contents[lang]) {
+    contents[lang].classList.add('visible');
+  }
+  
+  // Update button states
+  langBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+  
+  // Update document language
+  document.documentElement.lang = lang;
+}
+</script>
+
+</body>
+</html>
