@@ -4,7 +4,7 @@
 # version : 20260607-130000 - Auto-fit, select all, disclaimer, compact website
 # version : 20260607-131000 - fitBounds on every layer change
 # version : 20260607-140000 - LAYERS tab fetch, layer meta
-# version : 20260607-150000 - Fixed doc structure; tooltip via JS title + layer info in table header
+# version : 20260607-170000 - Sidebar collapse UX matches reference: arrow toggle inside header, thin strip when collapsed, mobile overlay+main-click to close
 -->
 <html lang="en">
 <head>
@@ -39,6 +39,39 @@
       overflow: hidden;
     }
 
+    /* ── SIDEBAR TOGGLE (inside sidebar, arrow style) ── */
+    #sidebar-toggle {
+      position: absolute;
+      top: 10px;
+      right: 6px;
+      width: 22px;
+      height: 22px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      background: rgba(255,255,255,0.12);
+      color: var(--cream);
+      font-size: .85rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s, color .15s;
+      z-index: 5;
+      flex-shrink: 0;
+    }
+    #sidebar-toggle:hover { background: var(--terracotta); border-color: var(--terracotta); }
+
+    /* ── OVERLAY ── */
+    #sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.35);
+      z-index: 99;
+    }
+    #sidebar-overlay.hidden { display: none !important; }
+
     /* ── SIDEBAR ── */
     #sidebar {
       width: var(--sidebar-w);
@@ -48,8 +81,32 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      z-index: 10;
+      z-index: 100;
       box-shadow: 2px 0 12px rgba(0,0,0,0.06);
+      transition: width .25s ease, min-width .25s ease, padding .25s ease;
+      position: relative;
+      flex-shrink: 0;
+    }
+    #sidebar.collapsed {
+      width: 28px;
+      min-width: 28px;
+    }
+    #sidebar.collapsed > *:not(#sidebar-toggle) {
+      display: none;
+    }
+    #sidebar.collapsed #sidebar-toggle {
+      right: 3px;
+    }
+
+    /* Mobile: sidebar overlays the map */
+    @media (max-width: 640px) {
+      #sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        z-index: 100;
+        box-shadow: 2px 0 16px rgba(0,0,0,.15);
+      }
+      #sidebar-overlay { display: block; }
     }
 
     #sidebar-header {
@@ -57,6 +114,7 @@
       border-bottom: 1px solid var(--border);
       background: var(--deep);
       flex-shrink: 0;
+      position: relative;
     }
     #sidebar-header h1 { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--cream); letter-spacing: 0.02em; line-height: 1.2; }
     #sidebar-header h1 em { color: var(--gold); font-style: italic; }
@@ -185,9 +243,11 @@
 <body>
 
 <div id="float-tip"></div>
+<div id="sidebar-overlay"></div>
 
 <aside id="sidebar">
   <div id="sidebar-header">
+    <button id="sidebar-toggle" title="Collapse sidebar">&#x25C4;</button>
     <h1>Renato <em>in</em> Rome</h1>
     <p>A curated map of the Eternal City</p>
   </div>
@@ -233,6 +293,42 @@ const COLORS = [
 ];
 
 let allData = [], filteredData = [], activeLayers = new Set(), layerColors = {}, clusterGroups = {}, layerMeta = {};
+
+// ── SIDEBAR TOGGLE ────────────────────────────────────────────────────────────
+(function() {
+  const sidebar = document.getElementById('sidebar');
+  const toggle  = document.getElementById('sidebar-toggle');
+  const overlay = document.getElementById('sidebar-overlay');
+  const main    = document.getElementById('main');
+
+  function collapse() {
+    sidebar.classList.add('collapsed');
+    toggle.innerHTML = '&#x25BA;';
+    toggle.title = 'Expand sidebar';
+    overlay.classList.add('hidden');
+  }
+
+  function expand() {
+    sidebar.classList.remove('collapsed');
+    toggle.innerHTML = '&#x25C4;';
+    toggle.title = 'Collapse sidebar';
+    if (window.innerWidth <= 640) overlay.classList.remove('hidden');
+  }
+
+  toggle.addEventListener('click', e => {
+    e.stopPropagation();
+    sidebar.classList.contains('collapsed') ? expand() : collapse();
+  });
+
+  overlay.addEventListener('click', collapse);
+
+  main.addEventListener('click', () => {
+    if (window.innerWidth <= 640 && !sidebar.classList.contains('collapsed')) collapse();
+  });
+
+  // Auto-collapse on small screens
+  if (window.innerWidth <= 640) collapse();
+})();
 
 // ── MAP ──────────────────────────────────────────────────────────────────────
 const map = L.map('map', { center: [41.9028, 12.4964], zoom: 12 });
