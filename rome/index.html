@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<!-- version history
+# version : 20260607-120000 - Initial version
+# version : 20260607-130000 - Auto-fit, select all, disclaimer, compact website
+# version : 20260607-131000 - fitBounds on every layer change
+# version : 20260607-140000 - LAYERS tab fetch, layer meta
+# version : 20260607-150000 - Fixed doc structure; tooltip via JS title + layer info in table header
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Renato in Rome</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <style>
+    :root {
+      --cream: #faf6f0;
+      --warm-white: #fffdf9;
+      --terracotta: #c0533a;
+      --gold: #c9963e;
+      --deep: #1a1208;
+      --muted: #6b5c4a;
+      --border: #e2d9cc;
+      --sidebar-w: 300px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lato', sans-serif;
+      background: var(--cream);
+      color: var(--deep);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: var(--warm-white);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 10;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.06);
+    }
+
+    #sidebar-header {
+      padding: 20px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--deep);
+      flex-shrink: 0;
+    }
+    #sidebar-header h1 { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--cream); letter-spacing: 0.02em; line-height: 1.2; }
+    #sidebar-header h1 em { color: var(--gold); font-style: italic; }
+    #sidebar-header p { font-size: 0.68rem; color: #a89880; margin-top: 4px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    #sidebar-body { flex: 1; overflow-y: auto; padding: 14px; }
+    #sidebar-body::-webkit-scrollbar { width: 4px; }
+    #sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .section-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 7px; margin-top: 14px; }
+    .section-label:first-child { margin-top: 0; }
+
+    #search-input {
+      width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: 6px;
+      font-family: 'Lato', sans-serif; font-size: 0.83rem; background: var(--cream);
+      color: var(--deep); outline: none; transition: border-color .2s;
+    }
+    #search-input:focus { border-color: var(--terracotta); }
+    #search-input::placeholder { color: #b0a090; }
+
+    #sel-controls { display: flex; gap: 6px; margin-bottom: 8px; }
+    .sel-btn {
+      flex: 1; padding: 5px 0; font-family: 'Lato', sans-serif; font-size: 0.72rem;
+      letter-spacing: 0.06em; text-transform: uppercase; border-radius: 5px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--cream); color: var(--muted);
+      transition: background .15s, color .15s;
+    }
+    .sel-btn:hover { background: var(--terracotta); color: white; border-color: var(--terracotta); }
+
+    #layer-list { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+    #layer-list li {
+      display: flex; align-items: center; gap: 8px; padding: 6px 9px;
+      border-radius: 6px; cursor: pointer; transition: background .15s;
+      user-select: none; font-size: 0.82rem;
+    }
+    #layer-list li:hover { background: var(--cream); }
+    #layer-list li.active { background: var(--cream); }
+
+    .layer-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(0,0,0,0.15); }
+
+    .layer-check {
+      margin-left: auto; width: 15px; height: 15px; border: 1.5px solid var(--border);
+      border-radius: 3px; display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: white; flex-shrink: 0;
+    }
+    #layer-list li.active .layer-check { background: var(--terracotta); border-color: var(--terracotta); }
+
+    #count-badge { font-size: 0.7rem; color: var(--muted); background: var(--cream); border: 1px solid var(--border); border-radius: 10px; padding: 1px 7px; }
+    #loading-msg { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 16px; }
+
+    /* ── FLOATING TOOLTIP ── */
+    #float-tip {
+      position: fixed;
+      display: none;
+      background: var(--deep);
+      color: var(--cream);
+      font-family: 'Lato', sans-serif;
+      font-size: 0.73rem;
+      line-height: 1.55;
+      padding: 9px 13px;
+      border-radius: 8px;
+      max-width: 240px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+      pointer-events: none;
+      z-index: 99999;
+      white-space: normal;
+    }
+    #float-tip .tip-name  { color: var(--gold); font-weight: 700; font-size: 0.78rem; margin-bottom: 4px; }
+    #float-tip .tip-desc  { color: var(--cream); }
+    #float-tip .tip-src   { color: #b0a090; font-size: 0.66rem; margin-top: 4px; }
+
+    /* ── DISCLAIMER ── */
+    #disclaimer {
+      flex-shrink: 0; padding: 10px 14px; border-top: 1px solid var(--border);
+      background: #fdf5ec; font-size: 0.69rem; color: #8a6a4a; line-height: 1.5;
+    }
+    #disclaimer strong { color: var(--terracotta); }
+
+    /* ── MAIN ── */
+    #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #map { flex: 1; }
+
+    /* ── TABLE PANEL ── */
+    #table-panel { height: 210px; overflow-y: auto; border-top: 2px solid var(--border); background: var(--warm-white); }
+    #table-panel::-webkit-scrollbar { width: 5px; height: 5px; }
+    #table-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    #table-wrap { padding: 0 14px 14px; }
+
+    .table-section-title {
+      padding: 9px 0 3px; position: sticky; top: 0; background: var(--warm-white);
+      z-index: 1; border-bottom: 1px solid var(--border); margin-bottom: 3px;
+    }
+    .table-section-title .ts-name {
+      font-family: 'Playfair Display', serif; font-size: 0.95rem;
+    }
+    .table-section-title .ts-meta {
+      font-size: 0.68rem; color: var(--muted); margin-top: 1px; line-height: 1.4;
+    }
+    .table-section-title .ts-source {
+      font-size: 0.63rem; color: #b0a090;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.76rem; table-layout: fixed; }
+    col.col-name    { width: 22%; }
+    col.col-address { width: 28%; }
+    col.col-website { width: 16%; }
+    col.col-remarks { width: 34%; }
+
+    th { text-align: left; padding: 4px 7px; color: var(--muted); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.65rem; border-bottom: 1px solid var(--border); }
+    td { padding: 4px 7px; border-bottom: 1px solid #f0ebe3; vertical-align: top; overflow: hidden; }
+    td.td-website { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
+    tr:last-child td { border-bottom: none; }
+    td a { color: var(--terracotta); text-decoration: none; }
+    td a:hover { text-decoration: underline; }
+
+    /* ── POPUP ── */
+    .leaflet-popup-content-wrapper { border-radius: 8px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important; font-family: 'Lato', sans-serif !important; }
+    .popup-name { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .popup-addr { font-size: 0.78rem; color: var(--muted); margin-bottom: 7px; }
+    .popup-remark { font-size: 0.76rem; font-style: italic; margin-bottom: 6px; color: #555; }
+    .popup-link { display: block; font-size: 0.76rem; color: var(--terracotta); margin-bottom: 3px; }
+    .popup-warn { font-size: 0.7rem; color: #b06030; font-weight: 700; margin-top: 8px; }
+    .popup-cat  { font-size: 0.68rem; color: #999; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<div id="float-tip"></div>
+
+<aside id="sidebar">
+  <div id="sidebar-header">
+    <h1>Renato <em>in</em> Rome</h1>
+    <p>A curated map of the Eternal City</p>
+  </div>
+  <div id="sidebar-body">
+    <div class="section-label">Search</div>
+    <input id="search-input" type="text" placeholder="Filter by name, address, remarks…" />
+
+    <div class="section-label" style="margin-top:14px; display:flex; align-items:center; gap:8px;">
+      Layers <span id="count-badge">0 places</span>
+    </div>
+    <div id="sel-controls">
+      <button class="sel-btn" onclick="selectAll()">Select all</button>
+      <button class="sel-btn" onclick="deselectAll()">Deselect all</button>
+    </div>
+    <ul id="layer-list"></ul>
+    <div id="loading-msg">Loading data…</div>
+  </div>
+
+  <div id="disclaimer">
+    <strong>⚠ Disclaimer:</strong> All information dates from 2019 or earlier. Details such as opening hours, addresses, and phone numbers may have changed. Use this map for inspiration only — always verify before visiting. No rights can be derived from this content.
+  </div>
+</aside>
+
+<div id="main">
+  <div id="map"></div>
+  <div id="table-panel">
+    <div id="table-wrap"></div>
+  </div>
+</div>
+
+<script>const current_version = "20260607-150000";</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+const SHEET_ID   = "1W26AXb91InFg7Lw6TR1mkVh3dm-OQbhGAx0BgNrJdok";
+const SHEET_NAME = "MASTER";
+const F = { id:"Id", category:"Layer", name:"naam", address:"address", lon:"LON", lat:"LAT", website:"website", remarks:"remarks" };
+
+const COLORS = [
+  "#E05A3A","#3ABF57","#3357AB","#D4845A","#2BB89A","#7B5EA7","#E8A838","#2E86C1","#C0392B","#27AE60",
+  "#8E44AD","#D35400","#1A8CA0","#B7950B","#C0553A","#4A235A","#6E2F1A","#145A32","#1A5276","#784212",
+  "#1B2631","#6C3483","#0E6655","#7D6608","#512E5F","#4D4512","#0B5345","#1F618D"
+];
+
+let allData = [], filteredData = [], activeLayers = new Set(), layerColors = {}, clusterGroups = {}, layerMeta = {};
+
+// ── MAP ──────────────────────────────────────────────────────────────────────
+const map = L.map('map', { center: [41.9028, 12.4964], zoom: 12 });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap © CartoDB', subdomains: 'abcd', maxZoom: 19
+}).addTo(map);
+
+// ── FIT BOUNDS ───────────────────────────────────────────────────────────────
+function fitMapToVisible(data) {
+  const pts = data.filter(r => activeLayers.has(r[F.category]))
+    .map(r => [toFloat(r[F.lat]), toFloat(r[F.lon])]).filter(([a,o]) => !isNaN(a) && !isNaN(o));
+  if (!pts.length) return;
+  if (pts.length === 1) { map.setView(pts[0], 15); return; }
+  map.fitBounds(L.latLngBounds(pts), { padding: [40,40], maxZoom: 16 });
+}
+
+// ── CSV FETCH & PARSE ─────────────────────────────────────────────────────────
+async function fetchSheet() {
+  const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`);
+  return parseCSV(await res.text());
+}
+
+async function fetchLayerMeta() {
+  try {
+    const res  = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LAYERS`);
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    const headers = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,'').trim());
+    console.log('LAYERS headers:', headers);
+    const meta = {};
+    lines.slice(1).forEach(line => {
+      const vals = parseCSVLine(line).map(v => v.replace(/^"|"$/g,'').trim());
+      const row  = {};
+      headers.forEach((h,i) => row[h] = vals[i] || '');
+      const name = row['Layer'] || '';
+      if (!name) return;
+      meta[name] = {
+        description: row['Description'] || '',
+        source:      row['Source'] || row['Sourcce'] || '',
+      };
+    });
+    console.log('layerMeta built:', meta);
+    return meta;
+  } catch(e) { console.warn('LAYERS tab failed:', e); return {}; }
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = parseCSVLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = parseCSVLine(line), obj = {};
+    headers.forEach((h,i) => obj[h.trim().replace(/^"|"$/g,'')] = (vals[i]||'').replace(/^"|"$/g,'').trim());
+    return obj;
+  }).filter(r => r[F.name]);
+}
+
+function parseCSVLine(line) {
+  const result = []; let cur = '', inQ = false;
+  for (const c of line) {
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === ',' && !inQ) { result.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function toFloat(v) { return v ? parseFloat(String(v).replace(',','.')) : NaN; }
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function shortUrl(url) { try { return new URL(url).hostname.replace(/^www\./,''); } catch { return url; } }
+
+// ── FLOATING TOOLTIP ─────────────────────────────────────────────────────────
+const tip = document.getElementById('float-tip');
+
+function showTip(e, layer) {
+  const m = layerMeta[layer];
+  if (!m || (!m.description && !m.source)) return;
+  tip.innerHTML =
+    `<div class="tip-name">${escH(layer)}</div>` +
+    (m.description ? `<div class="tip-desc">${escH(m.description)}</div>` : '') +
+    (m.source      ? `<div class="tip-src">Source: ${escH(m.source)}</div>` : '');
+  tip.style.display = 'block';
+  moveTip(e);
+}
+
+function moveTip(e) {
+  const x = e.clientX + 16, y = e.clientY + 12;
+  tip.style.left = (x + 250 > window.innerWidth  ? e.clientX - 260 : x) + 'px';
+  tip.style.top  = (y + 120 > window.innerHeight ? e.clientY - 130 : y) + 'px';
+}
+
+function hideTip() { tip.style.display = 'none'; }
+
+// ── SELECT ALL / DESELECT ALL ────────────────────────────────────────────────
+function selectAll()   { [...new Set(filteredData.map(r=>r[F.category]).filter(Boolean))].forEach(l=>activeLayers.add(l));    render(true); }
+function deselectAll() { activeLayers.clear(); render(true); }
+
+// ── BUILD MARKERS ─────────────────────────────────────────────────────────────
+function buildLayers(data) {
+  Object.values(clusterGroups).forEach(g => map.removeLayer(g));
+  clusterGroups = {};
+  const layerNames = [...new Set(data.map(r=>r[F.category]).filter(Boolean))];
+
+  layerNames.forEach((layer, i) => {
+    const color = layerColors[layer] || COLORS[i % COLORS.length];
+    layerColors[layer] = color;
+    if (!activeLayers.has(layer)) return;
+
+    const cluster = L.markerClusterGroup({
+      maxClusterRadius: 60, disableClusteringAtZoom: 13,
+      iconCreateFunction: c => L.divIcon({
+        html: `<div style="background:${color};color:#fff;border-radius:50%;width:32px;height:32px;line-height:32px;text-align:center;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,0.7);box-shadow:0 2px 6px rgba(0,0,0,0.3)">${c.getChildCount()}</div>`,
+        className:'', iconSize:[32,32]
+      })
+    });
+
+    data.filter(r=>r[F.category]===layer).forEach(row => {
+      const lat = toFloat(row[F.lat]), lon = toFloat(row[F.lon]);
+      if (isNaN(lat)||isNaN(lon)) return;
+      const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(row[F.name])}@${lat},${lon},15z`;
+      const webLink = row[F.website] ? `<a class="popup-link" href="${escH(row[F.website])}" target="_blank">🌐 ${escH(row[F.website])}</a>` : '';
+      const popup = L.popup({maxWidth:340}).setContent(`
+        <div style="font-family:'Lato',sans-serif;padding:4px 2px">
+          <div class="popup-name">${escH(row[F.name])}</div>
+          <div class="popup-addr">${escH(row[F.address])}</div>
+          ${row[F.remarks] ? `<div class="popup-remark">${escH(row[F.remarks])}</div>` : ''}
+          ${webLink}
+          <a class="popup-link" href="${mapsUrl}" target="_blank">📍 Google Maps</a>
+          <div class="popup-warn">ℹ Info from 2019 or earlier — please verify</div>
+          <div class="popup-cat">${escH(row[F.category])}</div>
+        </div>`);
+      L.circleMarker([lat,lon],{radius:7,color:'#fff',weight:2,fillColor:color,fillOpacity:0.9})
+        .bindPopup(popup).bindTooltip(row[F.name],{direction:'top',offset:[0,-6]})
+        .addTo(cluster);
+    });
+
+    cluster.addTo(map);
+    clusterGroups[layer] = cluster;
+  });
+}
+
+// ── BUILD SIDEBAR ─────────────────────────────────────────────────────────────
+function buildSidebar(data) {
+  const layerNames = [...new Set(data.map(r=>r[F.category]).filter(Boolean))];
+  const ul = document.getElementById('layer-list');
+  ul.innerHTML = '';
+
+  layerNames.forEach((layer, i) => {
+    const color = layerColors[layer] || COLORS[i % COLORS.length];
+    layerColors[layer] = color;
+    const li = document.createElement('li');
+    if (activeLayers.has(layer)) li.classList.add('active');
+    li.innerHTML = `
+      <span class="layer-dot" style="background:${color}"></span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(layer)}</span>
+      <span class="layer-check">${activeLayers.has(layer)?'✓':''}</span>`;
+
+    li.addEventListener('click',  ()  => { activeLayers.has(layer) ? activeLayers.delete(layer) : activeLayers.add(layer); render(true); });
+    li.addEventListener('mouseenter', e => showTip(e, layer));
+    li.addEventListener('mousemove',  e => moveTip(e));
+    li.addEventListener('mouseleave', ()  => hideTip());
+    ul.appendChild(li);
+  });
+
+  document.getElementById('count-badge').textContent = `${data.filter(r=>activeLayers.has(r[F.category])).length} places`;
+}
+
+// ── BUILD TABLE ───────────────────────────────────────────────────────────────
+function buildTable(data) {
+  const wrap = document.getElementById('table-wrap');
+  wrap.innerHTML = '';
+  const layerNames = [...new Set(data.map(r=>r[F.category]).filter(Boolean))];
+
+  layerNames.forEach(layer => {
+    if (!activeLayers.has(layer)) return;
+    const rows = data.filter(r=>r[F.category]===layer);
+    if (!rows.length) return;
+
+    const color = layerColors[layer] || '#333';
+    const meta  = layerMeta[layer]  || {};
+
+    const title = document.createElement('div');
+    title.className = 'table-section-title';
+    title.innerHTML =
+      `<div class="ts-name" style="color:${color}">${escH(layer)}</div>` +
+      (meta.description ? `<div class="ts-meta">${escH(meta.description)}</div>` : '') +
+      (meta.source      ? `<div class="ts-source">Source: ${escH(meta.source)}</div>` : '');
+    wrap.appendChild(title);
+
+    const tbl = document.createElement('table');
+    tbl.innerHTML = `<colgroup><col class="col-name"><col class="col-address"><col class="col-website"><col class="col-remarks"></colgroup>
+      <thead><tr><th>Name</th><th>Address</th><th>Website</th><th>Remarks</th></tr></thead>`;
+    const tbody = document.createElement('tbody');
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escH(r[F.name])}</td>
+        <td>${escH(r[F.address])}</td>
+        <td class="td-website" title="${escH(r[F.website])}">${r[F.website]?`<a href="${escH(r[F.website])}" target="_blank">${escH(shortUrl(r[F.website]))}</a>`:''}</td>
+        <td>${escH(r[F.remarks])}</td>`;
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+    wrap.appendChild(tbl);
+  });
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────────────────
+function applySearch() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  filteredData = q ? allData.filter(r=>[F.category,F.name,F.address,F.website,F.remarks].some(k=>(r[k]||'').toLowerCase().includes(q))) : [...allData];
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function render(fitBounds=true) {
+  applySearch();
+  buildSidebar(filteredData);
+  buildLayers(filteredData);
+  buildTable(filteredData);
+  if (fitBounds) fitMapToVisible(filteredData);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    [allData, layerMeta] = await Promise.all([fetchSheet(), fetchLayerMeta()]);
+    filteredData = [...allData];
+    const layers = [...new Set(allData.map(r=>r[F.category]).filter(Boolean))];
+    layers.slice(0,4).forEach(l => activeLayers.add(l));
+    document.getElementById('loading-msg').textContent = '';
+    render(true);
+    document.getElementById('search-input').addEventListener('input', () => render(true));
+  } catch(e) {
+    document.getElementById('loading-msg').textContent = 'Error loading data. Check console.';
+    console.error(e);
+  }
+})();
+</script>
+</body>
+</html>
