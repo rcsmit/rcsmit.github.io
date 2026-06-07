@@ -4,7 +4,7 @@
 # version : 20260607-130000 - Auto-fit, select all, disclaimer, compact website
 # version : 20260607-131000 - fitBounds on every layer change
 # version : 20260607-140000 - LAYERS tab fetch, layer meta
-# version : 20260607-210000 - Move toggle button to direct child of sidebar (not inside header) so it stays visible when collapsed; centered vertically
+# version : 20260607-260000 - Use 100dvh (dynamic viewport height) so Android nav buttons don't clip the layout; 100vh as fallback
 -->
 <html lang="en">
 <head>
@@ -35,33 +35,36 @@
       background: var(--cream);
       color: var(--deep);
       display: flex;
-      height: 100vh;
+      height: 100vh;       /* fallback for browsers without dvh support */
+      height: 100dvh;      /* dvh = dynamic viewport height, accounts for Android nav bar and browser chrome */
       overflow: hidden;
     }
 
-    /* ── SIDEBAR TOGGLE (inside sidebar, arrow style) ── */
+    /* ── SIDEBAR TOGGLE ── */
     #sidebar-toggle {
       position: absolute;
       top: 50%;
-      right: 3px;
+      right: -16px;              /* half-outside the sidebar edge */
       transform: translateY(-50%);
-      width: 22px;
-      height: 22px;
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 4px;
+      width: 16px;
+      height: 64px;              /* ~3 line heights */
+      border: 1px solid var(--border);
+      border-left: none;
+      border-radius: 0 6px 6px 0;
       background: var(--terracotta);
-      color: var(--cream);
-      font-size: .85rem;
+      color: #fff;
+      font-size: .75rem;
       line-height: 1;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background .15s;
-      z-index: 1002;
+      transition: background .15s, width .15s;
+      z-index: 1003;
       flex-shrink: 0;
+      box-shadow: 2px 0 6px rgba(0,0,0,0.15);
     }
-    #sidebar-toggle:hover { background: #a8432c; }
+    #sidebar-toggle:hover { background: #a8432c; width: 20px; }
 
     /* ── OVERLAY ── */
     #sidebar-overlay {
@@ -82,9 +85,9 @@
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      position: relative;   /* establishes stacking context */
-      z-index: 1002;        /* above Leaflet (max ~600) */
+      overflow: visible;         /* lets toggle button poke outside the edge */
+      position: relative;
+      z-index: 1002;
       box-shadow: 2px 0 12px rgba(0,0,0,0.06);
       transition: width .25s ease, min-width .25s ease;
       flex-shrink: 0;
@@ -94,6 +97,10 @@
       min-width: 28px;
     }
     #sidebar.collapsed > *:not(#sidebar-toggle) { display: none; }
+    /* Clip scrollable inner content so it doesn't spill during transition */
+    #sidebar-body, #sidebar-header, #disclaimer {
+      overflow: hidden;
+    }
     #sidebar.collapsed #sidebar-toggle { right: 3px; }
 
     /* Mobile: sidebar floats over the map as an overlay.
@@ -197,10 +204,34 @@
 
     /* ── MAIN ── */
     #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-    #map { flex: 1; }
+    #map { flex: 1; min-height: 80px; }
+
+    /* ── DRAG HANDLE ── */
+    #drag-handle {
+      height: 6px;
+      background: var(--border);
+      cursor: ns-resize;
+      flex-shrink: 0;
+      position: relative;
+      transition: background .15s;
+      user-select: none;
+    }
+    #drag-handle:hover { background: var(--terracotta); }
+    #drag-handle::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 2px;
+      border-radius: 2px;
+      background: rgba(0,0,0,0.2);
+      box-shadow: 0 -3px 0 rgba(0,0,0,0.12), 0 3px 0 rgba(0,0,0,0.12);
+    }
 
     /* ── TABLE PANEL ── */
-    #table-panel { height: 210px; overflow-y: auto; border-top: 2px solid var(--border); background: var(--warm-white); }
+    #table-panel { height: 210px; min-height: 40px; max-height: 80vh; overflow-y: auto; background: var(--warm-white); flex-shrink: 0; }
     #table-panel::-webkit-scrollbar { width: 5px; height: 5px; }
     #table-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     #table-wrap { padding: 0 14px 14px; }
@@ -275,6 +306,7 @@
 
 <div id="main">
   <div id="map"></div>
+  <div id="drag-handle"></div>
   <div id="table-panel">
     <div id="table-wrap"></div>
   </div>
@@ -336,6 +368,7 @@ let allData = [], filteredData = [], activeLayers = new Set(), layerColors = {},
 
 // ── MAP ──────────────────────────────────────────────────────────────────────
 const map = L.map('map', { center: [41.9028, 12.4964], zoom: 12 });
+window._leafletMap = map;
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '© OpenStreetMap © CartoDB', subdomains: 'abcd', maxZoom: 19
 }).addTo(map);
@@ -349,10 +382,48 @@ function fitMapToVisible(data) {
   map.fitBounds(L.latLngBounds(pts), { padding: [40,40], maxZoom: 16 });
 }
 
+// ── FALLBACK DATA (used when Google Sheet is unreachable) ─────────────────────
+const FALLBACK_DATA = [
+  { Id:"1",  Layer:"Gelato",    naam:"Giolitti",              address:"Via degli Uffici del Vicario 40",  LON:"12.477356", LAT:"41.901011", website:"http://www.giolitti.it/",          remarks:"Classic Roman gelateria since 1900" },
+  { Id:"2",  Layer:"Gelato",    naam:"Fatamorgana",           address:"Via Laurina 10",                   LON:"12.477762", LAT:"41.908757", website:"",                                  remarks:"Unusual creative flavours" },
+  { Id:"3",  Layer:"Gelato",    naam:"Otaleg",                address:"Viale dei Colli Portuensi 594",    LON:"12.443049", LAT:"41.861870", website:"http://www.otaleg.com/",             remarks:"Best in Rome per Dissapore 2015" },
+  { Id:"4",  Layer:"Pizza2",    naam:"Antico Forno Roscioli", address:"Via dei Chiavari 34",              LON:"12.474292", LAT:"41.894567", website:"http://www.anticofornoroscioli.it/", remarks:"Famous Roman bakery-pizzeria" },
+  { Id:"5",  Layer:"Pizza2",    naam:"Pizzarium Bonci",       address:"Via della Meloria 43",             LON:"12.446624", LAT:"41.906787", website:"http://www.bonci.it/",               remarks:"Pizza al taglio legend" },
+  { Id:"6",  Layer:"Pizza2",    naam:"Dar Poeta",             address:"Vicolo del Bologna 45",            LON:"12.468463", LAT:"41.891411", website:"http://www.darpoeta.com/",           remarks:"Trastevere favourite" },
+  { Id:"7",  Layer:"Aperitivo", naam:"Freni e Frizioni",      address:"Via del Politeama 4",              LON:"12.470686", LAT:"41.891297", website:"http://www.freniefrizioni.com/",     remarks:"Legendary Trastevere aperitivo spot" },
+  { Id:"8",  Layer:"Aperitivo", naam:"Doppiozeroo",           address:"Via Ostiense 68",                  LON:"12.479637", LAT:"41.870754", website:"http://doppiozeroo.com/",             remarks:"Stylish aperitivo near Ostiense" },
+  { Id:"9",  Layer:"Yoga",      naam:"ZEM Yoga Studio",       address:"Corso Vittorio Emanuele II 184",   LON:"12.470681", LAT:"41.897217", website:"http://www.zemyogastudio.com/",      remarks:"Hot vinyasa €18 drop-in / €145 month" },
+  { Id:"10", Layer:"Yoga",      naam:"Yoga Aventino",         address:"Via delle Terme Deciane 10",       LON:"12.485132", LAT:"41.883367", website:"http://www.yogaaventino.com",        remarks:"" },
+  { Id:"11", Layer:"Enoteche",  naam:"Cavour 313",            address:"Via Cavour 313",                   LON:"12.489153", LAT:"41.893735", website:"http://cavour313.it/",               remarks:"Great wine bar near the Colosseum" },
+  { Id:"12", Layer:"Enoteche",  naam:"Roscioli",              address:"Via dei Giubbonari 21",            LON:"12.474242", LAT:"41.894237", website:"http://www.roscioli.com/",            remarks:"Deli and wine bar combined" },
+  { Id:"13", Layer:"Vega",      naam:"Il Margutta",           address:"Via Margutta 118",                 LON:"12.478375", LAT:"41.909483", website:"http://www.ilmargutta.bio/",          remarks:"Oldest vegetarian restaurant in Rome" },
+  { Id:"14", Layer:"Vega",      naam:"Flower Burger",         address:"Via dei Gracchi 87",               LON:"12.462157", LAT:"41.907841", website:"http://www.flowerburger.it/",         remarks:"Vegan fast food" },
+  { Id:"15", Layer:"Parking",   naam:"Parcheggio Villa Borghese", address:"Viale del Galoppatoio 33",    LON:"12.484273", LAT:"41.909646", website:"http://www.sabait.it/",              remarks:"€18/day, €2.20/hour" },
+];
+
+const FALLBACK_META = {
+  "Gelato":    { description: "Artisan ice cream shops, ranked and reviewed.", source: "Dissapore 2015" },
+  "Pizza2":    { description: "Pizza al taglio and Roman-style pizzerias.",    source: "Local knowledge" },
+  "Aperitivo": { description: "Best spots for an evening aperitivo.",          source: "Local knowledge" },
+  "Yoga":      { description: "Yoga studios in Rome.",                         source: "Various" },
+  "Enoteche":  { description: "Wine bars and enotecas.",                       source: "Local knowledge" },
+  "Vega":      { description: "Vegan and vegetarian restaurants.",             source: "Local knowledge" },
+  "Parking":   { description: "Parking garages in central Rome.",              source: "060608.it" },
+};
+
 // ── CSV FETCH & PARSE ─────────────────────────────────────────────────────────
 async function fetchSheet() {
-  const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`);
-  return parseCSV(await res.text());
+  try {
+    const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = parseCSV(await res.text());
+    if (!data.length) throw new Error('Empty sheet response');
+    return data;
+  } catch(e) {
+    console.warn('Sheet fetch failed, using fallback data:', e);
+    document.getElementById('loading-msg').textContent = '⚠ Using demo data — sheet unreachable';
+    return FALLBACK_DATA;
+  }
 }
 
 async function fetchLayerMeta() {
@@ -376,7 +447,7 @@ async function fetchLayerMeta() {
     });
     console.log('layerMeta built:', meta);
     return meta;
-  } catch(e) { console.warn('LAYERS tab failed:', e); return {}; }
+  } catch(e) { console.warn('LAYERS tab failed:', e); return FALLBACK_META; }
 }
 
 function parseCSV(text) {
@@ -409,6 +480,8 @@ function shortUrl(url) { try { return new URL(url).hostname.replace(/^www\./,'')
 const tip = document.getElementById('float-tip');
 
 function showTip(e, layer) {
+  // Never show on touch devices — info is visible in the table header
+  if (window.matchMedia('(hover: none)').matches) return;
   const m = layerMeta[layer];
   if (!m || (!m.description && !m.source)) return;
   tip.innerHTML =
@@ -426,6 +499,8 @@ function moveTip(e) {
 }
 
 function hideTip() { tip.style.display = 'none'; }
+// Hide tooltip on any touch (touch devices fire no mouseleave)
+document.addEventListener('touchstart', hideTip, { passive: true });
 
 // ── SELECT ALL / DESELECT ALL ────────────────────────────────────────────────
 function selectAll()   { [...new Set(filteredData.map(r=>r[F.category]).filter(Boolean))].forEach(l=>activeLayers.add(l));    render(true); }
@@ -570,6 +645,48 @@ function render(fitBounds=true) {
     document.getElementById('loading-msg').textContent = 'Error loading data. Check console.';
     console.error(e);
   }
+})();
+
+// ── DRAG TO RESIZE TABLE PANEL ────────────────────────────────────────────────
+(function() {
+  const handle = document.getElementById('drag-handle');
+  const panel  = document.getElementById('table-panel');
+  const main   = document.getElementById('main');
+  let dragging = false, startY = 0, startH = 0;
+
+  handle.addEventListener('mousedown', e => {
+    dragging = true;
+    startY = e.clientY;
+    startH = panel.offsetHeight;
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  handle.addEventListener('touchstart', e => {
+    dragging = true;
+    startY = e.touches[0].clientY;
+    startH = panel.offsetHeight;
+    e.preventDefault();
+  }, { passive: false });
+
+  function onMove(clientY) {
+    if (!dragging) return;
+    const delta  = startY - clientY;           // drag up → bigger panel
+    const mainH  = main.offsetHeight;
+    const minH   = 40;
+    const maxH   = mainH - 80;                 // leave at least 80px for map
+    const newH   = Math.min(maxH, Math.max(minH, startH + delta));
+    panel.style.height = newH + 'px';
+    // invalidate Leaflet map size so it redraws to fill remaining space
+    if (window._leafletMap) window._leafletMap.invalidateSize();
+  }
+
+  document.addEventListener('mousemove', e => onMove(e.clientY));
+  document.addEventListener('touchmove', e => onMove(e.touches[0].clientY), { passive: false });
+
+  document.addEventListener('mouseup',  () => { dragging = false; document.body.style.cursor = ''; document.body.style.userSelect = ''; });
+  document.addEventListener('touchend', () => { dragging = false; });
 })();
 </script>
 </body>
