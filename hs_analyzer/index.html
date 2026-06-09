@@ -10,8 +10,9 @@
 # version : 20260608-214357 - Initial version with draggable landmarks for photo mode
 # version : 20260608-215500 - Fix: suppress skeleton dot at old position while dragging
 # version : 20260608-220000 - Fix: limit drag handles and hit-test to active draw side only
+# version : 20260608-220500 - Fix: coordinaten-mapping herschreven, canvas heeft geen object-fit letterboxing
 -->
-<script>const current_version = "20260608-220000";</script>
+<script>const current_version = "20260608-220500";</script>
 <style>
   :root {
     --bg:      #f4f2ee;
@@ -420,37 +421,27 @@ const ANGLE_DEFS=[
 ];
 
 // ─── Canvas coordinate helpers ────────────────────────────────────────────────
-// The canvas element has CSS size (clientWidth/clientHeight) and internal resolution (width/height).
-// inputImage also uses object-fit:contain, so the image is letterboxed.
-// We need to convert mouse events → canvas internal pixels → normalized [0,1].
-
-function getImageRect() {
-  // Returns {x, y, w, h} of the actual rendered image within the canvas element CSS box.
-  const cW = poseCanvas.clientWidth, cH = poseCanvas.clientHeight;
-  const iW = inputImage.naturalWidth  || poseCanvas.width;
-  const iH = inputImage.naturalHeight || poseCanvas.height;
-  const scale = Math.min(cW / iW, cH / iH);
-  const rW = iW * scale, rH = iH * scale;
-  return { x: (cW - rW) / 2, y: (cH - rH) / 2, w: rW, h: rH };
-}
+// poseCanvas vult altijd 100%×100% van videoContainer (geen object-fit letterboxing op canvas).
+// De interne resolutie (width/height) == de afbeeldingsresolutie.
+// De CSS weergavegrootte == getBoundingClientRect().
+// Dus: clientX → normX = (clientX - canvasLeft) / canvasClientWidth
 
 function clientToNorm(clientX, clientY) {
-  const canvasRect = poseCanvas.getBoundingClientRect();
-  const cx = clientX - canvasRect.left;
-  const cy = clientY - canvasRect.top;
-  const { x, y, w, h } = getImageRect();
-  return { nx: (cx - x) / w, ny: (cy - y) / h };
+  const r = poseCanvas.getBoundingClientRect();
+  return {
+    nx: (clientX - r.left)  / r.width,
+    ny: (clientY - r.top)   / r.height
+  };
 }
 
-function normToCanvas(nx, ny) {
-  // Convert normalized [0,1] to canvas *internal* pixel coords
-  return { cx: nx * poseCanvas.width, cy: ny * poseCanvas.height };
-}
-
-function normToClient(nx, ny) {
-  // Convert normalized [0,1] to CSS client coords (for hit-testing on the element)
-  const { x, y, w, h } = getImageRect();
-  return { cx: x + nx * w, cy: y + ny * h };
+function findClosestLandmark_cssPos(idx) {
+  // Geeft CSS-pixelpositie van een landmark terug (voor hit-test afstand)
+  const lm = editedLandmarks[idx];
+  const r = poseCanvas.getBoundingClientRect();
+  return {
+    cx: r.left + lm.x * r.width,
+    cy: r.top  + lm.y * r.height
+  };
 }
 
 // ─── MediaPipe ────────────────────────────────────────────────────────────────
@@ -531,18 +522,14 @@ async function reRunPose() {
 // ─── Hit testing for drag ──────────────────────────────────────────────────────
 function findClosestLandmark(clientX, clientY) {
   if (!editedLandmarks) return null;
-  const canvasRect = poseCanvas.getBoundingClientRect();
-  const cx = clientX - canvasRect.left;
-  const cy = clientY - canvasRect.top;
-  const { x: ox, y: oy, w, h } = getImageRect();
   const activeDots = sideToDraw === 'left' ? LEFT_DOTS : RIGHT_DOTS;
   let best = null, bestDist = DRAG_RADIUS_PX * 1.8;
   for (const idx of DRAGGABLE_INDICES) {
     if (!activeDots.has(idx)) continue;
     const lm = editedLandmarks[idx];
     if (!lm || (lm.visibility ?? 1) < 0.1) continue;
-    const ex = ox + lm.x * w, ey = oy + lm.y * h;
-    const dist = Math.hypot(cx - ex, cy - ey);
+    const pos = findClosestLandmark_cssPos(idx);
+    const dist = Math.hypot(clientX - pos.cx, clientY - pos.cy);
     if (dist < bestDist) { bestDist = dist; best = idx; }
   }
   return best;
