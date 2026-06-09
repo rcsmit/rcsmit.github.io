@@ -6,6 +6,12 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <title>Handstand Analyzer</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<!-- version history
+# version : 20260608-214357 - Initial version with draggable landmarks for photo mode
+# version : 20260608-215500 - Fix: suppress skeleton dot at old position while dragging
+# version : 20260608-220000 - Fix: limit drag handles and hit-test to active draw side only
+-->
+<script>const current_version = "20260608-220000";</script>
 <style>
   :root {
     --bg:      #f4f2ee;
@@ -20,6 +26,8 @@
     --good-bg: #eaf5ec;
     --warn-bg: #fdf3e3;
     --bad-bg:  #fdecea;
+    --drag-ring: rgba(255,200,0,0.9);
+    --drag-active: rgba(255,140,0,0.95);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body {
@@ -61,29 +69,40 @@
   #videoContainer { position:relative; display:none; width:100%; height:100%; }
   #inputVideo, #inputImage { position:absolute; width:100%; height:100%; object-fit:contain; }
   #inputImage { display:none; }
-  #poseCanvas { position:absolute; width:100%; height:100%; object-fit:contain; }
+  /* Canvas sits on top of image for drawing & drag interaction */
+  #poseCanvas {
+    position:absolute; width:100%; height:100%; object-fit:contain;
+    cursor:default;
+  }
+  #poseCanvas.drag-mode   { cursor:crosshair; }
+  #poseCanvas.dragging    { cursor:grabbing; }
   #webcamVideo { position:absolute; width:100%; height:100%; object-fit:contain; display:none; transform:scaleX(-1); }
 
-  .controls {
+  /* Drag-edit toolbar (image mode only) */
+  #editToolbar {
     position:absolute; top:0; left:0; right:0;
-    padding:10px 16px; background:linear-gradient(rgba(244,242,238,.95),transparent);
-    display:none; align-items:center; gap:8px; z-index:50; flex-wrap:wrap;
+    padding:8px 16px; background:linear-gradient(rgba(244,242,238,.97),transparent);
+    display:none; align-items:center; gap:8px; z-index:55; flex-wrap:wrap;
   }
+  #editToolbar .edit-title { font-size:0.58rem; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
+  #editToolbar .edit-hint  { font-size:0.52rem; color:var(--warn); letter-spacing:1px; }
   .btn {
     background:transparent; border:1px solid var(--border); color:var(--text);
     font-family:'DM Mono',monospace; font-size:0.62rem; letter-spacing:2px;
     padding:5px 12px; cursor:pointer; transition:all .15s; text-transform:uppercase;
   }
   .btn:hover { border-color:var(--accent); }
-  .btn.rec-active { border-color:#c0392b; color:#c0392b; animation:recpulse 1s ease-in-out infinite; }
-  @keyframes recpulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+  .btn.active { border-color:var(--accent); background:var(--accent); color:#fff; }
 
+  .controls {
+    position:absolute; top:0; left:0; right:0;
+    padding:10px 16px; background:linear-gradient(rgba(244,242,238,.95),transparent);
+    display:none; align-items:center; gap:8px; z-index:50; flex-wrap:wrap;
+  }
   #seekBar {
     flex:1; -webkit-appearance:none; height:2px; background:var(--border); outline:none; cursor:pointer; min-width:40px;
   }
-  #seekBar::-webkit-slider-thumb {
-    -webkit-appearance:none; width:11px; height:11px; background:var(--accent); border-radius:50%;
-  }
+  #seekBar::-webkit-slider-thumb { -webkit-appearance:none; width:11px; height:11px; background:var(--accent); border-radius:50%; }
   #timeDisplay { font-size:0.58rem; color:var(--muted); min-width:80px; text-align:right; }
 
   #notHandstandBanner {
@@ -91,25 +110,14 @@
     background:var(--bad-bg); border:1px solid #e8b4b0; color:var(--bad);
     font-size:0.6rem; letter-spacing:2px; padding:5px 14px; display:none; white-space:nowrap; z-index:5;
   }
-  #debugInfo {
-    position:absolute; bottom:12px; left:12px;
-    font-size:0.52rem; color:rgba(0,0,0,.35); pointer-events:none; letter-spacing:1px;
-  }
-  #recStatus {
-    position:absolute; bottom:0; left:0; right:0;
-    background:rgba(192,57,43,0.88); color:#fff;
-    font-size:0.58rem; letter-spacing:2px; text-align:center;
-    padding:6px; display:none; z-index:60;
-  }
+  #debugInfo { position:absolute; bottom:12px; left:12px; font-size:0.52rem; color:rgba(0,0,0,.35); pointer-events:none; letter-spacing:1px; }
+
   #loadingOverlay {
     position:absolute; inset:0; background:rgba(244,242,238,.9);
     display:none; align-items:center; justify-content:center;
     flex-direction:column; gap:10px; z-index:10;
   }
-  .spinner {
-    width:28px; height:28px; border:2px solid var(--border);
-    border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite;
-  }
+  .spinner { width:28px; height:28px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
   @keyframes spin { to{transform:rotate(360deg)} }
   #loadingText { font-size:0.62rem; letter-spacing:3px; color:var(--accent); }
   #loadingSub  { font-size:0.5rem; color:var(--muted); letter-spacing:1px; }
@@ -172,42 +180,37 @@
   .ov-divider { height:1px; background:rgba(0,0,0,0.1); margin:2px 0; }
   .ov-row.torque-row { background:rgba(245,243,240,0.88); }
 
+  /* Drag-mode landmark highlight when hoverable */
+  .drag-hint-badge {
+    position:absolute; bottom:12px; right:12px; z-index:20; pointer-events:none;
+    background:rgba(255,200,0,0.92); color:#1a1a1a;
+    font-size:0.52rem; letter-spacing:2px; text-transform:uppercase;
+    padding:4px 10px; border-radius:2px; display:none;
+  }
+
   /* ── Mobile ── */
   @media (max-width:680px) {
     .main { display:block; position:relative; height:calc(100vh - 55px); height:calc(100dvh - 55px); overflow:hidden; }
     .video-area { position:absolute; inset:0; width:100%; height:100dvh; }
-
-    /* Panel slides in from the LEFT */
     .panel {
       position:absolute; top:0; left:0; bottom:0; width:172px;
-      border-right:1px solid rgba(221,221,221,0.5);
-      border-left:none;
+      border-right:1px solid rgba(221,221,221,0.5); border-left:none;
       background:rgba(255,255,255,0.55); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
       z-index:80; overflow-y:auto; transform:translateX(-100%); transition:transform .25s ease;
     }
     .panel.open { transform:translateX(0); }
-
-    /* Hamburger — top-left, below controls bar height */
     #panelToggle {
       display:flex; position:absolute; top:10px; left:10px; z-index:100;
       background:rgba(255,255,255,0.82); border:1px solid rgba(0,0,0,0.18);
       font-family:'DM Mono',monospace; font-size:0.6rem; letter-spacing:2px;
       padding:5px 10px; cursor:pointer; backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
     }
-
-    /* Controls bar: push content right so it clears the hamburger button (~90px) */
-    .controls {
-      z-index:55;
-      padding-left: 90px;   /* clear the ☰ button */
-    }
-
+    .controls { z-index:55; padding-left:90px; }
     .panel-section { padding:10px 12px; border-bottom:1px solid rgba(221,221,221,0.4); }
     .score-num { font-size:1.8rem; }
     #uploadZone { margin-top:60px; }
     #notHandstandBanner { top:55px; }
     .header-url { display:none; }
-
-    /* Angle/torque overlays move to left when panel is closed, right when open */
     #angleOverlay  { right:10px; }
     #torqueOverlay { right:10px; }
   }
@@ -244,17 +247,25 @@
       <canvas id="poseCanvas"></canvas>
     </div>
 
-    <div id="notHandstandBanner">⚠ NOT INVERTED — get upside down for scoring</div>
-    <div id="debugInfo"></div>
-    <div id="recStatus">⏺ RECORDING — press STOP REC when done</div>
+    <!-- Edit toolbar for photo drag mode -->
+    <div id="editToolbar">
+      <span class="edit-title">Edit Points</span>
+      <button class="btn active" id="dragToggleBtn" onclick="toggleDragMode()">✦ DRAG ON</button>
+      <button class="btn" onclick="resetLandmarks()">↺ RESET</button>
+      <button class="btn" onclick="reRunPose()">⟳ RE-RUN AI</button>
+      <span class="edit-hint" id="dragHint">Click a joint to select, then drag</span>
+    </div>
 
+    <!-- Video controls -->
     <div class="controls" id="controls">
       <button class="btn" onclick="togglePlay()">⏯</button>
       <input type="range" id="seekBar" min="0" max="100" step="0.1" value="0" oninput="seek(this.value)">
       <span id="timeDisplay">0:00 / 0:00</span>
       <button class="btn" id="bestBtn" style="display:none" onclick="jumpToBest()">★ BEST</button>
-      <button class="btn" id="recBtn" style="display:none" onclick="toggleRecording()">⏺ REC</button>
     </div>
+
+    <div id="notHandstandBanner">⚠ NOT INVERTED — get upside down for scoring</div>
+    <div id="debugInfo"></div>
 
     <div id="loadingOverlay">
       <div class="spinner"></div>
@@ -264,6 +275,7 @@
 
     <div id="angleOverlay"></div>
     <div id="torqueOverlay"></div>
+    <div class="drag-hint-badge" id="dragHintBadge">DRAG JOINTS</div>
   </div>
 
   <button id="panelToggle" onclick="togglePanel()">☰ INFO</button>
@@ -289,7 +301,7 @@
       <div class="section-title">Angle Labels</div>
       <div class="toggle-row">
         <label class="toggle-switch">
-          <input type="checkbox" id="whiteLabelsToggle" onchange="whiteLabels = this.checked">
+          <input type="checkbox" id="whiteLabelsToggle" onchange="whiteLabels = this.checked; if(activeSource==='image') redrawImage();">
           <div class="toggle-track"></div>
           <div class="toggle-thumb"></div>
         </label>
@@ -297,20 +309,18 @@
       </div>
     </div>
 
-    <!-- Export section -->
-    <div class="panel-section">
-      <div class="section-title">Export</div>
-      <div class="source-btns">
-        <button class="btn" id="exportBtn" style="display:none" onclick="toggleRecording()">⏺ &nbsp;Record &amp; Export</button>
-        <div id="exportHint" style="font-size:0.52rem;color:var(--muted);line-height:1.7;margin-top:4px;display:none">
-          Composites skeleton + panels onto video.<br>
-          Start → play through → Stop to download.<br>
-          Stops auto when video ends.
-        </div>
-        <div id="exportNoteNoSrc" style="font-size:0.52rem;color:var(--muted);line-height:1.6">
-          Load a video or start webcam to enable export.
-        </div>
+    <!-- Photo drag-edit section (shown only for images) -->
+    <div class="panel-section" id="photoEditSection" style="display:none">
+      <div class="section-title">Photo Editing</div>
+      <div style="font-size:0.56rem;color:var(--muted);line-height:1.75;margin-bottom:8px;">
+        After AI detection, enable drag mode to fine-tune any joint position. Angles recalculate live.
       </div>
+      <div class="source-btns">
+        <button class="btn" id="dragToggleBtn2" onclick="toggleDragMode()">✦ DRAG MODE ON</button>
+        <button class="btn" onclick="resetLandmarks()">↺ Reset to AI</button>
+        <button class="btn" onclick="reRunPose()">⟳ Re-run AI</button>
+      </div>
+      <div id="selectedJointInfo" style="margin-top:8px;font-size:0.54rem;color:var(--muted);line-height:1.6;"></div>
     </div>
 
     <div class="panel-section">
@@ -369,7 +379,7 @@ const loading     = document.getElementById('loadingOverlay');
 const loadingText = document.getElementById('loadingText');
 const banner      = document.getElementById('notHandstandBanner');
 const debugInfo   = document.getElementById('debugInfo');
-const recStatus   = document.getElementById('recStatus');
+const editToolbar = document.getElementById('editToolbar');
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let pose=null, poseReady=false;
@@ -377,16 +387,27 @@ let activeSource=null, webcamCamera=null, animFrame=null;
 let isInverted=false, objURL=null, bestScore=0, bestTime=0;
 let sideToDraw='left', whiteLabels=false, hasBeenInverted=false;
 
-// Latest pose data (used by composite renderer)
-let latestLandmarks=null, latestAngles=null, latestScore=null, latestTorques=null;
+// Image / drag state
+let originalLandmarks=null;   // landmarks as returned by MediaPipe (normalized 0-1)
+let editedLandmarks=null;     // current working copy (normalized 0-1)
+let dragModeEnabled=false;
+let selectedLmIdx=null;       // currently selected landmark index
+let isDragging=false;
 
-// Recording
-let mediaRecorder=null, recordedChunks=[], isRecording=false;
-let compositeCanvas=null, compositeCtx=null, recAnimFrame=null;
-let compositeRunning=false;
-
+// ─── Constants ────────────────────────────────────────────────────────────────
 const VIS=0.5;
 const G=9.81;
+const DRAG_RADIUS_PX = 16;   // hit-test radius in canvas pixels
+const DRAG_DISPLAY_PX = 9;   // visual dot radius when drag mode enabled
+
+// Landmark names (subset we care about)
+const LM_NAMES = {
+  11:'L-Shoulder', 12:'R-Shoulder', 13:'L-Elbow', 14:'R-Elbow',
+  15:'L-Wrist', 16:'R-Wrist', 23:'L-Hip', 24:'R-Hip',
+  25:'L-Knee', 26:'R-Knee', 27:'L-Ankle', 28:'R-Ankle',
+  31:'L-Foot', 32:'R-Foot'
+};
+const DRAGGABLE_INDICES = new Set(Object.keys(LM_NAMES).map(Number));
 
 const SEGMENT_MASSES={hand:.6,forearm:2.2,upperArm:4,torso:24,head:7,hips:8.2,thigh:14,shin:6,foot:2};
 
@@ -397,6 +418,40 @@ const ANGLE_DEFS=[
   {key:'knee',     label:'Knee',     weight:15,ideal:180,tol:10, ptsR:[23,25,27],ptsL:[24,26,28],labelLm:25, coach:{bad:'Straighten knees',warn:'Knees slightly bent'}},
   {key:'ankle',    label:'Ankle',    weight:5, ideal:160,tol:30, ptsR:[25,27,31],ptsL:[26,28,32],labelLm:27, coach:{bad:'Point toes',warn:'Toes can be more pointed'}},
 ];
+
+// ─── Canvas coordinate helpers ────────────────────────────────────────────────
+// The canvas element has CSS size (clientWidth/clientHeight) and internal resolution (width/height).
+// inputImage also uses object-fit:contain, so the image is letterboxed.
+// We need to convert mouse events → canvas internal pixels → normalized [0,1].
+
+function getImageRect() {
+  // Returns {x, y, w, h} of the actual rendered image within the canvas element CSS box.
+  const cW = poseCanvas.clientWidth, cH = poseCanvas.clientHeight;
+  const iW = inputImage.naturalWidth  || poseCanvas.width;
+  const iH = inputImage.naturalHeight || poseCanvas.height;
+  const scale = Math.min(cW / iW, cH / iH);
+  const rW = iW * scale, rH = iH * scale;
+  return { x: (cW - rW) / 2, y: (cH - rH) / 2, w: rW, h: rH };
+}
+
+function clientToNorm(clientX, clientY) {
+  const canvasRect = poseCanvas.getBoundingClientRect();
+  const cx = clientX - canvasRect.left;
+  const cy = clientY - canvasRect.top;
+  const { x, y, w, h } = getImageRect();
+  return { nx: (cx - x) / w, ny: (cy - y) / h };
+}
+
+function normToCanvas(nx, ny) {
+  // Convert normalized [0,1] to canvas *internal* pixel coords
+  return { cx: nx * poseCanvas.width, cy: ny * poseCanvas.height };
+}
+
+function normToClient(nx, ny) {
+  // Convert normalized [0,1] to CSS client coords (for hit-testing on the element)
+  const { x, y, w, h } = getImageRect();
+  return { cx: x + nx * w, cy: y + ny * h };
+}
 
 // ─── MediaPipe ────────────────────────────────────────────────────────────────
 function initPose() {
@@ -413,23 +468,144 @@ function togglePanel(){
   const p=document.getElementById('sidePanel'),b=document.getElementById('panelToggle');
   b.textContent=p.classList.toggle('open')?'✕ CLOSE':'☰ INFO';
 }
-function setSideToDraw(s){sideToDraw=s;updateSideButtons();}
+function setSideToDraw(s){sideToDraw=s;updateSideButtons();if(activeSource==='image')redrawImage();}
 function updateSideButtons(){
   document.getElementById('leftSideBtn').style.borderColor  = sideToDraw==='left'  ?'var(--accent)':'var(--border)';
   document.getElementById('rightSideBtn').style.borderColor = sideToDraw==='right' ?'var(--accent)':'var(--border)';
 }
-function showExportUI(){
-  document.getElementById('exportBtn').style.display='inline-block';
-  document.getElementById('exportHint').style.display='block';
-  document.getElementById('exportNoteNoSrc').style.display='none';
-  document.getElementById('recBtn').style.display='inline-block';
+
+// ─── Drag mode ────────────────────────────────────────────────────────────────
+function toggleDragMode() {
+  dragModeEnabled = !dragModeEnabled;
+  selectedLmIdx = null;
+  isDragging = false;
+  updateDragUI();
+  redrawImage();
 }
-function hideExportUI(){
-  document.getElementById('exportBtn').style.display='none';
-  document.getElementById('exportHint').style.display='none';
-  document.getElementById('exportNoteNoSrc').style.display='block';
-  document.getElementById('recBtn').style.display='none';
+
+function updateDragUI() {
+  const on = dragModeEnabled;
+  // Toolbar buttons
+  const btn1 = document.getElementById('dragToggleBtn');
+  const btn2 = document.getElementById('dragToggleBtn2');
+  if (btn1) { btn1.textContent = on ? '✦ DRAG ON' : '✦ DRAG OFF'; btn1.classList.toggle('active', on); }
+  if (btn2) { btn2.textContent = on ? '✦ DRAG MODE ON' : '✦ DRAG MODE OFF'; btn2.classList.toggle('active', on); }
+  // Canvas cursor
+  poseCanvas.classList.toggle('drag-mode', on && !isDragging);
+  poseCanvas.classList.toggle('dragging', isDragging);
+  // Hint badge
+  document.getElementById('dragHintBadge').style.display = on ? 'block' : 'none';
+  // Drag hint text
+  const hint = document.getElementById('dragHint');
+  if (hint) hint.textContent = on ? 'Click a joint • drag to move • angles update live' : '';
+  // Selected joint info
+  updateSelectedJointInfo();
 }
+
+function updateSelectedJointInfo() {
+  const el = document.getElementById('selectedJointInfo');
+  if (!el) return;
+  if (selectedLmIdx !== null && LM_NAMES[selectedLmIdx]) {
+    const lm = editedLandmarks[selectedLmIdx];
+    el.innerHTML = `<span style="color:var(--accent)">▸ ${LM_NAMES[selectedLmIdx]}</span><br>x: ${lm.x.toFixed(3)}&nbsp; y: ${lm.y.toFixed(3)}`;
+  } else {
+    el.innerHTML = dragModeEnabled ? '<span style="color:var(--warn)">Click a yellow joint to select</span>' : '';
+  }
+}
+
+function resetLandmarks() {
+  if (!originalLandmarks) return;
+  editedLandmarks = originalLandmarks.map(lm => ({...lm}));
+  selectedLmIdx = null;
+  recomputeAndRedraw();
+}
+
+async function reRunPose() {
+  if (!poseReady || !inputImage.src) return;
+  loading.style.display = 'flex'; loadingText.textContent = 'RE-RUNNING POSE...';
+  editedLandmarks = null; originalLandmarks = null; selectedLmIdx = null;
+  await pose.send({image: inputImage});
+  loading.style.display = 'none';
+}
+
+// ─── Hit testing for drag ──────────────────────────────────────────────────────
+function findClosestLandmark(clientX, clientY) {
+  if (!editedLandmarks) return null;
+  const canvasRect = poseCanvas.getBoundingClientRect();
+  const cx = clientX - canvasRect.left;
+  const cy = clientY - canvasRect.top;
+  const { x: ox, y: oy, w, h } = getImageRect();
+  const activeDots = sideToDraw === 'left' ? LEFT_DOTS : RIGHT_DOTS;
+  let best = null, bestDist = DRAG_RADIUS_PX * 1.8;
+  for (const idx of DRAGGABLE_INDICES) {
+    if (!activeDots.has(idx)) continue;
+    const lm = editedLandmarks[idx];
+    if (!lm || (lm.visibility ?? 1) < 0.1) continue;
+    const ex = ox + lm.x * w, ey = oy + lm.y * h;
+    const dist = Math.hypot(cx - ex, cy - ey);
+    if (dist < bestDist) { bestDist = dist; best = idx; }
+  }
+  return best;
+}
+
+// ─── Canvas pointer events ────────────────────────────────────────────────────
+poseCanvas.addEventListener('pointerdown', e => {
+  if (!dragModeEnabled || activeSource !== 'image') return;
+  const idx = findClosestLandmark(e.clientX, e.clientY);
+  if (idx !== null) {
+    selectedLmIdx = idx;
+    isDragging = true;
+    poseCanvas.setPointerCapture(e.pointerId);
+    poseCanvas.classList.remove('drag-mode');
+    poseCanvas.classList.add('dragging');
+    updateSelectedJointInfo();
+    redrawImage();
+  } else {
+    selectedLmIdx = null;
+    updateSelectedJointInfo();
+    redrawImage();
+  }
+  e.preventDefault();
+});
+
+poseCanvas.addEventListener('pointermove', e => {
+  if (!dragModeEnabled || activeSource !== 'image') return;
+  // Hover highlight (when not dragging)
+  if (!isDragging) {
+    const hoverIdx = findClosestLandmark(e.clientX, e.clientY);
+    poseCanvas.style.cursor = (hoverIdx !== null) ? 'grab' : 'crosshair';
+    return;
+  }
+  // Move selected landmark
+  if (selectedLmIdx === null) return;
+  const { nx, ny } = clientToNorm(e.clientX, e.clientY);
+  const clamped_nx = Math.max(0, Math.min(1, nx));
+  const clamped_ny = Math.max(0, Math.min(1, ny));
+  editedLandmarks[selectedLmIdx] = {
+    ...editedLandmarks[selectedLmIdx],
+    x: clamped_nx,
+    y: clamped_ny,
+    visibility: 1
+  };
+  recomputeAndRedraw();
+  updateSelectedJointInfo();
+  e.preventDefault();
+});
+
+poseCanvas.addEventListener('pointerup', e => {
+  if (!isDragging) return;
+  isDragging = false;
+  poseCanvas.releasePointerCapture(e.pointerId);
+  poseCanvas.classList.remove('dragging');
+  poseCanvas.classList.add('drag-mode');
+  e.preventDefault();
+});
+
+poseCanvas.addEventListener('pointercancel', () => {
+  isDragging = false;
+  poseCanvas.classList.remove('dragging');
+  if (dragModeEnabled) poseCanvas.classList.add('drag-mode');
+});
 
 // ─── File / video loading ─────────────────────────────────────────────────────
 async function loadFile(e){
@@ -440,27 +616,41 @@ async function loadFile(e){
   await initPose(); poseReady=true;
   if(file.type.startsWith('image/')) await loadImage(file); else await loadVideo(file);
 }
+
 async function loadImage(file){
   activeSource='image'; objURL=URL.createObjectURL(file);
   inputVideo.style.display='none'; inputImage.style.display='block'; inputImage.src=objURL;
   await new Promise(r=>{inputImage.onload=r;});
   poseCanvas.width=inputImage.naturalWidth; poseCanvas.height=inputImage.naturalHeight;
-  showVideoContainer(); controls.style.display='none'; loading.style.display='none';
-  bestScore=0; hasBeenInverted=false; hideExportUI();
+  showVideoContainer(); controls.style.display='none';
+  editToolbar.style.display='flex';
+  document.getElementById('photoEditSection').style.display='block';
+  loading.style.display='none';
+  loading.style.display='flex'; loadingText.textContent='DETECTING POSE...';
+  bestScore=0; hasBeenInverted=false;
+  dragModeEnabled=false; selectedLmIdx=null; isDragging=false;
+  updateDragUI();
+  originalLandmarks=null; editedLandmarks=null;
   await pose.send({image:inputImage});
+  loading.style.display='none';
 }
+
 async function loadVideo(file){
   activeSource='video'; objURL=URL.createObjectURL(file);
   inputImage.style.display='none'; inputVideo.style.display='block';
   inputVideo.src=objURL; inputVideo.load();
   await new Promise(r=>{inputVideo.onloadedmetadata=r;});
-  syncCanvas(); showVideoContainer(); controls.style.display='flex'; loading.style.display='none';
+  syncCanvas(); showVideoContainer(); controls.style.display='flex';
+  editToolbar.style.display='none';
+  document.getElementById('photoEditSection').style.display='none';
+  loading.style.display='none';
   bestScore=0; hasBeenInverted=false;
   document.getElementById('bestBtn').style.display='none';
   document.getElementById('scoreBest').textContent='—';
-  showExportUI(); startVideoLoop();
+  startVideoLoop();
   await pose.send({image:inputVideo});
 }
+
 function showVideoContainer(){
   document.getElementById('uploadZone').style.display='none';
   document.getElementById('videoContainer').style.display='block';
@@ -492,13 +682,13 @@ function updateSeekBar(){
 }
 function fmt(s){return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0');}
 
-inputVideo.addEventListener('ended',()=>{if(isRecording)stopRecording();});
-
 // ─── Webcam ───────────────────────────────────────────────────────────────────
 async function startWebcam(){
   activeSource='webcam'; showVideoContainer();
   webcamVideo.style.display='block'; inputVideo.style.display='none'; inputImage.style.display='none';
-  controls.style.display='none'; loading.style.display='flex'; loadingText.textContent='LOADING MODEL...';
+  controls.style.display='none'; editToolbar.style.display='none';
+  document.getElementById('photoEditSection').style.display='none';
+  loading.style.display='flex'; loadingText.textContent='LOADING MODEL...';
   if(!poseReady){await initPose();poseReady=true;}
   loadingText.textContent='STARTING CAMERA...';
   webcamCamera=new Camera(webcamVideo,{
@@ -506,7 +696,7 @@ async function startWebcam(){
     width:1280,height:720
   });
   webcamCamera.start()
-    .then(()=>{loading.style.display='none';showExportUI();})
+    .then(()=>{loading.style.display='none';})
     .catch(e=>{loadingText.textContent='CAMERA ERROR: '+e.message;});
 }
 function stopWebcam(){if(webcamCamera){webcamCamera.stop();webcamCamera=null;}webcamVideo.style.display='none';}
@@ -583,23 +773,94 @@ function detectInversion(lm){
   return inv;
 }
 
+// ─── Image: recompute angles from edited landmarks & redraw ──────────────────
+function recomputeAndRedraw() {
+  if (!editedLandmarks) return;
+  const lm = editedLandmarks;
+  isInverted = detectInversion(lm);
+  if (isInverted) hasBeenInverted = true;
+  const angles = calcAngles(lm);
+  const score  = isInverted ? weightedScore(angles) : null;
+  const torques= isInverted ? calcTorques(lm) : null;
+  ctx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
+  // While dragging, suppress the skeleton dot for the moving joint so the old position doesn't ghost
+  const skipDot = (dragModeEnabled && isDragging) ? selectedLmIdx : null;
+  drawSkeleton(lm, sideToDraw, ctx, poseCanvas, skipDot);
+  drawAnglesOnCanvas(lm, angles, ctx, poseCanvas);
+  if (dragModeEnabled) drawDragHandles(lm);
+  renderPanel(angles, score, torques);
+}
+
+function redrawImage() {
+  if (activeSource !== 'image' || !editedLandmarks) return;
+  recomputeAndRedraw();
+}
+
+// ─── Drag handle drawing ─────────────────────────────────────────────────────
+function drawDragHandles(lm) {
+  const W = poseCanvas.width, H = poseCanvas.height;
+  // Only show handles on the active draw side so the other side's dots don't ghost
+  const activeDots = sideToDraw === 'left' ? LEFT_DOTS : RIGHT_DOTS;
+  for (const idx of DRAGGABLE_INDICES) {
+    if (!activeDots.has(idx)) continue;
+    const m = lm[idx];
+    if (!m || (m.visibility ?? 1) < 0.1) continue;
+    const px = m.x * W, py = m.y * H;
+    const isSelected = (idx === selectedLmIdx);
+    // Outer ring
+    ctx.beginPath();
+    ctx.arc(px, py, isSelected ? DRAG_DISPLAY_PX + 5 : DRAG_DISPLAY_PX, 0, Math.PI * 2);
+    ctx.strokeStyle = isSelected ? 'rgba(255,140,0,1)' : 'rgba(255,200,0,0.85)';
+    ctx.lineWidth = isSelected ? 3 : 2;
+    ctx.setLineDash(isSelected ? [] : [4, 2]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Inner fill
+    ctx.beginPath();
+    ctx.arc(px, py, isSelected ? 5 : 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = isSelected ? 'rgba(255,140,0,1)' : 'rgba(255,220,0,0.8)';
+    ctx.fill();
+    // Label for selected
+    if (isSelected && LM_NAMES[idx]) {
+      ctx.save();
+      ctx.font = 'bold 12px DM Mono,monospace';
+      ctx.textAlign = 'left';
+      const label = LM_NAMES[idx];
+      const tx = px + DRAG_DISPLAY_PX + 7, ty = py + 4;
+      ctx.fillStyle = 'rgba(255,255,255,0.88)';
+      const tw = ctx.measureText(label).width;
+      ctx.fillRect(tx - 2, ty - 12, tw + 6, 16);
+      ctx.fillStyle = '#b06a00';
+      ctx.fillText(label, tx, ty);
+      ctx.restore();
+    }
+  }
+}
+
 // ─── Pose results ─────────────────────────────────────────────────────────────
 function onResults(results){
   ctx.clearRect(0,0,poseCanvas.width,poseCanvas.height);
   if(!results.poseLandmarks){
-    latestLandmarks=null;latestAngles=null;latestScore=null;latestTorques=null;
-    renderPanel(null,null,null);
-    if(compositeRunning)renderCompositeFrame();
-    return;
+    if (activeSource === 'image') { editedLandmarks = null; originalLandmarks = null; }
+    renderPanel(null,null,null); return;
   }
   const lm=results.poseLandmarks;
+
+  // For images: store landmarks and enter edit mode
+  if (activeSource === 'image') {
+    originalLandmarks = lm.map(m => ({...m}));
+    editedLandmarks   = lm.map(m => ({...m}));
+    recomputeAndRedraw();
+    return;
+  }
+
+  // Video / webcam
   isInverted=detectInversion(lm);
   if(isInverted)hasBeenInverted=true;
   drawSkeleton(lm,sideToDraw,ctx,poseCanvas);
   const angles=calcAngles(lm);
   const score=isInverted?weightedScore(angles):null;
   const torques=isInverted?calcTorques(lm):null;
-  latestLandmarks=lm;latestAngles=angles;latestScore=score;latestTorques=torques;
   if(activeSource==='video'&&isInverted&&score!==null&&score>bestScore){
     bestScore=score;bestTime=inputVideo.currentTime;
     const el=document.getElementById('scoreBest');el.textContent=bestScore;colorScore(el,bestScore);
@@ -607,11 +868,9 @@ function onResults(results){
   }
   drawAnglesOnCanvas(lm,angles,ctx,poseCanvas);
   renderPanel(angles,score,torques);
-  // Paint composite every time pose fires — keeps recording in sync on desktop
-  if(compositeRunning)renderCompositeFrame();
 }
 
-// ─── Skeleton draw (accepts any canvas context) ───────────────────────────────
+// ─── Skeleton draw ────────────────────────────────────────────────────────────
 const CONNECTIONS_LEFT  =[[11,13],[13,15],[11,23],[23,25],[25,27],[27,31]];
 const CONNECTIONS_RIGHT =[[12,14],[14,16],[12,24],[24,26],[26,28],[28,32]];
 const LEFT_DOTS  =new Set([11,13,15,23,25,27,31]);
@@ -619,10 +878,11 @@ const RIGHT_DOTS =new Set([12,14,16,24,26,28,32]);
 
 function lmPx(lm,i,canvas){return{x:lm[i].x*canvas.width,y:lm[i].y*canvas.height};}
 
-function drawSkeleton(lm,side,c,canvas){
+function drawSkeleton(lm,side,c,canvas,skipDotIdx=null){
   c.lineWidth=2.5;c.lineCap='round';c.setLineDash([]);
   const drawDots=(set,stroke)=>{
     for(const i of set){
+      if(i===skipDotIdx)continue; // hidden — replaced by drag handle
       if((lm[i].visibility??1)<.3)continue;
       const p=lmPx(lm,i,canvas);
       c.beginPath();c.arc(p.x,p.y,6,0,Math.PI*2);
@@ -701,166 +961,6 @@ function renderPanel(angles,score,torques){
   if(!isInverted)fl.innerHTML='<div class="feedback-item warn">Get inverted to receive coaching</div>';
   else if(!feedback.length)fl.innerHTML='<div class="feedback-item good">✓ Perfect alignment — hold it!</div>';
   else fl.innerHTML=feedback.map(f=>`<div class="feedback-item ${f.cls}">${f.text}</div>`).join('');
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// ─── RECORDING / EXPORT ───────────────────────────────────────────────────────
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function getSupportedMime(){
-  const types=['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'];
-  for(const t of types){try{if(MediaRecorder.isTypeSupported(t))return t;}catch(e){}}
-  return '';
-}
-function mimeToExt(m){return m.includes('mp4')?'mp4':m.includes('webm')?'webm':'video';}
-
-// ── Composite canvas panel draw ────────────────────────────────────────────────
-function drawCompositePanel(c,lm,angles,score,torques,W,H){
-  if(!angles&&!score)return;
-  const COLS={good:'#2d7a3a',warn:'#b06a00',bad:'#c0392b',muted:'#888'};
-  const panW=Math.min(170,W*0.27);
-  const px=W-panW-10;
-  const rowH=Math.max(22,H*0.044);
-  const fs=Math.max(11,rowH*.48);
-  const lfs=Math.max(8,fs*.62);
-  let py=52;
-
-  c.save();
-
-  // ── Angle rows ──
-  if(angles){
-    for(const def of ANGLE_DEFS){
-      const val=angles[def.key];if(val==null)continue;
-      const q=getQuality(def,val);
-      const bgMap={good:'rgba(234,245,236,.9)',warn:'rgba(253,243,227,.9)',bad:'rgba(253,236,234,.9)',neutral:'rgba(255,255,255,.8)'};
-      const bdrMap={good:'#2d7a3a',warn:'#b06a00',bad:'#c0392b',neutral:'#ccc'};
-      c.fillStyle=bgMap[q]||bgMap.neutral;c.fillRect(px,py,panW,rowH);
-      c.fillStyle=bdrMap[q]||bdrMap.neutral;c.fillRect(px+panW-3,py,3,rowH);
-      c.fillStyle=COLS.muted;c.font=`${lfs}px DM Mono,monospace`;c.textAlign='left';
-      c.fillText(def.label.toUpperCase(),px+6,py+lfs+2);
-      c.fillStyle=COLS[q]||COLS.muted;c.font=`bold ${fs}px Bebas Neue,sans-serif`;c.textAlign='right';
-      c.fillText(val+'°',px+panW-7,py+rowH-3);
-      py+=rowH+3;
-    }
-  }
-
-  // ── Torque rows ──
-  if(torques&&isInverted){
-    py+=5;
-    const rows=[
-      {label:'WRIST τ',  val:(torques.wrist>=0?'+':'')+torques.wrist+' Nm',  q:torqueQuality(torques.wrist)},
-      {label:'SHLDR τ',  val:(torques.shoulder>=0?'+':'')+torques.shoulder+' Nm', q:torqueQuality(torques.shoulder)},
-    ];
-    for(const r of rows){
-      const bgMap={good:'rgba(234,245,236,.9)',warn:'rgba(253,243,227,.9)',bad:'rgba(253,236,234,.9)'};
-      c.fillStyle=bgMap[r.q]||'rgba(245,243,240,.9)';c.fillRect(px,py,panW,rowH);
-      c.fillStyle=COLS[r.q]||COLS.muted;c.fillRect(px+panW-3,py,3,rowH);
-      c.fillStyle=COLS.muted;c.font=`${lfs}px DM Mono,monospace`;c.textAlign='left';
-      c.fillText(r.label,px+6,py+lfs+2);
-      c.fillStyle=COLS[r.q]||COLS.muted;c.font=`bold ${Math.max(10,fs*.82)}px DM Mono,monospace`;c.textAlign='right';
-      c.fillText(r.val,px+panW-7,py+rowH-3);
-      py+=rowH+3;
-    }
-  }
-
-  // ── Score badge (bottom-left) ──
-  if(score!==null){
-    const bx=10,by=H-68,bw=82,bh=58;
-    const sCol=score>=75?'#2d7a3a':score>=50?'#b06a00':'#c0392b';
-    c.fillStyle='rgba(255,255,255,.9)';c.fillRect(bx,by,bw,bh);
-    c.strokeStyle=sCol;c.lineWidth=2;c.strokeRect(bx,by,bw,bh);
-    c.fillStyle=COLS.muted;c.font=`${lfs}px DM Mono,monospace`;c.textAlign='left';
-    c.fillText('SCORE',bx+6,by+lfs+4);
-    c.fillStyle=sCol;c.font=`bold ${Math.min(36,bh*.62)}px Bebas Neue,sans-serif`;
-    c.fillText(score,bx+6,by+bh-6);
-  }
-
-  
-  // ── Watermark ──
-  c.fillStyle='rgba(255,255,255,1)';
-  c.font=`${Math.max(9,lfs)}px DM Mono,monospace`;c.textAlign='right';
-  c.fillText('rcsmit.github.io/hs_analyzer',W-8,H-6);
-
-  c.restore();
-}
-
-// ── Composite render loop ──────────────────────────────────────────────────────
-function renderCompositeFrame(){
-  if(!compositeCanvas||!compositeCtx)return;
-  const cw=compositeCanvas.width,ch=compositeCanvas.height,cc=compositeCtx;
-  cc.clearRect(0,0,cw,ch);
-
-  // 1. Video frame
-  const src=activeSource==='webcam'?webcamVideo:inputVideo;
-  try{
-    if(activeSource==='webcam'){cc.save();cc.translate(cw,0);cc.scale(-1,1);cc.drawImage(src,0,0,cw,ch);cc.restore();}
-    else{cc.drawImage(src,0,0,cw,ch);}
-  }catch(e){}
-
-  // 2. Pose skeleton + angle labels (re-draw onto composite)
-  if(latestLandmarks){
-    drawSkeleton(latestLandmarks,sideToDraw,cc,compositeCanvas);
-    if(latestAngles)drawAnglesOnCanvas(latestLandmarks,latestAngles,cc,compositeCanvas);
-  }
-
-  // 3. Info panel
-  drawCompositePanel(cc,latestLandmarks,latestAngles,latestScore,latestTorques,cw,ch);
-}
-
-// ── Recording controls ─────────────────────────────────────────────────────────
-function toggleRecording(){isRecording?stopRecording():startRecording();}
-
-function startRecording(){
-  if(activeSource==='image'){alert('Recording works with video or webcam sources only.');return;}
-  syncCanvas();
-  compositeCanvas=document.createElement('canvas');
-  compositeCanvas.width=poseCanvas.width;compositeCanvas.height=poseCanvas.height;
-  compositeCtx=compositeCanvas.getContext('2d');
-
-  const mime=getSupportedMime();
-  if(!mime){alert('MediaRecorder not supported in this browser. Try Chrome or Safari 14.5+.');return;}
-
-  recordedChunks=[];
-  let stream;
-  try{stream=compositeCanvas.captureStream(30);}catch(e){alert('captureStream not supported: '+e.message);return;}
-
-  try{mediaRecorder=new MediaRecorder(stream,{mimeType:mime});}
-  catch(e){try{mediaRecorder=new MediaRecorder(stream);}catch(e2){alert('MediaRecorder error: '+e2.message);return;}}
-
-  mediaRecorder.ondataavailable=e=>{if(e.data&&e.data.size>0)recordedChunks.push(e.data);};
-  mediaRecorder.onstop=finishRecording;
-  mediaRecorder.start(100);
-  isRecording=true;
-  compositeRunning=true;
-  renderCompositeFrame();
-
-  if(activeSource==='video'&&inputVideo.paused)inputVideo.play();
-
-  recStatus.style.display='block';
-  const rb=document.getElementById('recBtn'),eb=document.getElementById('exportBtn');
-  rb.textContent='⏹ STOP REC';eb.textContent='⏹ Stop & Save';
-  rb.classList.add('rec-active');eb.classList.add('rec-active');
-}
-
-function stopRecording(){
-  if(!mediaRecorder||mediaRecorder.state==='inactive')return;
-  mediaRecorder.stop();isRecording=false;compositeRunning=false;
-  recStatus.style.display='none';
-  const rb=document.getElementById('recBtn'),eb=document.getElementById('exportBtn');
-  rb.textContent='⏺ REC';eb.textContent='⏺ Record & Export';
-  rb.classList.remove('rec-active');eb.classList.remove('rec-active');
-}
-
-function finishRecording(){
-  if(!recordedChunks.length)return;
-  const mime=mediaRecorder.mimeType||getSupportedMime();
-  const blob=new Blob(recordedChunks,{type:mime});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  const ts=new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
-  a.href=url;a.download=`handstand_${ts}.${mimeToExt(mime)}`;
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  setTimeout(()=>URL.revokeObjectURL(url),8000);
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
