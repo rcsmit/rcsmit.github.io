@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COVID-19 Levitt Model</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<!-- version history
+# version : 20260615-120000 - Initial version
+# version : 20260615-130000 - Fix date adapter; CORS proxy
+# version : 20260615-140000 - Post-period reality in amber; renamed index.html
+# version : 20260615-150000 - Fix: independent postPoints array
+# version : 20260615-200000 - Feature: show reality-ahead-of-slice (dashed amber) within fit period during animation
+-->
+<script>const current_version = "20260615-190000";</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.4.4/luxon.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;800&display=swap');
+
+:root {
+  --sidebar-w: 310px;
+  --toggle-w:  28px;
+  --bg:        #f5f2ec;
+  --surface:   #fffefa;
+  --border:    #d9d4c8;
+  --ink:       #1a1714;
+  --ink-muted: #6b6560;
+  --accent:    #c0533a;
+  --radius:    6px;
+  --shadow:    0 2px 12px rgba(0,0,0,.08);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg); color: var(--ink);
+  height: 100vh; height: 100dvh;
+  display: flex; overflow: hidden;
+}
+
+/* ── Sidebar ── */
+#sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  background: var(--surface); border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: visible; position: relative; flex-shrink: 0;
+  z-index: 1002;
+  transition: width .25s ease, min-width .25s ease;
+  box-shadow: 2px 0 20px rgba(0,0,0,.06);
+}
+#sidebar-header, #sidebar-body, #sidebar-footer { overflow: hidden; }
+#sidebar.collapsed { width: var(--toggle-w); min-width: var(--toggle-w); }
+#sidebar.collapsed > *:not(#sidebar-toggle) { display: none; }
+
+#sidebar-toggle {
+  position: absolute; top: 50%; right: -16px; transform: translateY(-50%);
+  width: 16px; height: 64px;
+  border: 1px solid rgba(0,0,0,.12); border-left: none;
+  border-radius: 0 6px 6px 0;
+  background: var(--accent); color: #fff; font-size: .75rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, width .15s;
+  z-index: 1003; flex-shrink: 0;
+  box-shadow: 2px 0 6px rgba(0,0,0,.15);
+}
+#sidebar-toggle:hover { background: #a8432c; width: 20px; }
+
+#sidebar-header { padding: 20px 20px 14px; border-bottom: 1px solid var(--border); }
+#sidebar-header h1 { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.02em; color: var(--accent); line-height: 1.2; }
+#sidebar-header p  { font-size: .72rem; color: var(--ink-muted); margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+
+#sidebar-body {
+  flex: 1; overflow-y: auto; padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+#sidebar-body::-webkit-scrollbar { width: 4px; }
+#sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+.ctrl-group { display: flex; flex-direction: column; gap: 6px; }
+.ctrl-group label { font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); }
+.ctrl-group select,
+.ctrl-group input[type=text],
+.ctrl-group input[type=number] {
+  font-family: 'JetBrains Mono', monospace; font-size: .8rem;
+  padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); color: var(--ink); outline: none; transition: border-color .15s; width: 100%;
+}
+.ctrl-group select:focus, .ctrl-group input:focus { border-color: var(--accent); }
+
+.preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.preset-btn {
+  font-family: 'JetBrains Mono', monospace; font-size: .72rem;
+  padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); color: var(--ink-muted); cursor: pointer; transition: all .15s; text-align: left;
+}
+.preset-btn:hover  { border-color: var(--accent); color: var(--accent); background: #fdf5f3; }
+.preset-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; }
+
+.legend-strip {
+  display: flex; flex-direction: column; gap: 5px; padding: 10px 12px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
+  font-family: 'JetBrains Mono', monospace; font-size: .7rem; color: var(--ink-muted);
+}
+.legend-strip .row { display: flex; align-items: center; gap: 8px; }
+.swatch { width: 22px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+.swatch.dash {
+  background: repeating-linear-gradient(90deg,var(--c,#999) 0,var(--c,#999) 5px,transparent 5px,transparent 8px);
+}
+
+#run-btn {
+  width: 100%; padding: 11px; background: var(--accent); color: #fff;
+  border: none; border-radius: var(--radius);
+  font-family: 'Syne', sans-serif; font-size: .9rem; font-weight: 600;
+  cursor: pointer; transition: background .15s, transform .1s;
+}
+#run-btn:hover  { background: #a8432c; transform: translateY(-1px); }
+#run-btn:active { transform: translateY(0); }
+
+#sidebar-footer {
+  padding: 14px 20px; border-top: 1px solid var(--border);
+  font-size: .68rem; color: var(--ink-muted);
+  font-family: 'JetBrains Mono', monospace; line-height: 1.6;
+}
+#sidebar-footer a { color: var(--accent); text-decoration: none; }
+#sidebar-footer a:hover { text-decoration: underline; }
+
+#sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 1001; }
+#sidebar-overlay.hidden { display: none !important; }
+
+@media (max-width: 640px) {
+  #sidebar { position: fixed; top: 0; left: 0; bottom: 0; z-index: 1002; }
+  #sidebar-overlay { display: block; }
+}
+
+/* ── Main ── */
+#main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg); }
+
+.main-header { padding: 20px 28px 0; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.main-header h2 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; }
+
+#status-badge {
+  font-family: 'JetBrains Mono', monospace; font-size: .72rem;
+  padding: 3px 10px; border-radius: 20px;
+  background: var(--border); color: var(--ink-muted);
+}
+#status-badge.loading { background: #fef3c7; color: #92400e; }
+#status-badge.ready   { background: #d1fae5; color: #065f46; }
+#status-badge.error   { background: #fee2e2; color: #991b1b; }
+
+/* ── Animation bar ── */
+#anim-bar {
+  display: none;
+  margin: 14px 28px 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 16px;
+  gap: 10px; flex-direction: column;
+}
+#anim-bar.visible { display: flex; }
+
+.anim-row { display: flex; align-items: center; gap: 8px; }
+#anim-slider {
+  flex: 1; accent-color: var(--accent); cursor: pointer; height: 4px;
+}
+#anim-label {
+  font-family: 'JetBrains Mono', monospace; font-size: .78rem;
+  color: var(--ink); min-width: 90px; text-align: right; flex-shrink: 0;
+}
+.anim-btn {
+  font-family: 'JetBrains Mono', monospace; font-size: .8rem;
+  padding: 5px 12px; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--bg); color: var(--ink); cursor: pointer; transition: all .15s;
+  flex-shrink: 0;
+}
+.anim-btn:hover { border-color: var(--accent); color: var(--accent); }
+.anim-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+#anim-speed { font-family: 'JetBrains Mono', monospace; font-size: .78rem; width: 70px; }
+
+/* ── Info cards ── */
+.info-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: 10px; padding: 14px 28px 0;
+}
+.info-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+.info-card .val { font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 600; color: var(--accent); }
+.info-card .lbl { font-size: .68rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .06em; margin-top: 2px; }
+
+/* ── Charts ── */
+.charts-area { padding: 14px 28px 28px; display: flex; flex-direction: column; gap: 18px; flex: 1; }
+.chart-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow);
+}
+.chart-card h3 {
+  font-size: .75rem; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--ink-muted); margin-bottom: 12px;
+}
+.chart-wrap { position: relative; height: 260px; }
+
+#loading-overlay {
+  position: absolute; inset: 0; background: rgba(245,242,236,.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 10; border-radius: var(--radius);
+}
+.spinner {
+  width: 32px; height: 32px;
+  border: 3px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#error-msg {
+  display: none; margin: 12px 28px 0; padding: 12px 16px;
+  background: #fee2e2; color: #991b1b; border-radius: var(--radius);
+  font-family: 'JetBrains Mono', monospace; font-size: .8rem; line-height: 1.6;
+}
+#data-source-note {
+  display: none; margin: 8px 28px 0; padding: 8px 14px;
+  background: #fef3c7; color: #78350f; border-radius: var(--radius);
+  font-family: 'JetBrains Mono', monospace; font-size: .72rem;
+}
+</style>
+</head>
+<body>
+
+<div id="sidebar-overlay"></div>
+
+<aside id="sidebar">
+  <button id="sidebar-toggle" title="Collapse sidebar">&#x25C4;</button>
+
+  <div id="sidebar-header">
+    <h1>COVID-19<br>Levitt Model</h1>
+    <p>Gompertz curve fitting · NL</p>
+  </div>
+
+  <div id="sidebar-body">
+    <div class="ctrl-group">
+      <label>Preset periods</label>
+      <div class="preset-grid">
+        <button class="preset-btn active" data-from="2020-03-01" data-until="2020-05-01">NL mrt 2020</button>
+        <button class="preset-btn" data-from="2020-09-01" data-until="2020-11-22">NL okt 2020</button>
+        <button class="preset-btn" data-from="2020-11-22" data-until="2021-02-10">NL dec 2020</button>
+        <button class="preset-btn" data-from="2021-02-10" data-until="2021-06-28">NL mrt 2021</button>
+        <button class="preset-btn" data-from="2021-06-28" data-until="2021-09-02">NL jul 2021</button>
+        <button class="preset-btn" data-from="2021-10-01" data-until="2021-12-31">NL okt 2021</button>
+      </div>
+    </div>
+
+    <div class="ctrl-group">
+      <label>Start date (fit period)</label>
+      <input type="text" id="from-date" value="2020-03-01" placeholder="yyyy-mm-dd">
+    </div>
+    <div class="ctrl-group">
+      <label>End date (fit period)</label>
+      <input type="text" id="until-date" value="2020-05-01" placeholder="yyyy-mm-dd">
+    </div>
+    <div class="ctrl-group">
+      <label>Metric</label>
+      <select id="metric-select">
+        <option value="new_cases_smoothed" selected>new_cases_smoothed</option>
+        <option value="new_deaths_smoothed">new_deaths_smoothed</option>
+        <option value="new_cases">new_cases</option>
+        <option value="new_deaths">new_deaths</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Extra forecast days</label>
+      <input type="number" id="extra-days" value="30" min="0" max="180">
+    </div>
+    <div class="ctrl-group">
+      <label>Y-axis scale</label>
+      <select id="yaxis-scale">
+        <option value="linear" selected>Linear</option>
+        <option value="logarithmic">Log (10)</option>
+      </select>
+    </div>
+    <div class="ctrl-group">
+      <label>Trendline window</label>
+      <select id="trendline-window">
+        <option value="14" selected>Last 14 days (Levitt)</option>
+        <option value="all">All data</option>
+        <option value="7">Last 7 days</option>
+        <option value="21">Last 21 days</option>
+      </select>
+    </div>
+
+    <div class="ctrl-group">
+      <label>Colour key</label>
+      <div class="legend-strip">
+        <div class="row"><div class="swatch" style="background:#3ab065"></div>Reality — used for fit</div>
+        <div class="row"><div class="swatch dash" style="--c:#e07b1a"></div>Reality — fit period, ahead of slice</div>
+        <div class="row"><div class="swatch" style="background:#e07b1a"></div>Reality — after end date</div>
+        <div class="row"><div class="swatch dash" style="--c:#3a7fc0"></div>Predicted</div>
+        <div class="row"><div class="swatch" style="background:#c09b3a"></div>J(t) reality</div>
+        <div class="row"><div class="swatch dash" style="--c:#c0533a"></div>J(t) trendline</div>
+      </div>
+    </div>
+
+    <button id="run-btn">▶ Run Analysis</button>
+  </div>
+
+  <div id="sidebar-footer">
+    Based on <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7325180/" target="_blank">Levitt et al. (2020)</a><br>
+    Data: <a href="https://ourworldindata.org" target="_blank">Our World in Data</a> · NL subset<br>
+    Port of <a href="https://github.com/rcsmit/COVIDcases" target="_blank">rcsmit/COVIDcases</a>
+  </div>
+</aside>
+
+<div id="main">
+  <div class="main-header">
+    <h2 id="chart-title">Netherlands · Levitt Analysis</h2>
+    <span id="status-badge">idle</span>
+  </div>
+
+  <div id="error-msg"></div>
+  <div id="data-source-note"></div>
+
+  <!-- Animation bar -->
+  <div id="anim-bar">
+    <div class="anim-row">
+      <button class="anim-btn" id="btn-prev">◀ Prev</button>
+      <button class="anim-btn active" id="btn-play">▶ Play</button>
+      <button class="anim-btn" id="btn-next">Next ▶</button>
+      <select id="anim-speed" class="anim-btn" style="padding:5px 6px">
+        <option value="800">Slow</option>
+        <option value="400" selected>Normal</option>
+        <option value="150">Fast</option>
+        <option value="50">Turbo</option>
+      </select>
+      <span id="anim-label">day 14</span>
+    </div>
+    <div class="anim-row">
+      <input type="range" id="anim-slider" min="14" max="14" value="14">
+    </div>
+  </div>
+
+  <div class="info-grid" id="info-grid" style="display:none">
+    <div class="info-card"><div class="val" id="ic-m">—</div><div class="lbl">slope m</div></div>
+    <div class="info-card"><div class="val" id="ic-b">—</div><div class="lbl">intercept b</div></div>
+    <div class="info-card"><div class="val" id="ic-rsq">—</div><div class="lbl">R²</div></div>
+    <div class="info-card"><div class="val" id="ic-u">—</div><div class="lbl">U (days)</div></div>
+    <div class="info-card"><div class="val" id="ic-top">—</div><div class="lbl">predicted peak</div></div>
+    <div class="info-card"><div class="val" id="ic-jdm">—</div><div class="lbl">J(t) δ-max</div></div>
+  </div>
+
+  <div class="charts-area">
+    <div class="chart-card">
+      <h3>Daily cases — reality vs prediction</h3>
+      <div class="chart-wrap" id="wrap1">
+        <div id="loading-overlay"><div class="spinner"></div></div>
+        <canvas id="chart-delta"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>J(t) = log₁₀(log(G(t)/G(t-1))) — trendline fit</h3>
+      <div class="chart-wrap"><canvas id="chart-jt"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <h3>Cumulative cases — reality vs prediction</h3>
+      <div class="chart-wrap"><canvas id="chart-cumm"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────
+   SIDEBAR TOGGLE
+───────────────────────────────────────────────────────── */
+const EXPANDED_ON_LOAD_FOR_DESKTOP = true;
+const EXPANDED_ON_LOAD_FOR_MOBILE  = false;
+
+(function () {
+  const sidebar = document.getElementById('sidebar');
+  const toggle  = document.getElementById('sidebar-toggle');
+  const overlay = document.getElementById('sidebar-overlay');
+  const main    = document.getElementById('main');
+
+  function collapse() {
+    sidebar.classList.add('collapsed'); document.body.classList.remove('sidebar-open');
+    toggle.innerHTML = '&#x25BA;'; toggle.title = 'Expand sidebar';
+    overlay.classList.add('hidden');
+  }
+  function expand() {
+    sidebar.classList.remove('collapsed'); document.body.classList.add('sidebar-open');
+    toggle.innerHTML = '&#x25C4;'; toggle.title = 'Collapse sidebar';
+    if (window.innerWidth <= 640) overlay.classList.remove('hidden');
+  }
+  const mob = window.innerWidth <= 640;
+  (mob ? !EXPANDED_ON_LOAD_FOR_MOBILE : !EXPANDED_ON_LOAD_FOR_DESKTOP) ? collapse() : expand();
+  toggle.addEventListener('click', e => { e.stopPropagation(); sidebar.classList.contains('collapsed') ? expand() : collapse(); });
+  overlay.addEventListener('click', collapse);
+  if (main) main.addEventListener('click', () => { if (window.innerWidth <= 640 && !sidebar.classList.contains('collapsed')) collapse(); });
+})();
+
+/* ── Preset buttons ── */
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('from-date').value  = btn.dataset.from;
+    document.getElementById('until-date').value = btn.dataset.until;
+  });
+});
+
+/* ─────────────────────────────────────────────────────────
+   GLOBALS
+───────────────────────────────────────────────────────── */
+let CSV_CACHE  = null;
+let charts     = { delta: null, jt: null, cumm: null };
+
+// Full session state (set once after CSV load, reused by animation)
+let SESSION = null;
+/*  SESSION = {
+      allRowsFit: [{date, value}…],   // all fit-period rows
+      rowsPost:   [{date, value}…],
+      postPoints: [{date, raw, cumm}…],
+      extraDays, trendWin, metric, yScale,
+      from, until,                     // Date objects
+      totalFitDays,                    // allRowsFit.length
+    }
+*/
+
+let animTimer  = null;
+let animDay    = 14;   // current window size (number of fit rows used)
+
+const RAW_URL   = 'https://raw.githubusercontent.com/rcsmit/COVIDcases/main/input/owid-covid-data_NL.csv';
+const PROXY_URL = 'https://corsproxy.io/?' + encodeURIComponent(RAW_URL);
+
+/* ─────────────────────────────────────────────────────────
+   STATUS / ERROR HELPERS
+───────────────────────────────────────────────────────── */
+function setStatus(t, c) { const el = document.getElementById('status-badge'); el.textContent = t; el.className = c||''; }
+function showError(m)  { const el = document.getElementById('error-msg'); el.innerHTML = m; el.style.display = 'block'; setStatus('error','error'); }
+function clearError()  { document.getElementById('error-msg').style.display = 'none'; }
+function showNote(m)   { const el = document.getElementById('data-source-note'); el.textContent = m; el.style.display = 'block'; }
+function clearNote()   { document.getElementById('data-source-note').style.display = 'none'; }
+
+/* ─────────────────────────────────────────────────────────
+   MATH
+───────────────────────────────────────────────────────── */
+function linReg(xs, ys) {
+  const n = xs.length;
+  if (n < 2) return { m:0, b:0, r2:0 };
+  let sx=0,sy=0,sxy=0,sxx=0,syy=0;
+  for (let i=0;i<n;i++){sx+=xs[i];sy+=ys[i];sxy+=xs[i]*ys[i];sxx+=xs[i]*xs[i];syy+=ys[i]*ys[i];}
+  const den=n*sxx-sx*sx;
+  if(den===0) return {m:0,b:sy/n,r2:0};
+  const m=(n*sxy-sx*sy)/den, b=(sy-m*sx)/n;
+  const rd=Math.sqrt((n*sxx-sx*sx)*(n*syy-sy*sy));
+  return {m, b, r2: rd===0?0:Math.pow((n*sxy-sx*sy)/rd,2)};
+}
+
+function rollMean(arr, w) {
+  return arr.map((_,i) => {
+    if(i<w-1) return null;
+    let s=0; for(let j=i-w+1;j<=i;j++) s+=arr[j]; return s/w;
+  });
+}
+
+/* ─────────────────────────────────────────────────────────
+   CORE: compute Levitt for a SLICE of fit rows
+   rowsFitSlice  – the rows actually used (first N rows)
+   allRowsFit    – all fit-period rows (for x-axis extent)
+   rowsPost      – post-period rows (for reality overlay)
+   extraDays     – forecast horizon beyond last fit row
+   trendWin      – '14' | '7' | '21' | 'all'
+───────────────────────────────────────────────────────── */
+function computeLevitt(rowsFitSlice, allRowsFit, rowsPost, extraDays, trendWin) {
+  // 1. Cumulative on the active slice
+  let cumsum = 0;
+  const data = rowsFitSlice.map(r => { cumsum += r.value; return {date:r.date, raw:r.value, cumm:cumsum}; });
+
+  // 2. J(t)
+  const jRaw = [];
+  for (let i=1; i<data.length; i++) {
+    const prev=data[i-1].cumm, curr=data[i].cumm;
+    let jv=null;
+    if(prev>0 && curr>prev){ const lr=Math.log(curr/prev); if(lr>0) jv=Math.log10(lr); }
+    jRaw.push(jv===null ? 0 : jv);
+  }
+  const jSmooth=[null, ...rollMean(jRaw, 3)];
+  data.forEach((d,i) => d.jt = jSmooth[i]);
+
+  const valid = data.filter(d => d.jt!==null && d.cumm>0);
+  if (valid.length < 4) throw new Error('Too few valid J(t) values.');
+
+  // 3. Trendline fit
+  let fitSub = valid;
+  if (trendWin!=='all') { const w=parseInt(trendWin,10); fitSub=valid.slice(-Math.min(w,valid.length)); }
+  const off = valid.indexOf(fitSub[0]);
+  const {m, b, r2} = linReg(fitSub.map((_,i)=>off+i), fitSub.map(d=>d.jt));
+  if(m===0) throw new Error('Slope is zero — try different window or period.');
+
+  // 4. Build timeline: full fit period extent + extraDays forecast
+  const startDate = new Date(allRowsFit[0].date);
+  const fullFitDays = Math.round((allRowsFit[allRowsFit.length-1].date - startDate) / 86400000) + 1;
+  const totalDays   = fullFitDays + extraDays;
+
+  const allDates = Array.from({length: totalDays}, (_,i) => {
+    const d=new Date(startDate); d.setDate(d.getDate()+i); return d;
+  });
+
+  // Map each date to its J(t) index (position in valid[]) — used for trendline evaluation
+  const jtByDate = {};
+  valid.forEach((d,i) => { jtByDate[d.date.toISOString().slice(0,10)] = i; });
+
+  // The last known J(t) index (within valid[]) and its calendar date
+  const lastValidJtIdx  = valid.length - 1;
+  const lastValidDate   = valid[lastValidJtIdx].date.getTime();
+
+  const lastSliceDate = rowsFitSlice[rowsFitSlice.length-1].date.toISOString().slice(0,10);
+
+  const extended = allDates.map((date) => {
+    const dstr  = date.toISOString().slice(0,10);
+    const ts    = date.getTime();
+    const dayOffset = Math.round((ts - startDate.getTime()) / 86400000);
+    const known = data[dayOffset] || null;
+
+    let jtIdx;
+    if (jtByDate[dstr] !== undefined) {
+      jtIdx = jtByDate[dstr];
+    } else {
+      const daysBeyond = Math.round((ts - lastValidDate) / 86400000);
+      jtIdx = lastValidJtIdx + daysBeyond;
+    }
+
+    const trendJt = jtIdx * m + b;
+    const predictedGrowth = Math.exp(Math.pow(10, trendJt));
+    return { date, raw: known?known.raw:null, cumm: known?known.cumm:null, jt: known?known.jt:null, trendJt, predictedGrowth, dayOffset };
+  });
+
+  // lastSliceIdx = position in extended[] matching the last slice date
+  const lastSliceIdx = extended.findIndex(e => e.date.toISOString().slice(0,10) === lastSliceDate);
+
+  // 5. Forward simulate from lastSliceIdx; anchor predDaily at last real point for smooth join
+  const lastSliceEntry = extended[lastSliceIdx];
+  lastSliceEntry.predCumm  = lastSliceEntry.cumm;
+  lastSliceEntry.predDaily = lastSliceEntry.raw;  // anchor: connects blue to end of green
+  for (let i=lastSliceIdx+1; i<extended.length; i++) {
+    extended[i].predCumm  = extended[i-1].predCumm * extended[i].predictedGrowth;
+    extended[i].predDaily = extended[i].predCumm - extended[i-1].predCumm;
+  }
+
+  // 6. Post-period reality (independent, carried from last fit-period cumm in allRowsFit)
+  //    We always use the FULL allRowsFit cumsum as the base so post-cumm is stable
+  let baseCumm = 0;
+  allRowsFit.forEach(r => baseCumm += r.value);
+  let postCumm = baseCumm;
+  const postPoints = rowsPost.map(r => { postCumm += r.value; return {date:r.date, raw:r.value, cumm:postCumm}; });
+
+  // 7. Stats
+  const U = (-1/m)/Math.log(10);
+  const jtdm = Math.log10(Math.exp(1/U)-1);
+  const dayOfPeak = (jtdm-b)/m;
+  const peakDate = new Date(startDate); peakDate.setDate(peakDate.getDate()+Math.round(dayOfPeak));
+
+  return {extended, postPoints, m, b, r2, U, jtdm, peakDate, lastSliceIdx, valid, fitSub, off};
+}
+
+/* ─────────────────────────────────────────────────────────
+   CHART RENDERING
+───────────────────────────────────────────────────────── */
+function destroyCharts() {
+  Object.values(charts).forEach(c => c&&c.destroy());
+  charts={delta:null, jt:null, cumm:null};
+}
+
+function mkDS(label, data, color, dash=[], extra={}) {
+  return {
+    label, data,
+    borderColor: color, backgroundColor: 'transparent',
+    pointRadius: data.length>150 ? 1 : 2.5,
+    pointHoverRadius: 5,
+    borderWidth: 1.8, borderDash: dash, tension: 0.3, spanGaps: false,
+    ...extra,
+  };
+}
+
+// Shared mutable ref for the vline plugin — updated each frame
+const vlineRef = { sliceEnd: null, fitEnd: null };
+
+const VLINE_PLUGIN = {
+  id: 'vline',
+  afterDraw(chart) {
+    const {ctx, chartArea, scales} = chart;
+    if (!scales.x || !vlineRef.sliceEnd) return;
+    drawVline(ctx, scales.x, chartArea, vlineRef.sliceEnd.getTime(), '#c0533a', 1.5, [], 'fit end');
+    if (vlineRef.fitEnd && vlineRef.sliceEnd < vlineRef.fitEnd)
+      drawVline(ctx, scales.x, chartArea, vlineRef.fitEnd.getTime(), '#b0a898', 1, [4,4], 'period end');
+  }
+};
+
+function makeVlinePlugin(sliceEndDate, fitEndDate) {
+  // Update the shared ref — all charts share the same plugin instance
+  vlineRef.sliceEnd = sliceEndDate;
+  vlineRef.fitEnd   = fitEndDate;
+  return VLINE_PLUGIN;
+}
+function drawVline(ctx, xScale, ca, ts, color, lw, dash, label) {
+  const x = xScale.getPixelForValue(ts);
+  if (x < ca.left || x > ca.right) return;
+  ctx.save();
+  ctx.beginPath(); ctx.setLineDash(dash);
+  ctx.strokeStyle=color; ctx.lineWidth=lw;
+  ctx.moveTo(x, ca.top); ctx.lineTo(x, ca.bottom); ctx.stroke();
+  ctx.setLineDash([]);
+  if (label) {
+    ctx.fillStyle='#8a8078'; ctx.font='10px JetBrains Mono,monospace';
+    ctx.textAlign='right'; ctx.fillText(label, x-4, ca.top+12);
+  }
+  ctx.restore();
+}
+
+function baseChartOptions(yType, yLabel) {
+  return {
+    animation: {duration: 200},
+    responsive: true, maintainAspectRatio: false,
+    interaction: {mode:'index', intersect:false},
+    plugins: {
+      legend: { labels: { font:{family:'JetBrains Mono,monospace',size:11}, color:'#1a1714', boxWidth:16 } },
+      tooltip: {
+        backgroundColor:'#fffefa', titleColor:'#1a1714', bodyColor:'#6b6560',
+        borderColor:'#d9d4c8', borderWidth:1,
+        titleFont:{family:'JetBrains Mono,monospace',size:11},
+        bodyFont: {family:'JetBrains Mono,monospace',size:11},
+        callbacks: {
+          label: ctx => {
+            const v=ctx.parsed.y;
+            if(v===null||v===undefined||isNaN(v)) return null;
+            return ` ${ctx.dataset.label}: ${Math.abs(v)>=1000 ? v.toLocaleString('nl-NL',{maximumFractionDigits:0}) : v.toFixed(4)}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        type:'time', time:{unit:'month', tooltipFormat:'yyyy-MM-dd'},
+        grid:{color:'#e8e3da'},
+        ticks:{font:{family:'JetBrains Mono,monospace',size:10},color:'#6b6560'}
+      },
+      y: {
+        type: yType,
+        title:{display:true, text:yLabel, font:{family:'Syne,sans-serif',size:11,weight:'600'}, color:'#6b6560'},
+        grid:{color:'#e8e3da'},
+        ticks:{font:{family:'JetBrains Mono,monospace',size:10}, color:'#6b6560',
+               callback: v => typeof v==='number' ? v.toLocaleString('nl-NL') : v}
+      }
+    }
+  };
+}
+
+function renderCharts(result, yScale, sliceEndDate, fitEndDate, allRowsFit, startDate, extraDays) {
+  const {extended, postPoints, lastSliceIdx} = result;
+  const C = {fit:'#3ab065', post:'#e07b1a', pred:'#3a7fc0', jFit:'#c09b3a', jPost:'#e07b1a', jTrend:'#c0533a'};
+  const vp = makeVlinePlugin(sliceEndDate, fitEndDate);
+
+  // Window: startDate → sliceEndDate + extraDays
+  const xMin   = startDate.getTime();
+  const sliceEnd = sliceEndDate.getTime();
+  const xMax   = sliceEnd + extraDays * 86400000;
+
+  /* ── Reality: clip allRowsFit to rows ≤ sliceEndDate ── */
+  const fitRows  = allRowsFit.filter(r => r.date.getTime() <= sliceEnd);
+  // Exclude the very last fit row from the green series — the blue anchor covers that point
+  const fitRowsPlot = fitRows.length > 1 ? fitRows.slice(0, -1) : fitRows;
+  const realDaily = fitRowsPlot.map(r => ({x: r.date, y: r.value}));
+
+  let cs = 0;
+  const realCumm = fitRowsPlot.map(r => { cs += r.value; return {x: r.date, y: cs}; });
+  // Add the last fit row's cumm separately as the anchor for prediction
+  if (fitRows.length > fitRowsPlot.length) cs += fitRows[fitRows.length-1].value;
+  const lastFitCumm = cs;
+
+  const cumArr = []; let cum2 = 0;
+  fitRowsPlot.forEach(r => { cum2 += r.value; cumArr.push(cum2); });
+  const jRawFit = cumArr.map((c,i) => {
+    if(i===0) return null;
+    const prev=cumArr[i-1];
+    if(prev>0&&c>prev){const lr=Math.log(c/prev);return lr>0?Math.log10(lr):null;}
+    return null;
+  });
+  const jSmoothFit = jRawFit.map((_,i) => {
+    if(i<2) return null;
+    const vs=[jRawFit[i-2],jRawFit[i-1],jRawFit[i]].filter(v=>v!==null);
+    return vs.length===3?vs.reduce((a,x)=>a+x,0)/3:null;
+  });
+  const realJt = fitRowsPlot.map((r,i) => ({x: r.date, y: jSmoothFit[i]}));
+
+  /* ── Prediction ── */
+  const predDaily = extended.map(d=>({x:d.date, y:d.predDaily??null}));
+  const predCumm  = extended.map(d=>({x:d.date, y:d.predCumm??null}));
+  const predJt    = extended.map(d=>({x:d.date, y:isFinite(d.trendJt)?d.trendJt:null}));
+
+  /* ── Reality ahead of slice (within fit period) ── */
+  const fitEnd = fitEndDate.getTime();
+  const aheadRows = allRowsFit.filter(r => { const t=r.date.getTime(); return t > sliceEnd && t <= fitEnd; });
+  const aheadDaily = aheadRows.map(r => ({x: r.date, y: r.value}));
+
+  // Cumulative for ahead rows — continues from lastFitCumm of sliceRows
+  let csAhead = cs;  // cs was built from fitRows (slice)
+  const aheadCumm = aheadRows.map(r => { csAhead += r.value; return {x: r.date, y: csAhead}; });
+
+  // J(t) for ahead rows — continue cumArr
+  const cumArrFull = [...cumArr]; let cum3 = cum2;
+  aheadRows.forEach(r => { cum3 += r.value; cumArrFull.push(cum3); });
+  const jRawAhead = aheadRows.map((_, i) => {
+    const idx = cumArr.length + i;
+    const c = cumArrFull[idx], prev = cumArrFull[idx-1];
+    if(!prev || prev<=0 || c<=prev) return null;
+    const lr=Math.log(c/prev); return lr>0?Math.log10(lr):null;
+  });
+  const jSmoothAhead = jRawAhead.map((_,i) => {
+    // blend with last 2 values of jRawFit for the rolling window
+    const all = [...jRawFit, ...jRawAhead];
+    const idx = jRawFit.length + i;
+    if(idx<2) return null;
+    const vs=[all[idx-2],all[idx-1],all[idx]].filter(v=>v!==null);
+    return vs.length===3?vs.reduce((a,x)=>a+x,0)/3:null;
+  });
+  const aheadJt = aheadRows.map((r,i)=>({x:r.date, y:jSmoothAhead[i]}));
+
+  /* ── Post-period: rows after fitEndDate within forecast window ── */
+  const postInWindow = postPoints.filter(d => d.date.getTime() > fitEnd && d.date.getTime() <= xMax);
+  const postDaily = postInWindow.map(d=>({x:d.date, y:d.raw}));
+  const postCumm  = postInWindow.map(d=>({x:d.date, y:d.cumm}));
+
+  const postJtRaw = postInWindow.map((d,i) => {
+    const prev=i===0?lastFitCumm:postInWindow[i-1].cumm;
+    if(prev>0&&d.cumm>prev){const lr=Math.log(d.cumm/prev);return lr>0?Math.log10(lr):null;}
+    return null;
+  });
+  const postJtSmooth = postJtRaw.map((_,i) => {
+    if(i<2) return null;
+    const vs=[postJtRaw[i-2],postJtRaw[i-1],postJtRaw[i]].filter(v=>v!==null);
+    return vs.length===3?vs.reduce((a,x)=>a+x,0)/3:null;
+  });
+  const postJt = postInWindow.map((d,i)=>({x:d.date, y:postJtSmooth[i]}));
+
+  function axisOpts(yType, yLabel) {
+    const base = baseChartOptions(yType, yLabel);
+    base.scales.x.min = xMin;
+    base.scales.x.max = xMax;
+    return base;
+  }
+
+  const yLin  = yScale==='logarithmic'?'logarithmic':'linear';
+  const nFit  = realDaily.length;
+  const nPost = postInWindow.length;
+  const pr    = nFit>150?1:2.5;
+  const ppo   = nPost>150?1:2.5;
+
+  // If charts already exist → update data in-place (fast, no flicker)
+  if (charts.delta && charts.jt && charts.cumm) {
+    charts.delta.data.datasets[0].data = realDaily;
+    charts.delta.data.datasets[1].data = aheadDaily;
+    charts.delta.data.datasets[2].data = postDaily;
+    charts.delta.data.datasets[3].data = predDaily;
+    charts.delta.options.scales.x.min = xMin;
+    charts.delta.options.scales.x.max = xMax;
+    charts.delta.update('none');
+
+    charts.jt.data.datasets[0].data = realJt;
+    charts.jt.data.datasets[1].data = aheadJt;
+    charts.jt.data.datasets[2].data = postJt;
+    charts.jt.data.datasets[3].data = predJt;
+    charts.jt.options.scales.x.min = xMin;
+    charts.jt.options.scales.x.max = xMax;
+    charts.jt.update('none');
+
+    charts.cumm.data.datasets[0].data = realCumm;
+    charts.cumm.data.datasets[1].data = aheadCumm;
+    charts.cumm.data.datasets[2].data = postCumm;
+    charts.cumm.data.datasets[3].data = predCumm;
+    charts.cumm.options.scales.x.min = xMin;
+    charts.cumm.options.scales.x.max = xMax;
+    charts.cumm.update('none');
+    return;
+  }
+
+  // First render — create charts from scratch
+  destroyCharts();
+
+  // Store vp reference on chart instances so the plugin closure stays live
+  const mkChart = (id, datasets, opts) => {
+    const ch = new Chart(document.getElementById(id), {
+      type:'line', data:{datasets}, options:opts, plugins:[vp],
+    });
+    ch._vlinePlugin = vp;
+    return ch;
+  };
+
+  charts.delta = mkChart('chart-delta', [
+    mkDS('Reality (fit period)',       realDaily,  C.fit,  [], {pointRadius:pr}),
+    mkDS('Reality (fit, not yet used)',aheadDaily, C.post, [], {pointRadius:pr,  borderDash:[2,2]}),
+    mkDS('Reality (after end date)',   postDaily,  C.post, [], {pointRadius:ppo}),
+    mkDS('Predicted',                  predDaily,  C.pred, [5,3], {pointRadius:0, borderWidth:2}),
+  ], axisOpts(yLin,'cases/day'));
+
+  charts.jt = mkChart('chart-jt', [
+    mkDS('J(t) reality (fit)',         realJt,   C.jFit,  [], {pointRadius:pr}),
+    mkDS('J(t) reality (ahead)',       aheadJt,  C.post,  [], {pointRadius:pr,  borderDash:[2,2]}),
+    mkDS('J(t) reality (post)',        postJt,   C.jPost, [], {pointRadius:ppo}),
+    mkDS('J(t) trendline',             predJt,   C.jTrend,[5,3], {pointRadius:0, borderWidth:2}),
+  ], axisOpts('linear','J(t)'));
+
+  charts.cumm = mkChart('chart-cumm', [
+    mkDS('Reality cumm (fit)',         realCumm,  C.fit,  [], {pointRadius:pr}),
+    mkDS('Reality cumm (ahead)',       aheadCumm, C.post, [], {pointRadius:pr,  borderDash:[2,2]}),
+    mkDS('Reality cumm (after end)',   postCumm,  C.post, [], {pointRadius:ppo}),
+    mkDS('Predicted cumm',             predCumm,  C.pred, [5,3], {pointRadius:0, borderWidth:2}),
+  ], axisOpts(yLin,'Cumulative'));
+}
+
+/* ─────────────────────────────────────────────────────────
+   ANIMATION
+───────────────────────────────────────────────────────── */
+function updateInfoCards(r) {
+  document.getElementById('ic-m').textContent   = r.m.toFixed(5);
+  document.getElementById('ic-b').textContent   = r.b.toFixed(4);
+  document.getElementById('ic-rsq').textContent = r.r2.toFixed(3);
+  document.getElementById('ic-u').textContent   = isFinite(r.U)?r.U.toFixed(1):'∞';
+  document.getElementById('ic-top').textContent = isFinite(r.peakDate.getTime())?r.peakDate.toISOString().slice(0,10):'n/a';
+  document.getElementById('ic-jdm').textContent = isFinite(r.jtdm)?r.jtdm.toFixed(3):'n/a';
+}
+
+function drawFrame(day) {
+  if (!SESSION) return;
+  const {allRowsFit, rowsPost, extraDays, trendWin, yScale, until, from} = SESSION;
+  const slice = allRowsFit.slice(0, day);
+  let result;
+  try {
+    result = computeLevitt(slice, allRowsFit, rowsPost, extraDays, trendWin);
+  } catch(e) {
+    console.warn('Frame error:', e.message); return;
+  }
+  const sliceEndDate = new Date(slice[slice.length-1].date);
+  renderCharts(result, yScale, sliceEndDate, until, allRowsFit, from, extraDays);
+  updateInfoCards(result);
+
+  const slider = document.getElementById('anim-slider');
+  slider.value = day;
+  const dateStr = sliceEndDate.toISOString().slice(0,10);
+  document.getElementById('anim-label').textContent = `day ${day} · ${dateStr}`;
+  document.getElementById('chart-title').textContent =
+    `Netherlands · ${SESSION.metric} · fit up to ${dateStr}`;
+  animDay = day;
+}
+
+function stopAnim() {
+  if (animTimer) { clearInterval(animTimer); animTimer=null; }
+  document.getElementById('btn-play').textContent = '▶ Play';
+  document.getElementById('btn-play').classList.remove('active');
+}
+
+function startAnim() {
+  if (!SESSION) return;
+  stopAnim();
+  document.getElementById('btn-play').textContent = '⏸ Pause';
+  document.getElementById('btn-play').classList.add('active');
+  const speed = parseInt(document.getElementById('anim-speed').value, 10);
+  animTimer = setInterval(() => {
+    const next = animDay + 1;
+    if (next > SESSION.allRowsFit.length) { stopAnim(); return; }
+    drawFrame(next);
+  }, speed);
+}
+
+document.getElementById('btn-play').addEventListener('click', () => {
+  if (animTimer) stopAnim(); else {
+    // restart from beginning if at end
+    if (animDay >= SESSION?.allRowsFit.length) { animDay = 14; }
+    startAnim();
+  }
+});
+document.getElementById('btn-prev').addEventListener('click', () => {
+  stopAnim();
+  if (SESSION && animDay > 14) drawFrame(animDay - 1);
+});
+document.getElementById('btn-next').addEventListener('click', () => {
+  stopAnim();
+  if (SESSION && animDay < SESSION.allRowsFit.length) drawFrame(animDay + 1);
+});
+document.getElementById('anim-slider').addEventListener('input', e => {
+  stopAnim();
+  if (SESSION) drawFrame(parseInt(e.target.value, 10));
+});
+
+/* ─────────────────────────────────────────────────────────
+   CSV FETCH
+───────────────────────────────────────────────────────── */
+async function fetchCSV() {
+  for (const [url, label] of [[RAW_URL, null],[PROXY_URL,'⚠ Data loaded via CORS proxy (corsproxy.io)']]) {
+    try {
+      const res=await fetch(url,{mode:'cors'});
+      if(!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text=await res.text();
+      const {data}=Papa.parse(text,{header:true,skipEmptyLines:true});
+      if(data.length<10) throw new Error('Empty');
+      if(label) showNote(label);
+      return data;
+    } catch(e) { console.warn(`Fetch failed (${url}):`, e.message); }
+  }
+  throw new Error(
+    'Could not load CSV.<br><br>'+
+    '<b>When opening as a local file (file://)</b>, browsers block external requests.<br>'+
+    'Fix: <code>python -m http.server 8080</code> → open <code>http://localhost:8080/index.html</code>'
+  );
+}
+
+/* ─────────────────────────────────────────────────────────
+   MAIN RUN
+───────────────────────────────────────────────────────── */
+async function run() {
+  clearError(); clearNote(); stopAnim();
+  setStatus('loading…','loading');
+  document.getElementById('loading-overlay').style.display='flex';
+  document.getElementById('info-grid').style.display='none';
+  document.getElementById('anim-bar').classList.remove('visible');
+
+  const fromStr  = document.getElementById('from-date').value.trim();
+  const untilStr = document.getElementById('until-date').value.trim();
+  const metric   = document.getElementById('metric-select').value;
+  const extraDays= parseInt(document.getElementById('extra-days').value,10)||30;
+  const yScale   = document.getElementById('yaxis-scale').value;
+  const trendWin = document.getElementById('trendline-window').value;
+
+  const from  = new Date(fromStr);
+  const until = new Date(untilStr);
+
+  if(isNaN(from)||isNaN(until)){showError('Invalid date — use yyyy-mm-dd.');document.getElementById('loading-overlay').style.display='none';return;}
+  if(from>=until){showError('Start must be before end.');document.getElementById('loading-overlay').style.display='none';return;}
+
+  try {
+    if(!CSV_CACHE){ setStatus('fetching…','loading'); CSV_CACHE=await fetchCSV(); }
+  } catch(e){showError(e.message);document.getElementById('loading-overlay').style.display='none';return;}
+
+  const allRowsFit=[], rowsPost=[];
+  for(const row of CSV_CACHE){
+    const d=new Date(row.date); if(isNaN(d)) continue;
+    const v=parseFloat(row[metric]);
+    const sv=isNaN(v)?0:Math.max(0,v);
+    if(d>=from && d<=until) allRowsFit.push({date:d,value:sv});
+    else if(d>until)         rowsPost.push({date:d,value:sv});
+  }
+  allRowsFit.sort((a,b)=>a.date-b.date);
+  rowsPost.sort((a,b)=>a.date-b.date);
+
+  if(allRowsFit.length<15){
+    showError(`Only ${allRowsFit.length} rows in fit period — need at least 15.`);
+    document.getElementById('loading-overlay').style.display='none'; return;
+  }
+
+  // Store session
+  SESSION = {allRowsFit, rowsPost, extraDays, trendWin, metric, yScale, from, until};
+  animDay = allRowsFit.length;   // start at full fit period
+
+  // Setup slider
+  const slider=document.getElementById('anim-slider');
+  slider.min=14; slider.max=allRowsFit.length; slider.value=animDay;
+
+  // Draw full fit period first
+  let result;
+  try {
+    result = computeLevitt(allRowsFit, allRowsFit, rowsPost, extraDays, trendWin);
+  } catch(e){showError(e.message);document.getElementById('loading-overlay').style.display='none';return;}
+
+  renderCharts(result, yScale, until, until, allRowsFit, from, extraDays);
+  updateInfoCards(result);
+  document.getElementById('info-grid').style.display='grid';
+  document.getElementById('anim-bar').classList.add('visible');
+  document.getElementById('anim-label').textContent = `day ${animDay} · ${until.toISOString().slice(0,10)}`;
+  document.getElementById('chart-title').textContent =
+    `Netherlands · ${metric} · fit ${fromStr}–${untilStr}${rowsPost.length?` + ${rowsPost.length} post days`:''}`;
+
+  document.getElementById('loading-overlay').style.display='none';
+  setStatus(`ready · ${allRowsFit.length} fit + ${rowsPost.length} post rows`, 'ready');
+}
+
+document.getElementById('run-btn').addEventListener('click', run);
+window.addEventListener('load', () => setTimeout(run, 400));
+</script>
+</body>
+</html>
