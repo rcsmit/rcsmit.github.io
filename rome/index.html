@@ -8,6 +8,8 @@
 # version : 20260607-270000 - Deeplink support: ?layer=Gelato or ?layer=Gelato,Pizza2 activates specific layers on load; URL syncs with current selection for sharing
 # version : 20260607-280000 - Show warning banner in sidebar when a deeplinked layer name isn't found
 # version : 20260607-290000 - Deeplink warning clears on manual layer change; show "no layers selected" overlay on map when zero layers active
+# version : 20260607-300000 - Table rows get two action icons: search on Google Maps, and show-on-map (centers + opens popup, zooms out of cluster if needed, collapses sidebar on mobile)
+# version : 20260607-310000 - Remove popup link underline; fix Google Maps URLs to proper ?api=1&query= format with name+address (no broken coordinate glue); add Print Map feature with numbered markers + grouped legend below map
 -->
 <html lang="en">
 <head>
@@ -211,6 +213,29 @@
     #float-tip .tip-desc  { color: var(--cream); }
     #float-tip .tip-src   { color: #b0a090; font-size: 0.66rem; margin-top: 4px; }
 
+    /* ── PRINT BUTTON ── */
+    #print-btn {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 9px;
+      background: var(--deep);
+      color: var(--cream);
+      border: none;
+      border-radius: 6px;
+      font-family: 'Lato', sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    #print-btn:hover { background: var(--terracotta); }
+
+    /* ── PRINT-ONLY LEGEND (hidden on screen, shown only when printing) ── */
+    #print-legend {
+      display: none;
+    }
+
     /* ── DISCLAIMER ── */
     #disclaimer {
       flex-shrink: 0; padding: 10px 14px; border-top: 1px solid var(--border);
@@ -286,14 +311,35 @@
     }
 
     table { width: 100%; border-collapse: collapse; font-size: 0.76rem; table-layout: fixed; }
-    col.col-name    { width: 22%; }
-    col.col-address { width: 28%; }
-    col.col-website { width: 16%; }
-    col.col-remarks { width: 34%; }
+    col.col-name    { width: 20%; }
+    col.col-address { width: 25%; }
+    col.col-website { width: 14%; }
+    col.col-remarks { width: 29%; }
+    col.col-actions { width: 12%; }
 
     th { text-align: left; padding: 4px 7px; color: var(--muted); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.65rem; border-bottom: 1px solid var(--border); }
     td { padding: 4px 7px; border-bottom: 1px solid #f0ebe3; vertical-align: top; overflow: hidden; }
     td.td-website { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
+    td.td-actions { white-space: nowrap; text-align: right; }
+
+    .row-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+      cursor: pointer;
+      margin-left: 3px;
+      text-decoration: none;
+      transition: background .15s, transform .1s;
+      line-height: 1;
+    }
+    .row-icon:hover { background: var(--terracotta); transform: scale(1.08); }
+    .row-icon:active { transform: scale(0.95); }
     tr:last-child td { border-bottom: none; }
     td a { color: var(--terracotta); text-decoration: none; }
     td a:hover { text-decoration: underline; }
@@ -303,12 +349,75 @@
     .popup-name { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
     .popup-addr { font-size: 0.78rem; color: var(--muted); margin-bottom: 7px; }
     .popup-remark { font-size: 0.76rem; font-style: italic; margin-bottom: 6px; color: #555; }
-    .popup-link { display: block; font-size: 0.76rem; color: var(--terracotta); margin-bottom: 3px; }
+    .popup-link { display: block; font-size: 0.76rem; color: var(--terracotta); margin-bottom: 3px; text-decoration: none; }
+    .popup-link:hover { text-decoration: underline; }
     .popup-warn { font-size: 0.7rem; color: #b06030; font-weight: 700; margin-top: 8px; }
     .popup-cat  { font-size: 0.68rem; color: #999; margin-top: 4px; }
+
+    /* ── PRINT MODE ──
+       Triggered via window.print(). Hides all UI chrome, shows only the
+       map (full page width) followed by a legend table of every active,
+       numbered point. */
+    @media print {
+      body { height: auto; overflow: visible; display: block; }
+      #sidebar, #sidebar-toggle, #sidebar-overlay, #drag-handle,
+      #table-panel, #float-tip, #no-layers-msg, #deeplink-warning,
+      .leaflet-control-container {
+        display: none !important;
+      }
+      #main { display: block; height: auto; }
+      #map {
+        width: 100% !important;
+        height: 600px !important;
+        page-break-after: avoid;
+      }
+      #print-legend {
+        display: block !important;
+        padding: 16px 0 0;
+        font-family: 'Lato', sans-serif;
+        color: #1a1208;
+      }
+      #print-legend h2 {
+        font-family: 'Playfair Display', serif;
+        font-size: 1.3rem;
+        margin-bottom: 4px;
+      }
+      #print-legend .legend-meta {
+        font-size: 0.75rem;
+        color: #6b5c4a;
+        margin-bottom: 14px;
+      }
+      .legend-group { margin-bottom: 12px; break-inside: avoid; }
+      .legend-group-title {
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        padding-bottom: 2px;
+        border-bottom: 1px solid #ccc;
+      }
+      .legend-row {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        font-size: 0.78rem;
+        padding: 1px 0;
+      }
+      .legend-num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px; height: 16px;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 0.62rem;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+    }
   </style>
 </head>
 <body>
+<div id="print-legend"></div>
 
 <div id="float-tip"></div>
 <div id="sidebar-overlay"></div>
@@ -332,6 +441,7 @@
       <button class="sel-btn" onclick="deselectAll()">Deselect all</button>
     </div>
     <ul id="layer-list"></ul>
+    <button id="print-btn" onclick="preparePrintMap()">🖨 Print map</button>
     <div id="loading-msg">Loading data…</div>
   </div>
 
@@ -349,7 +459,7 @@
   </div>
 </div>
 
-<script>const current_version = "20260607-290000";</script>
+<script>const current_version = "20260607-310000";</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
@@ -364,6 +474,7 @@ const COLORS = [
 ];
 
 let allData = [], filteredData = [], activeLayers = new Set(), layerColors = {}, clusterGroups = {}, layerMeta = {};
+const markersById = {}; // rowId -> { marker, cluster }
 
 // ── SIDEBAR TOGGLE ────────────────────────────────────────────────────────────
 (function() {
@@ -547,6 +658,7 @@ function deselectAll() { clearDeeplinkWarning(); activeLayers.clear(); render(tr
 function buildLayers(data) {
   Object.values(clusterGroups).forEach(g => map.removeLayer(g));
   clusterGroups = {};
+  Object.keys(markersById).forEach(k => delete markersById[k]);
   const layerNames = [...new Set(data.map(r=>r[F.category]).filter(Boolean))];
 
   layerNames.forEach((layer, i) => {
@@ -565,7 +677,10 @@ function buildLayers(data) {
     data.filter(r=>r[F.category]===layer).forEach(row => {
       const lat = toFloat(row[F.lat]), lon = toFloat(row[F.lon]);
       if (isNaN(lat)||isNaN(lon)) return;
-      const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(row[F.name])}@${lat},${lon},15z`;
+      // Proper Google Maps search URL: https://developers.google.com/maps/documentation/urls/get-started#search-action
+      // Using name + address as the query is more reliable than name + raw coordinates.
+      const mapsQuery = row[F.address] ? `${row[F.name]}, ${row[F.address]}` : `${row[F.name]} @${lat},${lon}`;
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapsQuery)}`;
       const webLink = row[F.website] ? `<a class="popup-link" href="${escH(row[F.website])}" target="_blank">🌐 ${escH(row[F.website])}</a>` : '';
       const popup = L.popup({maxWidth:340}).setContent(`
         <div style="font-family:'Lato',sans-serif;padding:4px 2px">
@@ -577,9 +692,11 @@ function buildLayers(data) {
           <div class="popup-warn">ℹ Info from 2019 or earlier — please verify</div>
           <div class="popup-cat">${escH(row[F.category])}</div>
         </div>`);
-      L.circleMarker([lat,lon],{radius:7,color:'#fff',weight:2,fillColor:color,fillOpacity:0.9})
+      const marker = L.circleMarker([lat,lon],{radius:7,color:'#fff',weight:2,fillColor:color,fillOpacity:0.9})
         .bindPopup(popup).bindTooltip(row[F.name],{direction:'top',offset:[0,-6]})
         .addTo(cluster);
+
+      if (row[F.id]) markersById[row[F.id]] = { marker, cluster, lat, lon };
     });
 
     cluster.addTo(map);
@@ -587,7 +704,120 @@ function buildLayers(data) {
   });
 }
 
-// ── BUILD SIDEBAR ─────────────────────────────────────────────────────────────
+// ── SHOW ON MAP (called from table row icon) ──────────────────────────────────
+function showOnMap(id) {
+  const entry = markersById[id];
+  if (!entry) return;
+  const { marker, cluster, lat, lon } = entry;
+
+  // Close the sidebar on mobile so the map is visible
+  if (window.innerWidth <= 640) {
+    const sidebar  = document.getElementById('sidebar');
+    const toggle   = document.getElementById('sidebar-toggle');
+    const overlay  = document.getElementById('sidebar-overlay');
+    if (sidebar && !sidebar.classList.contains('collapsed')) {
+      sidebar.classList.add('collapsed');
+      document.body.classList.remove('sidebar-open');
+      if (toggle) { toggle.innerHTML = '&#x25BA;'; toggle.title = 'Expand sidebar'; }
+      if (overlay) overlay.classList.add('hidden');
+    }
+  }
+
+  map.setView([lat, lon], 17, { animate: true });
+
+  // If the marker is currently grouped inside a cluster, zoom in to separate
+  // it out first, then open its popup once it's actually rendered on the map.
+  if (cluster && cluster.hasLayer && cluster.hasLayer(marker)) {
+    cluster.zoomToShowLayer(marker, () => marker.openPopup());
+  } else {
+    setTimeout(() => marker.openPopup(), 300);
+  }
+}
+window.showOnMap = showOnMap;
+
+// ── PRINT MAP ──────────────────────────────────────────────────────────────────
+// Builds a numbered legend of every visible point (grouped by layer), assigns
+// matching numbers to temporary print-only markers on the map (so clusters
+// don't hide individual points), then triggers the browser print dialog.
+let printMarkers = [];
+
+function preparePrintMap() {
+  const visibleData = filteredData.filter(r => activeLayers.has(r[F.category]));
+  if (!visibleData.length) {
+    alert('No layers selected — choose at least one layer before printing.');
+    return;
+  }
+
+  // Remove any leftover print markers from a previous print
+  printMarkers.forEach(m => map.removeLayer(m));
+  printMarkers = [];
+
+  // Temporarily hide the live clustered layers so numbered print markers
+  // are the only thing visible on top of the base map tiles.
+  Object.values(clusterGroups).forEach(g => map.removeLayer(g));
+
+  const legendWrap = document.getElementById('print-legend');
+  const layerNames  = [...new Set(visibleData.map(r => r[F.category]))];
+  let counter = 0;
+  let legendHtml = `
+    <h2>Renato in Rome — Curated Map</h2>
+    <div class="legend-meta">Printed ${new Date().toLocaleDateString()} · ${visibleData.length} places · Layers: ${layerNames.map(escH).join(', ')}</div>
+  `;
+
+  layerNames.forEach(layer => {
+    const color = layerColors[layer] || '#333';
+    const rows  = visibleData.filter(r => r[F.category] === layer);
+    let groupHtml = `<div class="legend-group"><div class="legend-group-title" style="color:${color}">${escH(layer)}</div>`;
+
+    rows.forEach(row => {
+      const lat = toFloat(row[F.lat]), lon = toFloat(row[F.lon]);
+      if (isNaN(lat) || isNaN(lon)) return;
+      counter++;
+
+      // Numbered marker drawn directly on the map for this print session
+      const numMarker = L.marker([lat, lon], {
+        icon: L.divIcon({
+          html: `<div style="background:${color};color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-size:11px;font-weight:700;border:1.5px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.4)">${counter}</div>`,
+          className: '', iconSize: [22, 22]
+        }),
+        interactive: false
+      }).addTo(map);
+      printMarkers.push(numMarker);
+
+      groupHtml += `
+        <div class="legend-row">
+          <span class="legend-num" style="background:${color}">${counter}</span>
+          <span>${escH(row[F.name])}${row[F.address] ? ' — ' + escH(row[F.address]) : ''}</span>
+        </div>`;
+    });
+
+    groupHtml += `</div>`;
+    legendHtml += groupHtml;
+  });
+
+  legendWrap.innerHTML = legendHtml;
+
+  // Fit the map to all visible points before printing
+  fitMapToVisible(visibleData);
+
+  // Give Leaflet a moment to redraw before the print dialog opens,
+  // and restore the live clustered view afterwards.
+  setTimeout(() => {
+    window.print();
+    setTimeout(restoreAfterPrint, 300);
+  }, 350);
+}
+
+function restoreAfterPrint() {
+  printMarkers.forEach(m => map.removeLayer(m));
+  printMarkers = [];
+  Object.values(clusterGroups).forEach(g => g.addTo(map));
+}
+
+// Also restore if the user cancels the print dialog (afterprint fires either way)
+window.addEventListener('afterprint', restoreAfterPrint);
+
+window.preparePrintMap = preparePrintMap;
 function buildSidebar(data) {
   const layerNames = [...new Set(data.map(r=>r[F.category]).filter(Boolean))];
   const ul = document.getElementById('layer-list');
@@ -636,16 +866,27 @@ function buildTable(data) {
     wrap.appendChild(title);
 
     const tbl = document.createElement('table');
-    tbl.innerHTML = `<colgroup><col class="col-name"><col class="col-address"><col class="col-website"><col class="col-remarks"></colgroup>
-      <thead><tr><th>Name</th><th>Address</th><th>Website</th><th>Remarks</th></tr></thead>`;
+    tbl.innerHTML = `<colgroup><col class="col-name"><col class="col-address"><col class="col-website"><col class="col-remarks"><col class="col-actions"></colgroup>
+      <thead><tr><th>Name</th><th>Address</th><th>Website</th><th>Remarks</th><th></th></tr></thead>`;
     const tbody = document.createElement('tbody');
     rows.forEach(r => {
       const tr = document.createElement('tr');
+      const lat = toFloat(r[F.lat]), lon = toFloat(r[F.lon]);
+      const hasCoords = !isNaN(lat) && !isNaN(lon);
+      const gmapsQuery = r[F.address] ? `${r[F.name]}, ${r[F.address]}` : r[F.name];
+      const gmapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(gmapsQuery)}`;
+
+      const actions = `
+        <a class="row-icon" href="${gmapsUrl}" target="_blank" title="Search on Google Maps">🔍</a>
+        ${hasCoords ? `<button class="row-icon" onclick="showOnMap('${escH(r[F.id])}')" title="Show on map">📍</button>` : ''}
+      `;
+
       tr.innerHTML = `
         <td>${escH(r[F.name])}</td>
         <td>${escH(r[F.address])}</td>
         <td class="td-website" title="${escH(r[F.website])}">${r[F.website]?`<a href="${escH(r[F.website])}" target="_blank">${escH(shortUrl(r[F.website]))}</a>`:''}</td>
-        <td>${escH(r[F.remarks])}</td>`;
+        <td>${escH(r[F.remarks])}</td>
+        <td class="td-actions">${actions}</td>`;
       tbody.appendChild(tr);
     });
     tbl.appendChild(tbody);
