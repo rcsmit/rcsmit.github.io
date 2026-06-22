@@ -10,6 +10,8 @@
 # version : 20260607-290000 - Deeplink warning clears on manual layer change; show "no layers selected" overlay on map when zero layers active
 # version : 20260607-300000 - Table rows get two action icons: search on Google Maps, and show-on-map (centers + opens popup, zooms out of cluster if needed, collapses sidebar on mobile)
 # version : 20260622-090000 - Removed popup link underline; Google Maps links now use precise lat/lon (?api=1&query=) instead of malformed name@lat,lon search; added print version (Print map button, numbered pins, active-layers legend with per-layer breakdown rendered below the map, print-only CSS)
+# version : 20260622-100000 - Added basemap style dropdown (Light/Dark/Voyager/Light no labels/Dark no labels via CartoDB), preference saved in localStorage
+# version : 20260622-101000 - Fixed Voyager basemap showing as blank grey tiles: it needs the "rastertiles/voyager/" subpath on CartoDB, unlike the other styles
 -->
 <html lang="en">
 <head>
@@ -148,6 +150,13 @@
     }
     #search-input:focus { border-color: var(--terracotta); }
     #search-input::placeholder { color: #b0a090; }
+
+    #basemap-select {
+      width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+      font-family: 'Lato', sans-serif; font-size: 0.8rem; background: var(--cream);
+      color: var(--deep); outline: none; cursor: pointer; transition: border-color .2s;
+    }
+    #basemap-select:focus { border-color: var(--terracotta); }
 
     #sel-controls { display: flex; gap: 6px; margin-bottom: 8px; }
     .sel-btn {
@@ -388,6 +397,15 @@
     <div class="section-label">Search</div>
     <input id="search-input" type="text" placeholder="Filter by name, address, remarks…" />
 
+    <div class="section-label">Map style</div>
+    <select id="basemap-select">
+      <option value="light_all">Light</option>
+      <option value="dark_all">Dark</option>
+      <option value="voyager">Voyager</option>
+      <option value="light_nolabels">Light (no labels)</option>
+      <option value="dark_nolabels">Dark (no labels)</option>
+    </select>
+
     <div class="section-label" style="margin-top:14px; display:flex; align-items:center; gap:8px;">
       Layers <span id="count-badge">0 places</span>
     </div>
@@ -417,7 +435,7 @@
   </div>
 </div>
 
-<script>const current_version = "20260622-090000";</script>
+<script>const current_version = "20260622-101000";</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
@@ -475,9 +493,40 @@ const markersById = {}; // rowId -> { marker, cluster }
 // ── MAP ──────────────────────────────────────────────────────────────────────
 const map = L.map('map', { center: [41.9028, 12.4964], zoom: 12 });
 window._leafletMap = map;
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+// ── BASEMAP STYLE SWITCHER ────────────────────────────────────────────────────
+// CartoDB serves "light_all"/"dark_all" (+ "_nolabels" variants) directly,
+// but "voyager" lives under a "rastertiles/" subpath — without it the tiles 404
+// and you just see a grey background.
+const BASEMAP_URLS = {
+  light_all:        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  dark_all:         'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  voyager:          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  light_nolabels:   'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+  dark_nolabels:    'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
+};
+
+let basemapLayer = L.tileLayer(BASEMAP_URLS.light_all, {
   attribution: '© OpenStreetMap © CartoDB', subdomains: 'abcd', maxZoom: 19
 }).addTo(map);
+
+function setBasemap(style) {
+  if (basemapLayer) map.removeLayer(basemapLayer);
+  const url = BASEMAP_URLS[style] || BASEMAP_URLS.light_all;
+  basemapLayer = L.tileLayer(url, {
+    attribution: '© OpenStreetMap © CartoDB', subdomains: 'abcd', maxZoom: 19
+  }).addTo(map);
+  basemapLayer.bringToBack();
+  try { localStorage.setItem('renato-basemap', style); } catch(e) {}
+}
+
+(function() {
+  const select = document.getElementById('basemap-select');
+  let saved = 'light_all';
+  try { saved = localStorage.getItem('renato-basemap') || 'light_all'; } catch(e) {}
+  select.value = saved;
+  if (saved !== 'light_all') setBasemap(saved);
+  select.addEventListener('change', () => setBasemap(select.value));
+})();
 
 // ── FIT BOUNDS ───────────────────────────────────────────────────────────────
 function fitMapToVisible(data) {
