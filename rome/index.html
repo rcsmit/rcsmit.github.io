@@ -6,6 +6,8 @@
 # version : 20260607-140000 - LAYERS tab fetch, layer meta
 # version : 20260607-260000 - Use 100dvh (dynamic viewport height) so Android nav buttons don't clip the layout; 100vh as fallback
 # version : 20260607-270000 - Deeplink support: ?layer=Gelato or ?layer=Gelato,Pizza2 activates specific layers on load; URL syncs with current selection for sharing
+# version : 20260607-280000 - Show warning banner in sidebar when a deeplinked layer name isn't found
+# version : 20260607-290000 - Deeplink warning clears on manual layer change; show "no layers selected" overlay on map when zero layers active
 -->
 <html lang="en">
 <head>
@@ -175,6 +177,19 @@
     #count-badge { font-size: 0.7rem; color: var(--muted); background: var(--cream); border: 1px solid var(--border); border-radius: 10px; padding: 1px 7px; }
     #loading-msg { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 16px; }
 
+    #deeplink-warning {
+      display: none;
+      background: #fdf0e8;
+      border: 1px solid #e8b89a;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.72rem;
+      color: #94502c;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    #deeplink-warning strong { color: var(--terracotta); }
+
     /* ── FLOATING TOOLTIP ── */
     #float-tip {
       position: fixed;
@@ -204,7 +219,26 @@
     #disclaimer strong { color: var(--terracotta); }
 
     /* ── MAIN ── */
-    #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+    #no-layers-msg {
+      display: none;
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--deep);
+      color: var(--cream);
+      font-size: 0.78rem;
+      padding: 9px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      max-width: 80%;
+    }
     #map { flex: 1; min-height: 80px; }
 
     /* ── DRAG HANDLE ── */
@@ -286,6 +320,7 @@
     <p>A curated map of the Eternal City</p>
   </div>
   <div id="sidebar-body">
+    <div id="deeplink-warning"></div>
     <div class="section-label">Search</div>
     <input id="search-input" type="text" placeholder="Filter by name, address, remarks…" />
 
@@ -307,13 +342,14 @@
 
 <div id="main">
   <div id="map"></div>
+  <div id="no-layers-msg">No layers selected — choose one or more from the sidebar.</div>
   <div id="drag-handle"></div>
   <div id="table-panel">
     <div id="table-wrap"></div>
   </div>
 </div>
 
-<script>const current_version = "20260607-270000";</script>
+<script>const current_version = "20260607-290000";</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
@@ -504,8 +540,8 @@ function hideTip() { tip.style.display = 'none'; }
 document.addEventListener('touchstart', hideTip, { passive: true });
 
 // ── SELECT ALL / DESELECT ALL ────────────────────────────────────────────────
-function selectAll()   { [...new Set(filteredData.map(r=>r[F.category]).filter(Boolean))].forEach(l=>activeLayers.add(l));    render(true); }
-function deselectAll() { activeLayers.clear(); render(true); }
+function selectAll()   { clearDeeplinkWarning(); [...new Set(filteredData.map(r=>r[F.category]).filter(Boolean))].forEach(l=>activeLayers.add(l)); render(true); }
+function deselectAll() { clearDeeplinkWarning(); activeLayers.clear(); render(true); }
 
 // ── BUILD MARKERS ─────────────────────────────────────────────────────────────
 function buildLayers(data) {
@@ -567,7 +603,7 @@ function buildSidebar(data) {
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(layer)}</span>
       <span class="layer-check">${activeLayers.has(layer)?'✓':''}</span>`;
 
-    li.addEventListener('click',  ()  => { activeLayers.has(layer) ? activeLayers.delete(layer) : activeLayers.add(layer); render(true); });
+    li.addEventListener('click',  ()  => { clearDeeplinkWarning(); activeLayers.has(layer) ? activeLayers.delete(layer) : activeLayers.add(layer); render(true); });
     li.addEventListener('mouseenter', e => showTip(e, layer));
     li.addEventListener('mousemove',  e => moveTip(e));
     li.addEventListener('mouseleave', ()  => hideTip());
@@ -623,6 +659,14 @@ function applySearch() {
   filteredData = q ? allData.filter(r=>[F.category,F.name,F.address,F.website,F.remarks].some(k=>(r[k]||'').toLowerCase().includes(q))) : [...allData];
 }
 
+// Hide the deeplink warning — called whenever the user manually changes
+// the layer selection, since the warning only applies to the initial URL state.
+function clearDeeplinkWarning() {
+  const warn = document.getElementById('deeplink-warning');
+  warn.style.display = 'none';
+  warn.innerHTML = '';
+}
+
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render(fitBounds=true) {
   applySearch();
@@ -631,6 +675,13 @@ function render(fitBounds=true) {
   buildTable(filteredData);
   if (fitBounds) fitMapToVisible(filteredData);
   syncURL();
+  updateNoLayersMessage();
+}
+
+// Show a message in the map area when zero layers are active
+function updateNoLayersMessage() {
+  const msg = document.getElementById('no-layers-msg');
+  msg.style.display = activeLayers.size === 0 ? 'flex' : 'none';
 }
 
 // Keep the URL's ?layer= param in sync with the current selection,
@@ -665,9 +716,19 @@ function getLayersFromURL() {
 
     if (deeplinkLayers) {
       // Only activate layers that actually exist (case-insensitive match)
-      allLayers.forEach(l => {
-        if (deeplinkLayers.some(d => d.toLowerCase() === l.toLowerCase())) activeLayers.add(l);
+      const notFound = [];
+      deeplinkLayers.forEach(d => {
+        const match = allLayers.find(l => l.toLowerCase() === d.toLowerCase());
+        if (match) activeLayers.add(match);
+        else notFound.push(d);
       });
+
+      if (notFound.length) {
+        const warn = document.getElementById('deeplink-warning');
+        warn.innerHTML = `<strong>⚠ Layer${notFound.length > 1 ? 's' : ''} not found:</strong> ${notFound.map(escH).join(', ')}`;
+        warn.style.display = 'block';
+      }
+
       // If none of the requested layers matched anything real, fall back to default
       if (!activeLayers.size) allLayers.slice(0,4).forEach(l => activeLayers.add(l));
     } else {
