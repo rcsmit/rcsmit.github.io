@@ -5,6 +5,7 @@
 # version : 20260607-131000 - fitBounds on every layer change
 # version : 20260607-140000 - LAYERS tab fetch, layer meta
 # version : 20260607-260000 - Use 100dvh (dynamic viewport height) so Android nav buttons don't clip the layout; 100vh as fallback
+# version : 20260607-270000 - Deeplink support: ?layer=Gelato or ?layer=Gelato,Pizza2 activates specific layers on load; URL syncs with current selection for sharing
 -->
 <html lang="en">
 <head>
@@ -312,7 +313,7 @@
   </div>
 </div>
 
-<script>const current_version = "20260607-150000";</script>
+<script>const current_version = "20260607-270000";</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
@@ -629,6 +630,29 @@ function render(fitBounds=true) {
   buildLayers(filteredData);
   buildTable(filteredData);
   if (fitBounds) fitMapToVisible(filteredData);
+  syncURL();
+}
+
+// Keep the URL's ?layer= param in sync with the current selection,
+// so the address bar always reflects a shareable deeplink.
+function syncURL() {
+  const params = new URLSearchParams(window.location.search);
+  if (activeLayers.size) {
+    params.set('layer', [...activeLayers].join(','));
+  } else {
+    params.delete('layer');
+  }
+  const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+  history.replaceState(null, '', newUrl);
+}
+
+// Reads ?layer=Gelato or ?layer=Gelato,Pizza2 from the URL.
+// If present, only those layers are activated on load instead of the default first 4.
+function getLayersFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get('layer') || params.get('layers');
+  if (!raw) return null;
+  return raw.split(',').map(s => s.trim()).filter(Boolean);
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
@@ -636,8 +660,20 @@ function render(fitBounds=true) {
   try {
     [allData, layerMeta] = await Promise.all([fetchSheet(), fetchLayerMeta()]);
     filteredData = [...allData];
-    const layers = [...new Set(allData.map(r=>r[F.category]).filter(Boolean))];
-    layers.slice(0,4).forEach(l => activeLayers.add(l));
+    const allLayers      = [...new Set(allData.map(r=>r[F.category]).filter(Boolean))];
+    const deeplinkLayers = getLayersFromURL();
+
+    if (deeplinkLayers) {
+      // Only activate layers that actually exist (case-insensitive match)
+      allLayers.forEach(l => {
+        if (deeplinkLayers.some(d => d.toLowerCase() === l.toLowerCase())) activeLayers.add(l);
+      });
+      // If none of the requested layers matched anything real, fall back to default
+      if (!activeLayers.size) allLayers.slice(0,4).forEach(l => activeLayers.add(l));
+    } else {
+      allLayers.slice(0,4).forEach(l => activeLayers.add(l));
+    }
+
     document.getElementById('loading-msg').textContent = '';
     render(true);
     document.getElementById('search-input').addEventListener('input', () => render(true));
