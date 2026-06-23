@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<title>Kaartjes generator</title>
+<style>
+  :root{
+    --card-w: 6cm;
+    --card-h: 4.5cm;
+    --ink: #1c1c1c;
+    --paper: #ffffff;
+    --accent: #2b6e63;
+    --muted: #6b6b6b;
+  }
+
+  * { box-sizing: border-box; }
+
+  body{
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f1f0ec;
+    color: var(--ink);
+    margin: 0;
+    padding: 24px;
+  }
+
+  .toolbar{
+    max-width: 900px;
+    margin: 0 auto 24px;
+    background: var(--paper);
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 18px 22px;
+  }
+
+  .toolbar h1{
+    font-size: 20px;
+    margin: 0 0 4px;
+  }
+
+  .toolbar p.sub{
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  textarea{
+    width: 100%;
+    min-height: 140px;
+    font-family: ui-monospace, "Courier New", monospace;
+    font-size: 13px;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    resize: vertical;
+  }
+
+  .controls{
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  label.opt{
+    font-size: 13px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  input[type="number"]{
+    width: 60px;
+    padding: 4px 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  button{
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button:hover{ background: #245a51; }
+
+  button.secondary{
+    background: #fff;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+  }
+  button.secondary:hover{ background: #f0f7f5; }
+
+  .hint{
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  /* PRINT SHEET */
+  .sheet-wrap{
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .page{
+    background: var(--paper);
+    width: 21cm;
+    min-height: 29.7cm;
+    margin: 0 auto 30px;
+    padding: 1cm 0.5cm;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    display: grid;
+    grid-template-columns: repeat(3, var(--card-w));
+    grid-auto-rows: var(--card-h);
+    justify-content: center;
+    gap: 0;
+  }
+
+  .card{
+    width: var(--card-w);
+    height: var(--card-h);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4mm;
+    border: none;
+  }
+
+  .card.col-notlast{ border-right: 1px dashed #999; }
+  .card.row-notlast{ border-bottom: 1px dashed #999; }
+
+  .card span{
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+
+  @media print{
+    body{ background: white; padding: 0; }
+    .toolbar{ display: none; }
+    .page{
+      box-shadow: none;
+      margin: 0;
+      page-break-after: always;
+    }
+  }
+
+  @page{
+    size: A4;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+
+  <div class="toolbar">
+    <h1>Card generator</h1>
+    <p class="sub">Cards of 6 &times; 4,5 cm — 3 columns &times; 6 rows per A4. Modify the text and save as PDF.</p>
+
+    <textarea id="textInput">PILLOW CASES
+PILLOW CASES
+PILLOW CASES
+BEACH TOWELS
+SINGLE DUVET COVERS
+SINGLE DUVET COVERS
+SINGLE DUVET COVERS
+DOUBLE DUVET COVERS
+DOUBLE DUVET COVERS
+DOUBLE DUVET COVERS
+SINGLE SHEETS
+SINGLE SHEETS
+KING SHEETS
+KING SHEETS
+DOUBLE SHEETS
+DOUBLE SHEETS
+BATH TOWELS
+BATH TOWELS</textarea>
+
+    <div class="controls">
+      <label class="opt">Number of copies per text:
+        <input type="number" id="copies" value="1" min="1" max="20">
+      </label>
+      <label class="opt">
+        <input type="checkbox" id="showBorder" checked>
+        Show cutlines (middle + between cards)
+      </label>
+      <label class="opt">Font size (pt):
+        <input type="number" id="fontSize" value="36" min="6" max="90">
+      </label>
+      <button id="renderBtn">Generate cards</button>
+      <button id="printBtn" class="secondary">Print / Save as PDF</button>
+    </div>
+    <p class="hint">Tip: use in the print dialog "Save as PDF" and set margins to "None". Each line in the text area will become one card.</p>
+  </div>
+
+  <div class="sheet-wrap" id="sheetWrap"></div>
+
+<script>
+  const textInput = document.getElementById('textInput');
+  const copiesInput = document.getElementById('copies');
+  const showBorder = document.getElementById('showBorder');
+  const fontSizeInput = document.getElementById('fontSize');
+  const sheetWrap = document.getElementById('sheetWrap');
+  const PER_PAGE = 18; // 3 cols x 6 rows
+
+  function render(){
+    const lines = textInput.value
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+
+    const copies = Math.max(1, parseInt(copiesInput.value, 10) || 1);
+    const fontSize = Math.max(6, parseInt(fontSizeInput.value, 10) || 15);
+
+    let cards = [];
+    lines.forEach(line => {
+      for (let i = 0; i < copies; i++){
+        cards.push(line);
+      }
+    });
+
+    sheetWrap.innerHTML = '';
+
+    if (cards.length === 0){
+      sheetWrap.innerHTML = '<p style="text-align:center;color:#888;">Enter at least one line of text.</p>';
+      return;
+    }
+
+    const pageCount = Math.ceil(cards.length / PER_PAGE);
+
+    for (let p = 0; p < pageCount; p++){
+      const page = document.createElement('div');
+      page.className = 'page';
+
+      for (let i = 0; i < PER_PAGE; i++){
+        const idx = p * PER_PAGE + i;
+        const col = i % 3;          // 0,1,2
+        const row = Math.floor(i / 3); // 0..5
+        const card = document.createElement('div');
+        card.className = 'card' + (idx >= cards.length ? ' empty' : '');
+
+        if (showBorder.checked){
+          if (col < 2) card.classList.add('col-notlast');
+          if (row < 5) card.classList.add('row-notlast');
+        }
+
+        if (idx < cards.length){
+          const span = document.createElement('span');
+          span.textContent = cards[idx];
+          span.style.fontSize = fontSize + 'pt';
+          card.appendChild(span);
+        }
+        page.appendChild(card);
+      }
+      sheetWrap.appendChild(page);
+    }
+  }
+
+  document.getElementById('renderBtn').addEventListener('click', render);
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+  textInput.addEventListener('input', render);
+  copiesInput.addEventListener('input', render);
+  showBorder.addEventListener('change', render);
+  fontSizeInput.addEventListener('input', render);
+
+  render();
+</script>
+
+</body>
+</html>
