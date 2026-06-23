@@ -127,11 +127,37 @@
     width: var(--card-w);
     height: var(--card-h);
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: center;
     text-align: center;
-    padding: 4mm;
+    padding: 0;
     border: none;
+  }
+
+  .card-side{
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1mm;
+  }
+
+  .card-side span{
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    white-space: nowrap;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+  }
+
+  .card-main{
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4mm;
+    min-width: 0;
   }
 
   .card.col-notlast{ border-right: 1px dashed #999; }
@@ -195,7 +221,13 @@ BATH TOWELS</textarea>
         Show cutlines (middle + between cards)
       </label>
       <label class="opt">Font size (pt):
-        <input type="number" id="fontSize" value="36" min="6" max="90">
+        <input type="number" id="fontSize" value="30" min="6" max="90">
+      </label>
+      <label class="opt">Side text:
+        <input type="text" id="sideText" value="HL023-Twee Bruggen" style="width:180px;">
+      </label>
+      <label class="opt">Side text size (pt):
+        <input type="number" id="sideFontSize" value="10" min="4" max="40">
       </label>
       <button id="renderBtn">Generate cards</button>
       <button id="printBtn" class="secondary">Print / Save as PDF</button>
@@ -210,6 +242,8 @@ BATH TOWELS</textarea>
   const copiesInput = document.getElementById('copies');
   const showBorder = document.getElementById('showBorder');
   const fontSizeInput = document.getElementById('fontSize');
+  const sideTextInput = document.getElementById('sideText');
+  const sideFontSizeInput = document.getElementById('sideFontSize');
   const sheetWrap = document.getElementById('sheetWrap');
   const PER_PAGE = 18; // 3 cols x 6 rows
 
@@ -221,6 +255,8 @@ BATH TOWELS</textarea>
 
     const copies = Math.max(1, parseInt(copiesInput.value, 10) || 1);
     const fontSize = Math.max(6, parseInt(fontSizeInput.value, 10) || 15);
+    const sideText = sideTextInput.value;
+    const sideFontSize = Math.max(4, parseInt(sideFontSizeInput.value, 10) || 10);
 
     let cards = [];
     lines.forEach(line => {
@@ -255,10 +291,21 @@ BATH TOWELS</textarea>
         }
 
         if (idx < cards.length){
+          const side = document.createElement('div');
+          side.className = 'card-side';
+          const sideSpan = document.createElement('span');
+          sideSpan.textContent = sideText;
+          sideSpan.style.fontSize = sideFontSize + 'pt';
+          side.appendChild(sideSpan);
+          card.appendChild(side);
+
+          const main = document.createElement('div');
+          main.className = 'card-main';
           const span = document.createElement('span');
           span.textContent = cards[idx];
           span.style.fontSize = fontSize + 'pt';
-          card.appendChild(span);
+          main.appendChild(span);
+          card.appendChild(main);
         }
         page.appendChild(card);
       }
@@ -272,6 +319,8 @@ BATH TOWELS</textarea>
   copiesInput.addEventListener('input', render);
   showBorder.addEventListener('change', render);
   fontSizeInput.addEventListener('input', render);
+  sideTextInput.addEventListener('input', render);
+  sideFontSizeInput.addEventListener('input', render);
 
   render();
 </script>
