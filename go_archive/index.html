@@ -10,21 +10,25 @@
   <style>
     body { font-family: system-ui, sans-serif; display: grid; place-items: center; min-height: 100svh; margin: 0; padding: 24px; }
     .card { width: 100%; max-width: 720px; text-align: center; }
-    input { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 10px; }
+    input { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 10px; box-sizing: border-box; }
     h1 { font-size: 20px; margin-bottom: 12px; }
     button { margin-top: 12px; padding: 10px 20px; font-size: 16px; border: none; border-radius: 8px; background: #111; color: white; cursor: pointer; }
     button:hover { background: #333; }
+    p.status { color: #666; font-size: 14px; margin-top: 8px; min-height: 1.2em; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>Archive.is URL</h1>
     <input id="urlInput" type="text" placeholder="Resultaat verschijnt hier" spellcheck="false" />
+    <p class="status" id="status"></p>
     <br>
     <button onclick="openInNewTab()">Open</button>
   </div>
 
   <script>
+    // version = "20260709120000"
+
     function cleanUrl(raw) {
       if (!raw) return "";
       const start = raw.indexOf("https");
@@ -35,23 +39,36 @@
       return s;
     }
 
+    function setStatus(msg) {
+      document.getElementById("status").textContent = msg;
+    }
+
     async function fillFromClipboard() {
       try {
         const txt = await navigator.clipboard.readText();
         const cleaned = cleanUrl(txt);
-        document.getElementById("urlInput").value = cleaned
-          ? "https://archive.is/" + cleaned
-          : "";
-      } catch (_) {
-        document.getElementById("urlInput").value = "";
+        // "/newest/" redirects straight to the most recent snapshot,
+        // instead of showing the search/results list page.
+        const finalUrl = cleaned ? "https://archive.ph/newest/" + cleaned : "";
+        document.getElementById("urlInput").value = finalUrl;
+
+        if (finalUrl) {
+          setStatus("Doorsturen naar archive.is …");
+          // Navigate in the same tab so it isn't blocked as a pop-up,
+          // and so the archived page actually replaces this one.
+          location.href = finalUrl;
+        } else {
+          setStatus("Geen geldige URL op het klembord gevonden.");
+        }
+      } catch (err) {
+        setStatus("Kon klembord niet lezen. Klik op 'Open' of geef toestemming.");
       }
     }
 
     function openInNewTab() {
       const val = document.getElementById("urlInput").value.trim();
       if (val) {
-        //window.open(val, "_blank");
-        window.open(val);
+        location.href = val;
       } else {
         alert("Geen geldige URL");
       }
