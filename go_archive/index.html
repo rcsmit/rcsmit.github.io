@@ -49,7 +49,7 @@
         const cleaned = cleanUrl(txt);
         // "/newest/" redirects straight to the most recent snapshot,
         // instead of showing the search/results list page.
-        const finalUrl = cleaned ? "https://archive.ph/newest/" + cleaned : "";
+        const finalUrl = cleaned ? "https://archive.is/newest/" + cleaned : "";
         document.getElementById("urlInput").value = finalUrl;
 
         if (finalUrl) {
