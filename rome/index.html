@@ -12,6 +12,7 @@
 # version : 20260622-090000 - Removed popup link underline; Google Maps links now use precise lat/lon (?api=1&query=) instead of malformed name@lat,lon search; added print version (Print map button, numbered pins, active-layers legend with per-layer breakdown rendered below the map, print-only CSS)
 # version : 20260622-100000 - Added basemap style dropdown (Light/Dark/Voyager/Light no labels/Dark no labels via CartoDB), preference saved in localStorage
 # version : 20260622-101000 - Fixed Voyager basemap showing as blank grey tiles: it needs the "rastertiles/voyager/" subpath on CartoDB, unlike the other styles
+# version : 20260804-120000 - Narrower popups on mobile (recalculated at popup-open time, plus CSS max-width safety net); bottom table panel now only lists rows visible within the current map viewport, refreshing on pan/zoom
 -->
 <html lang="en">
 <head>
@@ -332,6 +333,10 @@
 
     /* ── POPUP ── */
     .leaflet-popup-content-wrapper { border-radius: 8px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important; font-family: 'Lato', sans-serif !important; }
+    @media (max-width: 640px) {
+      .leaflet-popup-content-wrapper { max-width: calc(100vw - 60px) !important; }
+      .leaflet-popup-content { width: auto !important; max-width: calc(100vw - 76px) !important; margin: 10px 12px !important; }
+    }
     .popup-name { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
     .popup-addr { font-size: 0.78rem; color: var(--muted); margin-bottom: 7px; }
     .popup-remark { font-size: 0.76rem; font-style: italic; margin-bottom: 6px; color: #555; }
@@ -435,7 +440,7 @@
   </div>
 </div>
 
-<script>const current_version = "20260622-101000";</script>
+<script>const current_version = "20260804-120000";</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
@@ -493,6 +498,17 @@ const markersById = {}; // rowId -> { marker, cluster }
 // ── MAP ──────────────────────────────────────────────────────────────────────
 const map = L.map('map', { center: [41.9028, 12.4964], zoom: 12 });
 window._leafletMap = map;
+// Keep the bottom table panel in sync with what's actually visible on the map.
+map.on('moveend', () => refreshTableForViewport());
+// Recompute popup max-width at the moment each popup opens (not at page load),
+// so it reflects the current viewport even if the window was resized/rotated
+// after the page loaded.
+map.on('popupopen', (e) => {
+  const p = e.popup;
+  if (!p || !p.options) return;
+  p.options.maxWidth = window.innerWidth <= 640 ? Math.min(220, window.innerWidth - 60) : 340;
+  p.update();
+});
 // ── BASEMAP STYLE SWITCHER ────────────────────────────────────────────────────
 // CartoDB serves "light_all"/"dark_all" (+ "_nolabels" variants) directly,
 // but "voyager" lives under a "rastertiles/" subpath — without it the tiles 404
@@ -697,7 +713,7 @@ function buildLayers(data) {
       if (isNaN(lat)||isNaN(lon)) return;
       const mapsUrl = mapsUrlFor(row);
       const webLink = row[F.website] ? `<a class="popup-link" href="${escH(row[F.website])}" target="_blank">🌐 ${escH(row[F.website])}</a>` : '';
-      const popup = L.popup({maxWidth:340}).setContent(`
+      const popup = L.popup({maxWidth: window.innerWidth <= 640 ? 220 : 340}).setContent(`
         <div style="font-family:'Lato',sans-serif;padding:4px 2px">
           <div class="popup-name">${escH(row[F.name])}</div>
           <div class="popup-addr">${escH(row[F.address])}</div>
@@ -938,11 +954,25 @@ function clearDeeplinkWarning() {
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
+// Only rows whose marker currently falls within the visible map viewport are
+// shown in the bottom table panel — panning/zooming the map updates the list.
+function visibleTableData() {
+  let bounds;
+  try { bounds = map.getBounds(); } catch(e) { return filteredData; }
+  return filteredData.filter(r => {
+    const lat = toFloat(r[F.lat]), lon = toFloat(r[F.lon]);
+    if (isNaN(lat) || isNaN(lon)) return false;
+    return bounds.contains([lat, lon]);
+  });
+}
+
+function refreshTableForViewport() { buildTable(visibleTableData()); }
+
 function render(fitBounds=true) {
   applySearch();
   buildSidebar(filteredData);
   buildLayers(filteredData);
-  buildTable(filteredData);
+  buildTable(visibleTableData());
   if (fitBounds) fitMapToVisible(filteredData);
   syncURL();
   updateNoLayersMessage();
