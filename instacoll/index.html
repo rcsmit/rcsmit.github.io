@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insta Collections</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<!--
+version history
+# version : 20260809-150000 - Initial version: grid + scroll feed viewer, collection switcher, CSV-from-Sheets loader
+# version : 20260809-153000 - Removed grid view (kept scroll feed only), added deep-link support (?collection or bare ?name), renamed to index.html
+-->
+<script>const current_version = "20260809-153000";</script>
+<style>
+  :root{
+    --ig-black:#0a0a0a;
+    --ig-gray:#8e8e8e;
+    --ig-border:#dbdbdb;
+    --ig-bg:#fafafa;
+    --ig-card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ig-bg);
+    color:var(--ig-black);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--ig-border);
+  }
+  .header-inner{
+    max-width:600px; margin:0 auto;
+    padding:14px 20px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-weight:700; font-size:20px; letter-spacing:-.02em;
+  }
+  .brand .dot{
+    width:10px;height:10px;border-radius:50%;
+    background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af,#515bd4);
+  }
+
+  /* ---------- collection chips ---------- */
+  .chip-row{
+    max-width:600px; margin:0 auto;
+    padding:0 20px 14px;
+    display:flex; gap:8px; overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .chip-row::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex:0 0 auto;
+    padding:7px 16px;
+    border-radius:999px;
+    border:1px solid var(--ig-border);
+    background:var(--ig-card);
+    font-size:13px; font-weight:600;
+    cursor:pointer; white-space:nowrap;
+    transition:background .15s,color .15s,border-color .15s;
+  }
+  .chip.active{ background:var(--ig-black); color:#fff; border-color:var(--ig-black); }
+  .chip .count{ opacity:.55; font-weight:500; margin-left:4px; }
+  .chip.active .count{ opacity:.8; }
+
+  main{ max-width:600px; margin:0 auto; padding:20px; min-height:60vh; }
+
+  #status-msg{
+    text-align:center; color:var(--ig-gray); font-size:14px; padding:60px 20px;
+  }
+
+  /* ---------- feed / scroll view ---------- */
+  #feed-view{ display:flex; flex-direction:column; gap:24px; max-width:470px; margin:0 auto; }
+  .post-card{
+    background:var(--ig-card);
+    border:1px solid var(--ig-border);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .post-head{
+    display:flex; align-items:center; gap:10px;
+    padding:12px 14px;
+  }
+  .avatar{
+    width:32px; height:32px; border-radius:50%;
+    background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af,#515bd4);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:13px;
+    flex-shrink:0;
+  }
+  .post-head .who{ font-size:13px; font-weight:600; }
+  .post-head .when{ font-size:12px; color:var(--ig-gray); }
+  .post-embed-slot{ min-height:200px; background:#f2f2f2; display:flex; align-items:center; justify-content:center; color:var(--ig-gray); font-size:13px; }
+  .post-foot{ padding:10px 14px 16px; font-size:13px; }
+  .post-foot .caption{ margin-bottom:6px; }
+  .post-foot .tags{ color:#00376b; font-weight:500; }
+
+  .empty-note{ text-align:center; color:var(--ig-gray); font-size:13px; padding:12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand"><span class="dot"></span>Insta Collections</div>
+  </div>
+  <div class="chip-row" id="chip-row"></div>
+</header>
+
+<main>
+  <div id="status-msg">Loading collection…</div>
+  <div id="feed-view" style="display:none;"></div>
+</main>
+
+<script src="https://www.instagram.com/embed.js" async></script>
+<script>
+/* ---------------------------------------------------------------------- *
+ * Config — edit these two to point at your sheet                         *
+ * ---------------------------------------------------------------------- */
+const SPREADSHEET_ID = "1VxN3uBwHLji9Eig8YA7DJs9cVBWN2QIV74no16lb8fY";
+const WORKSHEET_NAME = "Blad1";
+const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(WORKSHEET_NAME)}`;
+
+/* Fallback data so the page still demonstrates itself if the sheet can't be reached */
+const FALLBACK_ROWS = [
+  { id:"1", collection:"demo", url:"https://www.instagram.com/reel/C1a2B3c4D5e/", date_added:"2026-06-01T10:00:00+00:00", added_by:"rene", caption:"Acro jam sunset session", tags:"acro,sunset", type:"reel", status:"active" },
+  { id:"2", collection:"demo", url:"https://www.instagram.com/p/C1a2B3c4D5f/", date_added:"2026-06-02T10:00:00+00:00", added_by:"cat", caption:"Handstand progress week 4", tags:"handstand,training", type:"post", status:"active" },
+  { id:"3", collection:"demo", url:"https://www.instagram.com/reel/C1a2B3c4D5g/", date_added:"2026-06-03T10:00:00+00:00", added_by:"rene", caption:"Chiang Mai community circle", tags:"community,chiangmai", type:"reel", status:"active" },
+];
+
+let ALL_ROWS = [];
+let ACTIVE_COLLECTION = null;
+let feedObserver = null;
+
+/* ---------------------------------------------------------------------- *
+ * CSV parsing (handles quoted fields with commas/newlines/escaped quotes) *
+ * ---------------------------------------------------------------------- */
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], next = text[i + 1];
+    if (inQuotes) {
+      if (c === '"' && next === '"') { field += '"'; i++; }
+      else if (c === '"') { inQuotes = false; }
+      else { field += c; }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\r') { /* skip */ }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
+      else field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+
+  const header = rows.shift().map(h => h.trim());
+  return rows
+    .filter(r => r.some(v => v.trim() !== ""))
+    .map(r => Object.fromEntries(header.map((h, idx) => [h, (r[idx] || "").trim()])));
+}
+
+/* gviz wraps CSV cleanly (unlike its JSON endpoint), so a plain fetch + parse works */
+async function loadRows() {
+  try {
+    const res = await fetch(SHEET_CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (!rows.length) throw new Error("Sheet returned no rows");
+    return rows;
+  } catch (e) {
+    console.warn("Could not load sheet, using fallback data:", e);
+    const msg = document.getElementById("status-msg");
+    if (msg) msg.textContent = "⚠ Could not reach the sheet — showing demo data.";
+    return FALLBACK_ROWS;
+  }
+}
+
+/* ---------------------------------------------------------------------- *
+ * Deep link handling                                                      *
+ * index.html?berlin            -> collection "berlin"                     *
+ * index.html?collection=berlin -> also works                              *
+ * ---------------------------------------------------------------------- */
+function getCollectionFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("collection")) return params.get("collection");
+
+  const raw = window.location.search.replace(/^\?/, "");
+  if (!raw) return null;
+  const firstPart = raw.split("&")[0].split("=")[0];
+  return firstPart ? decodeURIComponent(firstPart) : null;
+}
+
+function setCollectionInURL(collection) {
+  const url = new URL(window.location.href);
+  url.search = collection ? "?" + encodeURIComponent(collection) : "";
+  window.history.replaceState(null, "", url);
+}
+
+/* ---------------------------------------------------------------------- *
+ * Helpers                                                                 *
+ * ---------------------------------------------------------------------- */
+function formatDate(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+function escapeHTML(s) {
+  return (s || "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+}
+
+function activeRows() {
+  return ALL_ROWS.filter(r =>
+    (r.status || "active").toLowerCase() !== "hidden" &&
+    (!ACTIVE_COLLECTION || r.collection === ACTIVE_COLLECTION)
+  );
+}
+
+/* ---------------------------------------------------------------------- *
+ * Rendering                                                               *
+ * ---------------------------------------------------------------------- */
+function renderChips() {
+  const chipRow = document.getElementById("chip-row");
+  const collections = [...new Set(ALL_ROWS.map(r => r.collection).filter(Boolean))].sort();
+  const countFor = (c) => ALL_ROWS.filter(r => r.collection === c && (r.status || "active").toLowerCase() !== "hidden").length;
+
+  chipRow.innerHTML = "";
+  collections.forEach(c => {
+    const chip = document.createElement("button");
+    chip.className = "chip" + (c === ACTIVE_COLLECTION ? " active" : "");
+    chip.innerHTML = `${escapeHTML(c)}<span class="count">${countFor(c)}</span>`;
+    chip.addEventListener("click", () => {
+      ACTIVE_COLLECTION = c;
+      setCollectionInURL(c);
+      renderChips();
+      renderFeed();
+    });
+    chipRow.appendChild(chip);
+  });
+}
+
+function renderFeed() {
+  const feed = document.getElementById("feed-view");
+  const rows = activeRows();
+  feed.innerHTML = "";
+
+  if (feedObserver) feedObserver.disconnect();
+
+  if (!rows.length) {
+    feed.innerHTML = `<div class="empty-note">No links in this collection yet.</div>`;
+    return;
+  }
+
+  feedObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        loadEmbedInto(entry.target.querySelector(".post-embed-slot"), entry.target.dataset.url);
+        feedObserver.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: "300px 0px" });
+
+  rows.forEach(row => {
+    const card = document.createElement("div");
+    card.className = "post-card";
+    card.dataset.url = row.url;
+    const initial = (row.added_by || "?").trim().charAt(0).toUpperCase();
+    card.innerHTML = `
+      <div class="post-head">
+        <div class="avatar">${escapeHTML(initial)}</div>
+        <div>
+          <div class="who">${escapeHTML(row.added_by || "unknown")}</div>
+          <div class="when">${formatDate(row.date_added)}</div>
+        </div>
+      </div>
+      <div class="post-embed-slot">Loading embed…</div>
+      <div class="post-foot">
+        <div class="caption">${escapeHTML(row.caption)}</div>
+        <div class="tags">${escapeHTML((row.tags || "").split(",").filter(Boolean).map(t => "#" + t).join(" "))}</div>
+      </div>
+    `;
+    feed.appendChild(card);
+    feedObserver.observe(card);
+  });
+}
+
+function loadEmbedInto(slot, url) {
+  if (!slot) return;
+  slot.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="${escapeHTML(url)}" data-instgrm-version="14" style="margin:0;width:100%;"></blockquote>`;
+  processEmbeds();
+}
+
+function processEmbeds() {
+  if (window.instgrm && window.instgrm.Embeds) {
+    window.instgrm.Embeds.process();
+  } else {
+    // embed.js not ready yet — retry shortly
+    setTimeout(processEmbeds, 400);
+  }
+}
+
+/* ---------------------------------------------------------------------- *
+ * Init                                                                    *
+ * ---------------------------------------------------------------------- */
+(async function init() {
+  ALL_ROWS = await loadRows();
+  const collections = [...new Set(ALL_ROWS.map(r => r.collection).filter(Boolean))].sort();
+
+  const requested = getCollectionFromURL();
+  const matched = requested
+    ? collections.find(c => c.toLowerCase() === requested.toLowerCase())
+    : null;
+  ACTIVE_COLLECTION = matched || collections[0] || null;
+
+  document.getElementById("status-msg").style.display = "none";
+  document.getElementById("feed-view").style.display = "flex";
+  renderChips();
+  renderFeed();
+})();
+</script>
+
+</body>
+</html>
