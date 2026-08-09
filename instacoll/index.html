@@ -9,8 +9,14 @@
 version history
 # version : 20260809-150000 - Initial version: grid + scroll feed viewer, collection switcher, CSV-from-Sheets loader
 # version : 20260809-153000 - Removed grid view (kept scroll feed only), added deep-link support (?collection or bare ?name), renamed to index.html
+# version : 20260809-160000 - Removed custom post header (duplicated Instagram's own), strip tracking params from embed URLs, dedupe repeated links
+# version : 20260809-161000 - Strip leftover tracking-param fragments (e.g. ?igsh=...) from displayed captions, for rows saved before the bot-side fix
+# version : 20260809-162000 - Crop Instagram embed's own like/comment/share row + comment box off the bottom (approximate, cross-origin iframe)
+# version : 20260809-163000 - Removed post-foot (our own caption/tags block); each card is now just the embed itself
+# version : 20260809-164000 - Fix leftover whitespace between cropped embed and card border (collapse min-height/flex-centering once loaded)
+# version : 20260809-165000 - Reverted footer-crop feature (20260809-162000/164000); embed now renders full and uncropped
 -->
-<script>const current_version = "20260809-153000";</script>
+<script>const current_version = "20260809-165000";</script>
 <style>
   :root{
     --ig-black:#0a0a0a;
@@ -86,23 +92,7 @@ version history
     border-radius:8px;
     overflow:hidden;
   }
-  .post-head{
-    display:flex; align-items:center; gap:10px;
-    padding:12px 14px;
-  }
-  .avatar{
-    width:32px; height:32px; border-radius:50%;
-    background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af,#515bd4);
-    display:flex; align-items:center; justify-content:center;
-    color:#fff; font-weight:700; font-size:13px;
-    flex-shrink:0;
-  }
-  .post-head .who{ font-size:13px; font-weight:600; }
-  .post-head .when{ font-size:12px; color:var(--ig-gray); }
   .post-embed-slot{ min-height:200px; background:#f2f2f2; display:flex; align-items:center; justify-content:center; color:var(--ig-gray); font-size:13px; }
-  .post-foot{ padding:10px 14px 16px; font-size:13px; }
-  .post-foot .caption{ margin-bottom:6px; }
-  .post-foot .tags{ color:#00376b; font-weight:500; }
 
   .empty-note{ text-align:center; color:var(--ig-gray); font-size:13px; padding:12px; }
 </style>
@@ -210,22 +200,38 @@ function setCollectionInURL(collection) {
 /* ---------------------------------------------------------------------- *
  * Helpers                                                                 *
  * ---------------------------------------------------------------------- */
-function formatDate(iso) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (isNaN(d)) return iso;
-  return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
-
 function escapeHTML(s) {
   return (s || "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
 }
 
+/* Strip tracking params (?igsh=..., ?utm_source=..., etc.) so the embed widget
+   doesn't render the raw query string as fallback text, and so identical posts
+   shared with different tracking params are recognized as duplicates. */
+function sanitizeInstagramUrl(url) {
+  const match = (url || "").match(/instagram\.com\/(reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i);
+  if (!match) return (url || "").split("?")[0];
+  const kind = match[1].toLowerCase() === "reels" ? "reel" : match[1].toLowerCase();
+  return `https://www.instagram.com/${kind}/${match[2]}/`;
+}
+
+function dedupeRows(rows) {
+  const seen = new Set();
+  const result = [];
+  for (const row of rows) {
+    const key = sanitizeInstagramUrl(row.url);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(row);
+  }
+  return result;
+}
+
 function activeRows() {
-  return ALL_ROWS.filter(r =>
+  const filtered = ALL_ROWS.filter(r =>
     (r.status || "active").toLowerCase() !== "hidden" &&
     (!ACTIVE_COLLECTION || r.collection === ACTIVE_COLLECTION)
   );
+  return dedupeRows(filtered);
 }
 
 /* ---------------------------------------------------------------------- *
@@ -276,20 +282,8 @@ function renderFeed() {
     const card = document.createElement("div");
     card.className = "post-card";
     card.dataset.url = row.url;
-    const initial = (row.added_by || "?").trim().charAt(0).toUpperCase();
     card.innerHTML = `
-      <div class="post-head">
-        <div class="avatar">${escapeHTML(initial)}</div>
-        <div>
-          <div class="who">${escapeHTML(row.added_by || "unknown")}</div>
-          <div class="when">${formatDate(row.date_added)}</div>
-        </div>
-      </div>
       <div class="post-embed-slot">Loading embed…</div>
-      <div class="post-foot">
-        <div class="caption">${escapeHTML(row.caption)}</div>
-        <div class="tags">${escapeHTML((row.tags || "").split(",").filter(Boolean).map(t => "#" + t).join(" "))}</div>
-      </div>
     `;
     feed.appendChild(card);
     feedObserver.observe(card);
@@ -298,7 +292,8 @@ function renderFeed() {
 
 function loadEmbedInto(slot, url) {
   if (!slot) return;
-  slot.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="${escapeHTML(url)}" data-instgrm-version="14" style="margin:0;width:100%;"></blockquote>`;
+  const cleanUrl = sanitizeInstagramUrl(url);
+  slot.innerHTML = `<blockquote class="instagram-media" data-instgrm-permalink="${escapeHTML(cleanUrl)}" data-instgrm-version="14" style="margin:0;width:100%;"></blockquote>`;
   processEmbeds();
 }
 
