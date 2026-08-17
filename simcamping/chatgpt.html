@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SimCamping 2000</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#111;font-family:Arial,sans-serif}
+  #game{position:fixed;inset:0}
+  #ui{position:fixed;left:12px;top:12px;z-index:5;color:#fff;background:#18251ddd;border:2px solid #91b57c;border-radius:8px;padding:10px;width:310px;box-shadow:0 4px 18px #0008}
+  h1{font-size:22px;margin:0 0 7px;color:#d9ef9d}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:13px;margin-bottom:8px}
+  .stat{background:#263b29;padding:5px;border-radius:4px}
+  #tools{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+  button{border:1px solid #8ca66e;background:#d5e6a7;color:#152015;border-radius:4px;padding:7px 4px;font-weight:bold;cursor:pointer}
+  button:hover{background:#efffc8}
+  button.active{background:#f3bd58}
+  #msg{margin-top:8px;font-size:12px;line-height:1.3;color:#e9f3dc}
+  #help{position:fixed;right:12px;bottom:12px;z-index:5;background:#18251ddd;color:#fff;border:2px solid #91b57c;border-radius:7px;padding:8px 11px;font-size:12px}
+  #pause{position:fixed;right:12px;top:12px;z-index:5}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="ui">
+  <h1>⛺ SimCamping 2000</h1>
+  <div class="stats">
+    <div class="stat">💰 €<span id="money">25,000</span></div>
+    <div class="stat">👥 <span id="guests">0</span> gasten</div>
+    <div class="stat">😊 Tevredenheid <span id="happy">70</span>%</div>
+    <div class="stat">⭐ Reputatie <span id="rep">50</span></div>
+    <div class="stat">🏕️ Plaatsen <span id="sites">0</span></div>
+    <div class="stat">📅 Dag <span id="day">1</span></div>
+  </div>
+  <div id="tools">
+    <button data-tool="tent">⛺ Plaats<br>kampeerplek €500</button>
+    <button data-tool="cabin">🏠 Plaats<br>bungalow €2k</button>
+    <button data-tool="tree">🌳 Boom €100</button>
+    <button data-tool="road">🛣️ Weg €150</button>
+    <button data-tool="toilet">🚿 Sanitair €3k</button>
+    <button data-tool="pool">🏊 Zwembad €5k</button>
+  </div>
+  <div id="msg">Kies iets uit het bouwmenu en klik op het terrein. Bouw een camping die winst maakt.</div>
+</div>
+<button id="pause">⏸ Pauze</button>
+<div id="help">Linkermuisknop = bouwen · Rechtermuisknop = camera draaien · Scroll = zoom · Spatie = pauze</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x8fc7df);
+scene.fog = new THREE.Fog(0x8fc7df, 55, 105);
+
+const camera = new THREE.PerspectiveCamera(45,innerWidth/innerHeight,.1,200);
+camera.position.set(22,28,28);
+camera.lookAt(0,0,0);
+
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+document.querySelector('#game').appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xe9f7ff,0x52705a,2.2));
+const sun=new THREE.DirectionalLight(0xfff0cc,2.4);
+sun.position.set(-25,40,20); sun.castShadow=true; scene.add(sun);
+
+const ground=new THREE.Mesh(
+  new THREE.PlaneGeometry(80,80),
+  new THREE.MeshLambertMaterial({color:0x5d914b})
+);
+ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+
+const grid=new THREE.GridHelper(80,40,0x42683c,0x6ca05a);
+grid.position.y=.015; scene.add(grid);
+
+const objects=[];
+let money=25000, day=1, guests=0, happy=70, rep=50, paused=false, selected='tent';
+const costs={tent:500,cabin:2000,tree:100,road:150,toilet:3000,pool:5000};
+const labels={tent:'kampeerplek',cabin:'bungalow',tree:'boom',road:'weg',toilet:'sanitairgebouw',pool:'zwembad'};
+
+function mat(c){return new THREE.MeshLambertMaterial({color:c});}
+function box(w,h,d,c){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function cyl(r,h,c){const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,12),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+
+function make(type,x,z){
+  const g=new THREE.Group();
+  if(type==='tent'){
+    const a=new THREE.Mesh(new THREE.ConeGeometry(1.35,1.8,4),mat(0xe7d4a0));
+    a.rotation.y=Math.PI/4;a.position.y=.9;g.add(a);
+    const floor=box(2.7,.08,2.7,0x9d764d);floor.position.y=.04;g.add(floor);
+  }
+  if(type==='cabin'){
+    const b=box(2.8,1.8,2.4,0xb9824d);b.position.y=.9;g.add(b);
+    const roof=new THREE.Mesh(new THREE.ConeGeometry(2.05,1.3,4),mat(0x713b2a));roof.rotation.y=Math.PI/4;roof.position.y=2.45;g.add(roof);
+    const door=box(.45,.85,.06,0x4d3022);door.position.set(0,.45,1.23);g.add(door);
+  }
+  if(type==='tree'){
+    const trunk=cyl(.22,1.2,0x70452b);trunk.position.y=.6;g.add(trunk);
+    const crown=new THREE.Mesh(new THREE.SphereGeometry(1.1,10,8),mat(0x286b36));crown.position.y=1.7;g.add(crown);
+  }
+  if(type==='road'){
+    const r=box(3,.06,3,0x4a4a48);r.position.y=.04;g.add(r);
+    const line=box(.25,.07,1.0,0xe7d48b);line.position.y=.08;g.add(line);
+  }
+  if(type==='toilet'){
+    const b=box(3,1.8,2.4,0xd8d7c9);b.position.y=.9;g.add(b);
+    const roof=box(3.15,.15,2.55,0x527b7e);roof.position.y=1.85;g.add(roof);
+    for(let i=-1;i<=1;i++){const w=box(.55,.55,.05,0x83aeca);w.position.set(i*.8,1.05,1.22);g.add(w)}
+  }
+  if(type==='pool'){
+    const rim=box(4.4,.35,3.2,0xd6c48b);rim.position.y=.17;g.add(rim);
+    const water=box(3.8,.08,2.6,0x299fd0);water.position.y=.36;g.add(water);
+  }
+  g.position.set(x,0,z);scene.add(g);objects.push({type,g});
+}
+
+function updateUI(){
+  moneyEl.textContent=Math.max(0,Math.round(money)).toLocaleString('it-IT');
+  guestsEl.textContent=guests;
+  happyEl.textContent=Math.round(happy);
+  repEl.textContent=Math.round(rep);
+  sitesEl.textContent=objects.filter(o=>o.type==='tent'||o.type==='cabin').length;
+  dayEl.textContent=day;
+}
+const moneyEl=document.querySelector('#money'), guestsEl=document.querySelector('#guests'),
+happyEl=document.querySelector('#happy'),repEl=document.querySelector('#rep'),
+sitesEl=document.querySelector('#sites'),dayEl=document.querySelector('#day'),msg=document.querySelector('#msg');
+
+document.querySelectorAll('[data-tool]').forEach(b=>{
+  b.onclick=()=>{selected=b.dataset.tool;document.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active');msg.textContent=`Geselecteerd: ${labels[selected]}. Klik op een leeg vak.`}
+});
+document.querySelector('[data-tool="tent"]').classList.add('active');
+
+const ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+renderer.domElement.addEventListener('pointerdown',e=>{
+  if(e.button!==0)return;
+  mouse.x=e.clientX/innerWidth*2-1; mouse.y=-(e.clientY/innerHeight)*2+1;
+  ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObject(ground)[0]; if(!hit)return;
+  const x=Math.round(hit.point.x/3)*3,z=Math.round(hit.point.z/3)*3;
+  if(Math.abs(x)>37||Math.abs(z)>37)return;
+  const occupied=objects.some(o=>Math.abs(o.g.position.x-x)<1.4&&Math.abs(o.g.position.z-z)<1.4);
+  if(occupied){msg.textContent='Dat vak is al bezet.';return}
+  if(money<costs[selected]){msg.textContent='Niet genoeg geld.';return}
+  money-=costs[selected]; make(selected,x,z); updateUI();
+});
+
+let dragging=false,lastX=0,lastY=0;
+renderer.domElement.addEventListener('pointerdown',e=>{if(e.button===2){dragging=true;lastX=e.clientX;lastY=e.clientY}});
+addEventListener('pointerup',()=>dragging=false);
+addEventListener('pointermove',e=>{
+ if(!dragging)return;
+ const dx=e.clientX-lastX,dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;
+ camera.position.applyAxisAngle(new THREE.Vector3(0,1,0),-dx*.008);
+ camera.position.y=Math.max(8,Math.min(55,camera.position.y+dy*.12));
+ camera.lookAt(0,0,0);
+});
+addEventListener('wheel',e=>{
+ const p=camera.position.clone().normalize();
+ camera.position.addScaledVector(p,e.deltaY*.025);
+ camera.position.y=Math.max(7,camera.position.y); camera.lookAt(0,0,0);
+},{passive:true});
+
+document.querySelector('#pause').onclick=()=>{
+ paused=!paused;document.querySelector('#pause').textContent=paused?'▶ Doorgaan':'⏸ Pauze';
+};
+addEventListener('keydown',e=>{if(e.code==='Space'){paused=!paused;document.querySelector('#pause').textContent=paused?'▶ Doorgaan':'⏸ Pauze'}});
+
+let last=performance.now(),acc=0;
+function tick(now){
+ requestAnimationFrame(tick);
+ const dt=Math.min(.1,(now-last)/1000);last=now;
+ if(!paused){
+   acc+=dt;
+   if(acc>5){
+     acc=0;day++;
+     const tents=objects.filter(o=>o.type==='tent').length;
+     const cabins=objects.filter(o=>o.type==='cabin').length;
+     const toilets=objects.filter(o=>o.type==='toilet').length;
+     const pools=objects.filter(o=>o.type==='pool').length;
+     const capacity=tents*3+cabins*4;
+     guests=Math.min(capacity,Math.max(0,Math.floor(capacity*(.45+rep/200))));
+     const service=toilets*8+pools*6;
+     happy=Math.max(20,Math.min(100,65+service*.7-Math.max(0,guests-service)*1.2));
+     rep=Math.max(0,Math.min(100,rep+(happy>70?.6:-.7)));
+     money+=guests*18-tents*3-cabins*10-toilets*15-pools*20;
+     updateUI();
+     msg.textContent=guests?`Dag ${day}: ${guests} gasten betalen vandaag. Houd sanitair en voorzieningen op peil.`:`Dag ${day}: nog geen gasten. Bouw kampeerplekken of bungalows.`;
+   }
+ }
+ renderer.render(scene,camera);
+}
+updateUI();tick(performance.now());
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body>
+</html>

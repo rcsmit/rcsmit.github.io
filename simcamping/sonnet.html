@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<!-- version history
+# version : 20260817-153000 - Initial version: SimCamping isometric camping tycoon, no build tools required
+-->
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SimCamping</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sand:#f4e9d6;
+    --sand-dark:#e3d3ac;
+    --forest:#2f6b4f;
+    --forest-dark:#204a37;
+    --ember:#e8703a;
+    --ember-dark:#c65323;
+    --sky:#8fd0e0;
+    --ink:#3a3226;
+    --cream:#fffaf0;
+    --gold:#e0a63a;
+    --panel-shadow: 0 6px 0 rgba(0,0,0,0.15), 0 10px 18px rgba(0,0,0,0.18);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%; overflow:hidden;
+    font-family:'Nunito',sans-serif; color:var(--ink); background:var(--forest-dark);
+    touch-action:none; user-select:none;
+  }
+  #app{position:fixed; inset:0;}
+  canvas{display:block; width:100%; height:100%;}
+
+  h1,h2,.brand,.tool-label,.stat-label{font-family:'Baloo 2', sans-serif;}
+
+  /* ---------- top bar ---------- */
+  #topbar{
+    position:absolute; top:0; left:0; right:0;
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px;
+    background:linear-gradient(180deg, var(--forest) 0%, var(--forest-dark) 100%);
+    border-bottom:4px solid var(--forest-dark);
+    box-shadow:0 4px 14px rgba(0,0,0,0.35);
+    z-index:20; flex-wrap:wrap;
+  }
+  .brand{
+    color:var(--cream); font-weight:800; font-size:20px; letter-spacing:0.5px;
+    display:flex; align-items:center; gap:6px; margin-right:6px; white-space:nowrap;
+  }
+  .stats{display:flex; gap:8px; flex-wrap:wrap; flex:1;}
+  .stat-pill{
+    background:var(--cream); border-radius:12px; padding:5px 12px;
+    display:flex; flex-direction:column; align-items:flex-start; min-width:64px;
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,0.08);
+  }
+  .stat-label{font-size:9px; text-transform:uppercase; letter-spacing:0.8px; color:#8a7a5c; font-weight:700;}
+  .stat-value{font-size:15px; font-weight:800; color:var(--ink); line-height:1.15;}
+  .stat-value.warn{color:var(--ember-dark);}
+  .stat-value.good{color:var(--forest);}
+  #speedbar{display:flex; align-items:center; gap:4px;}
+  .sbtn{
+    background:var(--cream); border:none; border-radius:10px; width:34px; height:34px;
+    font-size:15px; cursor:pointer; box-shadow:inset 0 -2px 0 rgba(0,0,0,0.1);
+    display:flex; align-items:center; justify-content:center; color:var(--ink);
+  }
+  .sbtn.active{background:var(--gold); color:#fff;}
+  .sbtn:active{transform:translateY(1px);}
+  #nextday{
+    background:var(--ember); color:#fff; border:none; border-radius:12px;
+    padding:8px 14px; font-weight:800; font-family:'Baloo 2',sans-serif; font-size:14px;
+    cursor:pointer; box-shadow:0 3px 0 var(--ember-dark); white-space:nowrap;
+  }
+  #nextday:active{transform:translateY(2px); box-shadow:0 1px 0 var(--ember-dark);}
+  #helpbtn{
+    background:var(--sand); border:none; border-radius:50%; width:34px; height:34px;
+    font-weight:800; cursor:pointer; font-family:'Baloo 2',sans-serif; color:var(--ink);
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,0.1);
+  }
+
+  /* ---------- toolbar ---------- */
+  #toolbar{
+    position:absolute; left:0; right:0; bottom:0; z-index:20;
+    background:linear-gradient(0deg, var(--forest-dark) 0%, var(--forest) 100%);
+    border-top:4px solid var(--forest-dark);
+    box-shadow:0 -4px 14px rgba(0,0,0,0.35);
+    padding:8px 10px 10px;
+  }
+  #toolscroll{
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:4px;
+    scrollbar-width:thin;
+  }
+  .tool{
+    flex:0 0 auto; width:78px; background:var(--cream); border:3px solid transparent;
+    border-radius:14px; padding:6px 4px 5px; cursor:pointer; text-align:center;
+    box-shadow:0 3px 0 rgba(0,0,0,0.18);
+  }
+  .tool:active{transform:translateY(2px); box-shadow:0 1px 0 rgba(0,0,0,0.18);}
+  .tool.selected{border-color:var(--gold); background:#fff6e2;}
+  .tool .icon{font-size:24px; line-height:1;}
+  .tool-label{font-size:10.5px; font-weight:700; margin-top:2px; color:var(--ink);}
+  .tool-cost{font-size:10px; font-weight:800; color:var(--forest); margin-top:1px;}
+  .tool-cost.free{color:#8a7a5c;}
+  .group-sep{flex:0 0 auto; width:2px; background:rgba(255,255,255,0.15); border-radius:2px; margin:4px 2px;}
+
+  /* ---------- toast ---------- */
+  #toastwrap{
+    position:absolute; top:74px; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:6px; z-index:30; pointer-events:none;
+  }
+  .toast{
+    background:rgba(58,50,38,0.92); color:#fff; padding:7px 16px; border-radius:20px;
+    font-weight:700; font-size:13px; box-shadow:0 4px 10px rgba(0,0,0,0.3);
+    animation:toastin 0.25s ease-out, toastout 0.4s ease-in 2.6s forwards;
+    white-space:nowrap;
+  }
+  @keyframes toastin{from{opacity:0; transform:translateY(-8px);} to{opacity:1; transform:translateY(0);}}
+  @keyframes toastout{to{opacity:0; transform:translateY(-8px);}}
+
+  /* ---------- help modal ---------- */
+  #helpmodal{
+    position:absolute; inset:0; background:rgba(20,16,10,0.55); z-index:50;
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  #helpmodal.show{display:flex;}
+  .card{
+    background:var(--cream); border-radius:18px; max-width:420px; width:100%;
+    padding:20px 22px; box-shadow:var(--panel-shadow); max-height:80vh; overflow-y:auto;
+  }
+  .card h2{margin:0 0 8px; color:var(--forest-dark); font-size:22px;}
+  .card p, .card li{font-size:14px; line-height:1.5;}
+  .card ul{padding-left:20px; margin:6px 0;}
+  .card button{
+    margin-top:10px; background:var(--ember); color:#fff; border:none; border-radius:10px;
+    padding:9px 18px; font-weight:800; font-family:'Baloo 2'; cursor:pointer; box-shadow:0 3px 0 var(--ember-dark);
+  }
+
+  /* ---------- tile tooltip ---------- */
+  #hint{
+    position:absolute; left:12px; bottom:112px; z-index:20;
+    background:rgba(58,50,38,0.85); color:#fff; padding:6px 12px; border-radius:10px;
+    font-size:12px; font-weight:600; max-width:280px; pointer-events:none;
+  }
+
+  #loading{
+    position:absolute; inset:0; background:var(--forest-dark); color:var(--cream);
+    display:flex; align-items:center; justify-content:center; z-index:100; font-family:'Baloo 2';
+    font-size:18px; text-align:center; padding:20px;
+  }
+
+  @media (max-width:640px){
+    .brand span.sub{display:none;}
+    .stat-pill{min-width:52px; padding:4px 8px;}
+    .stat-value{font-size:13px;}
+    .tool{width:66px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="loading">🏕️ SimCamping wordt geladen…</div>
+
+  <div id="topbar" style="display:none;">
+    <div class="brand">🏕️ <span>SimCamping</span></div>
+    <div class="stats">
+      <div class="stat-pill"><span class="stat-label">Kas</span><span class="stat-value" id="stat-cash">€0</span></div>
+      <div class="stat-pill"><span class="stat-label">Dag</span><span class="stat-value" id="stat-day">1</span></div>
+      <div class="stat-pill"><span class="stat-label">Gasten</span><span class="stat-value" id="stat-guests">0</span></div>
+      <div class="stat-pill"><span class="stat-label">Tevredenheid</span><span class="stat-value" id="stat-sat">–</span></div>
+      <div class="stat-pill"><span class="stat-label">Inkomen/nacht</span><span class="stat-value" id="stat-income">€0</span></div>
+    </div>
+    <div id="speedbar">
+      <button class="sbtn active" id="btn-pause" title="Pauze">⏸</button>
+      <button class="sbtn" id="btn-play1" title="Normaal">▶</button>
+      <button class="sbtn" id="btn-play2" title="Snel">⏩</button>
+    </div>
+    <button id="nextday">Volgende dag ➜</button>
+    <button id="helpbtn">?</button>
+  </div>
+
+  <div id="toastwrap"></div>
+  <div id="hint"></div>
+
+  <div id="toolbar" style="display:none;">
+    <div id="toolscroll"></div>
+  </div>
+
+  <div id="helpmodal">
+    <div class="card">
+      <h2>🏕️ Welkom op je camping!</h2>
+      <p>Bouw en beheer je eigen camping, geïnspireerd op de klassieke stadssimulators. Geen installatie nodig — alles draait live in je browser.</p>
+      <ul>
+        <li><b>🖐 Verplaats</b> de camera door te slepen. Scrollen/pinchen = zoomen.</li>
+        <li><b>🛣 Wegen</b> zijn verplicht: kampeerplekken hebben een weg direct ernaast nodig.</li>
+        <li><b>🏨 Bouw een receptie</b> voordat gasten kunnen inchecken — elke receptie biedt plek aan 8 groepen.</li>
+        <li><b>🚻 🛍️ 🏊 🎠 🌳</b> Voorzieningen verhogen de tevredenheid van gasten in de buurt, wat zorgt voor meer bezetting én minder vertrek.</li>
+        <li><b>💰</b> Verdien geld per bezette plek per nacht, min onderhoudskosten. Klik op <b>Volgende dag</b> of zet de tijd op play.</li>
+      </ul>
+      <button onclick="document.getElementById('helpmodal').classList.remove('show')">Aan de slag!</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function loadScript(urls, cb, i){
+  i = i || 0;
+  if(i >= urls.length){ cb(false); return; }
+  var s = document.createElement('script');
+  s.src = urls[i];
+  s.onload = function(){ cb(true); };
+  s.onerror = function(){ loadScript(urls, cb, i+1); };
+  document.head.appendChild(s);
+}
+loadScript([
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.128.0/three.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/128/three.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.150.1/three.min.js'
+], function(ok){
+  if(ok && window.THREE){ initGame(); }
+  else{
+    document.getElementById('loading').innerHTML =
+      '⚠️ Kon Three.js niet laden.<br>Controleer je internetverbinding en herlaad de pagina.';
+  }
+});
+
+const current_version = "20260817-153000";
+
+function initGame(){
+document.getElementById('loading').style.display='none';
+document.getElementById('topbar').style.display='flex';
+document.getElementById('toolbar').style.display='block';
+
+/* ================= CONFIG ================= */
+const SIZE = 16;          // grid is SIZE x SIZE
+const TS   = 2;            // world units per tile
+const CAPACITY_PER_RECEPTION = 8;
+
+const TILE_DEFS = {
+  grass:         { label:'Gras', icon:'🌱', cost:0, upkeep:0 },
+  road:          { label:'Weg', icon:'🛣️', cost:20, upkeep:0, group:'terrain' },
+  bulldoze:      { label:'Slopen', icon:'🧹', cost:0, upkeep:0, group:'terrain' },
+  pan:           { label:'Verplaats', icon:'🖐️', cost:0, upkeep:0, group:'terrain', isTool:true },
+  pitch_tent:    { label:'Tentplek', icon:'⛺', cost:60, upkeep:0, group:'pitch', price:18, guests:2, requiresRoad:true },
+  pitch_caravan: { label:'Caravanplek', icon:'🚐', cost:100, upkeep:0, group:'pitch', price:32, guests:4, requiresRoad:true },
+  reception:     { label:'Receptie', icon:'🏨', cost:450, upkeep:8, group:'building' },
+  toilet:        { label:'Sanitair', icon:'🚻', cost:350, upkeep:6, group:'building' },
+  shop:          { label:'Winkel', icon:'🛍️', cost:550, upkeep:12, group:'building' },
+  pool:          { label:'Zwembad', icon:'🏊', cost:900, upkeep:18, group:'building' },
+  playground:    { label:'Speeltuin', icon:'🎠', cost:220, upkeep:4, group:'building' },
+  tree:          { label:'Boom', icon:'🌳', cost:15, upkeep:0, group:'building' },
+};
+const TOOL_ORDER = [
+  'pan','bulldoze', null,
+  'road', null,
+  'pitch_tent','pitch_caravan', null,
+  'reception','toilet','shop','pool','playground','tree'
+];
+
+/* ================= STATE ================= */
+let cash = 6000;
+let day = 1;
+let guests = 0;
+let avgSatisfaction = null;
+let lastIncome = 0;
+let speed = 0; // 0 paused, 1 normal, 2 fast
+let dayTimer = null;
+let selectedTool = 'pan';
+
+// grid[x][z] = { type, occupied(bool for pitches), mesh(THREE.Group|null) }
+const grid = [];
+for(let x=0;x<SIZE;x++){
+  grid.push([]);
+  for(let z=0;z<SIZE;z++){
+    grid[x].push({ type:'grass', occupied:false, mesh:null });
+  }
+}
+
+/* ================= THREE SETUP ================= */
+const canvasApp = document.getElementById('app');
+const scene = new THREE.Scene();
+const skyDay = new THREE.Color(0x8fd0e0);
+const skyDusk = new THREE.Color(0xf3b077);
+scene.background = skyDay.clone();
+scene.fog = new THREE.Fog(scene.background.getHex(), 45, 90);
+
+const worldSpan = SIZE*TS;
+const frustum = worldSpan*0.62;
+let camera;
+function makeCamera(){
+  const aspect = window.innerWidth/window.innerHeight;
+  camera = new THREE.OrthographicCamera(
+    -frustum*aspect, frustum*aspect, frustum, -frustum, 0.1, 300
+  );
+}
+makeCamera();
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+canvasApp.appendChild(renderer.domElement);
+
+// isometric orbit setup
+let camZoom = 1;
+let camTarget = new THREE.Vector3(0,0,0);
+const isoDir = new THREE.Vector3(1,1.15,1).normalize();
+const camDist = 40;
+function updateCamera(){
+  camera.position.copy(camTarget).add(isoDir.clone().multiplyScalar(camDist));
+  camera.zoom = camZoom;
+  camera.lookAt(camTarget);
+  camera.updateProjectionMatrix();
+}
+updateCamera();
+
+// lights
+const hemi = new THREE.HemisphereLight(0xffffff, 0x4a3f2c, 0.65);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffffff, 0.95);
+sun.position.set(30,45,20);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left = -worldSpan; sun.shadow.camera.right = worldSpan;
+sun.shadow.camera.top = worldSpan; sun.shadow.camera.bottom = -worldSpan;
+sun.shadow.camera.near = 1; sun.shadow.camera.far = 150;
+sun.shadow.bias = -0.0015;
+scene.add(sun);
+scene.add(sun.target);
+
+/* ---- procedural checkerboard ground texture ---- */
+function makeGroundTexture(){
+  const c = document.createElement('canvas');
+  c.width = c.height = 512;
+  const ctx = c.getContext('2d');
+  const cell = c.width/SIZE;
+  for(let i=0;i<SIZE;i++){
+    for(let j=0;j<SIZE;j++){
+      ctx.fillStyle = (i+j)%2===0 ? '#6fae4f' : '#67a548';
+      ctx.fillRect(i*cell, j*cell, cell, cell);
+    }
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.magFilter = THREE.NearestFilter;
+  return tex;
+}
+const groundGeo = new THREE.PlaneGeometry(worldSpan, worldSpan);
+const groundMat = new THREE.MeshStandardMaterial({ map:makeGroundTexture(), roughness:1 });
+const groundMesh = new THREE.Mesh(groundGeo, groundMat);
+groundMesh.rotation.x = -Math.PI/2;
+groundMesh.receiveShadow = true;
+scene.add(groundMesh);
+
+// invisible raycast plane slightly above ground for reliable picking
+const pickPlane = new THREE.Mesh(
+  new THREE.PlaneGeometry(worldSpan*2, worldSpan*2),
+  new THREE.MeshBasicMaterial({ visible:false })
+);
+pickPlane.rotation.x = -Math.PI/2;
+scene.add(pickPlane);
+
+// thin border wall so the campsite feels contained
+const borderMat = new THREE.MeshStandardMaterial({ color:0x3f6b3a, roughness:1 });
+const borderGeo = new THREE.BoxGeometry(worldSpan+0.6, 0.6, 0.6);
+[[0,-worldSpan/2-0.3,0],[0,worldSpan/2+0.3,0]].forEach(p=>{
+  const b = new THREE.Mesh(borderGeo, borderMat);
+  b.position.set(p[0], -0.3, p[1]);
+  b.receiveShadow = true; b.castShadow=true;
+  scene.add(b);
+});
+const borderGeo2 = new THREE.BoxGeometry(0.6, 0.6, worldSpan+0.6);
+[[-worldSpan/2-0.3,0,0],[worldSpan/2+0.3,0,0]].forEach(p=>{
+  const b = new THREE.Mesh(borderGeo2, borderMat);
+  b.position.set(p[0], -0.3, p[1]);
+  b.receiveShadow = true; b.castShadow=true;
+  scene.add(b);
+});
+
+/* ================= HELPERS ================= */
+function tileCenter(x,z){
+  return new THREE.Vector3(
+    (x - SIZE/2 + 0.5) * TS,
+    0,
+    (z - SIZE/2 + 0.5) * TS
+  );
+}
+function worldToTile(pt){
+  const x = Math.floor(pt.x/TS + SIZE/2);
+  const z = Math.floor(pt.z/TS + SIZE/2);
+  return {x,z};
+}
+function inBounds(x,z){ return x>=0 && x<SIZE && z>=0 && z<SIZE; }
+function neighbors4(x,z){
+  return [[x+1,z],[x-1,z],[x,z+1],[x,z-1]].filter(p=>inBounds(p[0],p[1]));
+}
+function chebyshev(x1,z1,x2,z2){ return Math.max(Math.abs(x1-x2), Math.abs(z1-z2)); }
+function isAdjacentToRoad(x,z){
+  return neighbors4(x,z).some(([nx,nz])=> grid[nx][nz].type==='road');
+}
+function countTiles(type){
+  let n=0;
+  for(let x=0;x<SIZE;x++) for(let z=0;z<SIZE;z++) if(grid[x][z].type===type) n++;
+  return n;
+}
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function randChoice(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+/* ================= TILE MESH BUILDERS ================= */
+const padGeo = new THREE.BoxGeometry(TS*0.94, 0.16, TS*0.94);
+function pad(color){
+  const m = new THREE.Mesh(padGeo, new THREE.MeshStandardMaterial({color, roughness:0.9}));
+  m.position.y = 0.08;
+  m.receiveShadow = true; m.castShadow = true;
+  return m;
+}
+function box(w,h,d,color,y){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshStandardMaterial({color, roughness:0.85}));
+  m.position.y = y!==undefined?y:h/2;
+  m.castShadow = true; m.receiveShadow = true;
+  return m;
+}
+function cone(r,h,color,y){
+  const m = new THREE.Mesh(new THREE.ConeGeometry(r,h,4), new THREE.MeshStandardMaterial({color, roughness:0.8}));
+  m.rotation.y = Math.PI/4;
+  m.position.y = y!==undefined?y:h/2;
+  m.castShadow = true;
+  return m;
+}
+function cyl(r,h,color,y){
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,10), new THREE.MeshStandardMaterial({color, roughness:0.85}));
+  m.position.y = y!==undefined?y:h/2;
+  m.castShadow = true; m.receiveShadow = true;
+  return m;
+}
+function sphere(r,color,y){
+  const m = new THREE.Mesh(new THREE.SphereGeometry(r,10,8), new THREE.MeshStandardMaterial({color, roughness:0.8}));
+  m.position.y = y!==undefined?y:r;
+  m.castShadow = true;
+  return m;
+}
+
+const TENT_COLORS = [0xe36b5c,0x4f9ad1,0xe0a63a,0x6bbf6b];
+const CARAVAN_COLORS = [0xf4f4f4, 0xe8e2d0];
+
+function buildMesh(type, occupied){
+  const g = new THREE.Group();
+  switch(type){
+    case 'road': {
+      g.add(pad(0xc7bda0));
+      break;
+    }
+    case 'pitch_tent': {
+      g.add(pad(0xd9c48f));
+      if(occupied){
+        const tc = randChoice(TENT_COLORS);
+        const tent = cone(0.55,0.62,tc,0.31);
+        tent.scale.set(1,0.85,0.62);
+        tent.castShadow = true;
+        g.add(tent);
+        const fly = box(0.05,0.3,0.05,0x5a4a35,0.15);
+        fly.position.set(0.35,0.15,0);
+        g.add(fly);
+      }
+      break;
+    }
+    case 'pitch_caravan': {
+      g.add(pad(0xcfd9c8));
+      if(occupied){
+        const cc = randChoice(CARAVAN_COLORS);
+        const body = box(1.15,0.55,0.7,cc,0.4);
+        g.add(body);
+        const stripe = box(1.16,0.12,0.72,0xe8703a,0.4);
+        g.add(stripe);
+        const wheel1 = cyl(0.14,0.12,0x2c2620,0.14); wheel1.rotation.z=Math.PI/2; wheel1.position.set(0.35,0.14,0.38); g.add(wheel1);
+        const wheel2 = wheel1.clone(); wheel2.position.set(-0.35,0.14,0.38); g.add(wheel2);
+      }
+      break;
+    }
+    case 'reception': {
+      g.add(pad(0xd9c48f));
+      const body = box(1.3,0.7,1.0,0x8a5a3c,0.45);
+      g.add(body);
+      const roof = box(1.5,0.25,1.2,0x3f8f5c,0.85);
+      g.add(roof);
+      const pole = cyl(0.03,0.9,0x6b5b45,0.55); pole.position.set(0.7,0.55,-0.55); g.add(pole);
+      const flag = box(0.3,0.2,0.02,0xe8703a,0.95); flag.position.set(0.85,0.95,-0.55); g.add(flag);
+      break;
+    }
+    case 'toilet': {
+      g.add(pad(0xe7ecec));
+      const body = box(1.1,0.75,0.85,0xf5f7f5,0.47);
+      g.add(body);
+      const roof = box(1.25,0.14,1.0,0x4f9ad1,0.9);
+      g.add(roof);
+      const door = box(0.28,0.5,0.05,0x4f9ad1,0.3); door.position.set(0,0.3,0.43); g.add(door);
+      break;
+    }
+    case 'shop': {
+      g.add(pad(0xf0dcb0));
+      const body = box(1.3,0.8,1.0,0xf4ede0,0.5);
+      g.add(body);
+      const awn = box(1.5,0.1,0.4,0xe8703a,0.95); awn.position.z = 0.65; g.add(awn);
+      const sign = box(0.6,0.22,0.06,0xc65323,1.15); g.add(sign);
+      break;
+    }
+    case 'pool': {
+      const rim = box(TS*0.94,0.2,TS*0.94,0xe8e2cf,0.1);
+      g.add(rim);
+      const water = box(TS*0.72,0.12,TS*0.72,0x3fa9d8,0.16);
+      water.material.transparent = true; water.material.opacity = 0.92;
+      g.add(water);
+      break;
+    }
+    case 'playground': {
+      g.add(pad(0xe07a5f));
+      const pole1 = cyl(0.05,0.75,0xe0a63a,0.4); pole1.position.set(-0.4,0.4,-0.2); g.add(pole1);
+      const pole2 = cyl(0.05,0.75,0xe0a63a,0.4); pole2.position.set(0.4,0.4,-0.2); g.add(pole2);
+      const bar = box(0.9,0.06,0.06,0xe0a63a,0.75); bar.position.set(0,0.75,-0.2); g.add(bar);
+      const seat = box(0.22,0.03,0.18,0x4f9ad1,0.35); seat.position.set(0,0.35,-0.2); g.add(seat);
+      const slideBase = cyl(0.35,0.5,0x6bbf6b,0.25); slideBase.position.set(0.1,0.25,0.35); g.add(slideBase);
+      const slide = box(0.35,0.06,0.7,0xe8703a,0.5); slide.rotation.x = -0.5; slide.position.set(0.1,0.45,0.55); g.add(slide);
+      break;
+    }
+    case 'tree': {
+      const trunk = cyl(0.09,0.5,0x6b4a30,0.25);
+      g.add(trunk);
+      const leaves = sphere(0.42,0x3f8f4f,0.75);
+      g.add(leaves);
+      const leaves2 = sphere(0.3,0x4fa860,1.02);
+      g.add(leaves2);
+      break;
+    }
+  }
+  return g;
+}
+
+function setTile(x,z,type,occupied){
+  const cell = grid[x][z];
+  if(cell.mesh){ scene.remove(cell.mesh); disposeGroup(cell.mesh); cell.mesh = null; }
+  cell.type = type;
+  cell.occupied = !!occupied;
+  if(type !== 'grass'){
+    const mesh = buildMesh(type, occupied);
+    const c = tileCenter(x,z);
+    mesh.position.copy(c);
+    mesh.rotation.y = (Math.random()<0.5?0:0) ; // keep grid-aligned for readability
+    scene.add(mesh);
+    cell.mesh = mesh;
+  }
+}
+function disposeGroup(g){
+  g.traverse(o=>{
+    if(o.geometry) o.geometry.dispose();
+    if(o.material) o.material.dispose();
+  });
+}
+
+/* ================= CAMERA CONTROLS ================= */
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let isPointerDown = false;
+let dragStart = null;
+let didDrag = false;
+let lastTileHit = null;
+let paintMode = false;
+
+function screenToTile(clientX, clientY){
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((clientX-rect.left)/rect.width)*2 - 1;
+  mouse.y = -((clientY-rect.top)/rect.height)*2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hit = raycaster.intersectObject(pickPlane)[0];
+  if(!hit) return null;
+  const t = worldToTile(hit.point);
+  if(!inBounds(t.x,t.z)) return null;
+  return t;
+}
+
+function panCamera(dx, dy){
+  // move target along screen-aligned axes projected onto ground plane
+  const right = new THREE.Vector3(1,0,-1).normalize();
+  const fwd = new THREE.Vector3(-1,0,-1).normalize();
+  const scale = (frustum*2/renderer.domElement.clientHeight) / camZoom;
+  camTarget.addScaledVector(right, -dx*scale);
+  camTarget.addScaledVector(fwd, dy*scale);
+  const half = worldSpan/2 + 4;
+  camTarget.x = clamp(camTarget.x, -half, half);
+  camTarget.z = clamp(camTarget.z, -half, half);
+  updateCamera();
+}
+
+let pointers = {};
+renderer.domElement.addEventListener('pointerdown', (e)=>{
+  renderer.domElement.setPointerCapture(e.pointerId);
+  pointers[e.pointerId] = {x:e.clientX, y:e.clientY};
+  if(Object.keys(pointers).length === 1){
+    isPointerDown = true;
+    dragStart = {x:e.clientX, y:e.clientY};
+    didDrag = false;
+    lastTileHit = null;
+    if(selectedTool !== 'pan'){
+      const t = screenToTile(e.clientX, e.clientY);
+      if(t){ attemptPlace(t.x,t.z); lastTileHit = t.x+'_'+t.z; }
+      paintMode = (selectedTool==='bulldoze' || selectedTool==='road');
+    }
+  }
+});
+renderer.domElement.addEventListener('pointermove', (e)=>{
+  if(!pointers[e.pointerId]) return;
+  const prev = pointers[e.pointerId];
+  const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+  pointers[e.pointerId] = {x:e.clientX, y:e.clientY};
+  const ids = Object.keys(pointers);
+
+  if(ids.length === 2){
+    // pinch zoom
+    const pts = ids.map(id=>pointers[id]);
+    const dist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
+    if(pinchStartDist){
+      const factor = dist/pinchStartDist;
+      camZoom = clamp(pinchStartZoom*factor, 0.45, 3.2);
+      updateCamera();
+    }
+    return;
+  }
+
+  if(!isPointerDown) return;
+  const moved = Math.hypot(e.clientX-dragStart.x, e.clientY-dragStart.y);
+  if(moved>4) didDrag = true;
+
+  if(selectedTool === 'pan'){
+    panCamera(dx, dy);
+  } else if(paintMode && didDrag){
+    const t = screenToTile(e.clientX, e.clientY);
+    if(t){
+      const key = t.x+'_'+t.z;
+      if(key !== lastTileHit){ attemptPlace(t.x,t.z); lastTileHit = key; }
+    }
+  }
+});
+let pinchStartDist = null, pinchStartZoom = 1;
+renderer.domElement.addEventListener('pointerdown', ()=>{
+  const ids = Object.keys(pointers);
+  if(ids.length===2){
+    const pts = ids.map(id=>pointers[id]);
+    pinchStartDist = Math.hypot(pts[0].x-pts[1].x, pts[0].y-pts[1].y);
+    pinchStartZoom = camZoom;
+  }
+});
+function endPointer(e){
+  delete pointers[e.pointerId];
+  if(Object.keys(pointers).length < 2) pinchStartDist = null;
+  if(Object.keys(pointers).length === 0){
+    if(isPointerDown && !didDrag && selectedTool !== 'pan'){
+      const t = screenToTile(e.clientX, e.clientY);
+      if(t){ attemptPlace(t.x,t.z); }
+    }
+    isPointerDown = false;
+  }
+}
+renderer.domElement.addEventListener('pointerup', endPointer);
+renderer.domElement.addEventListener('pointercancel', endPointer);
+renderer.domElement.addEventListener('pointerleave', (e)=>{ if(Object.keys(pointers).length<=1) endPointer(e); });
+
+renderer.domElement.addEventListener('wheel', (e)=>{
+  e.preventDefault();
+  const factor = e.deltaY > 0 ? 0.9 : 1.1;
+  camZoom = clamp(camZoom*factor, 0.45, 3.2);
+  updateCamera();
+}, { passive:false });
+
+// hover hint for desktop
+renderer.domElement.addEventListener('mousemove', (e)=>{
+  if(isPointerDown) return;
+  const t = screenToTile(e.clientX, e.clientY);
+  const hintEl = document.getElementById('hint');
+  if(!t){ hintEl.style.opacity=0; return; }
+  hintEl.style.opacity=1;
+  const cell = grid[t.x][t.z];
+  const def = TILE_DEFS[cell.type];
+  let txt = def.label;
+  if(cell.type.startsWith('pitch_')) txt += cell.occupied ? ' · bezet 🙂' : ' · leeg';
+  hintEl.textContent = `(${t.x+1},${t.z+1}) ${txt}`;
+});
+
+// keyboard pan
+const keys = {};
+window.addEventListener('keydown', e=>{ keys[e.key]=true; });
+window.addEventListener('keyup', e=>{ keys[e.key]=false; });
+function keyboardPan(){
+  const spd = 10;
+  let dx=0, dy=0;
+  if(keys['ArrowLeft']||keys['a']) dx += spd;
+  if(keys['ArrowRight']||keys['d']) dx -= spd;
+  if(keys['ArrowUp']||keys['w']) dy += spd;
+  if(keys['ArrowDown']||keys['s']) dy -= spd;
+  if(dx||dy) panCamera(dx,dy);
+}
+
+window.addEventListener('resize', ()=>{
+  makeCamera();
+  updateCamera();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* ================= BUILD LOGIC ================= */
+function toast(msg, kind){
+  const wrap = document.getElementById('toastwrap');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  if(kind==='bad') el.style.background = 'rgba(198,83,35,0.95)';
+  if(kind==='good') el.style.background = 'rgba(47,107,79,0.95)';
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(()=>el.remove(), 3100);
+}
+
+function attemptPlace(x,z){
+  const def = TILE_DEFS[selectedTool];
+  const cell = grid[x][z];
+
+  if(selectedTool === 'bulldoze'){
+    if(cell.type === 'grass') return;
+    setTile(x,z,'grass',false);
+    refreshUI();
+    return;
+  }
+
+  if(cell.type !== 'grass'){
+    toast('Sloop dit vakje eerst 🧹');
+    return;
+  }
+  if(cash < def.cost){
+    toast('Niet genoeg geld! 💸', 'bad');
+    return;
+  }
+  if(def.requiresRoad && !isAdjacentToRoad(x,z)){
+    toast('Moet direct naast een weg liggen 🛣️', 'bad');
+    return;
+  }
+  cash -= def.cost;
+  setTile(x,z, selectedTool, false);
+  refreshUI();
+}
+
+/* ================= SATISFACTION / SIMULATION ================= */
+function hygieneScore(x,z){
+  let n=0;
+  for(let a=0;a<SIZE;a++) for(let b=0;b<SIZE;b++)
+    if(grid[a][b].type==='toilet' && chebyshev(x,z,a,b)<=5) n++;
+  return clamp(n,0,2)*9;
+}
+function funScore(x,z){
+  let n=0;
+  for(let a=0;a<SIZE;a++) for(let b=0;b<SIZE;b++){
+    const t = grid[a][b].type;
+    if((t==='pool' && chebyshev(x,z,a,b)<=6) || (t==='playground' && chebyshev(x,z,a,b)<=5)) n++;
+  }
+  return clamp(n,0,3)*7;
+}
+function shopScore(x,z){
+  let n=0;
+  for(let a=0;a<SIZE;a++) for(let b=0;b<SIZE;b++)
+    if(grid[a][b].type==='shop' && chebyshev(x,z,a,b)<=6) n++;
+  return clamp(n,0,2)*5;
+}
+function natureScore(x,z){
+  let n=0;
+  for(let a=0;a<SIZE;a++) for(let b=0;b<SIZE;b++)
+    if(grid[a][b].type==='tree' && chebyshev(x,z,a,b)<=3) n++;
+  return clamp(n,0,4)*2.5;
+}
+function crowdPenalty(x,z){
+  let n=0;
+  for(let a=0;a<SIZE;a++) for(let b=0;b<SIZE;b++){
+    const t = grid[a][b].type;
+    if((t==='pitch_tent'||t==='pitch_caravan') && chebyshev(x,z,a,b)<=1 && !(a===x&&b===z)) n++;
+  }
+  return Math.max(0,n-3)*5;
+}
+function tileSatisfaction(x,z, connected, hasReception){
+  if(!connected || !hasReception) return 0;
+  let s = 45;
+  s += hygieneScore(x,z);
+  s += funScore(x,z);
+  s += shopScore(x,z);
+  s += natureScore(x,z);
+  s -= crowdPenalty(x,z);
+  return clamp(Math.round(s),0,100);
+}
+
+function allPitches(){
+  const list = [];
+  for(let x=0;x<SIZE;x++) for(let z=0;z<SIZE;z++){
+    const t = grid[x][z].type;
+    if(t==='pitch_tent' || t==='pitch_caravan') list.push({x,z,cell:grid[x][z]});
+  }
+  return list;
+}
+
+function simulateDay(){
+  day++;
+  const hasReception = countTiles('reception') > 0;
+  const capacity = countTiles('reception') * CAPACITY_PER_RECEPTION;
+
+  let expenses = 0;
+  for(let x=0;x<SIZE;x++) for(let z=0;z<SIZE;z++){
+    const def = TILE_DEFS[grid[x][z].type];
+    if(def && def.upkeep) expenses += def.upkeep;
+  }
+
+  const pitches = allPitches();
+  pitches.forEach(p=>{
+    p.connected = isAdjacentToRoad(p.x,p.z);
+    p.sat = tileSatisfaction(p.x,p.z,p.connected,hasReception);
+  });
+
+  // vacate
+  pitches.filter(p=>p.cell.occupied).forEach(p=>{
+    const leaveChance = clamp((55 - p.sat)/110, 0.03, 0.5);
+    if(Math.random() < leaveChance) p.cell.occupied = false;
+  });
+
+  // fill
+  let occupiedCount = pitches.filter(p=>p.cell.occupied).length;
+  let freeSlots = capacity - occupiedCount;
+  const candidates = shuffle(pitches.filter(p=>!p.cell.occupied && p.connected && hasReception));
+  for(const p of candidates){
+    if(freeSlots<=0) break;
+    const fillChance = clamp(p.sat/110, 0.04, 0.9);
+    if(Math.random() < fillChance){ p.cell.occupied = true; freeSlots--; }
+  }
+
+  // rebuild visuals + income
+  let income = 0;
+  let satSum=0, satCount=0;
+  pitches.forEach(p=>{
+    if(p.cell.occupied){
+      income += TILE_DEFS[p.cell.type].price;
+    }
+    if(p.connected && hasReception){ satSum += p.sat; satCount++; }
+    setTile(p.x,p.z,p.cell.type,p.cell.occupied);
+  });
+
+  // shop bonus
+  for(let x=0;x<SIZE;x++) for(let z=0;z<SIZE;z++){
+    if(grid[x][z].type==='shop'){
+      const nearbyOccupied = pitches.filter(p=>p.cell.occupied && chebyshev(x,z,p.x,p.z)<=6).length;
+      income += nearbyOccupied * 3;
+    }
+  }
+
+  cash += income - expenses;
+  lastIncome = income - expenses;
+  avgSatisfaction = satCount ? Math.round(satSum/satCount) : null;
+  guests = pitches.reduce((s,p)=> s + (p.cell.occupied ? TILE_DEFS[p.cell.type].guests : 0), 0);
+
+  if(!hasReception && countTiles('pitch_tent')+countTiles('pitch_caravan')>0 && day%5===0){
+    toast('Bouw een receptie zodat gasten kunnen inchecken! 🏨','bad');
+  }
+  if(cash < 0){
+    toast('De kas staat rood! 📉','bad');
+  }
+  milestoneCheck();
+  refreshUI();
+}
+
+let milestones = { cash1:false, cash2:false, guests1:false, guests2:false };
+function milestoneCheck(){
+  if(!milestones.cash1 && cash>=10000){ milestones.cash1=true; toast('Mijlpaal: €10.000 op de bank! 🎉','good'); }
+  if(!milestones.cash2 && cash>=25000){ milestones.cash2=true; toast('Mijlpaal: €25.000! Je camping floreert 🌟','good'); }
+  if(!milestones.guests1 && guests>=20){ milestones.guests1=true; toast('Mijlpaal: 20 gasten tegelijk! 🏕️','good'); }
+  if(!milestones.guests2 && guests>=50){ milestones.guests2=true; toast('Mijlpaal: 50 gasten! Legendarische camping 🏆','good'); }
+}
+
+/* ================= UI WIRING ================= */
+function refreshUI(){
+  document.getElementById('stat-cash').textContent = '€' + cash.toLocaleString('nl-NL');
+  document.getElementById('stat-cash').className = 'stat-value' + (cash<0?' warn':'');
+  document.getElementById('stat-day').textContent = day;
+  document.getElementById('stat-guests').textContent = guests;
+  const satEl = document.getElementById('stat-sat');
+  satEl.textContent = avgSatisfaction===null ? '–' : avgSatisfaction+'%';
+  satEl.className = 'stat-value' + (avgSatisfaction!==null && avgSatisfaction<40 ? ' warn' : (avgSatisfaction!==null && avgSatisfaction>=70 ? ' good':''));
+  const incEl = document.getElementById('stat-income');
+  incEl.textContent = (lastIncome>=0?'+':'') + '€' + lastIncome.toLocaleString('nl-NL');
+  incEl.className = 'stat-value' + (lastIncome<0?' warn':(lastIncome>0?' good':''));
+}
+
+function buildToolbar(){
+  const wrap = document.getElementById('toolscroll');
+  wrap.innerHTML = '';
+  TOOL_ORDER.forEach(key=>{
+    if(key===null){ const sep=document.createElement('div'); sep.className='group-sep'; wrap.appendChild(sep); return; }
+    const def = TILE_DEFS[key];
+    const el = document.createElement('div');
+    el.className = 'tool' + (key===selectedTool ? ' selected' : '');
+    el.innerHTML = `<div class="icon">${def.icon}</div><div class="tool-label">${def.label}</div>` +
+      (def.isTool ? `<div class="tool-cost free">·</div>` : `<div class="tool-cost ${def.cost===0?'free':''}">${def.cost===0?'gratis':'€'+def.cost}</div>`);
+    el.addEventListener('click', ()=>{
+      selectedTool = key;
+      buildToolbar();
+    });
+    wrap.appendChild(el);
+  });
+}
+buildToolbar();
+refreshUI();
+
+document.getElementById('helpbtn').addEventListener('click', ()=>{
+  document.getElementById('helpmodal').classList.add('show');
+});
+document.getElementById('nextday').addEventListener('click', ()=> simulateDay());
+
+function setSpeed(s){
+  speed = s;
+  document.getElementById('btn-pause').classList.toggle('active', s===0);
+  document.getElementById('btn-play1').classList.toggle('active', s===1);
+  document.getElementById('btn-play2').classList.toggle('active', s===2);
+  if(dayTimer){ clearInterval(dayTimer); dayTimer=null; }
+  if(s>0){
+    const interval = s===1 ? 2600 : 900;
+    dayTimer = setInterval(simulateDay, interval);
+  }
+}
+document.getElementById('btn-pause').addEventListener('click', ()=>setSpeed(0));
+document.getElementById('btn-play1').addEventListener('click', ()=>setSpeed(1));
+document.getElementById('btn-play2').addEventListener('click', ()=>setSpeed(2));
+
+/* ================= STARTER LAYOUT ================= */
+(function starterLayout(){
+  const mid = Math.floor(SIZE/2);
+  // a short entrance road
+  for(let x=mid-2;x<=mid+2;x++){ setTile(x, 2, 'road', false); }
+  setTile(mid, 3, 'reception', false);
+  cash -= TILE_DEFS.reception.cost * 0; // starter buildings are free
+})();
+
+/* ================= RENDER LOOP ================= */
+let clock = 0;
+function animate(){
+  requestAnimationFrame(animate);
+  clock += 0.0018;
+  keyboardPan();
+  const f = (Math.sin(clock)+1)/2;
+  scene.background.lerpColors(skyDay, skyDusk, f*0.35);
+  scene.fog.color.copy(scene.background);
+  sun.intensity = 0.8 + f*0.25;
+  renderer.render(scene, camera);
+}
+animate();
+
+toast('Welkom op je camping! Bouw wegen en plekken om te beginnen 🏕️');
+
+} // end initGame
+</script>
+</body>
+</html>
