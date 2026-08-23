@@ -1,0 +1,2543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SimSpiri — Isla Namastara</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<!-- version history
+# version : 20260817-223058 - Initial version: SimSpiri isometric island sim (Three.js, single file)
+# version : 20260817-224500 - Robust multi-CDN synchronous Three.js loader with graceful fallback message
+# version : 20260817-230500 - Camera auto-fits to island footprint on load/restart; reskinned UI (dark poster/cult-rave HUD, Bungee + Manrope, hard shadows) away from generic light-cream/serif look
+# version : 20260817-232000 - Fixed canvas not filling viewport: replaced CSS `inset:0` shorthand (unsupported in some embedded preview engines) with explicit top/right/bottom/left everywhere, added width/height 100% fallback, and a ResizeObserver-based self-healing resize + one-time corrective camera fit
+# version : 20260817-233500 - Much more open, buildable islands: hard-capped volcanic rock (~4.5% of land) and jungle (~24% of land) as a fraction regardless of noise seed so grass always dominates, and roughly halved palm-tree decor density for a clearer, less cluttered island
+# version : 20260818-001500 - Fixed dorm demand flip-flopping between red/green every month: reduced formula sensitivity and added month-to-month smoothing so it reads as a legible trend instead of an oscillation triggered by capacity jumps; added an explanatory caption under the Demand bars
+-->
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sidebar-w: 300px;
+  --toggle-w: 26px;
+  --paper:#241129;
+  --paper-2:#150a19;
+  --paper-hi:#33163a;
+  --ink:#fbeee6;
+  --ink-soft:#caa0c4;
+  --line:#4d2a55;
+  --terra:#ff4d6d;
+  --terra-dark:#d12f52;
+  --marigold:#ffc933;
+  --jade:#2fe6ac;
+  --lotus:#ff7ad9;
+  --sky:#49d3ff;
+  --shadow: 3px 3px 0 rgba(0,0,0,.4);
+  --shadow-lg: 6px 6px 0 rgba(0,0,0,.45);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  height:100vh; height:100dvh;
+  display:flex; overflow:hidden;
+  font-family:'Manrope',sans-serif; color:var(--ink);
+  background:var(--paper-2);
+  user-select:none;
+}
+button{font-family:inherit}
+
+/* ================= SIDEBAR ================= */
+#sidebar-overlay{display:none;position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(10,4,14,.6);z-index:1001}
+#sidebar-overlay.hidden{display:none !important}
+
+#sidebar{
+  width:var(--sidebar-w); min-width:var(--sidebar-w);
+  display:flex; flex-direction:column;
+  overflow:visible; position:relative; flex-shrink:0;
+  z-index:1002;
+  transition:width .25s ease, min-width .25s ease;
+  background:
+    radial-gradient(140% 55% at 100% 0%, rgba(255,77,109,.20), transparent 55%),
+    radial-gradient(110% 50% at 0% 100%, rgba(47,230,172,.10), transparent 55%),
+    linear-gradient(175deg, var(--paper) 0%, var(--paper-2) 100%);
+  border-right:2px solid var(--terra);
+  box-shadow:6px 0 0 rgba(0,0,0,.32);
+}
+#sidebar.collapsed{width:var(--toggle-w);min-width:var(--toggle-w)}
+#sidebar.collapsed > *:not(#sidebar-toggle){display:none}
+#sidebar-header,#sidebar-body,#sidebar-footer{overflow:hidden}
+#sidebar-body{overflow-y:auto; flex:1; padding:0 14px 10px}
+#sidebar-toggle{
+  position:absolute; top:50%; right:-16px; transform:translateY(-50%);
+  width:16px;height:74px; border:2px solid rgba(0,0,0,.4); border-left:none;
+  border-radius:0 8px 8px 0; background:var(--terra); color:#1a0f1d;
+  font-size:.7rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  transition:background .15s,width .15s; z-index:1003; flex-shrink:0;
+  box-shadow:3px 0 0 rgba(0,0,0,.35);
+}
+#sidebar-toggle:hover{background:var(--marigold);width:21px}
+
+#sidebar-header{padding:16px 16px 10px; border-bottom:2px dashed var(--line)}
+#sidebar-header h1{
+  font-family:'Bungee',sans-serif; font-weight:400; font-size:1.32rem;
+  margin:0; letter-spacing:0; line-height:1.15; color:var(--ink);
+}
+#sidebar-header h1 em{font-style:normal;color:var(--marigold)}
+#sidebar-header p{margin:6px 0 0;font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
+
+.sec{margin-top:16px}
+.sec h2{
+  font-family:'Manrope',sans-serif; font-weight:800; font-size:.63rem; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--ink-soft); margin:0 0 7px; display:flex; align-items:center; gap:8px;
+}
+.sec h2:after{content:'';flex:1;height:2px;background:var(--line)}
+
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tool{
+  display:flex;align-items:center;gap:7px;text-align:left;
+  padding:7px 8px;border-radius:9px;cursor:pointer;
+  background:rgba(255,255,255,.045); border:1.5px solid var(--line);
+  font-size:.74rem; line-height:1.05; color:var(--ink);
+  transition:transform .12s, background .12s, border-color .12s, box-shadow .12s;
+}
+.tool .ic{font-size:1.05rem}
+.tool .tx{display:flex;flex-direction:column;gap:1px;min-width:0}
+.tool .tx b{font-weight:700;font-size:.74rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tool .tx span{font-size:.63rem;color:var(--ink-soft);font-variant-numeric:tabular-nums;font-weight:700}
+.tool:hover{transform:translateY(-2px);background:rgba(255,255,255,.09);border-color:var(--terra);box-shadow:var(--shadow)}
+.tool.active{background:var(--terra);border-color:var(--terra);color:#1a0f1d;box-shadow:inset 0 0 0 2px var(--marigold), var(--shadow)}
+.tool.active .tx span{color:rgba(26,15,29,.72)}
+.tool.locked{opacity:.35;cursor:not-allowed}
+.tool.wide{grid-column:span 2}
+
+.decree{
+  width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;
+  padding:8px 10px;margin-bottom:5px;border-radius:9px;cursor:pointer;
+  border:1.5px solid var(--line); background:rgba(255,255,255,.04);
+  font-size:.76rem;text-align:left;color:var(--ink);transition:background .12s,transform .12s,border-color .12s;
+}
+.decree:hover{background:rgba(255,255,255,.08);border-color:var(--marigold);transform:translateY(-2px)}
+.decree b{font-weight:700}
+.decree small{display:block;color:var(--ink-soft);font-size:.63rem;margin-top:2px}
+.decree .price{font-family:'Manrope',sans-serif;font-weight:800;color:var(--marigold);white-space:nowrap}
+.decree:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.slider-row{display:flex;align-items:center;gap:9px;font-size:.74rem}
+.slider-row input[type=range]{flex:1;accent-color:var(--terra)}
+.slider-row b{font-family:'Manrope',sans-serif;font-weight:800;font-size:.95rem;min-width:34px;text-align:right;color:var(--marigold)}
+
+#sidebar-footer{padding:10px 16px 12px;border-top:2px dashed var(--line);font-size:.6rem;color:var(--ink-soft);letter-spacing:.04em}
+#sidebar-footer a{color:var(--marigold);text-decoration:none}
+
+/* ================= MAIN ================= */
+#main{flex:1;position:relative;overflow:hidden;background:linear-gradient(180deg,#e6f4f6,#cfe8ee 55%,#bcdde6)}
+#scene{position:absolute;top:0;right:0;bottom:0;left:0;width:100%;height:100%;display:block;touch-action:none}
+
+/* top bar */
+#topbar{
+  position:absolute;top:0;left:0;right:0;z-index:40;
+  display:flex;align-items:center;gap:8px;padding:8px 10px;flex-wrap:wrap;
+  background:linear-gradient(180deg, rgba(21,10,25,.82), rgba(21,10,25,.35) 70%, transparent);
+  pointer-events:none;
+}
+#topbar > *{pointer-events:auto}
+.chip{
+  display:flex;align-items:baseline;gap:6px;
+  background:var(--paper); border:2px solid var(--line);
+  border-radius:999px;padding:4px 11px;box-shadow:var(--shadow);
+  font-size:.66rem;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-soft);
+  white-space:nowrap;
+}
+.chip b{font-family:'Manrope',sans-serif;font-size:.98rem;font-weight:800;letter-spacing:0;color:var(--ink);text-transform:none}
+.chip.coin b{color:var(--jade)}
+.chip.coin.neg b{color:var(--terra)}
+.meters{display:flex;gap:6px;flex-wrap:wrap}
+.meter{
+  position:relative;background:var(--paper);border:2px solid var(--line);
+  border-radius:8px;padding:3px 9px 5px;min-width:92px;box-shadow:var(--shadow);overflow:hidden;
+}
+.meter i{font-style:normal;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
+.meter b{display:block;font-family:'Manrope',sans-serif;font-size:.9rem;font-weight:800;line-height:1.05;color:var(--ink)}
+.meter .bar{position:absolute;left:0;bottom:0;height:3px;background:var(--jade);transition:width .5s ease}
+.meter.warn .bar{background:var(--marigold)}
+.meter.bad .bar{background:var(--terra)}
+.meter.bad b{color:var(--terra)}
+
+.btn{
+  background:var(--paper);border:2px solid var(--line);color:var(--ink);
+  border-radius:9px;padding:5px 9px;font-size:.76rem;cursor:pointer;box-shadow:var(--shadow);
+  transition:background .12s,transform .12s;
+}
+.btn:hover{background:var(--paper-hi);transform:translateY(-2px)}
+.btn.on{background:var(--terra);color:#1a0f1d;border-color:var(--terra)}
+.spacer{flex:1}
+
+/* camera pad */
+#campad{position:absolute;right:12px;bottom:96px;z-index:40;display:grid;grid-template-columns:repeat(2,34px);gap:5px}
+#campad .btn{padding:0;height:34px;display:flex;align-items:center;justify-content:center;font-size:.95rem}
+
+/* info panel */
+#info{
+  position:absolute;top:96px;right:12px;width:264px;max-height:calc(100% - 220px);
+  z-index:39;display:flex;flex-direction:column;gap:9px;overflow-y:auto;
+  background:linear-gradient(175deg,var(--paper),var(--paper-2));
+  border:2px solid var(--line);border-radius:13px;padding:12px;box-shadow:var(--shadow-lg);
+}
+#info.hidden{display:none}
+#info h3{font-family:'Bungee',sans-serif;font-weight:400;font-size:.86rem;margin:0;letter-spacing:0;color:var(--ink)}
+#info .sub{font-size:.66rem;color:var(--ink-soft);margin-top:-6px}
+.hr{height:1px;background:var(--line);margin:1px 0}
+.demand{display:flex;flex-direction:column;gap:5px}
+.drow{display:flex;align-items:center;gap:7px;font-size:.68rem}
+.drow span{width:56px;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.08em;font-size:.58rem}
+.dbar{flex:1;height:10px;background:rgba(255,255,255,.08);border-radius:3px;position:relative;overflow:hidden}
+.dbar i{position:absolute;top:0;bottom:0;left:50%;width:0;transition:width .4s,left .4s}
+.dbar:before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(255,255,255,.25)}
+.kv{display:flex;justify-content:space-between;font-size:.72rem;gap:8px}
+.kv span{color:var(--ink-soft)}
+.kv b{font-variant-numeric:tabular-nums;font-weight:800;color:var(--ink)}
+#log{display:flex;flex-direction:column;gap:5px;max-height:190px;overflow-y:auto}
+.logline{font-size:.69rem;line-height:1.32;padding-left:9px;border-left:2px solid var(--line);color:var(--ink)}
+.logline.good{border-color:var(--jade)}
+.logline.bad{border-color:var(--terra)}
+.logline.big{border-color:var(--marigold);font-weight:700}
+.logline em{font-style:normal;color:var(--ink-soft);font-size:.6rem;display:block}
+
+/* ticker */
+#ticker{
+  position:absolute;left:0;right:0;bottom:0;z-index:38;
+  display:flex;align-items:center;gap:10px;padding:7px 12px;
+  background:linear-gradient(0deg, rgba(21,10,25,.94), rgba(21,10,25,.5));
+  color:var(--ink);font-size:.76rem;
+}
+#ticker .tag{
+  font-family:'Bungee',sans-serif;font-weight:400;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;
+  background:var(--terra);padding:4px 9px;border-radius:4px;color:#1a0f1d;white-space:nowrap;
+}
+#ticker .msg{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#ticker .msg.flash{animation:flash .9s ease}
+@keyframes flash{0%{color:var(--marigold);transform:translateX(6px)}100%{color:var(--ink);transform:none}}
+
+/* hover tooltip */
+#tip{
+  position:absolute;z-index:45;pointer-events:none;padding:4px 8px;border-radius:7px;
+  background:var(--paper-2);color:var(--ink);font-size:.68rem;white-space:nowrap;
+  border:1px solid var(--terra);
+  transform:translate(-50%,-140%);opacity:0;transition:opacity .12s;
+}
+#tip.show{opacity:1}
+
+/* modal */
+#backdrop{
+  position:fixed;top:0;right:0;bottom:0;left:0;z-index:2000;display:none;align-items:center;justify-content:center;padding:18px;
+  background:radial-gradient(60% 60% at 50% 40%, rgba(36,17,41,.65), rgba(9,4,11,.92));
+  backdrop-filter:blur(3px);
+}
+#backdrop.show{display:flex}
+#modal{
+  width:min(560px,100%);max-height:88vh;overflow-y:auto;
+  background:linear-gradient(170deg,var(--paper),var(--paper-2));
+  border:3px solid var(--marigold);border-radius:18px;padding:22px 22px 18px;
+  box-shadow:8px 8px 0 rgba(0,0,0,.4), 0 30px 70px rgba(0,0,0,.55);
+  animation:pop .32s cubic-bezier(.2,1.3,.4,1);
+}
+@keyframes pop{from{transform:translateY(14px) scale(.96);opacity:0}to{transform:none;opacity:1}}
+#modal .eyebrow{font-size:.63rem;letter-spacing:.24em;text-transform:uppercase;color:var(--terra);font-weight:800}
+#modal h2{font-family:'Bungee',sans-serif;font-weight:400;font-size:1.5rem;line-height:1.15;margin:8px 0 10px;letter-spacing:0;color:var(--ink)}
+#modal .body{font-size:.9rem;line-height:1.55;color:var(--ink)}
+#modal .body p{margin:.5em 0}
+#modal .body ul{margin:.5em 0;padding-left:1.1em}
+#modal .body li{margin:.22em 0;font-size:.86rem}
+#modal .choices{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+#modal .choice{
+  text-align:left;padding:10px 13px;border-radius:11px;cursor:pointer;
+  border:2px solid var(--line);background:rgba(255,255,255,.04);font-size:.86rem;color:var(--ink);
+  transition:transform .12s,background .12s,border-color .12s;
+}
+#modal .choice:hover{transform:translateY(-2px);background:rgba(255,255,255,.08);border-color:var(--terra)}
+#modal .choice b{display:block;font-weight:700}
+#modal .choice small{color:var(--ink-soft);font-size:.7rem}
+#modal .choice.primary{background:var(--terra);color:#1a0f1d;border-color:var(--terra)}
+#modal .choice.primary small{color:rgba(26,15,29,.72)}
+
+/* raid overlay */
+#raid{
+  position:fixed;top:0;right:0;bottom:0;left:0;z-index:1900;display:none;flex-direction:column;
+  align-items:center;justify-content:flex-end;padding-bottom:16vh;pointer-events:none;
+}
+#raid.show{display:flex}
+#raid .siren{position:absolute;top:0;right:0;bottom:0;left:0;animation:sirenflash 1s steps(1) infinite;mix-blend-mode:screen;opacity:.4}
+@keyframes sirenflash{0%{background:radial-gradient(60% 50% at 20% 40%, #ff2b4a, transparent 70%)}50%{background:radial-gradient(60% 50% at 80% 40%, #2b8bff, transparent 70%)}}
+#raid .card{
+  pointer-events:auto;width:min(430px,92vw);text-align:center;
+  background:linear-gradient(170deg,var(--paper),var(--paper-2));border:3px solid var(--terra);
+  border-radius:16px;padding:16px;box-shadow:8px 8px 0 rgba(0,0,0,.45), 0 20px 50px rgba(0,0,0,.6);
+}
+#raid h3{font-family:'Bungee',sans-serif;font-weight:400;font-size:1.15rem;margin:0 0 4px;color:var(--ink)}
+#raid p{margin:0 0 10px;font-size:.8rem;color:var(--ink-soft)}
+#raid .count{font-family:'Bungee',sans-serif;font-weight:400;font-size:2rem;line-height:1;color:var(--terra)}
+#raid .track{height:8px;background:rgba(255,255,255,.12);border-radius:4px;overflow:hidden;margin:10px 0 12px}
+#raid .track i{display:block;height:100%;background:linear-gradient(90deg,var(--marigold),var(--terra));width:100%}
+#raid button{
+  width:100%;padding:12px;border-radius:11px;border:none;cursor:pointer;
+  background:var(--terra);color:#1a0f1d;font-size:.94rem;font-weight:800;
+  box-shadow:0 6px 0 var(--terra-dark);transition:transform .08s;
+}
+#raid button:active{transform:translateY(3px);box-shadow:0 3px 0 var(--terra-dark)}
+
+/* toast */
+#toast{
+  position:absolute;left:50%;top:78px;transform:translateX(-50%);z-index:60;
+  background:var(--paper-2);color:var(--ink);padding:7px 14px;border-radius:999px;
+  border:1px solid var(--terra);
+  font-size:.78rem;opacity:0;transition:opacity .25s, transform .25s;pointer-events:none;white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(4px)}
+
+@media (max-width:820px){
+  #info{width:214px;top:auto;bottom:44px;max-height:44%}
+  #campad{bottom:auto;top:96px;right:12px}
+}
+@media (max-width:640px){
+  #sidebar{position:fixed;top:0;left:0;bottom:0;z-index:1002;box-shadow:4px 0 0 rgba(0,0,0,.4)}
+  #sidebar-overlay{display:block}
+  #ticker{margin-left:var(--toggle-w)}
+  body.sidebar-open #ticker{margin-left:0}
+  .chip{font-size:.58rem;padding:3px 8px}
+  .chip b{font-size:.86rem}
+  .meter{min-width:74px;padding:2px 7px 4px}
+  #topbar{gap:5px;padding:6px}
+}
+</style>
+</head>
+<body>
+<div id="sidebar-overlay"></div>
+
+<aside id="sidebar">
+  <button id="sidebar-toggle" title="Collapse sidebar">&#x25C4;</button>
+
+  <div id="sidebar-header">
+    <h1>SimSpiri<br><em>Isla Namastara</em></h1>
+    <p>Office of the Supreme Guru</p>
+  </div>
+
+  <div id="sidebar-body">
+    <div class="sec">
+      <h2>Zoning &amp; Infrastructure</h2>
+      <div class="tools" id="tools"></div>
+    </div>
+
+    <div class="sec">
+      <h2>Guru Decrees</h2>
+      <div id="decrees"></div>
+    </div>
+
+    <div class="sec">
+      <h2>Donation Ask</h2>
+      <div class="slider-row">
+        <input type="range" id="donation" min="0" max="30" step="1" value="12">
+        <b id="donationVal">12%</b>
+      </div>
+      <p style="font-size:.66rem;color:var(--ink-soft);margin:5px 0 0;line-height:1.35">
+        The suggested contribution for "energetic upkeep". Greed pays the bills but dims the Enlightenment Index.
+      </p>
+    </div>
+
+    <div class="sec">
+      <h2>Requirements Cheat Sheet</h2>
+      <p style="font-size:.66rem;color:var(--ink-soft);margin:0;line-height:1.45">
+        <b>Dorms</b> need a Barefoot Path nearby, Prana and Purified Water.<br>
+        <b>Vibe Economy</b> needs Path, Prana and Wifi-Chakra.<br>
+        <b>Content Farm</b> needs Path, Prana and Wifi-Chakra — no wifi, no livestream, no income.<br>
+        Zoned land develops itself once the devotees arrive. Be patient. Breathe.
+      </p>
+    </div>
+  </div>
+
+  <div id="sidebar-footer">
+    Satire of the wellness-tourism economy. No real teacher, tradition or community was harmed.<br>
+    <a href="#" id="helpLink">How to play</a> · <a href="#" id="restartLink">Restart island</a>
+  </div>
+</aside>
+
+<div id="main">
+  <canvas id="scene"></canvas>
+
+  <div id="topbar">
+    <div class="chip coin" id="chipCoin"><span>Aura Coin</span><b>0</b></div>
+    <div class="chip" id="chipFollowers"><span>Devotees</span><b>0</b></div>
+    <div class="chip" id="chipDate"><span id="eraName">Deserted Beach</span><b id="dateVal">Jan Y1</b></div>
+    <div class="meters" id="meters"></div>
+    <div class="spacer"></div>
+    <button class="btn" id="btnPause" title="Pause / resume (Space)">❚❚</button>
+    <button class="btn" id="btnSpeed1" title="Slow">▸</button>
+    <button class="btn" id="btnSpeed2" title="Normal">▸▸</button>
+    <button class="btn" id="btnSpeed3" title="Fast">▸▸▸</button>
+    <button class="btn" id="btnInfo" title="Toggle island report">📋</button>
+    <button class="btn" id="btnSound" title="Toggle sound">🔔</button>
+  </div>
+
+  <div id="campad">
+    <button class="btn" id="rotL" title="Rotate left (Q)">⟲</button>
+    <button class="btn" id="rotR" title="Rotate right (E)">⟳</button>
+    <button class="btn" id="zoomIn" title="Zoom in (+)">＋</button>
+    <button class="btn" id="zoomOut" title="Zoom out (−)">－</button>
+    <button class="btn" id="goHome" title="Centre on the Grand Shala">⌖</button>
+  </div>
+
+  <div id="info">
+    <div>
+      <h3 id="selTitle">Isla Namastara</h3>
+      <div class="sub" id="selSub">Tap any tile to inspect it.</div>
+    </div>
+    <div class="hr"></div>
+    <div class="sec" style="margin:0">
+      <h2 style="margin-bottom:6px">Demand</h2>
+      <div class="demand">
+        <div class="drow"><span>Dorms</span><div class="dbar"><i id="dDorm"></i></div></div>
+        <div class="drow"><span>Vibe</span><div class="dbar"><i id="dVibe"></i></div></div>
+        <div class="drow"><span>Content</span><div class="dbar"><i id="dContent"></i></div></div>
+      </div>
+      <p style="font-size:.62rem;color:var(--ink-soft);margin:6px 0 0;line-height:1.4">
+        Green = zone more, plots will fill this moon. Red = hold off — you already have more capacity than devotees to use it.
+      </p>
+    </div>
+    <div class="hr"></div>
+    <div class="sec" style="margin:0">
+      <h2 style="margin-bottom:6px">Last Moon Cycle</h2>
+      <div class="kv"><span>Offerings &amp; trade</span><b id="fIncome">0</b></div>
+      <div class="kv"><span>Upkeep</span><b id="fExpense">0</b></div>
+      <div class="kv"><span>Net</span><b id="fNet">0</b></div>
+    </div>
+    <div class="hr"></div>
+    <div class="sec" style="margin:0">
+      <h2 style="margin-bottom:6px">Who Is Here</h2>
+      <div id="archList"></div>
+    </div>
+    <div class="hr"></div>
+    <div class="sec" style="margin:0">
+      <h2 style="margin-bottom:6px">Whispers</h2>
+      <div id="log"></div>
+    </div>
+  </div>
+
+  <div id="tip"></div>
+  <div id="toast"></div>
+
+  <div id="ticker">
+    <span class="tag">Island Wire</span>
+    <span class="msg" id="tickerMsg">The tide goes out. Somewhere, a singing bowl is being unpacked.</span>
+  </div>
+</div>
+
+<div id="raid">
+  <div class="siren"></div>
+  <div class="card">
+    <h3>🚨 Immigration Police Raid</h3>
+    <p>Two vans at the gate. Devotees are hiding in the treeline dressed as trees.</p>
+    <div class="count" id="raidCount">15</div>
+    <div class="track"><i id="raidBar"></i></div>
+    <button id="raidBtn">Present Retreat-Visa Paperwork</button>
+  </div>
+</div>
+
+<div id="backdrop">
+  <div id="modal">
+    <div class="eyebrow" id="mEyebrow">Announcement</div>
+    <h2 id="mTitle">Title</h2>
+    <div class="body" id="mBody"></div>
+    <div class="choices" id="mChoices"></div>
+  </div>
+</div>
+
+<script>
+/* Robust Three.js loader: tries several CDNs synchronously so later
+   <script> blocks never execute before THREE exists, and falls back
+   cleanly (with a visible message) if every CDN is blocked. */
+(function loadThreeSync(){
+  var urls = [
+    "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.128.0/three.min.js",
+    "https://unpkg.com/three@0.128.0/build/three.min.js",
+    "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"
+  ];
+  for (var i = 0; i < urls.length; i++) {
+    try {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", urls[i], false); // synchronous: guarantees load-before-continue
+      xhr.send(null);
+      if (xhr.status === 200 && xhr.responseText && xhr.responseText.length > 1000) {
+        (0, eval)(xhr.responseText); // eval in global scope -> defines window.THREE
+        if (typeof THREE !== "undefined") return;
+      }
+    } catch (e) { /* try next CDN */ }
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    document.body.innerHTML =
+      '<div style="padding:48px;font-family:sans-serif;max-width:480px;margin:80px auto;' +
+      'text-align:center;background:#f6efe2;border:1px solid #d8c8ac;border-radius:14px;color:#2b2118">' +
+      '<h2 style="font-family:serif;margin-top:0">Could not load the 3D engine</h2>' +
+      '<p>SimSpiri needs Three.js from a CDN, and every CDN it tried (cdnjs, unpkg, jsDelivr) was ' +
+      'unreachable — likely a blocked network, offline mode, or an ad/script blocker.</p>' +
+      '<p>Check your connection or content-blocker settings, then reload the page.</p></div>';
+  });
+  throw new Error("THREE.js failed to load from all CDN sources.");
+})();
+</script>
+<script>
+"use strict";
+const current_version = "20260817-224500";
+const EXPANDED_ON_LOAD_FOR_DESKTOP = true;
+const EXPANDED_ON_LOAD_FOR_MOBILE  = false;
+
+/* ============================================================
+   1. CONFIGURATION
+   ============================================================ */
+const GRID = 34;                    // tiles per side
+const HALF = GRID / 2;
+const MONTH_MS = [1e9, 5200, 2600, 1150];   // speed 0 = paused
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+const TERR = { WATER:0, SAND:1, GRASS:2, JUNGLE:3, ROCK:4 };
+const TERR_H = [-0.30, 0.14, 0.40, 0.40, 1.05];
+const TERR_COL = [0x1d5d78, 0xe7d5a6, 0x8ab861, 0x3d7a4c, 0x9c9384];
+const TERR_NAME = ["Lagoon","Beach","Meadow","Jungle","Volcanic Rock"];
+
+const TOOLS = {
+  select:   { icon:"✋", name:"Inspect / Pan",       cost:0,   kind:"select" },
+  bulldoze: { icon:"🪓", name:"Bulldoze",            cost:4,   kind:"bulldoze" },
+  path:     { icon:"〰️", name:"Barefoot Path",       cost:6,   kind:"road" },
+  dorm:     { icon:"🛖", name:"Devotee Dorms",       cost:14,  kind:"zone", zone:"dorm" },
+  vibe:     { icon:"🔮", name:"Vibe Economy",        cost:20,  kind:"zone", zone:"vibe" },
+  content:  { icon:"📸", name:"Content Farm",        cost:26,  kind:"zone", zone:"content" },
+  wifi:     { icon:"📡", name:"Wifi-Chakra Tower",   cost:240, kind:"build", b:"wifi" },
+  prana:    { icon:"☀️", name:"Prana Array",         cost:190, kind:"build", b:"prana" },
+  water:    { icon:"💧", name:"Water Purification",  cost:210, kind:"build", b:"water" },
+  visa:     { icon:"🛂", name:"Visa Consultancy",    cost:420, kind:"build", b:"visa",   era:2, wide:true },
+  temple:   { icon:"🛕", name:"Temple of Reciprocity",cost:520, kind:"build", b:"temple", era:3, wide:true },
+  ferry:    { icon:"⛴️", name:"Ferry Dock",           cost:360, kind:"build", b:"ferry",  era:3, wide:true, shore:true }
+};
+
+const ZONE_NAME = { dorm:"Devotee Dorms", vibe:"Sacred Commercial", content:"Content Farm" };
+const BUILD_NAME = {
+  shala:"Grand Shala", wifi:"Wifi-Chakra Tower", prana:"Prana Array", water:"Water Purification",
+  visa:"Visa Consultancy Office", temple:"Temple of Reciprocity", ferry:"Ferry Dock"
+};
+const UPKEEP = { shala:8, wifi:14, prana:12, water:11, visa:24, temple:16, ferry:13 };
+const RADIUS = { wifi:7.5, prana:6.5, water:6.5 };
+
+const DORM  = [ {cap:8,  up:2},  {cap:22, up:5},  {cap:48, up:11} ];
+const VIBE  = [ {inc:16, up:4},  {inc:42, up:9},  {inc:92, up:19} ];
+const CONT  = [ {inc:20, up:7, viral:1.6}, {inc:52, up:15, viral:3.4}, {inc:108, up:30, viral:6.2} ];
+
+const ARCH = {
+  trust: { name:"Trustfund Yogi",           give:3.4, note:"picky, pays for the private cacao bar" },
+  corp:  { name:"Burnt-out Corporate Refugee", give:1.6, note:"easy to win, cries in savasana" },
+  bro:   { name:"Digital Nomad Bro",        give:2.0, note:"crypto + kombucha, builds his own wifi" },
+  seek:  { name:"Sincere Seeker",           give:0.7, note:"leaves when the island turns into a shop" },
+  heal:  { name:"Freelance Healer",         give:1.5, note:"runs their own sessions, passive income" }
+};
+
+const ERAS = [
+  { min:0,   name:"Deserted Beach" },
+  { min:45,  name:"Modest Retreat Centre" },
+  { min:130, name:"Booming Wellness Hub" },
+  { min:320, name:"Media Hype" },
+  { min:1e9, name:"The Reckoning" }
+];
+
+const DECREES = [
+  { id:"visa",  name:"Hire Visa Consultants", cost:150, cd:6,  desc:"Paperwork that almost exists", run(){ S.visa=clamp(S.visa+13,0,100); note("A man named Bruno files 40 forms. Nobody reads them.","good"); } },
+  { id:"offer", name:"Community Offering",    cost:200, cd:8,  desc:"Rice, roofing, respect",        run(){ S.local=clamp(S.local+11,0,100); S.enlight=clamp(S.enlight+2,0,100); note("You fund the village roof. The village fixes it themselves, better.","good"); } },
+  { id:"blitz", name:"Instagram Blitz",       cost:120, cd:5,  desc:"+Viral, −Depth",               run(){ S.viral=Math.min(160,S.viral+22); S.enlight=clamp(S.enlight-4,0,100); S.visa=clamp(S.visa-4,0,100); note("Reel: 'I quit my job for THIS'. 400k views. Immigration also has an account.","bad"); } },
+  { id:"silent",name:"Silent Retreat Week",   cost:100, cd:10, desc:"+Enlightenment, no trade",     run(){ S.enlight=clamp(S.enlight+9,0,100); S.mod.silence=1; note("Seven days of silence. Revenue dips. Souls do not.","good"); } },
+  { id:"moon",  name:"Full Moon Party",       cost:80,  cd:7,  desc:"+Viral +Charisma, risky",      run(){ S.viral=Math.min(160,S.viral+16); S.charisma=clamp(S.charisma+5,0,100); S.mod.party=1; note("Full moon. Two DJs. One shaman with a subwoofer.","big"); } }
+];
+
+/* ============================================================
+   2. STATE
+   ============================================================ */
+const S = {
+  coin:2600, followers:0, enlight:62, charisma:48, visa:90, local:84, viral:5,
+  month:0, year:1, era:1, speed:0, started:false, gameOver:false,
+  donationAsk:12, tool:"select", sound:true,
+  tiles:[], demand:{dorm:0,vibe:0,content:0},
+  arch:{trust:0,corp:0,bro:0,seek:0,heal:0},
+  income:0, expense:0, dormCap:0, jungleStart:1,
+  stats:{},
+  mod:{ freeze:0, silence:0, party:0, rival:0, doc:0, scandal:0, disaster:0, sealed:0 },
+  cd:{}, eventCd:8, reckoning:-1, seekerless:0, brokeMonths:0,
+  shala:null, log:[]
+};
+
+/* ============================================================
+   3. HELPERS
+   ============================================================ */
+const clamp = (v,a,b)=>v<a?a:v>b?b:v;
+const lerp  = (a,b,t)=>a+(b-a)*t;
+const ri    = (n)=>Math.floor(Math.random()*n);
+const pick  = (arr)=>arr[ri(arr.length)];
+const fmt   = (n)=>Math.round(n).toLocaleString("en-US");
+const idx   = (x,z)=>z*GRID+x;
+const inGrid= (x,z)=>x>=0&&z>=0&&x<GRID&&z<GRID;
+const T     = (x,z)=>inGrid(x,z)?S.tiles[idx(x,z)]:null;
+const buildable = (t)=>t && (t.terr===TERR.SAND||t.terr===TERR.GRASS||t.terr===TERR.JUNGLE);
+const isEmpty = (t)=>t && !t.build && !t.zone && !t.road;
+
+function hash2(x,y,seed){
+  let h = (x|0)*374761393 + (y|0)*668265263 + seed*144665821;
+  h = (h ^ (h>>>13)) * 1274126177;
+  return ((h ^ (h>>>16)) >>> 0) / 4294967296;
+}
+function snoise(x,y,seed){
+  const xi=Math.floor(x), yi=Math.floor(y), xf=x-xi, yf=y-yi;
+  const u=xf*xf*(3-2*xf), v=yf*yf*(3-2*yf);
+  const a=hash2(xi,yi,seed), b=hash2(xi+1,yi,seed), c=hash2(xi,yi+1,seed), d=hash2(xi+1,yi+1,seed);
+  return a*(1-u)*(1-v)+b*u*(1-v)+c*(1-u)*v+d*u*v;
+}
+function fbm(x,y,seed){
+  return 0.58*snoise(x,y,seed)+0.28*snoise(x*2.1+3.3,y*2.1-1.7,seed+7)+0.14*snoise(x*4.4,y*4.4,seed+19);
+}
+
+/* ============================================================
+   4. THREE.JS SCENE
+   ============================================================ */
+const canvas = document.getElementById("scene");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+renderer.setClearColor(0xcfe8ee, 1);
+const scene = new THREE.Scene();
+
+const cam = new THREE.OrthographicCamera(-20,20,20,-20,-200,400);
+let camAngle = Math.PI*0.25, camZoom = 30, camTarget = new THREE.Vector3(0,0,0), shake = 0;
+const CAM_EL = 0.62;
+
+function updateCamera(){
+  const w = canvas.clientWidth||1, h = canvas.clientHeight||1;
+  const a = w/h, f = camZoom;
+  cam.left=-f*a/2; cam.right=f*a/2; cam.top=f/2; cam.bottom=-f/2;
+  const d = 90, sx = Math.cos(CAM_EL)*Math.cos(camAngle), sz = Math.cos(CAM_EL)*Math.sin(camAngle);
+  let jx=0, jz=0;
+  if(shake>0){ jx=(Math.random()-.5)*shake; jz=(Math.random()-.5)*shake; }
+  cam.position.set(camTarget.x+d*sx+jx, camTarget.y+d*Math.sin(CAM_EL), camTarget.z+d*sz+jz);
+  cam.lookAt(camTarget.x+jx, camTarget.y, camTarget.z+jz);
+  cam.updateProjectionMatrix();
+}
+function resize(){
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w,h,false);
+  updateCamera();
+}
+
+scene.add(new THREE.HemisphereLight(0xdff2ff, 0x6b5a3f, 0.85));
+const sun = new THREE.DirectionalLight(0xfff3d8, 0.95);
+sun.position.set(-30, 46, 18);
+scene.add(sun);
+const rim = new THREE.DirectionalLight(0xffc98a, 0.35);
+rim.position.set(28, 20, -24);
+scene.add(rim);
+
+/* shared geometry + materials */
+const GEO = {
+  quad:      new THREE.PlaneGeometry(1,1),
+  box:       new THREE.BoxGeometry(1,1,1),
+  cyl:       new THREE.CylinderGeometry(0.5,0.5,1,12),
+  cyl6:      new THREE.CylinderGeometry(0.5,0.5,1,6),
+  cone:      new THREE.ConeGeometry(0.5,1,10),
+  cone4:     new THREE.ConeGeometry(0.62,1,4),
+  sphere:    new THREE.SphereGeometry(0.5,12,10),
+  octa:      new THREE.OctahedronGeometry(0.5,0),
+  torus:     new THREE.TorusGeometry(0.4,0.06,8,16),
+  disc:      new THREE.CircleGeometry(0.5,16)
+};
+function mat(hex, opts){ return new THREE.MeshLambertMaterial(Object.assign({color:hex},opts||{})); }
+const MAT = {
+  bamboo:  mat(0xd0aa63), thatch: mat(0x6d5030), wood: mat(0x8a6844),
+  villa:   mat(0xf3ead8), stone: mat(0xbfb49c), deck: mat(0xa5825a),
+  smoothie:mat(0xe4668c), crystal: mat(0x9a6fd0, {transparent:true, opacity:0.85}),
+  kombucha:mat(0xb47a3a), studio: mat(0xf2f1ea), studioDark: mat(0x33302c),
+  ring:    new THREE.MeshBasicMaterial({color:0xfff2b0}),
+  glass:   mat(0x8fd4e8, {transparent:true, opacity:0.7}),
+  solarA:  mat(0x2b2f45), tank: mat(0xd9dbd2), pipe: mat(0x7d8b7a),
+  gold:    mat(0xe0a12b), terra: mat(0xc0523a), jade: mat(0x2f7d68),
+  leaf:    mat(0x2f6b45), leaf2: mat(0x3f8a55), trunk: mat(0x7a5a3b),
+  robe:    [mat(0xf6efe2), mat(0xe8b9c6), mat(0xc9e0d2), mat(0xf2d9a0), mat(0xcfd8ee)],
+  skin:    mat(0xc98f65),
+  van:     mat(0xf0f0f0), vanDark: mat(0x2a3550),
+  red:     new THREE.MeshBasicMaterial({color:0xff2b2b}),
+  blue:    new THREE.MeshBasicMaterial({color:0x2b6bff}),
+  black:   mat(0x24211d), white: mat(0xfbf7ee),
+  chakra:  [0xd93b3b,0xe07a1f,0xe8c73a,0x3f9d55,0x3a7fc1,0x3b45a8,0x8b4fbd].map(c=>mat(c))
+};
+
+MAT.ghost = {
+  dorm:    mat(0x2f7d68, {transparent:true, opacity:0.34}),
+  vibe:    mat(0xe4668c, {transparent:true, opacity:0.34}),
+  content: mat(0x33302c, {transparent:true, opacity:0.34})
+};
+
+const gTerrain = new THREE.Group(); scene.add(gTerrain);
+const gDecor   = new THREE.Group(); scene.add(gDecor);
+const gBuild   = new THREE.Group(); scene.add(gBuild);
+const gAgents  = new THREE.Group(); scene.add(gAgents);
+const gFx      = new THREE.Group(); scene.add(gFx);
+
+let topsMesh = null, quadTile = [];
+const wx = (x)=>x - HALF + 0.5;   // world position from tile coord
+
+/* ============================================================
+   5. TERRAIN
+   ============================================================ */
+function islandBounds(){
+  let minX=GRID, maxX=0, minZ=GRID, maxZ=0, any=false;
+  for(const t of S.tiles){
+    if(t.terr===TERR.WATER) continue;
+    any = true;
+    if(t.x<minX) minX=t.x; if(t.x>maxX) maxX=t.x;
+    if(t.z<minZ) minZ=t.z; if(t.z>maxZ) maxZ=t.z;
+  }
+  if(!any) return { w:GRID*0.6, d:GRID*0.6 };
+  return { w:(maxX-minX+1), d:(maxZ-minZ+1) };
+}
+// Fits the orthographic frustum to the generated island's footprint.
+// The isometric elevation foreshortens world depth on screen by sin(CAM_EL),
+// so "vertical" screen coverage needs dividing out that factor to land on
+// a zoom level where the island actually fills the viewport.
+function fitCameraToIsland(){
+  const b = islandBounds();
+  const w = canvas.clientWidth || 16, h = canvas.clientHeight || 9;
+  const aspect = clamp(w / h, 0.5, 3.2);
+  const PAD = 1.32; // breathing room around the island edges
+  const neededForDepth = (b.d * PAD) * Math.sin(CAM_EL);
+  const neededForWidth = (b.w * PAD) / Math.max(0.7, aspect);
+  camZoom = clamp(Math.max(neededForDepth, neededForWidth), 12, 74);
+}
+
+function generateIsland(){
+  const seed = 1 + ri(9999);
+  S.tiles = [];
+  for(let z=0; z<GRID; z++){
+    for(let x=0; x<GRID; x++){
+      const dx=(x-HALF+0.5)/HALF, dz=(z-HALF+0.5)/HALF;
+      const d = Math.min(1.4, Math.hypot(dx,dz));
+      let e = fbm(x/9.5, z/9.5, seed)*1.22 - d*d*1.30 + 0.36;
+      e += snoise(x/3.4, z/3.4, seed+61)*0.06;
+      let terr;
+      if(e < 0.14) terr = TERR.WATER;
+      else if(e < 0.215) terr = TERR.SAND;
+      else if(e < 0.64) terr = TERR.GRASS;      // more open, freely-buildable land
+      else if(e < 0.95) terr = TERR.JUNGLE;     // thinner jungle ring
+      else terr = TERR.ROCK;                    // only the tallest peak tips
+      S.tiles.push({
+        i:idx(x,z), x, z, terr, e, h:TERR_H[terr],
+        zone:null, lvl:0, build:null, road:false, sealed:0, closed:0,
+        cov:{prana:false, wifi:false, water:false}, nearRoad:false,
+        group:null, decor:null, age:0
+      });
+    }
+  }
+  // Elevation noise can occasionally stack into large mountainous regions;
+  // hard-cap rock/jungle as a fraction of land so every island reliably
+  // leaves plenty of open, freely-buildable grass regardless of seed.
+  capTerrainFraction(TERR.ROCK, 0.045, TERR.JUNGLE);
+  capTerrainFraction(TERR.JUNGLE, 0.24, TERR.GRASS);
+  S.jungleStart = Math.max(1, S.tiles.filter(t=>t.terr===TERR.JUNGLE).length);
+}
+function capTerrainFraction(kind, maxFraction, downgradeTo){
+  const land = S.tiles.filter(t=>t.terr!==TERR.WATER);
+  const list = S.tiles.filter(t=>t.terr===kind);
+  const maxCount = Math.floor(land.length * maxFraction);
+  if(list.length <= maxCount) return;
+  list.sort((a,b)=>a.e-b.e); // downgrade the least-extreme tiles first, keep the true peaks/core
+  const excess = list.length - maxCount;
+  for(let i=0;i<excess;i++){ list[i].terr = downgradeTo; list[i].h = TERR_H[downgradeTo]; }
+}
+
+function buildTerrainMesh(){
+  if(topsMesh){ gTerrain.remove(topsMesh); topsMesh.geometry.dispose(); }
+  while(gTerrain.children.length) gTerrain.remove(gTerrain.children[0]);
+  quadTile = [];
+  const pos=[], col=[], nor=[], sidePos=[], sideCol=[], sideNor=[];
+  const c = new THREE.Color();
+  const pushTri=(P,C,N,ax,ay,az,bx,by,bz,cx,cy,cz,r,g,b,nx,ny,nz)=>{
+    P.push(ax,ay,az,bx,by,bz,cx,cy,cz);
+    C.push(r,g,b,r,g,b,r,g,b);
+    N.push(nx,ny,nz,nx,ny,nz,nx,ny,nz);
+  };
+  for(const t of S.tiles){
+    const x0 = t.x-HALF, x1 = x0+1, z0 = t.z-HALF, z1 = z0+1, y = t.h;
+    // slight per-tile colour variation for texture
+    const v = 0.92 + hash2(t.x,t.z,3)*0.16;
+    c.setHex(TERR_COL[t.terr]);
+    const r=c.r*v, g=c.g*v, b=c.b*v;
+    quadTile.push(t.i, t.i);
+    pushTri(pos,col,nor, x0,y,z0, x0,y,z1, x1,y,z1, r,g,b, 0,1,0);
+    pushTri(pos,col,nor, x0,y,z0, x1,y,z1, x1,y,z0, r,g,b, 0,1,0);
+    // skirts where the neighbour is lower
+    const nb = [[1,0],[-1,0],[0,1],[0,-1]];
+    for(const [dx,dz] of nb){
+      const n = T(t.x+dx, t.z+dz);
+      const ny = n ? n.h : -1.4;
+      if(ny >= y-0.001) continue;
+      const dr=r*0.72, dg=g*0.72, db=b*0.72;
+      if(dx===1){  pushTri(sidePos,sideCol,sideNor, x1,y,z0, x1,y,z1, x1,ny,z1, dr,dg,db, 1,0,0);
+                   pushTri(sidePos,sideCol,sideNor, x1,y,z0, x1,ny,z1, x1,ny,z0, dr,dg,db, 1,0,0); }
+      if(dx===-1){ pushTri(sidePos,sideCol,sideNor, x0,y,z1, x0,y,z0, x0,ny,z0, dr,dg,db, -1,0,0);
+                   pushTri(sidePos,sideCol,sideNor, x0,y,z1, x0,ny,z0, x0,ny,z1, dr,dg,db, -1,0,0); }
+      if(dz===1){  pushTri(sidePos,sideCol,sideNor, x1,y,z1, x0,y,z1, x0,ny,z1, dr,dg,db, 0,0,1);
+                   pushTri(sidePos,sideCol,sideNor, x1,y,z1, x0,ny,z1, x1,ny,z1, dr,dg,db, 0,0,1); }
+      if(dz===-1){ pushTri(sidePos,sideCol,sideNor, x0,y,z0, x1,y,z0, x1,ny,z0, dr,dg,db, 0,0,-1);
+                   pushTri(sidePos,sideCol,sideNor, x0,y,z0, x1,ny,z0, x0,ny,z0, dr,dg,db, 0,0,-1); }
+    }
+  }
+  const mk=(P,C,N)=>{
+    const gg = new THREE.BufferGeometry();
+    gg.setAttribute("position", new THREE.Float32BufferAttribute(P,3));
+    gg.setAttribute("color", new THREE.Float32BufferAttribute(C,3));
+    gg.setAttribute("normal", new THREE.Float32BufferAttribute(N,3));
+    return gg;
+  };
+  const vm = new THREE.MeshLambertMaterial({ vertexColors:true });
+  topsMesh = new THREE.Mesh(mk(pos,col,nor), vm);
+  gTerrain.add(topsMesh);
+  const sides = new THREE.Mesh(mk(sidePos,sideCol,sideNor), new THREE.MeshLambertMaterial({vertexColors:true}));
+  sides.raycast = ()=>{};
+  gTerrain.add(sides);
+
+  // ocean
+  const ocean = new THREE.Mesh(new THREE.PlaneGeometry(GRID*3, GRID*3),
+    new THREE.MeshLambertMaterial({ color:0x3f93b8, transparent:true, opacity:0.86 }));
+  ocean.rotation.x = -Math.PI/2; ocean.position.y = 0.02;
+  ocean.raycast = ()=>{};
+  gTerrain.add(ocean);
+  const deep = new THREE.Mesh(new THREE.PlaneGeometry(GRID*3, GRID*3), new THREE.MeshLambertMaterial({color:0x1b4c66}));
+  deep.rotation.x = -Math.PI/2; deep.position.y = -0.55; deep.raycast = ()=>{};
+  gTerrain.add(deep);
+  window._ocean = ocean;
+}
+
+function scatterDecor(){
+  while(gDecor.children.length) gDecor.remove(gDecor.children[0]);
+  for(const t of S.tiles){
+    if(t.build || t.zone || t.road) continue;
+    const r = hash2(t.x,t.z,101);
+    if(t.terr===TERR.JUNGLE && r<0.28) t.decor = addPalm(t, 1.0+r*0.7);
+    else if(t.terr===TERR.GRASS && r>0.965) t.decor = addPalm(t, 0.8);
+    else if(t.terr===TERR.SAND && r>0.975) t.decor = addPalm(t, 1.1);
+    else if(t.terr===TERR.ROCK && r>0.75) t.decor = addRock(t);
+  }
+}
+function addPalm(t, s){
+  const g = new THREE.Group();
+  const trunk = new THREE.Mesh(GEO.cyl6, MAT.trunk);
+  trunk.scale.set(0.13,1.5*s,0.13); trunk.position.y = 0.75*s;
+  trunk.rotation.z = (hash2(t.x,t.z,7)-0.5)*0.25;
+  const crown = new THREE.Mesh(GEO.cone, hash2(t.x,t.z,9)>0.5?MAT.leaf:MAT.leaf2);
+  crown.scale.set(1.25*s,1.1*s,1.25*s); crown.position.y = 1.75*s;
+  const crown2 = new THREE.Mesh(GEO.cone, MAT.leaf2);
+  crown2.scale.set(0.9*s,0.8*s,0.9*s); crown2.position.y = 2.15*s;
+  g.add(trunk,crown,crown2);
+  g.position.set(wx(t.x)+(hash2(t.x,t.z,11)-0.5)*0.4, t.h, wx(t.z)+(hash2(t.x,t.z,13)-0.5)*0.4);
+  gDecor.add(g);
+  return g;
+}
+function addRock(t){
+  const g = new THREE.Group();
+  const r1 = new THREE.Mesh(GEO.octa, MAT.stone);
+  r1.scale.set(0.7,0.55,0.7); r1.position.y = 0.2; r1.rotation.y = hash2(t.x,t.z,5)*3;
+  g.add(r1);
+  g.position.set(wx(t.x), t.h, wx(t.z));
+  gDecor.add(g);
+  return g;
+}
+function clearDecor(t){
+  if(t.decor){ gDecor.remove(t.decor); t.decor = null; }
+}
+</script>
+<script>
+"use strict";
+/* ============================================================
+   6. BUILDING MESHES
+   ============================================================ */
+function addBox(g, m, sx,sy,sz, px,py,pz, ry){
+  const o = new THREE.Mesh(GEO.box, m);
+  o.scale.set(sx,sy,sz); o.position.set(px,py,pz);
+  if(ry) o.rotation.y = ry;
+  g.add(o); return o;
+}
+function addCyl(g, m, r,h, px,py,pz){
+  const o = new THREE.Mesh(GEO.cyl, m);
+  o.scale.set(r*2,h,r*2); o.position.set(px,py,pz);
+  g.add(o); return o;
+}
+function addCone(g, m, r,h, px,py,pz){
+  const o = new THREE.Mesh(GEO.cone, m);
+  o.scale.set(r*2,h,r*2); o.position.set(px,py,pz);
+  g.add(o); return o;
+}
+function addSphere(g, m, r, px,py,pz){
+  const o = new THREE.Mesh(GEO.sphere, m);
+  o.scale.set(r*2,r*2,r*2); o.position.set(px,py,pz);
+  g.add(o); return o;
+}
+
+function makeStructure(t){
+  const g = new THREE.Group();
+  const rot = hash2(t.x,t.z,23)*Math.PI*2;
+  if(t.build === "shala"){
+    addCyl(g, MAT.deck, 0.46, 0.14, 0,0.07,0);
+    for(const [dx,dz] of [[-0.3,-0.3],[0.3,-0.3],[-0.3,0.3],[0.3,0.3]])
+      addCyl(g, MAT.bamboo, 0.045, 0.62, dx,0.45,dz);
+    addCone(g, MAT.thatch, 0.62, 0.62, 0,1.05,0);
+    addSphere(g, MAT.gold, 0.07, 0,1.42,0);
+  }
+  else if(t.zone === "dorm"){
+    if(t.lvl===1){
+      addBox(g, MAT.bamboo, 0.5,0.32,0.42, 0,0.16,0, rot);
+      const roof = addCone(g, MAT.thatch, 0.45,0.3, 0,0.47,0); roof.rotation.y = rot;
+      addBox(g, MAT.wood, 0.1,0.02,0.24, 0.3,0.02,0, rot);
+    } else if(t.lvl===2){
+      addBox(g, MAT.bamboo, 0.62,0.5,0.5, 0,0.25,0, rot);
+      addBox(g, MAT.wood, 0.66,0.05,0.54, 0,0.5,0, rot);
+      addBox(g, MAT.bamboo, 0.44,0.34,0.36, 0.02,0.68,0, rot);
+      const roof = addCone(g, MAT.thatch, 0.5,0.34, 0,0.98,0); roof.rotation.y = rot+0.4;
+    } else {
+      addBox(g, MAT.villa, 0.7,0.46,0.6, 0,0.23,0, rot);
+      addBox(g, MAT.glass, 0.72,0.16,0.3, 0,0.34,0.16, rot);
+      addBox(g, MAT.villa, 0.5,0.4,0.44, -0.08,0.65,-0.04, rot);
+      const roof = addCone(g, MAT.thatch, 0.56,0.32, 0,1.0,0); roof.rotation.y = rot;
+      addCyl(g, MAT.glass, 0.14,0.06, 0.3,0.05,0.28);   // plunge pool
+      addCyl(g, MAT.kombucha, 0.06,0.2, -0.34,0.12,0.3); // private cacao bar
+    }
+  }
+  else if(t.zone === "vibe"){
+    const hue = hash2(t.x,t.z,31);
+    if(t.lvl===1){
+      addBox(g, hue<0.5?MAT.smoothie:MAT.kombucha, 0.46,0.3,0.4, 0,0.15,0, rot);
+      addBox(g, MAT.white, 0.52,0.04,0.46, 0,0.32,0, rot);
+      if(hue<0.5) addCyl(g, MAT.smoothie, 0.07,0.18, 0.12,0.42,0.12);
+      else { const o=new THREE.Mesh(GEO.octa, MAT.crystal); o.scale.set(0.28,0.4,0.28); o.position.y=0.5; g.add(o); }
+    } else if(t.lvl===2){
+      addBox(g, MAT.white, 0.6,0.44,0.5, 0,0.22,0, rot);
+      addBox(g, hue<0.5?MAT.smoothie:MAT.crystal, 0.64,0.06,0.56, 0,0.47,0, rot);
+      addBox(g, MAT.white, 0.4,0.3,0.34, 0,0.62,0, rot);
+      const o=new THREE.Mesh(GEO.octa, MAT.crystal); o.scale.set(0.3,0.44,0.3); o.position.y=0.95; g.add(o);
+      addCyl(g, MAT.deck, 0.3,0.03, 0.34,0.02,0.34);
+    } else {
+      addBox(g, MAT.villa, 0.72,0.62,0.6, 0,0.31,0, rot);
+      addBox(g, MAT.smoothie, 0.76,0.08,0.64, 0,0.66,0, rot);
+      addBox(g, MAT.villa, 0.5,0.44,0.44, 0,0.9,0, rot);
+      const o=new THREE.Mesh(GEO.octa, MAT.crystal); o.scale.set(0.42,0.7,0.42); o.position.y=1.42; g.add(o);
+      const ring = new THREE.Mesh(GEO.torus, MAT.gold); ring.position.y=1.15; ring.rotation.x=Math.PI/2; g.add(ring);
+    }
+  }
+  else if(t.zone === "content"){
+    if(t.lvl===1){
+      addBox(g, MAT.studio, 0.44,0.36,0.44, 0,0.18,0, rot);
+      const ring = new THREE.Mesh(GEO.torus, MAT.ring); ring.scale.set(0.7,0.7,0.7); ring.position.set(0,0.5,0); g.add(ring);
+      addCyl(g, MAT.studioDark, 0.02,0.16, 0,0.42,0);
+    } else if(t.lvl===2){
+      addBox(g, MAT.studio, 0.58,0.62,0.52, 0,0.31,0, rot);
+      addBox(g, MAT.studioDark, 0.62,0.07,0.56, 0,0.66,0, rot);
+      const ring = new THREE.Mesh(GEO.torus, MAT.ring); ring.position.set(0,0.86,0); g.add(ring);
+      addCyl(g, MAT.studioDark, 0.03,0.5, 0.26,0.9,0.26);
+    } else {
+      addBox(g, MAT.studioDark, 0.7,0.8,0.6, 0,0.4,0, rot);
+      addBox(g, MAT.studio, 0.74,0.1,0.64, 0,0.85,0, rot);
+      const dish = new THREE.Mesh(GEO.cone, MAT.white); dish.scale.set(0.5,0.3,0.5);
+      dish.rotation.x = Math.PI*0.82; dish.position.set(0.1,1.12,0.1); g.add(dish);
+      const ring = new THREE.Mesh(GEO.torus, MAT.ring); ring.scale.set(1.3,1.3,1.3); ring.position.set(-0.05,1.0,-0.05); g.add(ring);
+    }
+  }
+  else if(t.build === "wifi"){
+    addBox(g, MAT.stone, 0.3,0.1,0.3, 0,0.05,0);
+    addCyl(g, MAT.studioDark, 0.05,2.2, 0,1.15,0);
+    for(let i=0;i<3;i++){
+      const r = new THREE.Mesh(GEO.torus, MAT.chakra[i*2]);
+      r.scale.set(0.9-i*0.2, 0.9-i*0.2, 0.9-i*0.2);
+      r.position.y = 0.85+i*0.5; r.rotation.x = Math.PI/2;
+      g.add(r);
+    }
+    const orb = addSphere(g, MAT.gold, 0.11, 0,2.35,0);
+    g.userData.pulse = orb;
+  }
+  else if(t.build === "prana"){
+    addBox(g, MAT.stone, 0.8,0.06,0.8, 0,0.03,0);
+    for(let i=0;i<3;i++){
+      const p = addBox(g, MAT.solarA, 0.7,0.04,0.22, 0,0.2,-0.26+i*0.26);
+      p.rotation.x = -0.5;
+      const stripe = addBox(g, MAT.chakra[(i*2+1)%7], 0.7,0.045,0.05, 0,0.21,-0.26+i*0.26);
+      stripe.rotation.x = -0.5;
+      addCyl(g, MAT.pipe, 0.02,0.16, 0,0.1,-0.26+i*0.26);
+    }
+  }
+  else if(t.build === "water"){
+    addCyl(g, MAT.tank, 0.3,0.7, -0.1,0.35,-0.05);
+    addCyl(g, MAT.pipe, 0.32,0.06, -0.1,0.72,-0.05);
+    addBox(g, MAT.stone, 0.3,0.2,0.3, 0.28,0.1,0.24);
+    const spill = new THREE.Mesh(GEO.disc, MAT.kombucha);
+    spill.rotation.x = -Math.PI/2; spill.position.set(0.3,0.012,-0.28); spill.scale.set(0.7,0.7,0.7);
+    g.add(spill);
+    addCyl(g, MAT.pipe, 0.03,0.34, 0.16,0.17,-0.2);
+  }
+  else if(t.build === "visa"){
+    addBox(g, MAT.white, 0.66,0.44,0.56, 0,0.22,0);
+    addBox(g, MAT.stone, 0.7,0.06,0.6, 0,0.47,0);
+    for(let i=0;i<3;i++) addCyl(g, MAT.stone, 0.045,0.44, -0.22+i*0.22,0.22,0.3);
+    addCyl(g, MAT.studioDark, 0.02,0.9, 0.3,0.45,-0.24);
+    addBox(g, MAT.terra, 0.22,0.14,0.02, 0.41,0.83,-0.24);
+  }
+  else if(t.build === "temple"){
+    addBox(g, MAT.stone, 0.8,0.14,0.8, 0,0.07,0);
+    addBox(g, MAT.stone, 0.62,0.16,0.62, 0,0.22,0);
+    addBox(g, MAT.stone, 0.46,0.18,0.46, 0,0.39,0);
+    addCone(g, MAT.terra, 0.34,0.6, 0,0.78,0);
+    addSphere(g, MAT.gold, 0.08, 0,1.14,0);
+    addCyl(g, MAT.leaf, 0.06,0.3, 0.34,0.22,0.34);
+  }
+  else if(t.build === "ferry"){
+    addBox(g, MAT.deck, 0.3,0.08,1.5, 0,0.04,0.5);
+    for(let i=0;i<3;i++) addCyl(g, MAT.wood, 0.03,0.5, 0.11,-0.2,0.2+i*0.4);
+    addBox(g, MAT.white, 0.4,0.26,0.4, 0,0.15,-0.2);
+    addCone(g, MAT.terra, 0.3,0.2, 0,0.38,-0.2);
+    const boat = addBox(g, MAT.white, 0.22,0.12,0.5, 0.28,0.06,0.9);
+    addBox(g, MAT.sky||MAT.glass, 0.16,0.1,0.16, 0.28,0.16,0.85);
+    g.userData.boat = boat;
+  }
+  else if(t.road){
+    const p = new THREE.Mesh(GEO.quad, MAT.deck);
+    p.rotation.x = -Math.PI/2; p.scale.set(0.94,0.94,1); p.position.y = 0.014;
+    g.add(p);
+    for(let i=0;i<2;i++){
+      const s = new THREE.Mesh(GEO.quad, MAT.stone);
+      s.rotation.x = -Math.PI/2; s.scale.set(0.2,0.2,1);
+      s.position.set(-0.22+i*0.44, 0.02, (hash2(t.x,t.z,41)-0.5)*0.4);
+      g.add(s);
+    }
+  }
+  else { // zoned but undeveloped: surveyor markers
+    const m = t.zone==="dorm"?MAT.jade : t.zone==="vibe"?MAT.smoothie : MAT.studioDark;
+    const p = new THREE.Mesh(GEO.quad, MAT.ghost[t.zone]);
+    p.rotation.x = -Math.PI/2; p.scale.set(0.86,0.86,1); p.position.y = 0.015;
+    g.add(p);
+    for(const [dx,dz] of [[-0.38,-0.38],[0.38,0.38]]){
+      const st = addCyl(g, MAT.bamboo, 0.02,0.2, dx,0.1,dz);
+      addBox(g, m, 0.1,0.07,0.01, dx,0.2,dz);
+    }
+  }
+  g.position.set(wx(t.x), t.h, wx(t.z));
+  return g;
+}
+
+function refreshTile(t){
+  if(t.group){ gBuild.remove(t.group); t.group = null; }
+  if(!t.build && !t.zone && !t.road) return;
+  clearDecor(t);
+  t.group = makeStructure(t);
+  if(t.sealed>0 || t.closed>0){
+    t.group.traverse(o=>{ if(o.isMesh){ o.material = MAT.black; } });
+    const tape = new THREE.Mesh(GEO.quad, MAT.terra);
+    tape.rotation.x = -Math.PI/2; tape.scale.set(0.9,0.9,1); tape.position.y = 0.03;
+    t.group.add(tape);
+  }
+  gBuild.add(t.group);
+}
+
+/* ============================================================
+   7. PLACEMENT
+   ============================================================ */
+let coverageDirty = true;
+
+function placeCost(t, tool){
+  let c = tool.cost;
+  if(t && t.terr===TERR.JUNGLE && tool.kind!=="bulldoze" && tool.kind!=="select") c += 8;
+  return c;
+}
+function placeError(t, key){
+  const tool = TOOLS[key];
+  if(!t) return "Out of bounds";
+  if(tool.kind==="select") return null;
+  if(tool.kind==="bulldoze"){
+    if(t.build==="shala") return "The Grand Shala is sacred (and load-bearing)";
+    if(!t.build && !t.zone && !t.road) return "Nothing to remove";
+    return null;
+  }
+  if(tool.era && S.era < tool.era) return "Unlocked in a later era";
+  if(tool.shore){
+    if(t.terr!==TERR.SAND) return "Ferry docks go on the beach";
+    let nearWater = false;
+    for(const [dx,dz] of [[1,0],[-1,0],[0,1],[0,-1]]){ const n=T(t.x+dx,t.z+dz); if(n&&n.terr===TERR.WATER) nearWater=true; }
+    if(!nearWater) return "Must touch the lagoon";
+  } else {
+    if(t.terr===TERR.WATER) return "That is water, Guru";
+    if(t.terr===TERR.ROCK) return "Volcanic rock — nothing takes root here";
+  }
+  if(t.build) return "Occupied by " + (BUILD_NAME[t.build]||"a structure");
+  if(tool.kind==="road" && t.road) return "Already a path";
+  if(tool.kind!=="road" && t.road) return "Bulldoze the path first";
+  if(tool.kind==="zone" && t.zone===tool.zone) return "Already zoned " + ZONE_NAME[tool.zone];
+  if(tool.kind==="build" && t.zone) return "Bulldoze the zoning first";
+  if(placeCost(t,tool) > S.coin) return "Not enough Aura Coin";
+  return null;
+}
+
+function applyTool(t, key){
+  const tool = TOOLS[key];
+  if(tool.kind==="select"){ selectTile(t); return false; }
+  const err = placeError(t, key);
+  if(err){ toast(err); return false; }
+  const cost = placeCost(t, tool);
+  S.coin -= cost;
+  if(t.terr===TERR.JUNGLE && tool.kind!=="bulldoze"){
+    t.terr = TERR.GRASS; t.h = TERR_H[TERR.GRASS];
+    S.local = clamp(S.local - 0.5, 0, 100);
+    S.enlight = clamp(S.enlight - 0.35, 0, 100);
+    terrainDirty = true;
+  }
+  if(tool.kind==="bulldoze"){
+    t.zone = null; t.lvl = 0; t.build = null; t.road = false; t.sealed = 0; t.closed = 0;
+  } else if(tool.kind==="road"){
+    t.road = true; t.zone = null; t.lvl = 0;
+  } else if(tool.kind==="zone"){
+    t.zone = tool.zone; t.lvl = 0; t.road = false;
+  } else if(tool.kind==="build"){
+    t.build = tool.b; t.zone = null; t.lvl = 0; t.road = false;
+    if(tool.b==="temple"){ S.local = clamp(S.local+6,0,100); note("Temple of Reciprocity founded. The village elders attend, sceptically.","good"); }
+    if(tool.b==="visa") note("Visa Consultancy opened. Bruno has a laminator now.","good");
+    if(tool.b==="ferry") note("Ferry Dock built. Arrivals double. So does the queue for the smoothie bar.","good");
+  }
+  refreshTile(t);
+  coverageDirty = true;
+  if(typeof collectAnim === "function") collectAnim();
+  return true;
+}
+
+function removeStructure(t, keepZone){
+  t.build = null; t.lvl = 0; t.sealed = 0; t.closed = 0;
+  if(!keepZone) t.zone = null;
+  refreshTile(t);
+  coverageDirty = true;
+}
+
+function recomputeCoverage(){
+  const utils = { wifi:[], prana:[], water:[] };
+  const roads = [];
+  for(const t of S.tiles){
+    t.cov.wifi = t.cov.prana = t.cov.water = false;
+    t.nearRoad = false;
+    if(t.build && utils[t.build] && t.sealed<=0) utils[t.build].push(t);
+    if(t.road) roads.push(t);
+    if(t.build==="shala") roads.push(t);
+  }
+  for(const k in utils){
+    const r = RADIUS[k];
+    for(const u of utils[k]){
+      const r2 = r*r;
+      const x0=Math.max(0,Math.floor(u.x-r)), x1=Math.min(GRID-1,Math.ceil(u.x+r));
+      const z0=Math.max(0,Math.floor(u.z-r)), z1=Math.min(GRID-1,Math.ceil(u.z+r));
+      for(let z=z0;z<=z1;z++) for(let x=x0;x<=x1;x++){
+        const dx=x-u.x, dz=z-u.z;
+        if(dx*dx+dz*dz<=r2) S.tiles[idx(x,z)].cov[k] = true;
+      }
+    }
+  }
+  for(const rd of roads){
+    for(let dz=-2;dz<=2;dz++) for(let dx=-2;dx<=2;dx++){
+      const n = T(rd.x+dx, rd.z+dz);
+      if(n) n.nearRoad = true;
+    }
+  }
+  coverageDirty = false;
+}
+
+function zoneReqs(t){
+  const need = { road: t.nearRoad, prana: t.cov.prana, water:true, wifi:true };
+  if(t.zone==="dorm"){ need.water = t.cov.water; need.wifi = true; }
+  else { need.wifi = t.cov.wifi; need.water = true; }
+  return need;
+}
+function zoneReady(t){
+  const n = zoneReqs(t);
+  return n.road && n.prana && n.water && n.wifi;
+}
+</script>
+<script>
+"use strict";
+let terrainDirty = false;
+
+/* ============================================================
+   8. AGENTS (wandering devotees)
+   ============================================================ */
+const AGENT_MAX = 64;
+const agents = [];
+let landTiles = [];
+
+function refreshLandTiles(){
+  landTiles = S.tiles.filter(t=>t.terr!==TERR.WATER && t.terr!==TERR.ROCK);
+}
+function makeAgent(){
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(GEO.cyl, MAT.robe[ri(MAT.robe.length)]);
+  body.scale.set(0.16,0.3,0.16); body.position.y = 0.15;
+  const head = new THREE.Mesh(GEO.sphere, MAT.skin);
+  head.scale.set(0.13,0.13,0.13); head.position.y = 0.36;
+  const tree = new THREE.Mesh(GEO.cone, MAT.leaf);
+  tree.scale.set(0.5,0.8,0.5); tree.position.y = 0.4; tree.visible = false;
+  g.add(body, head, tree);
+  g.userData = { body, head, tree, speed: 0.5+Math.random()*0.7, t:null, tgt:new THREE.Vector3() };
+  gAgents.add(g);
+  agents.push(g);
+  const st = landTiles.length ? pick(landTiles) : null;
+  if(st) g.position.set(wx(st.x), st.h, wx(st.z));
+  pickAgentTarget(g);
+  return g;
+}
+function pickAgentTarget(a){
+  const pool = S.tiles.filter(t=>t.group && t.terr!==TERR.WATER);
+  const t = pool.length && Math.random()<0.75 ? pick(pool) : (landTiles.length?pick(landTiles):null);
+  if(!t) return;
+  a.userData.t = t;
+  a.userData.tgt.set(wx(t.x)+(Math.random()-0.5)*0.6, t.h, wx(t.z)+(Math.random()-0.5)*0.6);
+}
+function syncAgents(){
+  const want = clamp(Math.round(S.followers/9), S.followers>0?1:0, AGENT_MAX);
+  while(agents.length < want) makeAgent();
+  while(agents.length > want){ const a = agents.pop(); gAgents.remove(a); }
+}
+function updateAgents(dt){
+  for(const a of agents){
+    const u = a.userData;
+    if(disguise){ u.tree.visible = true; u.body.visible = false; u.head.visible = false; continue; }
+    u.tree.visible = false; u.body.visible = true; u.head.visible = true;
+    const d = u.tgt.clone().sub(a.position);
+    d.y = 0;
+    const len = d.length();
+    if(len < 0.12){ pickAgentTarget(a); continue; }
+    d.normalize().multiplyScalar(u.speed*dt);
+    a.position.x += d.x; a.position.z += d.z;
+    a.position.y = lerp(a.position.y, u.tgt.y, 0.12);
+    a.rotation.y = Math.atan2(d.x, d.z);
+    u.body.position.y = 0.15 + Math.abs(Math.sin(perf*6*u.speed))*0.03;
+  }
+}
+
+/* ============================================================
+   9. EFFECTS: vehicles, rain, sirens, audio
+   ============================================================ */
+let disguise = false, perf = 0;
+const vehicles = [];
+
+function spawnVehicle(kind){
+  const g = new THREE.Group();
+  const col = kind==="ambulance" ? MAT.white : kind==="crew" ? MAT.studioDark : MAT.van;
+  addBox(g, col, 0.42,0.3,0.8, 0,0.2,0);
+  addBox(g, MAT.vanDark, 0.44,0.16,0.3, 0,0.34,-0.12);
+  addCyl(g, MAT.black, 0.09,0.06, 0.2,0.06,0.24);
+  addCyl(g, MAT.black, 0.09,0.06, -0.2,0.06,0.24);
+  addCyl(g, MAT.black, 0.09,0.06, 0.2,0.06,-0.24);
+  addCyl(g, MAT.black, 0.09,0.06, -0.2,0.06,-0.24);
+  let lights = null;
+  if(kind==="raid" || kind==="ambulance"){
+    const l1 = addBox(g, MAT.red, 0.1,0.06,0.1, -0.1,0.38,0.1);
+    const l2 = addBox(g, MAT.blue, 0.1,0.06,0.1, 0.1,0.38,0.1);
+    lights = [l1,l2];
+  }
+  if(kind==="crew"){
+    addCyl(g, MAT.studioDark, 0.03,0.9, 0,0.7,0);
+    addSphere(g, MAT.stone, 0.12, 0,1.16,0);
+  }
+  // route: from a random edge towards the shala
+  const target = S.shala ? new THREE.Vector3(wx(S.shala.x), S.shala.h, wx(S.shala.z)) : new THREE.Vector3(0,0.4,0);
+  const side = ri(4);
+  const from = new THREE.Vector3(
+    side===0? -HALF-2 : side===1? HALF+2 : (Math.random()-0.5)*GRID,
+    0.4,
+    side===2? -HALF-2 : side===3? HALF+2 : (Math.random()-0.5)*GRID
+  );
+  g.position.copy(from);
+  gFx.add(g);
+  const v = { g, from, target, t:0, speed:0.13+Math.random()*0.05, lights, kind, life: 26 };
+  vehicles.push(v);
+  return v;
+}
+function updateVehicles(dt){
+  for(let i=vehicles.length-1;i>=0;i--){
+    const v = vehicles[i];
+    v.t = Math.min(1, v.t + dt*v.speed);
+    v.g.position.lerpVectors(v.from, v.target, v.t);
+    v.g.position.y = 0.42 + Math.sin(perf*9)*0.01;
+    const dir = v.target.clone().sub(v.from);
+    v.g.rotation.y = Math.atan2(dir.x, dir.z);
+    if(v.lights){
+      const on = Math.floor(perf*4)%2===0;
+      v.lights[0].visible = on; v.lights[1].visible = !on;
+    }
+    v.life -= dt;
+    if(v.life<=0){ gFx.remove(v.g); vehicles.splice(i,1); }
+  }
+}
+function clearVehicles(){
+  for(const v of vehicles) gFx.remove(v.g);
+  vehicles.length = 0;
+}
+
+let rain = null, rainTime = 0;
+function startRain(seconds){
+  if(!rain){
+    const n = 2200, pos = new Float32Array(n*3);
+    for(let i=0;i<n;i++){
+      pos[i*3]   = (Math.random()-0.5)*GRID*1.2;
+      pos[i*3+1] = Math.random()*22;
+      pos[i*3+2] = (Math.random()-0.5)*GRID*1.2;
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(pos,3));
+    rain = new THREE.Points(geo, new THREE.PointsMaterial({ color:0xbfe4f5, size:0.12, transparent:true, opacity:0.75 }));
+    gFx.add(rain);
+  }
+  rain.visible = true;
+  rainTime = seconds;
+}
+function updateRain(dt){
+  if(!rain || !rain.visible) return;
+  const p = rain.geometry.attributes.position;
+  for(let i=0;i<p.count;i++){
+    let y = p.getY(i) - dt*16;
+    if(y < 0){ y = 20 + Math.random()*4; }
+    p.setY(i,y);
+  }
+  p.needsUpdate = true;
+  rainTime -= dt;
+  if(rainTime<=0) rain.visible = false;
+}
+
+let actx = null;
+function beep(freq, dur, type, vol){
+  if(!S.sound) return;
+  try{
+    if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type||"sine"; o.frequency.value = freq;
+    g.gain.value = vol||0.06;
+    o.connect(g); g.connect(actx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime+dur);
+    o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+function siren(times){
+  if(!S.sound) return;
+  for(let i=0;i<times;i++){
+    setTimeout(()=>{ beep(760,0.28,"square",0.05); }, i*620);
+    setTimeout(()=>{ beep(520,0.28,"square",0.05); }, i*620+300);
+  }
+}
+function chime(){ beep(880,0.25,"sine",0.05); setTimeout(()=>beep(1320,0.3,"sine",0.04),110); }
+function thud(){ beep(90,0.4,"triangle",0.09); }
+</script>
+<script>
+"use strict";
+/* ============================================================
+   10. SIMULATION
+   ============================================================ */
+function computeStats(){
+  const st = { dormCap:0, dorms:0, dormsDev:0, vibeDev:0, contentDev:0,
+    vibeSlots:0, contentSlots:0, vibeInc:0, contentInc:0, viralGen:0, upkeep:0,
+    jungle:0, land:0, dormWater:0, dormWifi:0, sealed:0, idle:{dorm:0,vibe:0,content:0},
+    hasTemple:false, hasVisa:false, hasFerry:false, wifiTowers:0, pranaArrays:0, waterPlants:0 };
+  for(const t of S.tiles){
+    if(t.terr===TERR.JUNGLE) st.jungle++;
+    if(t.terr!==TERR.WATER) st.land++;
+    if(t.sealed>0 || t.closed>0){ st.sealed++; continue; }
+    if(t.build){
+      st.upkeep += UPKEEP[t.build]||0;
+      if(t.build==="temple") st.hasTemple = true;
+      if(t.build==="visa") st.hasVisa = true;
+      if(t.build==="ferry") st.hasFerry = true;
+      if(t.build==="wifi") st.wifiTowers++;
+      if(t.build==="prana") st.pranaArrays++;
+      if(t.build==="water") st.waterPlants++;
+      continue;
+    }
+    if(!t.zone) continue;
+    if(t.lvl===0){ st.idle[t.zone]++; continue; }
+    const L = t.lvl-1;
+    if(t.zone==="dorm"){
+      st.dormsDev++; st.dormCap += DORM[L].cap; st.upkeep += DORM[L].up;
+      if(t.cov.water) st.dormWater++;
+      if(t.cov.wifi)  st.dormWifi++;
+    } else if(t.zone==="vibe"){
+      st.vibeDev++; st.vibeSlots += t.lvl*15; st.upkeep += VIBE[L].up;
+      st.vibeInc += VIBE[L].inc;
+    } else {
+      st.contentDev++; st.contentSlots += t.lvl*11; st.upkeep += CONT[L].up;
+      if(t.cov.wifi){ st.contentInc += CONT[L].inc; st.viralGen += CONT[L].viral; }
+    }
+  }
+  st.upkeep += UPKEEP.shala;
+  st.natureRatio = clamp(st.jungle / S.jungleStart, 0, 1);
+  st.commercial = (st.vibeDev + st.contentDev*1.6) / Math.max(1, st.dormsDev);
+  st.contentDensity = clamp(st.contentDev / Math.max(3, st.dormsDev+st.vibeDev), 0, 1.4);
+  st.occupancy = st.dormCap>0 ? S.followers/st.dormCap : 0;
+  S.dormCap = st.dormCap;
+  S.stats = st;
+  return st;
+}
+
+function desirability(st){
+  return 0.30 + (S.enlight-48)/110 + (S.charisma-46)/130 + Math.min(0.30, S.viral/120)
+       + (st.hasFerry?0.08:0) + (st.vibeSlots > S.followers*0.5 ? 0.05 : -0.05)
+       - Math.max(0,(56-S.local))/210 - S.mod.rival*0.10 - S.mod.doc*0.25
+       - Math.max(0,(30-S.visa))/160;
+}
+function occTarget(desir){ return clamp(0.45 + desir*0.60, 0.08, 1); }
+function computeDemand(st){
+  const desir = clamp(desirability(st), 0, 1);
+  const ot = occTarget(desir);
+  // Raw signals are recomputed every month from current occupancy/slot ratios,
+  // which jump discontinuously the moment new plots finish building (capacity
+  // rises before devotees can move in). Smoothing the displayed demand over
+  // several months turns that into a legible trend instead of a flip-flop.
+  const SMOOTH = 0.30;
+  if(st.dormCap < 9){
+    S.demand.dorm = 1; // bootstrap: no dorms yet, always build, no smoothing needed
+  } else {
+    const rawDorm = clamp((st.occupancy - (ot-0.06))*2.2 + (desir-0.50)*1.4, -1, 1);
+    S.demand.dorm = lerp(S.demand.dorm, rawDorm, SMOOTH);
+  }
+  const rawVibe = clamp((S.followers - st.vibeSlots*0.72) / Math.max(24, st.vibeSlots*0.6+24)
+                        + (S.coin>400?0.12:-0.25), -1, 1);
+  S.demand.vibe = lerp(S.demand.vibe, rawVibe, SMOOTH);
+  const rawContent = clamp((S.followers*0.55 - st.contentSlots) / Math.max(24, st.contentSlots*0.7+30)
+                        + (S.viral<45?0.18:-0.14) - (S.visa<35?0.3:0), -1, 1);
+  S.demand.content = lerp(S.demand.content, rawContent, SMOOTH);
+}
+
+function develop(st){
+  const growth = clamp(0.45 + S.charisma/55 + (S.era-1)*0.28, 0.4, 4.2);
+  const maxLvl = S.era>=3 ? 3 : 2;
+  for(const z of ["dorm","vibe","content"]){
+    const d = S.demand[z];
+    if(d > 0.08){
+      let n = Math.floor(d*growth*1.5 + Math.random());
+      const cand = S.tiles.filter(t=>t.zone===z && t.lvl===0 && t.sealed<=0 && zoneReady(t));
+      while(n-- > 0 && cand.length){
+        const t = cand.splice(ri(cand.length),1)[0];
+        t.lvl = 1; t.age = 0; refreshTile(t);
+      }
+      // upgrades
+      if(d > 0.3 && S.enlight > 46){
+        let u = Math.floor(d*growth*0.9 + Math.random()*0.6);
+        const up = S.tiles.filter(t=>t.zone===z && t.lvl>0 && t.lvl<maxLvl && t.sealed<=0 && zoneReady(t) && t.age>2);
+        while(u-- > 0 && up.length){
+          const t = up.splice(ri(up.length),1)[0];
+          t.lvl++; refreshTile(t);
+        }
+      }
+    } else if(d < -0.34 && Math.random()<0.55){
+      const dev = S.tiles.filter(t=>t.zone===z && t.lvl>0);
+      if(dev.length){
+        const t = pick(dev);
+        t.lvl--; refreshTile(t);
+        if(t.lvl===0) note(ZONE_NAME[z]+" abandoned near the "+(t.terr===TERR.SAND?"beach":"palms")+". Nobody is renewing the lease.","bad");
+      }
+    }
+  }
+  for(const t of S.tiles){ if(t.lvl>0) t.age++; }
+  // structures without services decay
+  for(const t of S.tiles){
+    if(t.lvl>0 && !zoneReady(t) && Math.random()<0.12){
+      t.lvl--; refreshTile(t);
+      if(t.lvl===0) note("A "+ZONE_NAME[t.zone]+" plot went dark — missing services.","bad");
+    }
+  }
+}
+
+function updateMeters(st){
+  // Enlightenment Index
+  let e = 48;
+  e += st.natureRatio*20;
+  e += (st.dormsDev? st.dormWater/st.dormsDev : 0.5)*9;
+  e += (st.dormsDev? st.dormWifi/st.dormsDev : 0.3)*4;
+  e += st.hasTemple ? 6 : 0;
+  e -= Math.max(0, st.occupancy-0.9)*40;
+  e -= S.donationAsk*0.55;
+  e -= clamp(st.contentDensity,0,1.4)*13;
+  e -= S.mod.disaster*7;
+  e += (S.local-58)*0.13;
+  e += S.mod.silence ? 6 : 0;
+  S.enlight = clamp(lerp(S.enlight, clamp(e,0,100), 0.28), 0, 100);
+
+  // Guru Charisma
+  let c = 26 + S.enlight*0.42 + Math.min(18, S.viral*0.22) + (S.era-1)*2.2 - S.mod.scandal*9;
+  if(S.coin < 0) c -= 8;
+  S.charisma = clamp(lerp(S.charisma, clamp(c,0,100), 0.22), 0, 100);
+
+  // Viral reach
+  S.viral = clamp(S.viral*0.93 + st.viralGen*(0.75+S.charisma/140) + (S.mod.party?6:0), 0, 160);
+
+  // Visa meter
+  let v = S.visa;
+  v -= 0.35 + st.contentDensity*1.6 + S.viral*0.015 + Math.max(0, S.followers-40)*0.004;
+  if(st.hasVisa) v += 2.4;
+  if(S.mod.party) v -= 1.5;
+  if(v < 38) v += (38-v)*0.05;       // consulates forget, eventually
+  S.visa = clamp(v, 0, 100);
+
+  // Local relations
+  let l = S.local;
+  l -= 0.28 + Math.max(0, st.dormsDev - st.dormWater)*0.12 + S.viral*0.012 + st.commercial*0.10;
+  if(st.hasTemple) l += 1.1;
+  if(st.waterPlants>0) l += 0.25;
+  if(S.mod.party) l -= 2.2;
+  if(l < 44) l += (44-l)*0.045;      // slow goodwill recovery from rock bottom
+  S.local = clamp(l, 0, 100);
+
+  S.mod.scandal = Math.max(0, S.mod.scandal - 0.12);
+  S.mod.disaster = Math.max(0, S.mod.disaster - 0.34);
+  S.mod.rival = Math.max(0, S.mod.rival - 0.08);
+  S.mod.doc = Math.max(0, S.mod.doc - 0.14);
+}
+
+function updateArchetypes(st){
+  const com = clamp(st.commercial, 0, 3);
+  const w = {
+    trust: 0.9 + S.viral/70 + com*0.45,
+    corp:  1.5 + Math.max(0,(S.enlight-40))/90,
+    bro:   0.7 + (st.wifiTowers>0?0.8:0) + S.viral/110,
+    seek:  Math.max(0, 1.35 - com*0.75 - S.viral/85 - Math.max(0,(S.donationAsk-10))/28),
+    heal:  0.55 + S.enlight/120
+  };
+  let tot = 0; for(const k in w) tot += w[k];
+  let assigned = 0, keys = Object.keys(w);
+  keys.forEach((k,i)=>{
+    if(i===keys.length-1) S.arch[k] = Math.max(0, Math.round(S.followers) - assigned);
+    else { S.arch[k] = Math.round(S.followers * w[k]/tot); assigned += S.arch[k]; }
+  });
+  if(S.followers > 25 && S.arch.seek === 0) S.seekerless++;
+  else if(S.arch.seek > 0) S.seekerless = Math.max(0, S.seekerless-1);
+}
+
+function updatePopulation(st){
+  const desir = clamp(desirability(st), 0, 1);
+  const prev = S.followers;
+  const target = st.dormCap * occTarget(desir);
+  S.followers += (target - S.followers) * (target > S.followers ? 0.18 : 0.26);
+  if(S.followers < 0.4) S.followers = 0;
+  st.growth = S.followers - prev;
+  st.desir = desir;
+}
+
+function financeMonth(st){
+  let donation = 0;
+  for(const k in S.arch) donation += S.arch[k] * ARCH[k].give;
+  donation *= (S.donationAsk/12);
+  const useFactor = clamp(S.followers/Math.max(10, st.vibeSlots*0.55), 0, 1.25);
+  let vibeRev = st.vibeInc * (0.5 + S.enlight/150) * useFactor;
+  let contRev = st.contentInc * (0.45 + Math.min(1.15, S.viral/135));
+  if(S.mod.silence){ vibeRev *= 0.25; contRev *= 0.25; }
+  if(S.mod.freeze>0){ donation *= 0.6; vibeRev *= 0.8; }
+  const income = donation + vibeRev + contRev;
+  // stipends, laundry, kombucha — plus the PR retainer, the lawyer and the moderation intern
+  const expense = st.upkeep + S.followers*0.9 + S.viral*0.9;
+  S.income = income; S.expense = expense;
+  S.coin += income - expense;
+  if(S.coin < -400) S.brokeMonths++; else S.brokeMonths = Math.max(0, S.brokeMonths-1);
+}
+
+function checkEra(){
+  let e = 1;
+  for(let i=0;i<ERAS.length;i++) if(S.followers >= ERAS[i].min) e = i+1;
+  e = Math.min(e, 4);
+  if(e > S.era){
+    S.era = e;
+    chime();
+    const names = ["","Deserted Beach","Modest Retreat Centre","Booming Wellness Hub","Media Hype"];
+    const blurb = {
+      2:"Word travels. A second bamboo hut appears overnight, built by someone who watched a YouTube tutorial. You may now open a <b>Visa Consultancy</b>.",
+      3:"There is a queue for the smoothie bar. You may now build a <b>Ferry Dock</b> and a <b>Temple of Reciprocity</b>, and your best plots can reach level 3.",
+      4:"Isla Namastara appears on three listicles and one watchlist. The Reckoning is coming: in 24 moons the world will decide what you built."
+    };
+    if(e===4) S.reckoning = 24;
+    showModal({
+      eyebrow:"New Era",
+      title: names[e],
+      body: blurb[e] || "The island grows.",
+      choices:[{ label:"Inhale. Exhale. Continue.", primary:true }]
+    });
+    note("Era: "+names[e], "big");
+  }
+}
+
+function checkEndings(){
+  if(S.gameOver || S.sandbox) return;
+  if(S.brokeMonths >= 6){
+    return ending(false, "Insolvent Ascension",
+      "Your Aura Coin balance has been negative for half a year. The bamboo supplier accepts neither crypto nor gratitude. Creditors seize the shala; the island is reclaimed by lizards and, eventually, by the jungle.");
+  }
+  if(S.charisma < 9 && S.followers < 12 && S.era > 1){
+    return ending(false, "Deposed by Vibes",
+      "Charisma spent, devotees gone. A younger guru with better lighting has taken your hashtag. You leave on the morning ferry with one singing bowl and a bad back.");
+  }
+  if(S.reckoning > 0){
+    S.reckoning--;
+    if(S.reckoning === 0){
+      const good = S.local >= 62 && S.enlight >= 66 && S.arch.seek > 0 && S.visa >= 45 && S.coin >= 0;
+      if(good) ending(true, "Enlightened Utopia",
+        "The audit passes. The village co-owns the ferry. Sincere Seekers still sit on the beach at dawn, and nobody is selling them anything. Isla Namastara becomes the rare thing: a wellness destination that is actually well.");
+      else ending(false, "Fall of the Guru",
+        "The documentary drops on a Tuesday. Three former devotees, one accountant and a very calm village spokesperson explain, in sequence, what you did. Your visa is not renewed. The jungle takes the open-air shalas back within two seasons.");
+    }
+  }
+}
+
+function ending(win, title, text){
+  S.gameOver = true;
+  setSpeed(0);
+  showModal({
+    eyebrow: win ? "Ending — Enlightened Utopia" : "Ending — Fall of the Guru",
+    title: title,
+    body: "<p>"+text+"</p><ul>"
+      +"<li>Devotees at the end: <b>"+fmt(S.followers)+"</b></li>"
+      +"<li>Enlightenment Index: <b>"+Math.round(S.enlight)+"</b></li>"
+      +"<li>Local Relations: <b>"+Math.round(S.local)+"</b></li>"
+      +"<li>Visa Standing: <b>"+Math.round(S.visa)+"</b></li>"
+      +"<li>Aura Coin: <b>"+fmt(S.coin)+"</b></li>"
+      +"<li>Sincere Seekers remaining: <b>"+S.arch.seek+"</b></li></ul>",
+    choices:[
+      { label:"Keep playing anyway (sandbox)", sub:"No more endings — just the island", fn(){ S.gameOver=false; S.sandbox=true; S.reckoning=-1; S.brokeMonths=0; setSpeed(2); } },
+      { label:"Found a new island", sub:"Restart from one bamboo shala", primary:true, fn(){ restart(); } }
+    ]
+  });
+  note(title, win?"good":"bad");
+}
+
+function monthTick(){
+  if(S.gameOver) return;
+  S.month++; if(S.month>11){ S.month=0; S.year++; }
+  if(coverageDirty) recomputeCoverage();
+  for(const t of S.tiles){
+    if(t.sealed>0){ t.sealed--; if(t.sealed===0){ refreshTile(t); coverageDirty=true; note("Seals removed from a structure. Paperwork accepted, grudgingly.","good"); } }
+    if(t.closed>0){ t.closed--; if(t.closed===0) refreshTile(t); }
+  }
+  if(S.mod.freeze>0) S.mod.freeze--;
+  const st = computeStats();
+  computeDemand(st);
+  develop(st);
+  updateMeters(st);
+  updatePopulation(st);
+  updateArchetypes(st);
+  financeMonth(st);
+  for(const k in S.cd) if(S.cd[k]>0) S.cd[k]--;
+  S.mod.silence = 0; S.mod.party = 0;
+  if(S.seekerless === 18){ note("The last Sincere Seeker packed a rucksack and left without posting about it.","bad"); S.mod.scandal += 0.4; }
+  syncAgents();
+  maybeEvent(st);
+  checkEra();
+  checkEndings();
+  renderUI();
+}
+</script>
+<script>
+"use strict";
+/* ============================================================
+   11. EVENTS & DISASTERS
+   ============================================================ */
+function developed(filter){
+  return S.tiles.filter(t=>(t.lvl>0 || (t.build && t.build!=="shala")) && t.sealed<=0 && t.closed<=0 && (!filter || filter(t)));
+}
+function sealRandom(n, months){
+  const pool = developed();
+  let sealed = 0;
+  while(n-- > 0 && pool.length){
+    const t = pool.splice(ri(pool.length),1)[0];
+    t.sealed = months; refreshTile(t); sealed++;
+  }
+  coverageDirty = true;
+  return sealed;
+}
+function closeRandom(n, months, filter){
+  const pool = developed(filter);
+  let c = 0;
+  while(n-- > 0 && pool.length){
+    const t = pool.splice(ri(pool.length),1)[0];
+    t.closed = months; refreshTile(t); c++;
+  }
+  coverageDirty = true;
+  return c;
+}
+function destroyRandom(n, filter){
+  const pool = developed(filter);
+  let d = 0;
+  while(n-- > 0 && pool.length){
+    const t = pool.splice(ri(pool.length),1)[0];
+    if(t.lvl>0){ t.lvl = 0; }
+    else if(t.build){ t.build = null; }
+    refreshTile(t); d++;
+  }
+  coverageDirty = true;
+  return d;
+}
+
+const EVENTS = [
+  {
+    id:"raid",
+    weight:(st)=> S.followers>18 ? clamp((72-S.visa)/72,0,1)*3.4 : 0,
+    run:(st)=> startRaid()
+  },
+  {
+    id:"documentary",
+    weight:(st)=> S.viral>45 && S.followers>50 ? clamp(S.viral/120,0,1)*2.2 + (st.commercial>1.4?0.8:0) : 0,
+    run:()=>{
+      showModal({
+        eyebrow:"Streaming Platform", title:"A documentary crew has landed",
+        body:"<p>Four people with very good microphones say they are making \"an inspiring portrait of alternative living\". The working title on their clipboard is <i>Barefoot Empire: Inside the Namastara Cult</i>.</p>",
+        choices:[
+          { label:"Grant full access", sub:"Huge reach, and they will film everything", primary:true, fn(){
+              S.viral = Math.min(160, S.viral + 40); S.mod.doc = 1.2; S.mod.scandal += 0.7;
+              const left = Math.round(S.followers*0.18); S.followers = Math.max(0, S.followers-left);
+              note("Crew embedded. Reach explodes. "+left+" devotees suddenly remember their families.","bad");
+              spawnVehicle("crew"); }},
+          { label:"Deny access and hide the merch printer", sub:"Less reach, fewer questions", fn(){
+              S.viral = Math.max(0, S.viral-14); S.charisma = clamp(S.charisma-3,0,100);
+              note("You deny access. They film the gate for nine minutes. It becomes the poster.","bad"); }},
+          { label:"Buy them a retreat package", sub:"−400 Aura Coin, they may soften", fn(){
+              S.coin -= 400;
+              if(Math.random()<0.6){ S.viral = Math.min(160, S.viral + 18); note("Two crew members achieve genuine catharsis. The edit is kind.","good"); }
+              else { S.mod.scandal += 0.9; note("They filmed the invoice. That shot is in the trailer.","bad"); } }}
+        ]
+      });
+    }
+  },
+  {
+    id:"fullmoon",
+    weight:(st)=> st.vibeDev>2 ? 1.5 : 0.3,
+    run:()=>{
+      const nc = closeRandom(1, 2, t=>t.zone==="vibe");
+      S.local = clamp(S.local-8,0,100); S.viral = Math.min(160, S.viral + 12); S.enlight = clamp(S.enlight-3,0,100);
+      spawnVehicle("raid"); siren(3);
+      showModal({
+        eyebrow:"Noise Complaint", title:"The full moon party got away from you",
+        body:"<p>The sound system was pointed at the village. At 04:40 someone taught the neighbours' rooster to expect a drop. Police attended, declined a kombucha, and closed a venue for two moons.</p>",
+        choices:[
+          { label:"Apologise in person with rice and a new roof", sub:"−250 Aura Coin, +Local Relations", primary:true, fn(){
+              S.coin -= 250; S.local = clamp(S.local+9,0,100); note("You apologise properly. The elders accept, and mention the drainage while they are here.","good"); }},
+          { label:"Blame the DJ and post a heartfelt story", sub:"+Viral, −Local Relations", fn(){
+              S.viral = Math.min(160, S.viral + 10); S.local = clamp(S.local-5,0,100); note("The DJ is blamed. The DJ posts a heartfelt story of his own.","bad"); }}
+        ]
+      });
+    }
+  },
+  {
+    id:"ayahuasca",
+    weight:(st)=> st.vibeDev>1 && S.followers>40 ? 1.2 : 0.2,
+    run:()=>{
+      closeRandom(1, 4, t=>t.zone==="vibe");
+      S.enlight = clamp(S.enlight-5,0,100); S.mod.scandal += 0.5; S.mod.disaster += 1;
+      spawnVehicle("ambulance"); siren(2);
+      showModal({
+        eyebrow:"Medical Incident", title:"Ceremony complications",
+        body:"<p>A guest combined the brew with three supplements, an SSRI and an energy drink, then attempted to swim to the mainland to \"return something\". The ambulance is here. The ceremony space is closed for four moons.</p>",
+        choices:[
+          { label:"Pay the medical bill and hire an actual screener", sub:"−350 Aura Coin, protects your Enlightenment", primary:true, fn(){
+              S.coin -= 350; S.enlight = clamp(S.enlight+4,0,100); S.mod.scandal = Math.max(0,S.mod.scandal-0.4);
+              note("A trained facilitator is hired. She immediately bans the energy drinks.","good"); }},
+          { label:"Call it their own journey", sub:"Free, and the story travels", fn(){
+              S.mod.scandal += 0.8; S.charisma = clamp(S.charisma-5,0,100);
+              note("\"Everyone's path is their own,\" you say, into a phone that is recording.","bad"); }}
+        ]
+      });
+    }
+  },
+  {
+    id:"monsoon",
+    weight:(st)=> (S.month>=8 || S.month<=1) ? 2.0 : 0.5,
+    run:()=>{
+      startRain(12); shake = 0.55; thud();
+      const d = destroyRandom(1+ri(3), t=>t.lvl>0 && t.lvl<=2);
+      S.mod.disaster += 1.4; S.enlight = clamp(S.enlight-3,0,100);
+      showModal({
+        eyebrow:"Rainy Season", title:"Mudslide",
+        body:"<p>Three days of rain, then the hillside moved. "+(d||0)+" open-air structure"+(d===1?"":"s")+" now exist as a concept rather than a location. The village warned you about building on that slope. They warned you in advance. In writing.</p>",
+        choices:[
+          { label:"Rebuild with proper drainage", sub:"−300 Aura Coin, +Local Relations", primary:true, fn(){
+              S.coin -= 300; S.local = clamp(S.local+5,0,100); S.enlight = clamp(S.enlight+2,0,100);
+              note("Drainage installed. Somebody's uncle does it in a day for a fraction of your quote.","good"); }},
+          { label:"Declare it a cleansing", sub:"Free, +Viral", fn(){
+              S.viral = Math.min(160, S.viral + 9); note("\"The land is releasing what no longer serves it,\" you post, standing in mud.","big"); }}
+        ]
+      });
+    }
+  },
+  {
+    id:"freeze",
+    weight:(st)=> S.arch.trust>6 ? 1.4 : 0.2,
+    run:()=>{
+      S.mod.freeze = 4;
+      note("A trustfund parent froze their child's card. Income dips for four moons.","bad");
+      tick("Somewhere in Connecticut, a father has discovered what a \"cacao integration package\" costs.");
+    }
+  },
+  {
+    id:"rival",
+    weight:(st)=> S.followers>70 ? 1.3 : 0.15,
+    run:()=>{
+      S.mod.rival = 1.4;
+      const lost = Math.round(S.followers*0.11);
+      S.followers = Math.max(0, S.followers - lost);
+      showModal({
+        eyebrow:"Competition", title:"A rival guru opens up the coast",
+        body:"<p>Guru Blaize — formerly a growth marketer named Kevin — has opened <i>Vortex Bay</i> two headlands away. Ice baths, a breathwork pyramid, and 22% commission for referrals. "+lost+" devotees have already swum over.</p>",
+        choices:[
+          { label:"Undercut him: half-price initiations", sub:"−Aura Coin per moon for a while, +devotees", primary:true, fn(){
+              S.donationAsk = Math.max(0, S.donationAsk-4); document.getElementById("donation").value = S.donationAsk;
+              document.getElementById("donationVal").textContent = S.donationAsk+"%";
+              S.viral = Math.min(160, S.viral + 8); note("Prices cut. The devotees return, slightly smug.","good"); }},
+          { label:"Out-mystify him: 40 days of visible fasting", sub:"+Charisma, −Enlightenment (you get cranky)", fn(){
+              S.charisma = clamp(S.charisma+9,0,100); S.enlight = clamp(S.enlight-4,0,100);
+              note("You are photographed looking translucent and wise. It works.","good"); }},
+          { label:"Ignore Kevin", sub:"Free, he keeps growing", fn(){ S.mod.rival = 2.2; note("You ignore him. He buys a jet ski and a drone.","bad"); }}
+        ]
+      });
+    }
+  },
+  {
+    id:"audit",
+    weight:(st)=> S.income>260 ? 1.5 : 0.2,
+    run:()=>{
+      const bill = Math.round(clamp(S.income*2.6, 150, 9000));
+      showModal({
+        eyebrow:"Tax Authority", title:"Audit of \"spiritual donations\"",
+        body:"<p>An inspector has questions about "+fmt(bill)+" Aura Coin classified as \"voluntary energetic exchange\". She has a spreadsheet. She has printed the spreadsheet.</p>",
+        choices:[
+          { label:"Pay the assessment", sub:"−"+fmt(bill)+" Aura Coin, +Visa standing", primary:true, fn(){
+              S.coin -= bill; S.visa = clamp(S.visa+8,0,100);
+              note("Assessment paid. You are now, technically, a compliant business.","good"); }},
+          { label:"Claim religious exemption", sub:"Gamble: free, or double and a scandal", fn(){
+              if(Math.random() < clamp(0.25 + (S.stats.hasTemple?0.2:0) + S.visa/300, 0.15, 0.7)){
+                S.visa = clamp(S.visa-4,0,100); note("Exemption granted. The inspector leaves with a free chakra bracelet.","good");
+              } else {
+                S.coin -= bill*2; S.mod.scandal += 1.0; S.visa = clamp(S.visa-14,0,100);
+                note("Exemption denied, penalties doubled. The spreadsheet has grown a second tab.","bad");
+              } }}
+        ]
+      });
+    }
+  },
+  {
+    id:"waterwar",
+    weight:(st)=> (st.dormsDev - st.dormWater) > 2 || S.local < 55 ? 1.6 : 0.25,
+    run:()=>{
+      S.local = clamp(S.local-9,0,100);
+      showModal({
+        eyebrow:"Groundwater Rights", title:"The wells are running low",
+        body:"<p>Your infinity plunge pools and the village rice terraces draw from the same aquifer. Guess which one ran dry first. Guess which one is in the local newspaper.</p>",
+        choices:[
+          { label:"Fund a shared water system", sub:"−450 Aura Coin, +Local Relations, +Enlightenment", primary:true, fn(){
+              S.coin -= 450; S.local = clamp(S.local+16,0,100); S.enlight = clamp(S.enlight+4,0,100);
+              note("A shared pipeline is built. The village committee now has your phone number.","good"); }},
+          { label:"Install a bigger pump, quietly", sub:"Free, −Local Relations", fn(){
+              S.local = clamp(S.local-10,0,100); S.mod.scandal += 0.6;
+              note("A bigger pump arrives at night in an unmarked boat.","bad"); }}
+        ]
+      });
+    }
+  },
+  {
+    id:"blessing",
+    weight:(st)=> S.local>70 && S.enlight>62 ? 1.4 : 0.1,
+    run:()=>{
+      S.charisma = clamp(S.charisma+6,0,100); S.enlight = clamp(S.enlight+4,0,100);
+      const gift = 180 + ri(160); S.coin += gift;
+      note("The village invites the island to a real ceremony. Nobody films it. +"+gift+" Aura Coin in gifts.","good");
+      tick("An elder teaches your devotees a chant older than your business model.");
+      chime();
+    }
+  }
+];
+
+function maybeEvent(st){
+  if(S.eventCd > 0){ S.eventCd--; return; }
+  if(Math.random() > 0.55) return;
+  const weights = EVENTS.map(e=>Math.max(0, e.weight(st)));
+  const total = weights.reduce((a,b)=>a+b,0);
+  if(total <= 0.01) return;
+  let r = Math.random()*total;
+  for(let i=0;i<EVENTS.length;i++){
+    r -= weights[i];
+    if(r <= 0){ S.eventCd = 4 + ri(6); EVENTS[i].run(st); return; }
+  }
+}
+
+/* ---------- the raid: interactive ---------- */
+let raidTimer = null, raidLeft = 0, raidResolved = true;
+const raidEl = document.getElementById("raid");
+
+function startRaid(){
+  raidResolved = false;
+  raidLeft = 15;
+  disguise = true;
+  clearVehicles();
+  spawnVehicle("raid"); spawnVehicle("raid");
+  siren(9);
+  const prev = S.speed;
+  S.resumeSpeed = prev || 2;
+  setSpeed(0);
+  raidEl.classList.add("show");
+  document.getElementById("raidCount").textContent = "15";
+  document.getElementById("raidBar").style.width = "100%";
+  note("🚨 Immigration police at the gate. Devotees are hiding in the treeline dressed as trees.","bad");
+  tick("Two white vans. One clipboard. Forty people pretending to be shrubbery.");
+  raidTimer = setInterval(()=>{
+    raidLeft -= 0.1;
+    document.getElementById("raidCount").textContent = Math.max(0, raidLeft).toFixed(1);
+    document.getElementById("raidBar").style.width = clamp(raidLeft/15*100,0,100)+"%";
+    if(raidLeft <= 0) resolveRaid(false);
+  }, 100);
+}
+
+document.getElementById("raidBtn").addEventListener("click", ()=>{
+  if(!raidResolved) resolveRaid(true);
+});
+
+function resolveRaid(inTime){
+  if(raidResolved) return;
+  raidResolved = true;
+  clearInterval(raidTimer); raidTimer = null;
+  raidEl.classList.remove("show");
+  disguise = false;
+  const st = S.stats || computeStats();
+  const chance = clamp(0.18 + S.visa/150 + (st.hasVisa?0.32:0), 0.08, 0.94);
+  if(inTime && Math.random() < chance){
+    const fine = 180 + ri(140);
+    S.coin -= fine;
+    S.visa = clamp(S.visa+7,0,100);
+    showModal({
+      eyebrow:"Raid Resolved", title:"The paperwork holds",
+      body:"<p>You present forty-one \"retreat visas\", a laminated schedule of \"unpaid volunteer study\" and a smile of pure serenity. The officer squints, stamps something, and fines you "+fine+" Aura Coin for the unregistered kombucha tap.</p>",
+      choices:[{ label:"Namaste. Please leave.", primary:true }]
+    });
+    note("Raid survived. Fine: "+fine+" Aura Coin. Bruno's laminator earns its keep.","good");
+  } else {
+    const sealed = sealRandom(2+ri(3), 5);
+    const lost = Math.round(S.followers * (inTime?0.16:0.28));
+    S.followers = Math.max(0, S.followers - lost);
+    S.charisma = clamp(S.charisma - (inTime?6:12), 0, 100);
+    S.visa = clamp(S.visa+4, 0, 100);
+    S.mod.scandal += 0.8;
+    showModal({
+      eyebrow:"Raid Resolved", title: inTime ? "Papers rejected" : "You were too slow",
+      body:"<p>"+(inTime
+        ? "The officer reads your documents carefully, which is the one thing they were not designed for."
+        : "You spent fifteen seconds looking for a folder you last saw in a hammock.")
+        +"</p><ul><li>"+sealed+" structure"+(sealed===1?"":"s")+" sealed for 5 moons</li><li>"+lost+" devotees deported or fled</li><li>Charisma damaged</li></ul>",
+      choices:[{ label:"Regroup. Breathe. Rebrand.", primary:true }]
+    });
+    note("Raid failed: "+sealed+" structures sealed, "+lost+" devotees gone.","bad");
+  }
+  setTimeout(clearVehicles, 6000);
+  renderUI();
+}
+</script>
+<script>
+"use strict";
+/* ============================================================
+   12. UI
+   ============================================================ */
+const $ = (id)=>document.getElementById(id);
+const METERS = [
+  { key:"enlight",  label:"Enlightenment", low:true },
+  { key:"charisma", label:"Guru Charisma", low:true },
+  { key:"visa",     label:"Visa Standing", low:true },
+  { key:"local",    label:"Local Relations", low:true },
+  { key:"viral",    label:"Viral Reach", low:false }
+];
+
+function buildToolbar(){
+  const wrap = $("tools"); wrap.innerHTML = "";
+  for(const key in TOOLS){
+    const t = TOOLS[key];
+    const b = document.createElement("button");
+    b.className = "tool" + (t.wide?" wide":"") + (S.tool===key?" active":"");
+    b.dataset.key = key;
+    b.innerHTML = '<span class="ic">'+t.icon+'</span><span class="tx"><b>'+t.name+'</b><span>'
+      + (t.cost? t.cost+" ⧫" + (t.kind==="zone"||t.kind==="road"?" / tile":"") : "free") + '</span></span>';
+    b.addEventListener("click", ()=>selectTool(key));
+    wrap.appendChild(b);
+  }
+  const dec = $("decrees"); dec.innerHTML = "";
+  for(const d of DECREES){
+    const b = document.createElement("button");
+    b.className = "decree"; b.dataset.id = d.id;
+    b.innerHTML = '<span><b>'+d.name+'</b><small>'+d.desc+'</small></span><span class="price">'+d.cost+' ⧫</span>';
+    b.addEventListener("click", ()=>{
+      if((S.cd[d.id]||0) > 0){ toast(d.name+" needs "+S.cd[d.id]+" more moons"); return; }
+      if(S.coin < d.cost){ toast("Not enough Aura Coin"); return; }
+      S.coin -= d.cost; S.cd[d.id] = d.cd; d.run(); chime(); renderUI();
+    });
+    dec.appendChild(b);
+  }
+}
+function selectTool(key){
+  const t = TOOLS[key];
+  if(t.era && S.era < t.era){ toast(t.name+" unlocks in a later era"); return; }
+  S.tool = key;
+  document.querySelectorAll(".tool").forEach(b=>b.classList.toggle("active", b.dataset.key===key));
+  renderSelection();
+}
+
+function note(msg, cls){
+  S.log.unshift({ msg, cls: cls||"", when: MONTHS[S.month]+" Y"+S.year });
+  if(S.log.length > 40) S.log.pop();
+  tick(msg);
+  renderLog();
+}
+function tick(msg){
+  const el = $("tickerMsg");
+  el.textContent = msg;
+  el.classList.remove("flash");
+  void el.offsetWidth;
+  el.classList.add("flash");
+}
+let toastT = null;
+function toast(msg){
+  const el = $("toast");
+  el.textContent = msg; el.classList.add("show");
+  clearTimeout(toastT);
+  toastT = setTimeout(()=>el.classList.remove("show"), 1700);
+}
+function renderLog(){
+  const box = $("log");
+  box.innerHTML = S.log.slice(0,14).map(l=>
+    '<div class="logline '+l.cls+'"><em>'+l.when+'</em>'+l.msg+'</div>').join("");
+}
+
+function renderUI(){
+  const coinChip = $("chipCoin");
+  coinChip.querySelector("b").textContent = fmt(S.coin);
+  coinChip.classList.toggle("neg", S.coin < 0);
+  $("chipFollowers").querySelector("b").textContent = fmt(S.followers);
+  $("dateVal").textContent = MONTHS[S.month]+" Y"+S.year + (S.reckoning>0 ? " · Reckoning in "+S.reckoning : "");
+  $("eraName").textContent = ERAS[S.era-1].name;
+
+  const mbox = $("meters");
+  if(mbox.children.length !== METERS.length){
+    mbox.innerHTML = METERS.map(m=>'<div class="meter" id="m_'+m.key+'"><i>'+m.label+'</i><b>0</b><span class="bar"></span></div>').join("");
+  }
+  for(const m of METERS){
+    const el = $("m_"+m.key), v = S[m.key];
+    el.querySelector("b").textContent = Math.round(v);
+    el.querySelector(".bar").style.width = clamp(v,0,100)+"%";
+    el.classList.remove("warn","bad");
+    if(m.low){ if(v < 28) el.classList.add("bad"); else if(v < 52) el.classList.add("warn"); }
+    else { if(v > 85) el.classList.add("bad"); else if(v > 58) el.classList.add("warn"); }
+  }
+
+  const setBar = (id, v)=>{
+    const el = $(id);
+    if(v >= 0){ el.style.left = "50%"; el.style.width = (v*50)+"%"; el.style.background = "var(--jade)"; }
+    else { el.style.width = (-v*50)+"%"; el.style.left = (50 + v*50)+"%"; el.style.background = "var(--terra)"; }
+  };
+  setBar("dDorm", S.demand.dorm); setBar("dVibe", S.demand.vibe); setBar("dContent", S.demand.content);
+
+  $("fIncome").textContent = "+"+fmt(S.income);
+  $("fExpense").textContent = "−"+fmt(S.expense);
+  const net = S.income - S.expense;
+  const nEl = $("fNet");
+  nEl.textContent = (net>=0?"+":"−")+fmt(Math.abs(net));
+  nEl.style.color = net>=0 ? "var(--jade)" : "var(--terra)";
+
+  $("archList").innerHTML = Object.keys(ARCH).map(k=>
+    '<div class="kv" title="'+ARCH[k].note+'"><span>'+ARCH[k].name+'</span><b>'+fmt(S.arch[k])+'</b></div>').join("");
+
+  document.querySelectorAll(".tool").forEach(b=>{
+    const t = TOOLS[b.dataset.key];
+    b.classList.toggle("locked", !!(t.era && S.era < t.era));
+  });
+  document.querySelectorAll(".decree").forEach(b=>{
+    const cd = S.cd[b.dataset.id]||0;
+    b.disabled = cd > 0 || S.coin < DECREES.find(d=>d.id===b.dataset.id).cost;
+    const price = b.querySelector(".price");
+    const d = DECREES.find(x=>x.id===b.dataset.id);
+    price.textContent = cd>0 ? cd+" moons" : d.cost+" ⧫";
+  });
+  renderSelection();
+}
+
+function selectTile(t){ S.sel = t; renderSelection(); }
+function renderSelection(){
+  const t = S.sel;
+  const title = $("selTitle"), sub = $("selSub");
+  if(!t){
+    title.textContent = "Isla Namastara";
+    sub.innerHTML = "Active tool: <b>"+TOOLS[S.tool].name+"</b>. Tap a tile to inspect.";
+    return;
+  }
+  let name = t.build ? (BUILD_NAME[t.build]) :
+             t.road ? "Barefoot Path" :
+             t.zone ? ZONE_NAME[t.zone] + (t.lvl? " · Level "+t.lvl : " · unbuilt") :
+             TERR_NAME[t.terr];
+  title.textContent = name;
+  let lines = ["Tile "+t.x+","+t.z+" · "+TERR_NAME[t.terr]];
+  if(t.sealed>0) lines.push("<b style='color:var(--terra)'>SEALED</b> for "+t.sealed+" moons");
+  if(t.closed>0) lines.push("<b style='color:var(--terra)'>CLOSED</b> for "+t.closed+" moons");
+  if(t.zone){
+    const n = zoneReqs(t);
+    const miss = [];
+    if(!n.road) miss.push("Barefoot Path");
+    if(!n.prana) miss.push("Prana");
+    if(!n.water) miss.push("Purified Water");
+    if(!n.wifi) miss.push("Wifi-Chakra");
+    lines.push(miss.length ? "Missing: <b style='color:var(--terra)'>"+miss.join(", ")+"</b>" : "All services connected ✓");
+    if(t.zone==="dorm" && t.lvl) lines.push("Beds: <b>"+DORM[t.lvl-1].cap+"</b>");
+    if(t.zone==="vibe" && t.lvl) lines.push("Trade: <b>"+VIBE[t.lvl-1].inc+" ⧫</b>/moon at full flow");
+    if(t.zone==="content" && t.lvl) lines.push("Content: <b>"+CONT[t.lvl-1].inc+" ⧫</b>/moon, +"+CONT[t.lvl-1].viral+" viral");
+  }
+  if(t.build && RADIUS[t.build]) lines.push("Service radius: <b>"+RADIUS[t.build]+"</b> tiles");
+  if(t.build) lines.push("Upkeep: <b>"+(UPKEEP[t.build]||0)+" ⧫</b>/moon");
+  lines.push("Services here: "+(t.cov.prana?"☀️":"")+(t.cov.water?"💧":"")+(t.cov.wifi?"📡":"")+(t.nearRoad?"〰️":"")
+    + ((!t.cov.prana&&!t.cov.water&&!t.cov.wifi&&!t.nearRoad)?"none":""));
+  sub.innerHTML = lines.join("<br>");
+}
+
+/* ---------- modal ---------- */
+let modalPrevSpeed = null;
+function showModal(cfg){
+  if(modalPrevSpeed === null) modalPrevSpeed = S.speed>0 ? S.speed : (S.resumeSpeed||0);
+  setSpeed(0);
+  $("mEyebrow").textContent = cfg.eyebrow || "Island Wire";
+  $("mTitle").textContent = cfg.title || "";
+  $("mBody").innerHTML = cfg.body || "";
+  const ch = $("mChoices"); ch.innerHTML = "";
+  const choices = cfg.choices && cfg.choices.length ? cfg.choices : [{label:"Continue", primary:true}];
+  for(const c of choices){
+    const b = document.createElement("button");
+    b.className = "choice" + (c.primary?" primary":"");
+    b.innerHTML = "<b>"+c.label+"</b>" + (c.sub?"<small>"+c.sub+"</small>":"");
+    b.addEventListener("click", ()=>{
+      if(c.fn) c.fn();
+      closeModal();
+      renderUI();
+    });
+    ch.appendChild(b);
+  }
+  $("backdrop").classList.add("show");
+}
+function closeModal(){
+  $("backdrop").classList.remove("show");
+  if(!S.gameOver && modalPrevSpeed) setSpeed(modalPrevSpeed);
+  modalPrevSpeed = null;
+  S.resumeSpeed = 0;
+}
+function setSpeed(n){
+  S.speed = n;
+  $("btnPause").classList.toggle("on", n===0);
+  $("btnSpeed1").classList.toggle("on", n===1);
+  $("btnSpeed2").classList.toggle("on", n===2);
+  $("btnSpeed3").classList.toggle("on", n===3);
+}
+
+const HELP_BODY = `
+<p>You are the <b>Supreme Guru</b> of Isla Namastara: an empty tropical island, one bamboo shala, and a great deal of self-belief.</p>
+<ul>
+<li><b>Lay a Barefoot Path</b> first — nothing develops without one nearby.</li>
+<li><b>Zone</b> Devotee Dorms (beds), Vibe Economy (income), Content Farm (reach). Devotees build on zoned land themselves.</li>
+<li><b>Services:</b> Prana Array = power, Water Purification = water, Wifi-Chakra Tower = the livestream. No wifi, no income.</li>
+<li><b>Watch the Visa Standing.</b> When it drops, the immigration vans arrive — and you get 15 seconds to find your paperwork.</li>
+<li><b>Watch Local Relations.</b> The island had people on it before you arrived, and they share your aquifer.</li>
+<li><b>Watch the Sincere Seekers.</b> If they all leave, you have built a shop with incense.</li>
+</ul>
+<p>Reach <b>Media Hype</b> and the Reckoning begins: 24 moons later the island becomes either an <b>Enlightened Utopia</b> or the subject of a documentary.</p>
+<p style="font-size:.78rem;color:var(--ink-soft)">Controls: drag to pan (Inspect tool) · scroll or +/− to zoom · Q/E rotate · Space pause · 1/2/3 speed · B bulldoze · Esc inspect.</p>`;
+
+function showHelp(){
+  showModal({
+    eyebrow:"SimSpiri", title:"Isla Namastara awaits",
+    body: HELP_BODY,
+    choices:[{ label:"Begin the Ascension", sub:"Starts at normal speed", primary:true, fn(){ S.started = true; setSpeed(2); modalPrevSpeed = null; } }]
+  });
+}
+</script>
+<script>
+"use strict";
+/* ============================================================
+   13. INPUT & CAMERA CONTROLS
+   ============================================================ */
+const ray = new THREE.Raycaster();
+let hover = null, painting = false, panning = false, lastPaint = -1;
+const pointers = new Map();
+let pinchDist = 0;
+const keys = new Set();
+
+const cursor = new THREE.Group();
+{
+  const p = new THREE.Mesh(GEO.quad, new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.3 }));
+  p.rotation.x = -Math.PI/2; p.scale.set(0.98,0.98,1);
+  const ringMat = new THREE.MeshBasicMaterial({ color:0xffffff });
+  const bars = [];
+  for(let i=0;i<4;i++){
+    const b = new THREE.Mesh(GEO.quad, ringMat);
+    b.rotation.x = -Math.PI/2;
+    if(i<2){ b.scale.set(1,0.06,1); b.position.z = i===0?-0.47:0.47; }
+    else   { b.scale.set(0.06,1,1); b.position.x = i===2?-0.47:0.47; }
+    bars.push(b);
+  }
+  cursor.add(p, ...bars);
+  cursor.userData = { fill:p, ring:ringMat };
+  cursor.visible = false;
+  scene.add(cursor);
+}
+function setCursor(t){
+  hover = t;
+  if(!t){ cursor.visible = false; hideTip(); return; }
+  cursor.visible = true;
+  cursor.position.set(wx(t.x), t.h + 0.03, wx(t.z));
+  const err = placeError(t, S.tool);
+  const col = S.tool==="select" ? 0xfff0c0 : err ? 0xff5a44 : 0x7de0a8;
+  cursor.userData.ring.color.setHex(col);
+  cursor.userData.fill.material.color.setHex(col);
+  const tool = TOOLS[S.tool];
+  let label;
+  if(S.tool === "select") label = (t.build?BUILD_NAME[t.build]:t.road?"Barefoot Path":t.zone?ZONE_NAME[t.zone]:TERR_NAME[t.terr]);
+  else label = err ? err : tool.name + " — " + placeCost(t,tool) + " ⧫";
+  showTip(label);
+}
+function showTip(text){
+  const el = $("tip");
+  el.textContent = text;
+  el.classList.add("show");
+  const v = new THREE.Vector3(cursor.position.x, cursor.position.y+0.4, cursor.position.z).project(cam);
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  el.style.left = ((v.x*0.5+0.5)*w) + "px";
+  el.style.top  = ((-v.y*0.5+0.5)*h) + "px";
+}
+function hideTip(){ $("tip").classList.remove("show"); }
+
+function pickTile(cx, cy){
+  if(!topsMesh) return null;
+  const r = canvas.getBoundingClientRect();
+  const nd = new THREE.Vector2(((cx-r.left)/r.width)*2-1, -((cy-r.top)/r.height)*2+1);
+  ray.setFromCamera(nd, cam);
+  const hits = ray.intersectObject(topsMesh, false);
+  if(!hits.length) return null;
+  const ti = quadTile[hits[0].faceIndex];
+  return (ti===undefined) ? null : S.tiles[ti];
+}
+function panBy(dx, dy){
+  const scale = camZoom / Math.max(1, canvas.clientHeight);
+  const right = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0);
+  const up = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 1);
+  right.y = 0; right.normalize();
+  up.y = 0; up.normalize();
+  camTarget.addScaledVector(right, -dx*scale);
+  camTarget.addScaledVector(up, dy*scale);
+  camTarget.x = clamp(camTarget.x, -GRID*0.7, GRID*0.7);
+  camTarget.z = clamp(camTarget.z, -GRID*0.7, GRID*0.7);
+}
+
+canvas.addEventListener("pointerdown", (e)=>{
+  canvas.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+  if(pointers.size === 2){
+    painting = false; panning = false;
+    const [a,b] = [...pointers.values()];
+    pinchDist = Math.hypot(a.x-b.x, a.y-b.y);
+    return;
+  }
+  const t = pickTile(e.clientX, e.clientY);
+  if(e.button === 1 || e.button === 2 || S.tool === "select"){
+    panning = true;
+    if(t) selectTile(t);
+  } else {
+    painting = true; lastPaint = -1;
+    if(t){ if(applyTool(t, S.tool)) { lastPaint = t.i; beep(520,0.05,"triangle",0.03); } renderUI(); }
+  }
+});
+canvas.addEventListener("pointermove", (e)=>{
+  const prev = pointers.get(e.pointerId);
+  if(pointers.size === 2 && prev){
+    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    const [a,b] = [...pointers.values()];
+    const d = Math.hypot(a.x-b.x, a.y-b.y);
+    if(pinchDist > 0) camZoom = clamp(camZoom * (pinchDist/Math.max(1,d)), 12, 74);
+    pinchDist = d;
+    return;
+  }
+  if(prev){
+    const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+    pointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+    if(panning){ panBy(dx, dy); return; }
+  }
+  const t = pickTile(e.clientX, e.clientY);
+  setCursor(t);
+  if(painting && t && t.i !== lastPaint){
+    if(applyTool(t, S.tool)) lastPaint = t.i;
+    renderUI();
+  }
+});
+function endPointer(e){
+  pointers.delete(e.pointerId);
+  if(pointers.size < 2) pinchDist = 0;
+  if(pointers.size === 0){ painting = false; panning = false; }
+}
+canvas.addEventListener("pointerup", endPointer);
+canvas.addEventListener("pointercancel", endPointer);
+canvas.addEventListener("pointerleave", (e)=>{ endPointer(e); setCursor(null); });
+canvas.addEventListener("contextmenu", (e)=>e.preventDefault());
+canvas.addEventListener("wheel", (e)=>{
+  e.preventDefault();
+  camZoom = clamp(camZoom * (1 + e.deltaY*0.0012), 12, 74);
+}, { passive:false });
+
+window.addEventListener("keydown", (e)=>{
+  const k = e.key.toLowerCase();
+  keys.add(k);
+  if(k === " "){ e.preventDefault(); setSpeed(S.speed===0 ? 2 : 0); }
+  else if(k === "1") setSpeed(1);
+  else if(k === "2") setSpeed(2);
+  else if(k === "3") setSpeed(3);
+  else if(k === "b") selectTool("bulldoze");
+  else if(k === "escape") selectTool("select");
+  else if(k === "+" || k === "=") camZoom = clamp(camZoom*0.88, 12, 74);
+  else if(k === "-") camZoom = clamp(camZoom*1.14, 12, 74);
+  else if(k === "h") showHelp();
+});
+window.addEventListener("keyup", (e)=>keys.delete(e.key.toLowerCase()));
+
+$("rotL").addEventListener("click", ()=>{ camAngle -= Math.PI/2; });
+$("rotR").addEventListener("click", ()=>{ camAngle += Math.PI/2; });
+$("zoomIn").addEventListener("click", ()=>{ camZoom = clamp(camZoom*0.85,12,74); });
+$("zoomOut").addEventListener("click", ()=>{ camZoom = clamp(camZoom*1.18,12,74); });
+$("goHome").addEventListener("click", ()=>{ if(S.shala) camTarget.set(wx(S.shala.x), 0, wx(S.shala.z)); });
+$("btnPause").addEventListener("click", ()=>setSpeed(0));
+$("btnSpeed1").addEventListener("click", ()=>setSpeed(1));
+$("btnSpeed2").addEventListener("click", ()=>setSpeed(2));
+$("btnSpeed3").addEventListener("click", ()=>setSpeed(3));
+$("btnInfo").addEventListener("click", ()=>$("info").classList.toggle("hidden"));
+$("btnSound").addEventListener("click", ()=>{
+  S.sound = !S.sound;
+  $("btnSound").textContent = S.sound ? "🔔" : "🔇";
+  $("btnSound").classList.toggle("on", !S.sound);
+  if(S.sound) chime();
+});
+$("donation").addEventListener("input", (e)=>{
+  S.donationAsk = +e.target.value;
+  $("donationVal").textContent = S.donationAsk + "%";
+});
+$("helpLink").addEventListener("click", (e)=>{ e.preventDefault(); showHelp(); });
+$("restartLink").addEventListener("click", (e)=>{
+  e.preventDefault();
+  showModal({ eyebrow:"Careful", title:"Abandon this island?",
+    body:"<p>The shalas will rot, the domain will lapse, and a new island will rise from a different random seed.</p>",
+    choices:[
+      { label:"Yes, found a new island", primary:true, fn(){ restart(); } },
+      { label:"No, stay and manage the mess" }
+    ]});
+});
+window.addEventListener("resize", resize);
+
+// Belt-and-braces sizing: some embedding contexts (iframos, font-load reflows)
+// can report a stale/zero canvas size at boot before layout settles. Watch
+// the container directly and re-sync the renderer + do one corrective camera
+// fit the first time we observe a real, non-trivial size.
+let didInitialFit = false;
+function watchMainSize(){
+  const target = document.getElementById("main");
+  const onSize = () => {
+    resize();
+    if (!didInitialFit && canvas.clientWidth > 60 && canvas.clientHeight > 60) {
+      didInitialFit = true;
+      fitCameraToIsland();
+    }
+  };
+  if (window.ResizeObserver) {
+    new ResizeObserver(onSize).observe(target);
+  } else {
+    // very old engines: poll briefly instead
+    let tries = 0;
+    const t = setInterval(() => { onSize(); if (++tries > 20) clearInterval(t); }, 150);
+  }
+}
+watchMainSize();
+
+/* keyboard panning + rotation held keys */
+function keyPan(dt){
+  const sp = canvas.clientHeight * dt * 0.65;
+  if(keys.has("w") || keys.has("arrowup"))    panBy(0,  sp);
+  if(keys.has("s") || keys.has("arrowdown"))  panBy(0, -sp);
+  if(keys.has("a") || keys.has("arrowleft"))  panBy( sp, 0);
+  if(keys.has("d") || keys.has("arrowright")) panBy(-sp, 0);
+  if(keys.has("q")) camAngle -= dt*1.1;
+  if(keys.has("e")) camAngle += dt*1.1;
+}
+
+/* ============================================================
+   14. ANIMATED SCENERY
+   ============================================================ */
+let animObjs = [];
+function collectAnim(){
+  animObjs = [];
+  for(const t of S.tiles){
+    if(t.group && t.group.userData){
+      if(t.group.userData.pulse) animObjs.push({ kind:"pulse", o:t.group.userData.pulse });
+      if(t.group.userData.boat)  animObjs.push({ kind:"boat", o:t.group.userData.boat, base:t.group.userData.boat.position.z });
+    }
+  }
+}
+function animateScenery(dt){
+  for(const a of animObjs){
+    if(a.kind === "pulse"){
+      const s = 0.22 + Math.sin(perf*3)*0.06;
+      a.o.scale.setScalar(s);
+    } else if(a.kind === "boat"){
+      a.o.position.z = a.base + Math.sin(perf*0.5)*0.6;
+      a.o.position.y = 0.06 + Math.sin(perf*2)*0.02;
+    }
+  }
+  if(window._ocean){
+    window._ocean.position.y = 0.02 + Math.sin(perf*0.8)*0.015;
+    window._ocean.material.opacity = 0.82 + Math.sin(perf*0.6)*0.05;
+  }
+}
+
+/* ============================================================
+   15. MAIN LOOP
+   ============================================================ */
+let lastFrame = performance.now(), acc = 0;
+function frame(now){
+  const dtms = Math.min(90, now - lastFrame);
+  lastFrame = now;
+  const dt = dtms / 1000;
+  perf += dt;
+
+  if(S.started && S.speed > 0 && !S.gameOver){
+    acc += dtms;
+    let guard = 0;
+    while(S.speed > 0 && acc >= MONTH_MS[S.speed] && guard++ < 4){
+      acc -= MONTH_MS[S.speed];
+      monthTick();
+    }
+    if(S.speed === 0) acc = 0;
+  }
+  if(terrainDirty){
+    terrainDirty = false;
+    buildTerrainMesh();
+    refreshLandTiles();
+  }
+  keyPan(dt);
+  updateAgents(dt);
+  updateVehicles(dt);
+  updateRain(dt);
+  animateScenery(dt);
+  if(shake > 0) shake = Math.max(0, shake - dt*0.6);
+  updateCamera();
+  renderer.render(scene, cam);
+  requestAnimationFrame(frame);
+}
+
+/* ============================================================
+   16. INIT / RESTART
+   ============================================================ */
+function placeStart(){
+  let best = null, bestScore = -1e9;
+  for(const t of S.tiles){
+    if(t.terr !== TERR.GRASS && t.terr !== TERR.SAND) continue;
+    let land = 0;
+    for(let dz=-2;dz<=2;dz++) for(let dx=-2;dx<=2;dx++){
+      const n = T(t.x+dx,t.z+dz);
+      if(n && buildable(n)) land++;
+    }
+    const d = Math.hypot(t.x-HALF, t.z-HALF);
+    const score = land*2 - d*1.6 + (t.terr===TERR.GRASS?4:0);
+    if(score > bestScore){ bestScore = score; best = t; }
+  }
+  if(!best) best = S.tiles.find(t=>buildable(t)) || S.tiles[0];
+  best.build = "shala"; best.zone = null; best.road = false;
+  S.shala = best;
+  refreshTile(best);
+  for(let i=1;i<=3;i++){
+    for(const [dx,dz] of [[i,0],[-i,0],[0,i]]){
+      const n = T(best.x+dx, best.z+dz);
+      if(n && buildable(n) && isEmpty(n)){ n.road = true; refreshTile(n); }
+    }
+  }
+  camTarget.set(wx(best.x), 0, wx(best.z));
+}
+
+function initGame(){
+  generateIsland();
+  buildTerrainMesh();
+  scatterDecor();
+  refreshLandTiles();
+  placeStart();
+  fitCameraToIsland();
+  recomputeCoverage();
+  collectAnim();
+  computeStats();
+  computeDemand(S.stats);
+  syncAgents();
+  renderUI();
+}
+
+function restart(){
+  // wipe scene groups
+  for(const g of [gBuild, gAgents, gFx, gDecor]){
+    while(g.children.length) g.remove(g.children[0]);
+  }
+  agents.length = 0; vehicles.length = 0; rain = null; disguise = false;
+  Object.assign(S, {
+    coin:2600, followers:0, enlight:62, charisma:48, visa:90, local:84, viral:5,
+    month:0, year:1, era:1, gameOver:false, started:true, donationAsk:12, tool:"select",
+    income:0, expense:0, dormCap:0, eventCd:8, reckoning:-1, seekerless:0, brokeMonths:0, sel:null, sandbox:false,
+    log:[], demand:{dorm:0,vibe:0,content:0}, arch:{trust:0,corp:0,bro:0,seek:0,heal:0},
+    mod:{ freeze:0, silence:0, party:0, rival:0, doc:0, scandal:0, disaster:0, sealed:0 }, cd:{}
+  });
+  $("donation").value = 12; $("donationVal").textContent = "12%";
+  camZoom = 30; camAngle = Math.PI*0.25;
+  coverageDirty = true;
+  initGame();
+  selectTool("select");
+  note("A new island rises from the sea. One bamboo shala. Infinite potential.","big");
+  setSpeed(2);
+}
+
+/* sidebar collapse (desktop in-flow, mobile overlay) */
+(function () {
+  const sidebar = document.getElementById('sidebar');
+  const toggle  = document.getElementById('sidebar-toggle');
+  const overlay = document.getElementById('sidebar-overlay');
+  const main    = document.getElementById('main');
+  function collapse() {
+    sidebar.classList.add('collapsed');
+    document.body.classList.remove('sidebar-open');
+    toggle.innerHTML = '&#x25BA;';
+    toggle.title = 'Expand sidebar';
+    overlay.classList.add('hidden');
+    setTimeout(resize, 260);
+  }
+  function expand() {
+    sidebar.classList.remove('collapsed');
+    document.body.classList.add('sidebar-open');
+    toggle.innerHTML = '&#x25C4;';
+    toggle.title = 'Collapse sidebar';
+    if (window.innerWidth <= 640) overlay.classList.remove('hidden');
+    setTimeout(resize, 260);
+  }
+  const isMobile = window.innerWidth <= 640;
+  if (isMobile ? !EXPANDED_ON_LOAD_FOR_MOBILE : !EXPANDED_ON_LOAD_FOR_DESKTOP) collapse(); else expand();
+  toggle.addEventListener('click', e => {
+    e.stopPropagation();
+    sidebar.classList.contains('collapsed') ? expand() : collapse();
+  });
+  overlay.addEventListener('click', collapse);
+})();
+
+/* boot */
+buildToolbar();
+resize();
+initGame();
+note("Isla Namastara: one shala, one path, one very large ambition.","big");
+tick("The tide goes out. Somewhere, a singing bowl is being unpacked.");
+setSpeed(0);
+requestAnimationFrame(frame);
+showHelp();
+</script>
+</body>
+</html>

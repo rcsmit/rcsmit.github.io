@@ -216,12 +216,6 @@ BATH TOWELS</textarea>
       <label class="opt">Number of copies per text:
         <input type="number" id="copies" value="1" min="1" max="20">
       </label>
-      <label class="opt">Columns:
-        <input type="number" id="cols" value="3" min="1" max="4">
-      </label>
-      <label class="opt">Rows:
-        <input type="number" id="rows" value="6" min="1" max="10">
-      </label>
       <label class="opt">
         <input type="checkbox" id="showBorder" checked>
         Show cutlines (middle + between cards)
@@ -238,28 +232,20 @@ BATH TOWELS</textarea>
       <button id="renderBtn">Generate cards</button>
       <button id="printBtn" class="secondary">Print / Save as PDF</button>
     </div>
-    <p class="hint">Tip: use in the print dialog "Save as PDF" and set margins to "None". Each line in the text area will become one card. Card size scales automatically so the chosen grid (up to 4 columns &times; 10 rows) always fills the full A4 page evenly.</p>
+    <p class="hint">Tip: use in the print dialog "Save as PDF" and set margins to "None". Each line in the text area will become one card.</p>
   </div>
 
   <div class="sheet-wrap" id="sheetWrap"></div>
 
 <script>
-  const version = "20260822-175936"; // version identifier
   const textInput = document.getElementById('textInput');
   const copiesInput = document.getElementById('copies');
-  const colsInput = document.getElementById('cols');
-  const rowsInput = document.getElementById('rows');
   const showBorder = document.getElementById('showBorder');
   const fontSizeInput = document.getElementById('fontSize');
   const sideTextInput = document.getElementById('sideText');
   const sideFontSizeInput = document.getElementById('sideFontSize');
   const sheetWrap = document.getElementById('sheetWrap');
-  const MAX_COLS = 4;
-  const MAX_ROWS = 10;
-  const PAGE_W_CM = 21;    // A4 width
-  const PAGE_H_CM = 29.7;  // A4 height
-  const PAD_X_CM = 0.5;    // matches .page left/right padding
-  const PAD_Y_CM = 1;      // matches .page top/bottom padding
+  const PER_PAGE = 18; // 3 cols x 6 rows
 
   function render(){
     const lines = textInput.value
@@ -271,17 +257,6 @@ BATH TOWELS</textarea>
     const fontSize = Math.max(6, parseInt(fontSizeInput.value, 10) || 15);
     const sideText = sideTextInput.value;
     const sideFontSize = Math.max(4, parseInt(sideFontSizeInput.value, 10) || 10);
-
-    let cols = Math.min(MAX_COLS, Math.max(1, parseInt(colsInput.value, 10) || MAX_COLS));
-    let rows = Math.min(MAX_ROWS, Math.max(1, parseInt(rowsInput.value, 10) || MAX_ROWS));
-    colsInput.value = cols;
-    rowsInput.value = rows;
-    const PER_PAGE = cols * rows;
-
-    const usableW = PAGE_W_CM - 2 * PAD_X_CM;
-    const usableH = PAGE_H_CM - 2 * PAD_Y_CM;
-    const cardWcm = usableW / cols;
-    const cardHcm = usableH / rows;
 
     let cards = [];
     lines.forEach(line => {
@@ -302,21 +277,17 @@ BATH TOWELS</textarea>
     for (let p = 0; p < pageCount; p++){
       const page = document.createElement('div');
       page.className = 'page';
-      page.style.gridTemplateColumns = `repeat(${cols}, var(--card-w))`;
-      page.style.gridAutoRows = 'var(--card-h)';
-      page.style.setProperty('--card-w', cardWcm.toFixed(4) + 'cm');
-      page.style.setProperty('--card-h', cardHcm.toFixed(4) + 'cm');
 
       for (let i = 0; i < PER_PAGE; i++){
         const idx = p * PER_PAGE + i;
-        const col = i % cols;
-        const row = Math.floor(i / cols);
+        const col = i % 3;          // 0,1,2
+        const row = Math.floor(i / 3); // 0..5
         const card = document.createElement('div');
         card.className = 'card' + (idx >= cards.length ? ' empty' : '');
 
         if (showBorder.checked){
-          if (col < cols - 1) card.classList.add('col-notlast');
-          if (row < rows - 1) card.classList.add('row-notlast');
+          if (col < 2) card.classList.add('col-notlast');
+          if (row < 5) card.classList.add('row-notlast');
         }
 
         if (idx < cards.length){
@@ -346,8 +317,6 @@ BATH TOWELS</textarea>
   document.getElementById('printBtn').addEventListener('click', () => window.print());
   textInput.addEventListener('input', render);
   copiesInput.addEventListener('input', render);
-  colsInput.addEventListener('input', render);
-  rowsInput.addEventListener('input', render);
   showBorder.addEventListener('change', render);
   fontSizeInput.addEventListener('input', render);
   sideTextInput.addEventListener('input', render);
