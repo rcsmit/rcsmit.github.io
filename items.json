@@ -136,6 +136,21 @@
   },
   {
     "category": "Geo & Maps",
+    "directory": "rome",
+    "description": "Map about Rome"
+  },
+  {
+    "category": "Geo & Maps",
+    "directory": "fab_route",
+    "description": "Roouteplanner for a campsite"
+  },
+  {
+    "category": "Geo & Maps",
+    "directory": "gpxnav",
+    "description": "Follow a GPX track on a map"
+  },
+  {
+    "category": "Geo & Maps",
     "directory": "radiusmap",
     "description": "Radius map tool"
   },

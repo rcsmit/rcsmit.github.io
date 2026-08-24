@@ -26,6 +26,10 @@ Movement & Body,hs_drills,Handstand drill library
 Movement & Body,hs_drills_app,Mobile web app with swipe navigation for HS drills
 Movement & Body,acroyoga,Acroyoga interactive flowchart
 Geo & Maps,astrocart,Astrocartography calculator
+Geo & Maps,rome,Touristic info about Rome
+Geo & Maps,fab_route,Navigation tool for a camping
+Geo & Maps,gpxnav,Follow a GPX track on a map
+
 Geo & Maps,radiusmap,Radius map tool
 Geo & Maps,geoquest,Geography quiz game
 Geo & Maps,conscious_communities,Conscious communities map
@@ -39,6 +43,13 @@ Statistics,doodsoorzaken,Visualization of causes of death in the Netherlands
 Tools & Apps,hostelrater,Hostel review tool
 Personal & Featured,eventgrid, Tool to sheow events all over the world. Can be easily adapted.
 Tools & Apps,eventgrid,Karaoke events all over the world. DEMO
+Tools & Apps,instacoll,Show a collection of Instagram posts from a Google sheet
+Tools & Apps,simcamping,Simulation of a camping like SimCity
+Tools & Apps,simspiri,Simulation of a spiritual island, like Simcity
+Tools & Apps,cardgenerator,Generates cards for linnen bags
 People & Profiles,reneco,My first ever website
+People & Profiles,weblog,All my weblogs in one place
 Statistics,seir_model, SEIR-model for Hanta virus
 Statistics,weather,Weather data visualizations
+Statistics,levitt,Prediction of COVID-19 deaths based on Levitt's model
+Statistics,hittekracht,Tool to calculate the heat force (in Dutch)
