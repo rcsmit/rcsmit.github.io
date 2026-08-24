@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
-<title>Fabulous Village — Walking Route</title>
-<!-- version = "20260824-000000" -->
+<title>Fabulous Village — Looproute</title>
+<!-- version = "20260823-143943" -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -116,6 +116,12 @@ header .tag{
   outline:none;
   border-color:var(--terracotta);
 }
+.modebtns{
+  display:flex;
+  gap:6px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
 button{
   font-family:'Inter',sans-serif;
   font-size:0.8rem;
@@ -129,7 +135,9 @@ button{
   transition: all .15s ease;
 }
 button:hover{ border-color:var(--terracotta); }
-.btn-clear{ width:100%; margin-top:10px; }
+.btn-a.active{ background:var(--olive); border-color:var(--olive); color:#fff; }
+.btn-b.active{ background:var(--terracotta); border-color:var(--terracotta); color:#fff; }
+.btn-clear{ margin-left:auto; }
 .btn-go{
   width:100%;
   margin-top:12px;
@@ -263,22 +271,6 @@ button:hover{ border-color:var(--terracotta); }
 .summary .stat .v{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.05rem; }
 .summary .stat .l{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); }
 
-.mobile-summary{ display:none; }
-@media (max-width: 860px){
-  .mobile-summary.active{
-    display:flex;
-    gap:16px;
-    background:var(--cream);
-    border:1px solid var(--line);
-    border-radius:8px;
-    padding:10px 12px;
-    margin-top:12px;
-  }
-  .mobile-summary .stat{ display:flex; flex-direction:column; }
-  .mobile-summary .stat .v{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.05rem; }
-  .mobile-summary .stat .l{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); }
-}
-
 .steps{ list-style:none; margin:0; padding:0; }
 .steps li{
   position:relative;
@@ -316,34 +308,37 @@ datalist{ display:none; }
 
 <header>
   <h1>Fabulous Village</h1>
-  <span class="tag">Walking route on the campsite</span>
+  <span class="tag">Looproute op de camping</span>
 </header>
 
 <div class="layout">
   <div class="controls">
     <div class="field">
-      <label for="startInput">From (plot number) — 000 = entrance</label>
+      <label for="startInput">Van (standplaatsnummer) 000 = ingang</label>
       <input id="startInput" list="plotlist" placeholder="" autocomplete="off">
     </div>
     <div class="field">
-      <label for="endInput">To (plot number)</label>
+      <label for="endInput">Naar (standplaatsnummer)</label>
       <input id="endInput" list="plotlist" placeholder="" autocomplete="off">
     </div>
     <datalist id="plotlist"></datalist>
-    <button class="btn-clear" id="clearBtn">Clear</button>
-    <button class="btn-go" id="goBtn" disabled>🚶‍♂️ Calculate route</button>
-    <div class="mobile-summary" id="mobileSummary"></div>
+    <div class="modebtns">
+      <button class="btn-a active" id="modeA">📍 Klik = start (A)</button>
+      <button class="btn-b" id="modeB">🏁 Klik = bestemming (B)</button>
+      <button class="btn-clear" id="clearBtn">Wissen</button>
+    </div>
+    <button class="btn-go" id="goBtn" disabled>🚶‍♂️ Bereken route</button>
     <div class="legendrow">
       <span><span class="swatch" style="background:var(--grey-pitch)"></span>hu OPENAIR</span>
       <span><span class="swatch" style="background:var(--yellow-pitch)"></span>Tour operators</span>
     </div>
-    <div class="hint">Type a number or click directly on your plot number on the map. Green marker = start, terracotta marker = destination.</div>
+    <div class="hint">Typ een nummer of klik direct op je plaatsnummer op de kaart. Groene marker = start, terracotta marker = bestemming.</div>
   </div>
 
   <div class="routepanel">
-    <h2>Walking route</h2>
-    <div id="routeContent"><div class="empty">Choose a start point and destination above to see your walking route.</div></div>
-    <div class="disclaimer">This map is based on the official Fabulous Village site plan, but is schematic and not surveyed to scale. Distance and walking time are an indication.</div>
+    <h2>Looproute</h2>
+    <div id="routeContent"><div class="empty">Kies hierboven een startpunt en een bestemming om je looproute te zien.</div></div>
+    <div class="disclaimer">Deze kaart is gebaseerd op de officiële plattegrond van Fabulous Village, maar is schematisch en niet landmeetkundig nauwkeurig. Afstand en looptijd zijn een indicatie.</div>
   </div>
 
   <div class="maparea" id="maparea">
@@ -461,22 +456,24 @@ function nearestPlotToPoint(x,y, maxDist){
 
 // ---------- state ----------
 let startPlot = null, endPlot = null;
+let mode = 'A';
 
 const startInput = document.getElementById('startInput');
 const endInput = document.getElementById('endInput');
+const modeABtn = document.getElementById('modeA');
+const modeBBtn = document.getElementById('modeB');
 const clearBtn = document.getElementById('clearBtn');
 const goBtn = document.getElementById('goBtn');
 const loadingOverlay = document.getElementById('loadingOverlay');
 const routeContent = document.getElementById('routeContent');
-const mobileSummary = document.getElementById('mobileSummary');
 
+modeABtn.addEventListener('click', ()=>{ mode='A'; modeABtn.classList.add('active'); modeBBtn.classList.remove('active'); });
+modeBBtn.addEventListener('click', ()=>{ mode='B'; modeBBtn.classList.add('active'); modeABtn.classList.remove('active'); });
 clearBtn.addEventListener('click', ()=>{
   startPlot=null; endPlot=null;
   startInput.value=''; endInput.value='';
   updateMarkers();
-  mobileSummary.classList.remove('active');
-  mobileSummary.innerHTML = '';
-  routeContent.innerHTML = '<div class="empty">Choose a start point and destination above to see your walking route.</div>';
+  routeContent.innerHTML = '<div class="empty">Kies hierboven een startpunt en een bestemming om je looproute te zien.</div>';
 });
 
 startInput.addEventListener('input', ()=>{
@@ -547,23 +544,18 @@ function renderRoute(){
 
   if (!startPlot || !endPlot){
     // safety net; the GO button should prevent this state
-    mobileSummary.classList.remove('active');
-    mobileSummary.innerHTML = '';
-    routeContent.innerHTML = '<div class="empty">Choose a start point and destination above to see your walking route.</div>';
+
+    routeContent.innerHTML = '<div class="empty">Kies hierboven een startpunt en een bestemming om je looproute te zien.</div>';
     return;
   }
   if (startPlot.key === endPlot.key){
-    mobileSummary.classList.remove('active');
-    mobileSummary.innerHTML = '';
-    routeContent.innerHTML = '<div class="empty">Start and destination are the same plot number.</div>';
+    routeContent.innerHTML = '<div class="empty">Start en bestemming zijn hetzelfde plaatsnummer.</div>';
     return;
   }
 
   const result = pathBetween(startPlot.node, endPlot.node);
   if (!result){
-    mobileSummary.classList.remove('active');
-    mobileSummary.innerHTML = '';
-    routeContent.innerHTML = '<div class="empty">Could not find a route between these two points.</div>';
+    routeContent.innerHTML = '<div class="empty">Kon geen route vinden tussen deze twee punten.</div>';
     return;
   }
 
@@ -601,23 +593,17 @@ function renderRoute(){
 
   let html = '';
   html += `<div class="summary">
-    <div class="stat"><span class="v">${Math.round(meters)} m</span><span class="l">distance</span></div>
-    <div class="stat"><span class="v">${Math.max(1,Math.round(minutes))} min</span><span class="l">walking time</span></div>
+    <div class="stat"><span class="v">${Math.round(meters)} m</span><span class="l">afstand</span></div>
+    <div class="stat"><span class="v">${Math.max(1,Math.round(minutes))} min</span><span class="l">looptijd</span></div>
   </div>`;
   html += '<ul class="steps">';
-  html += `<li>Depart from plot <span class="street">${startPlot.key}</span></li>`;
+  html += `<li>Vertrek bij standplaats <span class="street">${startPlot.key}</span></li>`;
   instr.forEach(seg=>{
     html += `<li><span class="street">${seg.street}</span> <span class="d">— ${Math.round(seg.w*M_PER_UNIT)} m</span></li>`;
   });
-  html += `<li>Arrive at plot <span class="street">${endPlot.key}</span></li>`;
+  html += `<li>Aankomst bij standplaats <span class="street">${endPlot.key}</span></li>`;
   html += '</ul>';
   routeContent.innerHTML = html;
-
-  mobileSummary.innerHTML = `
-    <div class="stat"><span class="v">${Math.round(meters)} m</span><span class="l">distance</span></div>
-    <div class="stat"><span class="v">${Math.max(1,Math.round(minutes))} min</span><span class="l">walking time</span></div>
-  `;
-  mobileSummary.classList.add('active');
 }
 
 // ---------- click on map to set point ----------
@@ -628,15 +614,8 @@ mapSvg.addEventListener('click', (e)=>{
   const svgP = pt.matrixTransform(ctm);
   const p = nearestPlotToPoint(svgP.x, svgP.y, 60);
   if (!p) return;
-  if (!startPlot || endPlot){
-    // start a fresh selection: set as start, clear any previous destination
-    startPlot = p; endPlot = null;
-    startInput.value = p.key; endInput.value = '';
-  } else {
-    // start already set, no destination yet: this click sets the destination
-    endPlot = p;
-    endInput.value = p.key;
-  }
+  if (mode === 'A'){ startPlot = p; startInput.value = p.key; }
+  else { endPlot = p; endInput.value = p.key; }
   updateMarkers();
 });
 
@@ -748,13 +727,6 @@ maparea.addEventListener('touchmove', (e)=>{
 maparea.addEventListener('touchend', (e)=>{
   if (e.touches.length === 0){ dragging=false; touchStartDist=null; }
 });
-
-// default start point = entrance (000)
-if (plotByKey['000']){
-  startPlot = plotByKey['000'];
-  startInput.value = '000';
-  updateMarkers();
-}
 
 window.addEventListener('resize', fitView);
 fitView();
