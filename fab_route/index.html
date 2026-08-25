@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <title>Fabulous Village — Walking Route</title>
-<!-- version = "20260824-120000" -->
+<!-- version = "20260825-090000" -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
@@ -98,6 +98,23 @@ header .tag{
   padding:16px 18px;
   border-bottom:1px solid var(--line);
   border-right:1px solid var(--line);
+}
+.fields-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.buttons-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+  margin-top:12px;
+}
+.buttons-row .btn-go,
+.buttons-row .btn-clear{ margin-top:0; }
+@media (max-width:480px){
+  .fields-row{ grid-template-columns:1fr; }
+  .buttons-row{ grid-template-columns:1fr; }
 }
 .field{
   margin-bottom:10px;
@@ -265,32 +282,16 @@ button:hover{ background:var(--panel); }
 }
 .summary{
   display:flex;
-  gap:16px;
   background:var(--yellow);
   border:1px solid var(--yellow-dark);
   border-radius:12px;
-  padding:12px 14px;
+  padding:12px 0;
   margin-bottom:12px;
 }
-.summary .stat{ display:flex; flex-direction:column; }
+.summary .stat{ flex:1 1 0; display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 14px; }
+.summary .stat:not(:last-child){ border-right:1px solid rgba(22,22,22,0.18); }
 .summary .stat .v{ font-family:'Poppins',sans-serif; font-weight:800; font-size:1.1rem; color:var(--ink); }
 .summary .stat .l{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:rgba(22,22,22,0.6); }
-
-.mobile-summary{ display:none; }
-@media (max-width: 860px){
-  .mobile-summary.active{
-    display:flex;
-    gap:16px;
-    background:var(--yellow);
-    border:1px solid var(--yellow-dark);
-    border-radius:12px;
-    padding:12px 14px;
-    margin-top:12px;
-  }
-  .mobile-summary .stat{ display:flex; flex-direction:column; }
-  .mobile-summary .stat .v{ font-family:'Poppins',sans-serif; font-weight:800; font-size:1.1rem; color:var(--ink); }
-  .mobile-summary .stat .l{ font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:rgba(22,22,22,0.6); }
-}
 
 .steps{ list-style:none; margin:0; padding:0; }
 .steps li{
@@ -336,32 +337,30 @@ datalist{ display:none; }
 
 <div class="layout">
   <div class="controls">
-    <table>
-      <tr>
-        <td>
-    <div class="field">
-      <label for="startInput">From</label>
-      <input id="startInput" list="plotlist" placeholder="" autocomplete="off">
-    </div>
-  </td>
-  <td>
-    <div class="field">
-      <label for="endInput">To</label>
-      <input id="endInput" list="plotlist" placeholder="" autocomplete="off">
+    <div class="fields-row">
+      <div class="field">
+        <label for="startInput">From</label>
+        <input id="startInput" list="plotlist" placeholder="" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="endInput">To</label>
+        <input id="endInput" list="plotlist" placeholder="" autocomplete="off">
+      </div>
     </div>
     <datalist id="plotlist"></datalist>
-  </td></tr><tr><td>
-
-    <button class="btn-go" id="goBtn" disabled>🚶‍♂️ Calculate route</button></td><td>
-  
-      <button class="btn-clear" id="clearBtn">Clear</button></td></tr></table>
-    <div class="mobile-summary" id="mobileSummary"></div>
-    <!-- <div class="legendrow">
+    <div class="buttons-row">
+      <button class="btn-clear" id="clearBtn">Clear</button>
+      <button class="btn-go" id="goBtn" disabled>🚶‍♂️ Calculate route</button>
+      
+    </div>
+    <!--
+    <div class="legendrow">
       <span><span class="swatch" style="background:var(--grey-pitch)"></span>hu OPENAIR</span>
       <span><span class="swatch" style="background:var(--yellow-pitch)"></span>Tour operators</span>
-    </div> -->
-    <!-- <div class="hint">Type a number or click directly on your plot number on the map. Green marker = start, pink marker = destination.</div>
-  </div> -->
+    </div>
+    <div class="hint">Type a number or click directly on your plot number on the map. Green marker = start, pink marker = destination.</div>
+    -->
+  </div>
 
   <div class="routepanel">
     <h2>Walking route</h2>
@@ -488,14 +487,11 @@ const clearBtn = document.getElementById('clearBtn');
 const goBtn = document.getElementById('goBtn');
 const loadingOverlay = document.getElementById('loadingOverlay');
 const routeContent = document.getElementById('routeContent');
-const mobileSummary = document.getElementById('mobileSummary');
 
 clearBtn.addEventListener('click', ()=>{
   startPlot=null; endPlot=null;
   startInput.value=''; endInput.value='';
   updateMarkers();
-  mobileSummary.classList.remove('active');
-  mobileSummary.innerHTML = '';
   routeContent.innerHTML = '<div class="empty">Choose a start point and destination above to see your walking route.</div>';
 });
 
@@ -567,22 +563,16 @@ function renderRoute(){
 
   if (!startPlot || !endPlot){
     // safety net; the GO button should prevent this state
-    mobileSummary.classList.remove('active');
-    mobileSummary.innerHTML = '';
     routeContent.innerHTML = '<div class="empty">Choose a start point and destination above to see your walking route.</div>';
     return;
   }
   if (startPlot.key === endPlot.key){
-    mobileSummary.classList.remove('active');
-    mobileSummary.innerHTML = '';
     routeContent.innerHTML = '<div class="empty">Start and destination are the same plot number.</div>';
     return;
   }
 
   const result = pathBetween(startPlot.node, endPlot.node);
   if (!result){
-    mobileSummary.classList.remove('active');
-    mobileSummary.innerHTML = '';
     routeContent.innerHTML = '<div class="empty">Could not find a route between these two points.</div>';
     return;
   }
@@ -591,6 +581,9 @@ function renderRoute(){
   const pts = [[startPlot.x,startPlot.y]];
   result.nodes.forEach(n=> pts.push(NODES[n]));
   pts.push([endPlot.x, endPlot.y]);
+
+  // zoom/pan so the whole route is in view
+  fitToPoints(pts);
 
   // draw dashed route
   const d = pts.map((p,i)=> (i===0?'M':'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
@@ -632,12 +625,6 @@ function renderRoute(){
   html += `<li>Arrive at plot <span class="street">${endPlot.key}</span></li>`;
   html += '</ul>';
   routeContent.innerHTML = html;
-
-  mobileSummary.innerHTML = `
-    <div class="stat"><span class="v">${Math.round(meters)} m</span><span class="l">distance</span></div>
-    <div class="stat"><span class="v">${Math.max(1,Math.round(minutes))} min</span><span class="l">walking time</span></div>
-  `;
-  mobileSummary.classList.add('active');
 }
 
 // ---------- click on map to set point ----------
@@ -679,6 +666,37 @@ function fitView(){
   scale = Math.min(sx, sy);
   tx = (rect.width - VBW*scale)/2;
   ty = (rect.height - VBH*scale)/2;
+  applyTransform();
+}
+
+// Frame a set of world-space points (e.g. the current route) in the viewport,
+// zooming/panning so the whole route is visible with some breathing room.
+function fitToPoints(points, opts){
+  if (!points || !points.length) return;
+  const pad = (opts && opts.pad) || 70;
+  const maxScale = (opts && opts.maxScale) || 3.2;
+  const minSpan = (opts && opts.minSpan) || 120; // avoid over-zooming on very short routes
+
+  const rect = maparea.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  points.forEach(p=>{
+    minX = Math.min(minX, p[0]); maxX = Math.max(maxX, p[0]);
+    minY = Math.min(minY, p[1]); maxY = Math.max(maxY, p[1]);
+  });
+  const w = Math.max(maxX - minX, minSpan);
+  const h = Math.max(maxY - minY, minSpan);
+
+  const sx = (rect.width - pad*2) / w;
+  const sy = (rect.height - pad*2) / h;
+  let newScale = Math.min(sx, sy);
+  newScale = Math.min(maxScale, Math.max(0.3, newScale));
+
+  const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+  tx = rect.width/2 - cx*newScale;
+  ty = rect.height/2 - cy*newScale;
+  scale = newScale;
   applyTransform();
 }
 
