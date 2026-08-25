@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <title>Fabulous Village — Walking Route</title>
-<!-- version = "20260825-090000" -->
+<!-- version = "20260825-140000" -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
@@ -324,6 +324,120 @@ button:hover{ background:var(--panel); }
 }
 
 datalist{ display:none; }
+
+.qr-fab{
+  position:fixed;
+  left:50%;
+  bottom:16px;
+  transform:translateX(-50%);
+  width:46px;
+  height:46px;
+  border-radius:50%;
+  background:var(--paper);
+  border:1.5px solid var(--ink);
+  box-shadow:var(--shadow);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  z-index:40;
+  padding:0;
+  color:var(--ink);
+}
+.qr-fab:hover{ background:var(--yellow); border-color:var(--yellow-dark); }
+.qr-fab svg{ width:22px; height:22px; display:block; }
+
+.share-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(22,22,22,0.55);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+  padding:20px;
+}
+.share-overlay.active{ display:flex; }
+.share-card{
+  background:var(--paper);
+  border-radius:16px;
+  padding:26px 22px 20px;
+  max-width:320px;
+  width:100%;
+  box-shadow:var(--shadow);
+  text-align:center;
+  position:relative;
+}
+.share-card h3{
+  margin:0 0 4px 0;
+  font-family:'Poppins',sans-serif;
+  font-weight:800;
+  font-size:1.05rem;
+}
+.share-card .sub{
+  font-size:0.78rem;
+  color:var(--muted);
+  margin-bottom:16px;
+  line-height:1.4;
+}
+.share-card img{
+  width:200px;
+  height:200px;
+  border-radius:8px;
+  border:1px solid var(--line);
+  margin-bottom:16px;
+  background:var(--panel);
+}
+.share-card .linkrow{
+  display:flex;
+  gap:8px;
+  margin-bottom:6px;
+}
+.share-card .linkrow input{
+  flex:1;
+  min-width:0;
+  padding:8px 10px;
+  border:1.5px solid var(--line);
+  border-radius:8px;
+  font-size:0.72rem;
+  background:var(--panel);
+  color:var(--ink);
+  font-family:'Poppins',sans-serif;
+}
+.share-card .copybtn{
+  padding:8px 12px;
+  font-size:0.75rem;
+  white-space:nowrap;
+}
+.share-card .copied{
+  font-size:0.7rem;
+  color:#1f9d63;
+  font-weight:600;
+  height:14px;
+  margin-top:2px;
+}
+.share-close{
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  border:1.5px solid var(--line);
+  background:var(--paper);
+  cursor:pointer;
+  font-size:0.95rem;
+  line-height:1;
+  padding:0;
+  color:var(--ink);
+}
+.share-close:hover{ background:var(--panel); }
+.share-empty{
+  font-size:0.85rem;
+  color:var(--muted);
+  line-height:1.5;
+  padding:6px 0 2px;
+}
 </style>
 </head>
 <body>
@@ -349,9 +463,8 @@ datalist{ display:none; }
     </div>
     <datalist id="plotlist"></datalist>
     <div class="buttons-row">
-      <button class="btn-clear" id="clearBtn">Clear</button>
       <button class="btn-go" id="goBtn" disabled>🚶‍♂️ Calculate route</button>
-      
+      <button class="btn-clear" id="clearBtn">Clear</button>
     </div>
     <!--
     <div class="legendrow">
@@ -382,6 +495,29 @@ datalist{ display:none; }
 
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loading-box"><div class="spinner"></div>Calculting route…</div>
+</div>
+
+<button class="qr-fab" id="qrFab" title="Share this route" aria-label="Share this route">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+    <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+    <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="2"/>
+    <rect x="5" y="5" width="3" height="3" fill="currentColor"/>
+    <rect x="16" y="5" width="3" height="3" fill="currentColor"/>
+    <rect x="5" y="16" width="3" height="3" fill="currentColor"/>
+    <rect x="14" y="14" width="3" height="3" fill="currentColor"/>
+    <rect x="18" y="14" width="3" height="3" fill="currentColor"/>
+    <rect x="14" y="18" width="3" height="3" fill="currentColor"/>
+    <rect x="18" y="18" width="3" height="3" fill="currentColor"/>
+  </svg>
+</button>
+
+<div class="share-overlay" id="shareOverlay">
+  <div class="share-card">
+    <button class="share-close" id="shareClose" aria-label="Close">&#10005;</button>
+    <h3>Share this route</h3>
+    <div id="shareBody"></div>
+  </div>
 </div>
 
 <script>
@@ -787,8 +923,26 @@ maparea.addEventListener('touchend', (e)=>{
   if (e.touches.length === 0){ dragging=false; touchStartDist=null; }
 });
 
-// default start point = entrance (000)
-if (plotByKey['000']){
+// ---------- deep link (from/to) ----------
+function buildDeepLink(){
+  if (!startPlot || !endPlot) return null;
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.searchParams.set('from', startPlot.key);
+  url.searchParams.set('to', endPlot.key);
+  return url.toString();
+}
+
+const deepLinkParams = new URLSearchParams(window.location.search);
+const deepLinkStart = deepLinkParams.get('from') ? findPlotByTypedValue(deepLinkParams.get('from')) : null;
+const deepLinkEnd = deepLinkParams.get('to') ? findPlotByTypedValue(deepLinkParams.get('to')) : null;
+
+// default start point = entrance (000), unless a deep link specifies start/end
+if (deepLinkStart || deepLinkEnd){
+  if (deepLinkStart){ startPlot = deepLinkStart; startInput.value = deepLinkStart.key; }
+  if (deepLinkEnd){ endPlot = deepLinkEnd; endInput.value = deepLinkEnd.key; }
+  updateMarkers();
+} else if (plotByKey['000']){
   startPlot = plotByKey['Reception'];
   startInput.value = 'Reception';
   updateMarkers();
@@ -796,6 +950,81 @@ if (plotByKey['000']){
 
 window.addEventListener('resize', fitView);
 fitView();
+
+if (deepLinkStart && deepLinkEnd && deepLinkStart.key !== deepLinkEnd.key){
+  renderRoute();
+}
+
+// ---------- share / QR overlay ----------
+const qrFab = document.getElementById('qrFab');
+const shareOverlay = document.getElementById('shareOverlay');
+const shareClose = document.getElementById('shareClose');
+const shareBody = document.getElementById('shareBody');
+
+function clearChildren(el){
+  while (el.firstChild) el.removeChild(el.firstChild);
+}
+
+function openShareOverlay(){
+  clearChildren(shareBody);
+  const link = buildDeepLink();
+
+  if (!link){
+    const empty = document.createElement('div');
+    empty.className = 'share-empty';
+    empty.textContent = 'Choose a start point and destination first, then share the route.';
+    shareBody.appendChild(empty);
+  } else {
+    const sub = document.createElement('div');
+    sub.className = 'sub';
+    sub.textContent = 'Scan the QR code or copy the link to open this exact route';
+    shareBody.appendChild(sub);
+
+    const img = document.createElement('img');
+    img.alt = 'QR code for this route';
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(link);
+    shareBody.appendChild(img);
+
+    const row = document.createElement('div');
+    row.className = 'linkrow';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.readOnly = true;
+    input.value = link;
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'copybtn';
+    copyBtn.textContent = 'Copy';
+    row.appendChild(input);
+    row.appendChild(copyBtn);
+    shareBody.appendChild(row);
+
+    const copiedMsg = document.createElement('div');
+    copiedMsg.className = 'copied';
+    shareBody.appendChild(copiedMsg);
+
+    copyBtn.addEventListener('click', async ()=>{
+      try {
+        await navigator.clipboard.writeText(link);
+      } catch (e){
+        input.focus();
+        input.select();
+        try { document.execCommand('copy'); } catch (e2) { /* ignore */ }
+      }
+      copiedMsg.textContent = 'Copied!';
+      setTimeout(()=>{ copiedMsg.textContent = ''; }, 1800);
+    });
+  }
+
+  shareOverlay.classList.add('active');
+}
+
+qrFab.addEventListener('click', openShareOverlay);
+shareClose.addEventListener('click', ()=> shareOverlay.classList.remove('active'));
+shareOverlay.addEventListener('click', (e)=>{
+  if (e.target === shareOverlay) shareOverlay.classList.remove('active');
+});
+
 </script>
 
 </body>
