@@ -209,3 +209,12 @@ A sortable, filterable table of every plot, mirroring the edge table.
 - **Distances look wildly wrong.** Re-check `M_PER_UNIT` — it's easy to accidentally calibrate it against the wrong pair of points.
 - **The map-config-tool "doesn't remember my last session."** That's expected — it has no storage. Always finish an editing session by exporting and pasting the result into both files (see section 2).
 - **Two people edited at the same time and now the data has diverged.** There's no merge tool here — pick the more complete/recent export, and have the other person redo their (hopefully small) changes on top of it.
+
+---
+
+### 6. To do list / wishlist
+- NODES / EDGES / PLOTS in a seperate file
+- map.svg in a seperate file
+- variables and map in a database
+- version/system with everything webbased, user control etc etc
+- qr code / deeplink
