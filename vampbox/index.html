@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* version = "20260827-204500" */
+/* version = "20260827-211500" */
 :root{
   --panel:#23262b;
   --panel-hi:#31353c;
@@ -191,6 +191,7 @@ body{padding:10px 8px 18px}
 .tab.on{color:var(--lit-fg);background:linear-gradient(180deg,var(--lit1),var(--lit2));border-color:var(--lit-edge)}
 .tab:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .pads{grid-template-columns:repeat(3,1fr);gap:8px}
+.pad.nc{font-size:15px;letter-spacing:.06em}
 .pad{font-size:18px;padding:16px 4px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .btn.big{padding:18px 10px}
 .grid4 .btn{padding:15px 4px}
@@ -429,7 +430,7 @@ body[data-theme="blueprint"]{
 
 <script>
 "use strict";
-const version = "20260827-204500";
+const version = "20260827-211500";
 
 /* ============================================================
    1. AUDIO CORE
@@ -1295,7 +1296,7 @@ function onBar(){
 function finish(t){
   // final stab on the downbeat, then stop
   const c = chordAt(S.bar, 0);
-  if(c){
+  if(c && !c.nc){
     const notes = voiceChord(c, S.transpose);
     const v = chordVoiceName();
     notes.forEach(n => chordNote(v, n, t, 1.4, 0.95));
@@ -1329,7 +1330,7 @@ function playStep(i, t){
   }
   // --- chord for this step ---
   const c = chordAt(S.bar, i);
-  if(c){
+  if(c && !c.nc){
     // bass
     if(st.walk && S.section !== 'ending'){
       const sub = subOf(st);
@@ -1511,38 +1512,42 @@ function paintTransport(){
 }
 
 /* chord pads: diatonic set for the chosen key */
+const NC = { nc:true, sym:'N.C.', root:0, ivs:[0], bass:0 };
 function buildPads(){
   const key = KEYS[S.keyPc];
   // [semitones above the key, letter steps above the key, chord quality]
   const defs = [
     [0,0,''],  [2,1,'m'],  [4,2,'m'],   [5,3,''],
     [7,4,''],  [9,5,'m'],  [7,4,'7'],   [5,3,'maj7'],
-    [10,6,''], [2,1,'m7'], [9,5,'m7'],  [0,0,'sus4']
+    [10,6,''], [2,1,'m7'], [9,5,'m7']
   ];
-  const wrap = $('pads'); wrap.innerHTML = '';
-  S.padChords = [];
-  defs.forEach(([iv, ls, q]) => {
+  const items = defs.map(([iv, ls, q]) => {
     const pc = (key.pc + iv) % 12;
     const sym = spellNote(key.li + ls, pc) + q;
+    return { sym, chord: parseChord(sym) };
+  });
+  items.push({ sym:'N.C.', chord:NC });   // drums only, no bass or chords
+
+  const wrap = $('pads'); wrap.innerHTML = '';
+  S.padChords = [];
+  items.forEach(({sym, chord}) => {
     const b = document.createElement('button');
     b.className = 'btn pad'; b.type = 'button'; b.textContent = sym;
+    if(chord.nc) b.classList.add('nc');
+    const select = () => { S.holdChord = chord; paintPads(); $('dChord').textContent = sym; };
     b.addEventListener('click', () => {
       initAudio();
-      S.holdChord = parseChord(sym);
-      if(S.padMode === 'tap'){
-        playPad(voiceChord(S.holdChord, S.transpose), ac.currentTime + 0.02, S.padBeats * 60 / S.bpm);
+      select();
+      if(S.padMode === 'tap' && !chord.nc){
+        playPad(voiceChord(chord, S.transpose), ac.currentTime + 0.02, S.padBeats * 60 / S.bpm);
       }
-      paintPads();
-      $('dChord').textContent = chordName(S.holdChord);
     });
     b.addEventListener('pointerdown', () => {
       if(S.padMode !== 'press') return;
       initAudio();
       if(ac.state === 'suspended') ac.resume();
-      S.holdChord = parseChord(sym);
-      paintPads();
-      $('dChord').textContent = chordName(S.holdChord);
-      playPad(voiceChord(S.holdChord, S.transpose), ac.currentTime + 0.02, 600);
+      select();
+      if(!chord.nc) playPad(voiceChord(chord, S.transpose), ac.currentTime + 0.02, 600);
     });
     const release = () => { if(S.padMode === 'press' && ac) killPad(ac.currentTime, 0.25); };
     ['pointerup','pointercancel','pointerleave'].forEach(ev => b.addEventListener(ev, release));
@@ -1551,7 +1556,7 @@ function buildPads(){
     S.padChords.push({sym, el:b});
   });
   if(!S.holdChord || !S.padChords.some(p => p.sym === S.holdChord.sym)){
-    S.holdChord = parseChord(S.padChords[0].sym);
+    S.holdChord = items[0].chord;
   }
   paintPads();
   $('dChord').textContent = chordName(S.holdChord);
