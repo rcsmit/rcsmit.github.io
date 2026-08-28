@@ -468,6 +468,7 @@ body[data-theme="blueprint"]{
         <div class="sl"><label for="vDrums">Drums</label><input type="range" id="vDrums" min="0" max="100" value="80"><output id="oDrums">80</output></div>
         <div class="sl"><label for="vBass">Bass</label><input type="range" id="vBass" min="0" max="100" value="80"><output id="oBass">80</output></div>
         <div class="sl"><label for="vChords">Chords</label><input type="range" id="vChords" min="0" max="100" value="70"><output id="oChords">70</output></div>
+        <div class="sl"><label for="vPunch">Chord tap</label><input type="range" id="vPunch" min="0" max="100" value="70"><output id="oPunch">70</output></div>
         <div class="sl"><label for="vPad">Pad</label><input type="range" id="vPad" min="0" max="100" value="35"><output id="oPad">35</output></div>
         <p class="hint">Turn the chords down and the drums up if the band covers your voice.</p>
       </div>
@@ -1230,7 +1231,7 @@ const S = {
   arpKey:null, arpNotes:[], arpIdx:0, lastBass:0, crashNext:false,
   slots:['V7','IVmaj7','bVII','ii7','vi7'],
   chordSource:'live', seq:new Array(16).fill(null), seqResolved:[], seqLen:1, armedSlot:0,
-  holdChord:null, keyPc:0, padMode:'press', padAttack:0, padBeats:4, padSustain:1.0, padVoice:'strings',
+  holdChord:null, keyPc:0, padMode:'press', padAttack:0, padBeats:4, padSustain:1.0, padVoice:'strings', punchVol:0.7,
   lastChordSym:null, padChords:[], stopping:false
 };
 const LOOKAHEAD = 0.06, TICK = 15; // small enough that a chord tap on the beat lands on that beat
@@ -1415,14 +1416,21 @@ function finish(t){
   setTimeout(() => { paintTransport(); setDisplaySection('STOPPED'); }, 60);
 }
 
+let lastPunch = -Infinity;   // 0 would swallow a tap made in the first 250ms after load
 function punchChord(chord){
-  if(!chord || chord.nc) return;
+  if(!chord || chord.nc || S.punchVol <= 0) return;
+  // Devices differ in which events they deliver for one press (pointerdown,
+  // click, or both). Both call this; this guard makes a single gesture sound
+  // exactly once rather than twice or not at all.
+  const now = performance.now();
+  if(now - lastPunch < 250) return;
+  lastPunch = now;
   initAudio();
   if(ac.state === 'suspended') ac.resume();
-  const st = style(), voice = chordVoiceName();
+  const voice = chordVoiceName();
   const dur = (60 / S.bpm) * (S.playing ? 1 : 1.4);
   voiceChord(chord, S.transpose).forEach((n, idx) =>
-    chordNote(voice, n, ac.currentTime + 0.008 + idx * 0.006, dur, 0.7));
+    chordNote(voice, n, ac.currentTime + 0.008 + idx * 0.006, dur, S.punchVol));
 }
 function chordVoiceName(){
   const sel = document.getElementById('chordVoice').value;
@@ -1728,13 +1736,8 @@ function buildPads(){
     b.addEventListener('click', () => {
       initAudio();
       if(S.chordSource === 'sequence'){ assignSeqSlot(chord); return; }
-      // in press mode, pointerdown/pointerup below already selected and sounded
-      // this chord -- the browser also fires a click right as the finger lifts,
-      // which without this guard replayed a second, stray confirmation note
-      // at the exact moment you released the button.
-      if(S.padMode === 'press') return;
-      select();
-      punchChord(chord);   // hear the new chord the instant you tap it
+      if(S.padMode !== 'press') select();   // press mode already selected on pointerdown
+      punchChord(chord);                    // de-duped, so a press-mode click is a no-op
       if(S.padMode === 'tap' && !chord.nc){
         playPad(voiceChord(chord, S.transpose), ac.currentTime + 0.02, S.padBeats * 60 / S.bpm);
       }
@@ -1744,6 +1747,7 @@ function buildPads(){
       initAudio();
       if(ac.state === 'suspended') ac.resume();
       select();
+      punchChord(chord);   // press mode's own tap -- click never reaches here (see above)
       if(!chord.nc) playPad(voiceChord(chord, S.transpose), ac.currentTime + 0.02, PAD_HOLD);
     });
     const release = () => { if(S.padMode === 'press' && ac) killPad(ac.currentTime, S.padSustain); };
@@ -1948,6 +1952,7 @@ function setChordMode(mode){
                ['vDrums','oDrums',v=>{ if(busDrums) busDrums.gain.value=v; }],
                ['vBass','oBass',v=>{ if(busBass) busBass.gain.value=v; }],
                ['vChords','oChords',v=>{ if(busChords) busChords.gain.value=v; }],
+               ['vPunch','oPunch',v=>{ S.punchVol = v; }],
                ['vPad','oPad',v=>{ if(busPad) busPad.gain.value=v*0.5; }]];
   mix.forEach(([id,out,fn]) => {
     $(id).addEventListener('input', e => {
