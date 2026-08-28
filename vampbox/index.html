@@ -192,8 +192,20 @@ body{padding:10px 8px 18px}
 .tab:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .pads{grid-template-columns:repeat(3,1fr);gap:8px}
 .pad.nc{font-size:15px;letter-spacing:.06em}
+/* camera preview */
+.camview{position:relative;margin-top:10px;border-radius:8px;overflow:hidden;background:#000;border:1px solid var(--edge)}
+.camview video{display:block;width:100%;height:56vh;max-height:460px;min-height:260px;object-fit:cover;transform:scaleX(-1)}
+.camview canvas{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1);pointer-events:none}
+.camhud{
+  position:absolute;left:0;right:0;bottom:0;display:flex;align-items:baseline;gap:10px;
+  padding:7px 10px;background:linear-gradient(180deg,transparent,rgba(0,0,0,.75));
+}
+.camhud b{font-family:"IBM Plex Mono",monospace;font-size:22px;color:var(--led);text-shadow:0 0 10px rgba(255,106,51,.5)}
+.camhud span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#cbd3da}
+
 /* live / sequence mode switch */
 .subtabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px}
+.subtabs.three{grid-template-columns:repeat(3,1fr)}
 .subtab{
   font-family:inherit;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
   color:var(--silk);background:var(--field);border:1px solid var(--edge);border-radius:7px;
@@ -391,8 +403,9 @@ body[data-theme="blueprint"]{
 
       <span class="lbl" style="margin-top:14px">Chord</span>
       <div class="rack">
-        <div class="subtabs">
+        <div class="subtabs three">
           <button class="subtab on" id="chordModeLive">Live</button>
+          <button class="subtab" id="camToggle">Camera</button>
           <button class="subtab" id="chordModeSeq">Sequence</button>
         </div>
 
@@ -407,9 +420,22 @@ body[data-theme="blueprint"]{
           </div>
         </div>
 
+        <div id="camWrap" style="display:none">
+          <div class="camview">
+            <video id="camVideo" playsinline muted autoplay></video>
+            <canvas id="camCanvas"></canvas>
+            <div class="camhud">
+              <b id="camChord">—</b>
+              <span id="camInfo">looking for a hand…</span>
+            </div>
+          </div>
+          <p class="hint" id="camHint">Left hand picks the chord: 1–5 fingers is I to V, index+pinky is vi, index+pinky+thumb is vii°, a fist is N.C. Right hand runs the band: open palm starts, fist stops.</p>
+        </div>
+
         <div class="pads" id="pads"></div>
         <p class="hint" id="chordHint">Tap a chord and the band follows it until you tap the next one.</p>
       </div>
+
     </section>
 
     <!-- ---------- 3. LEVELS ---------- -->
@@ -448,6 +474,29 @@ body[data-theme="blueprint"]{
         <p class="hint">The first six pads are always the plain chords of the key. These five are yours.</p>
       </div>
 
+      <span class="lbl" style="margin-top:14px">Performance</span>
+      <div class="rack">
+        <select id="perfMode" aria-label="Performance mode">
+          <option value="full">Full quality</option>
+          <option value="light">Light — for slower machines</option>
+        </select>
+        <p class="hint">Light mode thins the chord voicings and pad, drops the hand skeleton and tracks hands less often. Use it if the sound stutters.</p>
+      </div>
+
+      <span class="lbl" style="margin-top:14px">Camera control</span>
+      <div class="rack">
+        <select id="camQuality" aria-label="What the camera controls">
+          <option value="chords">Left hand picks the chord</option>
+          <option value="tilt">Left hand + wrist tilt for major / minor</option>
+        </select>
+        <div class="sl">
+          <label for="camSteady">Steadiness</label>
+          <input type="range" id="camSteady" min="1" max="10" step="1" value="3">
+          <output id="camSteadyOut">3 frames</output>
+        </div>
+        <p class="hint">Steadiness is how many frames a gesture must hold before it counts. Raise it if chords flicker while you move; lower it for a faster response.</p>
+      </div>
+
       <span class="lbl" style="margin-top:14px">Pad voice</span>
       <div class="rack">
         <select id="padVoice" aria-label="Pad voice">
@@ -468,7 +517,6 @@ body[data-theme="blueprint"]{
         <div class="sl"><label for="vDrums">Drums</label><input type="range" id="vDrums" min="0" max="100" value="80"><output id="oDrums">80</output></div>
         <div class="sl"><label for="vBass">Bass</label><input type="range" id="vBass" min="0" max="100" value="80"><output id="oBass">80</output></div>
         <div class="sl"><label for="vChords">Chords</label><input type="range" id="vChords" min="0" max="100" value="70"><output id="oChords">70</output></div>
-        <div class="sl"><label for="vPunch">Chord tap</label><input type="range" id="vPunch" min="0" max="100" value="70"><output id="oPunch">70</output></div>
         <div class="sl"><label for="vPad">Pad</label><input type="range" id="vPad" min="0" max="100" value="35"><output id="oPad">35</output></div>
         <p class="hint">Turn the chords down and the drums up if the band covers your voice.</p>
       </div>
@@ -504,6 +552,7 @@ function initAudio(){
   const mk = v => { const g = ac.createGain(); g.gain.value = v; g.connect(comp); return g; };
   busDrums = mk(0.8); busBass = mk(0.8); busChords = mk(0.7); busPad = mk(0.35);
 
+  filterCache.clear();
   const len = Math.floor(ac.sampleRate * 2);
   noiseBuf = ac.createBuffer(1, len, ac.sampleRate);
   const d = noiseBuf.getChannelData(0);
@@ -515,6 +564,23 @@ function noise(){ const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop
    into the bus forever; over a long song that dead weight keeps costing CPU on
    every single sample until the render thread can't keep up and the audio
    crackles, even with nothing being played at that moment. */
+/* Drum filters never change their settings, so building a fresh one for every
+   hit is pure waste -- a hi-hat pattern alone did that 8+ times a bar. These are
+   made once and left connected; each hit only creates a source and a gain.
+   Filtering after the gain instead of before is equivalent here, both are linear. */
+const filterCache = new Map();
+function sharedFilter(type, freq, q){
+  const key = type + freq + (q || '');
+  let f = filterCache.get(key);
+  if(!f){
+    f = ac.createBiquadFilter();
+    f.type = type; f.frequency.value = freq;
+    if(q) f.Q.value = q;
+    f.connect(busDrums);
+    filterCache.set(key, f);
+  }
+  return f;
+}
 function reap(src, ...rest){
   src.onended = () => {
     try{ src.disconnect(); }catch(e){}
@@ -536,16 +602,14 @@ const D = {
     g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v*1.05,t+0.004);
     g.gain.exponentialRampToValueAtTime(0.0001,t+0.42);
     o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+0.45); reap(o,g);
-    const n=noise(),ng=ac.createGain(),f=ac.createBiquadFilter();
-    f.type='lowpass'; f.frequency.value=2400;
+    const n=noise(),ng=ac.createGain();
     ng.gain.setValueAtTime(v*0.28,t); ng.gain.exponentialRampToValueAtTime(0.0001,t+0.025);
-    n.connect(f); f.connect(ng); ng.connect(busDrums); n.start(t); n.stop(t+0.05); reap(n,f,ng);
+    n.connect(ng); ng.connect(sharedFilter('lowpass',2400)); n.start(t); n.stop(t+0.05); reap(n,ng);
   },
-  s(t,v){ const n=noise(),f=ac.createBiquadFilter(),g=ac.createGain();
-    f.type='bandpass'; f.frequency.value=1900; f.Q.value=0.7;
+  s(t,v){ const n=noise(),g=ac.createGain();
     g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v*0.7,t+0.002);
     g.gain.exponentialRampToValueAtTime(0.0001,t+0.19);
-    n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+0.22); reap(n,f,g);
+    n.connect(g); g.connect(sharedFilter('bandpass',1900,0.7)); n.start(t); n.stop(t+0.22); reap(n,g);
     const o=ac.createOscillator(),og=ac.createGain();
     o.type='triangle'; o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(140,t+0.1);
     og.gain.setValueAtTime(v*0.35,t); og.gain.exponentialRampToValueAtTime(0.0001,t+0.12);
@@ -566,22 +630,19 @@ const D = {
     o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+0.3); reap(o,g);
   },
   cl(t,v){ for(let i=0;i<3;i++){
-      const n=noise(),f=ac.createBiquadFilter(),g=ac.createGain(),tt=t+i*0.011;
-      f.type='bandpass'; f.frequency.value=1500; f.Q.value=1.2;
+      const n=noise(),g=ac.createGain(),tt=t+i*0.011;
       g.gain.setValueAtTime(0.0001,tt); g.gain.exponentialRampToValueAtTime(v*(i===2?0.6:0.32),tt+0.002);
       g.gain.exponentialRampToValueAtTime(0.0001,tt+(i===2?0.16:0.04));
-      n.connect(f); f.connect(g); g.connect(busDrums); n.start(tt); n.stop(tt+0.2); reap(n,f,g);
+      n.connect(g); g.connect(sharedFilter('bandpass',1500,1.2)); n.start(tt); n.stop(tt+0.2); reap(n,g);
     } },
-  sh(t,v){ const n=noise(),f=ac.createBiquadFilter(),g=ac.createGain();
-    f.type='highpass'; f.frequency.value=6500;
+  sh(t,v){ const n=noise(),g=ac.createGain();
     g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(v*0.22,t+0.012);
     g.gain.exponentialRampToValueAtTime(0.0001,t+0.075);
-    n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+0.1); reap(n,f,g);
+    n.connect(g); g.connect(sharedFilter('highpass',6500)); n.start(t); n.stop(t+0.1); reap(n,g);
   },
-  tb(t,v){ const n=noise(),f=ac.createBiquadFilter(),g=ac.createGain();
-    f.type='highpass'; f.frequency.value=5000;
+  tb(t,v){ const n=noise(),g=ac.createGain();
     g.gain.setValueAtTime(v*0.26,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.13);
-    n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+0.16); reap(n,f,g);
+    n.connect(g); g.connect(sharedFilter('highpass',5000)); n.start(t); n.stop(t+0.16); reap(n,g);
   },
   cb(t,v){ [560,845].forEach((fr,i)=>{ const o=ac.createOscillator(),g=ac.createGain();
       o.type='square'; o.frequency.value=fr;
@@ -594,11 +655,10 @@ const D = {
   t3(t,v){ tone(t,v,140,70,0.42,'sine',0.7); }
 };
 function hat(t,v,dec,hp,amt){
-  const n=noise(),f=ac.createBiquadFilter(),g=ac.createGain();
-  f.type='highpass'; f.frequency.value=hp;
+  const n=noise(),g=ac.createGain();
   g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v*amt,t+0.002);
   g.gain.exponentialRampToValueAtTime(0.0001,t+dec);
-  n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+dec+0.05); reap(n,f,g);
+  n.connect(g); g.connect(sharedFilter('highpass',hp)); n.start(t); n.stop(t+dec+0.05); reap(n,g);
 }
 function tone(t,v,f0,f1,dec,type,amt){
   const o=ac.createOscillator(),g=ac.createGain();
@@ -606,10 +666,9 @@ function tone(t,v,f0,f1,dec,type,amt){
   g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v*amt,t+0.004);
   g.gain.exponentialRampToValueAtTime(0.0001,t+dec);
   o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+dec+0.05); reap(o,g);
-  const n=noise(),ng=ac.createGain(),hf=ac.createBiquadFilter();
-  hf.type='highpass'; hf.frequency.value=2000;
+  const n=noise(),ng=ac.createGain();
   ng.gain.setValueAtTime(v*0.1,t); ng.gain.exponentialRampToValueAtTime(0.0001,t+0.02);
-  n.connect(hf); hf.connect(ng); ng.connect(busDrums); n.start(t); n.stop(t+0.04); reap(n,hf,ng);
+  n.connect(ng); ng.connect(sharedFilter('highpass',2000)); n.start(t); n.stop(t+0.04); reap(n,ng);
 }
 
 /* ---------------- pitched voices ---------------- */
@@ -678,10 +737,12 @@ function playPad(notes, t, dur){
   g.connect(flt); flt.connect(busPad);
   const spec = PAD_VOICES[S.padVoice] || PAD_VOICES.strings;
   flt.frequency.value = spec.cut;
+  // Each partial is an oscillator per note; two is enough to keep the character.
+  const partials = S.light ? spec.p.slice(0, 2) : spec.p;
   const nodes = [], ogs = [];
   notes.forEach(n => {
     const f = mtof(n);
-    spec.p.forEach(([type, mult, det, gain]) => {
+    partials.forEach(([type, mult, det, gain]) => {
       const o = ac.createOscillator(); o.type = type;
       o.frequency.value = f * mult; o.detune.value = det;
       const og = ac.createGain(); og.gain.value = gain / notes.length;
@@ -1228,13 +1289,17 @@ const S = {
   playing:false, styleIdx:0, bpm:120, transpose:0,
   section:'main', variation:'A', pending:null, pendingLabel:null,
   sectionBar:0, bar:0, step:0, nextTime:0, timer:null,
-  arpKey:null, arpNotes:[], arpIdx:0, lastBass:0, crashNext:false,
+  arpKey:null, arpNotes:[], arpIdx:0, lastBass:0, crashNext:false, light:false,
   slots:['V7','IVmaj7','bVII','ii7','vi7'],
   chordSource:'live', seq:new Array(16).fill(null), seqResolved:[], seqLen:1, armedSlot:0,
-  holdChord:null, keyPc:0, padMode:'press', padAttack:0, padBeats:4, padSustain:1.0, padVoice:'strings', punchVol:0.7,
+  holdChord:null, keyPc:0, padMode:'press', padAttack:0, padBeats:4, padSustain:1.0, padVoice:'strings',
   lastChordSym:null, padChords:[], stopping:false
 };
-const LOOKAHEAD = 0.06, TICK = 15; // small enough that a chord tap on the beat lands on that beat
+// Drums are decided in advance, so they get a generous buffer against main-thread
+// stalls. Chords depend on what you press, so they are queued and only committed
+// PITCH_AHEAD before they sound -- that delay, not LOOKAHEAD, is the chord latency.
+const LOOKAHEAD = 0.10, TICK = 16, PITCH_AHEAD = 0.035;
+let pitchQueue = [];
 
 function style(){ return STYLES[S.styleIdx]; }
 function subOf(st){ return st.sub || 4; }
@@ -1327,13 +1392,14 @@ function buildFill(st, steps, idx){
 }
 
 /* ---------- live chord ---------- */
-function chordAt(){
+function chordAt(bar){
   if(S.chordSource === 'sequence'){
     if(!S.seqResolved.length) return null;
     const len = S.seqLen || 1;
-    return S.seqResolved[((S.bar % len) + len) % len];
+    const b = (bar === undefined) ? S.bar : bar;
+    return S.seqResolved[((b % len) + len) % len];
   }
-  return S.holdChord;
+  return S.holdChord;   // live: always the very latest press
 }
 /* The loop length is however many bars you've actually filled -- trailing
    empty bars are trimmed. A gap in the middle just repeats the chord before
@@ -1363,6 +1429,7 @@ function stepDuration(idx){
   return base;
 }
 function scheduler(){
+  drainPitch();
   if(!S.playing) return;
   while(S.nextTime < ac.currentTime + LOOKAHEAD){
     playStep(S.step, S.nextTime);
@@ -1402,7 +1469,7 @@ function onBar(){
 }
 function finish(t){
   // final stab on the downbeat, then stop
-  const c = chordAt(S.bar, 0);
+  const c = chordAt(S.bar);
   if(c && !c.nc){
     const notes = voiceChord(c, S.transpose);
     const v = chordVoiceName();
@@ -1416,22 +1483,6 @@ function finish(t){
   setTimeout(() => { paintTransport(); setDisplaySection('STOPPED'); }, 60);
 }
 
-let lastPunch = -Infinity;   // 0 would swallow a tap made in the first 250ms after load
-function punchChord(chord){
-  if(!chord || chord.nc || S.punchVol <= 0) return;
-  // Devices differ in which events they deliver for one press (pointerdown,
-  // click, or both). Both call this; this guard makes a single gesture sound
-  // exactly once rather than twice or not at all.
-  const now = performance.now();
-  if(now - lastPunch < 250) return;
-  lastPunch = now;
-  initAudio();
-  if(ac.state === 'suspended') ac.resume();
-  const voice = chordVoiceName();
-  const dur = (60 / S.bpm) * (S.playing ? 1 : 1.4);
-  voiceChord(chord, S.transpose).forEach((n, idx) =>
-    chordNote(voice, n, ac.currentTime + 0.008 + idx * 0.006, dur, S.punchVol));
-}
 function chordVoiceName(){
   const sel = document.getElementById('chordVoice').value;
   return sel === 'auto' ? style().cv : sel;
@@ -1439,9 +1490,8 @@ function chordVoiceName(){
 
 function playStep(i, t){
   const st = style(), p = patternFor(), steps = stepsOf(st);
-  // --- drums ---
+  // --- drums: nothing here depends on the chord, so schedule them now ---
   if(i === 0 && S.crashNext){ D.cr(t, 0.85); S.crashNext = false; }
-  const sub0 = subOf(st);
   for(const k in p.drums){
     const ch = p.drums[k][i];
     if(!ch || ch === '.' || !D[k]) continue;
@@ -1451,72 +1501,89 @@ function playStep(i, t){
     const loose = (k === 'h' || k === 'sh' || k === 'rd' || k === 'oh') ? 0.008 : 0.003;
     D[k](t + (Math.random() - 0.5) * loose, Math.min(1, v));
   }
-  // --- chord for this step ---
-  const c = chordAt(S.bar, i);
-  if(c && !c.nc){
-    // bass
-    if(st.walk && S.section !== 'ending'){
-      const sub = subOf(st);
-      if(i % sub === 0){
-        const dur = (60 / S.bpm) * 0.92;
-        bassNote(st.bv, walkNote(c, i / sub), t, dur, 0.85 + Math.random() * 0.1);
-      }
-    } else if(p.bass){
-      const bch = p.bass[i];
-      if(bch && bch !== '.' && bch !== '-'){
-        let len = 1, j = i + 1;
-        while(j < steps && p.bass[j] === '-'){ len++; j++; }
-        const dur = len * stepDuration(i) * 0.92;
-        bassNote(st.bv, bassMidi(c, bch, S.transpose), t, dur, 0.9);
-      }
+  // --- everything pitched: defer, so it reads the chord as late as possible ---
+  pitchQueue.push({ st, p, i, t, steps, bar:S.bar, section:S.section, stepDur:stepDuration(i) });
+  scheduleBeatUI(st, i, t);
+}
+
+/* Committed only ~30 ms before it sounds, so a chord pressed on the beat is heard
+   on that beat instead of the next one. */
+function drainPitch(){
+  if(!ac) return;
+  const now = ac.currentTime;
+  while(pitchQueue.length && pitchQueue[0].t <= now + PITCH_AHEAD){
+    const ev = pitchQueue.shift();
+    playPitched(ev, Math.max(ev.t, now + 0.004));
+  }
+}
+
+function playPitched(ev, t){
+  const { st, p, i, steps, stepDur } = ev;
+  const c = chordAt(ev.bar);
+  if(!c || c.nc) return;
+  // bass
+  if(st.walk && ev.section !== 'ending'){
+    const sub = subOf(st);
+    if(i % sub === 0){
+      bassNote(st.bv, walkNote(c, i / sub), t, (60 / S.bpm) * 0.92, 0.85 + Math.random() * 0.1);
     }
-    // comp
-    const cch = p.comp ? p.comp[i] : '.';
-    if(cch && cch !== '.' && cch !== '-' && S.section !== 'fill'){
-      const gate = (st.g || 2) * stepDuration(i);
-      const vel = (VEL[cch] || 0.7);
-      const voice = chordVoiceName();
-      if(st.arp){
-        const key = c.sym + '/' + S.transpose;
-        if(S.arpKey !== key){
-          if(st.arp.dir === 'rollup'){
-            const [r, t3, p5] = chordRootTones(c, S.transpose);
-            S.arpNotes = [r, t3, p5, r + 12, p5, t3];
-          } else {
-            S.arpNotes = arpSeq(voiceChord(c, S.transpose), st.arp);
-          }
-          S.arpKey = key; S.arpIdx = 0;
+  } else if(p.bass){
+    const bch = p.bass[i];
+    if(bch && bch !== '.' && bch !== '-'){
+      let len = 1, j = i + 1;
+      while(j < steps && p.bass[j] === '-'){ len++; j++; }
+      bassNote(st.bv, bassMidi(c, bch, S.transpose), t, len * stepDur * 0.92, 0.9);
+    }
+  }
+  // comp
+  const cch = p.comp ? p.comp[i] : '.';
+  if(cch && cch !== '.' && cch !== '-' && ev.section !== 'fill'){
+    const gate = (st.g || 2) * stepDur;
+    const vel = (VEL[cch] || 0.7);
+    const voice = chordVoiceName();
+    if(st.arp){
+      const key = c.sym + '/' + S.transpose;
+      if(S.arpKey !== key){
+        if(st.arp.dir === 'rollup'){
+          const [r, t3, p5] = chordRootTones(c, S.transpose);
+          S.arpNotes = [r, t3, p5, r + 12, p5, t3];
+        } else {
+          S.arpNotes = arpSeq(voiceChord(c, S.transpose), st.arp);
         }
-        chordNote(voice, S.arpNotes[S.arpIdx % S.arpNotes.length], t, gate, vel);
-        S.arpIdx++;
-      } else {
-        voiceChord(c, S.transpose).forEach((n, idx) => chordNote(voice, n, t + idx * 0.006, gate, vel));
+        S.arpKey = key; S.arpIdx = 0;
       }
+      chordNote(voice, S.arpNotes[S.arpIdx % S.arpNotes.length], t, gate, vel);
+      S.arpIdx++;
+    } else {
+      let notes = voiceChord(c, S.transpose);
+      if(S.light && notes.length > 3) notes = notes.slice(0, 3);
+      notes.forEach((n, idx) => chordNote(voice, n, t + idx * 0.006, gate, vel));
     }
-    // pad on chord change
-    if((S.padMode === 'change' || S.padMode === 'hold') && c.sym !== S.lastChordSym){
-      const dur = (S.padMode === 'hold') ? PAD_HOLD : S.padBeats * 60 / S.bpm;
-      playPad(voiceChord(c, S.transpose), t, dur);
-    }
-    S.lastChordSym = c.sym;
   }
-  // --- UI beat lamps ---
+  // pad on chord change
+  if((S.padMode === 'change' || S.padMode === 'hold') && c.sym !== S.lastChordSym){
+    const dur = (S.padMode === 'hold') ? PAD_HOLD : S.padBeats * 60 / S.bpm;
+    playPad(voiceChord(c, S.transpose), t, dur);
+  }
+  S.lastChordSym = c.sym;
+}
+
+function scheduleBeatUI(st, i, t){
   const sub = subOf(st);
-  if(i % sub === 0){
-    const beat = i / sub, bar = S.bar;
-    const delay = Math.max(0, (t - ac.currentTime) * 1000);
-    setTimeout(() => {
-      if(!S.playing && S.section !== 'ending') return;
-      lightBeat(beat);
-      document.getElementById('dBar').textContent = String(bar + 1);
-      const cc = chordAt();
-      document.getElementById('dChord').textContent = cc ? chordName(cc) : '—';
-      if(S.chordSource === 'sequence'){
-        const len = S.seqLen || 1, idx = ((bar % len) + len) % len;
-        document.querySelectorAll('.seqslot').forEach((el, i) => el.classList.toggle('playing', i === idx));
-      }
-    }, delay);
-  }
+  if(i % sub !== 0) return;
+  const beat = i / sub, bar = S.bar;
+  const delay = Math.max(0, (t - ac.currentTime) * 1000);
+  setTimeout(() => {
+    if(!S.playing && S.section !== 'ending') return;
+    lightBeat(beat);
+    document.getElementById('dBar').textContent = String(bar + 1);
+    const cc = chordAt(bar);
+    document.getElementById('dChord').textContent = cc ? chordName(cc) : '—';
+    if(S.chordSource === 'sequence' && seqEls){
+      const len = S.seqLen || 1, idx = ((bar % len) + len) % len;
+      for(let k = 0; k < seqEls.length; k++) seqEls[k].classList.toggle('playing', k === idx);
+    }
+  }, delay);
 }
 
 /* ---------- transport actions ---------- */
@@ -1531,6 +1598,7 @@ function start(withIntro){
   S.section = withIntro ? 'intro' : 'main';
   S.variation = 'A'; S.pending = null; S.fillIdx = 1;
   S.nextTime = ac.currentTime + 0.08;
+  pitchQueue = [];
   clearInterval(S.timer);
   S.timer = setInterval(scheduler, TICK);
   scheduler();
@@ -1540,6 +1608,7 @@ function stop(){
   if(ac) killPad(ac.currentTime, 0.25);
   S.playing = false;
   clearInterval(S.timer); S.timer = null;
+  pitchQueue = [];
   S.pending = null; S.section = 'main'; S.sectionBar = 0;
   clearBeats();
   document.querySelectorAll('.seqslot.playing').forEach(el => el.classList.remove('playing'));
@@ -1556,6 +1625,287 @@ function queue(sect, fill, variation){
   }
   S.pending = {sect, fill, variation};
   paintTransport();
+}
+
+
+/* ============================================================
+   6. CAMERA / HAND GESTURES  (MediaPipe HandLandmarker)
+   ============================================================ */
+const CAM = {
+  on:false, landmarker:null, stream:null, raf:null, loading:false,
+  lastGesture:null, stableCount:0, applied:null, lastVideoTime:-1,
+  rightGesture:null, rightCount:0, rightApplied:null, roles:[],
+  lastDetect:0, colors:null
+};
+function cacheCamColors(){
+  const st = getComputedStyle(document.body);
+  CAM.colors = {
+    led: st.getPropertyValue('--led').trim() || '#ff6a33',
+    blue: st.getPropertyValue('--blue').trim() || '#4aa8ff'
+  };
+}
+/* Which landmark pairs to draw as bones. */
+const HAND_BONES = [
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [5,9],[9,10],[10,11],[11,12],
+  [9,13],[13,14],[14,15],[15,16],
+  [13,17],[17,18],[18,19],[19,20],
+  [0,17]
+];
+/* Degree table matching the pad layout: [semitones, letter steps, quality] */
+const GESTURE_CHORDS = {
+  1:[0,0,''], 2:[2,1,'m'], 3:[4,2,'m'], 4:[5,3,''], 5:[7,4,''],
+  vi:[9,5,'m'], vii:[11,6,'dim']
+};
+
+function fingersUp(lm){
+  // A finger is extended when its tip sits beyond the middle joint, measured
+  // along the hand's own axis -- so it still works when the hand is tilted.
+  const wrist = lm[0];
+  const axis = { x: lm[9].x - wrist.x, y: lm[9].y - wrist.y };
+  const len = Math.hypot(axis.x, axis.y) || 1e-6;
+  axis.x /= len; axis.y /= len;
+  const along = p => (p.x - wrist.x) * axis.x + (p.y - wrist.y) * axis.y;
+  const out = {};
+  [['index',8,6],['middle',12,10],['ring',16,14],['pinky',20,18]].forEach(([name,tip,pip]) => {
+    out[name] = along(lm[tip]) > along(lm[pip]) * 1.06;
+  });
+  // The thumb sticks out sideways, so measure it from the pinky knuckle instead:
+  // extended means the tip is further from it than the thumb's own joint is.
+  // That holds for either hand and at any rotation, so no handedness guess is needed.
+  const fromPinky = p => Math.hypot(p.x - lm[17].x, p.y - lm[17].y);
+  out.thumb = fromPinky(lm[4]) > fromPinky(lm[2]) * 1.12;
+  return out;
+}
+
+function gestureFrom(lm){
+  const f = fingersUp(lm);
+  const n = ['thumb','index','middle','ring','pinky'].filter(k => f[k]).length;
+  if(n === 0) return 'nc';
+  if(f.index && f.pinky && !f.middle && !f.ring) return f.thumb ? 'vii' : 'vi';
+  if(n >= 1 && n <= 5) return n;
+  return null;
+}
+
+/* Wrist tilt, only used in the tilt mode: leaning the hand over flips the
+   quality, so the same finger count gives you major or minor. */
+function tiltOf(lm){
+  const dx = lm[9].x - lm[0].x, dy = lm[9].y - lm[0].y;
+  const ang = Math.atan2(dx, -dy) * 180 / Math.PI;   // 0 = straight up
+  if(ang > 28) return 'right';
+  if(ang < -28) return 'left';
+  return 'flat';
+}
+
+function gestureChord(g, tilt){
+  if(g === 'nc') return NC;
+  const spec = GESTURE_CHORDS[g];
+  if(!spec) return null;
+  let [iv, ls, q] = spec;
+  if($('camQuality').value === 'tilt' && tilt !== 'flat'){
+    q = (tilt === 'left') ? 'm' : '';        // lean left for minor, right for major
+  }
+  const key = KEYS[S.keyPc];
+  return parseChord(spellNote(key.li + ls, (key.pc + iv) % 12) + q);
+}
+
+function applyGestureChord(chord){
+  if(!chord) return;
+  if(CAM.applied && CAM.applied.sym === chord.sym) return;
+  CAM.applied = chord;
+  if(S.chordSource === 'sequence'){ assignSeqSlot(chord); return; }
+  S.holdChord = chord;
+  paintPads();
+  $('dChord').textContent = chord.sym;
+  initAudio();
+  if(ac.state === 'suspended') ac.resume();
+  if(S.padMode === 'press' || S.padMode === 'tap'){
+    if(chord.nc) killPad(ac.currentTime, S.padSustain);
+    else playPad(voiceChord(chord, S.transpose), ac.currentTime + 0.02,
+                 S.padMode === 'press' ? PAD_HOLD : S.padBeats * 60 / S.bpm);
+  }
+}
+
+async function camStart(){
+  if(CAM.on || CAM.loading) return;
+  CAM.loading = true;
+  $('camInfo').textContent = 'starting\u2026';
+  $('camWrap').style.display = '';
+  try{
+    const vision = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14');
+    const files = await vision.FilesetResolver.forVisionTasks(
+      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm');
+    CAM.landmarker = await vision.HandLandmarker.createFromOptions(files, {
+      baseOptions:{
+        modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
+        delegate:'GPU'
+      },
+      runningMode:'VIDEO', numHands:2
+    });
+    CAM.stream = await navigator.mediaDevices.getUserMedia({ video:{ width:{ideal:480}, height:{ideal:360} }, audio:false });
+    const v = $('camVideo');
+    v.srcObject = CAM.stream;
+    await v.play();
+    CAM.on = true; CAM.loading = false;
+    $('camToggle').classList.add('on');
+    $('chordModeLive').classList.remove('on');
+    $('chordModeSeq').classList.remove('on');
+    $('seqChordUI').style.display = 'none';
+    $('pads').style.display = 'none';
+    $('chordHint').style.display = 'none';
+    $('camInfo').textContent = 'looking for a hand\u2026';
+    camLoop();
+  }catch(err){
+    CAM.loading = false;
+    camStop();
+    $('camWrap').style.display = '';
+    $('camInfo').textContent = 'camera unavailable';
+    $('camHint').textContent = 'Could not start the camera: ' + (err && err.message ? err.message : err);
+  }
+}
+
+function camStop(){
+  CAM.on = false;
+  if(CAM.raf) cancelAnimationFrame(CAM.raf);
+  CAM.raf = null;
+  if(CAM.stream){ CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; }
+  const v = $('camVideo'); if(v) v.srcObject = null;
+  const cv = $('camCanvas');
+  if(cv){ const g = cv.getContext('2d'); g && g.clearRect(0, 0, cv.width, cv.height); }
+  CAM.lastGesture = null; CAM.stableCount = 0; CAM.applied = null; CAM.lastVideoTime = -1;
+  $('camToggle').classList.remove('on');
+  $('camWrap').style.display = 'none';
+  $('pads').style.display = '';
+  $('chordHint').style.display = '';
+  $('chordModeLive').classList.toggle('on', S.chordSource === 'live');
+  $('chordModeSeq').classList.toggle('on', S.chordSource === 'sequence');
+  $('seqChordUI').style.display = S.chordSource === 'sequence' ? '' : 'none';
+  $('camChord').textContent = '\u2014';
+}
+
+function camLoop(){
+  if(!CAM.on) return;
+  const v = $('camVideo');
+  const now = performance.now();
+  // Detection is by far the most expensive thing here. Hands don't move at
+  // 60 Hz, so running it at a fraction of the display rate costs almost no
+  // responsiveness and saves most of the CPU.
+  const minGap = 1000 / (S.light ? 12 : 20);
+  if(now - CAM.lastDetect >= minGap && v.readyState >= 2 && v.currentTime !== CAM.lastVideoTime){
+    CAM.lastDetect = now;
+    CAM.lastVideoTime = v.currentTime;
+    let res = null;
+    try{ res = CAM.landmarker.detectForVideo(v, now); }catch(e){}
+    handleHands(res);
+  }
+  CAM.raf = requestAnimationFrame(camLoop);
+}
+
+function drawSkeleton(res){
+  if(S.light) return;                       // skeleton is the first thing to drop
+  const cv = $('camCanvas'), v = $('camVideo');
+  if(!cv || !v.videoWidth) return;
+  // The overlay is scaled up by CSS anyway, so back it with a small bitmap.
+  const w = Math.min(360, v.videoWidth);
+  const h = Math.round(w * v.videoHeight / v.videoWidth);
+  if(cv.width !== w){ cv.width = w; cv.height = h; }
+  const g = cv.getContext('2d');
+  g.clearRect(0, 0, cv.width, cv.height);
+  if(!res || !res.landmarks) return;
+  if(!CAM.colors) cacheCamColors();          // reading CSS vars per frame is slow
+  const { led, blue } = CAM.colors;
+  res.landmarks.forEach((lm, i) => {
+    const role = CAM.roles[i];
+    const col = role === 'right' ? blue : led;
+    g.strokeStyle = col; g.fillStyle = col; g.lineWidth = Math.max(2, cv.width / 260);
+    g.beginPath();
+    HAND_BONES.forEach(([a, b]) => {
+      g.moveTo(lm[a].x * cv.width, lm[a].y * cv.height);
+      g.lineTo(lm[b].x * cv.width, lm[b].y * cv.height);
+    });
+    g.stroke();
+    const r = Math.max(3, cv.width / 200);
+    lm.forEach(pt => {
+      g.beginPath();
+      g.arc(pt.x * cv.width, pt.y * cv.height, r, 0, Math.PI * 2);
+      g.fill();
+    });
+  });
+}
+
+/* The right hand runs transport: an open palm starts the band, a fist stops it. */
+function handleRightHand(lm){
+  const f = fingersUp(lm);
+  const n = ['thumb','index','middle','ring','pinky'].filter(k => f[k]).length;
+  const g = n >= 4 ? 'open' : n === 0 ? 'fist' : null;
+  if(g === CAM.rightGesture) CAM.rightCount++;
+  else { CAM.rightGesture = g; CAM.rightCount = 1; }
+  const need = parseInt($('camSteady').value, 10) || 3;
+  if(g && CAM.rightCount === need && CAM.rightApplied !== g){
+    CAM.rightApplied = g;
+    if(g === 'open' && !S.playing) start(false);
+    else if(g === 'fist' && S.playing) stop();
+  }
+  if(!g) CAM.rightApplied = null;
+  return g;
+}
+
+function handleHands(res){
+  CAM.roles = [];
+  if(!res || !res.landmarks || !res.landmarks.length){
+    $('camInfo').textContent = 'no hand';
+    CAM.lastGesture = null; CAM.stableCount = 0;
+    CAM.rightGesture = null; CAM.rightCount = 0; CAM.rightApplied = null;
+    drawSkeleton(res);
+    return;
+  }
+  // MediaPipe reports handedness for the un-mirrored image, so its "Right"
+  // is the hand the user holds up on their right.
+  let leftIdx = -1, rightIdx = -1;
+  res.landmarks.forEach((lm, i) => {
+    const h = (res.handednesses && res.handednesses[i] && res.handednesses[i][0])
+      ? res.handednesses[i][0].categoryName : 'Left';
+    if(h === 'Right' && rightIdx < 0){ rightIdx = i; CAM.roles[i] = 'right'; }
+    else if(leftIdx < 0){ leftIdx = i; CAM.roles[i] = 'left'; }
+    else CAM.roles[i] = 'left';
+  });
+  drawSkeleton(res);
+
+  let rightLabel = '';
+  if(rightIdx >= 0){
+    const rg = handleRightHand(res.landmarks[rightIdx]);
+    rightLabel = rg === 'open' ? ' \u00b7 right: start' : rg === 'fist' ? ' \u00b7 right: stop' : '';
+  } else {
+    CAM.rightGesture = null; CAM.rightCount = 0; CAM.rightApplied = null;
+  }
+
+  if(leftIdx < 0){
+    $('camInfo').textContent = 'right hand only' + rightLabel;
+    CAM.lastGesture = null; CAM.stableCount = 0;
+    return;
+  }
+
+  const lm = res.landmarks[leftIdx];
+  const g = gestureFrom(lm);
+  const tilt = tiltOf(lm);
+
+  if(g === CAM.lastGesture) CAM.stableCount++;
+  else { CAM.lastGesture = g; CAM.stableCount = 1; }
+
+  const need = parseInt($('camSteady').value, 10) || 3;
+  const label = g === 'nc' ? 'fist' : g === 'vi' ? 'index+pinky' : g === 'vii' ? 'index+pinky+thumb'
+              : g === null ? 'unclear' : g + ' finger' + (g > 1 ? 's' : '');
+  $('camInfo').textContent = label + (CAM.stableCount < need ? ' \u2026' : '') +
+    ($('camQuality').value === 'tilt' && tilt !== 'flat' ? ' \u00b7 ' + tilt : '') + rightLabel;
+
+  if(g !== null && CAM.stableCount === need){
+    const chord = gestureChord(g, tilt);
+    if(chord){
+      $('camChord').textContent = chord.sym;
+      applyGestureChord(chord);
+    }
+  }
 }
 
 /* ============================================================
@@ -1737,7 +2087,6 @@ function buildPads(){
       initAudio();
       if(S.chordSource === 'sequence'){ assignSeqSlot(chord); return; }
       if(S.padMode !== 'press') select();   // press mode already selected on pointerdown
-      punchChord(chord);                    // de-duped, so a press-mode click is a no-op
       if(S.padMode === 'tap' && !chord.nc){
         playPad(voiceChord(chord, S.transpose), ac.currentTime + 0.02, S.padBeats * 60 / S.bpm);
       }
@@ -1747,7 +2096,6 @@ function buildPads(){
       initAudio();
       if(ac.state === 'suspended') ac.resume();
       select();
-      punchChord(chord);   // press mode's own tap -- click never reaches here (see above)
       if(!chord.nc) playPad(voiceChord(chord, S.transpose), ac.currentTime + 0.02, PAD_HOLD);
     });
     const release = () => { if(S.padMode === 'press' && ac) killPad(ac.currentTime, S.padSustain); };
@@ -1779,6 +2127,7 @@ function assignSeqSlot(chord){
   buildSeqGrid();
   paintPads();
 }
+let seqEls = null;
 function buildSeqGrid(){
   const wrap = $('seqGrid'); wrap.innerHTML = '';
   for(let i = 0; i < 16; i++){
@@ -1795,6 +2144,7 @@ function buildSeqGrid(){
     b.addEventListener('click', () => { S.armedSlot = i; buildSeqGrid(); paintPads(); });
     wrap.appendChild(b);
   }
+  seqEls = wrap.children;                     // cached; the beat loop runs 8x a second
   $('seqLenNote').textContent = 'Loops after bar ' + S.seqLen;
 }
 function presetChordName(key, iv, ls, q){ return spellNote(key.li + ls, (key.pc + iv) % 12) + q; }
@@ -1821,10 +2171,13 @@ function loadSeqPreset(id){
   paintPads();
 }
 function setChordMode(mode){
+  if(CAM.on) camStop();            // Live and Sequence are hands-off-the-camera modes
   S.chordSource = mode;
   $('chordModeLive').classList.toggle('on', mode === 'live');
   $('chordModeSeq').classList.toggle('on', mode === 'sequence');
   $('seqChordUI').style.display = mode === 'sequence' ? '' : 'none';
+  $('pads').style.display = '';
+  $('chordHint').style.display = '';
   $('chordHint').textContent = mode === 'sequence'
     ? 'Tap a bar to select it, then tap a chord to fill it. Empty bars repeat the one before, and it loops after the last bar you filled.'
     : 'Tap a chord and the band follows it until you tap the next one.';
@@ -1914,6 +2267,7 @@ function setChordMode(mode){
     const t = e.target.value;
     if(t) document.body.setAttribute('data-theme', t);
     else document.body.removeAttribute('data-theme');
+    CAM.colors = null;
   });
   $('padAttack').addEventListener('input', e => {
     const ms = parseInt(e.target.value,10);
@@ -1926,6 +2280,16 @@ function setChordMode(mode){
     buildPads();
     buildSlots();
     buildSeqPresetSelect();
+  });
+  $('perfMode').addEventListener('change', e => {
+    S.light = e.target.value === 'light';
+    const cv = $('camCanvas');
+    if(S.light && cv){ const g = cv.getContext('2d'); g && g.clearRect(0, 0, cv.width, cv.height); }
+  });
+  $('camToggle').addEventListener('click', () => { CAM.on ? camStop() : camStart(); });
+  $('camSteady').addEventListener('input', e => {
+    const n = parseInt(e.target.value,10);
+    $('camSteadyOut').value = n + (n === 1 ? ' frame' : ' frames');
   });
   $('chordModeLive').addEventListener('click', () => setChordMode('live'));
   $('chordModeSeq').addEventListener('click', () => setChordMode('sequence'));
@@ -1952,7 +2316,6 @@ function setChordMode(mode){
                ['vDrums','oDrums',v=>{ if(busDrums) busDrums.gain.value=v; }],
                ['vBass','oBass',v=>{ if(busBass) busBass.gain.value=v; }],
                ['vChords','oChords',v=>{ if(busChords) busChords.gain.value=v; }],
-               ['vPunch','oPunch',v=>{ S.punchVol = v; }],
                ['vPad','oPad',v=>{ if(busPad) busPad.gain.value=v*0.5; }]];
   mix.forEach(([id,out,fn]) => {
     $(id).addEventListener('input', e => {
