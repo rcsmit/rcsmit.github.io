@@ -7,6 +7,8 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <!-- version history
 # version : 20260828-182807 - Initial version: 606-style 7-voice synthesized step sequencer, accent row, swing, adjustable pattern length, presets, JSON export/import, lookahead scheduler
+# version : 20260828-183512 - Preset library expanded to 59 patterns in 8 categories, compact string notation with pat() parser, grouped dropdown with optgroups
+# version : 20260828-184930 - Per-channel tone module: persistent filter (LP/HP/BP) + resonance, tanh drive with makeup gain, tune and decay scaling per voice, channel level; 8 kit presets; kit is saved in the JSON export (format v2)
 -->
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -129,6 +131,34 @@ tr.accentrow th.voice{color:var(--accentcol)}
 .numrow td{font-size:.55rem;text-align:center;color:#6d675b;padding-bottom:2px}
 .numrow td.beat{color:var(--ink);font-weight:600}
 
+/* ---------- channel strip ---------- */
+.chanhead{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+  border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:10px;
+}
+.chantabs{display:flex;gap:4px;flex-wrap:wrap}
+.chantab{
+  font-family:"IBM Plex Mono",monospace;font-size:.68rem;font-weight:600;letter-spacing:.06em;
+  border:1px solid var(--line);border-radius:3px;background:#efece5;color:#5f594e;
+  padding:6px 9px;cursor:pointer;transition:background .12s,color .12s;
+}
+.chantab:hover{background:#fff}
+.chantab.sel{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chantab.edited::after{content:"•";color:var(--orange);margin-left:3px}
+.chantab.sel.edited::after{color:var(--amber)}
+.chanhead-right{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+button.btn.small{padding:6px 10px;font-size:.68rem}
+.ftype{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.ftype .lbl{
+  font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:#5f594e;margin-right:4px;
+}
+.ftype button{
+  font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.06em;
+  border:1px solid var(--line);border-radius:3px;background:#efece5;color:#5f594e;
+  padding:6px 10px;cursor:pointer;
+}
+.ftype button.sel{background:var(--accentcol);color:#fff;border-color:#2d5c68}
+
 /* ---------- io ---------- */
 .io{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 select,textarea{
@@ -189,6 +219,23 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
     </div>
   </div>
 
+  <div class="panel" id="chanPanel">
+    <div class="chanhead">
+      <div class="chantabs" id="chanTabs"></div>
+      <div class="chanhead-right">
+        <select id="kitSel" aria-label="Kit">
+          <option value="">— kit —</option>
+        </select>
+        <button class="btn ghost small" id="chanAudition">Hit</button>
+        <button class="btn ghost small" id="chanReset">Reset</button>
+      </div>
+    </div>
+    <div class="chanbody">
+      <div class="knobs" id="chanKnobs"></div>
+      <div class="ftype" id="chanFtype"></div>
+    </div>
+  </div>
+
   <div class="panel">
     <div class="io">
       <button class="btn ghost" id="exportBtn">Export JSON</button>
@@ -202,6 +249,8 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
       Klik of sleep over het raster om stappen aan/uit te zetten. <kbd>Space</kbd> = play/stop.
       De <b>ACC</b>-rij is de globale accent-rij (606-stijl): elke stap met accent klinkt harder.
       Het knopje links van de naam mute't een stem.
+      In het kanaalpaneel staat per stem een tone-module: tune, decay, filter, resonantie en drive.
+      De export bevat zowel het pattern als de kit-instellingen.
     </div>
   </div>
 
@@ -209,7 +258,9 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
 
 <script>
 // # version : 20260828-182807 - Initial version: 606-style 7-voice synthesized step sequencer, accent row, swing, adjustable pattern length, presets, JSON export/import, lookahead scheduler
-const current_version = "20260828-182807";
+// # version : 20260828-183512 - Preset library expanded to 59 patterns in 8 categories, compact string notation with pat() parser, grouped dropdown with optgroups
+// # version : 20260828-184930 - Per-channel tone module: persistent filter (LP/HP/BP) + resonance, tanh drive with makeup gain, tune and decay scaling per voice, channel level; 8 kit presets; kit is saved in the JSON export (format v2)
+const current_version = "20260828-184930";
 
 (function () {
   "use strict";
@@ -233,6 +284,110 @@ const current_version = "20260828-182807";
     { id: "CY", name: "Cymbal",    gain: 0.40 }
   ];
   const ACCENT_ROW = "ACC";
+
+  function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
+
+  /* ---- Per-channel tone module ----------------------------------
+     level  0..2    channel output gain
+     tune   0.5..2  multiplies every frequency in the voice
+     decay  0.25..3 multiplies every envelope length
+     ftype  off | lowpass | highpass | bandpass
+     cutoff 30..18000 Hz
+     reso   0.1..18  filter Q
+     drive  0..1     tanh saturation before the level stage
+     --------------------------------------------------------------- */
+  const CHANNEL_DEFAULTS = {
+    BD: { level:1.00, tune:1.00, decay:1.00, ftype:"lowpass",  cutoff:6000,  reso:0.7, drive:0.15 },
+    SD: { level:1.00, tune:1.00, decay:1.00, ftype:"bandpass", cutoff:2400,  reso:0.5, drive:0.10 },
+    LT: { level:1.00, tune:1.00, decay:1.00, ftype:"lowpass",  cutoff:4000,  reso:0.8, drive:0.08 },
+    HT: { level:1.00, tune:1.00, decay:1.00, ftype:"lowpass",  cutoff:5000,  reso:0.8, drive:0.08 },
+    CH: { level:1.00, tune:1.00, decay:1.00, ftype:"highpass", cutoff:6000,  reso:0.7, drive:0.00 },
+    OH: { level:1.00, tune:1.00, decay:1.00, ftype:"highpass", cutoff:5500,  reso:0.7, drive:0.00 },
+    CY: { level:1.00, tune:1.00, decay:1.00, ftype:"highpass", cutoff:4000,  reso:0.5, drive:0.00 }
+  };
+
+  const CHANNEL_PARAMS = [
+    { key:"level",  label:"Level",  min:0,    max:2,     step:0.01, fmt:v => Math.round(v*100)+"%" },
+    { key:"tune",   label:"Tune",   min:0.5,  max:2,     step:0.01, fmt:v => v.toFixed(2)+"×" },
+    { key:"decay",  label:"Decay",  min:0.25, max:3,     step:0.01, fmt:v => v.toFixed(2)+"×" },
+    { key:"cutoff", label:"Cutoff", min:30,   max:18000, step:1,    fmt:v => v >= 1000 ? (v/1000).toFixed(1)+"k" : Math.round(v)+" Hz", log:true },
+    { key:"reso",   label:"Reso",   min:0.1,  max:18,    step:0.1,  fmt:v => "Q "+v.toFixed(1) },
+    { key:"drive",  label:"Drive",  min:0,    max:1,     step:0.01, fmt:v => Math.round(v*100)+"%" }
+  ];
+
+  /* Whole-kit voicings — the 606 engine pushed into different territories. */
+  const KITS = {
+    "606 dry": {},
+    "909 wide": {
+      BD: { tune:0.82, decay:1.55, ftype:"lowpass",  cutoff:3200, reso:1.6, drive:0.35, level:1.10 },
+      SD: { tune:0.95, decay:1.30, ftype:"bandpass", cutoff:1900, reso:0.9, drive:0.28 },
+      LT: { tune:0.85, decay:1.45, cutoff:3000, reso:1.4, drive:0.20 },
+      HT: { tune:0.90, decay:1.35, cutoff:3800, reso:1.4, drive:0.20 },
+      CH: { decay:0.85, ftype:"highpass", cutoff:7500, reso:1.2 },
+      OH: { decay:1.60, ftype:"highpass", cutoff:6200, reso:1.2 },
+      CY: { decay:1.80, ftype:"highpass", cutoff:3200, reso:0.8, level:0.9 }
+    },
+    "808 boom": {
+      BD: { tune:0.62, decay:2.60, ftype:"lowpass", cutoff:1200, reso:2.2, drive:0.10, level:1.20 },
+      SD: { tune:0.90, decay:1.10, ftype:"bandpass", cutoff:1600, reso:1.2, drive:0.05 },
+      LT: { tune:0.70, decay:2.00, cutoff:2200, reso:1.8 },
+      HT: { tune:0.78, decay:1.80, cutoff:2800, reso:1.8 },
+      CH: { decay:0.70, cutoff:8500 },
+      OH: { decay:1.40, cutoff:7000 },
+      CY: { decay:1.30, cutoff:5000, level:0.8 }
+    },
+    "Lo-fi tape": {
+      BD: { decay:0.90, ftype:"lowpass", cutoff:2200, reso:1.0, drive:0.55 },
+      SD: { decay:0.80, ftype:"lowpass", cutoff:3000, reso:1.0, drive:0.50 },
+      LT: { ftype:"lowpass", cutoff:2000, drive:0.40 },
+      HT: { ftype:"lowpass", cutoff:2600, drive:0.40 },
+      CH: { ftype:"bandpass", cutoff:5000, reso:1.5, decay:0.80, drive:0.30 },
+      OH: { ftype:"bandpass", cutoff:4500, reso:1.5, decay:0.80, drive:0.30 },
+      CY: { ftype:"lowpass", cutoff:6000, decay:0.70, level:0.8 }
+    },
+    "Dub echo chamber": {
+      BD: { tune:0.75, decay:1.80, ftype:"lowpass", cutoff:900, reso:3.5, drive:0.25 },
+      SD: { tune:1.15, decay:1.60, ftype:"bandpass", cutoff:3200, reso:4.0, drive:0.20 },
+      LT: { tune:0.80, decay:2.20, ftype:"bandpass", cutoff:400, reso:5.0 },
+      HT: { tune:0.95, decay:2.00, ftype:"bandpass", cutoff:700, reso:5.0 },
+      CH: { decay:0.60, ftype:"bandpass", cutoff:9000, reso:6.0 },
+      OH: { decay:2.20, ftype:"bandpass", cutoff:7000, reso:6.0 },
+      CY: { decay:2.50, ftype:"highpass", cutoff:2500, reso:2.0 }
+    },
+    "Acid squelch": {
+      BD: { decay:0.75, ftype:"lowpass", cutoff:2600, reso:8.0, drive:0.45 },
+      SD: { decay:0.70, ftype:"bandpass", cutoff:2800, reso:7.0, drive:0.35 },
+      LT: { ftype:"lowpass", cutoff:1400, reso:9.0, drive:0.30 },
+      HT: { ftype:"lowpass", cutoff:2000, reso:9.0, drive:0.30 },
+      CH: { ftype:"bandpass", cutoff:8000, reso:8.0, decay:0.70 },
+      OH: { ftype:"bandpass", cutoff:6500, reso:8.0 },
+      CY: { ftype:"bandpass", cutoff:7000, reso:6.0, level:0.8 }
+    },
+    "Deep sub": {
+      BD: { tune:0.55, decay:2.20, ftype:"lowpass", cutoff:700, reso:1.2, drive:0.20, level:1.25 },
+      SD: { tune:1.05, decay:0.90, ftype:"highpass", cutoff:900, reso:0.7 },
+      LT: { tune:0.65, decay:1.60, ftype:"lowpass", cutoff:1200 },
+      HT: { tune:0.75, decay:1.40, ftype:"lowpass", cutoff:1600 },
+      CH: { level:0.75, cutoff:9000 },
+      OH: { level:0.75, cutoff:8000 },
+      CY: { level:0.60, cutoff:6000 }
+    },
+    "Bright pop": {
+      BD: { tune:1.10, decay:0.80, ftype:"lowpass", cutoff:9000, reso:0.7, drive:0.20 },
+      SD: { tune:1.10, decay:1.10, ftype:"bandpass", cutoff:3200, reso:0.6, drive:0.15 },
+      LT: { tune:1.10, decay:0.90, cutoff:6000 },
+      HT: { tune:1.15, decay:0.85, cutoff:7000 },
+      CH: { tune:1.10, cutoff:9000, level:1.10 },
+      OH: { tune:1.10, cutoff:8000, level:1.10 },
+      CY: { tune:1.05, decay:1.20, cutoff:5000 }
+    }
+  };
+
+  function freshKit() {
+    const k = {};
+    VOICES.forEach(v => { k[v.id] = Object.assign({}, CHANNEL_DEFAULTS[v.id]); });
+    return k;
+  }
 
   /* Compact notation: "x" = hit, "." = rest. Spaces are ignored (grouping only). */
   function pat(str) {
@@ -601,20 +756,35 @@ const current_version = "20260828-182807";
   const state = {
     pattern: emptyPattern(),
     muted: {},
+    kit: null,          // filled in below (needs VOICES + CHANNEL_DEFAULTS)
     tempo: 120,
     swing: 0,
     length: 16,
     volume: 0.8,
     playing: false
   };
+  state.kit = freshKit();
   rows.forEach(id => { state.muted[id] = false; });
 
   /* ============================================================
      AUDIO ENGINE
+
+     Signal flow per voice (606 philosophy: pure synthesis, no samples;
+     909 philosophy: each voice gets its own tone-shaping stage):
+
+       oscillators/noise  →  [channel input]
+                             → filter (LP/HP/BP, cutoff + resonance)
+                             → drive (tanh waveshaper + makeup)
+                             → channel level
+                             → master → limiter → out
+
+     The channel strip is built ONCE and stays alive; only the sound
+     generators are created per hit. That keeps the 606's cheapness.
      ============================================================ */
   let ctx = null;
   let master = null;
   let noiseBuffer = null;
+  const channels = {};      // voiceId -> { input, filter, shaper, out }
 
   function initAudio() {
     if (ctx) return;
@@ -622,7 +792,7 @@ const current_version = "20260828-182807";
     ctx = new AC();
     master = ctx.createGain();
     master.gain.value = state.volume;
-    // Soft limiter so accents never clip
+    // Soft limiter so accents and drive never clip
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -8;
     comp.knee.value = 6;
@@ -636,6 +806,62 @@ const current_version = "20260828-182807";
     noiseBuffer = ctx.createBuffer(1, len, ctx.sampleRate);
     const d = noiseBuffer.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+
+    VOICES.forEach(v => {
+      const input  = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      const shaper = ctx.createWaveShaper();
+      const out    = ctx.createGain();
+      shaper.oversample = "2x";
+      input.connect(filter);
+      filter.connect(shaper);
+      shaper.connect(out);
+      out.connect(master);
+      channels[v.id] = { input: input, filter: filter, shaper: shaper, out: out };
+      applyChannel(v.id);
+    });
+  }
+
+  /* tanh-style soft clipper; amount 0 = bypass (null curve passes through) */
+  function driveCurve(amount) {
+    if (amount <= 0) return null;
+    const k = 1 + amount * 14;          // 0..1 → 1..15
+    const n = 1024;
+    const curve = new Float32Array(n);
+    const norm = Math.tanh(k);
+    for (let i = 0; i < n; i++) {
+      const x = (i / (n - 1)) * 2 - 1;
+      curve[i] = Math.tanh(k * x) / norm;
+    }
+    return curve;
+  }
+
+  /* Push the stored parameters of one channel into the audio nodes. */
+  function applyChannel(id) {
+    const ch = channels[id];
+    if (!ch) return;
+    const p = state.kit[id];
+    const now = ctx.currentTime;
+
+    if (p.ftype === "off") {
+      ch.filter.type = "lowpass";
+      ch.filter.frequency.setTargetAtTime(20000, now, 0.01);
+      ch.filter.Q.setTargetAtTime(0.0001, now, 0.01);
+    } else {
+      ch.filter.type = p.ftype;
+      ch.filter.frequency.setTargetAtTime(clamp(p.cutoff, 30, 20000), now, 0.01);
+      ch.filter.Q.setTargetAtTime(p.reso, now, 0.01);
+    }
+
+    ch.shaper.curve = driveCurve(p.drive);
+    // Makeup: drive raises perceived level, so pull the channel back a bit.
+    const makeup = 1 / (1 + p.drive * 0.9);
+    ch.out.gain.setTargetAtTime(p.level * makeup, now, 0.01);
+  }
+
+  function applyAllChannels() {
+    if (!ctx) return;
+    VOICES.forEach(v => applyChannel(v.id));
   }
 
   function noiseSource() {
@@ -652,99 +878,107 @@ const current_version = "20260828-182807";
     g.exponentialRampToValueAtTime(0.0001, t + decay);
   }
 
-  /* --- individual 606-flavoured voices, all synthesized --- */
+  /* --- individual 606-flavoured voices, all synthesized ---
+     Each takes (time, gain, params, dest); params.tune scales every
+     frequency, params.decay scales every envelope length. --------- */
   const synth = {
-    BD(t, g) {
+    BD(t, g, p, dest) {
+      const tu = p.tune, dc = p.decay;
       const osc = ctx.createOscillator();
       const amp = ctx.createGain();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(115, t);
-      osc.frequency.exponentialRampToValueAtTime(46, t + 0.055);
-      env(amp, t, g, 0.34, 0.003);
+      osc.frequency.setValueAtTime(115 * tu, t);
+      osc.frequency.exponentialRampToValueAtTime(46 * tu, t + 0.055 * dc);
+      env(amp, t, g, 0.34 * dc, 0.003);
       // click transient
       const clk = ctx.createOscillator();
       const clkAmp = ctx.createGain();
       clk.type = "square";
-      clk.frequency.setValueAtTime(1100, t);
+      clk.frequency.setValueAtTime(1100 * tu, t);
       env(clkAmp, t, g * 0.16, 0.014, 0.001);
-      clk.connect(clkAmp).connect(master);
-      osc.connect(amp).connect(master);
-      osc.start(t); osc.stop(t + 0.4);
+      clk.connect(clkAmp).connect(dest);
+      osc.connect(amp).connect(dest);
+      osc.start(t); osc.stop(t + 0.4 * dc + 0.05);
       clk.start(t); clk.stop(t + 0.03);
     },
-    SD(t, g) {
+    SD(t, g, p, dest) {
+      const tu = p.tune, dc = p.decay;
       const n = noiseSource();
       const hp = ctx.createBiquadFilter();
-      hp.type = "highpass"; hp.frequency.value = 1400;
+      hp.type = "highpass"; hp.frequency.value = 1400 * tu;
       const nAmp = ctx.createGain();
-      env(nAmp, t, g * 0.8, 0.16, 0.002);
-      n.connect(hp).connect(nAmp).connect(master);
-      n.start(t); n.stop(t + 0.25);
+      env(nAmp, t, g * 0.8, 0.16 * dc, 0.002);
+      n.connect(hp).connect(nAmp).connect(dest);
+      n.start(t); n.stop(t + 0.25 * dc + 0.05);
 
       [238, 476].forEach((f, i) => {
         const o = ctx.createOscillator();
         const a = ctx.createGain();
         o.type = "triangle";
-        o.frequency.setValueAtTime(f, t);
-        env(a, t, g * (i === 0 ? 0.6 : 0.35), 0.09, 0.002);
-        o.connect(a).connect(master);
-        o.start(t); o.stop(t + 0.15);
+        o.frequency.setValueAtTime(f * tu, t);
+        env(a, t, g * (i === 0 ? 0.6 : 0.35), 0.09 * dc, 0.002);
+        o.connect(a).connect(dest);
+        o.start(t); o.stop(t + 0.15 * dc + 0.05);
       });
     },
-    LT(t, g) { tom(t, g, 105, 62, 0.30); },
-    HT(t, g) { tom(t, g, 170, 104, 0.24); },
-    CH(t, g) { hat(t, g, 0.045, 7800); },
-    OH(t, g) { hat(t, g, 0.32, 7000); },
-    CY(t, g) {
+    LT(t, g, p, dest) { tom(t, g, 105, 62, 0.30, p, dest); },
+    HT(t, g, p, dest) { tom(t, g, 170, 104, 0.24, p, dest); },
+    CH(t, g, p, dest) { hat(t, g, 0.045, 7800, p, dest); },
+    OH(t, g, p, dest) { hat(t, g, 0.32, 7000, p, dest); },
+    CY(t, g, p, dest) {
+      const tu = p.tune, dc = p.decay;
       const n = noiseSource();
       const hp = ctx.createBiquadFilter();
-      hp.type = "highpass"; hp.frequency.value = 5200;
+      hp.type = "highpass"; hp.frequency.value = 5200 * tu;
       const bp = ctx.createBiquadFilter();
-      bp.type = "bandpass"; bp.frequency.value = 9000; bp.Q.value = 0.6;
+      bp.type = "bandpass"; bp.frequency.value = 9000 * tu; bp.Q.value = 0.6;
       const a = ctx.createGain();
-      env(a, t, g * 0.55, 1.1, 0.004);
-      n.connect(hp).connect(bp).connect(a).connect(master);
-      n.start(t); n.stop(t + 1.2);
+      env(a, t, g * 0.55, 1.1 * dc, 0.004);
+      n.connect(hp).connect(bp).connect(a).connect(dest);
+      n.start(t); n.stop(t + 1.2 * dc + 0.05);
     }
   };
 
-  function tom(t, g, f0, f1, dec) {
+  function tom(t, g, f0, f1, dec, p, dest) {
+    const tu = p.tune, d = dec * p.decay;
     const o = ctx.createOscillator();
     const a = ctx.createGain();
     o.type = "sine";
-    o.frequency.setValueAtTime(f0, t);
-    o.frequency.exponentialRampToValueAtTime(f1, t + dec * 0.7);
-    env(a, t, g, dec, 0.003);
-    o.connect(a).connect(master);
-    o.start(t); o.stop(t + dec + 0.05);
+    o.frequency.setValueAtTime(f0 * tu, t);
+    o.frequency.exponentialRampToValueAtTime(f1 * tu, t + d * 0.7);
+    env(a, t, g, d, 0.003);
+    o.connect(a).connect(dest);
+    o.start(t); o.stop(t + d + 0.05);
 
     const n = noiseSource();
     const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass"; lp.frequency.value = 900;
+    lp.type = "lowpass"; lp.frequency.value = 900 * tu;
     const na = ctx.createGain();
     env(na, t, g * 0.14, 0.05, 0.002);
-    n.connect(lp).connect(na).connect(master);
+    n.connect(lp).connect(na).connect(dest);
     n.start(t); n.stop(t + 0.08);
   }
 
-  function hat(t, g, dec, hpFreq) {
+  function hat(t, g, dec, hpFreq, p, dest) {
+    const tu = p.tune, d = dec * p.decay;
     const n = noiseSource();
     const hp = ctx.createBiquadFilter();
-    hp.type = "highpass"; hp.frequency.value = hpFreq;
+    hp.type = "highpass"; hp.frequency.value = hpFreq * tu;
     const bp = ctx.createBiquadFilter();
-    bp.type = "bandpass"; bp.frequency.value = 10000; bp.Q.value = 0.8;
+    bp.type = "bandpass"; bp.frequency.value = 10000 * tu; bp.Q.value = 0.8;
     const a = ctx.createGain();
-    env(a, t, g * 0.6, dec, 0.002);
-    n.connect(hp).connect(bp).connect(a).connect(master);
-    n.start(t); n.stop(t + dec + 0.05);
+    env(a, t, g * 0.6, d, 0.002);
+    n.connect(hp).connect(bp).connect(a).connect(dest);
+    n.start(t); n.stop(t + d + 0.05);
   }
 
   function trigger(voiceId, time, accented) {
     if (state.muted[voiceId]) return;
     const v = VOICES.find(x => x.id === voiceId);
-    if (!v || !synth[voiceId]) return;
+    const ch = channels[voiceId];
+    if (!v || !ch || !synth[voiceId]) return;
     const g = v.gain * (accented ? ACCENT_GAIN : NORMAL_GAIN);
-    synth[voiceId](time, g);
+    synth[voiceId](time, g, state.kit[voiceId], ch.input);
   }
 
   /* ============================================================
@@ -1030,17 +1264,178 @@ const current_version = "20260828-182807";
   });
 
   /* ============================================================
+     UI — CHANNEL STRIP (per-voice tone module)
+     ============================================================ */
+  let selectedVoice = VOICES[0].id;
+
+  const chanTabs = document.getElementById("chanTabs");
+  const chanKnobs = document.getElementById("chanKnobs");
+  const chanFtype = document.getElementById("chanFtype");
+  const kitSel = document.getElementById("kitSel");
+
+  /* Cutoff needs a log-feeling slider; the others are linear. */
+  function toSlider(p, value) {
+    if (p.log) {
+      const r = Math.log(value / p.min) / Math.log(p.max / p.min);
+      return clamp(r, 0, 1) * 1000;
+    }
+    return ((value - p.min) / (p.max - p.min)) * 1000;
+  }
+  function fromSlider(p, raw) {
+    const r = clamp(raw / 1000, 0, 1);
+    if (p.log) return p.min * Math.pow(p.max / p.min, r);
+    return p.min + r * (p.max - p.min);
+  }
+
+  function isEdited(id) {
+    const d = CHANNEL_DEFAULTS[id], k = state.kit[id];
+    return Object.keys(d).some(key => d[key] !== k[key]);
+  }
+
+  function buildChanTabs() {
+    chanTabs.innerHTML = "";
+    VOICES.forEach(v => {
+      const b = document.createElement("button");
+      b.className = "chantab";
+      b.textContent = v.id;
+      b.title = v.name;
+      b.dataset.voice = v.id;
+      b.addEventListener("click", () => {
+        selectedVoice = v.id;
+        refreshChanTabs();
+        buildChanControls();
+      });
+      chanTabs.appendChild(b);
+    });
+    refreshChanTabs();
+  }
+
+  function refreshChanTabs() {
+    chanTabs.querySelectorAll(".chantab").forEach(b => {
+      b.classList.toggle("sel", b.dataset.voice === selectedVoice);
+      b.classList.toggle("edited", isEdited(b.dataset.voice));
+    });
+  }
+
+  function buildChanControls() {
+    const id = selectedVoice;
+    const p = state.kit[id];
+    chanKnobs.innerHTML = "";
+
+    CHANNEL_PARAMS.forEach(def => {
+      const wrap = document.createElement("div");
+      wrap.className = "knob";
+
+      const lbl = document.createElement("label");
+      const name = document.createElement("span");
+      name.textContent = def.label;
+      const val = document.createElement("b");
+      val.textContent = def.fmt(p[def.key]);
+      lbl.appendChild(name);
+      lbl.appendChild(val);
+
+      const sl = document.createElement("input");
+      sl.type = "range";
+      sl.min = 0; sl.max = 1000; sl.step = 1;
+      sl.value = toSlider(def, p[def.key]);
+      // Cutoff and reso do nothing while the filter is bypassed.
+      const inactive = (def.key === "cutoff" || def.key === "reso") && p.ftype === "off";
+      sl.disabled = inactive;
+      wrap.style.opacity = inactive ? ".4" : "1";
+
+      sl.addEventListener("input", () => {
+        let v = fromSlider(def, +sl.value);
+        if (def.step >= 1) v = Math.round(v);
+        state.kit[id][def.key] = v;
+        val.textContent = def.fmt(v);
+        if (ctx) applyChannel(id);
+        refreshChanTabs();
+        kitSel.value = "";
+      });
+
+      wrap.appendChild(lbl);
+      wrap.appendChild(sl);
+      chanKnobs.appendChild(wrap);
+    });
+
+    buildFtype();
+  }
+
+  function buildFtype() {
+    const id = selectedVoice;
+    chanFtype.innerHTML = "";
+    const lbl = document.createElement("span");
+    lbl.className = "lbl";
+    lbl.textContent = "Filter";
+    chanFtype.appendChild(lbl);
+
+    [["off","Off"], ["lowpass","LP"], ["highpass","HP"], ["bandpass","BP"]].forEach(([val, txt]) => {
+      const b = document.createElement("button");
+      b.textContent = txt;
+      b.classList.toggle("sel", state.kit[id].ftype === val);
+      b.addEventListener("click", () => {
+        state.kit[id].ftype = val;
+        if (ctx) applyChannel(id);
+        kitSel.value = "";
+        refreshChanTabs();
+        buildChanControls();
+      });
+      chanFtype.appendChild(b);
+    });
+  }
+
+  document.getElementById("chanAudition").addEventListener("click", () => {
+    initAudio();
+    if (ctx.state === "suspended") ctx.resume();
+    trigger(selectedVoice, ctx.currentTime + 0.01, true);
+  });
+
+  document.getElementById("chanReset").addEventListener("click", () => {
+    state.kit[selectedVoice] = Object.assign({}, CHANNEL_DEFAULTS[selectedVoice]);
+    if (ctx) applyChannel(selectedVoice);
+    kitSel.value = "";
+    refreshChanTabs();
+    buildChanControls();
+  });
+
+  /* ---- kit presets: start from defaults, overlay the kit's overrides ---- */
+  Object.keys(KITS).forEach(name => {
+    const o = document.createElement("option");
+    o.value = name; o.textContent = name;
+    kitSel.appendChild(o);
+  });
+
+  function applyKit(name) {
+    const overlay = KITS[name];
+    if (!overlay) return;
+    const k = freshKit();
+    Object.keys(overlay).forEach(id => {
+      if (k[id]) Object.assign(k[id], overlay[id]);
+    });
+    state.kit = k;
+    applyAllChannels();
+    refreshChanTabs();
+    buildChanControls();
+  }
+
+  kitSel.addEventListener("change", () => {
+    if (kitSel.value === "") return;
+    applyKit(kitSel.value);
+  });
+
+  /* ============================================================
      IMPORT / EXPORT
      ============================================================ */
   function serialize() {
     return {
       format: "xox-pattern",
-      version: 1,
+      version: 2,
       tempo: state.tempo,
       swing: state.swing,
       length: state.length,
       rows: rows.slice(),
-      pattern: JSON.parse(JSON.stringify(state.pattern))
+      pattern: JSON.parse(JSON.stringify(state.pattern)),
+      kit: JSON.parse(JSON.stringify(state.kit))
     };
   }
 
@@ -1073,6 +1468,26 @@ const current_version = "20260828-182807";
       lenEl.value = state.length;
       document.getElementById("lenVal").textContent = state.length;
     }
+
+    // Optional kit block (v2 files). Missing voices/params fall back to defaults.
+    if (obj.kit && typeof obj.kit === "object") {
+      const k = freshKit();
+      const types = ["off", "lowpass", "highpass", "bandpass"];
+      VOICES.forEach(v => {
+        const src2 = obj.kit[v.id];
+        if (!src2 || typeof src2 !== "object") return;
+        CHANNEL_PARAMS.forEach(def => {
+          const val = +src2[def.key];
+          if (Number.isFinite(val)) k[v.id][def.key] = clamp(val, def.min, def.max);
+        });
+        if (types.indexOf(src2.ftype) !== -1) k[v.id].ftype = src2.ftype;
+      });
+      state.kit = k;
+      applyAllChannels();
+      if (typeof refreshChanTabs === "function") { refreshChanTabs(); buildChanControls(); }
+      kitSel.value = "";
+    }
+
     refreshGrid();
   }
 
@@ -1139,6 +1554,8 @@ const current_version = "20260828-182807";
      BOOT
      ============================================================ */
   buildGrid();
+  buildChanTabs();
+  buildChanControls();
   applyPreset(0);
   presetSel.value = "0";
 })();
