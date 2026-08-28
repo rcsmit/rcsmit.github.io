@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* version = "20260827-211500" */
+/* version = "20260827-234500" */
 :root{
   --panel:#23262b;
   --panel-hi:#31353c;
@@ -192,6 +192,33 @@ body{padding:10px 8px 18px}
 .tab:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .pads{grid-template-columns:repeat(3,1fr);gap:8px}
 .pad.nc{font-size:15px;letter-spacing:.06em}
+/* live / sequence mode switch */
+.subtabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:11px}
+.subtab{
+  font-family:inherit;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--silk);background:var(--field);border:1px solid var(--edge);border-radius:7px;
+  padding:9px 4px;cursor:pointer;
+}
+.subtab.on{color:var(--lit-fg);background:linear-gradient(180deg,var(--lit1),var(--lit2));border-color:var(--lit-edge)}
+
+/* 16-bar chord sequence */
+.seqgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:9px 0}
+.seqslot{
+  font-family:inherit;padding:8px 2px;display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:var(--field);border:1px solid var(--edge);border-radius:6px;cursor:pointer;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.4);
+}
+.seqslot .n{font-size:9px;letter-spacing:.14em;color:var(--silk)}
+.seqslot .c{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600;color:var(--silk-bright)}
+.seqslot.empty .c{color:var(--silk);font-weight:400}
+.seqslot.past{opacity:.4}
+.seqslot.armed{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue) inset}
+.seqslot.playing .c{color:var(--led);text-shadow:0 0 8px rgba(255,106,51,.5)}
+.seqLenNote{font-size:11px;color:var(--silk);letter-spacing:.05em;align-self:center;flex:1;text-align:right}
+
+.slots{display:grid;gap:7px}
+.slot{display:flex;align-items:center;gap:9px}
+.slot span{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--silk);width:20px;flex:none;text-align:right}
 .pad{font-size:18px;padding:16px 4px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .btn.big{padding:18px 10px}
 .grid4 .btn{padding:15px 4px}
@@ -288,7 +315,7 @@ body[data-theme="blueprint"]{
     <section class="pane" id="pane0" aria-label="Style and tempo">
       <span class="lbl">Style</span>
       <div class="rack">
-        <input type="text" id="styleFilter" placeholder="Search 150 styles…" autocomplete="off">
+        <input type="text" id="styleFilter" placeholder="Search 152 styles…" autocomplete="off">
         <div class="row" style="margin-top:8px">
           <select id="styleSel" aria-label="Accompaniment style"></select>
         </div>
@@ -328,6 +355,11 @@ body[data-theme="blueprint"]{
           <input type="range" id="padAttack" min="0" max="1000" step="10" value="0">
           <output id="padAttackOut">0 ms</output>
         </div>
+        <div class="sl" id="padSusRow">
+          <label for="padSustain">Sustain</label>
+          <input type="range" id="padSustain" min="20" max="2000" step="20" value="1000">
+          <output id="padSustainOut">1000 ms</output>
+        </div>
         <div class="sl" id="padLenRow">
           <label for="padLen">Length</label>
           <input type="range" id="padLen" min="0.5" max="8" step="0.5" value="4">
@@ -359,13 +391,29 @@ body[data-theme="blueprint"]{
 
       <span class="lbl" style="margin-top:14px">Chord</span>
       <div class="rack">
+        <div class="subtabs">
+          <button class="subtab on" id="chordModeLive">Live</button>
+          <button class="subtab" id="chordModeSeq">Sequence</button>
+        </div>
+
+        <div id="seqChordUI" style="display:none">
+          <select id="seqPreset" aria-label="Chord sequence preset">
+            <option value="">Custom — tap bars below to fill them</option>
+          </select>
+          <div class="seqgrid" id="seqGrid"></div>
+          <div class="row">
+            <button class="btn half" id="seqClear">Clear all</button>
+            <span class="seqLenNote" id="seqLenNote">Loops after bar 1</span>
+          </div>
+        </div>
+
         <div class="pads" id="pads"></div>
-        <p class="hint">Tap a chord and the band follows it until you tap the next one.</p>
+        <p class="hint" id="chordHint">Tap a chord and the band follows it until you tap the next one.</p>
       </div>
     </section>
 
     <!-- ---------- 3. LEVELS ---------- -->
-    <section class="pane" id="pane2" aria-label="Levels">
+    <section class="pane" id="pane2" aria-label="Settings">
       <span class="lbl">Panel</span>
       <div class="rack">
         <select id="theme" aria-label="Colour scheme">
@@ -392,6 +440,12 @@ body[data-theme="blueprint"]{
           <option value="clav">Clav</option>
           <option value="accordion">Accordion</option>
         </select>
+      </div>
+
+      <span class="lbl" style="margin-top:14px">Chord pads 7–11</span>
+      <div class="rack">
+        <div class="slots" id="slots"></div>
+        <p class="hint">The first six pads are always the plain chords of the key. These five are yours.</p>
       </div>
 
       <span class="lbl" style="margin-top:14px">Pad voice</span>
@@ -423,14 +477,14 @@ body[data-theme="blueprint"]{
   <nav class="tabs">
     <button class="tab" data-pane="0">Style</button>
     <button class="tab on" data-pane="1">Play</button>
-    <button class="tab" data-pane="2">Levels</button>
+    <button class="tab" data-pane="2">Settings</button>
   </nav>
 
 </div>
 
 <script>
 "use strict";
-const version = "20260827-211500";
+const version = "20260827-234500";
 
 /* ============================================================
    1. AUDIO CORE
@@ -455,6 +509,17 @@ function initAudio(){
   for(let i=0;i<len;i++) d[i] = Math.random()*2-1;
 }
 function noise(){ const s = ac.createBufferSource(); s.buffer = noiseBuf; s.loop = true; return s; }
+/* Stopping a source node does not remove it from the graph -- only disconnecting
+   does. Without this every note ever played leaves its gain/filter nodes wired
+   into the bus forever; over a long song that dead weight keeps costing CPU on
+   every single sample until the render thread can't keep up and the audio
+   crackles, even with nothing being played at that moment. */
+function reap(src, ...rest){
+  src.onended = () => {
+    try{ src.disconnect(); }catch(e){}
+    rest.forEach(n => { try{ n.disconnect(); }catch(e){} });
+  };
+}
 function env(g, t, a, d, peak, sus){
   g.gain.cancelScheduledValues(t);
   g.gain.setValueAtTime(0.0001, t);
@@ -469,26 +534,26 @@ const D = {
     o.type='sine'; o.frequency.setValueAtTime(160,t); o.frequency.exponentialRampToValueAtTime(42,t+0.11);
     g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v*1.05,t+0.004);
     g.gain.exponentialRampToValueAtTime(0.0001,t+0.42);
-    o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+0.45);
+    o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+0.45); reap(o,g);
     const n=noise(),ng=ac.createGain(),f=ac.createBiquadFilter();
     f.type='lowpass'; f.frequency.value=2400;
     ng.gain.setValueAtTime(v*0.28,t); ng.gain.exponentialRampToValueAtTime(0.0001,t+0.025);
-    n.connect(f); f.connect(ng); ng.connect(busDrums); n.start(t); n.stop(t+0.05);
+    n.connect(f); f.connect(ng); ng.connect(busDrums); n.start(t); n.stop(t+0.05); reap(n,f,ng);
   },
   s(t,v){ const n=noise(),f=ac.createBiquadFilter(),g=ac.createGain();
     f.type='bandpass'; f.frequency.value=1900; f.Q.value=0.7;
     g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v*0.7,t+0.002);
     g.gain.exponentialRampToValueAtTime(0.0001,t+0.19);
-    n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+0.22);
+    n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+0.22); reap(n,f,g);
     const o=ac.createOscillator(),og=ac.createGain();
     o.type='triangle'; o.frequency.setValueAtTime(200,t); o.frequency.exponentialRampToValueAtTime(140,t+0.1);
     og.gain.setValueAtTime(v*0.35,t); og.gain.exponentialRampToValueAtTime(0.0001,t+0.12);
-    o.connect(og); og.connect(busDrums); o.start(t); o.stop(t+0.14);
+    o.connect(og); og.connect(busDrums); o.start(t); o.stop(t+0.14); reap(o,og);
   },
   rim(t,v){ const o=ac.createOscillator(),g=ac.createGain();
     o.type='square'; o.frequency.value=1750;
     g.gain.setValueAtTime(v*0.3,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.035);
-    o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+0.04);
+    o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+0.04); reap(o,g);
   },
   h(t,v){ hat(t,v,0.045,9000,0.5); },
   oh(t,v){ hat(t,v,0.30,8000,0.42); },
@@ -497,30 +562,30 @@ const D = {
     const o=ac.createOscillator(),g=ac.createGain();
     o.type='triangle'; o.frequency.value=760;
     g.gain.setValueAtTime(v*0.1,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);
-    o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+0.3);
+    o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+0.3); reap(o,g);
   },
   cl(t,v){ for(let i=0;i<3;i++){
       const n=noise(),f=ac.createBiquadFilter(),g=ac.createGain(),tt=t+i*0.011;
       f.type='bandpass'; f.frequency.value=1500; f.Q.value=1.2;
       g.gain.setValueAtTime(0.0001,tt); g.gain.exponentialRampToValueAtTime(v*(i===2?0.6:0.32),tt+0.002);
       g.gain.exponentialRampToValueAtTime(0.0001,tt+(i===2?0.16:0.04));
-      n.connect(f); f.connect(g); g.connect(busDrums); n.start(tt); n.stop(tt+0.2);
+      n.connect(f); f.connect(g); g.connect(busDrums); n.start(tt); n.stop(tt+0.2); reap(n,f,g);
     } },
   sh(t,v){ const n=noise(),f=ac.createBiquadFilter(),g=ac.createGain();
     f.type='highpass'; f.frequency.value=6500;
     g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(v*0.22,t+0.012);
     g.gain.exponentialRampToValueAtTime(0.0001,t+0.075);
-    n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+0.1);
+    n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+0.1); reap(n,f,g);
   },
   tb(t,v){ const n=noise(),f=ac.createBiquadFilter(),g=ac.createGain();
     f.type='highpass'; f.frequency.value=5000;
     g.gain.setValueAtTime(v*0.26,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.13);
-    n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+0.16);
+    n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+0.16); reap(n,f,g);
   },
   cb(t,v){ [560,845].forEach((fr,i)=>{ const o=ac.createOscillator(),g=ac.createGain();
       o.type='square'; o.frequency.value=fr;
       g.gain.setValueAtTime(v*(i?0.12:0.16),t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.26);
-      o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+0.28); }); },
+      o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+0.28); reap(o,g); }); },
   cg(t,v){ tone(t,v,300,190,0.26,'sine',0.5); },
   cgl(t,v){ tone(t,v,180,120,0.34,'sine',0.5); },
   t1(t,v){ tone(t,v,260,130,0.3,'sine',0.7); },
@@ -532,18 +597,18 @@ function hat(t,v,dec,hp,amt){
   f.type='highpass'; f.frequency.value=hp;
   g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v*amt,t+0.002);
   g.gain.exponentialRampToValueAtTime(0.0001,t+dec);
-  n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+dec+0.05);
+  n.connect(f); f.connect(g); g.connect(busDrums); n.start(t); n.stop(t+dec+0.05); reap(n,f,g);
 }
 function tone(t,v,f0,f1,dec,type,amt){
   const o=ac.createOscillator(),g=ac.createGain();
   o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(f1,t+dec*0.8);
   g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(v*amt,t+0.004);
   g.gain.exponentialRampToValueAtTime(0.0001,t+dec);
-  o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+dec+0.05);
+  o.connect(g); g.connect(busDrums); o.start(t); o.stop(t+dec+0.05); reap(o,g);
   const n=noise(),ng=ac.createGain(),hf=ac.createBiquadFilter();
   hf.type='highpass'; hf.frequency.value=2000;
   ng.gain.setValueAtTime(v*0.1,t); ng.gain.exponentialRampToValueAtTime(0.0001,t+0.02);
-  n.connect(hf); hf.connect(ng); ng.connect(busDrums); n.start(t); n.stop(t+0.04);
+  n.connect(hf); hf.connect(ng); ng.connect(busDrums); n.start(t); n.stop(t+0.04); reap(n,hf,ng);
 }
 
 /* ---------------- pitched voices ---------------- */
@@ -553,10 +618,10 @@ function bassNote(voice, midi, t, dur, vel){
   const f = mtof(midi), g = ac.createGain(), flt = ac.createBiquadFilter();
   flt.type='lowpass'; flt.Q.value = 6;
   g.connect(busBass); flt.connect(g);
-  const nodes = [];
+  const nodes = [], ogs = [];
   const add = (type,det,gain) => { const o=ac.createOscillator(); o.type=type;
     o.frequency.value=f; o.detune.value=det; const og=ac.createGain(); og.gain.value=gain;
-    o.connect(og); og.connect(flt); nodes.push(o); return o; };
+    o.connect(og); og.connect(flt); nodes.push(o); ogs.push(og); return o; };
   let peak = vel*0.5, cut0 = 900, cut1 = 400, atk = 0.006, rel = 0.08;
   switch(voice){
     case 'sub':    add('sine',0,1); cut0=300; cut1=200; peak=vel*0.75; break;
@@ -573,7 +638,7 @@ function bassNote(voice, midi, t, dur, vel){
   g.gain.exponentialRampToValueAtTime(peak,t+atk);
   g.gain.exponentialRampToValueAtTime(peak*0.55,t+Math.min(dur*0.6,0.35));
   g.gain.exponentialRampToValueAtTime(0.0001,t+dur+rel);
-  nodes.forEach(o=>{ o.start(t); o.stop(t+dur+rel+0.05); });
+  nodes.forEach(o => { o.start(t); o.stop(t+dur+rel+0.05); reap(o, g, flt, ...ogs); });
 }
 
 /* ---- backing pad: a single voice, never layered over itself ---- */
@@ -593,7 +658,9 @@ function killPad(t, rel){
   if(!padGate) return;
   const { g, nodes } = padGate;
   const at = Math.max(t, ac.currentTime);
-  const r = rel || 0.12;
+  const r = Math.max(rel || 0.12, 0.02);   // a 0 ms ramp is invalid and gets silently
+                                            // dropped, which cuts the note at full volume
+                                            // instead of fading it -> an audible click
   try{
     if(g.gain.cancelAndHoldAtTime) g.gain.cancelAndHoldAtTime(at);
     else { g.gain.cancelScheduledValues(at); g.gain.setValueAtTime(Math.max(g.gain.value, 0.0001), at); }
@@ -610,35 +677,35 @@ function playPad(notes, t, dur){
   g.connect(flt); flt.connect(busPad);
   const spec = PAD_VOICES[S.padVoice] || PAD_VOICES.strings;
   flt.frequency.value = spec.cut;
-  const nodes = [];
+  const nodes = [], ogs = [];
   notes.forEach(n => {
     const f = mtof(n);
     spec.p.forEach(([type, mult, det, gain]) => {
       const o = ac.createOscillator(); o.type = type;
       o.frequency.value = f * mult; o.detune.value = det;
       const og = ac.createGain(); og.gain.value = gain / notes.length;
-      o.connect(og); og.connect(g); nodes.push(o);
+      o.connect(og); og.connect(g); nodes.push(o); ogs.push(og);
     });
   });
-  const atk = Math.max(S.padAttack, 0.002);
+  const atk = Math.max(S.padAttack, 0.005);
   const peak = 0.42, rel = Math.max(0.35, atk * 0.6);
   const hold = Math.max(dur, atk + 0.05);
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(peak, t + atk);
   g.gain.setValueAtTime(peak, t + Math.min(hold, atk + 0.01));
   g.gain.exponentialRampToValueAtTime(0.0001, t + hold + rel);
-  nodes.forEach(o => { o.start(t); o.stop(t + hold + rel + 0.05); });
+  nodes.forEach(o => { o.start(t); o.stop(t + hold + rel + 0.05); reap(o, g, flt, ...ogs); });
   padGate = { g, nodes };
 }
 
 function chordNote(voice, midi, t, dur, vel, bus){
   const f = mtof(midi), out = bus || busChords;
   const g = ac.createGain(); g.connect(out);
-  const nodes = [];
+  const nodes = [], ogs = [];
   const osc = (type,det,gain,mult) => {
     const o=ac.createOscillator(); o.type=type; o.frequency.value=f*(mult||1); o.detune.value=det;
     const og=ac.createGain(); og.gain.value=gain; o.connect(og); og.connect(g);
-    nodes.push(o); return o;
+    nodes.push(o); ogs.push(og); return o;
   };
   let a=0.005, peak=vel*0.16, decay=dur, sus=0.0001, rel=0.18;
   switch(voice){
@@ -648,7 +715,7 @@ function chordNote(voice, midi, t, dur, vel, bus){
       mod.type='sine'; mod.frequency.value=f*2.01;
       mg.gain.setValueAtTime(f*2.4,t); mg.gain.exponentialRampToValueAtTime(f*0.15,t+0.4);
       mod.connect(mg); mg.connect(car.frequency); car.connect(g);
-      nodes.push(car,mod); peak=vel*0.18; rel=0.4; break;
+      nodes.push(car,mod); ogs.push(mg); peak=vel*0.18; rel=0.4; break;
     }
     case 'organ':
       osc('sine',0,0.5); osc('sine',0,0.28,2); osc('sine',0,0.18,3); osc('sine',0,0.1,4);
@@ -690,7 +757,7 @@ function chordNote(voice, midi, t, dur, vel, bus){
     g.gain.exponentialRampToValueAtTime(0.0001,t+Math.max(decay,0.08));
   }
   g.gain.exponentialRampToValueAtTime(0.0001,t+dur+rel);
-  nodes.forEach(o=>{ o.start(t); o.stop(t+dur+rel+0.08); });
+  nodes.forEach(o => { o.start(t); o.stop(t+dur+rel+0.08); reap(o, g, flt, ...ogs); });
 }
 
 /* ============================================================
@@ -813,6 +880,18 @@ function walkNote(c, beat){
 }
 
 /* Spread a voicing into a note-per-step sequence. */
+/* Always root position, unlike voiceChord's smart inversions -- a classic
+   ballad roll (C E G C E G... going C E G C2 G E) starts on the root every
+   time, not wherever the previous chord's voice leading happened to land. */
+function chordRootTones(c, transpose){
+  const root = (c.root + transpose + 120) % 12;
+  const third = c.ivs.find(x => x === 3 || x === 4) ?? 4;
+  const fifth = c.ivs.find(x => x === 6 || x === 7 || x === 8) ?? 7;
+  let r = 60 + root;
+  while(r > 72) r -= 12;
+  while(r < 55) r += 12;
+  return [r, r + third, r + fifth];
+}
 function arpSeq(notes, cfg){
   const octs = cfg.oct || 2;
   let seq = [];
@@ -1063,6 +1142,8 @@ const STYLES = [
 {n:'Stride Piano',c:'Piano',bpm:180,f:'jazz',sub:3,d:{},b:'r..5..r..5..',bv:'upright',cmp:'...x.....x..',cv:'piano',g:2},
 {n:'Piano Boogie',c:'Piano',bpm:160,f:'jazz',sub:3,d:{},b:'R..3..5..6..',bv:'upright',cmp:'x..x..x..x..',cv:'piano',g:1},
 {n:'Piano Waltz',c:'Piano',bpm:120,f:'ballroom',beats:3,d:{},b:'R...........',bv:'upright',cmp:'....x...x...',cv:'piano',g:3},
+{n:'6/8 Piano Ballad',c:'Piano',bpm:66,f:'ballad',sub:3,beats:2,d:{k:'X.....',sh:'x.x.x.'},b:'R-----',bv:'finger',cmp:'xxxxxx',cv:'piano',g:2,arp:{dir:'up',oct:2},pad:1},
+{n:'6/8 Piano Ballad 2',c:'Piano',bpm:68,f:'ballad',sub:3,beats:2,d:{k:'X.....',rim:'...x..'},b:'R.....',bv:'finger',cmp:'xxxxxx',cv:'piano',g:2,arp:{dir:'rollup'},pad:1},
 
 /* ---------- PRACTICE ---------- */
 {n:'Count 4/4',c:'Practice',bpm:100,f:'ambient',d:{rim:'X...x...x...x...'},b:'................',bv:'finger',cmp:'................',cv:'piano',g:1},
@@ -1147,10 +1228,12 @@ const S = {
   section:'main', variation:'A', pending:null, pendingLabel:null,
   sectionBar:0, bar:0, step:0, nextTime:0, timer:null,
   arpKey:null, arpNotes:[], arpIdx:0, lastBass:0, crashNext:false,
-  holdChord:null, keyPc:0, padMode:'press', padAttack:0, padBeats:4, padVoice:'strings',
+  slots:['V7','IVmaj7','bVII','ii7','vi7'],
+  chordSource:'live', seq:new Array(16).fill(null), seqResolved:[], seqLen:1, armedSlot:0,
+  holdChord:null, keyPc:0, padMode:'press', padAttack:0, padBeats:4, padSustain:1.0, padVoice:'strings',
   lastChordSym:null, padChords:[], stopping:false
 };
-const LOOKAHEAD = 0.12, TICK = 25;
+const LOOKAHEAD = 0.06, TICK = 15; // small enough that a chord tap on the beat lands on that beat
 
 function style(){ return STYLES[S.styleIdx]; }
 function subOf(st){ return st.sub || 4; }
@@ -1243,10 +1326,31 @@ function buildFill(st, steps, idx){
 }
 
 /* ---------- live chord ---------- */
-function chordAt(){ return S.holdChord; }
+function chordAt(){
+  if(S.chordSource === 'sequence'){
+    if(!S.seqResolved.length) return null;
+    const len = S.seqLen || 1;
+    return S.seqResolved[((S.bar % len) + len) % len];
+  }
+  return S.holdChord;
+}
+/* The loop length is however many bars you've actually filled -- trailing
+   empty bars are trimmed. A gap in the middle just repeats the chord before
+   it, the way a hand-written chord chart works. */
+function resolveSeq(){
+  let len = 0;
+  for(let i = 0; i < 16; i++) if(S.seq[i]) len = i + 1;
+  len = Math.max(len, 1);
+  let last = null;
+  for(let i = len - 1; i >= 0; i--) if(S.seq[i]){ last = S.seq[i]; break; }
+  const out = [];
+  for(let i = 0; i < len; i++){ if(S.seq[i]) last = S.seq[i]; out.push(last); }
+  S.seqResolved = out; S.seqLen = len;
+}
 
 /* ---------- scheduling ---------- */
 const RIT = { ballad:1, jazz:1, latin:1, ballroom:1, march:1, world:1, ambient:1, pop:1 };
+const PAD_HOLD = 20; // seconds a held pad can sustain before it is force-released as a safety net
 function stepDuration(idx){
   const st = style(), sub = subOf(st);
   let base = (60 / S.bpm) / sub;
@@ -1289,7 +1393,9 @@ function onBar(){
     if(S.sectionBar >= (fam.intro.bars || 1)){ S.section = 'main'; S.sectionBar = 0; }
   } else if(S.section === 'fill'){
     S.section = 'main'; S.sectionBar = 0; S.crashNext = true;
-    if(S.fillIdx === 2) S.variation = (S.variation === 'A' ? 'B' : 'A');
+    // Fill 1 and Fill 2 both return to the variation you were already on.
+    // Only the Main A / Main B buttons switch, by queuing a fill with
+    // an explicit target variation (see btnVarA/btnVarB below).
   }
   paintTransport();
 }
@@ -1309,6 +1415,15 @@ function finish(t){
   setTimeout(() => { paintTransport(); setDisplaySection('STOPPED'); }, 60);
 }
 
+function punchChord(chord){
+  if(!chord || chord.nc) return;
+  initAudio();
+  if(ac.state === 'suspended') ac.resume();
+  const st = style(), voice = chordVoiceName();
+  const dur = (60 / S.bpm) * (S.playing ? 1 : 1.4);
+  voiceChord(chord, S.transpose).forEach((n, idx) =>
+    chordNote(voice, n, ac.currentTime + 0.008 + idx * 0.006, dur, 0.7));
+}
 function chordVoiceName(){
   const sel = document.getElementById('chordVoice').value;
   return sel === 'auto' ? style().cv : sel;
@@ -1356,7 +1471,12 @@ function playStep(i, t){
       if(st.arp){
         const key = c.sym + '/' + S.transpose;
         if(S.arpKey !== key){
-          S.arpNotes = arpSeq(voiceChord(c, S.transpose), st.arp);
+          if(st.arp.dir === 'rollup'){
+            const [r, t3, p5] = chordRootTones(c, S.transpose);
+            S.arpNotes = [r, t3, p5, r + 12, p5, t3];
+          } else {
+            S.arpNotes = arpSeq(voiceChord(c, S.transpose), st.arp);
+          }
           S.arpKey = key; S.arpIdx = 0;
         }
         chordNote(voice, S.arpNotes[S.arpIdx % S.arpNotes.length], t, gate, vel);
@@ -1367,7 +1487,7 @@ function playStep(i, t){
     }
     // pad on chord change
     if((S.padMode === 'change' || S.padMode === 'hold') && c.sym !== S.lastChordSym){
-      const dur = (S.padMode === 'hold') ? 600 : S.padBeats * 60 / S.bpm;
+      const dur = (S.padMode === 'hold') ? PAD_HOLD : S.padBeats * 60 / S.bpm;
       playPad(voiceChord(c, S.transpose), t, dur);
     }
     S.lastChordSym = c.sym;
@@ -1383,6 +1503,10 @@ function playStep(i, t){
       document.getElementById('dBar').textContent = String(bar + 1);
       const cc = chordAt();
       document.getElementById('dChord').textContent = cc ? chordName(cc) : '—';
+      if(S.chordSource === 'sequence'){
+        const len = S.seqLen || 1, idx = ((bar % len) + len) % len;
+        document.querySelectorAll('.seqslot').forEach((el, i) => el.classList.toggle('playing', i === idx));
+      }
     }, delay);
   }
 }
@@ -1410,6 +1534,7 @@ function stop(){
   clearInterval(S.timer); S.timer = null;
   S.pending = null; S.section = 'main'; S.sectionBar = 0;
   clearBeats();
+  document.querySelectorAll('.seqslot.playing').forEach(el => el.classList.remove('playing'));
   paintTransport();
   setDisplaySection('STOPPED');
 }
@@ -1513,15 +1638,80 @@ function paintTransport(){
 
 /* chord pads: diatonic set for the chosen key */
 const NC = { nc:true, sym:'N.C.', root:0, ivs:[0], bass:0 };
+/* Same [semitones above key, letter steps above key, quality] convention as
+   PAD_OPTIONS below, so a preset is just a list of degrees, not fixed notes. */
+const SEQ_PRESETS = [
+  {id:'pop',         name:'Pop',                d:[[0,0,''],[7,4,''],[9,5,'m'],[5,3,'']]},
+  {id:'sadpop',       name:'Sad pop',             d:[[9,5,'m'],[5,3,''],[0,0,''],[7,4,'']]},
+  {id:'fifties',      name:'50s',                 d:[[0,0,''],[9,5,'m'],[5,3,''],[7,4,'']]},
+  {id:'three',        name:'Three chord',         d:[[0,0,''],[5,3,''],[7,4,''],[7,4,'']]},
+  {id:'jazz',         name:'Jazz turnaround',     d:[[2,1,'m7'],[7,4,'7'],[0,0,'maj7'],[0,0,'maj7']]},
+  {id:'blues',        name:'12-bar blues',        d:[[0,0,'7'],[0,0,'7'],[0,0,'7'],[0,0,'7'],[5,3,'7'],[5,3,'7'],[0,0,'7'],[0,0,'7'],[7,4,'7'],[5,3,'7'],[0,0,'7'],[7,4,'7']]},
+  {id:'andalusian',   name:'Andalusian',          d:[[9,5,'m'],[7,4,''],[5,3,''],[4,2,'']]},
+  {id:'ballad',       name:'Ballad',              d:[[0,0,''],[4,2,'m'],[5,3,''],[7,4,'']]},
+  {id:'canon',        name:'Canon',               d:[[0,0,''],[7,4,''],[9,5,'m'],[4,2,'m'],[5,3,''],[0,0,''],[5,3,''],[7,4,'']]},
+  {id:'rock',         name:'Rock',                d:[[0,0,''],[10,6,''],[5,3,''],[0,0,'']]},
+  {id:'vamp',         name:'One-chord vamp',      d:[[0,0,'']]}
+];
+/* What pads 7-11 can be set to. iv = semitones above the key,
+   ls = letter steps above the key (so the spelling stays correct). */
+/* Listed root-up, so the dropdown reads in the same order the chords sit on a keyboard. */
+const PAD_OPTIONS = [
+  {id:'i',       iv:0,  ls:0, q:'m'},
+  {id:'I6',      iv:0,  ls:0, q:'6'},
+  {id:'Isus4',   iv:0,  ls:0, q:'sus4'},
+  {id:'Imaj7',   iv:0,  ls:0, q:'maj7'},
+  {id:'I7',      iv:0,  ls:0, q:'7'},
+  {id:'II7',     iv:2,  ls:1, q:'7'},
+  {id:'ii7',     iv:2,  ls:1, q:'m7'},
+  {id:'bIII',    iv:3,  ls:2, q:''},
+  {id:'iii7',    iv:4,  ls:2, q:'m7'},
+  {id:'III7',    iv:4,  ls:2, q:'7'},
+  {id:'iv',      iv:5,  ls:3, q:'m'},
+  {id:'IV7',     iv:5,  ls:3, q:'7'},
+  {id:'IVmaj7',  iv:5,  ls:3, q:'maj7'},
+  {id:'v7',      iv:7,  ls:4, q:'m7'},
+  {id:'Vsus4',   iv:7,  ls:4, q:'sus4'},
+  {id:'V7',      iv:7,  ls:4, q:'7'},
+  {id:'V9',      iv:7,  ls:4, q:'9'},
+  {id:'bVI',     iv:8,  ls:5, q:''},
+  {id:'vi7',     iv:9,  ls:5, q:'m7'},
+  {id:'VI7',     iv:9,  ls:5, q:'7'},
+  {id:'bVII',    iv:10, ls:6, q:''},
+  {id:'viim7b5', iv:11, ls:6, q:'m7b5'}
+];
+function optionName(o){
+  const key = KEYS[S.keyPc];
+  return spellNote(key.li + o.ls, (key.pc + o.iv) % 12) + o.q;
+}
+function buildSlots(){
+  const wrap = $('slots'); wrap.innerHTML = '';
+  S.slots.forEach((id, i) => {
+    const row = document.createElement('div'); row.className = 'slot';
+    const num = document.createElement('span'); num.textContent = (i + 7) + '.';
+    const sel = document.createElement('select');
+    sel.setAttribute('aria-label', 'Chord pad ' + (i + 7));
+    PAD_OPTIONS.forEach(o => {
+      const opt = document.createElement('option');
+      opt.value = o.id; opt.textContent = optionName(o);
+      if(o.id === id) opt.selected = true;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', e => { S.slots[i] = e.target.value; buildPads(); });
+    row.appendChild(num); row.appendChild(sel); wrap.appendChild(row);
+  });
+}
 function buildPads(){
   const key = KEYS[S.keyPc];
   // [semitones above the key, letter steps above the key, chord quality]
-  const defs = [
-    [0,0,''],  [2,1,'m'],  [4,2,'m'],   [5,3,''],
-    [7,4,''],  [9,5,'m'],  [7,4,'7'],   [5,3,'maj7'],
-    [10,6,''], [2,1,'m7'], [9,5,'m7']
+  const fixed = [
+    [0,0,''], [2,1,'m'], [4,2,'m'], [5,3,''], [7,4,''], [9,5,'m']
   ];
-  const items = defs.map(([iv, ls, q]) => {
+  const chosen = S.slots.map(id => {
+    const o = PAD_OPTIONS.find(x => x.id === id) || PAD_OPTIONS[0];
+    return [o.iv, o.ls, o.q];
+  });
+  const items = fixed.concat(chosen).map(([iv, ls, q]) => {
     const pc = (key.pc + iv) % 12;
     const sym = spellNote(key.li + ls, pc) + q;
     return { sym, chord: parseChord(sym) };
@@ -1537,19 +1727,26 @@ function buildPads(){
     const select = () => { S.holdChord = chord; paintPads(); $('dChord').textContent = sym; };
     b.addEventListener('click', () => {
       initAudio();
+      if(S.chordSource === 'sequence'){ assignSeqSlot(chord); return; }
+      // in press mode, pointerdown/pointerup below already selected and sounded
+      // this chord -- the browser also fires a click right as the finger lifts,
+      // which without this guard replayed a second, stray confirmation note
+      // at the exact moment you released the button.
+      if(S.padMode === 'press') return;
       select();
+      punchChord(chord);   // hear the new chord the instant you tap it
       if(S.padMode === 'tap' && !chord.nc){
         playPad(voiceChord(chord, S.transpose), ac.currentTime + 0.02, S.padBeats * 60 / S.bpm);
       }
     });
     b.addEventListener('pointerdown', () => {
-      if(S.padMode !== 'press') return;
+      if(S.chordSource === 'sequence' || S.padMode !== 'press') return;
       initAudio();
       if(ac.state === 'suspended') ac.resume();
       select();
-      if(!chord.nc) playPad(voiceChord(chord, S.transpose), ac.currentTime + 0.02, 600);
+      if(!chord.nc) playPad(voiceChord(chord, S.transpose), ac.currentTime + 0.02, PAD_HOLD);
     });
-    const release = () => { if(S.padMode === 'press' && ac) killPad(ac.currentTime, 0.25); };
+    const release = () => { if(S.padMode === 'press' && ac) killPad(ac.currentTime, S.padSustain); };
     ['pointerup','pointercancel','pointerleave'].forEach(ev => b.addEventListener(ev, release));
     b.addEventListener('contextmenu', ev => ev.preventDefault());
     wrap.appendChild(b);
@@ -1562,7 +1759,72 @@ function buildPads(){
   $('dChord').textContent = chordName(S.holdChord);
 }
 function paintPads(){
+  if(S.chordSource === 'sequence'){
+    const cur = S.seq[S.armedSlot];
+    S.padChords.forEach(p => p.el.classList.toggle('lit', !!cur && cur.sym === p.sym));
+    return;
+  }
   S.padChords.forEach(p => p.el.classList.toggle('lit', !!S.holdChord && S.holdChord.sym === p.sym));
+}
+
+/* ---------- 16-bar chord sequence ---------- */
+function assignSeqSlot(chord){
+  S.seq[S.armedSlot] = chord;
+  resolveSeq();
+  S.armedSlot = (S.armedSlot + 1) % 16;   // fast entry: fill, auto-advance, fill, ...
+  buildSeqGrid();
+  paintPads();
+}
+function buildSeqGrid(){
+  const wrap = $('seqGrid'); wrap.innerHTML = '';
+  for(let i = 0; i < 16; i++){
+    const raw = S.seq[i];
+    const shown = raw || (i < S.seqLen ? S.seqResolved[i] : null);
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'seqslot';
+    b.classList.toggle('empty', !raw);
+    b.classList.toggle('past', i >= S.seqLen);
+    b.classList.toggle('armed', i === S.armedSlot);
+    const n = document.createElement('span'); n.className = 'n'; n.textContent = i + 1;
+    const c = document.createElement('span'); c.className = 'c'; c.textContent = shown ? shown.sym : '–';
+    b.appendChild(n); b.appendChild(c);
+    b.addEventListener('click', () => { S.armedSlot = i; buildSeqGrid(); paintPads(); });
+    wrap.appendChild(b);
+  }
+  $('seqLenNote').textContent = 'Loops after bar ' + S.seqLen;
+}
+function presetChordName(key, iv, ls, q){ return spellNote(key.li + ls, (key.pc + iv) % 12) + q; }
+function buildSeqPresetSelect(){
+  const key = KEYS[S.keyPc], sel = $('seqPreset');
+  sel.innerHTML = '<option value="">Custom — tap bars below to fill them</option>';
+  SEQ_PRESETS.forEach(p => {
+    const names = p.d.map(([iv,ls,q]) => presetChordName(key, iv, ls, q)).join(' – ');
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name + ': ' + names;
+    sel.appendChild(opt);
+  });
+}
+function loadSeqPreset(id){
+  const preset = SEQ_PRESETS.find(p => p.id === id);
+  const key = KEYS[S.keyPc];
+  S.seq = new Array(16).fill(null);
+  if(preset){
+    preset.d.forEach(([iv,ls,q], i) => { if(i < 16) S.seq[i] = parseChord(presetChordName(key, iv, ls, q)); });
+  }
+  resolveSeq();
+  S.armedSlot = 0;
+  buildSeqGrid();
+  paintPads();
+}
+function setChordMode(mode){
+  S.chordSource = mode;
+  $('chordModeLive').classList.toggle('on', mode === 'live');
+  $('chordModeSeq').classList.toggle('on', mode === 'sequence');
+  $('seqChordUI').style.display = mode === 'sequence' ? '' : 'none';
+  $('chordHint').textContent = mode === 'sequence'
+    ? 'Tap a bar to select it, then tap a chord to fill it. Empty bars repeat the one before, and it loops after the last bar you filled.'
+    : 'Tap a chord and the band follows it until you tap the next one.';
+  paintPads();
 }
 
 /* ---------- wiring ---------- */
@@ -1578,6 +1840,8 @@ function paintPads(){
   buildStyleSelect('');
   selectStyle(0, false);
   buildPads();
+  buildSeqGrid();
+  buildSeqPresetSelect();
   syncPadUI();
   paintTransport();
 
@@ -1613,15 +1877,16 @@ function paintPads(){
     $('transposeOut').value = (S.transpose > 0 ? '+' : '') + S.transpose;
   });
   function syncPadUI(){
-    const off = S.padMode === 'off', hold = S.padMode === 'hold';
+    const off = S.padMode === 'off', hold = S.padMode === 'hold', press = S.padMode === 'press';
     $('padAttackRow').style.display = off ? 'none' : '';
-    $('padLenRow').style.display = (off || hold || S.padMode === 'press') ? 'none' : '';
+    $('padSusRow').style.display = press ? '' : 'none';
+    $('padLenRow').style.display = (off || hold || press) ? 'none' : '';
     $('padHint').textContent = off
       ? 'The pad is the soft layer behind the band. It is silent right now.'
       : hold
         ? 'The pad holds under every bar and changes when the chord does. A long attack makes it swell in; 0 ms makes it land on the beat.'
-      : S.padMode === 'press'
-        ? 'The pad sounds while your finger is on a chord button and stops when you let go. A long attack makes it swell in.'
+      : press
+        ? 'The pad sounds while your finger is on a chord button. Sustain is how long it rings on after you let go — turn it up for a legato feel between chord changes, or down for a tight, percussive stop.'
         : 'The pad is the soft layer behind the band. Length is in beats, so it follows the tempo. A long attack makes it swell in; 0 ms makes it land on the beat.';
   }
   $('padMode').addEventListener('change', e => {
@@ -1629,11 +1894,18 @@ function paintPads(){
     if(ac && S.padMode !== 'hold') killPad(ac.currentTime, 0.2);
     syncPadUI();
   });
+  $('padSustain').addEventListener('input', e => {
+    const ms = parseInt(e.target.value,10);
+    S.padSustain = ms / 1000;
+    $('padSustainOut').value = ms + ' ms';
+  });
   $('padLen').addEventListener('input', e => {
     S.padBeats = parseFloat(e.target.value);
     $('padLenOut').value = S.padBeats + (S.padBeats === 1 ? ' beat' : ' beats');
   });
   $('padVoice').addEventListener('change', e => { S.padVoice = e.target.value; });
+  buildSlots();
+
   $('theme').addEventListener('change', e => {
     const t = e.target.value;
     if(t) document.body.setAttribute('data-theme', t);
@@ -1648,6 +1920,19 @@ function paintPads(){
     S.keyPc = parseInt(e.target.value,10);
     S.holdChord = null;
     buildPads();
+    buildSlots();
+    buildSeqPresetSelect();
+  });
+  $('chordModeLive').addEventListener('click', () => setChordMode('live'));
+  $('chordModeSeq').addEventListener('click', () => setChordMode('sequence'));
+  $('seqPreset').addEventListener('change', e => loadSeqPreset(e.target.value));
+  $('seqClear').addEventListener('click', () => {
+    S.seq = new Array(16).fill(null);
+    resolveSeq();
+    S.armedSlot = 0;
+    $('seqPreset').value = '';
+    buildSeqGrid();
+    paintPads();
   });
 
   $('btnStart').addEventListener('click', () => start(false));
