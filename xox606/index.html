@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>XOX Editor</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<!-- version history
+# version : 20260828-182807 - Initial version: 606-style 7-voice synthesized step sequencer, accent row, swing, adjustable pattern length, presets, JSON export/import, lookahead scheduler
+-->
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#e8e4dc;
+  --panel:#d2cdc2;
+  --panel-dark:#b9b3a6;
+  --ink:#26241f;
+  --line:#8f8879;
+  --orange:#e2571e;
+  --amber:#f0a419;
+  --red:#c0392b;
+  --accentcol:#3f7d8c;
+  --cell:#c6c0b3;
+  --sidebar-w:280px;
+  --toggle-w:28px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  min-height:100vh;
+  background:
+    repeating-linear-gradient(90deg, rgba(0,0,0,.025) 0 1px, transparent 1px 4px),
+    radial-gradient(120% 90% at 15% 0%, #f3efe7 0%, var(--paper) 55%, #d9d4cb 100%);
+  color:var(--ink);
+  font-family:"IBM Plex Mono", ui-monospace, monospace;
+  padding:14px 12px 40px;
+}
+.shell{max-width:900px;margin:0 auto}
+
+header.brand{
+  display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;
+  border-bottom:3px solid var(--ink);padding-bottom:8px;margin-bottom:14px;
+}
+header.brand h1{
+  font-family:"Bungee",sans-serif;font-weight:400;
+  font-size:clamp(1.5rem,6vw,2.4rem);margin:0;letter-spacing:.02em;line-height:1;
+}
+header.brand h1 span{color:var(--orange)}
+header.brand .sub{
+  font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;
+  color:#6d675b;padding-bottom:4px;
+}
+
+.panel{
+  background:linear-gradient(180deg,var(--panel) 0%, var(--panel-dark) 100%);
+  border:1px solid var(--line);
+  border-radius:4px;
+  box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 6px 18px rgba(0,0,0,.12);
+  padding:12px;
+  margin-bottom:14px;
+}
+
+/* ---------- transport ---------- */
+.transport{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button.btn{
+  font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:.78rem;
+  letter-spacing:.08em;text-transform:uppercase;
+  border:1px solid var(--line);border-bottom-width:3px;border-radius:3px;
+  background:#efece5;color:var(--ink);
+  padding:9px 14px;cursor:pointer;
+  transition:transform .06s, background .15s, box-shadow .15s;
+}
+button.btn:hover{background:#fff}
+button.btn:active{transform:translateY(2px);border-bottom-width:1px}
+button.btn.play{background:var(--orange);color:#fff;border-color:#8d3311}
+button.btn.play.on{background:var(--red);border-color:#7d2418}
+button.btn.ghost{background:transparent}
+
+.knobs{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px}
+.knob{display:flex;flex-direction:column;gap:4px;min-width:132px;flex:1 1 132px}
+.knob label{
+  font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:#5f594e;
+  display:flex;justify-content:space-between;
+}
+.knob label b{color:var(--ink);font-weight:600}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;cursor:pointer;
+}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:#8f8879;border-radius:2px}
+input[type=range]::-moz-range-track{height:4px;background:#8f8879;border-radius:2px}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:20px;margin-top:-8px;border-radius:2px;
+  background:var(--ink);border:1px solid #000;box-shadow:0 1px 2px rgba(0,0,0,.4);
+}
+input[type=range]::-moz-range-thumb{
+  width:14px;height:20px;border-radius:2px;background:var(--ink);border:1px solid #000;
+}
+
+/* ---------- grid ---------- */
+.gridwrap{overflow-x:auto;padding-bottom:6px}
+table.seq{border-collapse:separate;border-spacing:3px;margin:0 auto}
+table.seq th.voice{
+  text-align:left;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  padding-right:8px;white-space:nowrap;font-weight:600;
+  position:sticky;left:0;background:linear-gradient(90deg,var(--panel) 70%, rgba(210,205,194,0));
+  z-index:2;
+}
+table.seq th.voice .mute{
+  border:1px solid var(--line);background:#efece5;border-radius:2px;
+  font:inherit;font-size:.58rem;padding:1px 5px;margin-right:6px;cursor:pointer;color:#5f594e;
+}
+table.seq th.voice .mute.off{background:var(--ink);color:var(--paper)}
+td.step{padding:0}
+.pad{
+  width:30px;height:26px;border-radius:3px;
+  border:1px solid rgba(0,0,0,.28);
+  background:var(--cell);
+  box-shadow:0 1px 0 rgba(255,255,255,.5) inset;
+  cursor:pointer;display:block;
+  transition:background .08s, box-shadow .08s;
+}
+.pad.beat{background:#bdb6a7}
+.pad.on{background:var(--orange);box-shadow:0 0 0 1px rgba(0,0,0,.25) inset, 0 0 8px rgba(226,87,30,.55)}
+.pad.acc{background:var(--accentcol)}
+.pad.acc.on{background:var(--amber);box-shadow:0 0 8px rgba(240,164,25,.6)}
+.pad.dim{opacity:.22;cursor:not-allowed}
+.pad.cursor{outline:2px solid var(--ink);outline-offset:1px}
+tr.accentrow th.voice{color:var(--accentcol)}
+.numrow td{font-size:.55rem;text-align:center;color:#6d675b;padding-bottom:2px}
+.numrow td.beat{color:var(--ink);font-weight:600}
+
+/* ---------- io ---------- */
+.io{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select,textarea{
+  font-family:"IBM Plex Mono",monospace;font-size:.75rem;
+  border:1px solid var(--line);border-radius:3px;background:#efece5;color:var(--ink);padding:8px;
+}
+select{cursor:pointer}
+textarea{width:100%;height:86px;margin-top:10px;resize:vertical;display:none}
+textarea.show{display:block}
+.note{font-size:.66rem;color:#6d675b;margin-top:8px;line-height:1.5}
+kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;border-radius:3px;padding:0 4px;font-size:.66rem}
+@media (max-width:600px){
+  .pad{width:26px;height:24px}
+  table.seq th.voice{font-size:.6rem}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header class="brand">
+    <h1>XOX<span>·</span>606</h1>
+    <div class="sub">step sequencer / webaudio</div>
+  </header>
+
+  <div class="panel">
+    <div class="transport">
+      <button class="btn play" id="playBtn">▶ Play</button>
+      <button class="btn ghost" id="clearBtn">Clear</button>
+      <button class="btn ghost" id="randBtn">Random</button>
+      <select id="presetSel" aria-label="Preset">
+        <option value="">— preset —</option>
+      </select>
+    </div>
+    <div class="knobs">
+      <div class="knob">
+        <label>Tempo <b><span id="tempoVal">120</span> bpm</b></label>
+        <input type="range" id="tempo" min="40" max="220" step="1" value="120">
+      </div>
+      <div class="knob">
+        <label>Swing <b><span id="swingVal">0</span>%</b></label>
+        <input type="range" id="swing" min="0" max="70" step="1" value="0">
+      </div>
+      <div class="knob">
+        <label>Length <b><span id="lenVal">16</span> steps</b></label>
+        <input type="range" id="len" min="1" max="16" step="1" value="16">
+      </div>
+      <div class="knob">
+        <label>Volume <b><span id="volVal">80</span>%</b></label>
+        <input type="range" id="vol" min="0" max="100" step="1" value="80">
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="gridwrap">
+      <table class="seq" id="seq"></table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="io">
+      <button class="btn ghost" id="exportBtn">Export JSON</button>
+      <button class="btn ghost" id="importBtn">Import JSON</button>
+      <button class="btn ghost" id="downloadBtn">Download .json</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+      <button class="btn ghost" id="uploadBtn">Load file…</button>
+    </div>
+    <textarea id="io" spellcheck="false" placeholder="Pattern JSON"></textarea>
+    <div class="note">
+      Klik of sleep over het raster om stappen aan/uit te zetten. <kbd>Space</kbd> = play/stop.
+      De <b>ACC</b>-rij is de globale accent-rij (606-stijl): elke stap met accent klinkt harder.
+      Het knopje links van de naam mute't een stem.
+    </div>
+  </div>
+
+</div>
+
+<script>
+// # version : 20260828-182807 - Initial version: 606-style 7-voice synthesized step sequencer, accent row, swing, adjustable pattern length, presets, JSON export/import, lookahead scheduler
+const current_version = "20260828-182807";
+
+(function () {
+  "use strict";
+
+  /* ============================================================
+     CONFIG
+     ============================================================ */
+  const MAX_STEPS = 16;
+  const LOOKAHEAD_MS = 25;      // how often the scheduler wakes up
+  const SCHEDULE_AHEAD = 0.12;  // how far ahead (s) we schedule audio
+  const ACCENT_GAIN = 1.0;      // gain multiplier for accented steps
+  const NORMAL_GAIN = 0.62;     // gain multiplier for non-accented steps
+
+  const VOICES = [
+    { id: "BD", name: "Bass Drum", gain: 1.00 },
+    { id: "SD", name: "Snare",     gain: 0.75 },
+    { id: "LT", name: "Low Tom",   gain: 0.80 },
+    { id: "HT", name: "Hi Tom",    gain: 0.80 },
+    { id: "CH", name: "Closed HH", gain: 0.45 },
+    { id: "OH", name: "Open HH",   gain: 0.45 },
+    { id: "CY", name: "Cymbal",    gain: 0.40 }
+  ];
+  const ACCENT_ROW = "ACC";
+
+  /* Compact notation: "x" = hit, "." = rest. Spaces are ignored (grouping only). */
+  function pat(str) {
+    const a = new Array(MAX_STEPS).fill(0);
+    let i = 0;
+    for (let c = 0; c < str.length && i < MAX_STEPS; c++) {
+      const ch = str[c];
+      if (ch === " " || ch === "|") continue;
+      a[i] = (ch === "x" || ch === "X") ? 1 : 0;
+      i++;
+    }
+    return a;
+  }
+
+  const PRESETS = [
+    /* ---------- HOUSE & DANCE ---------- */
+    { cat:"House & Dance", name:"Four on the floor", tempo:124, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      SD: ".... x... .... x...",
+      CH: "..x. ..x. ..x. ..x.",
+      OH: ".... .... .... ..x.",
+      ACC:"x... x... x... x..." }},
+    { cat:"House & Dance", name:"Deep house", tempo:122, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      SD: ".... x... .... x...",
+      CH: ".x.x .x.x .x.x .x.x",
+      OH: "..x. ..x. ..x. ..x.",
+      ACC:"x... x... x... x..." }},
+    { cat:"House & Dance", name:"Tech house", tempo:126, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      SD: ".... x... .... x...",
+      CH: "..x. .xx. ..x. .xx.",
+      OH: ".... ..x. .... ..x.",
+      ACC:"x... x... x... x..." }},
+    { cat:"House & Dance", name:"Disco", tempo:118, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      OH: "..x. ..x. ..x. ..x.",
+      ACC:"x... x... x... x..." }},
+    { cat:"House & Dance", name:"Garage 2-step", tempo:134, swing:55, len:16, p:{
+      BD: "x... .... .x.. ....",
+      SD: ".... x... .... x...",
+      CH: "x.xx .x.x x.xx .x.x",
+      OH: ".... .x.. .... .x..",
+      ACC:"x... x... .x.. x..." }},
+    { cat:"House & Dance", name:"Trance", tempo:138, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      OH: "..x. ..x. ..x. ..x.",
+      CY: "x... .... .... ....",
+      ACC:"x... x... x... x..." }},
+    { cat:"House & Dance", name:"Hard techno", tempo:145, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      SD: ".... x... .... x...",
+      CH: "xxxx xxxx xxxx xxxx",
+      OH: ".... .... .... ..x.",
+      ACC:"x..x x..x x..x x..x" }},
+    { cat:"House & Dance", name:"Progressive", tempo:122, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      CH: "..x. ..x. ..x. ..x.",
+      OH: ".... .... .... ..x.",
+      LT: ".... .... x... ....",
+      ACC:"x... x... x... x..." }},
+
+    /* ---------- HIP HOP & BREAKS ---------- */
+    { cat:"Hip hop & Breaks", name:"Boom bap", tempo:88, swing:18, len:16, p:{
+      BD: "x... ..x. .... x...",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:".... x... .... x..." }},
+    { cat:"Hip hop & Breaks", name:"Trap", tempo:140, swing:0, len:16, p:{
+      BD: "x... ..x. .x.. ....",
+      SD: ".... .... x... ....",
+      CH: "xxxx xxxx xxxx xxxx",
+      OH: ".... .... .... ..x.",
+      ACC:".... .... x... ...." }},
+    { cat:"Hip hop & Breaks", name:"Funk break", tempo:104, swing:0, len:16, p:{
+      BD: "x..x ..x. .... x..x",
+      SD: ".... x... .... x...",
+      CH: "x.xx x.x. x.xx x.x.",
+      OH: ".... ..x. .... ..x.",
+      ACC:"x... x... .... x..." }},
+    { cat:"Hip hop & Breaks", name:"Amen-style", tempo:165, swing:0, len:16, p:{
+      BD: "x... ..x. .... ....",
+      SD: ".... x..x ..x. x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      CY: "x... .... .... ....",
+      ACC:".... x... ..x. ...." }},
+    { cat:"Hip hop & Breaks", name:"Drum & bass", tempo:174, swing:0, len:16, p:{
+      BD: "x... .... ..x. ....",
+      SD: ".... x... .... x...",
+      CH: "x.xx x.x. x.xx x.x.",
+      OH: ".... .... .... ..x.",
+      ACC:".... x... .... x..." }},
+    { cat:"Hip hop & Breaks", name:"Breakbeat", tempo:130, swing:0, len:16, p:{
+      BD: "x... .x.. x... ..x.",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:"x... x... .... x..." }},
+    { cat:"Hip hop & Breaks", name:"Half-time hats", tempo:84, swing:0, len:16, p:{
+      BD: "x... .... ..x. ....",
+      SD: ".... .... x... ....",
+      CH: "x.x. x.x. x.x. x.x.",
+      CY: "x... .... .... ....",
+      ACC:"x... .... x... ...." }},
+
+    /* ---------- ROCK & POP ---------- */
+    { cat:"Rock & Pop", name:"Basic rock", tempo:100, swing:0, len:16, p:{
+      BD: "x... ..x. ..x. ....",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:"x... x... x... x.x." }},
+    { cat:"Rock & Pop", name:"Rock 8ths", tempo:128, swing:0, len:16, p:{
+      BD: "x... .... x... ....",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      CY: "x... .... .... ....",
+      ACC:"x... x... x... x..." }},
+    { cat:"Rock & Pop", name:"Pop 16ths", tempo:112, swing:0, len:16, p:{
+      BD: "x... .... x... x...",
+      SD: ".... x... .... x...",
+      CH: "xxxx xxxx xxxx xxxx",
+      ACC:"x... x... x... x..." }},
+    { cat:"Rock & Pop", name:"Punk", tempo:176, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      CY: "x... .... x... ....",
+      ACC:"x... x... x... x..." }},
+    { cat:"Rock & Pop", name:"Motown", tempo:120, swing:0, len:16, p:{
+      BD: "x... .... x.x. ....",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:".... x... .... x..." }},
+    { cat:"Rock & Pop", name:"Ballad", tempo:68, swing:0, len:16, p:{
+      BD: "x... .... .... x...",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:".... x... .... x..." }},
+    { cat:"Rock & Pop", name:"Shuffle rock", tempo:96, swing:55, len:16, p:{
+      BD: "x... .... x... ..x.",
+      SD: ".... x... .... x...",
+      CH: "x.xx x.xx x.xx x.xx",
+      ACC:"x... x... x... x..." }},
+    { cat:"Rock & Pop", name:"Twist / 50s", tempo:148, swing:35, len:16, p:{
+      BD: "x... .... x... ....",
+      SD: ".... x... .... x...",
+      CH: "x.xx x.xx x.xx x.xx",
+      ACC:".... x... .... x..." }},
+    { cat:"Rock & Pop", name:"Country train", tempo:132, swing:0, len:16, p:{
+      BD: "x... .... x... ....",
+      SD: "..x. ..x. ..x. ..x.",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:".... x... .... x..." }},
+
+    /* ---------- LATIN ---------- */
+    { cat:"Latin", name:"Bossa nova", tempo:132, swing:0, len:16, p:{
+      BD: "x..x ..x. x..x ..x.",
+      SD: "x..x ..x. ..x. x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:"x... .... x... ...." }},
+    { cat:"Latin", name:"Samba", tempo:200, swing:0, len:16, p:{
+      BD: "x..x x..x x..x x..x",
+      SD: "..x. .x.x ..x. .x.x",
+      CH: "xxxx xxxx xxxx xxxx",
+      ACC:".... x... .... x..." }},
+    { cat:"Latin", name:"Cha-cha", tempo:128, swing:0, len:16, p:{
+      BD: "x... .... x... ....",
+      SD: ".... x... .... x.x.",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:"x... .... x... ...." }},
+    { cat:"Latin", name:"Rumba clave", tempo:108, swing:0, len:16, p:{
+      BD: "x... .... x... ....",
+      SD: "x..x .... x.x. ....",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:"x... .... x... ...." }},
+    { cat:"Latin", name:"Reggaeton", tempo:96, swing:0, len:16, p:{
+      BD: "x... .... x... ....",
+      SD: "...x ..x. ...x ..x.",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:"x... x... x... x..." }},
+    { cat:"Latin", name:"Cumbia", tempo:96, swing:0, len:16, p:{
+      BD: ".... x... .... x...",
+      SD: "..x. ..x. ..x. ..x.",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:".... x... .... x..." }},
+    { cat:"Latin", name:"Songo", tempo:104, swing:0, len:16, p:{
+      BD: "x..x .... x..x ....",
+      SD: ".... x..x .... x..x",
+      CH: "xxxx xxxx xxxx xxxx",
+      ACC:"x... .... x... ...." }},
+    { cat:"Latin", name:"Mambo", tempo:180, swing:0, len:16, p:{
+      BD: "x... .... x... ....",
+      SD: "..x. .x.. ..x. .x..",
+      CY: "x.x. .x.x x.x. .x.x",
+      ACC:"x... .... x... ...." }},
+    { cat:"Latin", name:"Tango", tempo:120, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      SD: ".... .... .... x.x.",
+      ACC:"x... .... x... ...." }},
+
+    /* ---------- JAZZ & SWING ---------- */
+    { cat:"Jazz & Swing", name:"Jazz ride", tempo:140, swing:60, len:16, p:{
+      CY: "x... x.x. x... x.x.",
+      CH: ".... x... .... x...",
+      BD: "x... .... .... ....",
+      ACC:".... x... .... x..." }},
+    { cat:"Jazz & Swing", name:"Jazz waltz (3/4)", tempo:168, swing:58, len:12, p:{
+      CY: "x..x .xx. .x.x",
+      CH: "...x ...x ....",
+      BD: "x... .... ....",
+      ACC:"x... .... ...." }},
+    { cat:"Jazz & Swing", name:"Brush ballad", tempo:76, swing:52, len:16, p:{
+      SD: "x.x. x.x. x.x. x.x.",
+      BD: "x... .... x... ....",
+      CY: ".... x... .... x...",
+      ACC:".... x... .... x..." }},
+    { cat:"Jazz & Swing", name:"Big band shuffle", tempo:132, swing:62, len:16, p:{
+      BD: "x... .... x... ....",
+      SD: ".... x... .... x...",
+      CY: "x..x ..x. x..x ..x.",
+      CH: ".... x... .... x...",
+      ACC:".... x... .... x..." }},
+
+    /* ---------- REGGAE & DUB ---------- */
+    { cat:"Reggae & Dub", name:"One drop", tempo:74, swing:0, len:16, p:{
+      BD: ".... .... x... ....",
+      SD: ".... .... x... ....",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:".... .... x... ...." }},
+    { cat:"Reggae & Dub", name:"Steppers", tempo:76, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      SD: ".... .... x... ....",
+      CH: "..x. ..x. ..x. ..x.",
+      ACC:".... .... x... ...." }},
+    { cat:"Reggae & Dub", name:"Rockers", tempo:78, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      SD: ".... .... x... ....",
+      CH: "x... x... x... x...",
+      OH: "..x. ..x. ..x. ..x.",
+      ACC:"x... .... x... ...." }},
+    { cat:"Reggae & Dub", name:"Ska", tempo:160, swing:0, len:16, p:{
+      BD: ".... x... .... x...",
+      SD: ".... x... .... x...",
+      CH: "..x. ..x. ..x. ..x.",
+      ACC:".... x... .... x..." }},
+    { cat:"Reggae & Dub", name:"Dub half-time", tempo:70, swing:0, len:16, p:{
+      BD: "x... .... .... ....",
+      SD: ".... .... x... ....",
+      OH: "..x. .... ..x. ....",
+      CY: "x... .... .... ....",
+      ACC:".... .... x... ...." }},
+
+    /* ---------- AFRO & WORLD ---------- */
+    { cat:"Afro & World", name:"Afrobeat", tempo:112, swing:0, len:16, p:{
+      BD: "x..x ..x. .x.. x...",
+      SD: ".... x..x .... x..x",
+      CH: "xxxx xxxx xxxx xxxx",
+      HT: ".... .... x.x. ....",
+      ACC:"x... x... .... x..." }},
+    { cat:"Afro & World", name:"Highlife", tempo:120, swing:0, len:16, p:{
+      BD: "x..x .... x..x ....",
+      SD: "..x. ..x. ..x. ..x.",
+      CH: "x.xx x.xx x.xx x.xx",
+      ACC:"x... .... x... ...." }},
+    { cat:"Afro & World", name:"Baiao", tempo:108, swing:0, len:16, p:{
+      BD: "x..x .... x..x ....",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:"x... .... x... ...." }},
+    { cat:"Afro & World", name:"6/8 Afro", tempo:96, swing:0, len:12, p:{
+      CY: "x.xx .xx. xx.x",
+      CH: "...x ...x ....",
+      BD: "x... ..x. ....",
+      SD: ".... x... ..x.",
+      ACC:"x... .... ...." }},
+    { cat:"Afro & World", name:"Second line", tempo:96, swing:22, len:16, p:{
+      BD: "x..x ..x. ..x. x...",
+      SD: "..x. x..x .x.. x.x.",
+      CH: "x.x. x.x. x.x. x.x.",
+      ACC:"x... .... x... ...." }},
+
+    /* ---------- ELECTRO & 606 CLASSICS ---------- */
+    { cat:"Electro & 606", name:"Electro 606", tempo:132, swing:12, len:16, p:{
+      BD: "x..x ..x. .x.. x...",
+      SD: ".... x... ...x x...",
+      CH: "xxxx xxxx xxxx xxxx",
+      OH: ".... ..x. .... ..x.",
+      LT: ".... .... .... ...x",
+      ACC:"x... x... .x.. x..x" }},
+    { cat:"Electro & 606", name:"Acid", tempo:128, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      OH: "..x. .... ..x. ....",
+      ACC:"x..x ..x. x..x ..x." }},
+    { cat:"Electro & 606", name:"Electro funk", tempo:112, swing:0, len:16, p:{
+      BD: "x..x ..x. ..x. .x..",
+      SD: ".... x... .... x...",
+      CH: "x.x. x.x. x.x. x.x.",
+      OH: ".... .... .... ..x.",
+      ACC:"x... x... .... x..." }},
+    { cat:"Electro & 606", name:"Miami bass", tempo:138, swing:0, len:16, p:{
+      BD: "x..x ..x. x..x ..x.",
+      SD: ".... x... .... x...",
+      CH: "xxxx xxxx xxxx xxxx",
+      ACC:".... x... .... x..." }},
+    { cat:"Electro & 606", name:"Industrial", tempo:132, swing:0, len:16, p:{
+      BD: "x..x .x.. x..x .x..",
+      SD: ".... x... .... x...",
+      CH: "xxxx xxxx xxxx xxxx",
+      CY: ".... .... x... ....",
+      ACC:"x..x .x.. x..x .x.." }},
+    { cat:"Electro & 606", name:"Minimal", tempo:124, swing:0, len:16, p:{
+      BD: "x... x... x... x...",
+      CH: "..x. ..x. ..x. ..x.",
+      OH: ".... .... .... ..x.",
+      ACC:"x... .... x... ...." }},
+    { cat:"Electro & 606", name:"Ambient pulse", tempo:90, swing:0, len:16, p:{
+      BD: "x... .... x... ....",
+      CH: "..x. ..x. ..x. ..x.",
+      CY: "x... .... .... ....",
+      ACC:"x... .... .... ...." }},
+
+    /* ---------- FILLS & ENDINGS ---------- */
+    { cat:"Fills & Endings", name:"Tom fill", tempo:110, swing:0, len:16, p:{
+      BD: "x... .... x... ....",
+      SD: ".... x... .... ....",
+      HT: ".... .... ..xx ..x.",
+      LT: ".... .... xx.. xx.x",
+      CH: "x.x. x.x. .... ....",
+      ACC:"x... x... x... x..x" }},
+    { cat:"Fills & Endings", name:"Snare roll fill", tempo:110, swing:0, len:16, p:{
+      BD: "x... .... .... ....",
+      SD: "..x. x.xx x.xx xxxx",
+      CH: "x.x. x.x. .... ....",
+      ACC:".... .... .... xxxx" }},
+    { cat:"Fills & Endings", name:"Crash ending", tempo:110, swing:0, len:16, p:{
+      CY: "x... .... x... ....",
+      BD: "x... .... x... ....",
+      SD: "x... .... x... ....",
+      ACC:"x... .... x... ...." }},
+    { cat:"Fills & Endings", name:"One-beat break", tempo:120, swing:0, len:4, p:{
+      BD: "x...",
+      CH: "x.x.",
+      ACC:"x..." }},
+    { cat:"Fills & Endings", name:"Count-in", tempo:120, swing:0, len:16, p:{
+      CH: "x... x... x... x...",
+      SD: ".... .... .... x.x.",
+      ACC:"x... x... x... x..." }}
+  ];
+
+  /* ============================================================
+     STATE
+     ============================================================ */
+  const rows = VOICES.map(v => v.id).concat([ACCENT_ROW]);
+
+  function emptyPattern() {
+    const p = {};
+    rows.forEach(id => { p[id] = new Array(MAX_STEPS).fill(0); });
+    return p;
+  }
+
+  const state = {
+    pattern: emptyPattern(),
+    muted: {},
+    tempo: 120,
+    swing: 0,
+    length: 16,
+    volume: 0.8,
+    playing: false
+  };
+  rows.forEach(id => { state.muted[id] = false; });
+
+  /* ============================================================
+     AUDIO ENGINE
+     ============================================================ */
+  let ctx = null;
+  let master = null;
+  let noiseBuffer = null;
+
+  function initAudio() {
+    if (ctx) return;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = state.volume;
+    // Soft limiter so accents never clip
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -8;
+    comp.knee.value = 6;
+    comp.ratio.value = 6;
+    comp.attack.value = 0.002;
+    comp.release.value = 0.12;
+    master.connect(comp);
+    comp.connect(ctx.destination);
+
+    const len = Math.floor(ctx.sampleRate * 2);
+    noiseBuffer = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+  }
+
+  function noiseSource() {
+    const s = ctx.createBufferSource();
+    s.buffer = noiseBuffer;
+    s.loop = true;
+    return s;
+  }
+
+  function env(node, t, peak, decay, hold) {
+    const g = node.gain;
+    g.setValueAtTime(0.0001, t);
+    g.exponentialRampToValueAtTime(Math.max(peak, 0.0002), t + (hold || 0.002));
+    g.exponentialRampToValueAtTime(0.0001, t + decay);
+  }
+
+  /* --- individual 606-flavoured voices, all synthesized --- */
+  const synth = {
+    BD(t, g) {
+      const osc = ctx.createOscillator();
+      const amp = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(115, t);
+      osc.frequency.exponentialRampToValueAtTime(46, t + 0.055);
+      env(amp, t, g, 0.34, 0.003);
+      // click transient
+      const clk = ctx.createOscillator();
+      const clkAmp = ctx.createGain();
+      clk.type = "square";
+      clk.frequency.setValueAtTime(1100, t);
+      env(clkAmp, t, g * 0.16, 0.014, 0.001);
+      clk.connect(clkAmp).connect(master);
+      osc.connect(amp).connect(master);
+      osc.start(t); osc.stop(t + 0.4);
+      clk.start(t); clk.stop(t + 0.03);
+    },
+    SD(t, g) {
+      const n = noiseSource();
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 1400;
+      const nAmp = ctx.createGain();
+      env(nAmp, t, g * 0.8, 0.16, 0.002);
+      n.connect(hp).connect(nAmp).connect(master);
+      n.start(t); n.stop(t + 0.25);
+
+      [238, 476].forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const a = ctx.createGain();
+        o.type = "triangle";
+        o.frequency.setValueAtTime(f, t);
+        env(a, t, g * (i === 0 ? 0.6 : 0.35), 0.09, 0.002);
+        o.connect(a).connect(master);
+        o.start(t); o.stop(t + 0.15);
+      });
+    },
+    LT(t, g) { tom(t, g, 105, 62, 0.30); },
+    HT(t, g) { tom(t, g, 170, 104, 0.24); },
+    CH(t, g) { hat(t, g, 0.045, 7800); },
+    OH(t, g) { hat(t, g, 0.32, 7000); },
+    CY(t, g) {
+      const n = noiseSource();
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 5200;
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass"; bp.frequency.value = 9000; bp.Q.value = 0.6;
+      const a = ctx.createGain();
+      env(a, t, g * 0.55, 1.1, 0.004);
+      n.connect(hp).connect(bp).connect(a).connect(master);
+      n.start(t); n.stop(t + 1.2);
+    }
+  };
+
+  function tom(t, g, f0, f1, dec) {
+    const o = ctx.createOscillator();
+    const a = ctx.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + dec * 0.7);
+    env(a, t, g, dec, 0.003);
+    o.connect(a).connect(master);
+    o.start(t); o.stop(t + dec + 0.05);
+
+    const n = noiseSource();
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass"; lp.frequency.value = 900;
+    const na = ctx.createGain();
+    env(na, t, g * 0.14, 0.05, 0.002);
+    n.connect(lp).connect(na).connect(master);
+    n.start(t); n.stop(t + 0.08);
+  }
+
+  function hat(t, g, dec, hpFreq) {
+    const n = noiseSource();
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass"; hp.frequency.value = hpFreq;
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass"; bp.frequency.value = 10000; bp.Q.value = 0.8;
+    const a = ctx.createGain();
+    env(a, t, g * 0.6, dec, 0.002);
+    n.connect(hp).connect(bp).connect(a).connect(master);
+    n.start(t); n.stop(t + dec + 0.05);
+  }
+
+  function trigger(voiceId, time, accented) {
+    if (state.muted[voiceId]) return;
+    const v = VOICES.find(x => x.id === voiceId);
+    if (!v || !synth[voiceId]) return;
+    const g = v.gain * (accented ? ACCENT_GAIN : NORMAL_GAIN);
+    synth[voiceId](time, g);
+  }
+
+  /* ============================================================
+     SCHEDULER (lookahead — keeps timing sample-accurate)
+     ============================================================ */
+  let currentStep = 0;
+  let nextStepTime = 0;
+  let timerId = null;
+  const drawQueue = [];
+
+  function stepDuration() {
+    return (60 / state.tempo) / 4; // one 16th note
+  }
+
+  function scheduleStep(step, time) {
+    const accented = state.pattern[ACCENT_ROW][step] === 1;
+    VOICES.forEach(v => {
+      if (state.pattern[v.id][step] === 1) trigger(v.id, time, accented);
+    });
+    drawQueue.push({ step: step, time: time });
+  }
+
+  function advance() {
+    nextStepTime += stepDuration();
+    currentStep = (currentStep + 1) % state.length;
+  }
+
+  function swingOffset(step) {
+    if (step % 2 === 0) return 0;
+    return (state.swing / 100) * stepDuration() * 0.66;
+  }
+
+  function scheduler() {
+    while (nextStepTime < ctx.currentTime + SCHEDULE_AHEAD) {
+      scheduleStep(currentStep, nextStepTime + swingOffset(currentStep));
+      advance();
+    }
+  }
+
+  function start() {
+    initAudio();
+    if (ctx.state === "suspended") ctx.resume();
+    state.playing = true;
+    currentStep = 0;
+    nextStepTime = ctx.currentTime + 0.06;
+    timerId = setInterval(scheduler, LOOKAHEAD_MS);
+    playBtn.textContent = "■ Stop";
+    playBtn.classList.add("on");
+    requestAnimationFrame(draw);
+  }
+
+  function stop() {
+    state.playing = false;
+    clearInterval(timerId);
+    timerId = null;
+    drawQueue.length = 0;
+    playBtn.textContent = "▶ Play";
+    playBtn.classList.remove("on");
+    clearCursor();
+  }
+
+  /* ============================================================
+     VISUAL PLAYHEAD
+     ============================================================ */
+  let drawnStep = -1;
+
+  function clearCursor() {
+    document.querySelectorAll(".pad.cursor").forEach(el => el.classList.remove("cursor"));
+    drawnStep = -1;
+  }
+
+  function draw() {
+    if (!state.playing) return;
+    const now = ctx.currentTime;
+    let step = drawnStep;
+    while (drawQueue.length && drawQueue[0].time < now) {
+      step = drawQueue[0].step;
+      drawQueue.shift();
+    }
+    if (step !== drawnStep) {
+      clearCursor();
+      document.querySelectorAll('.pad[data-step="' + step + '"]')
+        .forEach(el => el.classList.add("cursor"));
+      drawnStep = step;
+    }
+    requestAnimationFrame(draw);
+  }
+
+  /* ============================================================
+     UI — GRID
+     ============================================================ */
+  const seq = document.getElementById("seq");
+  const playBtn = document.getElementById("playBtn");
+
+  function buildGrid() {
+    seq.innerHTML = "";
+
+    // step numbers
+    const numTr = document.createElement("tr");
+    numTr.className = "numrow";
+    numTr.appendChild(document.createElement("th"));
+    for (let s = 0; s < MAX_STEPS; s++) {
+      const td = document.createElement("td");
+      td.textContent = s + 1;
+      if (s % 4 === 0) td.className = "beat";
+      numTr.appendChild(td);
+    }
+    seq.appendChild(numTr);
+
+    const all = VOICES.map(v => ({ id: v.id, name: v.name })).concat([{ id: ACCENT_ROW, name: "Accent" }]);
+
+    all.forEach(row => {
+      const tr = document.createElement("tr");
+      if (row.id === ACCENT_ROW) tr.className = "accentrow";
+
+      const th = document.createElement("th");
+      th.className = "voice";
+      const m = document.createElement("button");
+      m.className = "mute";
+      m.textContent = row.id;
+      m.title = "Mute/unmute " + row.name;
+      m.addEventListener("click", () => {
+        state.muted[row.id] = !state.muted[row.id];
+        m.classList.toggle("off", state.muted[row.id]);
+      });
+      th.appendChild(m);
+      th.appendChild(document.createTextNode(row.name));
+      tr.appendChild(th);
+
+      for (let s = 0; s < MAX_STEPS; s++) {
+        const td = document.createElement("td");
+        td.className = "step";
+        const pad = document.createElement("div");
+        pad.className = "pad";
+        if (row.id === ACCENT_ROW) pad.classList.add("acc");
+        if (s % 4 === 0) pad.classList.add("beat");
+        pad.dataset.row = row.id;
+        pad.dataset.step = s;
+        td.appendChild(pad);
+        tr.appendChild(td);
+      }
+      seq.appendChild(tr);
+    });
+
+    refreshGrid();
+  }
+
+  function refreshGrid() {
+    document.querySelectorAll(".pad").forEach(pad => {
+      const r = pad.dataset.row, s = +pad.dataset.step;
+      pad.classList.toggle("on", state.pattern[r][s] === 1);
+      pad.classList.toggle("dim", s >= state.length);
+    });
+  }
+
+  // click + drag painting
+  let painting = false;
+  let paintValue = 1;
+
+  function padFromEvent(e) {
+    const t = document.elementFromPoint(
+      e.clientX !== undefined ? e.clientX : e.touches[0].clientX,
+      e.clientY !== undefined ? e.clientY : e.touches[0].clientY
+    );
+    return t && t.classList.contains("pad") ? t : null;
+  }
+
+  function applyPad(pad) {
+    if (!pad) return;
+    const s = +pad.dataset.step;
+    if (s >= state.length) return;
+    const r = pad.dataset.row;
+    if (state.pattern[r][s] === paintValue) return;
+    state.pattern[r][s] = paintValue;
+    pad.classList.toggle("on", paintValue === 1);
+  }
+
+  seq.addEventListener("pointerdown", e => {
+    const pad = e.target.classList && e.target.classList.contains("pad") ? e.target : null;
+    if (!pad) return;
+    e.preventDefault();
+    const s = +pad.dataset.step;
+    if (s >= state.length) return;
+    painting = true;
+    paintValue = state.pattern[pad.dataset.row][s] === 1 ? 0 : 1;
+    applyPad(pad);
+    initAudio();
+    if (!state.playing) {
+      // audition the hit
+      if (paintValue === 1 && pad.dataset.row !== ACCENT_ROW) {
+        trigger(pad.dataset.row, ctx.currentTime + 0.01, true);
+      }
+    }
+  });
+
+  window.addEventListener("pointermove", e => {
+    if (!painting) return;
+    applyPad(padFromEvent(e));
+  });
+
+  window.addEventListener("pointerup", () => { painting = false; });
+  window.addEventListener("pointercancel", () => { painting = false; });
+
+  /* ============================================================
+     UI — CONTROLS
+     ============================================================ */
+  const tempoEl = document.getElementById("tempo");
+  const swingEl = document.getElementById("swing");
+  const lenEl = document.getElementById("len");
+  const volEl = document.getElementById("vol");
+  const ioEl = document.getElementById("io");
+
+  function bindRange(el, labelId, apply, suffixFn) {
+    const lbl = document.getElementById(labelId);
+    const update = () => {
+      const v = +el.value;
+      lbl.textContent = suffixFn ? suffixFn(v) : v;
+      apply(v);
+    };
+    el.addEventListener("input", update);
+    update();
+  }
+
+  bindRange(tempoEl, "tempoVal", v => { state.tempo = v; });
+  bindRange(swingEl, "swingVal", v => { state.swing = v; });
+  bindRange(lenEl, "lenVal", v => {
+    state.length = v;
+    if (currentStep >= v) currentStep = 0;
+    refreshGrid();
+  });
+  bindRange(volEl, "volVal", v => {
+    state.volume = v / 100;
+    if (master) master.gain.setTargetAtTime(state.volume, ctx.currentTime, 0.02);
+  });
+
+  playBtn.addEventListener("click", () => { state.playing ? stop() : start(); });
+
+  document.getElementById("clearBtn").addEventListener("click", () => {
+    state.pattern = emptyPattern();
+    refreshGrid();
+  });
+
+  document.getElementById("randBtn").addEventListener("click", () => {
+    const density = { BD: 0.30, SD: 0.16, LT: 0.08, HT: 0.08, CH: 0.55, OH: 0.10, CY: 0.03, ACC: 0.25 };
+    rows.forEach(r => {
+      for (let s = 0; s < MAX_STEPS; s++) {
+        let d = density[r];
+        if (s % 4 === 0) d *= 1.8;           // favour downbeats
+        state.pattern[r][s] = Math.random() < d ? 1 : 0;
+      }
+    });
+    refreshGrid();
+  });
+
+  const presetSel = document.getElementById("presetSel");
+  (function buildPresetList() {
+    const groups = {};
+    PRESETS.forEach((pr, i) => {
+      if (!groups[pr.cat]) {
+        const g = document.createElement("optgroup");
+        g.label = pr.cat;
+        presetSel.appendChild(g);
+        groups[pr.cat] = g;
+      }
+      const o = document.createElement("option");
+      o.value = String(i);
+      o.textContent = pr.name;
+      groups[pr.cat].appendChild(o);
+    });
+  })();
+
+  function applyPreset(i) {
+    const pr = PRESETS[i];
+    if (!pr) return;
+    const grid = {};
+    Object.keys(pr.p).forEach(k => { grid[k] = pat(pr.p[k]); });
+    loadPattern({ tempo: pr.tempo, swing: pr.swing || 0, length: pr.len, pattern: grid });
+  }
+
+  presetSel.addEventListener("change", () => {
+    if (presetSel.value === "") return;
+    applyPreset(+presetSel.value);
+  });
+
+  /* ============================================================
+     IMPORT / EXPORT
+     ============================================================ */
+  function serialize() {
+    return {
+      format: "xox-pattern",
+      version: 1,
+      tempo: state.tempo,
+      swing: state.swing,
+      length: state.length,
+      rows: rows.slice(),
+      pattern: JSON.parse(JSON.stringify(state.pattern))
+    };
+  }
+
+  function loadPattern(obj) {
+    if (!obj || typeof obj !== "object") throw new Error("Geen geldig object");
+    const src = obj.pattern || obj.p;
+    if (!src || typeof src !== "object") throw new Error("Veld 'pattern' ontbreekt");
+    const fresh = emptyPattern();
+    rows.forEach(r => {
+      const arr = src[r];
+      if (Array.isArray(arr)) {
+        for (let s = 0; s < MAX_STEPS; s++) fresh[r][s] = arr[s] ? 1 : 0;
+      }
+    });
+    state.pattern = fresh;
+
+    if (Number.isFinite(+obj.tempo)) {
+      state.tempo = Math.min(220, Math.max(40, Math.round(+obj.tempo)));
+      tempoEl.value = state.tempo;
+      document.getElementById("tempoVal").textContent = state.tempo;
+    }
+    if (Number.isFinite(+obj.swing)) {
+      state.swing = Math.min(70, Math.max(0, Math.round(+obj.swing)));
+      swingEl.value = state.swing;
+      document.getElementById("swingVal").textContent = state.swing;
+    }
+    const L = obj.length !== undefined ? obj.length : obj.len;
+    if (Number.isFinite(+L)) {
+      state.length = Math.min(MAX_STEPS, Math.max(1, Math.round(+L)));
+      lenEl.value = state.length;
+      document.getElementById("lenVal").textContent = state.length;
+    }
+    refreshGrid();
+  }
+
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    ioEl.classList.add("show");
+    ioEl.value = JSON.stringify(serialize(), null, 2);
+    ioEl.focus();
+    ioEl.select();
+  });
+
+  document.getElementById("importBtn").addEventListener("click", () => {
+    if (!ioEl.classList.contains("show")) {
+      ioEl.classList.add("show");
+      ioEl.value = "";
+      ioEl.placeholder = "Plak hier pattern-JSON en klik nogmaals op Import JSON";
+      ioEl.focus();
+      return;
+    }
+    try {
+      loadPattern(JSON.parse(ioEl.value));
+      ioEl.classList.remove("show");
+    } catch (err) {
+      alert("Import mislukt: " + err.message);
+    }
+  });
+
+  document.getElementById("downloadBtn").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(serialize(), null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "xox-pattern.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+
+  const fileIn = document.getElementById("fileIn");
+  document.getElementById("uploadBtn").addEventListener("click", () => fileIn.click());
+  fileIn.addEventListener("change", () => {
+    const f = fileIn.files && fileIn.files[0];
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try { loadPattern(JSON.parse(rd.result)); }
+      catch (err) { alert("Laden mislukt: " + err.message); }
+    };
+    rd.readAsText(f);
+    fileIn.value = "";
+  });
+
+  /* ============================================================
+     KEYBOARD
+     ============================================================ */
+  window.addEventListener("keydown", e => {
+    if (e.code === "Space" && e.target.tagName !== "TEXTAREA" && e.target.tagName !== "SELECT") {
+      e.preventDefault();
+      state.playing ? stop() : start();
+    }
+  });
+
+  /* ============================================================
+     BOOT
+     ============================================================ */
+  buildGrid();
+  applyPreset(0);
+  presetSel.value = "0";
+})();
+</script>
+</body>
+</html>

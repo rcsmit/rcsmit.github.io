@@ -404,7 +404,7 @@ body[data-theme="blueprint"]{
       <span class="lbl" style="margin-top:14px">Chord</span>
       <div class="rack">
         <div class="subtabs three">
-          <button class="subtab on" id="chordModeLive">Live</button>
+          <button class="subtab on" id="chordModeLive">Pads</button>
           <button class="subtab" id="camToggle">Camera</button>
           <button class="subtab" id="chordModeSeq">Sequence</button>
         </div>
@@ -429,7 +429,7 @@ body[data-theme="blueprint"]{
               <span id="camInfo">looking for a hand…</span>
             </div>
           </div>
-          <p class="hint" id="camHint">Left hand picks the chord: 1–5 fingers is I to V, index+pinky is vi, index+pinky+thumb is vii°, a fist is N.C. Right hand runs the band: open palm starts, fist stops.</p>
+          <p class="hint" id="camHint">1–5 fingers is I to V, index+pinky is vi, index+pinky+thumb is vii°, a fist is N.C. Switch to two hands in Settings to start and stop with your other hand.</p>
         </div>
 
         <div class="pads" id="pads"></div>
@@ -477,24 +477,33 @@ body[data-theme="blueprint"]{
       <span class="lbl" style="margin-top:14px">Performance</span>
       <div class="rack">
         <select id="perfMode" aria-label="Performance mode">
+          <option value="light" selected>Light — easier on the machine</option>
           <option value="full">Full quality</option>
-          <option value="light">Light — for slower machines</option>
         </select>
         <p class="hint">Light mode thins the chord voicings and pad, drops the hand skeleton and tracks hands less often. Use it if the sound stutters.</p>
       </div>
 
       <span class="lbl" style="margin-top:14px">Camera control</span>
       <div class="rack">
-        <select id="camQuality" aria-label="What the camera controls">
-          <option value="chords">Left hand picks the chord</option>
-          <option value="tilt">Left hand + wrist tilt for major / minor</option>
+        <select id="camHands" aria-label="How many hands to track">
+          <option value="1">One hand — chords only (lighter)</option>
+          <option value="2">Two hands — chords plus start / stop</option>
+        </select>
+        <select id="camQuality" aria-label="What the camera controls" style="margin-top:8px">
+          <option value="chords">Chord hand only</option>
+          <option value="tilt">Chord hand + wrist tilt for major / minor</option>
         </select>
         <div class="sl">
-          <label for="camSteady">Steadiness</label>
-          <input type="range" id="camSteady" min="1" max="10" step="1" value="3">
-          <output id="camSteadyOut">3 frames</output>
+          <label for="camRate">Tracking</label>
+          <input type="range" id="camRate" min="5" max="30" step="1" value="8">
+          <output id="camRateOut">8 / sec</output>
         </div>
-        <p class="hint">Steadiness is how many frames a gesture must hold before it counts. Raise it if chords flicker while you move; lower it for a faster response.</p>
+        <div class="sl">
+          <label for="camSteady">Steadiness</label>
+          <input type="range" id="camSteady" min="1" max="10" step="1" value="1">
+          <output id="camSteadyOut">1 frame</output>
+        </div>
+        <p class="hint">Tracking is how often the camera looks for your hands — by far the biggest cost, so lower it first if things struggle. Steadiness is how many of those looks a gesture must hold before it counts.</p>
       </div>
 
       <span class="lbl" style="margin-top:14px">Pad voice</span>
@@ -1289,7 +1298,7 @@ const S = {
   playing:false, styleIdx:0, bpm:120, transpose:0,
   section:'main', variation:'A', pending:null, pendingLabel:null,
   sectionBar:0, bar:0, step:0, nextTime:0, timer:null,
-  arpKey:null, arpNotes:[], arpIdx:0, lastBass:0, crashNext:false, light:false,
+  arpKey:null, arpNotes:[], arpIdx:0, lastBass:0, crashNext:false, light:true,
   slots:['V7','IVmaj7','bVII','ii7','vi7'],
   chordSource:'live', seq:new Array(16).fill(null), seqResolved:[], seqLen:1, armedSlot:0,
   holdChord:null, keyPc:0, padMode:'press', padAttack:0, padBeats:4, padSustain:1.0, padVoice:'strings',
@@ -1399,7 +1408,7 @@ function chordAt(bar){
     const b = (bar === undefined) ? S.bar : bar;
     return S.seqResolved[((b % len) + len) % len];
   }
-  return S.holdChord;   // live: always the very latest press
+  return S.holdChord;   // pad mode: always the very latest press
 }
 /* The loop length is however many bars you've actually filled -- trailing
    empty bars are trimmed. A gap in the middle just repeats the chord before
@@ -1741,7 +1750,7 @@ async function camStart(){
         modelAssetPath:'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task',
         delegate:'GPU'
       },
-      runningMode:'VIDEO', numHands:2
+      runningMode:'VIDEO', numHands:(parseInt($('camHands').value,10) === 2 ? 2 : 1)
     });
     CAM.stream = await navigator.mediaDevices.getUserMedia({ video:{ width:{ideal:480}, height:{ideal:360} }, audio:false });
     const v = $('camVideo');
@@ -1767,7 +1776,7 @@ async function camStart(){
 
 function camStop(){
   CAM.on = false;
-  if(CAM.raf) cancelAnimationFrame(CAM.raf);
+  if(CAM.raf) clearTimeout(CAM.raf);
   CAM.raf = null;
   if(CAM.stream){ CAM.stream.getTracks().forEach(t => t.stop()); CAM.stream = null; }
   const v = $('camVideo'); if(v) v.srcObject = null;
@@ -1786,20 +1795,18 @@ function camStop(){
 
 function camLoop(){
   if(!CAM.on) return;
-  const v = $('camVideo');
-  const now = performance.now();
   // Detection is by far the most expensive thing here. Hands don't move at
-  // 60 Hz, so running it at a fraction of the display rate costs almost no
-  // responsiveness and saves most of the CPU.
-  const minGap = 1000 / (S.light ? 12 : 20);
-  if(now - CAM.lastDetect >= minGap && v.readyState >= 2 && v.currentTime !== CAM.lastVideoTime){
-    CAM.lastDetect = now;
+  // 60 Hz, so this sleeps between looks instead of waking on every frame --
+  // a requestAnimationFrame loop costs something even on the frames it skips.
+  const minGap = 1000 / (parseInt($('camRate').value, 10) || 8);
+  const v = $('camVideo');
+  if(!document.hidden && v.readyState >= 2 && v.currentTime !== CAM.lastVideoTime){
     CAM.lastVideoTime = v.currentTime;
     let res = null;
-    try{ res = CAM.landmarker.detectForVideo(v, now); }catch(e){}
+    try{ res = CAM.landmarker.detectForVideo(v, performance.now()); }catch(e){}
     handleHands(res);
   }
-  CAM.raf = requestAnimationFrame(camLoop);
+  CAM.raf = setTimeout(camLoop, minGap);
 }
 
 function drawSkeleton(res){
@@ -1841,7 +1848,7 @@ function handleRightHand(lm){
   const g = n >= 4 ? 'open' : n === 0 ? 'fist' : null;
   if(g === CAM.rightGesture) CAM.rightCount++;
   else { CAM.rightGesture = g; CAM.rightCount = 1; }
-  const need = parseInt($('camSteady').value, 10) || 3;
+  const need = parseInt($('camSteady').value, 10) || 1;
   if(g && CAM.rightCount === need && CAM.rightApplied !== g){
     CAM.rightApplied = g;
     if(g === 'open' && !S.playing) start(false);
@@ -1863,13 +1870,18 @@ function handleHands(res){
   // MediaPipe reports handedness for the un-mirrored image, so its "Right"
   // is the hand the user holds up on their right.
   let leftIdx = -1, rightIdx = -1;
-  res.landmarks.forEach((lm, i) => {
-    const h = (res.handednesses && res.handednesses[i] && res.handednesses[i][0])
-      ? res.handednesses[i][0].categoryName : 'Left';
-    if(h === 'Right' && rightIdx < 0){ rightIdx = i; CAM.roles[i] = 'right'; }
-    else if(leftIdx < 0){ leftIdx = i; CAM.roles[i] = 'left'; }
-    else CAM.roles[i] = 'left';
-  });
+  if(res.landmarks.length === 1){
+    // Only one hand in view: it's the chord hand, whichever one it is.
+    leftIdx = 0; CAM.roles[0] = 'left';
+  } else {
+    res.landmarks.forEach((lm, i) => {
+      const h = (res.handednesses && res.handednesses[i] && res.handednesses[i][0])
+        ? res.handednesses[i][0].categoryName : 'Left';
+      if(h === 'Right' && rightIdx < 0){ rightIdx = i; CAM.roles[i] = 'right'; }
+      else if(leftIdx < 0){ leftIdx = i; CAM.roles[i] = 'left'; }
+      else CAM.roles[i] = 'left';
+    });
+  }
   drawSkeleton(res);
 
   let rightLabel = '';
@@ -1893,7 +1905,7 @@ function handleHands(res){
   if(g === CAM.lastGesture) CAM.stableCount++;
   else { CAM.lastGesture = g; CAM.stableCount = 1; }
 
-  const need = parseInt($('camSteady').value, 10) || 3;
+  const need = parseInt($('camSteady').value, 10) || 1;
   const label = g === 'nc' ? 'fist' : g === 'vi' ? 'index+pinky' : g === 'vii' ? 'index+pinky+thumb'
               : g === null ? 'unclear' : g + ' finger' + (g > 1 ? 's' : '');
   $('camInfo').textContent = label + (CAM.stableCount < need ? ' \u2026' : '') +
@@ -2171,7 +2183,7 @@ function loadSeqPreset(id){
   paintPads();
 }
 function setChordMode(mode){
-  if(CAM.on) camStop();            // Live and Sequence are hands-off-the-camera modes
+  if(CAM.on) camStop();            // Pads and Sequence are hands-off-the-camera modes
   S.chordSource = mode;
   $('chordModeLive').classList.toggle('on', mode === 'live');
   $('chordModeSeq').classList.toggle('on', mode === 'sequence');
@@ -2287,6 +2299,12 @@ function setChordMode(mode){
     if(S.light && cv){ const g = cv.getContext('2d'); g && g.clearRect(0, 0, cv.width, cv.height); }
   });
   $('camToggle').addEventListener('click', () => { CAM.on ? camStop() : camStart(); });
+  $('camRate').addEventListener('input', e => {
+    $('camRateOut').value = e.target.value + ' / sec';
+  });
+  $('camHands').addEventListener('change', () => {
+    if(CAM.on){ camStop(); camStart(); }   // hand count is fixed when the tracker is built
+  });
   $('camSteady').addEventListener('input', e => {
     const n = parseInt(e.target.value,10);
     $('camSteadyOut').value = n + (n === 1 ? ' frame' : ' frames');
