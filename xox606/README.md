@@ -2,8 +2,8 @@
 
 A browser-based 606-style step sequencer with per-voice tone shaping. Pure synthesis (no samples), persistent channel strips with filter + drive, 59 drum patterns in 8 categories, and 8 kit voicings.
 
-**Current version:** 20260828-184930  
-**Status:** MVP + tone module (alpha)
+**Current version:** 20260829-111700  
+**Status:** MVP + tone module + PDF export (alpha)
 
 ---
 
@@ -14,7 +14,10 @@ A browser-based 606-style step sequencer with per-voice tone shaping. Pure synth
 - **8 kit presets** (606 dry, 909 wide, 808 boom, lo-fi tape, dub chamber, acid squelch, deep sub, bright pop) as overlays on defaults
 - **59 drum patterns** across 8 categories (house, hip-hop, rock, latin, jazz, reggae, afro, electro)
 - **Pattern length 1–16 steps** with variable-length support (3/4 jazz waltz, 6/8 afro)
+- **Numeric entry** for every channel parameter (type exact values, or drag)
+- **Mixer strip** with per-voice level and mute in one view
 - **JSON export/import** (format v2: includes kit settings)
+- **PDF export** — printable pattern sheet, kit table and text notation, no dependencies
 - **Web Audio API synthesis** with lookahead scheduler for sample-accurate timing
 - **Swing/shuffle** per pattern (0–70%)
 - **Master volume + limiter**
@@ -24,7 +27,7 @@ A browser-based 606-style step sequencer with per-voice tone shaping. Pure synth
 ## Getting Started
 
 ### Use It
-1. Open `index.html` in a modern browser (Chrome, Edge, Firefox, Safari 18+)
+1. Open `xox_editor.html` in a modern browser (Chrome, Edge, Firefox, Safari 18+)
 2. Click **Play**, click/drag the grid to set steps, adjust controls
 3. Select a **preset** or **kit** to change character
 4. Edit **channel** tone per voice: tabs at the top of the tone panel
@@ -151,12 +154,38 @@ Tabs at the top of the tone panel show all 7 voices. Click a tab to edit that vo
 
 Controls:
 - **6 sliders:** Level, Tune, Decay, Cutoff (log), Reso, Drive
+- **6 number boxes:** one beside each slider. Type an exact value (`6300` for cutoff, `1.25` for tune) and press Enter. Slider and box stay in sync both ways; out-of-range entries are clamped on blur, and a half-typed field is left alone until you commit it.
 - **4 filter buttons:** Off / LP / HP / BP
 - **Hit:** Audition the voice with an accent hit (without playing the pattern)
 - **Reset:** Restore that voice to defaults
 - **Kit dropdown:** Apply a whole-kit voicing overlay
 
+### Mixer Strip
+
+Below the channel controls: one cell per voice with a level fader and a number box, so you can balance the kit without switching tabs. Click a voice ID to jump to that channel; double-click to mute. Mute state is shared with the grid's mute buttons and both views update together.
+
 Kits are stored in `KITS` object; each is a partial override (e.g., "909 wide" only tweaks voices that differ from the 606 baseline).
+
+---
+
+## PDF Export
+
+`buildPdf()` writes a PDF by hand — no library, no CDN, works offline. A PDF is a text container with a byte-offset table, so a one-page sheet is a content stream of drawing commands plus an xref.
+
+The sheet contains:
+- Header: preset name, tempo, swing, pattern length, kit name
+- The step grid as filled/empty cells, with the accent row in grey and steps beyond the pattern length greyed out
+- Kit settings table: level, tune, decay, filter type, cutoff, reso, drive and mute state per voice
+- Pattern in text notation (`x... x... x... x...`), the same notation the presets use
+- Footer with a timestamp
+
+Implementation notes:
+- Everything stays ASCII (`pdfStr()` strips and escapes) so string length equals byte length and the xref offsets stay correct
+- Fonts are the base-14 Type1 set (Helvetica, Helvetica-Bold, Courier) — no font embedding needed
+- `textWidth()` approximates advance widths to right-align number columns; good enough for a table, not for typesetting
+- Page geometry lives in the `PDF` constant (A4 portrait, 40 pt margin)
+
+If you add a voice or a channel parameter, the kit table columns in `pdfContent()` need a matching entry.
 
 ---
 
@@ -255,7 +284,7 @@ Each kit is a **partial override**. E.g., "909 wide" only specifies tune/decay/r
 ## Development & Contributing
 
 ### File Structure
-- `index.html` — single-file app (HTML + CSS + JS embedded)
+- `xox_editor.html` — single-file app (HTML + CSS + JS embedded)
 - All CSS variables defined in `:root` for theming
 - Version history in a JS const and HTML comment (both required per style guide)
 
@@ -323,6 +352,8 @@ The params passed to your synth are:
 - [ ] Step probability / ratcheting per step
 - [ ] Clone / duplicate patterns
 - [ ] Dark mode toggle
+- [ ] Multi-page PDF when pattern length or voice count outgrows one page
+- [ ] PDF: optional blank grid sheet for writing patterns by hand
 - [ ] Accessibility (ARIA labels, keyboard-only nav, screen reader support)
 
 ### Nice-to-Have
@@ -336,6 +367,7 @@ The params passed to your synth are:
 - [ ] Search / filter presets by name or category
 - [ ] Collaborative editing (WebSocket, multiple users)
 - [ ] Cloud backup / restore
+- [ ] MIDI file export (.mid) alongside the PDF
 - [ ] Unit tests (Vitest, jsdom)
 - [ ] Ableton Link bridge (Node.js companion app)
 
@@ -347,6 +379,7 @@ The params passed to your synth are:
 ### Not in Scope (Deliberate)
 - Sample playback (use a 909 sample kit elsewhere; this is synthesis-only)
 - Audio file export (route the output to a recording tool)
+- PDF font embedding (base-14 fonts are enough for a pattern sheet)
 - DAW plugin (VST/AU; would need a separate architecture)
 - iOS native support (Web MIDI blocked; use Web MIDI Browser app as workaround)
 

@@ -9,6 +9,7 @@
 # version : 20260828-182807 - Initial version: 606-style 7-voice synthesized step sequencer, accent row, swing, adjustable pattern length, presets, JSON export/import, lookahead scheduler
 # version : 20260828-183512 - Preset library expanded to 59 patterns in 8 categories, compact string notation with pat() parser, grouped dropdown with optgroups
 # version : 20260828-184930 - Per-channel tone module: persistent filter (LP/HP/BP) + resonance, tanh drive with makeup gain, tune and decay scaling per voice, channel level; 8 kit presets; kit is saved in the JSON export (format v2)
+# version : 20260829-111700 - Numeric entry boxes for every channel parameter, mixer strip with per-voice level and mute, dependency-free PDF export of the pattern sheet, kit table and text notation
 -->
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -159,6 +160,36 @@ button.btn.small{padding:6px 10px;font-size:.68rem}
 }
 .ftype button.sel{background:var(--accentcol);color:#fff;border-color:#2d5c68}
 
+.numbox{
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;font-weight:600;
+  width:64px;text-align:right;color:var(--ink);
+  border:1px solid var(--line);border-radius:2px;background:#efece5;
+  padding:2px 4px;
+}
+.numbox:focus{outline:2px solid var(--orange);outline-offset:-1px;background:#fff}
+.numbox::-webkit-outer-spin-button,.numbox::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.numbox[type=number]{-moz-appearance:textfield}
+
+/* ---------- mixer ---------- */
+.mixer{border-top:1px solid var(--line);margin-top:14px;padding-top:10px}
+.mixer-lbl{
+  font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:#5f594e;margin-bottom:8px;
+}
+.mixer-strip{display:flex;gap:8px;flex-wrap:wrap}
+.mixer-ch{
+  flex:1 1 76px;min-width:76px;
+  border:1px solid var(--line);border-radius:3px;background:#efece5;
+  padding:6px;display:flex;flex-direction:column;gap:4px;align-items:center;
+}
+.mixer-ch.muted{opacity:.42}
+.mixer-ch .id{
+  font-size:.66rem;font-weight:600;letter-spacing:.08em;cursor:pointer;
+  border:none;background:none;font-family:inherit;color:var(--ink);padding:0;
+}
+.mixer-ch.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink) inset}
+.mixer-ch input[type=range]{height:16px}
+.mixer-ch .numbox{width:100%;text-align:center}
+
 /* ---------- io ---------- */
 .io{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 select,textarea{
@@ -234,6 +265,10 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
       <div class="knobs" id="chanKnobs"></div>
       <div class="ftype" id="chanFtype"></div>
     </div>
+    <div class="mixer">
+      <div class="mixer-lbl">Mixer — level per stem</div>
+      <div class="mixer-strip" id="mixerStrip"></div>
+    </div>
   </div>
 
   <div class="panel">
@@ -241,6 +276,7 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
       <button class="btn ghost" id="exportBtn">Export JSON</button>
       <button class="btn ghost" id="importBtn">Import JSON</button>
       <button class="btn ghost" id="downloadBtn">Download .json</button>
+      <button class="btn ghost" id="pdfBtn">Export PDF</button>
       <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
       <button class="btn ghost" id="uploadBtn">Load file…</button>
     </div>
@@ -260,7 +296,8 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
 // # version : 20260828-182807 - Initial version: 606-style 7-voice synthesized step sequencer, accent row, swing, adjustable pattern length, presets, JSON export/import, lookahead scheduler
 // # version : 20260828-183512 - Preset library expanded to 59 patterns in 8 categories, compact string notation with pat() parser, grouped dropdown with optgroups
 // # version : 20260828-184930 - Per-channel tone module: persistent filter (LP/HP/BP) + resonance, tanh drive with makeup gain, tune and decay scaling per voice, channel level; 8 kit presets; kit is saved in the JSON export (format v2)
-const current_version = "20260828-184930";
+// # version : 20260829-111700 - Numeric entry boxes for every channel parameter, mixer strip with per-voice level and mute, dependency-free PDF export of the pattern sheet, kit table and text notation
+const current_version = "20260829-111700";
 
 (function () {
   "use strict";
@@ -307,12 +344,12 @@ const current_version = "20260828-184930";
   };
 
   const CHANNEL_PARAMS = [
-    { key:"level",  label:"Level",  min:0,    max:2,     step:0.01, fmt:v => Math.round(v*100)+"%" },
-    { key:"tune",   label:"Tune",   min:0.5,  max:2,     step:0.01, fmt:v => v.toFixed(2)+"×" },
-    { key:"decay",  label:"Decay",  min:0.25, max:3,     step:0.01, fmt:v => v.toFixed(2)+"×" },
-    { key:"cutoff", label:"Cutoff", min:30,   max:18000, step:1,    fmt:v => v >= 1000 ? (v/1000).toFixed(1)+"k" : Math.round(v)+" Hz", log:true },
-    { key:"reso",   label:"Reso",   min:0.1,  max:18,    step:0.1,  fmt:v => "Q "+v.toFixed(1) },
-    { key:"drive",  label:"Drive",  min:0,    max:1,     step:0.01, fmt:v => Math.round(v*100)+"%" }
+    { key:"level",  label:"Level",  unit:"×",  dec:2, min:0,    max:2,     step:0.01, fmt:v => Math.round(v*100)+"%" },
+    { key:"tune",   label:"Tune",   unit:"×",  dec:2, min:0.5,  max:2,     step:0.01, fmt:v => v.toFixed(2)+"×" },
+    { key:"decay",  label:"Decay",  unit:"×",  dec:2, min:0.25, max:3,     step:0.01, fmt:v => v.toFixed(2)+"×" },
+    { key:"cutoff", label:"Cutoff", unit:"Hz", dec:0, min:30,   max:18000, step:1,    fmt:v => v >= 1000 ? (v/1000).toFixed(1)+"k" : Math.round(v)+" Hz", log:true },
+    { key:"reso",   label:"Reso",   unit:"Q",  dec:1, min:0.1,  max:18,    step:0.1,  fmt:v => "Q "+v.toFixed(1) },
+    { key:"drive",  label:"Drive",  unit:"×",  dec:2, min:0,    max:1,     step:0.01, fmt:v => Math.round(v*100)+"%" }
   ];
 
   /* Whole-kit voicings — the 606 engine pushed into different territories. */
@@ -1103,6 +1140,7 @@ const current_version = "20260828-184930";
       m.addEventListener("click", () => {
         state.muted[row.id] = !state.muted[row.id];
         m.classList.toggle("off", state.muted[row.id]);
+        refreshMixer();
       });
       th.appendChild(m);
       th.appendChild(document.createTextNode(row.name));
@@ -1317,6 +1355,8 @@ const current_version = "20260828-184930";
     });
   }
 
+  /* Every parameter gets a slider AND a number box, kept in sync both ways.
+     The number box is the exact-entry path: type 6300, press Enter, done. */
   function buildChanControls() {
     const id = selectedVoice;
     const p = state.kit[id];
@@ -1328,11 +1368,16 @@ const current_version = "20260828-184930";
 
       const lbl = document.createElement("label");
       const name = document.createElement("span");
-      name.textContent = def.label;
-      const val = document.createElement("b");
-      val.textContent = def.fmt(p[def.key]);
+      name.textContent = def.label + (def.unit ? " (" + def.unit + ")" : "");
+
+      const box = document.createElement("input");
+      box.type = "number";
+      box.className = "numbox";
+      box.min = def.min; box.max = def.max; box.step = def.step;
+      box.value = p[def.key].toFixed(def.dec);
+
       lbl.appendChild(name);
-      lbl.appendChild(val);
+      lbl.appendChild(box);
 
       const sl = document.createElement("input");
       sl.type = "range";
@@ -1341,17 +1386,34 @@ const current_version = "20260828-184930";
       // Cutoff and reso do nothing while the filter is bypassed.
       const inactive = (def.key === "cutoff" || def.key === "reso") && p.ftype === "off";
       sl.disabled = inactive;
+      box.disabled = inactive;
       wrap.style.opacity = inactive ? ".4" : "1";
 
-      sl.addEventListener("input", () => {
-        let v = fromSlider(def, +sl.value);
-        if (def.step >= 1) v = Math.round(v);
+      function commit(v, from) {
+        v = clamp(v, def.min, def.max);
+        if (def.dec === 0) v = Math.round(v);
         state.kit[id][def.key] = v;
-        val.textContent = def.fmt(v);
+        if (from !== "box") box.value = v.toFixed(def.dec);
+        if (from !== "slider") sl.value = toSlider(def, v);
         if (ctx) applyChannel(id);
         refreshChanTabs();
+        refreshMixer();
         kitSel.value = "";
+      }
+
+      sl.addEventListener("input", () => commit(fromSlider(def, +sl.value), "slider"));
+
+      // Live while typing, but only when the field holds a usable number;
+      // an empty or half-typed field is left alone until blur/Enter.
+      box.addEventListener("input", () => {
+        const v = parseFloat(box.value);
+        if (Number.isFinite(v) && v >= def.min && v <= def.max) commit(v, "box");
       });
+      box.addEventListener("change", () => {
+        const v = parseFloat(box.value);
+        commit(Number.isFinite(v) ? v : state.kit[id][def.key], "none");
+      });
+      box.addEventListener("keydown", e => { if (e.key === "Enter") box.blur(); });
 
       wrap.appendChild(lbl);
       wrap.appendChild(sl);
@@ -1396,6 +1458,7 @@ const current_version = "20260828-184930";
     kitSel.value = "";
     refreshChanTabs();
     buildChanControls();
+    refreshMixer();
   });
 
   /* ---- kit presets: start from defaults, overlay the kit's overrides ---- */
@@ -1416,12 +1479,329 @@ const current_version = "20260828-184930";
     applyAllChannels();
     refreshChanTabs();
     buildChanControls();
+    refreshMixer();
   }
 
   kitSel.addEventListener("change", () => {
     if (kitSel.value === "") return;
     applyKit(kitSel.value);
   });
+
+  /* ---- mixer: every voice's level in one place, typed or dragged ---- */
+  const mixerStrip = document.getElementById("mixerStrip");
+  const LEVEL = CHANNEL_PARAMS[0];
+
+  function buildMixer() {
+    mixerStrip.innerHTML = "";
+    VOICES.forEach(v => {
+      const ch = document.createElement("div");
+      ch.className = "mixer-ch";
+      ch.dataset.voice = v.id;
+
+      const id = document.createElement("button");
+      id.className = "id";
+      id.textContent = v.id;
+      id.title = v.name + " — klik om te bewerken, dubbelklik om te mute'n";
+      id.addEventListener("click", () => {
+        selectedVoice = v.id;
+        refreshChanTabs();
+        buildChanControls();
+        refreshMixer();
+      });
+      id.addEventListener("dblclick", () => {
+        state.muted[v.id] = !state.muted[v.id];
+        syncMuteButtons();
+        refreshMixer();
+      });
+
+      const sl = document.createElement("input");
+      sl.type = "range";
+      sl.min = 0; sl.max = 1000; sl.step = 1;
+      sl.value = toSlider(LEVEL, state.kit[v.id].level);
+
+      const box = document.createElement("input");
+      box.type = "number";
+      box.className = "numbox";
+      box.min = LEVEL.min; box.max = LEVEL.max; box.step = LEVEL.step;
+      box.value = state.kit[v.id].level.toFixed(LEVEL.dec);
+
+      function commit(val, from) {
+        const value = clamp(val, LEVEL.min, LEVEL.max);
+        state.kit[v.id].level = value;
+        if (from !== "box") box.value = value.toFixed(LEVEL.dec);
+        if (from !== "slider") sl.value = toSlider(LEVEL, value);
+        if (ctx) applyChannel(v.id);
+        refreshChanTabs();
+        kitSel.value = "";
+        if (v.id === selectedVoice) buildChanControls();
+      }
+
+      sl.addEventListener("input", () => commit(fromSlider(LEVEL, +sl.value), "slider"));
+      box.addEventListener("input", () => {
+        const val = parseFloat(box.value);
+        if (Number.isFinite(val) && val >= LEVEL.min && val <= LEVEL.max) commit(val, "box");
+      });
+      box.addEventListener("change", () => {
+        const val = parseFloat(box.value);
+        commit(Number.isFinite(val) ? val : state.kit[v.id].level, "none");
+      });
+      box.addEventListener("keydown", e => { if (e.key === "Enter") box.blur(); });
+
+      ch.appendChild(id);
+      ch.appendChild(sl);
+      ch.appendChild(box);
+      mixerStrip.appendChild(ch);
+    });
+    refreshMixer();
+  }
+
+  /* Pull the strip back in line after a kit change, import or reset. */
+  function refreshMixer() {
+    mixerStrip.querySelectorAll(".mixer-ch").forEach(ch => {
+      const id = ch.dataset.voice;
+      const sl = ch.querySelector("input[type=range]");
+      const box = ch.querySelector(".numbox");
+      const lvl = state.kit[id].level;
+      if (document.activeElement !== sl) sl.value = toSlider(LEVEL, lvl);
+      if (document.activeElement !== box) box.value = lvl.toFixed(LEVEL.dec);
+      ch.classList.toggle("muted", !!state.muted[id]);
+      ch.classList.toggle("sel", id === selectedVoice);
+    });
+  }
+
+  /* The grid's mute buttons and the mixer show the same state. */
+  function syncMuteButtons() {
+    seq.querySelectorAll("th.voice .mute").forEach(b => {
+      const id = b.textContent.trim();
+      if (state.muted[id] !== undefined) b.classList.toggle("off", state.muted[id]);
+    });
+  }
+
+  /* ============================================================
+     PDF EXPORT
+
+     Written by hand — no library. A PDF is just a text container with
+     a byte-offset table, so a one-page pattern sheet is a few hundred
+     lines of drawing commands plus an xref. Everything stays ASCII so
+     string length equals byte length and the offsets stay honest.
+     ============================================================ */
+  const PDF = { W: 595.28, H: 841.89, M: 40 };
+
+  function pdfStr(s) {
+    // Latin-1-safe and escaped for PDF string literals.
+    return String(s)
+      .replace(/[×–—]/g, m => ({ "×": "x", "–": "-", "—": "-" }[m]))
+      .replace(/[^\x20-\x7E]/g, "?")
+      .replace(/([\\()])/g, "\\$1");
+  }
+
+  /* Rough advance widths — good enough to right-align a column. */
+  function textWidth(str, size, font) {
+    const factor = font === "F3" ? 0.60 : (font === "F2" ? 0.56 : 0.52);
+    return String(str).length * size * factor;
+  }
+
+  function pdfContent() {
+    const ops = [];
+    const put = s => ops.push(s);
+    const y = top => PDF.H - top;                       // work top-down
+    const gray = v => put(v.toFixed(3) + " g\n");
+    const strokeGray = v => put(v.toFixed(3) + " G\n");
+
+    function box(x, top, w, h, fill, stroke) {
+      if (fill !== null) { gray(fill); put(`${x.toFixed(2)} ${(y(top) - h).toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re f\n`); }
+      if (stroke !== undefined) {
+        strokeGray(stroke);
+        put("0.5 w\n");
+        put(`${x.toFixed(2)} ${(y(top) - h).toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)} re S\n`);
+      }
+    }
+    function label(x, top, size, str, font, tone) {
+      gray(tone === undefined ? 0 : tone);
+      put(`BT /${font || "F1"} ${size} Tf ${x.toFixed(2)} ${y(top).toFixed(2)} Td (${pdfStr(str)}) Tj ET\n`);
+    }
+    function labelRight(xRight, top, size, str, font, tone) {
+      label(xRight - textWidth(str, size, font || "F1"), top, size, str, font, tone);
+    }
+    function rule(top, tone) {
+      strokeGray(tone === undefined ? 0.75 : tone);
+      put("0.5 w\n");
+      put(`${PDF.M} ${y(top).toFixed(2)} m ${(PDF.W - PDF.M).toFixed(2)} ${y(top).toFixed(2)} l S\n`);
+    }
+
+    const preset = presetSel.value !== "" ? PRESETS[+presetSel.value].name : "Custom pattern";
+    const kitName = kitSel.value || "Custom kit";
+    const stamp = new Date().toLocaleString("nl-NL", {
+      year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
+    });
+
+    /* ---- header ---- */
+    label(PDF.M, 62, 22, "XOX  " + preset, "F2");
+    label(PDF.M, 80, 9.5,
+      `${state.tempo} BPM   |   swing ${state.swing}%   |   ${state.length} steps   |   kit: ${kitName}`,
+      "F1", 0.35);
+    rule(90, 0.2);
+
+    /* ---- step grid ---- */
+    const labelW = 66;
+    const gridX = PDF.M + labelW;
+    const cellW = (PDF.W - 2 * PDF.M - labelW) / MAX_STEPS;
+    const rowH = 19;
+    let top = 118;
+
+    // step numbers
+    for (let s = 0; s < MAX_STEPS; s++) {
+      const beat = s % 4 === 0;
+      labelRight(gridX + s * cellW + cellW - 4, top - 6, 7, String(s + 1), beat ? "F2" : "F1", beat ? 0.15 : 0.55);
+    }
+
+    const gridRows = VOICES.map(v => ({ id: v.id, name: v.name }))
+      .concat([{ id: ACCENT_ROW, name: "Accent" }]);
+
+    gridRows.forEach(row => {
+      const isAcc = row.id === ACCENT_ROW;
+      label(PDF.M, top + 13, 8.5, row.id, "F2", isAcc ? 0.35 : 0);
+      label(PDF.M + 22, top + 13, 7, row.name, "F1", 0.5);
+      if (state.muted[row.id]) label(PDF.M + 56, top + 13, 6.5, "M", "F2", 0.45);
+
+      for (let s = 0; s < MAX_STEPS; s++) {
+        const x = gridX + s * cellW + 1;
+        const w = cellW - 2;
+        const beyond = s >= state.length;
+        const on = state.pattern[row.id][s] === 1 && !beyond;
+        if (on) {
+          box(x, top, w, rowH - 3, isAcc ? 0.45 : 0.1);
+        } else {
+          box(x, top, w, rowH - 3, beyond ? 0.955 : (s % 4 === 0 ? 0.90 : 0.94), 0.82);
+        }
+      }
+      top += rowH;
+    });
+
+    /* ---- kit / fader table ---- */
+    top += 22;
+    label(PDF.M, top, 10, "Kit settings", "F2");
+    top += 6;
+    rule(top, 0.5);
+    top += 14;
+
+    const cols = [
+      { t: "Voice",  w: 78, align: "l" },
+      { t: "Level",  w: 52, align: "r" },
+      { t: "Tune",   w: 52, align: "r" },
+      { t: "Decay",  w: 52, align: "r" },
+      { t: "Filter", w: 52, align: "l" },
+      { t: "Cutoff", w: 62, align: "r" },
+      { t: "Reso",   w: 46, align: "r" },
+      { t: "Drive",  w: 46, align: "r" },
+      { t: "Mute",   w: 40, align: "l" }
+    ];
+    let cx = PDF.M;
+    cols.forEach(c => {
+      if (c.align === "r") labelRight(cx + c.w - 6, top, 7.5, c.t, "F2", 0.4);
+      else label(cx, top, 7.5, c.t, "F2", 0.4);
+      cx += c.w;
+    });
+    top += 5;
+    rule(top, 0.78);
+    top += 13;
+
+    const FT = { off: "off", lowpass: "LP", highpass: "HP", bandpass: "BP" };
+    VOICES.forEach((v, i) => {
+      const k = state.kit[v.id];
+      if (i % 2 === 1) box(PDF.M - 3, top + 4, PDF.W - 2 * PDF.M + 6, 15, 0.955);
+      const cells = [
+        { v: v.id + "  " + v.name, align: "l", font: "F1" },
+        { v: k.level.toFixed(2),  align: "r", font: "F3" },
+        { v: k.tune.toFixed(2),   align: "r", font: "F3" },
+        { v: k.decay.toFixed(2),  align: "r", font: "F3" },
+        { v: FT[k.ftype] || k.ftype, align: "l", font: "F1" },
+        { v: k.ftype === "off" ? "-" : Math.round(k.cutoff) + " Hz", align: "r", font: "F3" },
+        { v: k.ftype === "off" ? "-" : k.reso.toFixed(1), align: "r", font: "F3" },
+        { v: k.drive.toFixed(2),  align: "r", font: "F3" },
+        { v: state.muted[v.id] ? "muted" : "", align: "l", font: "F1" }
+      ];
+      let x = PDF.M;
+      cells.forEach((c, ci) => {
+        const w = cols[ci].w;
+        if (c.align === "r") labelRight(x + w - 6, top, 7.5, c.v, c.font, 0.05);
+        else label(x, top, 7.5, c.v, c.font, 0.05);
+        x += w;
+      });
+      top += 15;
+    });
+
+    /* ---- pattern in text notation (copy-typeable) ---- */
+    top += 22;
+    label(PDF.M, top, 10, "Pattern notation", "F2");
+    top += 6;
+    rule(top, 0.5);
+    top += 14;
+
+    gridRows.forEach(row => {
+      let str = "";
+      for (let s = 0; s < state.length; s++) {
+        if (s > 0 && s % 4 === 0) str += " ";
+        str += state.pattern[row.id][s] === 1 ? "x" : ".";
+      }
+      label(PDF.M, top, 8, row.id.padEnd(4, " ") + str, "F3", 0.1);
+      top += 12;
+    });
+
+    /* ---- footer ---- */
+    rule(PDF.H - 58, 0.8);
+    label(PDF.M, PDF.H - 46, 7, "XOX Editor", "F1", 0.55);
+    labelRight(PDF.W - PDF.M, PDF.H - 46, 7, stamp, "F1", 0.55);
+
+    return ops.join("");
+  }
+
+  function buildPdf() {
+    const content = pdfContent();
+    const objs = [
+      null,
+      "<< /Type /Catalog /Pages 2 0 R >>",
+      "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+      "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + PDF.W.toFixed(2) + " " + PDF.H.toFixed(2) + "]" +
+        " /Resources << /Font << /F1 5 0 R /F2 6 0 R /F3 7 0 R >> >> /Contents 4 0 R >>",
+      "<< /Length " + content.length + " >>\nstream\n" + content + "endstream",
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>",
+      "<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>"
+    ];
+
+    let pdf = "%PDF-1.4\n";
+    const offsets = [];
+    for (let i = 1; i < objs.length; i++) {
+      offsets[i] = pdf.length;
+      pdf += i + " 0 obj\n" + objs[i] + "\nendobj\n";
+    }
+    const xref = pdf.length;
+    pdf += "xref\n0 " + objs.length + "\n0000000000 65535 f \n";
+    for (let i = 1; i < objs.length; i++) {
+      pdf += String(offsets[i]).padStart(10, "0") + " 00000 n \n";
+    }
+    pdf += "trailer\n<< /Size " + objs.length + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF\n";
+    return pdf;
+  }
+
+  function downloadPdf() {
+    const str = buildPdf();
+    const bytes = new Uint8Array(str.length);
+    for (let i = 0; i < str.length; i++) bytes[i] = str.charCodeAt(i) & 0xff;
+    const blob = new Blob([bytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const preset = presetSel.value !== "" ? PRESETS[+presetSel.value].name : "pattern";
+    a.href = url;
+    a.download = "xox-" + preset.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".pdf";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  document.getElementById("pdfBtn").addEventListener("click", downloadPdf);
 
   /* ============================================================
      IMPORT / EXPORT
@@ -1484,7 +1864,7 @@ const current_version = "20260828-184930";
       });
       state.kit = k;
       applyAllChannels();
-      if (typeof refreshChanTabs === "function") { refreshChanTabs(); buildChanControls(); }
+      if (typeof refreshChanTabs === "function") { refreshChanTabs(); buildChanControls(); refreshMixer(); }
       kitSel.value = "";
     }
 
@@ -1556,6 +1936,7 @@ const current_version = "20260828-184930";
   buildGrid();
   buildChanTabs();
   buildChanControls();
+  buildMixer();
   applyPreset(0);
   presetSel.value = "0";
 })();
