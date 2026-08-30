@@ -2,13 +2,14 @@
 
 A browser-based 606-style step sequencer with per-voice tone shaping. Pure synthesis (no samples), persistent channel strips with filter + drive, 59 drum patterns in 8 categories, and 8 kit voicings.
 
-**Current version:** 20260829-124500  
+**Current version:** 20260829-145000  
 **Status:** MVP + tone module + PDF and Strudel export (alpha)
 
 ---
 
 ## What It Does
 
+- **100 pattern slots** (00–99) with a 2-digit picker, plus a Song view for chaining them
 - **16-step drum grid** with 8 synthesized voices (BD, SD, CP, LT, HT, CH, OH, CY) + global accent row
 - **Per-voice tone module:** tuning, decay scaling, filter type/cutoff/resonance, tanh drive with makeup gain, channel level
 - **8 kit presets** (606 dry, 909 wide, 808 boom, lo-fi tape, dub chamber, acid squelch, deep sub, bright pop) as overlays on defaults
@@ -96,6 +97,28 @@ Applied to audio nodes via `applyChannel(voiceId)` whenever a parameter changes.
 
 The scheduler is **NOT synced to anything external**. It runs on `ctx.currentTime` and assumes it owns the timeline.
 
+### Pattern Slots and Song
+
+A project holds `SLOT_COUNT` (100) slots. Each slot owns its **grid, length, swing, preset name and its own name**; tempo, kit, human and volume are project-level.
+
+`state.pattern`, `state.length` and `state.swing` are defined with `Object.defineProperty` as proxies onto `state.slots[state.slot]`. Everything written before slots existed — the grid, scheduler, presets, exporters — therefore needs no changes, and switching patterns is a single assignment plus a redraw. `setSlot(n)` is the only place that changes the live pattern.
+
+The preset a slot was loaded from is stored **by name**, so reordering `PRESETS` doesn't break a saved project. Switching slots restores it in the dropdown, and it feeds the PDF and Strudel headers. Editing steps keeps the name (it's the origin label); Clear and Random drop it, since it would no longer be true.
+
+The song chain is `state.song`, an array of slot numbers. `state.songMode` is not a separate setting: it follows the active tab. The Song tab plays the chain, the Pattern tab loops the pattern being edited, and the play button reads "Play song" or "Play" accordingly. When `state.songMode` is on, `onCycleEnd()` (called from `advance()` when the step wraps to 0) moves to the next row, so a pattern always plays out in full and the chain loops at the end.
+
+Pattern and Song are tabs below the transport panel, so the transport (play, tempo, pattern picker) stays reachable from both. The Song tab carries a badge with the number of chain lines. Each chain row shows the slot number followed by the slot's own name, falling back to the preset it came from, or "leeg" when the slot has no steps.
+
+The song editor is one column of 2-digit fields. Entering the second digit commits the cell and moves to the next, appending a row when you are on the last one — so a chain can be typed without touching the mouse. Insert and delete act on the focused row; there is no "clear", you type over a cell.
+
+### User Presets
+
+The built-in `PRESETS` array is read-only. `state.userPresets` holds the user's own, saved with **Save preset** from the current pattern and written in the same compact string notation as the built-ins — so a saved preset is readable in the JSON and can be pasted straight into `PRESETS` as code.
+
+Dropdown options are addressed as `b<i>` (built-in) and `u<i>` (user), so rebuilding one list never shifts the ids of the other. A name clash resolves to the user's preset.
+
+The library travels two ways: inside the project JSON (`userPresets`), and as its own file (`{"format": "xox-presets", "version": 1, "presets": [...]}`) via **Download presets**. Importing a library **merges** — same name wins for the incoming file, existing presets are never silently dropped, and entries without a name or without usable step notation are rejected. Both the text area and the file loader route by `format`, so one import path handles projects and libraries.
+
 ### Pattern Storage
 
 ```js
@@ -113,22 +136,28 @@ state.kit = {
 }
 ```
 
-### Export Format (v2)
+### Export Format (v3)
 
 ```json
 {
-  "format": "xox-pattern",
-  "version": 2,
+  "format": "xox-project",
+  "version": 3,
   "tempo": 124,
-  "swing": 12,
-  "length": 16,
+  "human": 0.05,
   "rows": ["BD", "SD", "CP", "LT", "HT", "CH", "OH", "CY", "ACC"],
-  "pattern": { "BD": [1,0,0,0,...], ... },
+  "current": 0,
+  "slots": {
+    "00": { "pattern": { "BD": [1,0,0,0,...], ... }, "length": 16, "swing": 12, "preset": "Four on the floor", "name": "Intro groove" },
+    "42": { "pattern": { ... }, "length": 12, "swing": 0, "preset": null }
+  },
+  "song": [0, 5, 11],
+  "userPresets": [ { "name": "Intro groove", "tempo": 124, "swing": 0, "len": 16, "p": { "BD": "x... .... .... ...." } } ],
+  "songMode": false,
   "kit": { "BD": { "level": 1, ... }, ... }
 }
 ```
 
-v1 files (no `kit` block) load and fall back to `CHANNEL_DEFAULTS`.
+Empty slots are omitted, so a fresh project stays small. v1 and v2 files (a single `pattern`, no `slots`) still load — they land in the currently selected slot — and a v2-shaped `pattern`/`length`/`swing` is still written alongside the slots for readers that expect it.
 
 ---
 
@@ -397,7 +426,6 @@ The params passed to your synth are:
 - [ ] Accessibility (ARIA labels, keyboard-only nav, screen reader support)
 
 ### Nice-to-Have
-- [ ] Pattern chaining / scene mode (8 patterns, one playing at a time)
 - [ ] Per-voice mute automation (mute curve over time)
 - [ ] Microtuning support (not 12-TET)
 - [ ] Polyrhythm (different lengths per voice)
@@ -408,6 +436,9 @@ The params passed to your synth are:
 - [ ] Collaborative editing (WebSocket, multiple users)
 - [ ] Cloud backup / restore
 - [ ] MIDI file export (.mid) alongside the PDF
+- [ ] Strudel export of a whole song, not just the current pattern
+- [ ] Copy/paste a pattern between slots
+- [ ] Queue a pattern change to the next bar instead of switching immediately
 - [ ] Strudel export: emit `$:` labelled statements as an option instead of `stack()`
 - [ ] Strudel import: parse mini-notation back into the grid
 - [ ] Unit tests (Vitest, jsdom)

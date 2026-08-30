@@ -13,6 +13,11 @@
 # version : 20260829-114500 - Strudel export: pattern and accents to mini-notation, channel settings mapped to bank/gain/filter/speed/clip/distort, tempo as setcpm with correct beats-per-cycle for non-16-step patterns
 # version : 20260829-121500 - Clap (CP) added as eighth voice: burst-flam synthesis with filtered tail, channel defaults, clap settings in all kits, clap rows in 12 presets, cp in the Strudel sample map; fixed row shading offset in the PDF kit table
 # version : 20260829-124500 - Hats and cymbal rebuilt on the six-oscillator metal circuit (non-harmonic square ratios through a bandpass) instead of filtered noise; closed hat now chokes the open hat; per-hit variation via a Human control (level, tune, decay), saved in the JSON export; sharper transients on kick, snare and toms; Open in Strudel button using the base64 URL fragment
+# version : 20260829-131500 - Project of 100 pattern slots (00-99) with a 2-digit picker; pattern, length and swing moved into the slot via property proxies so existing code is untouched; new Song view with a single-column chain editor (auto-advance, insert, delete) that steps at each pattern boundary; JSON is now a project (format v3, v1/v2 still load); PDF shows the pattern number and song chain
+# version : 20260829-134000 - Pattern and Song are now real tabs under the transport instead of a toggle button, with active-tab styling, aria-selected state, arrow-key navigation and a line-count badge on the Song tab
+# version : 20260829-140500 - The preset a pattern was loaded from is now stored on the slot (by name) and restored in the dropdown when switching patterns; it is saved per slot in the project JSON and used for the PDF and Strudel headers; Clear and Random drop it
+# version : 20260829-142000 - Song mode follows the tab instead of a checkbox: the Song tab plays the chain, the Pattern tab loops the edited pattern, and the play button says which; the song list shows each slot's preset name after its number
+# version : 20260829-145000 - Name field per pattern (shown in the song list, PDF and Strudel headers); user presets: Save preset stores the current pattern in the same compact notation, Del removes one, the library travels in the project JSON and as its own xox-presets file that merges on import
 -->
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -193,6 +198,84 @@ button.btn.small{padding:6px 10px;font-size:.68rem}
 .mixer-ch input[type=range]{height:16px}
 .mixer-ch .numbox{width:100%;text-align:center}
 
+/* ---------- tabs ---------- */
+.tabs{
+  display:flex;gap:4px;align-items:flex-end;
+  margin:0 0 -1px 2px;position:relative;z-index:2;
+}
+.tab{
+  font-family:"IBM Plex Mono",monospace;font-size:.74rem;font-weight:600;
+  letter-spacing:.1em;text-transform:uppercase;
+  border:1px solid var(--line);border-bottom:none;
+  border-radius:4px 4px 0 0;
+  background:#cfcabf;color:#6d675b;
+  padding:9px 18px;cursor:pointer;
+  box-shadow:inset 0 -6px 8px -6px rgba(0,0,0,.25);
+  transition:background .12s,color .12s,padding .12s;
+}
+.tab:hover{background:#ded9cf;color:var(--ink)}
+.tab.sel{
+  background:var(--panel);color:var(--ink);
+  padding-top:12px;
+  box-shadow:0 1px 0 rgba(255,255,255,.7) inset;
+}
+.tab.sel::after{
+  content:"";position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--panel);
+}
+.tab:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.tab .badge{
+  display:inline-block;margin-left:7px;padding:1px 6px;border-radius:8px;
+  background:var(--ink);color:var(--paper);font-size:.62rem;letter-spacing:0;
+}
+.tab .badge:empty{display:none}
+.tab.sel .badge{background:var(--orange)}
+
+/* ---------- pattern picker ---------- */
+.slotpick{display:flex;align-items:center;gap:4px}
+.slotlbl{font-size:.6rem;letter-spacing:.16em;color:#5f594e;margin-right:2px}
+button.btn.tiny{padding:7px 8px;font-size:.7rem;line-height:1}
+#slotInput{
+  font-family:"IBM Plex Mono",monospace;font-size:1rem;font-weight:600;
+  width:44px;text-align:center;letter-spacing:.06em;
+  border:1px solid var(--line);border-bottom-width:3px;border-radius:3px;
+  background:var(--ink);color:var(--amber);padding:5px 2px;
+}
+#slotInput:focus{outline:2px solid var(--orange);outline-offset:1px}
+#slotInput.empty{color:#8b8577}
+#nameInput{
+  font-family:"IBM Plex Mono",monospace;font-size:.72rem;
+  width:120px;border:1px solid var(--line);border-radius:3px;
+  background:#efece5;color:var(--ink);padding:6px 7px;margin-left:6px;
+}
+#nameInput:focus{outline:2px solid var(--orange);outline-offset:-1px;background:#fff}
+#nameInput::placeholder{color:#9a9487}
+button.btn.small:disabled{opacity:.4;cursor:default}
+
+/* ---------- song list ---------- */
+.songtitle{font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.songmode{
+  font-size:.66rem;letter-spacing:.06em;color:#5f594e;display:flex;align-items:center;gap:5px;
+}
+.songwrap{max-height:56vh;overflow-y:auto;padding-right:4px}
+.songlist{display:flex;flex-direction:column;gap:3px;max-width:420px}
+.songrow{display:flex;align-items:center;gap:8px}
+.songrow .n{
+  font-size:.62rem;color:#8b8577;width:26px;text-align:right;font-variant-numeric:tabular-nums;
+}
+.songrow input{
+  font-family:"IBM Plex Mono",monospace;font-size:.92rem;font-weight:600;letter-spacing:.08em;
+  width:56px;text-align:center;
+  border:1px solid var(--line);border-radius:3px;background:#efece5;color:var(--ink);padding:5px 2px;
+}
+.songrow input:focus{outline:2px solid var(--orange);outline-offset:-1px;background:#fff}
+.songrow .meta{
+  font-size:.62rem;color:#6d675b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.songrow.playing .meta{color:var(--orange)}
+.songrow.playing input{background:var(--orange);color:#fff;border-color:#8d3311}
+.songrow.playing .n{color:var(--orange);font-weight:600}
+.songempty{font-size:.7rem;color:#6d675b;padding:6px 0}
+
 /* ---------- io ---------- */
 .io{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 select,textarea{
@@ -221,11 +304,20 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
   <div class="panel">
     <div class="transport">
       <button class="btn play" id="playBtn">▶ Play</button>
+      <div class="slotpick">
+        <span class="slotlbl">PTN</span>
+        <button class="btn ghost tiny" id="slotPrev" title="Vorig pattern">&lt;</button>
+        <input type="text" id="slotInput" inputmode="numeric" maxlength="2" value="00" aria-label="Pattern number">
+        <button class="btn ghost tiny" id="slotNext" title="Volgend pattern">&gt;</button>
+        <input type="text" id="nameInput" maxlength="28" placeholder="naam" aria-label="Naam van dit pattern">
+      </div>
       <button class="btn ghost" id="clearBtn">Clear</button>
       <button class="btn ghost" id="randBtn">Random</button>
       <select id="presetSel" aria-label="Preset">
         <option value="">— preset —</option>
       </select>
+      <button class="btn ghost small" id="presetSave" title="Dit pattern opslaan als eigen preset">Save preset</button>
+      <button class="btn ghost small" id="presetDel" title="Geselecteerde eigen preset verwijderen" disabled>Del</button>
     </div>
     <div class="knobs">
       <div class="knob">
@@ -251,13 +343,37 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
     </div>
   </div>
 
-  <div class="panel">
+  <nav class="tabs" role="tablist" aria-label="Weergave">
+    <button class="tab sel" id="tabPattern" role="tab" aria-selected="true" aria-controls="chanPanel">Pattern</button>
+    <button class="tab" id="tabSong" role="tab" aria-selected="false" aria-controls="songPanel">Song<span class="badge" id="songCount"></span></button>
+  </nav>
+
+  <div class="panel view-song" id="songPanel" hidden>
+    <div class="chanhead">
+      <div class="songtitle">Song — volgorde van patterns</div>
+      <div class="chanhead-right">
+        <button class="btn ghost small" id="songInsert">Insert line</button>
+        <button class="btn ghost small" id="songDelete">Delete line</button>
+        <button class="btn ghost small" id="songAdd">+ Line</button>
+      </div>
+    </div>
+    <div class="songwrap"><div class="songlist" id="songList"></div></div>
+    <div class="note">
+      Dit tabblad speelt de song; het tabblad Pattern speelt het pattern dat je bewerkt.
+      Twee cijfers per regel; na het tweede cijfer springt hij vanzelf naar de volgende regel.
+      <kbd>Enter</kbd> voegt een regel in onder de huidige, <kbd>Backspace</kbd> in een leeg veld
+      gaat terug. Pijltjes omhoog en omlaag lopen door de lijst. Insert en delete werken op de
+      regel waar je staat; leegmaken hoeft niet, je typt er gewoon overheen.
+    </div>
+  </div>
+
+  <div class="panel view-pattern">
     <div class="gridwrap">
       <table class="seq" id="seq"></table>
     </div>
   </div>
 
-  <div class="panel" id="chanPanel">
+  <div class="panel view-pattern" id="chanPanel">
     <div class="chanhead">
       <div class="chantabs" id="chanTabs"></div>
       <div class="chanhead-right">
@@ -278,11 +394,12 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
     </div>
   </div>
 
-  <div class="panel">
+  <div class="panel view-pattern">
     <div class="io">
       <button class="btn ghost" id="exportBtn">Export JSON</button>
       <button class="btn ghost" id="importBtn">Import JSON</button>
       <button class="btn ghost" id="downloadBtn">Download .json</button>
+      <button class="btn ghost" id="presetsDlBtn">Download presets</button>
       <button class="btn ghost" id="pdfBtn">Export PDF</button>
       <button class="btn ghost" id="strudelBtn">Strudel code</button>
       <button class="btn ghost" id="strudelOpenBtn">Open in Strudel</button>
@@ -295,7 +412,7 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
       De <b>ACC</b>-rij is de globale accent-rij (606-stijl): elke stap met accent klinkt harder.
       Het knopje links van de naam mute't een stem.
       In het kanaalpaneel staat per stem een tone-module: tune, decay, filter, resonantie en drive.
-      De export bevat zowel het pattern als de kit-instellingen. "Strudel code" zet het pattern om naar code voor de strudel.cc REPL en kopieert het naar het klembord; "Open in Strudel" opent het daar meteen.
+      De export bevat het hele project: alle patterns, de song, de kit en je eigen presets. "Save preset" bewaart het huidige pattern onder zijn naam; "Download presets" schrijft alleen die bibliotheek weg, zodat je hem in een ander project kunt laden. "Strudel code" zet het pattern om naar code voor de strudel.cc REPL en kopieert het naar het klembord; "Open in Strudel" opent het daar meteen.
     </div>
   </div>
 
@@ -309,7 +426,12 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
 // # version : 20260829-114500 - Strudel export: pattern and accents to mini-notation, channel settings mapped to bank/gain/filter/speed/clip/distort, tempo as setcpm with correct beats-per-cycle for non-16-step patterns
 // # version : 20260829-121500 - Clap (CP) added as eighth voice: burst-flam synthesis with filtered tail, channel defaults, clap settings in all kits, clap rows in 12 presets, cp in the Strudel sample map; fixed row shading offset in the PDF kit table
 // # version : 20260829-124500 - Hats and cymbal rebuilt on the six-oscillator metal circuit (non-harmonic square ratios through a bandpass) instead of filtered noise; closed hat now chokes the open hat; per-hit variation via a Human control (level, tune, decay), saved in the JSON export; sharper transients on kick, snare and toms; Open in Strudel button using the base64 URL fragment
-const current_version = "20260829-124500";
+// # version : 20260829-131500 - Project of 100 pattern slots (00-99) with a 2-digit picker; pattern, length and swing moved into the slot via property proxies so existing code is untouched; new Song view with a single-column chain editor (auto-advance, insert, delete) that steps at each pattern boundary; JSON is now a project (format v3, v1/v2 still load); PDF shows the pattern number and song chain
+// # version : 20260829-134000 - Pattern and Song are now real tabs under the transport instead of a toggle button, with active-tab styling, aria-selected state, arrow-key navigation and a line-count badge on the Song tab
+// # version : 20260829-140500 - The preset a pattern was loaded from is now stored on the slot (by name) and restored in the dropdown when switching patterns; it is saved per slot in the project JSON and used for the PDF and Strudel headers; Clear and Random drop it
+// # version : 20260829-142000 - Song mode follows the tab instead of a checkbox: the Song tab plays the chain, the Pattern tab loops the edited pattern, and the play button says which; the song list shows each slot's preset name after its number
+// # version : 20260829-145000 - Name field per pattern (shown in the song list, PDF and Strudel headers); user presets: Save preset stores the current pattern in the same compact notation, Del removes one, the library travels in the project JSON and as its own xox-presets file that merges on import
+const current_version = "20260829-145000";
 
 (function () {
   "use strict";
@@ -823,17 +945,39 @@ const current_version = "20260829-124500";
     return p;
   }
 
+  const SLOT_COUNT = 100;                     // patterns 00..99
+
+  function emptySlot() {
+    return { pattern: emptyPattern(), length: 16, swing: 0, preset: null, name: "" };
+  }
+
   const state = {
-    pattern: emptyPattern(),
+    slots: Array.from({ length: SLOT_COUNT }, emptySlot),
+    slot: 0,                                  // which pattern is being edited/played
+    song: [],                                 // chain of slot numbers
+    userPresets: [],                          // saved by the user, kept in the project
+    songMode: false,
+    songRow: 0,
     muted: {},
     kit: null,          // filled in below (needs VOICES + CHANNEL_DEFAULTS)
     tempo: 120,
-    swing: 0,
-    length: 16,
     volume: 0.8,
     human: 0.05,        // 0 = machine-exact, 0.20 = loose
     playing: false
   };
+
+  /* pattern, length and swing live in the selected slot. Proxying them here
+     means every piece of code written before slots existed — the grid, the
+     scheduler, the presets, the exporters — keeps working untouched, and
+     switching patterns is a single assignment to state.slot. */
+  ["pattern", "length", "swing", "preset", "name"].forEach(key => {
+    Object.defineProperty(state, key, {
+      get() { return state.slots[state.slot][key]; },
+      set(v) { state.slots[state.slot][key] = v; },
+      enumerable: true
+    });
+  });
+
   state.kit = freshKit();
   rows.forEach(id => { state.muted[id] = false; });
 
@@ -1150,6 +1294,15 @@ const current_version = "20260829-124500";
   function advance() {
     nextStepTime += stepDuration();
     currentStep = (currentStep + 1) % state.length;
+    // A wrap to step 0 is the pattern boundary: that is where the song
+    // chain moves on, so a pattern always plays out in full.
+    if (currentStep === 0) onCycleEnd();
+  }
+
+  function onCycleEnd() {
+    if (!state.songMode || state.song.length === 0) return;
+    state.songRow = (state.songRow + 1) % state.song.length;
+    setSlot(state.song[state.songRow]);
   }
 
   function swingOffset(step) {
@@ -1168,6 +1321,10 @@ const current_version = "20260829-124500";
     initAudio();
     if (ctx.state === "suspended") ctx.resume();
     state.playing = true;
+    if (state.songMode && state.song.length) {
+      state.songRow = 0;
+      setSlot(state.song[0]);
+    }
     currentStep = 0;
     nextStepTime = ctx.currentTime + 0.06;
     timerId = setInterval(scheduler, LOOKAHEAD_MS);
@@ -1181,9 +1338,10 @@ const current_version = "20260829-124500";
     clearInterval(timerId);
     timerId = null;
     drawQueue.length = 0;
-    playBtn.textContent = "▶ Play";
+    updatePlayLabel();
     playBtn.classList.remove("on");
     clearCursor();
+    renderSongRows();
   }
 
   /* ============================================================
@@ -1366,6 +1524,8 @@ const current_version = "20260829-124500";
 
   document.getElementById("clearBtn").addEventListener("click", () => {
     state.pattern = emptyPattern();
+    state.preset = null;
+    presetSel.value = "";
     refreshGrid();
   });
 
@@ -1378,11 +1538,31 @@ const current_version = "20260829-124500";
         state.pattern[r][s] = Math.random() < d ? 1 : 0;
       }
     });
+    state.preset = null;
+    presetSel.value = "";
     refreshGrid();
   });
 
   const presetSel = document.getElementById("presetSel");
-  (function buildPresetList() {
+  /* Options are addressed as "b<i>" for the built-in list and "u<i>" for the
+     user's own, so the two can be rebuilt independently without the ids of
+     one shifting the other. */
+  function rebuildPresetList() {
+    const keep = presetSel.value;
+    presetSel.innerHTML = '<option value="">— preset —</option>';
+
+    if (state.userPresets.length) {
+      const g = document.createElement("optgroup");
+      g.label = "Mijn presets";
+      state.userPresets.forEach((pr, i) => {
+        const o = document.createElement("option");
+        o.value = "u" + i;
+        o.textContent = pr.name;
+        g.appendChild(o);
+      });
+      presetSel.appendChild(g);
+    }
+
     const groups = {};
     PRESETS.forEach((pr, i) => {
       if (!groups[pr.cat]) {
@@ -1392,24 +1572,127 @@ const current_version = "20260829-124500";
         groups[pr.cat] = g;
       }
       const o = document.createElement("option");
-      o.value = String(i);
+      o.value = "b" + i;
       o.textContent = pr.name;
       groups[pr.cat].appendChild(o);
     });
-  })();
 
-  function applyPreset(i) {
-    const pr = PRESETS[i];
+    presetSel.value = [...presetSel.options].some(o => o.value === keep) ? keep : "";
+    updatePresetButtons();
+  }
+
+  function presetById(id) {
+    if (typeof id !== "string" || !id) return null;
+    const i = parseInt(id.slice(1), 10);
+    if (!Number.isFinite(i)) return null;
+    return id[0] === "u" ? state.userPresets[i] : PRESETS[i];
+  }
+
+  /* The user's own presets win a name clash — they are the ones being edited. */
+  function presetIdByName(name) {
+    if (!name) return "";
+    for (let i = 0; i < state.userPresets.length; i++) if (state.userPresets[i].name === name) return "u" + i;
+    for (let i = 0; i < PRESETS.length; i++) if (PRESETS[i].name === name) return "b" + i;
+    return "";
+  }
+
+  function applyPreset(id) {
+    const pr = presetById(id);
     if (!pr) return;
     const grid = {};
     Object.keys(pr.p).forEach(k => { grid[k] = pat(pr.p[k]); });
     loadPattern({ tempo: pr.tempo, swing: pr.swing || 0, length: pr.len, pattern: grid });
+    state.preset = pr.name;          // stored by name: survives reordering the list
+    presetSel.value = id;
+    updatePresetButtons();
   }
 
   presetSel.addEventListener("change", () => {
-    if (presetSel.value === "") return;
-    applyPreset(+presetSel.value);
+    if (presetSel.value === "") { updatePresetButtons(); return; }
+    applyPreset(presetSel.value);
   });
+
+  /* ---- saving the current pattern as a reusable preset ----
+     Stored in the same compact string notation as the built-ins, so a saved
+     preset is readable in the JSON and can be pasted into PRESETS as code. */
+  /* A preset entry is only accepted if it has a name and at least one row of
+     step notation — anything else would end up as a dead entry in the list. */
+  function isPresetEntry(e) {
+    if (!e || typeof e !== "object" || typeof e.name !== "string" || !e.name) return false;
+    if (!e.p || typeof e.p !== "object") return false;
+    return Object.keys(e.p).some(k => rows.indexOf(k) >= 0 && typeof e.p[k] === "string");
+  }
+
+  function presetLibrary() {
+    return {
+      format: "xox-presets",
+      version: 1,
+      presets: JSON.parse(JSON.stringify(state.userPresets))
+    };
+  }
+
+  /* Merge rather than replace: loading a library should never silently drop
+     presets the user already had. Same name wins for the incoming file. */
+  function loadPresetLibrary(obj) {
+    const incoming = (obj.presets || []).filter(isPresetEntry);
+    if (!incoming.length) throw new Error("Geen bruikbare presets in dit bestand");
+    incoming.forEach(pr => {
+      pr.cat = "Mijn presets";
+      const at = state.userPresets.findIndex(x => x.name === pr.name);
+      if (at >= 0) state.userPresets[at] = pr; else state.userPresets.push(pr);
+    });
+    rebuildPresetList();
+    return incoming.length;
+  }
+
+  function gridToStrings() {
+    const p = {};
+    rows.forEach(r => {
+      const row = state.pattern[r].slice(0, state.length);
+      if (!row.some(v => v === 1)) return;
+      let str = "";
+      for (let i = 0; i < row.length; i++) {
+        if (i > 0 && i % 4 === 0) str += " ";
+        str += row[i] === 1 ? "x" : ".";
+      }
+      p[r] = str;
+    });
+    return p;
+  }
+
+  function saveUserPreset() {
+    const name = (state.name || state.preset || "Pattern " + pad2(state.slot)).trim();
+    const entry = {
+      name: name, cat: "Mijn presets",
+      tempo: state.tempo, swing: state.swing, len: state.length,
+      p: gridToStrings()
+    };
+    const at = state.userPresets.findIndex(pr => pr.name === name);
+    if (at >= 0) state.userPresets[at] = entry;      // same name overwrites
+    else state.userPresets.push(entry);
+    state.preset = name;
+    rebuildPresetList();
+    presetSel.value = presetIdByName(name);
+    renderSongRows();
+    updatePresetButtons();
+  }
+
+  function deleteUserPreset() {
+    const id = presetSel.value;
+    if (!id || id[0] !== "u") return;
+    const i = parseInt(id.slice(1), 10);
+    state.userPresets.splice(i, 1);
+    presetSel.value = "";
+    rebuildPresetList();
+  }
+
+  function updatePresetButtons() {
+    const del = document.getElementById("presetDel");
+    if (del) del.disabled = !(presetSel.value && presetSel.value[0] === "u");
+  }
+
+  document.getElementById("presetSave").addEventListener("click", saveUserPreset);
+  document.getElementById("presetDel").addEventListener("click", deleteUserPreset);
 
   /* ============================================================
      UI — CHANNEL STRIP (per-voice tone module)
@@ -1739,14 +2022,14 @@ const current_version = "20260829-124500";
       put(`${PDF.M} ${y(top).toFixed(2)} m ${(PDF.W - PDF.M).toFixed(2)} ${y(top).toFixed(2)} l S\n`);
     }
 
-    const preset = presetSel.value !== "" ? PRESETS[+presetSel.value].name : "Custom pattern";
+    const preset = state.name || state.preset || "Custom pattern";
     const kitName = kitSel.value || "Custom kit";
     const stamp = new Date().toLocaleString("nl-NL", {
       year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit"
     });
 
     /* ---- header ---- */
-    label(PDF.M, 62, 22, "XOX  " + preset, "F2");
+    label(PDF.M, 62, 22, "XOX " + pad2(state.slot) + "  " + preset, "F2");
     label(PDF.M, 80, 9.5,
       `${state.tempo} BPM   |   swing ${state.swing}%   |   ${state.length} steps   |   kit: ${kitName}`,
       "F1", 0.35);
@@ -1858,6 +2141,21 @@ const current_version = "20260829-124500";
       top += 12;
     });
 
+    /* ---- song chain ---- */
+    if (state.song.length) {
+      top += 20;
+      label(PDF.M, top, 10, "Song", "F2");
+      top += 6;
+      rule(top, 0.5);
+      top += 14;
+      const perLine = 16;
+      for (let i = 0; i < state.song.length; i += perLine) {
+        const chunk = state.song.slice(i, i + perLine).map(pad2).join("  ");
+        label(PDF.M, top, 8, String(i + 1).padStart(3, " ") + ":  " + chunk, "F3", 0.1);
+        top += 12;
+      }
+    }
+
     /* ---- footer ---- */
     rule(PDF.H - 58, 0.8);
     label(PDF.M, PDF.H - 46, 7, "XOX Editor", "F1", 0.55);
@@ -1902,7 +2200,7 @@ const current_version = "20260829-124500";
     const blob = new Blob([bytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const preset = presetSel.value !== "" ? PRESETS[+presetSel.value].name : "pattern";
+    const preset = state.name || state.preset || "pattern";
     a.href = url;
     a.download = "xox-" + preset.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".pdf";
     document.body.appendChild(a);
@@ -1945,14 +2243,14 @@ const current_version = "20260829-124500";
 
   function buildStrudel() {
     const bank = STRUDEL_BANK[kitSel.value] || "RolandTR606";
-    const preset = presetSel.value !== "" ? PRESETS[+presetSel.value].name : "Custom pattern";
+    const preset = state.name || state.preset || "Custom pattern";
     const kitName = kitSel.value || "custom";
     const L = state.length;
     const beatsPerCycle = L / 4;                 // one cycle = one bar of the grid
     const hasAccent = state.pattern[ACCENT_ROW].slice(0, L).some(v => v === 1);
 
     const out = [];
-    out.push("// " + preset + "  —  exported from XOX Editor");
+    out.push("// " + preset + "  (pattern " + pad2(state.slot) + ")  —  exported from XOX Editor");
     out.push("// " + state.tempo + " BPM | swing " + state.swing + "% | " + L + " steps | kit: " + kitName);
     out.push("// Paste into https://strudel.cc — if a bank is missing a sound,");
     out.push("// swap the sample name (cr/rd/oh) or the bank name below.");
@@ -2064,26 +2362,264 @@ const current_version = "20260829-124500";
   });
 
   /* ============================================================
+     PATTERN SLOTS (00–99) AND SONG CHAIN
+     ============================================================ */
+  const slotInput = document.getElementById("slotInput");
+  const songPanel = document.getElementById("songPanel");
+  const songList = document.getElementById("songList");
+  const tabPattern = document.getElementById("tabPattern");
+  const tabSong = document.getElementById("tabSong");
+  const songCount = document.getElementById("songCount");
+
+  function pad2(n) { return String(n).padStart(2, "0"); }
+
+  function slotIsEmpty(i) {
+    const sl = state.slots[i];
+    return !rows.some(r => sl.pattern[r].some(v => v === 1));
+  }
+
+  /* The one place that changes which pattern is live. Everything else —
+     grid, sliders, song highlight — is redrawn from here. */
+  function setSlot(n) {
+    state.slot = clamp(Math.round(n), 0, SLOT_COUNT - 1);
+    slotInput.value = pad2(state.slot);
+    slotInput.classList.toggle("empty", slotIsEmpty(state.slot));
+    nameInput.value = state.name || "";
+
+    // swing and length belong to the pattern, so their controls follow it
+    swingEl.value = state.swing;
+    document.getElementById("swingVal").textContent = state.swing;
+    lenEl.value = state.length;
+    document.getElementById("lenVal").textContent = state.length;
+
+    if (currentStep >= state.length) currentStep = 0;
+    refreshGrid();
+    presetSel.value = presetIdByName(state.preset);
+    updatePresetButtons();
+    renderSongRows();
+  }
+
+  const nameInput = document.getElementById("nameInput");
+  nameInput.addEventListener("input", () => {
+    state.name = nameInput.value;
+    renderSongRows();
+  });
+  nameInput.addEventListener("keydown", e => { if (e.key === "Enter") nameInput.blur(); });
+
+  slotInput.addEventListener("focus", () => slotInput.select());
+  slotInput.addEventListener("input", () => {
+    const digits = slotInput.value.replace(/\D/g, "").slice(0, 2);
+    slotInput.value = digits;
+    if (digits.length === 2) { setSlot(+digits); slotInput.blur(); }
+  });
+  slotInput.addEventListener("change", () => {
+    const v = parseInt(slotInput.value, 10);
+    setSlot(Number.isFinite(v) ? v : state.slot);
+  });
+  slotInput.addEventListener("keydown", e => {
+    if (e.key === "Enter") { slotInput.blur(); }
+    if (e.key === "ArrowUp") { e.preventDefault(); setSlot(state.slot + 1); }
+    if (e.key === "ArrowDown") { e.preventDefault(); setSlot(state.slot - 1); }
+  });
+  document.getElementById("slotPrev").addEventListener("click", () => setSlot(state.slot - 1));
+  document.getElementById("slotNext").addEventListener("click", () => setSlot(state.slot + 1));
+
+  /* ---- song list: one column, two digits per cell ---- */
+  let songFocus = 0;
+
+  function renderSongRows() {
+    songCount.textContent = state.song.length ? state.song.length : "";
+    if (state.song.length === 0) {
+      songList.innerHTML = '<div class="songempty">Nog geen regels — klik "+ Line" of typ hieronder.</div>';
+      return;
+    }
+    // Rebuild only when the row count changed; otherwise just refresh values,
+    // so typing never loses focus mid-edit.
+    if (songList.children.length !== state.song.length || !songList.firstElementChild.classList.contains("songrow")) {
+      songList.innerHTML = "";
+      state.song.forEach((slot, i) => songList.appendChild(makeSongRow(i)));
+    }
+    [...songList.children].forEach((row, i) => {
+      const inp = row.querySelector("input");
+      if (document.activeElement !== inp) inp.value = pad2(state.song[i]);
+      row.querySelector(".n").textContent = i + 1;
+      const slot = state.slots[state.song[i]];
+      row.querySelector(".meta").textContent =
+        slotIsEmpty(state.song[i]) ? "leeg" : (slot.name || slot.preset || "");
+      row.classList.toggle("playing", state.playing && state.songMode && i === state.songRow);
+    });
+  }
+
+  function makeSongRow(index) {
+    const row = document.createElement("div");
+    row.className = "songrow";
+
+    const n = document.createElement("span");
+    n.className = "n";
+
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.inputMode = "numeric";
+    inp.maxLength = 2;
+
+    const meta = document.createElement("span");
+    meta.className = "meta";
+
+    inp.addEventListener("focus", () => { songFocus = rowIndex(row); inp.select(); });
+
+    inp.addEventListener("input", () => {
+      const i = rowIndex(row);
+      const digits = inp.value.replace(/\D/g, "").slice(0, 2);
+      inp.value = digits;
+      if (digits.length) state.song[i] = clamp(parseInt(digits, 10), 0, SLOT_COUNT - 1);
+      // Two digits in means this cell is done — jump on, adding a row if needed.
+      if (digits.length === 2) {
+        if (i === state.song.length - 1) addSongLine(state.song[i]);
+        focusSongRow(i + 1);
+        renderSongRows();
+      }
+    });
+
+    inp.addEventListener("blur", () => {
+      const i = rowIndex(row);
+      const v = parseInt(inp.value, 10);
+      state.song[i] = Number.isFinite(v) ? clamp(v, 0, SLOT_COUNT - 1) : state.song[i];
+      inp.value = pad2(state.song[i]);
+    });
+
+    inp.addEventListener("keydown", e => {
+      const i = rowIndex(row);
+      if (e.key === "Enter")      { e.preventDefault(); insertSongLine(i + 1); }
+      if (e.key === "ArrowDown")  { e.preventDefault(); focusSongRow(i + 1); }
+      if (e.key === "ArrowUp")    { e.preventDefault(); focusSongRow(i - 1); }
+      if (e.key === "Backspace" && inp.value === "") { e.preventDefault(); focusSongRow(i - 1); }
+    });
+
+    row.appendChild(n);
+    row.appendChild(inp);
+    row.appendChild(meta);
+    return row;
+  }
+
+  function rowIndex(row) { return [...songList.children].indexOf(row); }
+
+  function focusSongRow(i) {
+    const target = songList.children[clamp(i, 0, state.song.length - 1)];
+    if (!target) return;
+    const inp = target.querySelector("input");
+    if (inp) { inp.focus(); inp.select(); }
+  }
+
+  function addSongLine(value) {
+    state.song.push(clamp(value === undefined ? state.slot : value, 0, SLOT_COUNT - 1));
+    renderSongRows();
+    return state.song.length - 1;
+  }
+
+  function insertSongLine(at) {
+    const i = clamp(at, 0, state.song.length);
+    state.song.splice(i, 0, state.slot);
+    renderSongRows();
+    focusSongRow(i);
+  }
+
+  function deleteSongLine(at) {
+    if (!state.song.length) return;
+    const i = clamp(at, 0, state.song.length - 1);
+    state.song.splice(i, 1);
+    if (state.songRow >= state.song.length) state.songRow = 0;
+    songFocus = clamp(i, 0, state.song.length - 1);
+    renderSongRows();
+    focusSongRow(songFocus);
+  }
+
+  document.getElementById("songAdd").addEventListener("click", () => {
+    const i = addSongLine();
+    focusSongRow(i);
+  });
+  document.getElementById("songInsert").addEventListener("click", () => {
+    insertSongLine(state.song.length ? songFocus : 0);
+  });
+  document.getElementById("songDelete").addEventListener("click", () => deleteSongLine(songFocus));
+
+  /* ---- view switching: pattern editor or song list ---- */
+  let songView = false;
+
+  function updatePlayLabel() {
+    playBtn.textContent = state.playing
+      ? "■ Stop"
+      : (state.songMode ? "▶ Play song" : "▶ Play");
+  }
+
+  /* The tab is the mode: the Song tab plays the chain, the Pattern tab
+     loops the pattern you are looking at. One less thing to forget. */
+  function setView(toSong) {
+    songView = toSong;
+    state.songMode = toSong;
+    if (toSong && state.song.length && !state.playing) {
+      state.songRow = 0;
+      setSlot(state.song[0]);
+    }
+    updatePlayLabel();
+    document.querySelectorAll(".view-pattern").forEach(el => { el.hidden = toSong; });
+    songPanel.hidden = !toSong;
+    tabPattern.classList.toggle("sel", !toSong);
+    tabSong.classList.toggle("sel", toSong);
+    tabPattern.setAttribute("aria-selected", String(!toSong));
+    tabSong.setAttribute("aria-selected", String(toSong));
+    if (toSong) { renderSongRows(); focusSongRow(songFocus); }
+  }
+  tabPattern.addEventListener("click", () => setView(false));
+  tabSong.addEventListener("click", () => setView(true));
+
+  // Left/right arrows move between tabs, as a tablist is expected to.
+  [tabPattern, tabSong].forEach(t => t.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      setView(!songView);
+      (songView ? tabSong : tabPattern).focus();
+    }
+  }));
+
+  /* ============================================================
      IMPORT / EXPORT
      ============================================================ */
+  /* v3 is a project: every used slot, the song chain, and the kit.
+     Empty slots are left out — a fresh project is a handful of lines,
+     not 100 blocks of zeros. */
   function serialize() {
+    const slots = {};
+    for (let i = 0; i < SLOT_COUNT; i++) {
+      if (slotIsEmpty(i) && i !== state.slot) continue;
+      slots[pad2(i)] = {
+        pattern: JSON.parse(JSON.stringify(state.slots[i].pattern)),
+        length: state.slots[i].length,
+        swing: state.slots[i].swing,
+        preset: state.slots[i].preset,
+        name: state.slots[i].name
+      };
+    }
     return {
-      format: "xox-pattern",
-      version: 2,
+      format: "xox-project",
+      version: 3,
       tempo: state.tempo,
-      swing: state.swing,
-      length: state.length,
       human: state.human,
       rows: rows.slice(),
-      pattern: JSON.parse(JSON.stringify(state.pattern)),
-      kit: JSON.parse(JSON.stringify(state.kit))
+      current: state.slot,
+      slots: slots,
+      song: state.song.slice(),
+      songMode: state.songMode,
+      userPresets: JSON.parse(JSON.stringify(state.userPresets)),
+      kit: JSON.parse(JSON.stringify(state.kit)),
+      // Kept so v3 files still open in anything that reads the v2 shape.
+      swing: state.swing,
+      length: state.length,
+      pattern: JSON.parse(JSON.stringify(state.pattern))
     };
   }
 
-  function loadPattern(obj) {
-    if (!obj || typeof obj !== "object") throw new Error("Geen geldig object");
-    const src = obj.pattern || obj.p;
-    if (!src || typeof src !== "object") throw new Error("Veld 'pattern' ontbreekt");
+  /* Reads one grid object into a fresh 16-step pattern. */
+  function readGrid(src) {
     const fresh = emptyPattern();
     rows.forEach(r => {
       const arr = src[r];
@@ -2091,20 +2627,62 @@ const current_version = "20260829-124500";
         for (let s = 0; s < MAX_STEPS; s++) fresh[r][s] = arr[s] ? 1 : 0;
       }
     });
-    state.pattern = fresh;
+    return fresh;
+  }
+
+  /* v3 projects carry every slot and the song chain; v1/v2 files carry a
+     single pattern, which lands in the slot that is currently selected. */
+  function loadProject(obj) {
+    if (Array.isArray(obj.userPresets)) {
+      state.userPresets = obj.userPresets.filter(isPresetEntry);
+      rebuildPresetList();
+    }
+    Object.keys(obj.slots).forEach(key => {
+      const i = parseInt(key, 10);
+      if (!Number.isFinite(i) || i < 0 || i >= SLOT_COUNT) return;
+      const src = obj.slots[key];
+      if (!src || typeof src.pattern !== "object") return;
+      state.slots[i] = {
+        pattern: readGrid(src.pattern),
+        length: Number.isFinite(+src.length) ? clamp(Math.round(+src.length), 1, MAX_STEPS) : 16,
+        swing: Number.isFinite(+src.swing) ? clamp(Math.round(+src.swing), 0, 70) : 0,
+        preset: typeof src.preset === "string" ? src.preset : null,
+        name: typeof src.name === "string" ? src.name : ""
+      };
+    });
+
+    state.song = Array.isArray(obj.song)
+      ? obj.song.filter(v => Number.isFinite(+v)).map(v => clamp(Math.round(+v), 0, SLOT_COUNT - 1))
+      : [];
+    state.songRow = 0;
+    renderSongRows();
+    if (obj.songMode && state.song.length) setView(true);
+  }
+
+  function loadPattern(obj) {
+    if (!obj || typeof obj !== "object") throw new Error("Geen geldig object");
+    const isProject = obj.slots && typeof obj.slots === "object";
+    if (isProject) loadProject(obj);
+    const src = obj.pattern || obj.p;
+    if (!isProject && (!src || typeof src !== "object")) throw new Error("Veld 'pattern' ontbreekt");
+    if (isProject) {
+      setSlot(Number.isFinite(+obj.current) ? +obj.current : 0);
+    } else {
+      state.pattern = readGrid(src);
+    }
 
     if (Number.isFinite(+obj.tempo)) {
       state.tempo = Math.min(220, Math.max(40, Math.round(+obj.tempo)));
       tempoEl.value = state.tempo;
       document.getElementById("tempoVal").textContent = state.tempo;
     }
-    if (Number.isFinite(+obj.swing)) {
+    if (!isProject && Number.isFinite(+obj.swing)) {
       state.swing = Math.min(70, Math.max(0, Math.round(+obj.swing)));
       swingEl.value = state.swing;
       document.getElementById("swingVal").textContent = state.swing;
     }
     const L = obj.length !== undefined ? obj.length : obj.len;
-    if (Number.isFinite(+L)) {
+    if (!isProject && Number.isFinite(+L)) {
       state.length = Math.min(MAX_STEPS, Math.max(1, Math.round(+L)));
       lenEl.value = state.length;
       document.getElementById("lenVal").textContent = state.length;
@@ -2155,11 +2733,31 @@ const current_version = "20260829-124500";
       return;
     }
     try {
-      loadPattern(JSON.parse(ioEl.value));
+      const obj = JSON.parse(ioEl.value);
+      if (obj && obj.format === "xox-presets") loadPresetLibrary(obj);
+      else loadPattern(obj);
       ioEl.classList.remove("show");
     } catch (err) {
       alert("Import mislukt: " + err.message);
     }
+  });
+
+  function downloadJson(obj, filename) {
+    const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  document.getElementById("presetsDlBtn").addEventListener("click", () => {
+    if (!state.userPresets.length) {
+      ioEl.classList.add("show");
+      ioEl.value = "Nog geen eigen presets — gebruik eerst \"Save preset\".";
+      return;
+    }
+    downloadJson(presetLibrary(), "xox-presets.json");
   });
 
   document.getElementById("downloadBtn").addEventListener("click", () => {
@@ -2181,8 +2779,11 @@ const current_version = "20260829-124500";
     if (!f) return;
     const rd = new FileReader();
     rd.onload = () => {
-      try { loadPattern(JSON.parse(rd.result)); }
-      catch (err) { alert("Laden mislukt: " + err.message); }
+      try {
+        const obj = JSON.parse(rd.result);
+        if (obj && obj.format === "xox-presets") loadPresetLibrary(obj);
+        else loadPattern(obj);
+      } catch (err) { alert("Laden mislukt: " + err.message); }
     };
     rd.readAsText(f);
     fileIn.value = "";
@@ -2205,8 +2806,11 @@ const current_version = "20260829-124500";
   buildChanTabs();
   buildChanControls();
   buildMixer();
-  applyPreset(0);
-  presetSel.value = "0";
+  rebuildPresetList();
+  applyPreset("b0");
+  setSlot(0);
+  renderSongRows();
+  setView(false);
 })();
 </script>
 </body>
