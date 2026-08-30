@@ -10,6 +10,8 @@
 # version : 20260828-183512 - Preset library expanded to 59 patterns in 8 categories, compact string notation with pat() parser, grouped dropdown with optgroups
 # version : 20260828-184930 - Per-channel tone module: persistent filter (LP/HP/BP) + resonance, tanh drive with makeup gain, tune and decay scaling per voice, channel level; 8 kit presets; kit is saved in the JSON export (format v2)
 # version : 20260829-111700 - Numeric entry boxes for every channel parameter, mixer strip with per-voice level and mute, dependency-free PDF export of the pattern sheet, kit table and text notation
+# version : 20260829-114500 - Strudel export: pattern and accents to mini-notation, channel settings mapped to bank/gain/filter/speed/clip/distort, tempo as setcpm with correct beats-per-cycle for non-16-step patterns
+# version : 20260829-121500 - Clap (CP) added as eighth voice: burst-flam synthesis with filtered tail, channel defaults, clap settings in all kits, clap rows in 12 presets, cp in the Strudel sample map; fixed row shading offset in the PDF kit table
 -->
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -277,6 +279,7 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
       <button class="btn ghost" id="importBtn">Import JSON</button>
       <button class="btn ghost" id="downloadBtn">Download .json</button>
       <button class="btn ghost" id="pdfBtn">Export PDF</button>
+      <button class="btn ghost" id="strudelBtn">Strudel code</button>
       <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
       <button class="btn ghost" id="uploadBtn">Load file…</button>
     </div>
@@ -286,7 +289,7 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
       De <b>ACC</b>-rij is de globale accent-rij (606-stijl): elke stap met accent klinkt harder.
       Het knopje links van de naam mute't een stem.
       In het kanaalpaneel staat per stem een tone-module: tune, decay, filter, resonantie en drive.
-      De export bevat zowel het pattern als de kit-instellingen.
+      De export bevat zowel het pattern als de kit-instellingen. "Strudel code" zet het pattern om naar code voor de strudel.cc REPL en kopieert het naar het klembord.
     </div>
   </div>
 
@@ -297,7 +300,9 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
 // # version : 20260828-183512 - Preset library expanded to 59 patterns in 8 categories, compact string notation with pat() parser, grouped dropdown with optgroups
 // # version : 20260828-184930 - Per-channel tone module: persistent filter (LP/HP/BP) + resonance, tanh drive with makeup gain, tune and decay scaling per voice, channel level; 8 kit presets; kit is saved in the JSON export (format v2)
 // # version : 20260829-111700 - Numeric entry boxes for every channel parameter, mixer strip with per-voice level and mute, dependency-free PDF export of the pattern sheet, kit table and text notation
-const current_version = "20260829-111700";
+// # version : 20260829-114500 - Strudel export: pattern and accents to mini-notation, channel settings mapped to bank/gain/filter/speed/clip/distort, tempo as setcpm with correct beats-per-cycle for non-16-step patterns
+// # version : 20260829-121500 - Clap (CP) added as eighth voice: burst-flam synthesis with filtered tail, channel defaults, clap settings in all kits, clap rows in 12 presets, cp in the Strudel sample map; fixed row shading offset in the PDF kit table
+const current_version = "20260829-121500";
 
 (function () {
   "use strict";
@@ -314,6 +319,7 @@ const current_version = "20260829-111700";
   const VOICES = [
     { id: "BD", name: "Bass Drum", gain: 1.00 },
     { id: "SD", name: "Snare",     gain: 0.75 },
+    { id: "CP", name: "Clap",      gain: 0.70 },
     { id: "LT", name: "Low Tom",   gain: 0.80 },
     { id: "HT", name: "Hi Tom",    gain: 0.80 },
     { id: "CH", name: "Closed HH", gain: 0.45 },
@@ -336,6 +342,7 @@ const current_version = "20260829-111700";
   const CHANNEL_DEFAULTS = {
     BD: { level:1.00, tune:1.00, decay:1.00, ftype:"lowpass",  cutoff:6000,  reso:0.7, drive:0.15 },
     SD: { level:1.00, tune:1.00, decay:1.00, ftype:"bandpass", cutoff:2400,  reso:0.5, drive:0.10 },
+    CP: { level:1.00, tune:1.00, decay:1.00, ftype:"bandpass", cutoff:1400,  reso:0.9, drive:0.05 },
     LT: { level:1.00, tune:1.00, decay:1.00, ftype:"lowpass",  cutoff:4000,  reso:0.8, drive:0.08 },
     HT: { level:1.00, tune:1.00, decay:1.00, ftype:"lowpass",  cutoff:5000,  reso:0.8, drive:0.08 },
     CH: { level:1.00, tune:1.00, decay:1.00, ftype:"highpass", cutoff:6000,  reso:0.7, drive:0.00 },
@@ -358,6 +365,7 @@ const current_version = "20260829-111700";
     "909 wide": {
       BD: { tune:0.82, decay:1.55, ftype:"lowpass",  cutoff:3200, reso:1.6, drive:0.35, level:1.10 },
       SD: { tune:0.95, decay:1.30, ftype:"bandpass", cutoff:1900, reso:0.9, drive:0.28 },
+      CP: { decay:1.40, ftype:"bandpass", cutoff:1600, reso:0.8, drive:0.22, level:1.05 },
       LT: { tune:0.85, decay:1.45, cutoff:3000, reso:1.4, drive:0.20 },
       HT: { tune:0.90, decay:1.35, cutoff:3800, reso:1.4, drive:0.20 },
       CH: { decay:0.85, ftype:"highpass", cutoff:7500, reso:1.2 },
@@ -367,6 +375,7 @@ const current_version = "20260829-111700";
     "808 boom": {
       BD: { tune:0.62, decay:2.60, ftype:"lowpass", cutoff:1200, reso:2.2, drive:0.10, level:1.20 },
       SD: { tune:0.90, decay:1.10, ftype:"bandpass", cutoff:1600, reso:1.2, drive:0.05 },
+      CP: { tune:0.95, decay:1.20, ftype:"bandpass", cutoff:1300, reso:1.0 },
       LT: { tune:0.70, decay:2.00, cutoff:2200, reso:1.8 },
       HT: { tune:0.78, decay:1.80, cutoff:2800, reso:1.8 },
       CH: { decay:0.70, cutoff:8500 },
@@ -376,6 +385,7 @@ const current_version = "20260829-111700";
     "Lo-fi tape": {
       BD: { decay:0.90, ftype:"lowpass", cutoff:2200, reso:1.0, drive:0.55 },
       SD: { decay:0.80, ftype:"lowpass", cutoff:3000, reso:1.0, drive:0.50 },
+      CP: { decay:0.85, ftype:"lowpass", cutoff:2600, reso:1.0, drive:0.45 },
       LT: { ftype:"lowpass", cutoff:2000, drive:0.40 },
       HT: { ftype:"lowpass", cutoff:2600, drive:0.40 },
       CH: { ftype:"bandpass", cutoff:5000, reso:1.5, decay:0.80, drive:0.30 },
@@ -385,6 +395,7 @@ const current_version = "20260829-111700";
     "Dub echo chamber": {
       BD: { tune:0.75, decay:1.80, ftype:"lowpass", cutoff:900, reso:3.5, drive:0.25 },
       SD: { tune:1.15, decay:1.60, ftype:"bandpass", cutoff:3200, reso:4.0, drive:0.20 },
+      CP: { tune:1.05, decay:2.00, ftype:"bandpass", cutoff:2200, reso:5.0, drive:0.15 },
       LT: { tune:0.80, decay:2.20, ftype:"bandpass", cutoff:400, reso:5.0 },
       HT: { tune:0.95, decay:2.00, ftype:"bandpass", cutoff:700, reso:5.0 },
       CH: { decay:0.60, ftype:"bandpass", cutoff:9000, reso:6.0 },
@@ -394,6 +405,7 @@ const current_version = "20260829-111700";
     "Acid squelch": {
       BD: { decay:0.75, ftype:"lowpass", cutoff:2600, reso:8.0, drive:0.45 },
       SD: { decay:0.70, ftype:"bandpass", cutoff:2800, reso:7.0, drive:0.35 },
+      CP: { decay:0.75, ftype:"bandpass", cutoff:2000, reso:7.0, drive:0.30 },
       LT: { ftype:"lowpass", cutoff:1400, reso:9.0, drive:0.30 },
       HT: { ftype:"lowpass", cutoff:2000, reso:9.0, drive:0.30 },
       CH: { ftype:"bandpass", cutoff:8000, reso:8.0, decay:0.70 },
@@ -403,6 +415,7 @@ const current_version = "20260829-111700";
     "Deep sub": {
       BD: { tune:0.55, decay:2.20, ftype:"lowpass", cutoff:700, reso:1.2, drive:0.20, level:1.25 },
       SD: { tune:1.05, decay:0.90, ftype:"highpass", cutoff:900, reso:0.7 },
+      CP: { tune:1.00, decay:0.85, ftype:"highpass", cutoff:800, reso:0.7 },
       LT: { tune:0.65, decay:1.60, ftype:"lowpass", cutoff:1200 },
       HT: { tune:0.75, decay:1.40, ftype:"lowpass", cutoff:1600 },
       CH: { level:0.75, cutoff:9000 },
@@ -412,6 +425,7 @@ const current_version = "20260829-111700";
     "Bright pop": {
       BD: { tune:1.10, decay:0.80, ftype:"lowpass", cutoff:9000, reso:0.7, drive:0.20 },
       SD: { tune:1.10, decay:1.10, ftype:"bandpass", cutoff:3200, reso:0.6, drive:0.15 },
+      CP: { tune:1.08, decay:1.15, ftype:"bandpass", cutoff:2000, reso:0.6, drive:0.10 },
       LT: { tune:1.10, decay:0.90, cutoff:6000 },
       HT: { tune:1.15, decay:0.85, cutoff:7000 },
       CH: { tune:1.10, cutoff:9000, level:1.10 },
@@ -444,36 +458,42 @@ const current_version = "20260829-111700";
     { cat:"House & Dance", name:"Four on the floor", tempo:124, swing:0, len:16, p:{
       BD: "x... x... x... x...",
       SD: ".... x... .... x...",
+      CP: ".... x... .... x...",
       CH: "..x. ..x. ..x. ..x.",
       OH: ".... .... .... ..x.",
       ACC:"x... x... x... x..." }},
     { cat:"House & Dance", name:"Deep house", tempo:122, swing:0, len:16, p:{
       BD: "x... x... x... x...",
       SD: ".... x... .... x...",
+      CP: ".... x... .... x...",
       CH: ".x.x .x.x .x.x .x.x",
       OH: "..x. ..x. ..x. ..x.",
       ACC:"x... x... x... x..." }},
     { cat:"House & Dance", name:"Tech house", tempo:126, swing:0, len:16, p:{
       BD: "x... x... x... x...",
       SD: ".... x... .... x...",
+      CP: ".... x... .... x...",
       CH: "..x. .xx. ..x. .xx.",
       OH: ".... ..x. .... ..x.",
       ACC:"x... x... x... x..." }},
     { cat:"House & Dance", name:"Disco", tempo:118, swing:0, len:16, p:{
       BD: "x... x... x... x...",
       SD: ".... x... .... x...",
+      CP: ".... x... .... x...",
       CH: "x.x. x.x. x.x. x.x.",
       OH: "..x. ..x. ..x. ..x.",
       ACC:"x... x... x... x..." }},
     { cat:"House & Dance", name:"Garage 2-step", tempo:134, swing:55, len:16, p:{
       BD: "x... .... .x.. ....",
       SD: ".... x... .... x...",
+      CP: ".... x... ..x. ....",
       CH: "x.xx .x.x x.xx .x.x",
       OH: ".... .x.. .... .x..",
       ACC:"x... x... .x.. x..." }},
     { cat:"House & Dance", name:"Trance", tempo:138, swing:0, len:16, p:{
       BD: "x... x... x... x...",
       SD: ".... x... .... x...",
+      CP: ".... x... .... x...",
       CH: "x.x. x.x. x.x. x.x.",
       OH: "..x. ..x. ..x. ..x.",
       CY: "x... .... .... ....",
@@ -481,11 +501,13 @@ const current_version = "20260829-111700";
     { cat:"House & Dance", name:"Hard techno", tempo:145, swing:0, len:16, p:{
       BD: "x... x... x... x...",
       SD: ".... x... .... x...",
+      CP: ".... x... .... x...",
       CH: "xxxx xxxx xxxx xxxx",
       OH: ".... .... .... ..x.",
       ACC:"x..x x..x x..x x..x" }},
     { cat:"House & Dance", name:"Progressive", tempo:122, swing:0, len:16, p:{
       BD: "x... x... x... x...",
+      CP: ".... x... .... x...",
       CH: "..x. ..x. ..x. ..x.",
       OH: ".... .... .... ..x.",
       LT: ".... .... x... ....",
@@ -500,6 +522,7 @@ const current_version = "20260829-111700";
     { cat:"Hip hop & Breaks", name:"Trap", tempo:140, swing:0, len:16, p:{
       BD: "x... ..x. .x.. ....",
       SD: ".... .... x... ....",
+      CP: ".... .... x... ....",
       CH: "xxxx xxxx xxxx xxxx",
       OH: ".... .... .... ..x.",
       ACC:".... .... x... ...." }},
@@ -605,6 +628,7 @@ const current_version = "20260829-111700";
       ACC:"x... .... x... ...." }},
     { cat:"Latin", name:"Reggaeton", tempo:96, swing:0, len:16, p:{
       BD: "x... .... x... ....",
+      CP: "...x ..x. ...x ..x.",
       SD: "...x ..x. ...x ..x.",
       CH: "x.x. x.x. x.x. x.x.",
       ACC:"x... x... x... x..." }},
@@ -726,12 +750,14 @@ const current_version = "20260829-111700";
     { cat:"Electro & 606", name:"Electro funk", tempo:112, swing:0, len:16, p:{
       BD: "x..x ..x. ..x. .x..",
       SD: ".... x... .... x...",
+      CP: ".... x... .... x...",
       CH: "x.x. x.x. x.x. x.x.",
       OH: ".... .... .... ..x.",
       ACC:"x... x... .... x..." }},
     { cat:"Electro & 606", name:"Miami bass", tempo:138, swing:0, len:16, p:{
       BD: "x..x ..x. x..x ..x.",
       SD: ".... x... .... x...",
+      CP: ".... x... .... x...",
       CH: "xxxx xxxx xxxx xxxx",
       ACC:".... x... .... x..." }},
     { cat:"Electro & 606", name:"Industrial", tempo:132, swing:0, len:16, p:{
@@ -957,6 +983,31 @@ const current_version = "20260829-111700";
         o.connect(a).connect(dest);
         o.start(t); o.stop(t + 0.15 * dc + 0.05);
       });
+    },
+    CP(t, g, p, dest) {
+      const tu = p.tune, dc = p.decay;
+      // What the ear reads as "clap" is three near-identical bursts a few
+      // milliseconds apart (the flam), followed by a longer room-ish tail.
+      // The burst spacing stays fixed — it's the flam, not part of the decay.
+      [0, 0.011, 0.021].forEach(off => {
+        const n = noiseSource();
+        const bp = ctx.createBiquadFilter();
+        bp.type = "bandpass"; bp.frequency.value = 1000 * tu; bp.Q.value = 1.4;
+        const a = ctx.createGain();
+        env(a, t + off, g * 0.55, 0.013, 0.001);
+        n.connect(bp).connect(a).connect(dest);
+        n.start(t + off); n.stop(t + off + 0.03);
+      });
+
+      const tail = noiseSource();
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass"; bp.frequency.value = 1200 * tu; bp.Q.value = 1.0;
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass"; hp.frequency.value = 600 * tu;
+      const a = ctx.createGain();
+      env(a, t + 0.030, g * 0.5, 0.22 * dc, 0.002);
+      tail.connect(bp).connect(hp).connect(a).connect(dest);
+      tail.start(t + 0.030); tail.stop(t + 0.030 + 0.25 * dc + 0.05);
     },
     LT(t, g, p, dest) { tom(t, g, 105, 62, 0.30, p, dest); },
     HT(t, g, p, dest) { tom(t, g, 170, 104, 0.24, p, dest); },
@@ -1260,7 +1311,7 @@ const current_version = "20260829-111700";
   });
 
   document.getElementById("randBtn").addEventListener("click", () => {
-    const density = { BD: 0.30, SD: 0.16, LT: 0.08, HT: 0.08, CH: 0.55, OH: 0.10, CY: 0.03, ACC: 0.25 };
+    const density = { BD: 0.30, SD: 0.16, CP: 0.10, LT: 0.08, HT: 0.08, CH: 0.55, OH: 0.10, CY: 0.03, ACC: 0.25 };
     rows.forEach(r => {
       for (let s = 0; s < MAX_STEPS; s++) {
         let d = density[r];
@@ -1709,7 +1760,7 @@ const current_version = "20260829-111700";
     const FT = { off: "off", lowpass: "LP", highpass: "HP", bandpass: "BP" };
     VOICES.forEach((v, i) => {
       const k = state.kit[v.id];
-      if (i % 2 === 1) box(PDF.M - 3, top + 4, PDF.W - 2 * PDF.M + 6, 15, 0.955);
+      if (i % 2 === 1) box(PDF.M - 3, top - 11, PDF.W - 2 * PDF.M + 6, 15, 0.955);
       const cells = [
         { v: v.id + "  " + v.name, align: "l", font: "F1" },
         { v: k.level.toFixed(2),  align: "r", font: "F3" },
@@ -1802,6 +1853,135 @@ const current_version = "20260829-111700";
   }
 
   document.getElementById("pdfBtn").addEventListener("click", downloadPdf);
+
+  /* ============================================================
+     STRUDEL EXPORT
+
+     Turns the pattern + kit into code for the strudel.cc REPL.
+     Strudel plays samples, not our oscillators, so this is a
+     translation and not a copy: the grid and the accents come across
+     exactly, the tone module comes across as closely as sample
+     playback allows (see the notes per parameter below).
+     ============================================================ */
+  const STRUDEL_SAMPLE = {
+    BD: "bd", SD: "sd", CP: "cp", LT: "lt", HT: "ht", CH: "hh", OH: "oh", CY: "cr"
+  };
+
+  /* Kit name → closest drum machine bank in Strudel's library. */
+  const STRUDEL_BANK = {
+    "909 wide": "RolandTR909",
+    "808 boom": "RolandTR808",
+    "Deep sub": "RolandTR808",
+    "Bright pop": "RolandTR707"
+  };
+
+  /* Compact number for code output: 1.00 -> 1, 0.62 -> .62, 1.10 -> 1.1 */
+  function num(v, d) {
+    let s = v.toFixed(d === undefined ? 2 : d);
+    if (s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");
+    if (s.indexOf("0.") === 0) s = s.slice(1);
+    else if (s.indexOf("-0.") === 0) s = "-" + s.slice(2);
+    return s;
+  }
+
+  function buildStrudel() {
+    const bank = STRUDEL_BANK[kitSel.value] || "RolandTR606";
+    const preset = presetSel.value !== "" ? PRESETS[+presetSel.value].name : "Custom pattern";
+    const kitName = kitSel.value || "custom";
+    const L = state.length;
+    const beatsPerCycle = L / 4;                 // one cycle = one bar of the grid
+    const hasAccent = state.pattern[ACCENT_ROW].slice(0, L).some(v => v === 1);
+
+    const out = [];
+    out.push("// " + preset + "  —  exported from XOX Editor");
+    out.push("// " + state.tempo + " BPM | swing " + state.swing + "% | " + L + " steps | kit: " + kitName);
+    out.push("// Paste into https://strudel.cc — if a bank is missing a sound,");
+    out.push("// swap the sample name (cr/rd/oh) or the bank name below.");
+    out.push("");
+    out.push("setcpm(" + state.tempo + "/" + num(beatsPerCycle, 2) + ")");
+    out.push("");
+
+    const layers = [];
+    VOICES.forEach(v => {
+      const row = state.pattern[v.id];
+      if (!row.slice(0, L).some(x => x === 1)) return;   // silent voice, skip
+
+      const k = state.kit[v.id];
+      const smp = STRUDEL_SAMPLE[v.id];
+
+      // Step grid → mini-notation, one token per step, grouped per beat.
+      let seqStr = "";
+      for (let s = 0; s < L; s++) {
+        if (s > 0) seqStr += (s % 4 === 0) ? "  " : " ";
+        seqStr += row[s] === 1 ? smp : "~";
+      }
+
+      // Accent + channel level folded into one gain pattern.
+      let gainStr;
+      if (hasAccent) {
+        const g = [];
+        for (let s = 0; s < L; s++) {
+          const acc = state.pattern[ACCENT_ROW][s] === 1;
+          g.push(num(k.level * (acc ? ACCENT_GAIN : NORMAL_GAIN), 2));
+        }
+        gainStr = '.gain("' + g.join(" ") + '")';
+      } else {
+        gainStr = ".gain(" + num(k.level * NORMAL_GAIN, 2) + ")";
+      }
+
+      const lines = [];
+      lines.push('  s("' + seqStr + '").bank("' + bank + '")');
+      lines.push("    " + gainStr);
+
+      if (k.ftype === "lowpass")  lines.push("    .lpf(" + Math.round(k.cutoff) + ").lpq(" + num(k.reso, 1) + ")");
+      if (k.ftype === "highpass") lines.push("    .hpf(" + Math.round(k.cutoff) + ").hpq(" + num(k.reso, 1) + ")");
+      if (k.ftype === "bandpass") lines.push("    .bpf(" + Math.round(k.cutoff) + ").bpq(" + num(k.reso, 1) + ")");
+
+      // Tune maps onto sample playback rate — pitch and length move together,
+      // which is exactly what tuning an analog voice does anyway.
+      if (Math.abs(k.tune - 1) > 0.005) lines.push("    .speed(" + num(k.tune, 2) + ")");
+
+      // Decay has no true sample equivalent. Shortening works (gate the sample),
+      // lengthening does not — you cannot stretch a sample past its end.
+      let note = "";
+      if (k.decay < 0.995) lines.push("    .clip(" + num(k.decay, 2) + ")");
+      else if (k.decay > 1.005) note = "  (decay " + num(k.decay, 2) + "x has no sample equivalent — try .room() or a longer sample)";
+
+      if (k.drive > 0.005) lines.push('    .distort("' + num(1 + k.drive * 3, 2) + ':.6")');
+
+      const body = lines.join("\n");
+      const head = "  // " + v.id + " — " + v.name + note;
+      if (state.muted[v.id]) {
+        layers.push(head + "  (muted)\n" + body.split("\n").map(l => "  // " + l.trim()).join("\n"));
+      } else {
+        layers.push(head + "\n" + body);
+      }
+    });
+
+    // Muted voices are commented out, so they must not carry a stack comma.
+    const active = layers.filter(l => !l.includes("(muted)"));
+    const muted = layers.filter(l => l.includes("(muted)"));
+
+    out.push("stack(");
+    out.push(active.join(",\n\n"));
+    if (muted.length) out.push("\n" + muted.join("\n\n"));
+    out.push(")");
+    if (state.swing > 0) out.push("  .swingBy(" + num(state.swing / 100 * 0.66, 3) + ", 4)");
+    out.push("");
+
+    return out.join("\n");
+  }
+
+  document.getElementById("strudelBtn").addEventListener("click", () => {
+    const code = buildStrudel();
+    ioEl.classList.add("show");
+    ioEl.value = code;
+    ioEl.focus();
+    ioEl.select();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).catch(() => {});
+    }
+  });
 
   /* ============================================================
      IMPORT / EXPORT

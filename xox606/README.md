@@ -2,14 +2,14 @@
 
 A browser-based 606-style step sequencer with per-voice tone shaping. Pure synthesis (no samples), persistent channel strips with filter + drive, 59 drum patterns in 8 categories, and 8 kit voicings.
 
-**Current version:** 20260829-111700  
-**Status:** MVP + tone module + PDF export (alpha)
+**Current version:** 20260829-121500  
+**Status:** MVP + tone module + PDF and Strudel export (alpha)
 
 ---
 
 ## What It Does
 
-- **16-step drum grid** with 7 synthesized voices (BD, SD, LT, HT, CH, OH, CY) + global accent row
+- **16-step drum grid** with 8 synthesized voices (BD, SD, CP, LT, HT, CH, OH, CY) + global accent row
 - **Per-voice tone module:** tuning, decay scaling, filter type/cutoff/resonance, tanh drive with makeup gain, channel level
 - **8 kit presets** (606 dry, 909 wide, 808 boom, lo-fi tape, dub chamber, acid squelch, deep sub, bright pop) as overlays on defaults
 - **59 drum patterns** across 8 categories (house, hip-hop, rock, latin, jazz, reggae, afro, electro)
@@ -18,6 +18,7 @@ A browser-based 606-style step sequencer with per-voice tone shaping. Pure synth
 - **Mixer strip** with per-voice level and mute in one view
 - **JSON export/import** (format v2: includes kit settings)
 - **PDF export** — printable pattern sheet, kit table and text notation, no dependencies
+- **Strudel export** — pattern and kit translated to code for the strudel.cc REPL
 - **Web Audio API synthesis** with lookahead scheduler for sample-accurate timing
 - **Swing/shuffle** per pattern (0–70%)
 - **Master volume + limiter**
@@ -57,7 +58,7 @@ This is a known gap — see [Sync & Timing](#sync--timing) below.
                     → [master] → [limiter] → [audio output]
 ```
 
-Each voice gets a persistent channel strip (`channels[voiceId]`), built once at `initAudio()`. Per hit, only the sound generator (oscillator/noise) is created and routed into that strip's input.
+Each voice gets a persistent channel strip (`channels[voiceId]`), built once at `initAudio()`. Note that the clap (CP) is not a TR-606 voice — the 606 had no clap. It is included because the tone module already takes this engine well past the original machine. Per hit, only the sound generator (oscillator/noise) is created and routed into that strip's input.
 
 ### Per-Voice State
 
@@ -109,7 +110,7 @@ state.kit = {
   "tempo": 124,
   "swing": 12,
   "length": 16,
-  "rows": ["BD", "SD", "LT", "HT", "CH", "OH", "CY", "ACC"],
+  "rows": ["BD", "SD", "CP", "LT", "HT", "CH", "OH", "CY", "ACC"],
   "pattern": { "BD": [1,0,0,0,...], ... },
   "kit": { "BD": { "level": 1, ... }, ... }
 }
@@ -186,6 +187,31 @@ Implementation notes:
 - Page geometry lives in the `PDF` constant (A4 portrait, 40 pt margin)
 
 If you add a voice or a channel parameter, the kit table columns in `pdfContent()` need a matching entry.
+
+---
+
+## Strudel Export
+
+`buildStrudel()` translates the pattern and kit into code for the [strudel.cc](https://strudel.cc) REPL. The button fills the text area and copies to the clipboard.
+
+Strudel plays **samples**, this app plays **oscillators**, so the export is a translation and not a copy:
+
+| XOX | Strudel | Fidelity |
+| --- | --- | --- |
+| Step grid | mini-notation, one token per step, grouped per beat | exact |
+| Accent row + channel level | `.gain("...")` pattern, one value per step | exact |
+| Tempo | `setcpm(bpm / beatsPerCycle)` where `beatsPerCycle = length / 4` | exact, also for 12-step patterns |
+| Swing | `.swingBy(amount, 4)` on the stack | close |
+| Filter type/cutoff/reso | `.lpf/.hpf/.bpf` + `.lpq/.hpq/.bpq` | close |
+| Drive | `.distort("amount:.6")` | close |
+| Tune | `.speed()` — sample rate, so pitch and length move together | approximate |
+| Decay < 1 | `.clip()` — gates the sample short | approximate |
+| Decay > 1 | nothing; emitted as a comment | **not possible** — you cannot stretch a sample past its end |
+| Muted voice | emitted commented out | n/a |
+
+Voice → sample mapping lives in `STRUDEL_SAMPLE` (`BD→bd, SD→sd, CP→cp, LT→lt, HT→ht, CH→hh, OH→oh, CY→cr`). Kit → bank mapping lives in `STRUDEL_BANK`, defaulting to `RolandTR606`. Not every bank has every sound; if a voice is silent in Strudel, swap the sample name or the bank. Silent voices (no steps) are skipped entirely.
+
+The generated code is valid JavaScript, so it can be syntax-checked without running Strudel — useful in tests.
 
 ---
 
@@ -368,6 +394,8 @@ The params passed to your synth are:
 - [ ] Collaborative editing (WebSocket, multiple users)
 - [ ] Cloud backup / restore
 - [ ] MIDI file export (.mid) alongside the PDF
+- [ ] Strudel export: emit `$:` labelled statements as an option instead of `stack()`
+- [ ] Strudel import: parse mini-notation back into the grid
 - [ ] Unit tests (Vitest, jsdom)
 - [ ] Ableton Link bridge (Node.js companion app)
 
