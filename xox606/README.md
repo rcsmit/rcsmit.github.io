@@ -2,7 +2,7 @@
 
 A browser-based 606-style step sequencer with per-voice tone shaping. Pure synthesis (no samples), persistent channel strips with filter + drive, 59 drum patterns in 8 categories, and 8 kit voicings.
 
-**Current version:** 20260829-121500  
+**Current version:** 20260829-124500  
 **Status:** MVP + tone module + PDF and Strudel export (alpha)
 
 ---
@@ -59,6 +59,18 @@ This is a known gap — see [Sync & Timing](#sync--timing) below.
 ```
 
 Each voice gets a persistent channel strip (`channels[voiceId]`), built once at `initAudio()`. Note that the clap (CP) is not a TR-606 voice — the 606 had no clap. It is included because the tone module already takes this engine well past the original machine. Per hit, only the sound generator (oscillator/noise) is created and routed into that strip's input.
+
+### Hi-Hats and Cymbal: the Metal Circuit
+
+Hats are not filtered noise. `metal()` sums **six square oscillators** at deliberately non-harmonic ratios (`METAL_RATIOS`, base 40 Hz) and runs them through a bandpass and a highpass. That inharmonic cluster is what the ear reads as "metal" rather than "sss". The same function drives the cymbal, with a thin noise layer on top for the wash.
+
+The hi-hats share one circuit, as on the hardware: `chokeOpenHat()` ramps a ringing open hat down when a closed hat (or another open hat) fires. Without it, fast hat patterns smear.
+
+### Humanize
+
+`state.human` (0–0.20, the **Human** control) applies a small random variation per hit to level, tune and decay. Analog circuits never fire twice identically, and sample banks ship several takes per sound for the same reason; at 0 every hit is bit-for-bit identical and a 16th-note hat line sounds like a machine gun.
+
+Timing is deliberately **not** humanized — jitter there would fight the scheduler and any future external sync.
 
 ### Per-Voice State
 
@@ -191,6 +203,8 @@ If you add a voice or a channel parameter, the kit table columns in `pdfContent(
 ---
 
 ## Strudel Export
+
+`strudelUrl()` base64-encodes the generated code into a `https://strudel.cc/#...` fragment, so **Open in Strudel** launches the pattern directly — no share database, no round trip. Patterns whose URL would exceed 8000 characters fall back to the copy path rather than opening a truncated tab.
 
 `buildStrudel()` translates the pattern and kit into code for the [strudel.cc](https://strudel.cc) REPL. The button fills the text area and copies to the clipboard.
 

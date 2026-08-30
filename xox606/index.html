@@ -12,6 +12,7 @@
 # version : 20260829-111700 - Numeric entry boxes for every channel parameter, mixer strip with per-voice level and mute, dependency-free PDF export of the pattern sheet, kit table and text notation
 # version : 20260829-114500 - Strudel export: pattern and accents to mini-notation, channel settings mapped to bank/gain/filter/speed/clip/distort, tempo as setcpm with correct beats-per-cycle for non-16-step patterns
 # version : 20260829-121500 - Clap (CP) added as eighth voice: burst-flam synthesis with filtered tail, channel defaults, clap settings in all kits, clap rows in 12 presets, cp in the Strudel sample map; fixed row shading offset in the PDF kit table
+# version : 20260829-124500 - Hats and cymbal rebuilt on the six-oscillator metal circuit (non-harmonic square ratios through a bandpass) instead of filtered noise; closed hat now chokes the open hat; per-hit variation via a Human control (level, tune, decay), saved in the JSON export; sharper transients on kick, snare and toms; Open in Strudel button using the base64 URL fragment
 -->
 <link href="https://fonts.googleapis.com/css2?family=Bungee&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -243,6 +244,10 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
         <label>Volume <b><span id="volVal">80</span>%</b></label>
         <input type="range" id="vol" min="0" max="100" step="1" value="80">
       </div>
+      <div class="knob">
+        <label>Human <b><span id="humanVal">5</span>%</b></label>
+        <input type="range" id="human" min="0" max="20" step="1" value="5">
+      </div>
     </div>
   </div>
 
@@ -280,6 +285,7 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
       <button class="btn ghost" id="downloadBtn">Download .json</button>
       <button class="btn ghost" id="pdfBtn">Export PDF</button>
       <button class="btn ghost" id="strudelBtn">Strudel code</button>
+      <button class="btn ghost" id="strudelOpenBtn">Open in Strudel</button>
       <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
       <button class="btn ghost" id="uploadBtn">Load file…</button>
     </div>
@@ -289,7 +295,7 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
       De <b>ACC</b>-rij is de globale accent-rij (606-stijl): elke stap met accent klinkt harder.
       Het knopje links van de naam mute't een stem.
       In het kanaalpaneel staat per stem een tone-module: tune, decay, filter, resonantie en drive.
-      De export bevat zowel het pattern als de kit-instellingen. "Strudel code" zet het pattern om naar code voor de strudel.cc REPL en kopieert het naar het klembord.
+      De export bevat zowel het pattern als de kit-instellingen. "Strudel code" zet het pattern om naar code voor de strudel.cc REPL en kopieert het naar het klembord; "Open in Strudel" opent het daar meteen.
     </div>
   </div>
 
@@ -302,7 +308,8 @@ kbd{background:#efece5;border:1px solid var(--line);border-bottom-width:2px;bord
 // # version : 20260829-111700 - Numeric entry boxes for every channel parameter, mixer strip with per-voice level and mute, dependency-free PDF export of the pattern sheet, kit table and text notation
 // # version : 20260829-114500 - Strudel export: pattern and accents to mini-notation, channel settings mapped to bank/gain/filter/speed/clip/distort, tempo as setcpm with correct beats-per-cycle for non-16-step patterns
 // # version : 20260829-121500 - Clap (CP) added as eighth voice: burst-flam synthesis with filtered tail, channel defaults, clap settings in all kits, clap rows in 12 presets, cp in the Strudel sample map; fixed row shading offset in the PDF kit table
-const current_version = "20260829-121500";
+// # version : 20260829-124500 - Hats and cymbal rebuilt on the six-oscillator metal circuit (non-harmonic square ratios through a bandpass) instead of filtered noise; closed hat now chokes the open hat; per-hit variation via a Human control (level, tune, decay), saved in the JSON export; sharper transients on kick, snare and toms; Open in Strudel button using the base64 URL fragment
+const current_version = "20260829-124500";
 
 (function () {
   "use strict";
@@ -824,6 +831,7 @@ const current_version = "20260829-121500";
     swing: 0,
     length: 16,
     volume: 0.8,
+    human: 0.05,        // 0 = machine-exact, 0.20 = loose
     playing: false
   };
   state.kit = freshKit();
@@ -951,14 +959,14 @@ const current_version = "20260829-121500";
       const amp = ctx.createGain();
       osc.type = "sine";
       osc.frequency.setValueAtTime(115 * tu, t);
-      osc.frequency.exponentialRampToValueAtTime(46 * tu, t + 0.055 * dc);
-      env(amp, t, g, 0.34 * dc, 0.003);
+      osc.frequency.exponentialRampToValueAtTime(46 * tu, t + 0.048 * dc);
+      env(amp, t, g, 0.34 * dc, 0.0012);
       // click transient
       const clk = ctx.createOscillator();
       const clkAmp = ctx.createGain();
       clk.type = "square";
-      clk.frequency.setValueAtTime(1100 * tu, t);
-      env(clkAmp, t, g * 0.16, 0.014, 0.001);
+      clk.frequency.setValueAtTime(1500 * tu, t);
+      env(clkAmp, t, g * 0.22, 0.009, 0.0006);
       clk.connect(clkAmp).connect(dest);
       osc.connect(amp).connect(dest);
       osc.start(t); osc.stop(t + 0.4 * dc + 0.05);
@@ -970,7 +978,7 @@ const current_version = "20260829-121500";
       const hp = ctx.createBiquadFilter();
       hp.type = "highpass"; hp.frequency.value = 1400 * tu;
       const nAmp = ctx.createGain();
-      env(nAmp, t, g * 0.8, 0.16 * dc, 0.002);
+      env(nAmp, t, g * 0.8, 0.16 * dc, 0.0012);
       n.connect(hp).connect(nAmp).connect(dest);
       n.start(t); n.stop(t + 0.25 * dc + 0.05);
 
@@ -1011,21 +1019,68 @@ const current_version = "20260829-121500";
     },
     LT(t, g, p, dest) { tom(t, g, 105, 62, 0.30, p, dest); },
     HT(t, g, p, dest) { tom(t, g, 170, 104, 0.24, p, dest); },
-    CH(t, g, p, dest) { hat(t, g, 0.045, 7800, p, dest); },
-    OH(t, g, p, dest) { hat(t, g, 0.32, 7000, p, dest); },
+    CH(t, g, p, dest) {
+      chokeOpenHat(t);
+      metal(t, g * 0.62, 0.045 * p.decay, 7000, 10000, 1.3, p, dest);
+    },
+    OH(t, g, p, dest) {
+      chokeOpenHat(t);
+      const a = metal(t, g * 0.62, 0.32 * p.decay, 6000, 9000, 1.0, p, dest);
+      openHat = { gain: a, until: t + 0.32 * p.decay };
+    },
     CY(t, g, p, dest) {
-      const tu = p.tune, dc = p.decay;
+      const dc = p.decay;
+      // Metal core plus a thin noise layer for the wash on top.
+      metal(t, g * 0.45, 1.1 * dc, 3000, 7000, 0.5, p, dest);
       const n = noiseSource();
       const hp = ctx.createBiquadFilter();
-      hp.type = "highpass"; hp.frequency.value = 5200 * tu;
-      const bp = ctx.createBiquadFilter();
-      bp.type = "bandpass"; bp.frequency.value = 9000 * tu; bp.Q.value = 0.6;
+      hp.type = "highpass"; hp.frequency.value = 6000 * p.tune;
       const a = ctx.createGain();
-      env(a, t, g * 0.55, 1.1 * dc, 0.004);
-      n.connect(hp).connect(bp).connect(a).connect(dest);
-      n.start(t); n.stop(t + 1.2 * dc + 0.05);
+      env(a, t, g * 0.16, 0.9 * dc, 0.003);
+      n.connect(hp).connect(a).connect(dest);
+      n.start(t); n.stop(t + dc + 0.05);
     }
   };
+
+  /* The 606/808 metal circuit: six square waves at deliberately
+     non-harmonic ratios, summed and then band-passed. This is what makes
+     a hat sound like "tss" instead of filtered white noise. */
+  const METAL_RATIOS = [2, 3, 4.16, 5.43, 6.79, 8.21];
+  const METAL_BASE = 40;
+
+  function metal(t, g, dec, hpFreq, bpFreq, q, p, dest) {
+    const tu = p.tune;
+    const bp = ctx.createBiquadFilter();
+    bp.type = "bandpass"; bp.frequency.value = bpFreq * tu; bp.Q.value = q;
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass"; hp.frequency.value = hpFreq * tu;
+    const a = ctx.createGain();
+    bp.connect(hp); hp.connect(a); a.connect(dest);
+
+    METAL_RATIOS.forEach(r => {
+      const o = ctx.createOscillator();
+      o.type = "square";
+      o.frequency.value = METAL_BASE * r * tu;
+      o.connect(bp);
+      o.start(t); o.stop(t + dec + 0.06);
+    });
+
+    env(a, t, g * 0.55, dec, 0.001);
+    return a;
+  }
+
+  /* One hi-hat circuit, one voice: a closed hat cuts off a ringing open
+     hat, and a new open hat cuts off the previous one. Without this,
+     fast hat patterns turn to mush. */
+  let openHat = null;
+
+  function chokeOpenHat(t) {
+    if (!openHat || openHat.until <= t) { openHat = null; return; }
+    const g = openHat.gain.gain;
+    g.cancelScheduledValues(t);
+    g.setTargetAtTime(0.0001, t, 0.004);
+    openHat = null;
+  }
 
   function tom(t, g, f0, f1, dec, p, dest) {
     const tu = p.tune, d = dec * p.decay;
@@ -1034,7 +1089,7 @@ const current_version = "20260829-121500";
     o.type = "sine";
     o.frequency.setValueAtTime(f0 * tu, t);
     o.frequency.exponentialRampToValueAtTime(f1 * tu, t + d * 0.7);
-    env(a, t, g, d, 0.003);
+    env(a, t, g, d, 0.0015);
     o.connect(a).connect(dest);
     o.start(t); o.stop(t + d + 0.05);
 
@@ -1047,17 +1102,19 @@ const current_version = "20260829-121500";
     n.start(t); n.stop(t + 0.08);
   }
 
-  function hat(t, g, dec, hpFreq, p, dest) {
-    const tu = p.tune, d = dec * p.decay;
-    const n = noiseSource();
-    const hp = ctx.createBiquadFilter();
-    hp.type = "highpass"; hp.frequency.value = hpFreq * tu;
-    const bp = ctx.createBiquadFilter();
-    bp.type = "bandpass"; bp.frequency.value = 10000 * tu; bp.Q.value = 0.8;
-    const a = ctx.createGain();
-    env(a, t, g * 0.6, d, 0.002);
-    n.connect(hp).connect(bp).connect(a).connect(dest);
-    n.start(t); n.stop(t + d + 0.05);
+  /* Analog circuits never fire twice identically; sample banks ship several
+     takes per sound for the same reason. Without this every hit is bit-for-bit
+     the same and a 16th-note hat line turns into a machine gun. Timing is left
+     alone on purpose — jitter there would fight the scheduler. */
+  function humanize(p) {
+    const h = state.human;
+    if (h <= 0) return p;
+    const j = () => 1 + (Math.random() * 2 - 1) * h;
+    return {
+      level: p.level, ftype: p.ftype, cutoff: p.cutoff, reso: p.reso, drive: p.drive,
+      tune: p.tune * (1 + (Math.random() * 2 - 1) * h * 0.35),
+      decay: p.decay * j()
+    };
   }
 
   function trigger(voiceId, time, accented) {
@@ -1065,8 +1122,9 @@ const current_version = "20260829-121500";
     const v = VOICES.find(x => x.id === voiceId);
     const ch = channels[voiceId];
     if (!v || !ch || !synth[voiceId]) return;
-    const g = v.gain * (accented ? ACCENT_GAIN : NORMAL_GAIN);
-    synth[voiceId](time, g, state.kit[voiceId], ch.input);
+    let g = v.gain * (accented ? ACCENT_GAIN : NORMAL_GAIN);
+    if (state.human > 0) g *= 1 + (Math.random() * 2 - 1) * state.human * 1.2;
+    synth[voiceId](time, g, humanize(state.kit[voiceId]), ch.input);
   }
 
   /* ============================================================
@@ -1298,6 +1356,7 @@ const current_version = "20260829-121500";
     if (currentStep >= v) currentStep = 0;
     refreshGrid();
   });
+  bindRange(document.getElementById("human"), "humanVal", v => { state.human = v / 100; });
   bindRange(volEl, "volVal", v => {
     state.volume = v / 100;
     if (master) master.gain.setTargetAtTime(state.volume, ctx.currentTime, 0.02);
@@ -1972,6 +2031,27 @@ const current_version = "20260829-121500";
     return out.join("\n");
   }
 
+  /* strudel.cc reads the code straight out of the URL fragment as base64,
+     so a pattern can be opened without a share database or a round trip. */
+  function strudelUrl() {
+    const code = buildStrudel();
+    const utf8 = unescape(encodeURIComponent(code));
+    return "https://strudel.cc/#" + btoa(utf8);
+  }
+
+  document.getElementById("strudelOpenBtn").addEventListener("click", () => {
+    const url = strudelUrl();
+    // Long patterns can outgrow what a browser accepts in an address bar;
+    // fall back to the copy path rather than opening a truncated tab.
+    if (url.length > 8000) {
+      ioEl.classList.add("show");
+      ioEl.value = buildStrudel();
+      ioEl.focus(); ioEl.select();
+      return;
+    }
+    window.open(url, "_blank", "noopener");
+  });
+
   document.getElementById("strudelBtn").addEventListener("click", () => {
     const code = buildStrudel();
     ioEl.classList.add("show");
@@ -1993,6 +2073,7 @@ const current_version = "20260829-121500";
       tempo: state.tempo,
       swing: state.swing,
       length: state.length,
+      human: state.human,
       rows: rows.slice(),
       pattern: JSON.parse(JSON.stringify(state.pattern)),
       kit: JSON.parse(JSON.stringify(state.kit))
@@ -2027,6 +2108,13 @@ const current_version = "20260829-121500";
       state.length = Math.min(MAX_STEPS, Math.max(1, Math.round(+L)));
       lenEl.value = state.length;
       document.getElementById("lenVal").textContent = state.length;
+    }
+
+    if (Number.isFinite(+obj.human)) {
+      state.human = clamp(+obj.human, 0, 0.2);
+      const he = document.getElementById("human");
+      he.value = Math.round(state.human * 100);
+      document.getElementById("humanVal").textContent = he.value;
     }
 
     // Optional kit block (v2 files). Missing voices/params fall back to defaults.
