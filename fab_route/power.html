@@ -361,7 +361,7 @@ function renderContext(){
 
 function renderPower(){
   powerLayer.innerHTML = '';
-  const showLabels = document.getElementById('toggleLabels').checked;
+  const showLabels = false; // document.getElementById('toggleLabels').checked;
   if (!POWER.length){
     console.warn('No power stations in data.js yet (no plot with color:"power").');
   }
@@ -405,10 +405,10 @@ function selectPower(key){
 }
 
 // ---------- map toggles ----------
-document.getElementById('toggleLabels').addEventListener('change', renderPower);
-document.getElementById('togglePlots').addEventListener('change', (e)=>{
-  contextLayer.style.display = e.target.checked ? '' : 'none';
-});
+// document.getElementById('toggleLabels').addEventListener('change', renderPower);
+// document.getElementById('togglePlots').addEventListener('change', (e)=>{
+//   contextLayer.style.display = e.target.checked ? '' : 'none';
+// });
 
 // ---------- pan & zoom ----------
 let scale=1, tx=0, ty=0;
