@@ -71,9 +71,13 @@ const M_PER_UNIT = 1;   // calibrate in step 5
 
 Then open `map-config-tool.html` in a browser — this is where all the real work happens.
 
-### Step 4 — Trace the graph in the map-config-tool
+### Step 4 — Trace the graph
 
-Work through this rough order (see section 4 below for a full explanation of every button):
+Two ways to do this: by hand in the map-config-tool, or by getting an AI to produce a rough first pass that you then check and fix in the tool. Most people will want the second — it turns hours of clicking into a few minutes of correcting.
+
+#### Step 4a — Manual, in the map-config-tool
+
+Work through this rough order (see section 5 below for a full explanation of every button):
 
 1. **Nodes tab → "Add node mode."** Click along every path, at every junction and bend, to lay down nodes. Turn on the **grid** (Overview tab, adjustable step size) if you want easier visual alignment with the background.
 2. **Edges tab → "Add edge mode."** Type a street name, then click two nodes in a row to connect them. Repeat for every path segment. Reuse the same street name for a whole path so the outlier-detection (see below) can do its job.
@@ -81,6 +85,34 @@ Work through this rough order (see section 4 below for a full explanation of eve
 4. **Add the power stations / switch boxes** the same way, with the colour dropdown set to **power station**. They're just plots with `color: "power"`, so they use exactly the same workflow — see section 3.
 5. **Check the Flagged edges and Stats accordions** (Overview tab) as you go. The tool automatically flags edges that are statistically much longer than others on the same street, or that are simply very long overall — these are almost always mistakes (e.g. a node accidentally connected across the map instead of to its neighbour). Click a flagged edge to jump straight to it on the map and inspect it.
 6. **Export early, export often.** There is no autosave — everything lives in the browser tab's memory only, and a refresh throws it all away. Use **Export data.js → Download data.js** regularly and keep the file somewhere safe as a checkpoint while you work.
+
+#### Step 4b — AI-assisted first pass
+
+An AI with vision (upload the map as a PDF, SVG, or image) can generate a starting `NODES` / `EDGES` / `PLOTS` from the map faster than tracing it by hand — but treat the result as a **draft**, not a finished graph. It will get some nodes slightly off, miss the odd short connector path, and occasionally misread a plot number. Always load the output into `map-config-tool.html` afterward and walk through Step 4a's checklist (grid overlay, Flagged edges, Stats) before publishing.
+
+Accuracy depends heavily on what you upload. An **SVG source file** works best, because the AI can be told to read literal `<path>`/coordinate data instead of guessing from pixels — that's much closer to what `map-svg.js` needs anyway (see Step 2). A PDF or a photo/scan of a paper map will still produce a usable draft, but expect more corrections afterward.
+
+Prompt to use (paste this alongside the uploaded map file):
+
+> I'm building a walking-route graph for a campsite map, for a tool that expects three JavaScript values in this exact shape:
+>
+> ```js
+> const NODES = { "n0": [x, y], "n1": [x, y], ... };
+> const EDGES = [["n0","n1","Street name"], ["n1","n2","Street name"], ...];
+> let PLOTS   = [{"key":"101","num":"101","x":x,"y":y,"color":"yellow","node":"n0"}, ...];
+> ```
+>
+> Look at the attached map and generate a first draft of all three:
+>
+> 1. **NODES** — place a node at every path junction, bend, and dead end. Coordinates must be in the same pixel/unit space as the source file (if it's an SVG, use its actual coordinates directly — don't rescale). Give each node a short id like `n0`, `n1`, `n2`.
+> 2. **EDGES** — one entry per path segment between two directly-connected nodes, `[fromId, toId, "Street name"]`. Use the real street/path name from the map if it's labelled; otherwise use a consistent placeholder per path (e.g. `"Path A"`) so I can rename it later. Reuse the same street name across every edge on the same physical path.
+> 3. **PLOTS** — one entry per numbered pitch/plot visible on the map: `{"key":"<plot number>","num":"<plot number>","x":x,"y":y,"color":"yellow","node":"<nearest node id>"}`. Also include any power stations / switch boxes you can identify, using `"color":"power"` instead of `"yellow"`, and any named special locations (reception, entrance, toilets, etc.) using their name as `key`.
+>
+> Output only the three JavaScript declarations, valid enough to paste directly into a `.js` file — no explanation, no markdown fences. If a plot's nearest node is ambiguous, pick the closest one and don't worry about it — I'll fix links by hand.
+
+Paste the result straight into `data.js` between the `NODES`/`EDGES`/`PLOTS` lines (see the file's own header comment for the exact format), open `map-config-tool.html`, and go through the Step 4a checklist — the Flagged edges accordion in particular tends to catch the AI's mistakes quickly, since a misplaced node usually produces one absurdly long edge.
+
+
 
 ### Step 5 — Calibrate distance and walking speed
 
@@ -142,17 +174,18 @@ A plot's `color` field is what puts it in one of three categories:
 | `grey` | hu OPENAIR pitch | Guest route finder, config tool |
 | `power` | Power station / switch box | **`power.html`** and the config tool only |
 
-The first two are a naming convention you're free to redefine per campsite (see section 5). The third is different: `power` is load-bearing. `index.html` filters those plots out of the guest autocomplete, out of the typed lookup, and out of click-to-select on the map, so a guest can never be routed to a switch box. The config tool draws them in their own layer as blue squares, with their own show/hide toggles, so they stay visible even when the regular plot layer is off.
+The first two are a naming convention you're free to redefine per campsite (see section 4). The third is different: `power` is load-bearing. `index.html` filters those plots out of the guest autocomplete, out of the typed lookup, and out of click-to-select on the map, so a guest can never be routed to a switch box. The config tool draws them in their own layer as blue squares, with their own show/hide toggles, so they stay visible even when the regular plot layer is off.
 
-**`power.html`** is the page for them:
+**`power.html`** is a plain map viewer for them — no search box, no route finder, nothing to type into:
 
-- A searchable, numerically-sorted list of every power station.
-- Click a row (or a blue square on the map) to select one — the map zooms to it and the panel shows its key, number, linked node, coordinates, and the eight closest pitches with walking distances in meters.
-- A **From plot** field gives full walking directions from any pitch to the selected station, using the same Dijkstra routing as the guest app.
-- Optional faint dots for the regular pitches, as context.
-- Deep-linkable: `power.html?ps=200&from=214` opens with that station selected and that route drawn. The selection is written back into the URL as you click, so the address bar is always shareable.
+- Every power station on the map, drawn as a blue square. Click one to highlight it and zoom in; click doesn't do anything else, there's no info panel.
+- Two checkboxes: show/hide the power-station number labels (off by default, since 100+ labels at once gets noisy), and show/hide the regular pitches as small grey context dots.
+- Pan and zoom, same controls as the other two pages.
+- Deep-linkable: `power.html?ps=200` opens with that one station already selected and zoomed to.
 
-If `data.js` contains no `power` plots yet, the page says so and tells you how to add them, rather than showing an empty list.
+If `data.js` contains no `power` plots yet, the squares just don't appear — check the browser console for a one-line reminder of how to add them in the config tool.
+
+Earlier versions of this page also had a search box and a walking-route finder to a selected station. Both were cut — this page is meant for a quick "where's the nearest switch box" glance, not a second route planner. If that functionality is needed again, it's a small addition back on top of the current `power.html`, not a rebuild.
 
 ---
 
@@ -273,10 +306,11 @@ A sortable, filterable table of every plot, mirroring the edge table. The filter
 ### 7. To do list / wishlist
 - ~~NODES / EDGES / PLOTS in a seperate file~~ — done, `data.js`
 - ~~map.svg in a seperate file~~ — done, `map-svg.js`
-- ~~qr code / deeplink~~ — done: QR + share modal on `index.html`, `?from=`/`?to=` there and `?ps=`/`?from=` on `power.html`
+- ~~qr code / deeplink~~ — done: QR + share modal on `index.html` (`?from=`/`?to=`), `?ps=` on `power.html`
 - client-side QR generation, to drop the `api.qrserver.com` dependency (external call + GDPR exposure)
 - move `VBW`/`VBH` into `data.js` so nothing but the page titles is per-file
 - more plot categories beyond yellow/grey/power, each independently toggleable as guest-visible or admin-only (`power` is currently the only category with that visible/hidden split hardcoded into `index.html`)
 - link a plot to other plots — e.g. enter a plot number and see the power station assigned to it, without hunting for it on the map
+- an "import AI draft" button in the map-config-tool, so Step 4b's output can be pasted straight in instead of hand-editing `data.js` first
 - variables and map in a database
 - version/system with everything webbased, user control etc etc
