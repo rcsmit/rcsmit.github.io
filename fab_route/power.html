@@ -281,43 +281,18 @@ datalist{ display:none; }
     <h1>Fabulous Village</h1>
     <span class="tag">Power stations &amp; switch boxes</span>
   </div>
-  <a class="backlink" href="index.html">&larr; Walking route</a>
 </header>
 
 <div class="layout">
   <div class="sidebar">
 
     <div>
-      <h2>Find a power station</h2>
-      <input type="text" id="psFilter" placeholder="filter by number, key or node...">
-      <div class="pslist" id="psList" style="margin-top:8px;"></div>
-      <div class="row" style="margin-top:8px;">
-        <button id="clearBtn">Clear selection</button>
-      </div>
-    </div>
-
-    <div>
-      <h2>Selected</h2>
-      <div id="psDetail"><div class="empty">Pick a power station from the list, or click a blue square on the map.</div></div>
-    </div>
-
-    <div>
-      <h2>Walking route</h2>
-      <div class="field">
-        <label for="fromInput">From plot</label>
-        <input type="text" id="fromInput" list="plotlist" placeholder="e.g. 214" autocomplete="off">
-      </div>
-      <datalist id="plotlist"></datalist>
-      <div id="routeContent" style="margin-top:10px;"><div class="empty">Enter a plot number to get walking directions to the selected power station.</div></div>
-    </div>
-
-    <div>
       <h2>Map</h2>
-      <label class="chk"><input type="checkbox" id="toggleLabels" checked> Labels</label>
+      <label class="chk"><input type="checkbox" id="toggleLabels"> Power station labels</label>
       <label class="chk"><input type="checkbox" id="togglePlots"> Show pitches as small dots</label>
     </div>
 
-    <div class="disclaimer">This map is based on the official Fabulous Village site plan, but is schematic and not surveyed to scale. Positions of power stations and switch boxes are indicative. Not endorsed by HU and/or Fabulous Village</div>
+    <div class="disclaimer">The key for the box for the 13xx is at the EC reception</div>
 
   </div>
 
@@ -340,7 +315,6 @@ datalist{ display:none; }
 // The background map is injected before anything reads #mapSvg.
 injectMapSvg();
 
-const WALK_SPEED = 1.3; // m/s
 const VBW = 1218.9, VBH = 870.236;
 
 // ---------- plot categories ----------
@@ -348,81 +322,20 @@ const VBW = 1218.9, VBH = 870.236;
 //   yellow -> tour operator pitch
 //   grey   -> hu OPENAIR pitch
 //   power  -> power station / switch box
-// This page shows the power category; the other two are context only.
+// This page just shows the power category on the map; the other two are
+// optional faint context dots. There is no search, no route finder here —
+// see the git history / README if that ever needs to come back.
 const POWER_COLOR = 'power';
 const POWER = PLOTS.filter(p => p.color === POWER_COLOR);
 const GUEST_PLOTS = PLOTS.filter(p => p.color !== POWER_COLOR);
 
-const guestByKey = {};
-GUEST_PLOTS.forEach(p=>{ guestByKey[p.key] = p; });
-
-// ---------- graph ----------
-const adj = {};
-for (const k in NODES) adj[k] = [];
-function dist(a,b){ const dx=a[0]-b[0], dy=a[1]-b[1]; return Math.sqrt(dx*dx+dy*dy); }
-EDGES.forEach(([u,v,street])=>{
-  if (!NODES[u] || !NODES[v]) return;
-  const w = dist(NODES[u], NODES[v]);
-  adj[u].push({to:v, w, street});
-  adj[v].push({to:u, w, street});
-});
-
-function dijkstra(start){
-  const distMap = {}, prev = {}, visited = {};
-  for (const k in NODES) distMap[k] = Infinity;
-  distMap[start] = 0;
-  const pq = [[0,start]];
-  while(pq.length){
-    pq.sort((a,b)=>a[0]-b[0]);
-    const [d,u] = pq.shift();
-    if (visited[u]) continue;
-    visited[u] = true;
-    adj[u].forEach(e=>{
-      const nd = d + e.w;
-      if (nd < distMap[e.to]){
-        distMap[e.to] = nd;
-        prev[e.to] = {node:u, street:e.street, w:e.w};
-        pq.push([nd, e.to]);
-      }
-    });
-  }
-  return {distMap, prev};
-}
-
-function pathBetween(startNode, endNode){
-  if (startNode === endNode) return {nodes:[startNode], segs:[]};
-  const {distMap, prev} = dijkstra(startNode);
-  if (!isFinite(distMap[endNode])) return null;
-  const nodesSeq = [endNode];
-  const segs = [];
-  let cur = endNode;
-  while (cur !== startNode){
-    const p = prev[cur];
-    segs.unshift({from:p.node, to:cur, street:p.street, w:p.w});
-    cur = p.node;
-    nodesSeq.unshift(cur);
-  }
-  return {nodes:nodesSeq, segs};
-}
-
-// numeric-aware sort, so 9 comes before 10
-function byNumber(a, b){
-  return String(a).localeCompare(String(b), undefined, {numeric:true, sensitivity:'base'});
-}
-
 // ---------- DOM ----------
-const psFilter     = document.getElementById('psFilter');
-const psListEl     = document.getElementById('psList');
-const psDetail     = document.getElementById('psDetail');
-const fromInput    = document.getElementById('fromInput');
-const routeContent = document.getElementById('routeContent');
-const clearBtn     = document.getElementById('clearBtn');
-const maparea      = document.getElementById('maparea');
-const mapinner     = document.getElementById('mapinner');
-const mapSvg       = document.getElementById('mapSvg');
+const maparea  = document.getElementById('maparea');
+const mapinner = document.getElementById('mapinner');
+const mapSvg   = document.getElementById('mapSvg');
 
 let selectedPower = null;
-let fromPlot = null;
+let didDrag = false;
 
 // ---------- overlay layers ----------
 const contextLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
@@ -430,18 +343,8 @@ contextLayer.setAttribute('id','contextLayer');
 contextLayer.style.display = 'none';
 const powerLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
 powerLayer.setAttribute('id','powerLayer');
-let routeLayer = document.getElementById('routeLayer');
-if (!routeLayer){
-  routeLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
-  routeLayer.setAttribute('id','routeLayer');
-  mapSvg.appendChild(routeLayer);
-}
-// appendChild also *moves* an existing node, which pins the draw order:
-// context dots -> power stations -> route on top. routeLayer ships inside a
-// nested <g> in the map SVG, so it is not a direct child until we move it.
 mapSvg.appendChild(contextLayer);
 mapSvg.appendChild(powerLayer);
-mapSvg.appendChild(routeLayer);
 
 function svgEl(tag, attrs){
   const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -459,6 +362,9 @@ function renderContext(){
 function renderPower(){
   powerLayer.innerHTML = '';
   const showLabels = document.getElementById('toggleLabels').checked;
+  if (!POWER.length){
+    console.warn('No power stations in data.js yet (no plot with color:"power").');
+  }
   POWER.forEach(p=>{
     const isSel = selectedPower && p.key === selectedPower.key;
     const s = isSel ? 13 : 9;
@@ -483,202 +389,19 @@ function renderPower(){
       t.textContent = p.num;
       g.appendChild(t);
     }
+    // Clicking a station just highlights it and zooms in — there's no side
+    // panel to fill in, and no route to draw.
     g.addEventListener('click', (ev)=>{ ev.stopPropagation(); if (!didDrag) selectPower(p.key); });
     powerLayer.appendChild(g);
   });
 }
 
-function clearRouteLayer(){
-  while (routeLayer.firstChild) routeLayer.removeChild(routeLayer.firstChild);
-}
-
-function drawMarker(x,y,color,label){
-  const g = svgEl('g',{});
-  g.appendChild(svgEl('circle',{cx:x,cy:y,r:9,fill:color,stroke:'#ffffff','stroke-width':2.5}));
-  const t = svgEl('text',{x:x,y:y+3.6,'text-anchor':'middle','font-size':9,'font-weight':700,fill:'#ffffff','font-family':'Poppins, sans-serif'});
-  t.textContent = label;
-  g.appendChild(t);
-  routeLayer.appendChild(g);
-}
-
-// Keeping the selection in the URL makes every power station shareable as a
-// deep link. Wrapped because history.replaceState is not available in every
-// context this page might be opened from.
-function setUrlParam(key, value){
-  try {
-    const url = new URL(window.location.href);
-    if (value === null) url.searchParams.delete(key);
-    else url.searchParams.set(key, value);
-    history.replaceState(null, '', url.toString());
-  } catch (e){ /* deep link just won't update */ }
-}
-
-// ---------- list ----------
-function buildList(){
-  const f = psFilter.value.trim().toLowerCase();
-  const rows = POWER
-    .filter(p => !f || p.num.toLowerCase().includes(f) || p.key.toLowerCase().includes(f) || p.node.toLowerCase().includes(f))
-    .sort((a,b)=> byNumber(a.num, b.num) || byNumber(a.key, b.key));
-
-  psListEl.innerHTML = '';
-
-  if (!POWER.length){
-    psListEl.innerHTML = '<div class="psrow" style="cursor:default;display:block;color:var(--muted);line-height:1.5;">'
-      + 'No power stations defined yet.<br>Add them in <b>map-config-tool.html</b>: turn on "Add plot mode", pick colour <b>power station</b>, click the map, then copy NODES / EDGES / PLOTS back into all three pages.'
-      + '</div>';
-    return;
-  }
-  if (!rows.length){
-    psListEl.innerHTML = '<div class="psrow" style="cursor:default;color:var(--muted);">No match for "' + f + '".</div>';
-    return;
-  }
-
-  rows.forEach(p=>{
-    const div = document.createElement('div');
-    div.className = 'psrow' + (selectedPower && selectedPower.key === p.key ? ' selected' : '');
-    div.innerHTML = '<span class="num"></span><span class="meta"></span>';
-    div.querySelector('.num').textContent = p.num;
-    div.querySelector('.meta').textContent = p.node;
-    div.addEventListener('click', ()=> selectPower(p.key));
-    psListEl.appendChild(div);
-  });
-}
-psFilter.addEventListener('input', buildList);
-
-// ---------- selection ----------
-function nearestGuestPlots(p, n){
-  return GUEST_PLOTS
-    .map(q => ({ q, d: dist([p.x,p.y],[q.x,q.y]) }))
-    .sort((a,b)=> a.d - b.d)
-    .slice(0, n);
-}
-
 function selectPower(key){
   selectedPower = POWER.find(p => p.key === key) || null;
-  buildList();
   renderPower();
-  renderDetail();
   if (selectedPower){
     fitToPoints([[selectedPower.x, selectedPower.y]], {minSpan:220, maxScale:3.4});
-    setUrlParam('ps', selectedPower.key);
   }
-  renderRoute();
-}
-
-function renderDetail(){
-  if (!selectedPower){
-    psDetail.innerHTML = '<div class="empty">Pick a power station from the list, or click a blue square on the map.</div>';
-    return;
-  }
-  const p = selectedPower;
-  const near = nearestGuestPlots(p, 8);
-  let html = '<div class="card">';
-  html += '<div><span class="k">number</span> <b>' + p.num + '</b></div>';
-  html += '<div><span class="k">key</span> <b>' + p.key + '</b></div>';
-  html += '<div><span class="k">node</span> <b>' + p.node + '</b></div>';
-  html += '<div><span class="k">position</span> <b>' + p.x.toFixed(1) + ' , ' + p.y.toFixed(1) + '</b></div>';
-  html += '</div>';
-  if (near.length){
-    html += '<h2 style="margin-top:12px;">Closest pitches</h2><ul class="nearlist">';
-    near.forEach(({q,d})=>{
-      html += '<li><span>' + q.key + '</span><span>' + Math.round(d * M_PER_UNIT) + ' m</span></li>';
-    });
-    html += '</ul>';
-  }
-  psDetail.innerHTML = html;
-}
-
-clearBtn.addEventListener('click', ()=>{
-  selectedPower = null;
-  fromPlot = null;
-  fromInput.value = '';
-  psFilter.value = '';
-  setUrlParam('ps', null);
-  buildList(); renderPower(); renderDetail(); renderRoute();
-  fitView();
-});
-
-// ---------- from-plot input ----------
-const datalistEl = document.getElementById('plotlist');
-GUEST_PLOTS.map(p=>p.key).sort(byNumber).forEach(k=>{
-  const opt = document.createElement('option');
-  opt.value = k;
-  datalistEl.appendChild(opt);
-});
-
-function findGuestPlot(val){
-  val = (val||'').trim();
-  if (!val) return null;
-  if (guestByKey[val]) return guestByKey[val];
-  const matches = GUEST_PLOTS.filter(p=>p.num === val);
-  return matches.length === 1 ? matches[0] : null;
-}
-
-fromInput.addEventListener('input', ()=>{
-  fromPlot = findGuestPlot(fromInput.value);
-  renderRoute();
-});
-
-// ---------- route ----------
-function renderRoute(){
-  clearRouteLayer();
-
-  if (!selectedPower){
-    routeContent.innerHTML = '<div class="empty">Select a power station first.</div>';
-    return;
-  }
-  if (!fromPlot){
-    routeContent.innerHTML = fromInput.value.trim()
-      ? '<div class="empty">Plot not found.</div>'
-      : '<div class="empty">Enter a plot number to get walking directions to the selected power station.</div>';
-    return;
-  }
-
-  const result = pathBetween(fromPlot.node, selectedPower.node);
-  if (!result){
-    routeContent.innerHTML = '<div class="empty">Could not find a route between these two points.</div>';
-    return;
-  }
-
-  const pts = [[fromPlot.x, fromPlot.y]];
-  result.nodes.forEach(n=> pts.push(NODES[n]));
-  pts.push([selectedPower.x, selectedPower.y]);
-
-  fitToPoints(pts);
-
-  const d = pts.map((p,i)=> (i===0?'M':'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
-  routeLayer.appendChild(svgEl('path',{d, fill:'none', stroke:'#161616','stroke-width':6,'stroke-linecap':'round','stroke-linejoin':'round', opacity:0.15}));
-  routeLayer.appendChild(svgEl('path',{d, fill:'none', stroke:'#161616','stroke-width':4,'stroke-linecap':'round','stroke-linejoin':'round','stroke-dasharray':'2,9'}));
-  drawMarker(fromPlot.x, fromPlot.y, '#3ecf8e', 'A');
-  drawMarker(selectedPower.x, selectedPower.y, '#2f6f8f', 'P');
-
-  let totalUnits = dist([fromPlot.x,fromPlot.y], NODES[result.nodes[0]]);
-  totalUnits += result.segs.reduce((s,e)=>s+e.w, 0);
-  totalUnits += dist(NODES[result.nodes[result.nodes.length-1]], [selectedPower.x, selectedPower.y]);
-  const meters = totalUnits * M_PER_UNIT;
-  const minutes = meters / WALK_SPEED / 60;
-
-  const instr = [];
-  result.segs.forEach(seg=>{
-    if (instr.length && instr[instr.length-1].street === seg.street){
-      instr[instr.length-1].w += seg.w;
-    } else {
-      instr.push({street:seg.street, w:seg.w});
-    }
-  });
-
-  let html = '<div class="summary">'
-    + '<div class="stat"><span class="v">' + Math.round(meters) + ' m</span><span class="l">distance</span></div>'
-    + '<div class="stat"><span class="v">' + Math.max(1, Math.round(minutes)) + ' min</span><span class="l">walking time</span></div>'
-    + '</div>';
-  html += '<ul class="steps">';
-  html += '<li>Depart from plot <span class="street">' + fromPlot.key + '</span></li>';
-  instr.forEach(seg=>{
-    html += '<li><span class="street">' + seg.street + '</span> <span class="d">&mdash; ' + Math.round(seg.w * M_PER_UNIT) + ' m</span></li>';
-  });
-  html += '<li>Arrive at power station <span class="street">' + selectedPower.num + '</span></li>';
-  html += '</ul>';
-  routeContent.innerHTML = html;
 }
 
 // ---------- map toggles ----------
@@ -690,7 +413,6 @@ document.getElementById('togglePlots').addEventListener('change', (e)=>{
 // ---------- pan & zoom ----------
 let scale=1, tx=0, ty=0;
 let dragging=false, dragStartX=0, dragStartY=0, startTx=0, startTy=0;
-let didDrag=false;
 
 function applyTransform(){
   mapinner.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + scale + ')';
@@ -823,22 +545,15 @@ maparea.addEventListener('touchend', (e)=>{
 // ---------- init ----------
 renderContext();
 renderPower();
-buildList();
-renderDetail();
 window.addEventListener('resize', fitView);
 fitView();
 
+// ?ps=<key> still selects and zooms to a station on load, so existing links
+// keep working even though there's no longer a UI to build that link from.
 const params = new URLSearchParams(window.location.search);
-const wantedFrom = params.get('from');
-if (wantedFrom){
-  const p = findGuestPlot(wantedFrom);
-  if (p){ fromPlot = p; fromInput.value = p.key; }
-}
 const wantedPs = params.get('ps');
 if (wantedPs && POWER.some(p=>p.key === wantedPs)){
   selectPower(wantedPs);
-} else {
-  renderRoute();
 }
 
 </script>
