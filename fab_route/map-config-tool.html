@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<title>Fabulous Village — Graph Debug Tool (NODES / EDGES / PLOTS)</title>
+<!-- version = "20260824-000000" -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+:root{
+  --cream:#faf5ea; --paper:#fffdf8; --ink:#2c2620; --muted:#8a7f6f; --line:#e7dcc6;
+  --terracotta:#bb5333; --terracotta-dark:#8f3d24; --olive:#77804f; --gold:#e0b400;
+  --danger:#c0392b; --ok:#2e7d32;
+  --shadow: 0 8px 24px rgba(44,38,32,0.12);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink);display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+header{background:var(--ink);color:var(--cream);padding:12px 18px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;flex-shrink:0;border-bottom:3px solid var(--terracotta);}
+header h1{font-family:'Fraunces',serif;font-weight:700;font-size:1.15rem;margin:0;}
+header .tag{font-size:0.7rem;color:#d8cdb8;letter-spacing:0.05em;text-transform:uppercase;}
+.layout{flex:1;display:grid;grid-template-columns:340px 1fr;min-height:0;}
+@media (max-width: 900px){ .layout{grid-template-columns:1fr;grid-template-rows:auto 1fr;} .sidebar{max-height:44vh;overflow-y:auto;} }
+.sidebar{background:var(--paper);border-right:1px solid var(--line);padding:14px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;font-size:0.82rem;}
+.sidebar h2{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);margin:0 0 8px;font-weight:700;}
+.section{border-bottom:1px solid var(--line);padding-bottom:12px;}
+.section:last-child{border-bottom:none;}
+label.chk{display:flex;align-items:center;gap:7px;padding:3px 0;cursor:pointer;}
+label.chk input{accent-color:var(--terracotta);}
+.legend-item{display:flex;align-items:center;gap:7px;padding:2px 0;cursor:pointer;border-radius:4px;}
+.legend-item:hover{background:var(--cream);}
+.legend-item.dim{opacity:0.35;}
+.swatch{width:14px;height:4px;border-radius:2px;flex-shrink:0;}
+.legend-count{margin-left:auto;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:0.72rem;}
+input[type=text], input[type=number], select{width:100%;padding:7px 8px;border:1.5px solid var(--line);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:0.82rem;background:var(--cream);color:var(--ink);}
+input:focus, select:focus{outline:none;border-color:var(--terracotta);}
+button{font-family:'Inter',sans-serif;font-size:0.78rem;font-weight:600;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);padding:7px 10px;border-radius:6px;cursor:pointer;}
+button:hover{border-color:var(--terracotta);}
+button.primary{background:var(--olive);border-color:var(--olive);color:#fff;}
+button.danger{background:var(--danger);border-color:var(--danger);color:#fff;}
+button.small{padding:4px 8px;font-size:0.72rem;}
+.row{display:flex;gap:6px;}
+.row > *{flex:1;}
+table.edgetbl{width:100%;border-collapse:collapse;font-size:0.72rem;font-family:'JetBrains Mono',monospace;}
+table.edgetbl th{position:sticky;top:0;background:var(--paper);text-align:left;padding:4px 4px;border-bottom:2px solid var(--line);cursor:pointer;}
+table.edgetbl td{padding:4px 4px;border-bottom:1px solid var(--line);}
+table.edgetbl tr:hover{background:var(--cream);cursor:pointer;}
+table.edgetbl tr.selected{background:#f3e6b8;}
+tr.flagged td{color:var(--danger);font-weight:700;}
+.scrollbox{max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:6px;}
+.pill{display:inline-block;padding:1px 7px;border-radius:10px;font-size:0.68rem;font-weight:700;}
+.pill.flag{background:#f8d7d3;color:var(--danger);}
+textarea{width:100%;height:110px;font-family:'JetBrains Mono',monospace;font-size:0.68rem;padding:6px;border:1.5px solid var(--line);border-radius:6px;background:var(--cream);resize:vertical;}
+.info-box{background:var(--cream);border:1px solid var(--line);border-radius:8px;padding:9px;font-family:'JetBrains Mono',monospace;font-size:0.75rem;line-height:1.5;}
+.maparea{position:relative;overflow:hidden;background:#e5ded0;cursor:grab;}
+.maparea.dragging{cursor:grabbing;}
+.mapinner{position:absolute;top:0;left:0;transform-origin:0 0;}
+#mapSvg{display:block;}
+.zoomctrls{position:absolute;bottom:16px;right:16px;display:flex;flex-direction:column;gap:6px;z-index:5;}
+.zoomctrls button{width:34px;height:34px;border-radius:8px;font-size:1rem;box-shadow:var(--shadow);}
+.hint{font-size:0.7rem;color:var(--muted);line-height:1.4;}
+#nodesLayer circle{cursor:pointer;}
+#nodesLayer text{pointer-events:none;user-select:none;}
+#edgesLayer line{cursor:pointer;}
+#plotsLayer circle{cursor:pointer;}
+.tooltip{position:absolute;background:var(--ink);color:var(--cream);padding:6px 9px;border-radius:6px;font-size:0.72rem;font-family:'JetBrains Mono',monospace;pointer-events:none;z-index:20;box-shadow:var(--shadow);white-space:pre;display:none;}
+.stat-badge{display:flex;justify-content:space-between;padding:2px 0;}
+.stat-badge b{font-family:'JetBrains Mono',monospace;}
+.tabbar{display:flex;gap:2px;background:var(--cream);border-radius:8px;padding:3px;flex-shrink:0;}
+.tabbtn{flex:1;background:transparent;border:none;padding:7px 4px;font-size:0.75rem;font-weight:700;color:var(--muted);border-radius:6px;cursor:pointer;}
+.tabbtn:hover{color:var(--ink);border-color:transparent;}
+.tabbtn.active{background:var(--paper);color:var(--terracotta-dark);box-shadow:var(--shadow);}
+.tabpanel{display:none;flex-direction:column;gap:10px;}
+.tabpanel.active{display:flex;}
+.accordion-item{border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+.accordion-header{width:100%;text-align:left;background:var(--paper);border:none;padding:9px 10px;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.accordion-header:hover{color:var(--ink);border-color:transparent;}
+.accordion-header .chev{margin-left:auto;transition:transform 0.15s;font-size:0.9rem;}
+.accordion-item.open .accordion-header .chev{transform:rotate(180deg);}
+.accordion-body{display:none;padding:0 10px 12px;}
+.accordion-item.open .accordion-body{display:block;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Fabulous Village — Graph Debug Tool</h1>
+  <span class="tag">NODES · EDGES · PLOTS visualizer &amp; editor</span>
+  <span class="tag" style="margin-left:auto;">Delete/Backspace deletes the selected item</span>
+  <a class="tag" href="power.html" style="color:var(--gold);">power.html &rarr;</a>
+</header>
+<div class="layout">
+  <div class="sidebar" id="sidebar">
+
+    <div class="tabbar" id="tabbar">
+      <button class="tabbtn active" data-tab="overview" type="button">Overview</button>
+      <button class="tabbtn" data-tab="nodes" type="button">Nodes</button>
+      <button class="tabbtn" data-tab="edges" type="button">Edges</button>
+      <button class="tabbtn" data-tab="plots" type="button">Plots</button>
+    </div>
+
+    <div class="tabpanel active" id="tab-overview">
+
+      <div class="accordion-item open">
+        <button class="accordion-header" type="button">Layers <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <label class="chk"><input type="checkbox" id="toggleBg" checked> Background (campsite map)</label>
+          <label class="chk"><input type="checkbox" id="toggleEdges" checked> Edges (paths)</label>
+          <label class="chk"><input type="checkbox" id="toggleNodes" checked> Nodes</label>
+          <label class="chk"><input type="checkbox" id="toggleNodeLabels"> Node labels (ID)</label>
+          <label class="chk"><input type="checkbox" id="togglePlots"> Plots (pitches)</label>
+          <label class="chk"><input type="checkbox" id="togglePlotLabels"> Plot labels (number)</label>
+          <label class="chk"><input type="checkbox" id="togglePower" checked> Power stations / switch boxes</label>
+          <label class="chk"><input type="checkbox" id="togglePowerLabels" checked> Power station labels</label>
+          <label class="chk"><input type="checkbox" id="toggleFlagged"> Show flagged edges only</label>
+          <label class="chk"><input type="checkbox" id="toggleGrid" checked> Grid (estimate coordinates)</label>
+          <div class="row" id="gridStepRow" style="margin-top:4px;">
+            <label style="flex:0 0 auto;align-self:center;font-size:0.72rem;color:var(--muted);">step</label>
+            <select id="gridStep">
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-header" type="button">Street legend <span class="hint">(click to isolate)</span> <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <div class="scrollbox" id="legendBox"></div>
+          <div class="row" style="margin-top:6px;">
+            <button class="small" id="legendAll">Show all</button>
+            <button class="small" id="legendNone">Hide all</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-header" type="button">Flagged edges <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <div class="hint" style="margin-bottom:6px;">Edges that are statistically much longer than average for their street, or that cross other paths/plots, are flagged here. Check them visually against the background map.</div>
+          <div class="scrollbox" id="flaggedBox"></div>
+        </div>
+      </div>
+
+      <div class="accordion-item open">
+        <button class="accordion-header" type="button">Stats <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <div class="info-box" id="statsBox"></div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-header" type="button">Export data.js <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <div class="hint">This is the complete <b>data.js</b>. Download it and overwrite the copy next to index.html &mdash; all three pages load that one file, so there is nothing else to keep in sync.</div>
+          <div class="row" style="margin-top:8px;">
+            <button class="primary" id="downloadDataBtn">Download data.js</button>
+            <button id="copyAllBtn">Copy</button>
+          </div>
+          <textarea id="exportDataBox" readonly style="height:150px;margin-top:8px;"></textarea>
+          <button id="refreshExport" style="margin-top:6px;width:100%;">Refresh export</button>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="tabpanel" id="tab-nodes">
+
+      <div class="accordion-item open">
+        <button class="accordion-header" type="button">Add node <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <div class="hint">Click an empty spot on the map (with "Add node mode" on) to place a new node.</div>
+          <label class="chk"><input type="checkbox" id="addNodeMode"> Add node mode</label>
+          <input type="text" id="newNodeId" placeholder="node id (optional, otherwise auto)" style="margin-top:6px;">
+        </div>
+      </div>
+
+      <div class="accordion-item open">
+        <button class="accordion-header" type="button">Selected node <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <div class="info-box" id="selInfo">Click a node on the map, or drag it to move it.</div>
+          <div class="hint" style="margin-top:6px;">Drag a node on the map to move it. Press Delete/Backspace to delete the selected node (this also removes its edges).</div>
+          <div class="row" style="margin-top:8px;">
+            <button class="danger small" id="deleteNodeBtn" disabled>Delete node</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="tabpanel" id="tab-edges">
+
+      <div class="accordion-item open">
+        <button class="accordion-header" type="button">Add edge <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <div class="hint">Click two nodes in a row (with "Add edge mode" on) to connect them.</div>
+          <label class="chk"><input type="checkbox" id="addEdgeMode"> Add edge mode</label>
+          <input type="text" id="newStreetName" placeholder="street name for new edge" style="margin-top:6px;">
+        </div>
+      </div>
+
+      <div class="accordion-item open">
+        <button class="accordion-header" type="button">Selected edge <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <div class="info-box" id="selInfoEdge">Click an edge on the map, or a row in the table.</div>
+          <div class="hint" style="margin-top:6px;">Press Delete/Backspace to delete the selected edge.</div>
+          <div class="row" style="margin-top:8px;">
+            <button class="danger small" id="deleteEdgeBtn" disabled>Delete edge</button>
+            <button class="small" id="renameStreetBtn" disabled>Rename street</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-header" type="button">Edge table <span class="hint">(click = select on map)</span> <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <input type="text" id="edgeFilter" placeholder="filter by node id or street name...">
+          <div class="scrollbox" style="margin-top:6px;max-height:260px;">
+            <table class="edgetbl" id="edgeTable">
+              <thead><tr><th data-k="u">From</th><th data-k="v">To</th><th data-k="street">Street</th><th data-k="len">Length</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="tabpanel" id="tab-plots">
+
+      <div class="accordion-item open">
+        <button class="accordion-header" type="button">Add plot <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <div class="hint">Click an empty spot on the map (with "Add plot mode" on) to place a new plot. The nearest node is linked automatically; adjust it below if needed.</div>
+          <label class="chk"><input type="checkbox" id="addPlotMode"> Add plot mode</label>
+          <div class="row" style="margin-top:6px;">
+            <input type="text" id="newPlotNum" placeholder="number/label">
+            <select id="newPlotColor"><option value="yellow">yellow</option><option value="grey">grey</option><option value="power">power station</option></select>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item open">
+        <button class="accordion-header" type="button">Selected plot <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <div class="info-box" id="selPlotInfo">Click a plot on the map to edit it.</div>
+          <div class="hint" style="margin-top:6px;">Drag a plot on the map to move it. Press Delete/Backspace to delete the selected plot.</div>
+          <div class="row" style="margin-top:8px;">
+            <input type="text" id="editPlotKey" placeholder="key" disabled>
+          </div>
+          <div class="row" style="margin-top:6px;">
+            <input type="text" id="editPlotNum" placeholder="number/label" disabled>
+            <select id="editPlotColor" disabled><option value="yellow">yellow</option><option value="grey">grey</option><option value="power">power station</option></select>
+          </div>
+          <select id="editPlotNode" disabled style="margin-top:6px;"></select>
+          <div class="row" style="margin-top:6px;">
+            <button class="primary small" id="savePlotBtn" disabled>Save</button>
+            <button class="danger small" id="deletePlotBtn" disabled>Delete plot</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <button class="accordion-header" type="button">Plot list <span class="hint">(click = select on map)</span> <span class="chev">▾</span></button>
+        <div class="accordion-body">
+          <input type="text" id="plotFilter" placeholder="filter by key, number, node id or color (try: power)...">
+          <div class="scrollbox" style="margin-top:6px;max-height:260px;">
+            <table class="edgetbl" id="plotTable">
+              <thead><tr><th data-k="key">Key</th><th data-k="num">Number</th><th data-k="node">Node</th><th data-k="color">Color</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="maparea" id="maparea">
+    <div class="mapinner" id="mapinner">
+
+    </div>
+    <div class="zoomctrls">
+      <button id="zoomIn">+</button>
+      <button id="zoomReset">⤲</button>
+      <button id="zoomOut">−</button>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+  </div>
+</div>
+
+<script src="data.js"></script>
+<script src="map-svg.js"></script>
+<script>
+
+// The background map is injected before anything reads #mapSvg.
+injectMapSvg();
+
+const VBW = 1218.9, VBH = 870.236;
+
+
+function dist(a,b){ const dx=a[0]-b[0], dy=a[1]-b[1]; return Math.sqrt(dx*dx+dy*dy); }
+
+// ---------- plot categories ----------
+// Three categories live in PLOTS, distinguished by `color`:
+//   yellow -> tour operator pitch
+//   grey   -> hu OPENAIR pitch
+//   power  -> power station / switch box (site infrastructure)
+// Power stations are hidden from the guest route finder (index.html) and get
+// their own page (power.html), but they are edited here like any other plot.
+const POWER_COLOR = 'power';
+const PLOT_FILL = { yellow:'#e0b400', grey:'#8a7f6f', power:'#2f6f8f' };
+const isPower = p => p.color === POWER_COLOR;
+
+// ---------- augment edges with length + id, group by street ----------
+let edgeList = EDGES.map((e,i)=>({ id:i, u:e[0], v:e[1], street:e[2], len: dist(NODES[e[0]], NODES[e[1]]) }));
+
+const streetColors = {};
+const PALETTE = ['#bb5333','#77804f','#2f6f8f','#9b6b9e','#c98b2c','#3c8f6f','#a94464','#5a6ab0','#8f6a3c','#4f9b9b','#b06b3c','#6b8f3c','#8f4f6b','#3c6b8f','#a68b3c'];
+[...new Set(edgeList.map(e=>e.street))].sort().forEach((s,i)=>{ streetColors[s] = PALETTE[i % PALETTE.length]; });
+
+// ---------- flag suspicious edges ----------
+// group by street, compute mean/std of length per street; flag len > mean + 1.8*std (and street has >=3 edges)
+// also flag globally very long edges (top 3%) regardless of street.
+function computeFlags(){
+  const byStreet = {};
+  edgeList.forEach(e=>{ (byStreet[e.street] = byStreet[e.street]||[]).push(e.len); });
+  const streetStats = {};
+  for (const s in byStreet){
+    const arr = byStreet[s];
+    const mean = arr.reduce((a,b)=>a+b,0)/arr.length;
+    const variance = arr.reduce((a,b)=>a+(b-mean)*(b-mean),0)/arr.length;
+    streetStats[s] = {mean, std: Math.sqrt(variance), n: arr.length};
+  }
+  const allLens = edgeList.map(e=>e.len).sort((a,b)=>a-b);
+  const p95 = allLens[Math.floor(allLens.length*0.93)];
+  edgeList.forEach(e=>{
+    const st = streetStats[e.street];
+    let flag = false, reason = [];
+    if (st.n >= 3 && e.len > st.mean + 1.8*st.std && e.len > 60){
+      flag = true; reason.push('length outlier within "'+e.street+'" (avg. '+st.mean.toFixed(0)+')');
+    }
+    if (e.len > p95 && e.len > 100){
+      flag = true; reason.push('among the longest 7% of all edges');
+    }
+    e.flagged = flag;
+    e.flagReason = reason.join('; ');
+  });
+}
+computeFlags();
+
+// ---------- DOM refs ----------
+const mapinner = document.getElementById('mapinner');
+const maparea = document.getElementById('maparea');
+const tooltip = document.getElementById('tooltip');
+
+// ---------- tabs & accordion ----------
+function switchTab(name){
+  document.querySelectorAll('.tabbtn').forEach(b=> b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.tabpanel').forEach(p=> p.classList.toggle('active', p.id==='tab-'+name));
+}
+document.querySelectorAll('.tabbtn').forEach(b=>{
+  b.addEventListener('click', ()=> switchTab(b.dataset.tab));
+});
+document.querySelectorAll('.accordion-header').forEach(h=>{
+  h.addEventListener('click', ()=> h.parentElement.classList.toggle('open'));
+});
+
+// insert background svg (already in DOM via static HTML injection point)
+// The mapSvg element is injected directly below by the build script.
+
+let edgesLayer, nodesLayer, plotsLayer, powerLayer, gridLayer;
+
+function buildOverlayLayers(svg){
+  gridLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+  gridLayer.setAttribute('id','gridLayer');
+  edgesLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+  edgesLayer.setAttribute('id','edgesLayer');
+  nodesLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+  nodesLayer.setAttribute('id','nodesLayer');
+  plotsLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+  plotsLayer.setAttribute('id','plotsLayer');
+  powerLayer = document.createElementNS('http://www.w3.org/2000/svg','g');
+  powerLayer.setAttribute('id','powerLayer');
+  svg.appendChild(gridLayer);
+  svg.appendChild(edgesLayer);
+  svg.appendChild(plotsLayer);
+  svg.appendChild(powerLayer);
+  svg.appendChild(nodesLayer);
+}
+
+// ---------- grid / raster overlay ----------
+function renderGrid(step){
+  gridLayer.innerHTML = '';
+  step = step || 50;
+  for (let x = 0; x <= VBW; x += step){
+    gridLayer.appendChild(svgEl('line', {x1:x,y1:0,x2:x,y2:VBH, stroke:'#2c2620', 'stroke-width': (x % (step*4)===0)?0.9:0.4, opacity:(x % (step*4)===0)?0.45:0.2}));
+    if (x % (step*2)===0){
+      const t = svgEl('text',{x:x+3,y:11,'font-size':9,fill:'#2c2620','font-family':'JetBrains Mono, monospace',opacity:0.55});
+      t.textContent = x;
+      gridLayer.appendChild(t);
+      const t2 = svgEl('text',{x:x+3,y:VBH-4,'font-size':9,fill:'#2c2620','font-family':'JetBrains Mono, monospace',opacity:0.55});
+      t2.textContent = x;
+      gridLayer.appendChild(t2);
+    }
+  }
+  for (let y = 0; y <= VBH; y += step){
+    gridLayer.appendChild(svgEl('line', {x1:0,y1:y,x2:VBW,y2:y, stroke:'#2c2620', 'stroke-width': (y % (step*4)===0)?0.9:0.4, opacity:(y % (step*4)===0)?0.45:0.2}));
+    if (y % (step*2)===0){
+      const t = svgEl('text',{x:3,y:y-3,'font-size':9,fill:'#2c2620','font-family':'JetBrains Mono, monospace',opacity:0.55});
+      t.textContent = y;
+      gridLayer.appendChild(t);
+      const t2 = svgEl('text',{x:VBW-30,y:y-3,'font-size':9,fill:'#2c2620','font-family':'JetBrains Mono, monospace',opacity:0.55});
+      t2.textContent = y;
+      gridLayer.appendChild(t2);
+    }
+  }
+}
+document.getElementById('toggleGrid').addEventListener('change', (e)=>{
+  gridLayer.style.display = e.target.checked ? '' : 'none';
+});
+document.getElementById('gridStep').addEventListener('change', (e)=>{
+  renderGrid(parseInt(e.target.value));
+});
+
+function svgEl(tag, attrs){
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+
+let selectedEdgeId = null;
+let selectedNode = null;
+let hiddenStreets = new Set();
+let showFlaggedOnly = false;
+let addEdgeMode = false;
+let addEdgeFirstNode = null;
+let addNodeMode = false;
+let addPlotMode = false;
+
+function renderEdges(){
+  edgesLayer.innerHTML = '';
+  edgeList.forEach(e=>{
+    if (hiddenStreets.has(e.street)) return;
+    if (showFlaggedOnly && !e.flagged) return;
+    const a = NODES[e.u], b = NODES[e.v];
+    if (!a || !b) return;
+    const line = svgEl('line', {
+      x1:a[0], y1:a[1], x2:b[0], y2:b[1],
+      stroke: e.flagged ? '#c0392b' : streetColors[e.street],
+      'stroke-width': e.flagged ? 3.2 : 2.1,
+      'stroke-dasharray': e.flagged ? '6,4' : 'none',
+      'stroke-linecap':'round',
+      opacity: e.id===selectedEdgeId ? 1 : 0.85,
+      'data-eid': e.id
+    });
+    if (e.id === selectedEdgeId){
+      line.setAttribute('stroke', '#e0b400');
+      line.setAttribute('stroke-width', 5);
+    }
+    line.addEventListener('click', (ev)=>{ ev.stopPropagation(); selectEdge(e.id); });
+    line.addEventListener('mousemove', (ev)=> showTooltip(ev, `${e.u} → ${e.v}\nstreet: ${e.street}\nlength: ${e.len.toFixed(1)}${e.flagged? '\n⚠ '+e.flagReason:''}`));
+    line.addEventListener('mouseleave', hideTooltip);
+    edgesLayer.appendChild(line);
+  });
+}
+
+let draggingNode = null;
+function renderNodes(showLabels){
+  nodesLayer.innerHTML = '';
+  for (const id in NODES){
+    const [x,y] = NODES[id];
+    const g = svgEl('g',{});
+    const c = svgEl('circle',{cx:x,cy:y,r: id===selectedNode?7:4, fill: id===selectedNode?'#e0b400':(newlyAdded.has(id)?'#bb5333':'#2c2620'), stroke:'#fffdf8','stroke-width':1.2, 'data-nid':id, cursor:'grab'});
+    c.addEventListener('mousedown', (ev)=>{
+      ev.stopPropagation();
+      draggingNode = id;
+    });
+    c.addEventListener('click', (ev)=>{ ev.stopPropagation(); if (!justDraggedNode) onNodeClick(id); justDraggedNode=false; });
+    c.addEventListener('mousemove', (ev)=> showTooltip(ev, `node: ${id}\nx:${NODES[id][0].toFixed(1)} y:${NODES[id][1].toFixed(1)}\nconnections: ${adjacency[id]? adjacency[id].length:0}\n(drag to move)`));
+    c.addEventListener('mouseleave', hideTooltip);
+    g.appendChild(c);
+    if (showLabels){
+      const t = svgEl('text',{x:x+6,y:y-6,'font-size':7.5,fill:'#2c2620','font-family':'JetBrains Mono, monospace','font-weight':700, stroke:'#fffdf8','stroke-width':2.2,'paint-order':'stroke'});
+      t.textContent = id;
+      g.appendChild(t);
+    }
+    nodesLayer.appendChild(g);
+  }
+}
+let justDraggedNode = false;
+const newlyAdded = new Set(["n106b","n79b"]);
+
+let selectedPlotKey = null;
+let draggingPlot = null;
+let justDraggedPlot = false;
+
+function renderPlots(showLabels){
+  plotsLayer.innerHTML = '';
+  PLOTS.forEach(p=>{
+    if (isPower(p)) return;          // drawn separately in renderPower()
+    const isSel = p.key === selectedPlotKey;
+    const fill = PLOT_FILL[p.color] || '#8a7f6f';
+    const g = svgEl('g',{});
+    const c = svgEl('circle',{cx:p.x, cy:p.y, r: isSel?4.2:2.2, fill, opacity: isSel?1:0.85, stroke: isSel?'#bb5333':'#fffdf8', 'stroke-width': isSel?1.4:0.5, cursor:'pointer'});
+    c.addEventListener('mousedown', (ev)=>{ ev.stopPropagation(); draggingPlot = p.key; });
+    c.addEventListener('click', (ev)=>{ ev.stopPropagation(); if (!justDraggedPlot) selectPlot(p.key); justDraggedPlot=false; });
+    c.addEventListener('mousemove', (ev)=> showTooltip(ev, `plot: ${p.key}\nnumber: ${p.num}\ncolor: ${p.color}\nnode: ${p.node}\n(drag to move)`));
+    c.addEventListener('mouseleave', hideTooltip);
+    g.appendChild(c);
+    if (showLabels){
+      const t = svgEl('text',{x:p.x+4,y:p.y-4,'font-size':6.5,fill:'#2c2620','font-family':'JetBrains Mono, monospace','font-weight':700, stroke:'#fffdf8','stroke-width':2,'paint-order':'stroke','pointer-events':'none'});
+      t.textContent = p.num;
+      g.appendChild(t);
+    }
+    plotsLayer.appendChild(g);
+  });
+}
+
+// Power stations / switch boxes get their own layer and a square marker so
+// they stay recognisable even when the regular plot layer is switched off.
+function renderPower(showLabels){
+  powerLayer.innerHTML = '';
+  PLOTS.forEach(p=>{
+    if (!isPower(p)) return;
+    const isSel = p.key === selectedPlotKey;
+    const s = isSel ? 9 : 6;
+    const g = svgEl('g',{});
+    const r = svgEl('rect',{
+      x: p.x - s/2, y: p.y - s/2, width: s, height: s, rx: 1.2,
+      fill: PLOT_FILL.power,
+      stroke: isSel ? '#bb5333' : '#fffdf8',
+      'stroke-width': isSel ? 1.8 : 1,
+      cursor:'pointer'
+    });
+    r.addEventListener('mousedown', (ev)=>{ ev.stopPropagation(); draggingPlot = p.key; });
+    r.addEventListener('click', (ev)=>{ ev.stopPropagation(); if (!justDraggedPlot) selectPlot(p.key); justDraggedPlot=false; });
+    r.addEventListener('mousemove', (ev)=> showTooltip(ev, `power station: ${p.key}\nnumber: ${p.num}\nnode: ${p.node}\n(drag to move)`));
+    r.addEventListener('mouseleave', hideTooltip);
+    g.appendChild(r);
+    if (showLabels){
+      const t = svgEl('text',{x:p.x+7,y:p.y-5,'font-size':7.5,fill:'#1d4a63','font-family':'JetBrains Mono, monospace','font-weight':700, stroke:'#fffdf8','stroke-width':2.2,'paint-order':'stroke','pointer-events':'none'});
+      t.textContent = p.num;
+      g.appendChild(t);
+    }
+    powerLayer.appendChild(g);
+  });
+}
+
+// Both plot layers are always redrawn together, so a plot that switches
+// category (or is added/deleted/moved) never lingers in the wrong layer.
+function refreshPlotLayers(){
+  const plotLabels  = document.getElementById('togglePlotLabels').checked;
+  const powerLabels = document.getElementById('togglePowerLabels').checked;
+  renderPlots(plotLabels);
+  renderPower(powerLabels);
+}
+
+const adjacency = {};
+function rebuildAdjacency(){
+  for (const k in adjacency) delete adjacency[k];
+  for (const id in NODES) adjacency[id] = [];
+  edgeList.forEach(e=>{
+    if (adjacency[e.u]) adjacency[e.u].push(e);
+    if (adjacency[e.v]) adjacency[e.v].push(e);
+  });
+}
+rebuildAdjacency();
+
+function showTooltip(ev, text){
+  tooltip.style.display='block';
+  tooltip.textContent = text;
+  const rect = maparea.getBoundingClientRect();
+  tooltip.style.left = (ev.clientX - rect.left + 14) + 'px';
+  tooltip.style.top = (ev.clientY - rect.top + 14) + 'px';
+}
+function hideTooltip(){ tooltip.style.display='none'; }
+
+function selectEdge(id){
+  selectedEdgeId = id;
+  selectedNode = null;
+  selectedPlotKey = null;
+  switchTab('edges');
+  renderEdges(); renderNodes(document.getElementById('toggleNodeLabels').checked); refreshPlotLayers();
+  const e = edgeList.find(x=>x.id===id);
+  document.getElementById('selInfoEdge').innerHTML = `<b>Edge #${e.id}</b><br>${e.u} → ${e.v}<br>street: <b>${e.street}</b><br>length: ${e.len.toFixed(1)} units${e.flagged?`<br><span class="pill flag">flagged</span> ${e.flagReason}`:''}`;
+  document.getElementById('deleteEdgeBtn').disabled = false;
+  document.getElementById('renameStreetBtn').disabled = false;
+  document.getElementById('deleteNodeBtn').disabled = true;
+  highlightTableRow(id);
+}
+
+function onNodeClick(id){
+  if (addEdgeMode){
+    if (!addEdgeFirstNode){
+      addEdgeFirstNode = id;
+      document.getElementById('selInfo').innerHTML = `First node chosen: <b>${id}</b>. Now click the second node.`;
+      renderNodes(document.getElementById('toggleNodeLabels').checked);
+      return;
+    } else {
+      const street = document.getElementById('newStreetName').value.trim() || 'Unknown street';
+      const newE = { id: edgeList.length, u: addEdgeFirstNode, v: id, street, len: dist(NODES[addEdgeFirstNode], NODES[id]) };
+      edgeList.push(newE);
+      rebuildAdjacency();
+      computeFlags();
+      if (!streetColors[street]) streetColors[street] = PALETTE[Object.keys(streetColors).length % PALETTE.length];
+      addEdgeFirstNode = null;
+      renderAll(); buildLegend(); buildEdgeTable(); buildFlaggedList(); updateStats(); buildExport();
+      document.getElementById('selInfo').innerHTML = `New edge added: ${newE.u} → ${newE.v} (${street}).`;
+      return;
+    }
+  }
+  selectedNode = id; selectedEdgeId = null; selectedPlotKey = null;
+  switchTab('nodes');
+  renderNodes(document.getElementById('toggleNodeLabels').checked); renderEdges(); refreshPlotLayers();
+  const conns = adjacency[id] || [];
+  let html = `<b>Node ${id}</b><br>x:${NODES[id][0].toFixed(1)} y:${NODES[id][1].toFixed(1)}<br>connections (${conns.length}):<br>`;
+  conns.forEach(c=>{
+    const other = c.u===id? c.v : c.u;
+    html += `→ ${other} <span style="color:var(--muted)">(${c.street}, ${c.len.toFixed(0)})</span><br>`;
+  });
+  const plotsHere = PLOTS.filter(p=>p.node===id);
+  html += `<br><b>Plots on this node (${plotsHere.length}):</b><br>`;
+  if (plotsHere.length){
+    plotsHere.forEach(p=>{
+      html += `<span class="pill" style="background:${p.color==='yellow'?'#f5e6b0':'#e2ddd3'};color:${p.color==='yellow'?'#8a6d00':'#5a5248'};cursor:pointer;margin:1px 2px 1px 0;display:inline-block;" data-plotkey="${p.key}">${p.num}</span>`;
+    });
+  } else {
+    html += `<span class="hint">no plots linked</span>`;
+  }
+  document.getElementById('selInfo').innerHTML = html;
+  document.getElementById('selInfo').querySelectorAll('[data-plotkey]').forEach(el=>{
+    el.addEventListener('click', ()=> selectPlot(el.dataset.plotkey));
+  });
+  document.getElementById('deleteEdgeBtn').disabled = true;
+  document.getElementById('renameStreetBtn').disabled = true;
+  document.getElementById('deleteNodeBtn').disabled = false;
+}
+
+document.getElementById('deleteEdgeBtn').addEventListener('click', ()=>{
+  if (selectedEdgeId===null) return;
+  edgeList = edgeList.filter(e=>e.id!==selectedEdgeId);
+  selectedEdgeId = null;
+  rebuildAdjacency();
+  computeFlags();
+  renderAll(); buildEdgeTable(); buildFlaggedList(); updateStats(); buildExport();
+  document.getElementById('selInfoEdge').textContent = 'Edge deleted.';
+  document.getElementById('deleteEdgeBtn').disabled = true;
+  document.getElementById('renameStreetBtn').disabled = true;
+});
+
+document.getElementById('renameStreetBtn').addEventListener('click', ()=>{
+  if (selectedEdgeId===null) return;
+  const e = edgeList.find(x=>x.id===selectedEdgeId);
+  const nn = prompt('New street name for edge ' + e.u + ' → ' + e.v, e.street);
+  if (nn && nn.trim()){
+    e.street = nn.trim();
+    if (!streetColors[e.street]) streetColors[e.street] = PALETTE[Object.keys(streetColors).length % PALETTE.length];
+    computeFlags();
+    renderAll(); buildLegend(); buildEdgeTable(); buildFlaggedList(); updateStats();
+  }
+});
+
+function selectPlot(key){
+  selectedPlotKey = key;
+  selectedNode = null; selectedEdgeId = null;
+  switchTab('plots');
+  renderNodes(document.getElementById('toggleNodeLabels').checked);
+  renderEdges();
+  refreshPlotLayers();
+  document.getElementById('deleteEdgeBtn').disabled = true;
+  document.getElementById('renameStreetBtn').disabled = true;
+  document.getElementById('deleteNodeBtn').disabled = true;
+  const p = PLOTS.find(x=>x.key===key);
+  if (!p) return;
+  document.getElementById('selPlotInfo').innerHTML = `<b>Plot ${p.key}</b><br>number: ${p.num}<br>color: ${p.color}<br>node: ${p.node}<br>x:${p.x.toFixed(1)} y:${p.y.toFixed(1)}`;
+  const keyInput = document.getElementById('editPlotKey');
+  const numInput = document.getElementById('editPlotNum');
+  const colorSel = document.getElementById('editPlotColor');
+  const nodeSel = document.getElementById('editPlotNode');
+  keyInput.value = p.key; keyInput.disabled = false;
+  numInput.value = p.num; numInput.disabled = false;
+  colorSel.value = p.color; colorSel.disabled = false;
+  nodeSel.innerHTML = Object.keys(NODES).sort().map(nid=>`<option value="${nid}" ${nid===p.node?'selected':''}>${nid}</option>`).join('');
+  nodeSel.disabled = false;
+  document.getElementById('savePlotBtn').disabled = false;
+  document.getElementById('deletePlotBtn').disabled = false;
+}
+
+document.getElementById('savePlotBtn').addEventListener('click', ()=>{
+  if (!selectedPlotKey) return;
+  const p = PLOTS.find(x=>x.key===selectedPlotKey);
+  if (!p) return;
+  const newKey = document.getElementById('editPlotKey').value.trim();
+  if (newKey && newKey !== p.key){
+    if (PLOTS.some(x=>x.key===newKey)){
+      alert('Key "' + newKey + '" is already used by another plot. Choose a different key.');
+      return;
+    }
+    p.key = newKey;
+    selectedPlotKey = newKey;
+  }
+  p.num = document.getElementById('editPlotNum').value.trim() || p.num;
+  p.color = document.getElementById('editPlotColor').value;
+  p.node = document.getElementById('editPlotNode').value;
+  refreshPlotLayers();
+  updateStats(); buildExport(); buildPlotTable();
+  selectPlot(selectedPlotKey);
+});
+
+document.getElementById('deletePlotBtn').addEventListener('click', ()=>{
+  if (!selectedPlotKey) return;
+  PLOTS = PLOTS.filter(x=>x.key!==selectedPlotKey);
+  selectedPlotKey = null;
+  document.getElementById('selPlotInfo').textContent = "Click a plot on the map to edit it.";
+  document.getElementById('editPlotKey').disabled = true; document.getElementById('editPlotKey').value='';
+  document.getElementById('editPlotNum').disabled = true; document.getElementById('editPlotNum').value='';
+  document.getElementById('editPlotColor').disabled = true;
+  document.getElementById('editPlotNode').disabled = true; document.getElementById('editPlotNode').innerHTML='';
+  document.getElementById('savePlotBtn').disabled = true;
+  document.getElementById('deletePlotBtn').disabled = true;
+  refreshPlotLayers();
+  updateStats(); buildExport(); buildPlotTable();
+});
+
+function nearestNodeId(x, y){
+  let best=null, bestD=Infinity;
+  for (const id in NODES){
+    const [nx,ny] = NODES[id];
+    const d = (nx-x)*(nx-x)+(ny-y)*(ny-y);
+    if (d<bestD){ bestD=d; best=id; }
+  }
+  return best;
+}
+
+let nodeCounter = 1;
+function addNewNode(x, y){
+  let id = document.getElementById('newNodeId').value.trim();
+  if (!id){
+    do { id = 'nnew' + nodeCounter; nodeCounter++; } while (NODES[id]);
+  } else if (NODES[id]){
+    alert('Node ID "' + id + '" already exists.');
+    return;
+  }
+  NODES[id] = [Math.round(x*10)/10, Math.round(y*10)/10];
+  newlyAdded.add(id);
+  rebuildAdjacency();
+  document.getElementById('newNodeId').value = '';
+  renderAll(); buildExport(); updateStats();
+  onNodeClick(id);
+}
+
+let plotCounter = 1;
+function addNewPlot(x, y){
+  let num = document.getElementById('newPlotNum').value.trim();
+  if (!num) num = 'new' + plotCounter;
+  const color = document.getElementById('newPlotColor').value;
+  let key = num;
+  while (PLOTS.some(p=>p.key===key)){ key = num + '#' + (++plotCounter); }
+  const node = nearestNodeId(x, y);
+  PLOTS.push({ key, num, x: Math.round(x*100)/100, y: Math.round(y*100)/100, color, node });
+  document.getElementById('newPlotNum').value = '';
+  refreshPlotLayers();
+  updateStats(); buildExport(); buildPlotTable();
+  selectPlot(key);
+}
+
+document.getElementById('addNodeMode').addEventListener('change', (e)=>{
+  addNodeMode = e.target.checked;
+  if (addNodeMode){ document.getElementById('addPlotMode').checked = false; addPlotMode = false; }
+});
+document.getElementById('addPlotMode').addEventListener('change', (e)=>{
+  addPlotMode = e.target.checked;
+  if (addPlotMode){ document.getElementById('addNodeMode').checked = false; addNodeMode = false; }
+});
+
+maparea.addEventListener('click', (e)=>{
+  if (didDrag) return;
+  if (!addNodeMode && !addPlotMode) return;
+  const rect = maparea.getBoundingClientRect();
+  const mx = e.clientX-rect.left, my = e.clientY-rect.top;
+  const wx = (mx-tx)/scale, wy = (my-ty)/scale;
+  if (addNodeMode) addNewNode(wx, wy);
+  else if (addPlotMode) addNewPlot(wx, wy);
+});
+
+document.getElementById('addEdgeMode').addEventListener('change', (e)=>{
+  addEdgeMode = e.target.checked; addEdgeFirstNode = null;
+});
+
+document.getElementById('deleteNodeBtn').addEventListener('click', ()=>{
+  if (!selectedNode) return;
+  const id = selectedNode;
+  const connCount = (adjacency[id]||[]).length;
+  const plotCount = PLOTS.filter(p=>p.node===id).length;
+  let msg = `Delete node "${id}"? This will also delete ${connCount} connected edge(s)`;
+  msg += plotCount ? ` and reassign ${plotCount} linked plot(s) to the nearest remaining node.` : '.';
+  if (!confirm(msg)) return;
+  edgeList = edgeList.filter(e=> e.u!==id && e.v!==id);
+  delete NODES[id];
+  newlyAdded.delete(id);
+  PLOTS.forEach(p=>{ if (p.node===id) p.node = nearestNodeId(p.x, p.y); });
+  rebuildAdjacency();
+  computeFlags();
+  selectedNode = null;
+  renderAll(); buildEdgeTable(); buildFlaggedList(); buildLegend(); updateStats(); buildExport(); buildPlotTable();
+  document.getElementById('selInfo').textContent = 'Node deleted.';
+  document.getElementById('deleteNodeBtn').disabled = true;
+});
+
+window.addEventListener('keydown', (e)=>{
+  if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+  const tag = document.activeElement && document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  if (selectedPlotKey){
+    e.preventDefault();
+    document.getElementById('deletePlotBtn').click();
+  } else if (selectedEdgeId !== null){
+    e.preventDefault();
+    document.getElementById('deleteEdgeBtn').click();
+  } else if (selectedNode){
+    e.preventDefault();
+    document.getElementById('deleteNodeBtn').click();
+  }
+});
+
+document.getElementById('copyAllBtn').addEventListener('click', async ()=>{
+  buildExport();
+  const combined = buildDataJs();
+  const btn = document.getElementById('copyAllBtn');
+  const original = btn.textContent;
+  try {
+    await navigator.clipboard.writeText(combined);
+    btn.textContent = 'Copied!';
+  } catch (err) {
+    const ta = document.createElement('textarea');
+    ta.value = combined;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = 'Copied!';
+  }
+  setTimeout(()=>{ btn.textContent = original; }, 1500);
+});
+
+function highlightTableRow(id){
+  document.querySelectorAll('#edgeTable tbody tr').forEach(tr=>{
+    tr.classList.toggle('selected', parseInt(tr.dataset.eid)===id);
+  });
+}
+
+// ---------- legend ----------
+function buildLegend(){
+  const box = document.getElementById('legendBox');
+  box.innerHTML = '';
+  const counts = {};
+  edgeList.forEach(e=>{ counts[e.street] = (counts[e.street]||0)+1; });
+  Object.keys(streetColors).sort().forEach(s=>{
+    if (!(s in counts)) return;
+    const row = document.createElement('div');
+    row.className = 'legend-item' + (hiddenStreets.has(s) ? ' dim' : '');
+    row.innerHTML = `<span class="swatch" style="background:${streetColors[s]}"></span><span>${s}</span><span class="legend-count">${counts[s]}</span>`;
+    row.addEventListener('click', ()=>{
+      if (hiddenStreets.has(s)) hiddenStreets.delete(s); else hiddenStreets.add(s);
+      buildLegend(); renderEdges();
+    });
+    box.appendChild(row);
+  });
+}
+document.getElementById('legendAll').addEventListener('click', ()=>{ hiddenStreets.clear(); buildLegend(); renderEdges(); });
+document.getElementById('legendNone').addEventListener('click', ()=>{
+  hiddenStreets = new Set(Object.keys(streetColors)); buildLegend(); renderEdges();
+});
+
+// ---------- flagged list ----------
+function buildFlaggedList(){
+  const box = document.getElementById('flaggedBox');
+  const flagged = edgeList.filter(e=>e.flagged).sort((a,b)=>b.len-a.len);
+  if (!flagged.length){ box.innerHTML = '<div class="hint" style="padding:6px;">No outliers found.</div>'; return; }
+  box.innerHTML = '';
+  flagged.forEach(e=>{
+    const row = document.createElement('div');
+    row.style.cssText = 'padding:5px 6px;border-bottom:1px solid var(--line);cursor:pointer;font-family:JetBrains Mono, monospace;font-size:0.7rem;';
+    row.innerHTML = `<b>${e.u} → ${e.v}</b> <span class="pill flag">${e.len.toFixed(0)}</span><br><span style="color:var(--muted)">${e.street}</span>`;
+    row.addEventListener('click', ()=>{ selectEdge(e.id); panToEdge(e); });
+    box.appendChild(row);
+  });
+}
+
+// ---------- edge table ----------
+let sortKey = 'len', sortDir = -1;
+function buildEdgeTable(){
+  const tbody = document.querySelector('#edgeTable tbody');
+  const filterVal = document.getElementById('edgeFilter').value.trim().toLowerCase();
+  let rows = edgeList.filter(e=>{
+    if (!filterVal) return true;
+    return e.u.toLowerCase().includes(filterVal) || e.v.toLowerCase().includes(filterVal) || e.street.toLowerCase().includes(filterVal);
+  });
+  rows.sort((a,b)=>{
+    let av = sortKey==='len'? a.len : a[sortKey];
+    let bv = sortKey==='len'? b.len : b[sortKey];
+    if (typeof av === 'string') return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+  tbody.innerHTML = '';
+  rows.forEach(e=>{
+    const tr = document.createElement('tr');
+    tr.dataset.eid = e.id;
+    if (e.flagged) tr.classList.add('flagged');
+    if (e.id === selectedEdgeId) tr.classList.add('selected');
+    tr.innerHTML = `<td>${e.u}</td><td>${e.v}</td><td>${e.street}</td><td>${e.len.toFixed(0)}</td>`;
+    tr.addEventListener('click', ()=>{ selectEdge(e.id); panToEdge(e); });
+    tbody.appendChild(tr);
+  });
+}
+document.querySelectorAll('#edgeTable th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const k = th.dataset.k;
+    if (sortKey===k) sortDir *= -1; else { sortKey=k; sortDir = k==='len'? -1 : 1; }
+    buildEdgeTable();
+  });
+});
+document.getElementById('edgeFilter').addEventListener('input', buildEdgeTable);
+
+// ---------- plot table ----------
+let plotSortKey = 'key', plotSortDir = 1;
+function buildPlotTable(){
+  const tbody = document.querySelector('#plotTable tbody');
+  if (!tbody) return;
+  const filterVal = document.getElementById('plotFilter').value.trim().toLowerCase();
+  let rows = PLOTS.filter(p=>{
+    if (!filterVal) return true;
+    return p.key.toLowerCase().includes(filterVal) || p.num.toLowerCase().includes(filterVal) || p.node.toLowerCase().includes(filterVal) || p.color.toLowerCase().includes(filterVal);
+  });
+  rows.sort((a,b)=>{
+    const av = a[plotSortKey], bv = b[plotSortKey];
+    if (typeof av === 'string') return plotSortDir * av.localeCompare(bv, undefined, {numeric:true, sensitivity:'base'});
+    return plotSortDir * (av - bv);
+  });
+  tbody.innerHTML = '';
+  rows.forEach(p=>{
+    const tr = document.createElement('tr');
+    if (p.key === selectedPlotKey) tr.classList.add('selected');
+    tr.innerHTML = `<td>${p.key}</td><td>${p.num}</td><td>${p.node}</td><td>${p.color}</td>`;
+    tr.addEventListener('click', ()=> selectPlot(p.key));
+    tbody.appendChild(tr);
+  });
+}
+document.querySelectorAll('#plotTable th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const k = th.dataset.k;
+    if (plotSortKey===k) plotSortDir *= -1; else { plotSortKey=k; plotSortDir = 1; }
+    buildPlotTable();
+  });
+});
+document.getElementById('plotFilter').addEventListener('input', buildPlotTable);
+
+// ---------- stats ----------
+function updateStats(){
+  const box = document.getElementById('statsBox');
+  const streets = new Set(edgeList.map(e=>e.street));
+  const flaggedN = edgeList.filter(e=>e.flagged).length;
+  box.innerHTML = `
+    <div class="stat-badge"><span>Nodes</span><b>${Object.keys(NODES).length}</b></div>
+    <div class="stat-badge"><span>Edges</span><b>${edgeList.length}</b></div>
+    <div class="stat-badge"><span>Plots</span><b>${PLOTS.filter(p=>!isPower(p)).length}</b></div>
+    <div class="stat-badge"><span style="color:#2f6f8f">Power stations</span><b style="color:#2f6f8f">${PLOTS.filter(isPower).length}</b></div>
+    <div class="stat-badge"><span>Unique streets</span><b>${streets.size}</b></div>
+    <div class="stat-badge"><span style="color:var(--danger)">Flagged edges</span><b style="color:var(--danger)">${flaggedN}</b></div>
+  `;
+}
+
+// ---------- export ----------
+// Emits the whole of data.js, header comment included, so the file can be
+// overwritten wholesale instead of patching three lines by hand.
+function buildDataJs(){
+  return [
+    '// FabRoute \u2014 shared graph data.',
+    '//',
+    '// Loaded by index.html, map-config-tool.html and power.html. This is the only',
+    '// place these three constants exist; edit the graph in map-config-tool.html and',
+    '// use its "Export data.js" panel to regenerate this whole file.',
+    '//',
+    '// PLOTS is `let` on purpose: map-config-tool.html reassigns it when a plot is',
+    '// deleted. NODES and EDGES are only ever mutated in place.',
+    '//',
+    '// Plot categories live in `color`:',
+    '//   yellow -> tour operator pitch',
+    '//   grey   -> hu OPENAIR pitch',
+    '//   power  -> power station / switch box (hidden from the guest route finder,',
+    '//             shown on power.html)',
+    '',
+    'const NODES = ' + JSON.stringify(NODES) + ';',
+    '',
+    'const EDGES = ' + JSON.stringify(edgeList.map(e=>[e.u, e.v, e.street])) + ';',
+    '',
+    'let PLOTS = ' + JSON.stringify(PLOTS) + ';',
+    '',
+    'const M_PER_UNIT = ' + M_PER_UNIT + '; // 1 unit = ' + M_PER_UNIT + ' meters',
+    ''
+  ].join('\n');
+}
+function buildExport(){
+  document.getElementById('exportDataBox').value = buildDataJs();
+}
+document.getElementById('refreshExport').addEventListener('click', buildExport);
+
+document.getElementById('downloadDataBtn').addEventListener('click', ()=>{
+  const blob = new Blob([buildDataJs()], {type:'text/javascript'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'data.js';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=> URL.revokeObjectURL(a.href), 1000);
+});
+
+// ---------- toggles ----------
+document.getElementById('toggleBg').addEventListener('change', (e)=>{
+  document.getElementById('bgGroup').style.display = e.target.checked ? '' : 'none';
+});
+document.getElementById('toggleEdges').addEventListener('change', (e)=>{
+  edgesLayer.style.display = e.target.checked ? '' : 'none';
+});
+document.getElementById('toggleNodes').addEventListener('change', (e)=>{
+  nodesLayer.style.display = e.target.checked ? '' : 'none';
+});
+document.getElementById('toggleNodeLabels').addEventListener('change', (e)=>{
+  renderNodes(e.target.checked);
+});
+document.getElementById('togglePlots').addEventListener('change', (e)=>{
+  plotsLayer.style.display = e.target.checked ? '' : 'none';
+});
+document.getElementById('togglePower').addEventListener('change', (e)=>{
+  powerLayer.style.display = e.target.checked ? '' : 'none';
+});
+document.getElementById('togglePowerLabels').addEventListener('change', (e)=>{
+  renderPower(e.target.checked);
+});
+document.getElementById('toggleFlagged').addEventListener('change', (e)=>{
+  showFlaggedOnly = e.target.checked; renderEdges();
+});
+
+function renderAll(){
+  renderEdges();
+  renderNodes(document.getElementById('toggleNodeLabels').checked);
+  refreshPlotLayers();
+}
+document.getElementById('togglePlotLabels').addEventListener('change', ()=>{
+  refreshPlotLayers();
+});
+
+// ---------- pan & zoom ----------
+let scale=1, tx=0, ty=0, dragging=false, dragStartX=0, dragStartY=0, startTx=0, startTy=0, didDrag=false;
+function applyTransform(){ mapinner.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`; }
+function fitView(){
+  const rect = maparea.getBoundingClientRect();
+  const pad = 20;
+  const sx = (rect.width - pad*2) / VBW, sy = (rect.height - pad*2) / VBH;
+  scale = Math.min(sx, sy);
+  tx = (rect.width - VBW*scale)/2; ty = (rect.height - VBH*scale)/2;
+  applyTransform();
+}
+function panToEdge(e){
+  const rect = maparea.getBoundingClientRect();
+  const a = NODES[e.u], b = NODES[e.v];
+  const cx = (a[0]+b[0])/2, cy=(a[1]+b[1])/2;
+  tx = rect.width/2 - cx*scale; ty = rect.height/2 - cy*scale;
+  applyTransform();
+}
+maparea.addEventListener('mousedown', (e)=>{
+  dragging=true; didDrag=false; dragStartX=e.clientX; dragStartY=e.clientY; startTx=tx; startTy=ty;
+  maparea.classList.add('dragging');
+});
+window.addEventListener('mousemove',(e)=>{
+  if (draggingPlot){
+    const rect = maparea.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const wx = (mx - tx) / scale, wy = (my - ty) / scale;
+    const p = PLOTS.find(pp=>pp.key===draggingPlot);
+    if (p){ p.x = Math.round(wx*100)/100; p.y = Math.round(wy*100)/100; }
+    justDraggedPlot = true;
+    refreshPlotLayers();
+    return;
+  }
+  if (draggingNode){
+    const rect = maparea.getBoundingClientRect();
+    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+    const wx = (mx - tx) / scale, wy = (my - ty) / scale;
+    NODES[draggingNode] = [Math.round(wx*10)/10, Math.round(wy*10)/10];
+    edgeList.forEach(ed=>{ if (ed.u===draggingNode || ed.v===draggingNode) ed.len = dist(NODES[ed.u], NODES[ed.v]); });
+    justDraggedNode = true;
+    renderNodes(document.getElementById('toggleNodeLabels').checked);
+    renderEdges();
+    return;
+  }
+  if (!dragging) return;
+  const dx=e.clientX-dragStartX, dy=e.clientY-dragStartY;
+  if (Math.abs(dx)>3||Math.abs(dy)>3) didDrag=true;
+  tx=startTx+dx; ty=startTy+dy; applyTransform();
+});
+window.addEventListener('mouseup', ()=>{
+  dragging=false; maparea.classList.remove('dragging');
+  if (draggingNode){
+    computeFlags(); buildEdgeTable(); buildFlaggedList(); updateStats(); buildExport();
+    draggingNode = null;
+  }
+  if (draggingPlot){
+    updateStats(); buildExport();
+    if (selectedPlotKey === draggingPlot) selectPlot(selectedPlotKey);
+    draggingPlot = null;
+  }
+});
+maparea.addEventListener('wheel',(e)=>{
+  e.preventDefault();
+  const rect = maparea.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const factor = e.deltaY<0?1.12:1/1.12;
+  const newScale = Math.min(10, Math.max(0.3, scale*factor));
+  const wx=(mx-tx)/scale, wy=(my-ty)/scale;
+  tx = mx - wx*newScale; ty = my - wy*newScale; scale=newScale; applyTransform();
+},{passive:false});
+document.getElementById('zoomIn').addEventListener('click', ()=>{
+  const rect=maparea.getBoundingClientRect(); const mx=rect.width/2, my=rect.height/2;
+  const newScale=Math.min(10,scale*1.3); const wx=(mx-tx)/scale, wy=(my-ty)/scale;
+  tx=mx-wx*newScale; ty=my-wy*newScale; scale=newScale; applyTransform();
+});
+document.getElementById('zoomOut').addEventListener('click', ()=>{
+  const rect=maparea.getBoundingClientRect(); const mx=rect.width/2, my=rect.height/2;
+  const newScale=Math.max(0.3,scale/1.3); const wx=(mx-tx)/scale, wy=(my-ty)/scale;
+  tx=mx-wx*newScale; ty=my-wy*newScale; scale=newScale; applyTransform();
+});
+document.getElementById('zoomReset').addEventListener('click', fitView);
+window.addEventListener('resize', fitView);
+
+// ---------- init ----------
+const svg = document.getElementById('mapSvg');
+buildOverlayLayers(svg);
+renderGrid(parseInt(document.getElementById('gridStep').value));
+renderAll();
+buildLegend();
+buildEdgeTable();
+buildPlotTable();
+buildFlaggedList();
+updateStats();
+buildExport();
+fitView();
+</script>
+</body>
+</html>
