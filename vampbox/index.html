@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-/* version = "20260827-234500" */
+/* version = "20260910-220000" */
 :root{
   --panel:#23262b;
   --panel-hi:#31353c;
@@ -483,6 +483,16 @@ body[data-theme="blueprint"]{
         <p class="hint">Light mode thins the chord voicings and pad, drops the hand skeleton and tracks hands less often. Use it if the sound stutters.</p>
       </div>
 
+      <span class="lbl" style="margin-top:14px">Keyboard</span>
+      <div class="rack">
+        <select id="kbdMode" aria-label="What the number keys do">
+          <option value="transport">1–4 for intro, fills and ending</option>
+          <option value="chords">1–7 major, QWERTYU minor</option>
+          <option value="scale">1–7 scale chords, QWERTYU minor</option>
+        </select>
+        <p class="hint" id="kbdHint"></p>
+      </div>
+
       <span class="lbl" style="margin-top:14px">Camera control</span>
       <div class="rack">
         <select id="camHands" aria-label="How many hands to track">
@@ -490,8 +500,8 @@ body[data-theme="blueprint"]{
           <option value="2">Two hands — chords plus start / stop</option>
         </select>
         <select id="camQuality" aria-label="What the camera controls" style="margin-top:8px">
-          <option value="chords">Chord hand only</option>
-          <option value="tilt">Chord hand + wrist tilt for major / minor</option>
+          <option value="chords">Scale chords — C Dm Em F G Am</option>
+          <option value="minor">Upright is major, tilt the hand for minor</option>
         </select>
         <div class="sl">
           <label for="camRate">Tracking</label>
@@ -542,7 +552,7 @@ body[data-theme="blueprint"]{
 
 <script>
 "use strict";
-const version = "20260827-234500";
+const version = "20260910-220000";
 
 /* ============================================================
    1. AUDIO CORE
@@ -1644,7 +1654,7 @@ const CAM = {
   on:false, landmarker:null, stream:null, raf:null, loading:false,
   lastGesture:null, stableCount:0, applied:null, lastVideoTime:-1,
   rightGesture:null, rightCount:0, rightApplied:null, roles:[],
-  lastDetect:0, colors:null
+  lastDetect:0, colors:null, tiltState:'flat', lastTilt:null
 };
 function cacheCamColors(){
   const st = getComputedStyle(document.body);
@@ -1662,10 +1672,10 @@ const HAND_BONES = [
   [13,17],[17,18],[18,19],[19,20],
   [0,17]
 ];
-/* Degree table matching the pad layout: [semitones, letter steps, quality] */
+/* Which degree of the key each gesture means, and the quality it gets in the
+   plain scale-chord mode: [degree index into DEGREES, quality] */
 const GESTURE_CHORDS = {
-  1:[0,0,''], 2:[2,1,'m'], 3:[4,2,'m'], 4:[5,3,''], 5:[7,4,''],
-  vi:[9,5,'m'], vii:[11,6,'dim']
+  1:[0,''], 2:[1,'m'], 3:[2,'m'], 4:[3,''], 5:[4,''], vi:[5,'m'], vii:[6,'dim']
 };
 
 function fingersUp(lm){
@@ -1697,26 +1707,35 @@ function gestureFrom(lm){
   return null;
 }
 
-/* Wrist tilt, only used in the tilt mode: leaning the hand over flips the
-   quality, so the same finger count gives you major or minor. */
+/* Wrist tilt, used by the minor mode: leaning the hand over flips the
+   quality, so the same finger count gives you major or minor.
+   The angle is read from the hand's own axis (wrist to middle knuckle), and it
+   latches: it takes 30 degrees to count as tilted but only comes back to flat
+   under 18, so a hand hovering near the edge doesn't flap between chords. */
+const TILT_ON = 30, TILT_OFF = 18;
 function tiltOf(lm){
   const dx = lm[9].x - lm[0].x, dy = lm[9].y - lm[0].y;
   const ang = Math.atan2(dx, -dy) * 180 / Math.PI;   // 0 = straight up
-  if(ang > 28) return 'right';
-  if(ang < -28) return 'left';
-  return 'flat';
+  const was = CAM.tiltState || 'flat';
+  const limit = (was === 'flat') ? TILT_ON : TILT_OFF;
+  let now = 'flat';
+  if(ang > limit) now = 'right';
+  else if(ang < -limit) now = 'left';
+  CAM.tiltState = now;
+  return now;
 }
 
 function gestureChord(g, tilt){
   if(g === 'nc') return NC;
   const spec = GESTURE_CHORDS[g];
   if(!spec) return null;
-  let [iv, ls, q] = spec;
-  if($('camQuality').value === 'tilt' && tilt !== 'flat'){
-    q = (tilt === 'left') ? 'm' : '';        // lean left for minor, right for major
+  let [deg, q] = spec;
+  if($('camQuality').value === 'minor'){
+    // Finger count picks the root only: hand upright is major, hand tilted
+    // either way is minor. So two fingers gives D, and D minor when leaned over.
+    q = (tilt === 'flat') ? '' : 'm';
   }
-  const key = KEYS[S.keyPc];
-  return parseChord(spellNote(key.li + ls, (key.pc + iv) % 12) + q);
+  return degreeChord(deg, q);
 }
 
 function applyGestureChord(chord){
@@ -1736,9 +1755,22 @@ function applyGestureChord(chord){
   }
 }
 
+/* The camera hint changes with the mode, so the rule you are playing by is
+   always written under the picture. */
+function setCamHint(){
+  const twoHands = '  Switch to two hands in Settings to start and stop with your other hand.';
+  const fingers = '1\u20135 fingers is I to V, index+pinky is vi, index+pinky+thumb is vii\u00b0, a fist is N.C.';
+  const txt = ($('camQuality').value === 'minor')
+    ? 'Fingers pick the root: 1\u20135 is I to V, index+pinky is vi, index+pinky+thumb is vii, a fist is N.C. '
+      + 'Hand upright plays the major, lean it over either way and the minor is played.'
+    : fingers;
+  $('camHint').textContent = txt + twoHands;
+}
+
 async function camStart(){
   if(CAM.on || CAM.loading) return;
   CAM.loading = true;
+  setCamHint();
   $('camInfo').textContent = 'starting\u2026';
   $('camWrap').style.display = '';
   try{
@@ -1783,6 +1815,7 @@ function camStop(){
   const cv = $('camCanvas');
   if(cv){ const g = cv.getContext('2d'); g && g.clearRect(0, 0, cv.width, cv.height); }
   CAM.lastGesture = null; CAM.stableCount = 0; CAM.applied = null; CAM.lastVideoTime = -1;
+  CAM.tiltState = 'flat'; CAM.lastTilt = null;
   $('camToggle').classList.remove('on');
   $('camWrap').style.display = 'none';
   $('pads').style.display = '';
@@ -1863,6 +1896,7 @@ function handleHands(res){
   if(!res || !res.landmarks || !res.landmarks.length){
     $('camInfo').textContent = 'no hand';
     CAM.lastGesture = null; CAM.stableCount = 0;
+    CAM.tiltState = 'flat'; CAM.lastTilt = null;
     CAM.rightGesture = null; CAM.rightCount = 0; CAM.rightApplied = null;
     drawSkeleton(res);
     return;
@@ -1895,6 +1929,7 @@ function handleHands(res){
   if(leftIdx < 0){
     $('camInfo').textContent = 'right hand only' + rightLabel;
     CAM.lastGesture = null; CAM.stableCount = 0;
+    CAM.tiltState = 'flat'; CAM.lastTilt = null;
     return;
   }
 
@@ -1906,12 +1941,21 @@ function handleHands(res){
   else { CAM.lastGesture = g; CAM.stableCount = 1; }
 
   const need = parseInt($('camSteady').value, 10) || 1;
+  // A tilt after the finger count has already settled has to count too, or
+  // leaning the hand over would only ever work on the one frame the gesture
+  // became stable.
+  const tiltMatters = $('camQuality').value === 'minor';
+  const tiltChanged = tiltMatters && tilt !== CAM.lastTilt;
+  CAM.lastTilt = tilt;
+
   const label = g === 'nc' ? 'fist' : g === 'vi' ? 'index+pinky' : g === 'vii' ? 'index+pinky+thumb'
               : g === null ? 'unclear' : g + ' finger' + (g > 1 ? 's' : '');
+  const tiltLabel = !tiltMatters ? ''
+    : (tilt === 'flat' ? ' \u00b7 upright' : ' \u00b7 tilted \u2192 minor');
   $('camInfo').textContent = label + (CAM.stableCount < need ? ' \u2026' : '') +
-    ($('camQuality').value === 'tilt' && tilt !== 'flat' ? ' \u00b7 ' + tilt : '') + rightLabel;
+    tiltLabel + rightLabel;
 
-  if(g !== null && CAM.stableCount === need){
+  if(g !== null && (CAM.stableCount === need || (CAM.stableCount > need && tiltChanged))){
     const chord = gestureChord(g, tilt);
     if(chord){
       $('camChord').textContent = chord.sym;
@@ -2071,6 +2115,16 @@ function buildSlots(){
     row.appendChild(num); row.appendChild(sel); wrap.appendChild(row);
   });
 }
+/* The seven degrees of the key as [semitones, letter steps]. The pads, the
+   camera gestures and the keyboard all spell their chords from this, so F major
+   gives Bb on all three. */
+const DEGREES = [[0,0],[2,1],[4,2],[5,3],[7,4],[9,5],[11,6]];
+function degreeChord(i, q){
+  const key = KEYS[S.keyPc], d = DEGREES[i];
+  if(!d) return null;
+  return parseChord(spellNote(key.li + d[1], (key.pc + d[0]) % 12) + q);
+}
+
 function buildPads(){
   const key = KEYS[S.keyPc];
   // [semitones above the key, letter steps above the key, chord quality]
@@ -2129,6 +2183,46 @@ function paintPads(){
     return;
   }
   S.padChords.forEach(p => p.el.classList.toggle('lit', !!S.holdChord && S.holdChord.sym === p.sym));
+}
+
+/* A chord played from the keyboard takes exactly the same path as a pad press,
+   so the pad mode, the sequence mode and the pad voice all behave identically
+   whether you tapped the screen or hit a key. */
+const KBD_MAJOR = ['1','2','3','4','5','6','7'];
+const KBD_MINOR = ['q','w','e','r','t','y','u'];
+const KBD_HELD = new Set();
+/* The scale mode's top row: the chords of the key as a player expects them on
+   the pads. The seventh is a plain minor, not the strict vii(b5) -- the pop
+   reading, and the one that actually sounds usable under a voice. */
+const KBD_SCALE_Q = ['', 'm', 'm', '', '', 'm', 'm'];
+
+function chordFromKey(chord){
+  if(!chord) return;
+  initAudio();
+  if(ac.state === 'suspended') ac.resume();
+  if(S.chordSource === 'sequence'){ assignSeqSlot(chord); return; }
+  S.holdChord = chord;
+  paintPads();
+  $('dChord').textContent = chord.sym;
+  if(S.padMode !== 'press' && S.padMode !== 'tap') return;
+  if(chord.nc){ killPad(ac.currentTime, S.padSustain); return; }
+  playPad(voiceChord(chord, S.transpose), ac.currentTime + 0.02,
+          S.padMode === 'press' ? PAD_HOLD : S.padBeats * 60 / S.bpm);
+}
+
+function setKbdHint(){
+  const mode = $('kbdMode').value;
+  const moved = ' Intro, fill 1, fill 2 and ending move to Z X C V. Space still starts and stops.';
+  let txt;
+  if(mode === 'chords'){
+    txt = '1\u20137 plays the major chords of the key, QWERTYU the minor ones, 0 is N.C.' + moved;
+  } else if(mode === 'scale'){
+    txt = '1\u20137 plays the chords of the key \u2014 in C that is C Dm Em F G Am Bm. '
+        + 'QWERTYU makes any degree minor, 0 is N.C.' + moved;
+  } else {
+    txt = '1 is intro, 2 and 3 are the fills, 4 is the ending, space starts and stops.';
+  }
+  $('kbdHint').textContent = txt;
 }
 
 /* ---------- 16-bar chord sequence ---------- */
@@ -2305,6 +2399,13 @@ function setChordMode(mode){
   $('camHands').addEventListener('change', () => {
     if(CAM.on){ camStop(); camStart(); }   // hand count is fixed when the tracker is built
   });
+  $('camQuality').addEventListener('change', () => {
+    // Forget the tilt and the chord already sent, so the next frame re-reads the
+    // hand under the new rule instead of waiting for the fingers to change.
+    CAM.tiltState = 'flat'; CAM.lastTilt = null; CAM.applied = null;
+    CAM.lastGesture = null; CAM.stableCount = 0;
+    if(CAM.on) setCamHint();
+  });
   $('camSteady').addEventListener('input', e => {
     const n = parseInt(e.target.value,10);
     $('camSteadyOut').value = n + (n === 1 ? ' frame' : ' frames');
@@ -2363,15 +2464,56 @@ function setChordMode(mode){
   });
   requestAnimationFrame(() => goPane(1, false));
 
+  // With the number row taken by chords, transport moves to the bottom row.
+  const TRANSPORT_NUM = { '1':'intro', '2':'fill1', '3':'fill2', '4':'ending' };
+  const TRANSPORT_ALT = { 'z':'intro', 'x':'fill1', 'c':'fill2', 'v':'ending' };
+  const kbdKey = e => (e.key.length === 1 ? e.key.toLowerCase() : e.key);
+
   document.addEventListener('keydown', e => {
-    if(e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-    const k = e.key;
-    if(k === ' '){ e.preventDefault(); S.playing ? stop() : start(false); }
-    else if(k === '1'){ e.preventDefault(); if(!S.playing) start(true); else queue('intro'); }
-    else if(k === '2'){ e.preventDefault(); queue('fill',1); }
-    else if(k === '3'){ e.preventDefault(); queue('fill',2); }
-    else if(k === '4'){ e.preventDefault(); queue('ending'); }
+    const t = e.target;
+    if(t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA'
+             || t.isContentEditable)) return;
+    if(e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = kbdKey(e);
+    if(k === ' '){ e.preventDefault(); if(!e.repeat){ S.playing ? stop() : start(false); } return; }
+
+    const mode = $('kbdMode').value;
+    if(mode !== 'transport'){
+      const top = KBD_MAJOR.indexOf(k), low = KBD_MINOR.indexOf(k);
+      if(top >= 0 || low >= 0 || k === '0'){
+        e.preventDefault();
+        if(e.repeat) return;              // holding a key must not retrigger the pad
+        KBD_HELD.add(k);
+        // Bottom row is always minor; the top row is either all major or the
+        // qualities of the key, depending on the mode.
+        const q = low >= 0 ? 'm' : (mode === 'scale' ? KBD_SCALE_Q[top] : '');
+        chordFromKey(k === '0' ? NC : degreeChord(top >= 0 ? top : low, q));
+        return;
+      }
+    }
+    const act = (mode === 'transport' ? TRANSPORT_NUM : TRANSPORT_ALT)[k];
+    if(!act) return;
+    e.preventDefault();
+    if(act === 'intro'){ if(!S.playing) start(true); else queue('intro'); }
+    else if(act === 'fill1') queue('fill', 1);
+    else if(act === 'fill2') queue('fill', 2);
+    else queue('ending');
   });
+
+  // In press mode the pad rings only while the key is down, as on the pads.
+  document.addEventListener('keyup', e => {
+    if(!KBD_HELD.delete(kbdKey(e))) return;
+    if(!KBD_HELD.size && S.padMode === 'press' && ac) killPad(ac.currentTime, S.padSustain);
+  });
+  // A key still down when the window loses focus would otherwise hang the pad.
+  window.addEventListener('blur', () => {
+    if(!KBD_HELD.size) return;
+    KBD_HELD.clear();
+    if(S.padMode === 'press' && ac) killPad(ac.currentTime, S.padSustain);
+  });
+
+  $('kbdMode').addEventListener('change', () => { KBD_HELD.clear(); setKbdHint(); });
+  setKbdHint();
 
   // keep audio alive when returning to the tab
   document.addEventListener('visibilitychange', () => {
