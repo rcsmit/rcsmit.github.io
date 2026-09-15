@@ -1,1711 +1,2584 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VJ LOOP FORGE v2</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<title>VJ LOOP FORGE v3 · GPU</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Bebas+Neue&display=swap');
-
   :root {
-    --bg: #080808;
-    --panel: #111;
-    --border: #222;
-    --accent: #00ffaa;
-    --accent2: #ff2266;
-    --text: #ccc;
-    --dim: #555;
+    --sidebar-w: 300px;
+    --toggle-w: 28px;
+
+    --bg: #05060a;
+    --panel: rgba(16,18,26,0.82);
+    --panel-solid: #0d0f16;
+    --border: rgba(255,255,255,0.09);
+    --border-hi: rgba(255,255,255,0.18);
+    --accent: #3df5c4;
+    --accent2: #ff2f6d;
+    --accent3: #7a5cff;
+    --text: #d6dbe4;
+    --dim: #6b7384;
+    --dimmer: #464d5c;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
+  html, body { height: 100%; }
+
   body {
-    background: var(--bg);
+    background:
+      radial-gradient(1200px 700px at 78% -10%, rgba(122,92,255,0.16), transparent 60%),
+      radial-gradient(900px 600px at 8% 110%, rgba(61,245,196,0.10), transparent 60%),
+      var(--bg);
     color: var(--text);
-    font-family: 'Share Tech Mono', monospace;
+    font-family: 'Share Tech Mono', ui-monospace, monospace;
     font-size: 12px;
-    display: flex;
-    flex-direction: column;
     height: 100vh;
+    height: 100dvh;
+    display: flex;
     overflow: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
-  header {
-    background: #000;
+  /* ---------- sidebar ---------- */
+  #sidebar {
+    width: var(--sidebar-w); min-width: var(--sidebar-w);
+    display: flex; flex-direction: column;
+    overflow: visible;
+    position: relative; flex-shrink: 0;
+    z-index: 1002;
+    background: linear-gradient(180deg, rgba(18,20,30,0.96), rgba(9,10,16,0.96));
+    border-right: 1px solid var(--border);
+    backdrop-filter: blur(14px);
+    transition: width .25s ease, min-width .25s ease;
+  }
+  #sidebar-header, #sidebar-body, #sidebar-footer { overflow: hidden; }
+  #sidebar.collapsed { width: var(--toggle-w); min-width: var(--toggle-w); }
+  #sidebar.collapsed > *:not(#sidebar-toggle) { display: none; }
+
+  #sidebar-toggle {
+    position: absolute;
+    top: 50%; right: -16px;
+    transform: translateY(-50%);
+    width: 16px; height: 72px;
+    border: 1px solid var(--border-hi); border-left: none;
+    border-radius: 0 6px 6px 0;
+    background: #141822; color: var(--accent);
+    font-size: .7rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, width .15s;
+    z-index: 1003; flex-shrink: 0;
+    box-shadow: 3px 0 14px rgba(0,0,0,.45);
+  }
+  #sidebar-toggle:hover { background: #1d2430; width: 20px; }
+
+  #sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1001; }
+  #sidebar-overlay.hidden { display: none !important; }
+
+  #sidebar-header {
+    padding: 14px 16px 12px;
     border-bottom: 1px solid var(--border);
-    padding: 8px 16px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-shrink: 0;
+    background: linear-gradient(180deg, rgba(61,245,196,0.06), transparent);
   }
-
-  header h1 {
+  #sidebar-header h1 {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 22px;
-    letter-spacing: 4px;
-    color: var(--accent);
-  }
-
-  header span {
-    color: var(--dim);
-    font-size: 10px;
-    letter-spacing: 2px;
-  }
-
-  .main {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
-
-  .canvas-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: #000;
-    padding: 12px;
-    gap: 10px;
-  }
-
-  #preview {
-    width: 100%;
-    max-width: 800px;
-    aspect-ratio: 16/9;
-    border: 1px solid var(--border);
-    display: block;
-    background: #000;
-  }
-
-  .canvas-controls {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .sidebar {
-    width: 310px;
-    background: var(--panel);
-    border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    flex-shrink: 0;
-  }
-
-  .section {
-    border-bottom: 1px solid var(--border);
-    padding: 10px 12px;
-  }
-
-  .section-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 14px;
+    font-size: 26px; line-height: 1;
     letter-spacing: 3px;
-    color: var(--accent);
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    color: #fff;
   }
+  #sidebar-header h1 b { color: var(--accent); font-weight: 400; }
+  #sidebar-header .sub { color: var(--dim); font-size: 9.5px; letter-spacing: 2px; margin-top: 5px; }
 
-  .row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-    gap: 6px;
+  #sidebar-body { flex: 1; overflow-y: auto; padding: 4px 0 10px; }
+  #sidebar-body::-webkit-scrollbar { width: 8px; }
+  #sidebar-body::-webkit-scrollbar-track { background: transparent; }
+  #sidebar-body::-webkit-scrollbar-thumb { background: #212735; border-radius: 4px; }
+  #sidebar-body::-webkit-scrollbar-thumb:hover { background: #2d3546; }
+
+  .section { border-bottom: 1px solid var(--border); padding: 12px 16px 14px; }
+  .section-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 9.5px; letter-spacing: 2.5px; color: var(--dim);
+    text-transform: uppercase; margin-bottom: 10px;
   }
-
-  .row label {
-    color: var(--dim);
-    min-width: 90px;
-    font-size: 11px;
-    letter-spacing: 1px;
+  .section-title::before {
+    content: ''; width: 3px; height: 11px; border-radius: 2px;
+    background: var(--accent); box-shadow: 0 0 10px var(--accent);
   }
+  .section-title .rnd-btn { margin-left: auto; }
 
-  .row input[type=range] {
-    flex: 1;
-    accent-color: var(--accent);
-    height: 3px;
-    cursor: pointer;
-  }
-
+  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .row:last-child { margin-bottom: 0; }
+  .row label.k { flex: 0 0 82px; color: var(--dim); font-size: 10px; letter-spacing: .8px; }
   .row .val {
-    color: var(--accent);
-    min-width: 38px;
-    text-align: right;
-    font-size: 11px;
+    flex: 0 0 38px; text-align: right; color: var(--accent);
+    font-size: 10px; font-variant-numeric: tabular-nums;
   }
 
-  .row select {
-    flex: 1;
-    background: #0a0a0a;
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 2px 4px;
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
+  select, input[type=text] {
+    flex: 1; min-width: 0;
+    background: #0f1219; color: var(--text);
+    border: 1px solid var(--border-hi); border-radius: 4px;
+    padding: 6px 7px; font-family: inherit; font-size: 11px;
+    cursor: pointer; outline: none;
+  }
+  select:focus { border-color: var(--accent); }
+  select optgroup { background: #0b0d13; color: var(--dim); }
+  select option { background: #0f1219; color: var(--text); }
+
+  input[type=range] {
+    flex: 1; min-width: 0; -webkit-appearance: none; appearance: none;
+    height: 20px; background: transparent; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 3px; border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent) var(--fill,50%), #232a38 var(--fill,50%), #232a38 100%);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 12px; height: 12px; margin-top: -4.5px;
+    border-radius: 50%; background: #fff;
+    border: 2px solid #0b0d13;
+    box-shadow: 0 0 8px rgba(61,245,196,.8);
+  }
+  input[type=range]::-moz-range-track { height: 3px; border-radius: 3px; background: #232a38; }
+  input[type=range]::-moz-range-progress { height: 3px; border-radius: 3px; background: var(--accent); }
+  input[type=range]::-moz-range-thumb {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #fff; border: 2px solid #0b0d13;
   }
 
-  .row input[type=color] {
-    width: 32px;
-    height: 20px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    padding: 0;
+  input[type=color] {
+    flex: 1; min-width: 0; height: 26px; padding: 0;
+    background: #0f1219; border: 1px solid var(--border-hi);
+    border-radius: 4px; cursor: pointer;
   }
+  input[type=color]::-webkit-color-swatch-wrapper { padding: 3px; }
+  input[type=color]::-webkit-color-swatch { border: none; border-radius: 2px; }
 
-  .row input[type=checkbox] {
-    accent-color: var(--accent);
-    width: 14px;
-    height: 14px;
-    cursor: pointer;
+  /* toggle switch */
+  .sw { display: flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+  .sw input { display: none; }
+  .sw i {
+    width: 30px; height: 16px; border-radius: 10px;
+    background: #232a38; border: 1px solid var(--border-hi);
+    position: relative; transition: background .15s, border-color .15s;
+    flex-shrink: 0;
   }
+  .sw i::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--dim); transition: transform .15s, background .15s;
+  }
+  .sw input:checked + i { background: rgba(61,245,196,.22); border-color: var(--accent); }
+  .sw input:checked + i::after { transform: translateX(14px); background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .sw span { font-size: 10px; color: var(--dim); letter-spacing: .5px; }
 
   .btn {
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 2px;
-    padding: 6px 14px;
-    border: 1px solid;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: all 0.1s;
-    background: transparent;
+    background: #141822; color: var(--text);
+    border: 1px solid var(--border-hi); border-radius: 4px;
+    padding: 7px 11px; font-family: inherit; font-size: 10.5px;
+    letter-spacing: 1.2px; cursor: pointer; text-transform: uppercase;
+    transition: border-color .15s, color .15s, background .15s, transform .08s;
+    white-space: nowrap;
   }
-
-  .btn-accent { color: var(--accent); border-color: var(--accent); }
-  .btn-accent:hover { background: var(--accent); color: #000; }
-  .btn-red { color: var(--accent2); border-color: var(--accent2); }
-  .btn-red:hover { background: var(--accent2); color: #fff; }
-  .btn-white { color: #fff; border-color: #444; }
-  .btn-white:hover { background: #222; }
-  .btn-sm { font-size: 10px; padding: 3px 8px; letter-spacing: 1px; }
-
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn:active { transform: translateY(1px); }
+  .btn-accent { border-color: rgba(61,245,196,.5); color: var(--accent); background: rgba(61,245,196,.08); }
+  .btn-accent:hover { background: rgba(61,245,196,.18); }
+  .btn-red { border-color: rgba(255,47,109,.55); color: var(--accent2); background: rgba(255,47,109,.1); }
+  .btn-red:hover { background: rgba(255,47,109,.2); color: #fff; }
+  .btn-sm { padding: 5px 8px; font-size: 9.5px; letter-spacing: 1px; }
   .rnd-btn {
-    background: transparent;
-    border: 1px solid #333;
-    color: var(--dim);
-    font-family: 'Share Tech Mono', monospace;
-    font-size: 10px;
-    padding: 2px 6px;
-    cursor: pointer;
-    letter-spacing: 1px;
+    background: transparent; border: 1px solid var(--border-hi);
+    color: var(--dim); border-radius: 3px; padding: 2px 6px;
+    font-family: inherit; font-size: 9px; letter-spacing: 1px; cursor: pointer;
   }
   .rnd-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  .status-bar {
-    background: #000;
-    border-top: 1px solid var(--border);
-    padding: 4px 12px;
-    font-size: 10px;
-    color: var(--dim);
-    display: flex;
-    gap: 20px;
+  /* scene picker */
+  .scenes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .scene-btn {
+    background: #10141c; border: 1px solid var(--border);
+    border-radius: 4px; color: var(--dim);
+    font-family: inherit; font-size: 9px; letter-spacing: .6px;
+    padding: 7px 5px; cursor: pointer; text-align: left;
+    display: flex; align-items: center; gap: 5px;
+    transition: border-color .15s, color .15s, background .15s;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .scene-btn .dot {
+    width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+    background: var(--dimmer);
+  }
+  .scene-btn:hover { border-color: var(--border-hi); color: var(--text); }
+  .scene-btn.on {
+    border-color: var(--accent); color: #fff;
+    background: linear-gradient(180deg, rgba(61,245,196,.16), rgba(61,245,196,.05));
+  }
+  .scene-btn.on .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    background: #10141c; border: 1px solid var(--border);
+    color: var(--dim); border-radius: 999px; padding: 4px 9px;
+    font-family: inherit; font-size: 9px; letter-spacing: 1px;
+    cursor: pointer; text-transform: uppercase;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  .swatches { display: flex; gap: 4px; flex-wrap: wrap; }
+  .sw-btn {
+    width: 26px; height: 18px; border-radius: 3px; cursor: pointer;
+    border: 1px solid var(--border-hi); padding: 0;
+  }
+  .sw-btn.on { border-color: #fff; box-shadow: 0 0 0 1px #fff inset; }
+
+  #sidebar-footer {
+    padding: 10px 16px; border-top: 1px solid var(--border);
+    color: var(--dimmer); font-size: 9px; letter-spacing: 1px;
+    display: flex; gap: 10px; align-items: center;
+  }
+
+  /* ---------- main ---------- */
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
+
+  .topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8,9,14,.7);
+    backdrop-filter: blur(10px);
     flex-shrink: 0;
   }
+  .topbar .spacer { margin-left: auto; }
+  .seg {
+    display: flex; border: 1px solid var(--border-hi);
+    border-radius: 4px; overflow: hidden;
+  }
+  .seg button {
+    background: transparent; color: var(--dim); border: none;
+    font-family: inherit; font-size: 9.5px; letter-spacing: 1.2px;
+    padding: 6px 10px; cursor: pointer;
+  }
+  .seg button.on { background: rgba(61,245,196,.15); color: var(--accent); }
+  .seg button:hover:not(.on) { color: var(--text); }
 
-  .status-bar span { color: var(--accent); }
+  .stage {
+    flex: 1; position: relative; min-height: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+    background:
+      linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px) 0 0 / 100% 34px,
+      linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px) 0 0 / 34px 100%;
+  }
+  .frame {
+    position: relative;
+    max-width: 100%; max-height: 100%;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    border: 1px solid var(--border-hi);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.03) inset;
+    background: #000;
+  }
+  #gl { display: block; width: 100%; height: 100%; }
+
+  .hud {
+    position: absolute; left: 10px; top: 10px;
+    display: flex; gap: 6px; align-items: center;
+    font-size: 9px; letter-spacing: 1.5px; color: var(--dim);
+    background: rgba(0,0,0,.45); border: 1px solid var(--border);
+    border-radius: 4px; padding: 4px 8px;
+    pointer-events: none; text-transform: uppercase;
+  }
+  .hud b { color: var(--accent); font-weight: 400; }
+
+  .beatbar {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+    background: rgba(255,255,255,.06);
+  }
+  .beatbar i {
+    display: block; height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    box-shadow: 0 0 12px var(--accent);
+  }
+
+  .transport {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 14px; border-top: 1px solid var(--border);
+    background: rgba(8,9,14,.7); flex-shrink: 0; flex-wrap: wrap;
+  }
+  .statuses {
+    display: flex; gap: 16px; margin-left: auto;
+    font-size: 9px; letter-spacing: 1.4px; color: var(--dimmer);
+    text-transform: uppercase;
+  }
+  .statuses b { color: var(--accent); font-weight: 400; }
 
   .rec-dot {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent2);
-    margin-right: 6px;
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent2); margin-right: 6px;
+    box-shadow: 0 0 8px var(--accent2);
     animation: blink 1s infinite;
   }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
+  .hidden { display: none !important; }
 
-  .hidden { display: none; }
+  #recStatus { color: var(--accent2); font-size: 9.5px; letter-spacing: 1.5px; }
 
-  .presets {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-    margin-top: 4px;
+  #errBox {
+    position: absolute; inset: 16px; z-index: 50;
+    background: rgba(5,6,10,.95); border: 1px solid var(--accent2);
+    border-radius: 6px; padding: 18px; overflow: auto;
+    color: #ffb3c9; font-size: 11px; line-height: 1.5; white-space: pre-wrap;
+  }
+  #errBox h3 { font-family: 'Bebas Neue',sans-serif; letter-spacing: 2px; color: var(--accent2); font-size: 20px; margin-bottom: 8px; }
+
+  #toast {
+    position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+    background: rgba(8,10,16,.95); border: 1px solid var(--accent);
+    color: var(--accent); border-radius: 4px; padding: 8px 14px;
+    font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase;
+    opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 60;
+  }
+  #toast.on { opacity: 1; }
+
+  @media (max-width: 860px) {
+    #sidebar { position: fixed; top: 0; left: 0; bottom: 0; box-shadow: 3px 0 30px rgba(0,0,0,.6); }
+    #sidebar-overlay { display: block; }
+    .stage { padding: 8px; }
+    .statuses { display: none; }
   }
 </style>
 <script src="https://unpkg.com/mp4-muxer@5.1.3/build/mp4-muxer.js"></script>
 </head>
 <body>
 
-<header>
-  <h1>⬡ VJ LOOP FORGE v2</h1>
-  <span>FRACTALS / PLASMA / GRADIENTS / TECHNO</span>
-  <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
-    <button class="btn btn-white btn-sm" onclick="randomizeAll()">⚡ RANDOMIZE ALL</button>
-    <div style="display:flex;border:1px solid #333;border-radius:2px;overflow:hidden;">
-      <button id="fmtWebm" onclick="setFormat('webm')" style="background:#222;color:#00ffaa;border:none;font-family:'Share Tech Mono',monospace;font-size:10px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">WEBM</button>
-      <button id="fmtMp4"  onclick="setFormat('mp4')"  style="background:transparent;color:#555;border:none;font-family:'Share Tech Mono',monospace;font-size:10px;padding:3px 8px;cursor:pointer;letter-spacing:1px;">MP4</button>
-    </div>
-    <button class="btn btn-accent btn-sm" onclick="startRecording()" id="recBtn">⏺ RECORD LOOP</button>
-    <button class="btn btn-red btn-sm hidden" onclick="stopRecording()" id="stopBtn">⏹ REC <span id="recCountdown"></span></button>
-  </div>
-</header>
+<div id="sidebar-overlay"></div>
 
-<div class="main">
-  <div class="canvas-area">
-    <canvas id="preview"></canvas>
-    <div class="canvas-controls">
-      <button class="btn btn-accent" onclick="togglePlay()" id="playBtn">▶ PLAY</button>
-      <button class="btn btn-white" onclick="resetAnim()">↺ RESET</button>
-      <select id="loopDuration" style="background:#111;border:1px solid #333;color:#ccc;padding:5px 8px;font-family:'Share Tech Mono',monospace;font-size:11px;">
-        <option value="4">4s LOOP</option>
-        <option value="8" selected>8s LOOP</option>
-        <option value="16">16s LOOP</option>
-        <option value="32">32s LOOP</option>
-      </select>
-      <select id="resolution" style="background:#111;border:1px solid #333;color:#ccc;padding:5px 8px;font-family:'Share Tech Mono',monospace;font-size:11px;">
-        <option value="1280x720">1280×720</option>
-        <option value="1920x1080" selected>1920×1080</option>
-      </select>
-    </div>
+<aside id="sidebar">
+  <button id="sidebar-toggle" title="Paneel inklappen">&#x25C4;</button>
+
+  <div id="sidebar-header">
+    <h1>VJ LOOP <b>FORGE</b></h1>
+    <div class="sub">V3 · GPU RAYMARCH ENGINE</div>
   </div>
 
-  <div class="sidebar">
+  <div id="sidebar-body">
 
-    <!-- SCENE -->
     <div class="section">
-      <div class="section-title">SCENE <button class="rnd-btn" onclick="randomizeSection('scene')">RND</button></div>
-      <div class="row">
-        <label>VISUAL MODE</label>
-        <select id="visualMode" onchange="updateParam()">
-          <optgroup label="── CLASSIC ──">
-            <option value="grid">GRID TUNNEL</option>
-            <option value="particles">PARTICLES</option>
-            <option value="waveform">WAVEFORM</option>
-            <option value="hexagons">HEXAGONS</option>
-            <option value="scanlines">SCANLINES</option>
-            <option value="kaleidoscope">KALEIDOSCOPE</option>
-            <option value="matrix">DATA RAIN</option>
-            <option value="laser">LASER GRID</option>
-          </optgroup>
-          <optgroup label="── NEW ──">
-            <option value="mandelbrot">MANDELBROT</option>
-            <option value="julia">JULIA SET</option>
-            <option value="plasma">PLASMA FIELD</option>
-            <option value="gradient_tunnel">GRADIENT TUNNEL</option>
-            <option value="voronoi">VORONOI STORM</option>
-            <option value="lissajous">LISSAJOUS WEB</option>
-            <option value="tunnel3d">PSYCHEDELIC TUNNEL</option>
-            <option value="starfield">HYPERSPACE</option>
-          </optgroup>
-        </select>
+      <div class="section-title">Scene <button class="rnd-btn" data-rnd="scene">RND</button></div>
+      <div class="scenes" id="sceneGrid"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Motion <button class="rnd-btn" data-rnd="motion">RND</button></div>
+      <div class="row"><label class="k">Speed</label><input type="range" id="speed" min="0.25" max="5" step="0.05" value="1"><span class="val" id="speedVal">1.00</span></div>
+      <div class="row"><label class="k">BPM</label><input type="range" id="bpm" min="80" max="200" step="1" value="140"><span class="val" id="bpmVal">140</span></div>
+      <div class="row"><label class="k">Beat pulse</label><input type="range" id="zoomPulse" min="0" max="1" step="0.01" value="0.3"><span class="val" id="zoomPulseVal">0.30</span></div>
+      <div class="row"><label class="k">Roll</label><input type="range" id="rotation" min="0" max="2" step="0.01" value="0.2"><span class="val" id="rotationVal">0.20</span></div>
+      <div class="row"><label class="k">Morph</label><input type="range" id="morph" min="0" max="1" step="0.01" value="0.4"><span class="val" id="morphVal">0.40</span></div>
+      <div class="row"><label class="k">Warp</label><input type="range" id="warp" min="0" max="1" step="0.01" value="0.4"><span class="val" id="warpVal">0.40</span></div>
+      <div class="row"><label class="k">Strobe</label><input type="range" id="strobe" min="0" max="1" step="0.01" value="0"><span class="val" id="strobeVal">0.00</span></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Colour <button class="rnd-btn" data-rnd="color">RND</button></div>
+      <div class="row"><label class="k">Palette</label><select id="palette"></select></div>
+      <div class="row" style="margin-bottom:10px">
+        <div class="swatches" id="swatches"></div>
       </div>
       <div class="row">
-        <label>OVERLAY</label>
-        <select id="overlayMode" onchange="updateParam()">
-          <option value="none">NONE</option>
-          <option value="scanlines">SCANLINES</option>
-          <option value="noise">NOISE</option>
-          <option value="vignette">VIGNETTE</option>
-          <option value="glitch">GLITCH</option>
-          <option value="chromatic">CHROMATIC AB</option>
-          <option value="crt">CRT MONITOR</option>
-        </select>
+        <input type="color" id="color1" value="#3df5c4">
+        <input type="color" id="color2" value="#0a1f2c">
+        <input type="color" id="color3" value="#ff2f6d">
       </div>
+      <div class="row"><label class="k">Hue shift</label><input type="range" id="hueShift" min="0" max="1" step="0.005" value="0.2"><span class="val" id="hueShiftVal">0.20</span></div>
+      <div class="row"><label class="k">Saturation</label><input type="range" id="saturation" min="0" max="2" step="0.02" value="1"><span class="val" id="saturationVal">1.00</span></div>
+      <div class="row"><label class="k">Exposure</label><input type="range" id="brightness" min="0.2" max="2.5" step="0.02" value="1"><span class="val" id="brightnessVal">1.00</span></div>
+      <div class="row"><label class="k">Contrast</label><input type="range" id="contrast" min="0.6" max="1.8" step="0.02" value="1.05"><span class="val" id="contrastVal">1.05</span></div>
+      <div class="row"><label class="k">Look</label><select id="tonemap">
+        <option value="0" selected>ACES FILMIC</option>
+        <option value="1">NEON HDR</option>
+        <option value="2">REINHARD SOFT</option>
+        <option value="3">CLIPPED / HARD</option>
+      </select></div>
+      <div class="row"><label class="sw"><input type="checkbox" id="invert"><i></i><span>Invert</span></label></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Geometry <button class="rnd-btn" data-rnd="geometry">RND</button></div>
+      <div class="row"><label class="k">Density</label><input type="range" id="density" min="2" max="40" step="1" value="14"><span class="val" id="densityVal">14</span></div>
+      <div class="row"><label class="k">Detail</label><input type="range" id="complexity" min="1" max="10" step="1" value="5"><span class="val" id="complexityVal">5</span></div>
+      <div class="row"><label class="k">Line width</label><input type="range" id="lineWidth" min="0.3" max="6" step="0.1" value="1"><span class="val" id="lineWidthVal">1.0</span></div>
+      <div class="row"><label class="k">Lens / FOV</label><input type="range" id="perspective" min="0.4" max="2.4" step="0.02" value="1"><span class="val" id="perspectiveVal">1.00</span></div>
+      <div class="row"><label class="k">Fractal zoom</label><input type="range" id="fractalZoom" min="0.2" max="3" step="0.02" value="1"><span class="val" id="fractalZoomVal">1.00</span></div>
+      <div class="row"><label class="k">Kaleido</label><input type="range" id="kaleido" min="0" max="16" step="1" value="0"><span class="val" id="kaleidoVal">0</span></div>
       <div class="row">
-        <label>SYMMETRY</label>
-        <input type="checkbox" id="symmetry" onchange="updateParam()">
-        <label style="min-width:0;flex:1;text-align:right;color:#555;font-size:10px;">mirror X</label>
-        <input type="checkbox" id="symmetryY" onchange="updateParam()">
-        <label style="min-width:0;text-align:right;color:#555;font-size:10px;">Y</label>
-      </div>
-      <div class="row">
-        <label>BLEND MODE</label>
-        <select id="blendMode" onchange="updateParam()">
-          <option value="normal">NORMAL</option>
-          <option value="screen">SCREEN</option>
-          <option value="add">ADDITIVE</option>
-          <option value="multiply">MULTIPLY</option>
-        </select>
+        <label class="sw"><input type="checkbox" id="symmetry"><i></i><span>Mirror X</span></label>
+        <label class="sw"><input type="checkbox" id="symmetryY"><i></i><span>Y</span></label>
       </div>
     </div>
 
-    <!-- MOTION -->
     <div class="section">
-      <div class="section-title">MOTION <button class="rnd-btn" onclick="randomizeSection('motion')">RND</button></div>
-      <div class="row">
-        <label>SPEED</label>
-        <input type="range" id="speed" min="0.1" max="5" step="0.05" value="1" oninput="updateParam()">
-        <span class="val" id="speedVal">1.00</span>
-      </div>
-      <div class="row">
-        <label>ZOOM PULSE</label>
-        <input type="range" id="zoomPulse" min="0" max="1" step="0.01" value="0.3" oninput="updateParam()">
-        <span class="val" id="zoomPulseVal">0.30</span>
-      </div>
-      <div class="row">
-        <label>ROTATION</label>
-        <input type="range" id="rotation" min="0" max="2" step="0.01" value="0.2" oninput="updateParam()">
-        <span class="val" id="rotationVal">0.20</span>
-      </div>
-      <div class="row">
-        <label>STROBE</label>
-        <input type="range" id="strobe" min="0" max="1" step="0.01" value="0" oninput="updateParam()">
-        <span class="val" id="strobeVal">0.00</span>
-      </div>
-      <div class="row">
-        <label>BEAT SYNC</label>
-        <input type="range" id="bpm" min="80" max="200" step="1" value="140" oninput="updateParam()">
-        <span class="val" id="bpmVal">140</span>
-      </div>
-      <div class="row">
-        <label>MORPH</label>
-        <input type="range" id="morph" min="0" max="1" step="0.01" value="0" oninput="updateParam()">
-        <span class="val" id="morphVal">0.00</span>
-      </div>
+      <div class="section-title">Post FX <button class="rnd-btn" data-rnd="post">RND</button></div>
+      <div class="row"><label class="k">Bloom</label><input type="range" id="glow" min="0" max="40" step="1" value="14"><span class="val" id="glowVal">14</span></div>
+      <div class="row"><label class="k">Bloom size</label><input type="range" id="bloomRadius" min="0.2" max="2" step="0.02" value="1"><span class="val" id="bloomRadiusVal">1.00</span></div>
+      <div class="row"><label class="k">Trails</label><input type="range" id="trails" min="0" max="0.97" step="0.01" value="0"><span class="val" id="trailsVal">0.00</span></div>
+      <div class="row"><label class="k">Trail drift</label><input type="range" id="trailZoom" min="0" max="1" step="0.01" value="0.3"><span class="val" id="trailZoomVal">0.30</span></div>
+      <div class="row"><label class="k">Chromatic</label><input type="range" id="chroma" min="0" max="1" step="0.01" value="0.18"><span class="val" id="chromaVal">0.18</span></div>
+      <div class="row"><label class="k">Grain</label><input type="range" id="grain" min="0" max="1" step="0.01" value="0.12"><span class="val" id="grainVal">0.12</span></div>
+      <div class="row"><label class="k">Vignette</label><input type="range" id="vignette" min="0" max="1" step="0.01" value="0.35"><span class="val" id="vignetteVal">0.35</span></div>
+      <div class="row"><label class="k">Overlay</label><select id="overlayMode">
+        <option value="0" selected>NONE</option>
+        <option value="1">SCANLINES</option>
+        <option value="2">CRT MASK</option>
+        <option value="3">GLITCH</option>
+        <option value="4">HALATION</option>
+        <option value="5">FEEDBACK ECHO</option>
+      </select></div>
     </div>
 
-    <!-- COLOR -->
     <div class="section">
-      <div class="section-title">COLOR <button class="rnd-btn" onclick="randomizeSection('color')">RND</button></div>
-      <div class="row">
-        <label>PALETTE</label>
-        <select id="palette" onchange="updatePalette()">
-          <option value="acid">ACID GREEN</option>
-          <option value="magenta">MAGENTA BURN</option>
-          <option value="cyber">CYBER BLUE</option>
-          <option value="fire">FIRE</option>
-          <option value="void">VOID PURPLE</option>
-          <option value="white">STROBOSCOPE</option>
-          <option value="rainbow">FULL SPECTRUM</option>
-          <option value="sunset">SUNSET</option>
-          <option value="ice">ICE COLD</option>
-          <option value="toxic">TOXIC</option>
-          <option value="custom">CUSTOM</option>
-        </select>
-      </div>
-      <div class="row">
-        <label>COLOR 1</label>
-        <input type="color" id="color1" value="#00ffaa" onchange="updateParam()">
-        <label>COLOR 2</label>
-        <input type="color" id="color2" value="#003322" onchange="updateParam()">
-        <label>COLOR 3</label>
-        <input type="color" id="color3" value="#ff2266" onchange="updateParam()">
-      </div>
-      <div class="row">
-        <label>HUE SHIFT</label>
-        <input type="range" id="hueShift" min="0" max="1" step="0.01" value="0.2" oninput="updateParam()">
-        <span class="val" id="hueShiftVal">0.20</span>
-      </div>
-      <div class="row">
-        <label>SATURATION</label>
-        <input type="range" id="saturation" min="0" max="2" step="0.05" value="1" oninput="updateParam()">
-        <span class="val" id="saturationVal">1.00</span>
-      </div>
-      <div class="row">
-        <label>BRIGHTNESS</label>
-        <input type="range" id="brightness" min="0.1" max="2" step="0.05" value="1" oninput="updateParam()">
-        <span class="val" id="brightnessVal">1.00</span>
-      </div>
-      <div class="row">
-        <label>INVERT</label>
-        <input type="checkbox" id="invert" onchange="updateParam()">
-      </div>
-    </div>
-
-    <!-- GEOMETRY -->
-    <div class="section">
-      <div class="section-title">GEOMETRY <button class="rnd-btn" onclick="randomizeSection('geometry')">RND</button></div>
-      <div class="row">
-        <label>DENSITY</label>
-        <input type="range" id="density" min="2" max="40" step="1" value="12" oninput="updateParam()">
-        <span class="val" id="densityVal">12</span>
-      </div>
-      <div class="row">
-        <label>LINE WIDTH</label>
-        <input type="range" id="lineWidth" min="0.5" max="8" step="0.5" value="1" oninput="updateParam()">
-        <span class="val" id="lineWidthVal">1.0</span>
-      </div>
-      <div class="row">
-        <label>PERSPECTIVE</label>
-        <input type="range" id="perspective" min="0.1" max="3" step="0.05" value="1" oninput="updateParam()">
-        <span class="val" id="perspectiveVal">1.00</span>
-      </div>
-      <div class="row">
-        <label>GLOW</label>
-        <input type="range" id="glow" min="0" max="40" step="1" value="8" oninput="updateParam()">
-        <span class="val" id="glowVal">8</span>
-      </div>
-      <div class="row">
-        <label>COMPLEXITY</label>
-        <input type="range" id="complexity" min="1" max="10" step="1" value="3" oninput="updateParam()">
-        <span class="val" id="complexityVal">3</span>
-      </div>
-      <div class="row">
-        <label>FRACTAL ZOOM</label>
-        <input type="range" id="fractalZoom" min="0.1" max="4" step="0.05" value="1" oninput="updateParam()">
-        <span class="val" id="fractalZoomVal">1.00</span>
-      </div>
-    </div>
-
-    <!-- PRESETS -->
-    <div class="section">
-      <div class="section-title">PRESETS</div>
-      <div class="presets">
-        <button class="btn btn-white btn-sm" onclick="loadPreset('berlin')">BERLIN</button>
-        <button class="btn btn-white btn-sm" onclick="loadPreset('ibiza')">IBIZA</button>
-        <button class="btn btn-white btn-sm" onclick="loadPreset('industrial')">INDUSTRIAL</button>
-        <button class="btn btn-white btn-sm" onclick="loadPreset('minimal')">MINIMAL</button>
-        <button class="btn btn-white btn-sm" onclick="loadPreset('rave')">RAVE</button>
-        <button class="btn btn-white btn-sm" onclick="loadPreset('acid')">ACID</button>
-        <button class="btn btn-accent btn-sm" onclick="loadPreset('mandelbrot')">MANDELBROT</button>
-        <button class="btn btn-accent btn-sm" onclick="loadPreset('plasma')">PLASMA</button>
-        <button class="btn btn-accent btn-sm" onclick="loadPreset('hyperspace')">HYPERSPACE</button>
-        <button class="btn btn-accent btn-sm" onclick="loadPreset('voronoi')">VORONOI</button>
-        <button class="btn btn-accent btn-sm" onclick="loadPreset('julia')">JULIA</button>
-        <button class="btn btn-accent btn-sm" onclick="loadPreset('psychedelic')">PSYCHEDELIC</button>
-      </div>
+      <div class="section-title">Presets</div>
+      <div class="chips" id="presetChips"></div>
     </div>
 
   </div>
-</div>
 
-<div class="status-bar">
-  <div>MODE: <span id="statusMode">GRID TUNNEL</span></div>
-  <div>BPM: <span id="statusBpm">140</span></div>
-  <div>FRAME: <span id="statusFrame">0</span></div>
-  <div>LOOP: <span id="statusLoop">8s</span></div>
-  <div id="recStatus" style="display:none"><span class="rec-dot"></span><span id="recLabel">RECORDING</span></div>
+  <div id="sidebar-footer">
+    <span>GPU: <span id="gpuName" style="color:var(--dim)">—</span></span>
+  </div>
+</aside>
+
+<div id="main">
+
+  <div class="topbar">
+    <button class="btn btn-sm" id="randomAllBtn">⚡ Randomize all</button>
+    <button class="btn btn-sm" id="copyLinkBtn" title="Deelbare link met alle instellingen">⧉ Copy link</button>
+    <div class="spacer"></div>
+    <div class="seg" id="fmtSeg">
+      <button data-fmt="webm" class="on">WEBM</button>
+      <button data-fmt="mp4">MP4</button>
+      <button data-fmt="png">PNG</button>
+    </div>
+    <button class="btn btn-accent btn-sm" id="recBtn">⏺ Record loop</button>
+    <button class="btn btn-red btn-sm hidden" id="stopBtn">⏹ Stop <span id="recCountdown"></span></button>
+  </div>
+
+  <div class="stage">
+    <div class="frame" id="frame">
+      <canvas id="gl"></canvas>
+      <div class="hud">
+        <span id="hudScene">—</span> · <b id="hudRes">—</b> · <b id="hudFps">0</b> FPS
+      </div>
+      <div class="beatbar"><i id="beatFill"></i></div>
+    </div>
+    <div id="toast"></div>
+  </div>
+
+  <div class="transport">
+    <button class="btn btn-accent btn-sm" id="playBtn">⏸ Pause</button>
+    <button class="btn btn-sm" id="resetBtn">↺ Reset</button>
+    <select id="loopDuration" style="flex:0 0 108px">
+      <option value="2">2s LOOP</option>
+      <option value="4">4s LOOP</option>
+      <option value="8" selected>8s LOOP</option>
+      <option value="16">16s LOOP</option>
+      <option value="32">32s LOOP</option>
+    </select>
+    <select id="resolution" style="flex:0 0 130px">
+      <option value="1280x720">1280×720</option>
+      <option value="1920x1080" selected>1920×1080</option>
+      <option value="2560x1440">2560×1440</option>
+      <option value="1080x1920">1080×1920 ↕</option>
+      <option value="1080x1080">1080×1080 □</option>
+    </select>
+    <select id="quality" style="flex:0 0 126px" title="Preview-resolutie">
+      <option value="0.5">PREVIEW 50%</option>
+      <option value="0.75" selected>PREVIEW 75%</option>
+      <option value="1">PREVIEW 100%</option>
+    </select>
+    <span id="recStatus" class="hidden"><span class="rec-dot"></span><span id="recLabel">RECORDING</span></span>
+    <div class="statuses">
+      <span>LOOP <b id="stLoop">8s</b></span>
+      <span>PHASE <b id="stPhase">0.00</b></span>
+      <span>BEATS <b id="stBeats">18</b></span>
+      <span>FRAME <b id="stFrame">0</b></span>
+    </div>
+  </div>
+
 </div>
 
 <script>
-// Make all interactive functions available globally immediately
-// by defining them on window after DOM is ready
-document.addEventListener('DOMContentLoaded', () => { _init(); });
+/* VJ LOOP FORGE v3 — GPU raymarch engine (WebGL2)
+   version = "20260915-121746"  (internal build id, never surfaced in the UI) */
+const version = "20260915-121746";
 
-function _init() {
-const canvas = document.getElementById('preview');
-const ctx = canvas.getContext('2d', { willReadFrequently: true });
+/* ==========================================================================
+   GLSL — shared prelude, per-scene bodies, post-processing chain
+   Every scene exposes:  vec3 scene(vec2 uv)
+   All motion is derived from uPhase (0..1) and quantised to a whole number of
+   cycles per loop, so every export is seamless by construction.
+   ========================================================================== */
 
-let W = 1920, H = 1080;
-canvas.width = W; canvas.height = H;
+const VERT = `#version 300 es
+void main(){
+  vec2 p = vec2(float((gl_VertexID & 1) << 2) - 1.0,
+                float((gl_VertexID & 2) << 1) - 1.0);
+  gl_Position = vec4(p, 0.0, 1.0);
+}`;
 
-let t = 0;
-let playing = false;
-let animId = null;
-let frameCount = 0;
-let recorder = null;
-let chunks = [];
+const PRELUDE = `#version 300 es
+precision highp float;
+precision highp int;
+out vec4 fragColor;
 
-// offscreen for fractal rendering
-let offscreen = document.createElement('canvas');
-let offCtx = offscreen.getContext('2d', { willReadFrequently: true });
-offscreen.width = W; offscreen.height = H;
+uniform vec2  uRes;
+uniform float uTime;
+uniform float uPhase;
+uniform float uLoop;
+uniform float uBeat;
+uniform float uBeatSaw;
+uniform float uBeats;
+uniform vec3  uC1;
+uniform vec3  uC2;
+uniform vec3  uC3;
+uniform float uSpeed;
+uniform float uZoomPulse;
+uniform float uRotation;
+uniform float uMorph;
+uniform float uHue;
+uniform float uDensity;
+uniform float uLineWidth;
+uniform float uPersp;
+uniform float uComplexity;
+uniform float uFractal;
+uniform float uWarp;
+uniform float uKaleido;
+uniform vec2  uMirror;
 
-// Low-res buffer for expensive fractals
-let fracBuf = document.createElement('canvas');
-let fracCtx = fracBuf.getContext('2d', { willReadFrequently: true });
-fracBuf.width = 256; fracBuf.height = 144;
-let fracImgData = fracCtx.createImageData(256, 144);
+#define PI  3.14159265359
+#define TAU 6.28318530718
 
-let P = {};
-function updateParam() {
-  P = {
-    visualMode: v('visualMode'),
-    overlayMode: v('overlayMode'),
-    symmetry: document.getElementById('symmetry').checked,
-    symmetryY: document.getElementById('symmetryY').checked,
-    blendMode: v('blendMode'),
-    speed: parseFloat(v('speed')),
-    zoomPulse: parseFloat(v('zoomPulse')),
-    rotation: parseFloat(v('rotation')),
-    strobe: parseFloat(v('strobe')),
-    bpm: parseInt(v('bpm')),
-    morph: parseFloat(v('morph')),
-    color1: v('color1'),
-    color2: v('color2'),
-    color3: v('color3'),
-    hueShift: parseFloat(v('hueShift')),
-    saturation: parseFloat(v('saturation')),
-    brightness: parseFloat(v('brightness')),
-    invert: document.getElementById('invert').checked,
-    density: parseInt(v('density')),
-    lineWidth: parseFloat(v('lineWidth')),
-    perspective: parseFloat(v('perspective')),
-    glow: parseInt(v('glow')),
-    complexity: parseInt(v('complexity')),
-    fractalZoom: parseFloat(v('fractalZoom')),
-    loopDuration: parseInt(v('loopDuration')),
-  };
-  ['speed','zoomPulse','rotation','strobe','hueShift','saturation','brightness','lineWidth','perspective','morph','fractalZoom'].forEach(k => {
-    const el = document.getElementById(k+'Val');
-    if(el) el.textContent = parseFloat(v(k)).toFixed(2);
-  });
-  ['bpm','density','glow','complexity'].forEach(k => {
-    const el = document.getElementById(k+'Val');
-    if(el) el.textContent = v(k);
-  });
-  document.getElementById('statusMode').textContent = v('visualMode').toUpperCase();
-  document.getElementById('statusBpm').textContent = v('bpm');
-  document.getElementById('statusLoop').textContent = v('loopDuration')+'s';
+float sat(float x){ return clamp(x, 0.0, 1.0); }
+vec3  sat3(vec3 x){ return clamp(x, vec3(0.0), vec3(1.0)); }
+mat2  rot2(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+
+/* ---- loop-safe motion -------------------------------------------------- */
+float nCyc(float base){ return max(1.0, floor(base * uSpeed + 0.5)); }
+float travel(float period, float base){ return uPhase * period * nCyc(base); }
+float spin(float base){ return mod(uPhase * TAU * floor(base * uRotation * 2.0 + 0.5), TAU); }
+float wave(float base, float off){ return sin(TAU * (uPhase * nCyc(base) + off)); }
+vec3  orbit(float base, float radius){
+  float a = TAU * uPhase * nCyc(base);
+  return vec3(cos(a), sin(a * 0.5), sin(a)) * radius;
 }
 
-function v(id) { return document.getElementById(id).value; }
+/* ---- hashes & noise ---------------------------------------------------- */
+float hash11(float p){ p = fract(p * 0.1031); p *= p + 33.33; p *= p + p; return fract(p); }
+float hash12(vec2 p){ vec3 p3 = fract(p.xyx * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+vec2  hash22(vec2 p){ vec3 p3 = fract(p.xyx * vec3(0.1031, 0.1030, 0.0973)); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.xx + p3.yz) * p3.zy); }
+float hash13(vec3 p3){ p3 = fract(p3 * 0.1031); p3 += dot(p3, p3.zyx + 31.32); return fract((p3.x + p3.y) * p3.z); }
+vec3  hash33(vec3 p3){ p3 = fract(p3 * vec3(0.1031, 0.1030, 0.0973)); p3 += dot(p3, p3.yxz + 33.33); return fract((p3.xxy + p3.yxx) * p3.zyx); }
 
-function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return [r,g,b];
+float noise2(vec2 x){
+  vec2 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), f.x),
+             mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), f.x), f.y);
 }
-function rgbToHex(r,g,b) {
-  return '#'+[r,g,b].map(x=>Math.min(255,Math.max(0,Math.round(x))).toString(16).padStart(2,'0')).join('');
+float noise3(vec3 x){
+  vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(hash13(i), hash13(i + vec3(1.0, 0.0, 0.0)), f.x),
+                 mix(hash13(i + vec3(0.0, 1.0, 0.0)), hash13(i + vec3(1.0, 1.0, 0.0)), f.x), f.y),
+             mix(mix(hash13(i + vec3(0.0, 0.0, 1.0)), hash13(i + vec3(1.0, 0.0, 1.0)), f.x),
+                 mix(hash13(i + vec3(0.0, 1.0, 1.0)), hash13(i + vec3(1.0, 1.0, 1.0)), f.x), f.y), f.z);
 }
-function hslToRgb(h,s,l) {
-  h=((h%360)+360)%360; s/=100; l/=100;
-  const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;
-  let r=0,g=0,b=0;
-  if(h<60){r=c;g=x;}else if(h<120){r=x;g=c;}else if(h<180){g=c;b=x;}
-  else if(h<240){g=x;b=c;}else if(h<300){r=x;b=c;}else{r=c;b=x;}
-  return [(r+m)*255,(g+m)*255,(b+m)*255];
+float fbm2(vec2 p, int oct){
+  float a = 0.5, s = 0.0;
+  for(int i = 0; i < 8; i++){ if(i >= oct) break; s += a * noise2(p); p = rot2(0.63) * p * 2.03; a *= 0.5; }
+  return s;
 }
-function beatPhase(t, bpm) { return (t * bpm / 60) % 1; }
-function beatPulse(t, bpm, sharpness=4) { return Math.pow(1 - beatPhase(t, bpm), sharpness); }
+float fbm3(vec3 p, int oct){
+  float a = 0.5, s = 0.0;
+  for(int i = 0; i < 8; i++){ if(i >= oct) break; s += a * noise3(p); p *= 2.02; p.xy = rot2(0.71) * p.xy; a *= 0.5; }
+  return s;
+}
 
-// ============================
-// GRADIENT HELPERS
-// ============================
-function triColorGradient(frac, c1, c2, c3) {
-  // 3-stop gradient between hex colors
-  const [r1,g1,b1] = hexToRgb(c1);
-  const [r2,g2,b2] = hexToRgb(c2);
-  const [r3,g3,b3] = hexToRgb(c3);
-  if(frac < 0.5) {
-    const f = frac * 2;
-    return [r1+(r2-r1)*f, g1+(g2-g1)*f, b1+(b2-b1)*f];
+/* ---- palette: cyclic ramp through the three user colours (linear) ------ */
+vec3 pal(float x){
+  x = fract(x + uHue);
+  float s = x * 3.0;
+  vec3 a, b; float f;
+  if(s < 1.0)      { a = uC1; b = uC3; f = s; }
+  else if(s < 2.0) { a = uC3; b = uC2; f = s - 1.0; }
+  else             { a = uC2; b = uC1; f = s - 2.0; }
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(a, b, f);
+}
+vec3 palN(float x){ vec3 c = pal(x); return c / max(1e-4, max(c.r, max(c.g, c.b))); }
+
+/* ---- sdf / shading helpers -------------------------------------------- */
+float smin(float a, float b, float k){ float h = sat(0.5 + 0.5 * (b - a) / k); return mix(b, a, h) - k * h * (1.0 - h); }
+float sdBox(vec3 p, vec3 b){ vec3 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0); }
+float sdTorus(vec3 p, vec2 t){ vec2 q = vec2(length(p.xz) - t.x, p.y); return length(q) - t.y; }
+float fres(vec3 n, vec3 rd, float k){ return pow(1.0 - sat(dot(n, -rd)), k); }
+mat3 camera(vec3 ro, vec3 ta){
+  vec3 f = normalize(ta - ro);
+  vec3 r = normalize(cross(vec3(0.0, 1.0, 0.0), f));
+  vec3 u = cross(f, r);
+  return mat3(r, u, f);
+}
+vec3 studio(vec3 rd){
+  float h = sat(rd.y * 0.5 + 0.5);
+  vec3 c = mix(pal(0.62) * 0.22, pal(0.18) * 0.7, h);
+  float band = smoothstep(0.86, 1.0, sin(atan(rd.z, rd.x) * 5.0 + rd.y * 7.0) * 0.5 + 0.5);
+  c += palN(0.42) * band * 0.7;
+  c += palN(0.05) * pow(sat(dot(rd, normalize(vec3(0.5, 0.8, -0.3)))), 24.0) * 2.2;
+  return c;
+}
+`;
+
+const EPILOGUE = `
+vec2 kalFold(vec2 p, float seg){
+  float r = length(p);
+  float a = atan(p.y, p.x);
+  float k = TAU / seg;
+  a = abs(mod(a + k * 0.5, k) - k * 0.5);
+  return vec2(cos(a), sin(a)) * r;
+}
+void main(){
+  vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / uRes.y;
+  uv *= 1.0 - 0.26 * uZoomPulse * uBeat;
+  uv = rot2(spin(1.0)) * uv;
+  if(uKaleido > 2.5) uv = kalFold(uv, uKaleido);
+  if(uMirror.x > 0.5) uv.x = abs(uv.x);
+  if(uMirror.y > 0.5) uv.y = abs(uv.y);
+  vec3 col = scene(uv);
+  fragColor = vec4(max(col, vec3(0.0)), 1.0);
+}`;
+
+const SCENES = {};
+
+/* ------------------------------------------------------------------ 01 */
+SCENES.tunnel = { label: 'RIB TUNNEL', src: `
+float gRing;
+float mapT(vec3 p){
+  // snaking twist: exactly periodic over the 4-unit rib spacing, so the loop wraps
+  p.xy = rot2(sin(p.z * PI * 0.5) * (0.3 + 1.4 * uWarp) + spin(0.5)) * p.xy;
+  float r = length(p.xy);
+  float a = atan(p.y, p.x);
+  float flute = 0.13 * sin(a * max(3.0, floor(uDensity * 0.5)) + p.z * PI * 0.5);
+  float R = 2.0 + flute + 0.2 * sin(p.z * PI * 0.5) * uMorph;
+  float wall = R - r;
+  float pz = mod(p.z, 4.0) - 2.0;
+  gRing = length(vec2(r - R + 0.32, pz)) - 0.05 - 0.02 * uLineWidth;
+  return min(wall * 0.8, gRing);
+}
+vec3 nrmT(vec3 p){
+  vec2 e = vec2(0.0018, 0.0);
+  return normalize(vec3(mapT(p + e.xyy) - mapT(p - e.xyy),
+                        mapT(p + e.yxy) - mapT(p - e.yxy),
+                        mapT(p + e.yyx) - mapT(p - e.yyx)));
+}
+vec3 scene(vec2 uv){
+  vec3 ro = vec3(0.0, 0.0, mod(travel(4.0, 3.0), 4.0));   // folded: exact wrap
+  vec3 rd = normalize(vec3(uv / max(0.4, uPersp), 1.0));
+  float t = 0.0, d = 0.0;
+  vec3 p = ro, glow = vec3(0.0);
+  bool hit = false;
+  for(int i = 0; i < 128; i++){
+    p = ro + rd * t;
+    d = mapT(p);
+    glow += pal(p.z * 0.25 + 0.15) * exp(-max(gRing, 0.0) * 22.0) * 0.022 * (0.55 + 0.9 * uBeat);
+    if(d < 0.0025){ hit = true; break; }
+    t += d * 0.7;
+    if(t > 34.0) break;
+  }
+  vec3 col = glow * (1.3 + uDensity * 0.03);
+  if(hit){
+    vec3 n = nrmT(p);
+    vec3 l = normalize(vec3(0.45, 0.65, -0.6));
+    float dif = sat(dot(n, l)) * 0.6 + 0.4;
+    float spe = pow(sat(dot(reflect(rd, n), l)), 42.0);
+    vec3 base = pal(0.55 + 0.2 * sin(p.z * PI * 0.5)) * 0.52;
+    col += base * dif;
+    col += palN(0.2) * spe * 1.5;
+    col += pal(0.85) * fres(n, rd, 4.0) * 0.7;
+    col *= exp(-t * 0.05);
+  }
+  col += pal(0.4) * 0.03;
+  return col;
+}`};
+
+/* ------------------------------------------------------------------ 02 */
+SCENES.terrain = { label: 'NEON TERRAIN', src: `
+#define PZ 24.0
+float terrH(vec2 q){
+  float k = TAU / PZ;
+  vec3 s = vec3(q.x * 0.26, cos(q.y * k) * 2.4, sin(q.y * k) * 2.4);
+  float h = fbm3(s * 1.15, int(clamp(3.0 + uComplexity * 0.4, 3.0, 7.0)));
+  return (h - 0.5) * (2.6 + 2.0 * uMorph);
+}
+vec3 scene(vec2 uv){
+  vec3 ro = vec3(0.0, 2.3, travel(PZ, 1.0));
+  vec3 rd = normalize(vec3(uv / max(0.4, uPersp), 1.05));
+  float t = 0.5;
+  vec3 p = ro;
+  bool hit = false;
+  for(int i = 0; i < 128; i++){
+    p = ro + rd * t;
+    float h = p.y - terrH(vec2(p.x, p.z));
+    if(h < 0.02 * t){ hit = true; break; }
+    t += max(0.04, h * 0.42);
+    if(t > 95.0) break;
+  }
+  vec3 col;
+  if(hit){
+    float e = 0.14;
+    float hL = terrH(vec2(p.x - e, p.z)), hR = terrH(vec2(p.x + e, p.z));
+    float hD = terrH(vec2(p.x, p.z - e)), hU = terrH(vec2(p.x, p.z + e));
+    vec3 n = normalize(vec3(hL - hR, 2.0 * e, hD - hU));
+    vec3 l = normalize(vec3(0.35, 0.5, -0.8));
+    float dif = sat(dot(n, l));
+    float rim = fres(n, rd, 3.0);
+
+    float gk = max(1.0, floor(uDensity * 0.18 * PZ + 0.5)) / PZ;
+    vec2 g = vec2(p.x, p.z) * gk;
+    vec2 gf = abs(fract(g) - 0.5);
+    vec2 w = fwidth(g) * 1.1 + 1e-5;
+    float ed = min(gf.x / w.x, gf.y / w.y);
+    float line = sat(1.0 - ed / max(0.6, uLineWidth * 1.6));
+
+    float hh = sat((p.y + 1.6) * 0.22);
+    vec3 emit = pal(0.08 + hh * 0.5 + fract(p.z / PZ)) * line * (1.8 + 2.6 * uBeat);
+    vec3 surf = pal(0.6) * (0.06 + 0.55 * dif) * (0.35 + hh);
+    col = surf + emit + pal(0.9) * rim * 0.25;
+    col *= exp(-t * 0.028);
+    col += pal(0.3) * (1.0 - exp(-t * 0.028)) * 0.10;
   } else {
-    const f = (frac-0.5)*2;
-    return [r2+(r3-r2)*f, g2+(g3-g2)*f, b2+(b3-b2)*f];
+    float horizon = sat(1.0 - abs(rd.y) * 5.0);
+    col = mix(pal(0.7) * 0.05, pal(0.25) * 0.35, sat(rd.y * 2.0 + 0.3));
+    col += pal(0.12) * pow(horizon, 3.0) * 0.45;
+    float sun = sat(dot(rd, normalize(vec3(0.05, 0.06, 1.0))));
+    col += palN(0.02) * pow(sun, 900.0) * 1.5;
+    col += palN(0.1) * pow(sun, 26.0) * 0.28;
+    float st = pow(hash12(floor(uv * 520.0) + 3.0), 70.0) * 2.0;
+    col += vec3(st) * sat(rd.y * 3.0);
   }
-}
+  return col;
+}`};
 
-// ============================
-// CLASSIC RENDERERS (kept from v1)
-// ============================
-function renderGridTunnel(t, p) {
-  ctx.fillStyle = '#000'; ctx.fillRect(0,0,W,H);
-  const cx=W/2, cy=H/2;
-  const layers = Math.max(4, p.density);
-  const pulse = beatPulse(t,p.bpm)*p.zoomPulse;
-  const baseSpeed = t*p.speed*0.5;
-  ctx.save();
-  if(p.rotation>0){ctx.translate(cx,cy);ctx.rotate(t*p.rotation*0.1);ctx.translate(-cx,-cy);}
-  ctx.shadowBlur=p.glow; ctx.lineWidth=p.lineWidth;
-  for(let i=0;i<layers;i++){
-    let frac=((i/layers+baseSpeed)%1);
-    frac=Math.pow(frac,p.perspective);
-    const col=hslToRgb((i/layers*360+t*p.hueShift*360)%360,80*p.saturation,50*p.brightness);
-    ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},${frac})`;
-    ctx.shadowColor=`rgba(${col[0]},${col[1]},${col[2]},0.8)`;
-    const s=frac*Math.min(W,H)*0.7*(1+pulse*0.3);
-    const ar=W/H;
-    ctx.strokeRect(cx-s*ar/2,cy-s/2,s*ar,s);
-  }
-  for(let j=0;j<p.complexity*2;j++){
-    const frac2=((j/(p.complexity*2)+baseSpeed)%1);
-    const s2=Math.pow(frac2,p.perspective)*Math.min(W,H)*0.7*(1+pulse*0.3);
-    const ar=W/H;
-    const col2=hslToRgb((j*40+t*p.hueShift*360)%360,80*p.saturation,50*p.brightness);
-    ctx.strokeStyle=`rgba(${col2[0]},${col2[1]},${col2[2]},${frac2*0.7})`;
-    ctx.shadowColor=`rgba(${col2[0]},${col2[1]},${col2[2]},0.5)`;
-    ctx.lineWidth=p.lineWidth*0.5;
-    ctx.beginPath();
-    ctx.moveTo(cx,cy); ctx.lineTo(cx-s2*ar/2,cy-s2/2);
-    ctx.moveTo(cx,cy); ctx.lineTo(cx+s2*ar/2,cy-s2/2);
-    ctx.moveTo(cx,cy); ctx.lineTo(cx+s2*ar/2,cy+s2/2);
-    ctx.moveTo(cx,cy); ctx.lineTo(cx-s2*ar/2,cy+s2/2);
-    ctx.stroke();
-  }
-  ctx.restore();
+/* ------------------------------------------------------------------ 03 */
+SCENES.hex = { label: 'HEX CELLS', src: `
+vec4 hexTile(vec2 p){
+  vec2 s = vec2(1.0, 1.7320508);
+  vec4 hC = floor(vec4(p, p - vec2(0.5, 1.0)) / s.xyxy) + 0.5;
+  vec4 h = vec4(p - hC.xy * s, p - (hC.zw + 0.5) * s);
+  return dot(h.xy, h.xy) < dot(h.zw, h.zw) ? vec4(h.xy, hC.xy) : vec4(h.zw, hC.zw + 0.5);
 }
+float hexD(vec2 p){ p = abs(p); return max(p.x * 0.8660254 + p.y * 0.5, p.y); }
+vec3 scene(vec2 uv){
+  float ang = TAU * uPhase * nCyc(1.0);
+  vec3 drift = vec3(cos(ang), sin(ang), 0.0) * 1.1;
+  vec2 q = uv * (1.6 + uDensity * 0.16);
+  vec2 wv = vec2(fbm3(vec3(q * 0.5, 0.0) + drift, 3), fbm3(vec3(q * 0.5 + 9.7, 4.1) + drift, 3)) - 0.5;
+  q += wv * (2.2 * uWarp + 0.2);
+  vec4 h = hexTile(q);
+  float d = hexD(h.xy);
+  float w = fwidth(d) * 1.4 + 1e-5;
+  float cid = hash12(h.zw);
+  float lvl = fbm3(vec3(h.zw * 0.22, 1.7) + drift * 0.7, 3);
+  float bt = fract(uPhase * uBeats + cid);
+  float pulse = pow(1.0 - bt, 5.0);
+  float edge = smoothstep(0.5 - w * (1.0 + uLineWidth), 0.5, d) * (1.0 - smoothstep(0.5, 0.5 + w, d));
+  float fill = smoothstep(0.5, 0.42, d);
+  vec3 col = vec3(0.0);
+  col += palN(lvl * 1.4 + 0.1) * edge * (1.4 + 4.0 * pulse * uZoomPulse + 1.5 * uBeat);
+  col += pal(lvl * 1.2 + 0.45) * fill * (0.1 + 0.55 * step(0.55, lvl) + 0.5 * pulse * pulse);
+  float inner = abs(d - 0.28 - 0.1 * sin(lvl * 9.0 + ang));
+  col += palN(lvl + 0.7) * exp(-inner * (60.0 / max(0.4, uLineWidth))) * 0.8 * step(0.4, cid);
+  col *= 0.55 + 0.65 * sat(1.3 - length(uv));
+  col += pal(0.5) * 0.02;
+  return col;
+}`};
 
-function renderParticles(t, p) {
-  ctx.fillStyle=`rgba(0,0,0,0.15)`; ctx.fillRect(0,0,W,H);
-  const count=p.density*20;
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse*3;
-  ctx.shadowBlur=p.glow;
-  for(let i=0;i<count;i++){
-    const seed=i*7919.3;
-    const phase=(t*p.speed*0.3+seed)%(Math.PI*2);
-    const r=(Math.sin(seed*1.3)*0.4+0.5)*Math.min(W,H)*0.45;
-    const angle=seed*2.399+t*p.speed*(0.2+(seed%0.3));
-    const x=W/2+Math.cos(angle)*r*(W/H);
-    const y=H/2+Math.sin(angle)*r;
-    const col=hslToRgb((i/count*360+t*p.hueShift*360+t*50)%360,90*p.saturation,60*p.brightness);
-    const size=(1+Math.sin(phase)*0.5)*p.lineWidth*(2+pulse);
-    ctx.shadowColor=`rgb(${col[0]},${col[1]},${col[2]})`;
-    ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},0.85)`;
-    ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2); ctx.fill();
+/* ------------------------------------------------------------------ 04 */
+SCENES.rain = { label: 'DATA RAIN', src: `
+vec3 scene(vec2 uv){
+  vec3 col = vec3(0.0);
+  int layers = int(clamp(uComplexity * 0.6 + 2.0, 2.0, 6.0));
+  for(int i = 0; i < 6; i++){
+    if(i >= layers) break;
+    float fi = float(i) / float(layers);
+    float depth = 1.0 + fi * 2.2;
+    float cells = max(10.0, floor(uDensity * 2.2));
+    vec2 q = uv * cells / depth;
+    q.x += fi * 23.7;
+    float colId = floor(q.x);
+    float cx = fract(q.x);
+    float cyc = floor(4.0 + hash11(colId * 1.37 + fi * 7.1) * 12.0);
+    float y = q.y * 1.1 + uPhase * cyc * 6.0;
+    float tr = fract(y / 6.0);                                             // 6-cell comet
+    float gi = mod(floor(y), 6.0 * cyc);                                   // wraps with the loop
+    float fl = mod(floor(uPhase * 8.0 * max(1.0, floor(uBeats * 0.5 + 0.5))), 8.0);
+    float glyph = step(0.42, hash12(vec2(colId, gi)));
+    vec2 sub = floor(vec2(cx, fract(y)) * vec2(4.0, 5.0));
+    float bits = step(0.44, hash12(sub + colId * 3.1 + gi * 0.13 + fl));
+    float gutter = step(abs(cx - 0.5), 0.40);
+    float mask = glyph * bits * gutter;
+    float env = pow(1.0 - tr, 4.0);
+    float head = smoothstep(0.94, 1.0, 1.0 - tr) * gutter * glyph;
+    vec3 c = pal(0.06 + fi * 0.2 + hash11(colId) * 0.08);
+    col += c * mask * env * (1.3 / depth) * (0.7 + 0.5 * uBeat);
+    col += vec3(1.0) * head * (0.8 / depth);
   }
-}
+  col += pal(0.55) * 0.025 * sat(1.4 - length(uv) * 1.1);
+  return col;
+}`};
 
-function renderWaveform(t, p) {
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse;
-  ctx.shadowBlur=p.glow; ctx.lineWidth=p.lineWidth;
-  const lines=p.complexity+2;
-  for(let l=0;l<lines;l++){
-    const col=hslToRgb((l/lines*360+t*p.hueShift*360+t*30)%360,85*p.saturation,55*p.brightness);
-    ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.4+0.6*(l/lines)})`;
-    ctx.shadowColor=`rgb(${col[0]},${col[1]},${col[2]})`;
-    ctx.beginPath();
-    const yBase=H/2+(l-lines/2)*(H/(lines+2));
-    const amp=H*0.15*(1+pulse*0.5)*(0.5+l/lines);
-    const freq=(p.density*0.5+l)*0.02;
-    for(let x=0;x<=300;x++){
-      const px=x/300*W;
-      const wave=Math.sin(px*freq+t*p.speed*3+l*0.7)*amp
-               +Math.sin(px*freq*1.6+t*p.speed*2+l)*amp*0.4
-               +Math.sin(px*freq*0.4+t*p.speed*5)*amp*0.2;
-      x===0?ctx.moveTo(px,yBase+wave):ctx.lineTo(px,yBase+wave);
+/* ------------------------------------------------------------------ 05 */
+SCENES.lasers = { label: 'BEAM CATHEDRAL', src: `
+float beamDist(vec3 p, vec3 o, vec3 d){
+  vec3 v = p - o;
+  return length(v - d * max(0.0, dot(v, d)));
+}
+vec3 scene(vec2 uv){
+  vec3 ro = vec3(0.0, 0.6, -6.0);
+  vec3 rd = normalize(vec3(uv / max(0.4, uPersp), 1.1));
+  vec3 col = vec3(0.0);
+  int N = int(clamp(uDensity * 0.32, 3.0, 8.0));
+  float w = 0.02 + 0.03 * uLineWidth;
+  float ds = 0.36;
+  float t = 0.2;
+  for(int i = 0; i < 52; i++){
+    vec3 p = ro + rd * t;
+    float haze = 0.3 + 0.7 * exp(-max(0.0, p.y + 1.3) * 0.35);
+    for(int b = 0; b < 8; b++){
+      if(b >= N) break;
+      float fb = float(b) / float(N);
+      float a = TAU * fb + spin(0.5);
+      float sw = 0.6 * wave(1.0, fb) * (0.4 + uMorph);
+      vec3 o = vec3(cos(a) * 2.2, 4.2, sin(a) * 2.2 + 6.0);
+      vec3 d = normalize(vec3(cos(a + sw) * 0.85, -1.0, sin(a + sw) * 0.85 - 0.18));
+      float dd = beamDist(p, o, d);
+      col += pal(fb + 0.12) * (w / (dd * dd + w * w)) * 0.30 * haze * ds * (0.5 + 0.9 * uBeat);
+      col += palN(fb) * exp(-length(p - o) * 2.2) * 0.10 * ds;
     }
-    ctx.stroke();
+    t += ds * (1.0 + t * 0.05);
+    if(t > 42.0) break;
   }
+  float tf = (-1.3 - ro.y) / min(-0.0015, rd.y);
+  if(tf > 0.0 && tf < 60.0){
+    vec3 fp = ro + rd * tf;
+    vec2 g = fp.xz * max(1.0, uDensity * 0.12);
+    vec2 gf = abs(fract(g) - 0.5);
+    vec2 fw = fwidth(g) * 1.2 + 1e-5;
+    float ed = min(gf.x / fw.x, gf.y / fw.y);
+    float line = sat(1.0 - ed / max(0.6, uLineWidth * 1.6));
+    col += pal(0.62) * line * 0.9 * exp(-tf * 0.055);
+    col += pal(0.3) * 0.05 * exp(-tf * 0.04);
+  }
+  return col;
+}`};
+
+/* ------------------------------------------------------------------ 06 */
+SCENES.bulb = { label: 'MANDELBULB', src: `
+float gTrap;
+float mapB(vec3 p){
+  vec3 z = p;
+  float dr = 1.0, r = 0.0;
+  float power = 7.0 + 3.0 * wave(1.0, 0.0) * uMorph;
+  gTrap = 1e9;
+  int it = int(clamp(6.0 + uComplexity, 6.0, 14.0));
+  for(int i = 0; i < 14; i++){
+    if(i >= it) break;
+    r = length(z);
+    if(r > 2.4) break;
+    float th = acos(clamp(z.z / max(r, 1e-6), -1.0, 1.0));
+    float ph = atan(z.y, z.x);
+    dr = pow(r, power - 1.0) * power * dr + 1.0;
+    float zr = pow(r, power);
+    th *= power; ph *= power;
+    z = zr * vec3(sin(th) * cos(ph), sin(th) * sin(ph), cos(th)) + p;
+    gTrap = min(gTrap, r);
+  }
+  return 0.5 * log(max(r, 1e-6)) * r / dr;
 }
-
-function renderHexagons(t, p) {
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse;
-  const size=W/(p.density*1.5);
-  const cols=Math.ceil(W/size/1.5)+2, rows=Math.ceil(H/size/Math.sqrt(3))+2;
-  ctx.shadowBlur=p.glow; ctx.lineWidth=p.lineWidth;
-  const offX=(t*p.speed*size*0.3)%(size*1.5);
-  const offY=(t*p.speed*size*0.2)%(size*Math.sqrt(3));
-  for(let row=-1;row<rows;row++){
-    for(let col=-1;col<cols;col++){
-      const cx=col*size*1.5-offX;
-      const cy=row*size*Math.sqrt(3)+(col%2)*size*Math.sqrt(3)/2-offY;
-      const dist=Math.hypot(cx-W/2,cy-H/2);
-      const hue=(dist*0.3+t*50+t*p.hueShift*360)%360;
-      const col3=hslToRgb(hue,80*p.saturation,45*p.brightness);
-      const alpha=0.3+0.7*(1-dist/Math.hypot(W/2,H/2));
-      ctx.strokeStyle=`rgba(${col3[0]},${col3[1]},${col3[2]},${Math.max(0,alpha)})`;
-      ctx.shadowColor=`rgba(${col3[0]},${col3[1]},${col3[2]},0.5)`;
-      ctx.beginPath();
-      for(let i=0;i<6;i++){
-        const angle=Math.PI/6+i*Math.PI/3+t*p.rotation*0.1;
-        const px=cx+size*(1+pulse*0.2)*0.9*Math.cos(angle);
-        const py=cy+size*(1+pulse*0.2)*0.9*Math.sin(angle);
-        i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
-      }
-      ctx.closePath(); ctx.stroke();
-    }
-  }
+vec3 nrmB(vec3 p){
+  vec2 e = vec2(0.0012, 0.0);
+  return normalize(vec3(mapB(p + e.xyy) - mapB(p - e.xyy),
+                        mapB(p + e.yxy) - mapB(p - e.yxy),
+                        mapB(p + e.yyx) - mapB(p - e.yyx)));
 }
-
-function renderMatrix(t, p) {
-  ctx.fillStyle=`rgba(0,0,0,0.1)`; ctx.fillRect(0,0,W,H);
-  const chars='01アイウエオカキクケコ◆▲●■';
-  const fontSize=Math.max(10,W/p.density/3);
-  ctx.font=`${fontSize}px Share Tech Mono, monospace`;
-  const cols2=Math.floor(W/fontSize);
-  ctx.shadowBlur=p.glow;
-  for(let i=0;i<cols2;i++){
-    const seed=i*997.3;
-    const speed2=(0.5+(seed%1)*1.5)*p.speed;
-    const y=((t*speed2*100+seed*100)%(H+fontSize*20))-fontSize*5;
-    const col=hslToRgb((i/cols2*360+t*p.hueShift*360+t*30)%360,85*p.saturation,55*p.brightness);
-    ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},0.9)`;
-    ctx.shadowColor=`rgb(${col[0]},${col[1]},${col[2]})`;
-    const char=chars[Math.floor((t*p.speed*10+seed)%chars.length)];
-    ctx.fillText(char,i*fontSize,y%H);
-    for(let j=1;j<p.complexity*3;j++){
-      const ta=1-j/(p.complexity*3);
-      ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},${ta*0.4})`;
-      ctx.fillText(chars[Math.floor((seed+j*31)%chars.length)],i*fontSize,y-j*fontSize);
-    }
+vec3 scene(vec2 uv){
+  float a = TAU * uPhase * nCyc(0.5);
+  float dist = 2.9 / max(0.35, uFractal);
+  vec3 ro = vec3(cos(a) * dist, 0.55 * sin(a * 2.0), sin(a) * dist);
+  mat3 cam = camera(ro, vec3(0.0));
+  vec3 rd = cam * normalize(vec3(uv, 1.5 / max(0.4, uPersp)));
+  float t = 0.0, d = 0.0, trap = 0.0;
+  vec3 p = ro;
+  bool hit = false;
+  for(int i = 0; i < 128; i++){
+    p = ro + rd * t;
+    d = mapB(p);
+    if(d < 0.0006 * t + 0.0004){ hit = true; trap = gTrap; break; }
+    t += d * 0.85;
+    if(t > 9.0) break;
   }
+  vec3 col = studio(rd) * 0.16;
+  if(hit){
+    vec3 n = nrmB(p);
+    vec3 l1 = normalize(vec3(0.7, 0.9, -0.4));
+    vec3 l2 = normalize(vec3(-0.6, 0.2, 0.7));
+    float occ = sat(0.45 + 0.55 * mapB(p + n * 0.045) / 0.045);
+    float d1 = sat(dot(n, l1));
+    float d2 = sat(dot(n, l2));
+    vec3 base = pal(trap * 1.9 + 0.12) * 0.75;
+    col  = base * (d1 * 1.15 + 0.25);
+    col += pal(trap * 1.9 + 0.5) * d2 * 0.5;
+    col += palN(0.15) * pow(sat(dot(reflect(rd, n), l1)), 60.0) * 2.4;
+    col += studio(reflect(rd, n)) * fres(n, rd, 3.5) * 1.3;
+    col *= occ;
+    col += pal(trap * 2.4 + 0.8) * pow(1.0 - occ, 2.0) * 0.5;
+    col *= 0.6 + 0.8 * uBeat * uZoomPulse + 0.4;
+  }
+  return col;
+}`};
+
+/* ------------------------------------------------------------------ 07 */
+SCENES.menger = { label: 'MENGER DESCENT', src: `
+float gEm;
+float gK;
+float mengerDE(vec3 p){
+  float d = sdBox(p, vec3(1.0));
+  float s = 1.0;
+  gEm = 0.0;
+  int it = int(clamp(2.0 + uComplexity * 0.5, 3.0, 6.0));
+  for(int m = 0; m < 6; m++){
+    if(m >= it) break;
+    vec3 a = mod(p * s, 2.0) - 1.0;
+    s *= 3.0;
+    vec3 r = abs(1.0 - 3.0 * abs(a));
+    float da = max(r.x, r.y), db = max(r.y, r.z), dc = max(r.z, r.x);
+    float c = (min(da, min(db, dc)) - 1.0) / s;
+    if(c > d){ d = c; gEm = float(m) + 1.0; }
+  }
+  return d;
 }
-
-function renderLaserGrid(t, p) {
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse;
-  ctx.shadowBlur=p.glow*2; ctx.lineWidth=p.lineWidth;
-  const horizon=H*0.5;
-  for(let i=0;i<p.density;i++){
-    const frac=Math.pow(i/p.density,p.perspective);
-    const y=horizon+frac*(H-horizon)*(1+pulse*0.2);
-    const col=hslToRgb((i/p.density*180+t*p.hueShift*360+t*60)%360,95*p.saturation,60*p.brightness);
-    ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.2+0.8*frac})`;
-    ctx.shadowColor=`rgb(${col[0]},${col[1]},${col[2]})`;
-    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
-  }
-  const vlines=p.complexity*4;
-  for(let i=0;i<vlines;i++){
-    const xBase=(i/vlines)*W+((t*p.speed*0.1)%1)*W/vlines;
-    const col=hslToRgb((i/vlines*360+t*p.hueShift*360+120+t*40)%360,95*p.saturation,60*p.brightness);
-    ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},0.7)`;
-    ctx.shadowColor=`rgb(${col[0]},${col[1]},${col[2]})`;
-    ctx.beginPath(); ctx.moveTo(W/2,horizon); ctx.lineTo(xBase,H); ctx.stroke();
-  }
+float mapM(vec3 p){
+  p.xz = rot2(spin(0.5)) * p.xz;
+  p.xy = rot2(0.35 * uWarp * sin(TAU * uPhase * nCyc(1.0))) * p.xy;
+  return mengerDE(p * gK) / gK;
 }
-
-function renderKaleidoscope(t, p) {
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-  const segs=p.complexity*2, cx=W/2, cy=H/2;
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse;
-  ctx.shadowBlur=p.glow; ctx.lineWidth=p.lineWidth;
-  for(let s=0;s<segs;s++){
-    const baseAngle=(s/segs)*Math.PI*2+t*p.rotation*0.2;
-    ctx.save(); ctx.translate(cx,cy); ctx.rotate(baseAngle);
-    for(let i=0;i<p.density;i++){
-      const r=i/p.density*Math.min(W,H)*0.5*(1+pulse*0.2);
-      const col=hslToRgb((i/p.density*360+s*30+t*p.hueShift*360+t*60)%360,85*p.saturation,55*p.brightness);
-      ctx.strokeStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.2+0.8*(i/p.density)})`;
-      ctx.shadowColor=`rgb(${col[0]},${col[1]},${col[2]})`;
-      ctx.beginPath();
-      const a=Math.sin(t*p.speed*2+i*0.3)*0.4;
-      ctx.moveTo(0,0); ctx.lineTo(r*Math.cos(a),r*Math.sin(a)); ctx.stroke();
-    }
-    ctx.restore();
-  }
+vec3 nrmM(vec3 p){
+  vec2 e = vec2(0.0008, 0.0);
+  return normalize(vec3(mapM(p + e.xyy) - mapM(p - e.xyy),
+                        mapM(p + e.yxy) - mapM(p - e.yxy),
+                        mapM(p + e.yyx) - mapM(p - e.yyx)));
 }
+vec3 scene(vec2 uv){
+  // self-similar 3x descent: camera closes in as the lattice refines, then returns
+  gK = pow(3.0, 0.5 + 0.5 * sin(TAU * uPhase * nCyc(1.0)));
+  float dist = 2.15 / (gK * max(0.4, uFractal));
+  vec3 ro = vec3(0.22 * wave(1.0, 0.0) * dist, 0.18 * wave(1.0, 0.25) * dist, -dist);
+  mat3 cam = camera(ro, vec3(0.0));
+  vec3 rd = cam * normalize(vec3(uv, 1.4 / max(0.4, uPersp)));
+  float t = 0.0, d = 0.0, em = 0.0;
+  vec3 p = ro, glow = vec3(0.0);
+  bool hit = false;
+  float eps = 0.0012 / gK;
+  for(int i = 0; i < 120; i++){
+    p = ro + rd * t;
+    d = mapM(p);
+    glow += pal(0.35 + float(i) * 0.004) * exp(-max(d, 0.0) * (60.0 * gK)) * 0.0035;
+    if(d < eps * (1.0 + t * 0.6)){ hit = true; em = gEm; break; }
+    t += d * 0.85;
+    if(t > 6.0 / gK + 2.0) break;
+  }
+  vec3 col = glow * (0.9 + 2.0 * uBeat * uZoomPulse);
+  if(hit){
+    vec3 n = nrmM(p);
+    vec3 l = normalize(vec3(0.55, 0.8, -0.55));
+    float occ = sat(0.35 + 0.65 * mapM(p + n * (0.04 / gK)) / (0.04 / gK));
+    vec3 base = pal(em * 0.16 + 0.12) * 0.5;
+    col += base * (sat(dot(n, l)) * 1.25 + 0.22) * occ;
+    col += palN(0.55) * pow(sat(dot(reflect(rd, n), l)), 36.0) * 1.1 * occ;
+    col += pal(0.75) * fres(n, rd, 4.0) * 0.4;
+    col += pal(em * 0.2 + 0.6) * pow(1.0 - occ, 2.2) * 0.35;
+  }
+  col += pal(0.45) * 0.02;
+  return col;
+}`};
 
-function renderScanlines(t, p) {
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse;
-  const lineCount=p.density*4;
-  ctx.shadowBlur=p.glow*0.5;
-  for(let i=0;i<lineCount;i++){
-    const yPos=((i/lineCount+t*p.speed*0.2)%1)*H;
-    const col=hslToRgb((i/lineCount*360+t*p.hueShift*360)%360,90*p.saturation,60*p.brightness);
-    const thick=p.lineWidth*(1+pulse);
-    ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},${0.3+0.7*(i%3===0?1:0.2)})`;
-    ctx.shadowColor=`rgb(${col[0]},${col[1]},${col[2]})`;
-    ctx.fillRect(0,yPos,W,thick);
+/* ------------------------------------------------------------------ 08 */
+SCENES.apollonian = { label: 'APOLLONIAN', src: `
+float gTrap;
+float mapA(vec3 p){
+  float s = 1.15 + 0.22 * uMorph * (0.5 + 0.5 * wave(1.0, 0.0));
+  float scale = 1.0;
+  gTrap = 0.0;
+  int it = int(clamp(5.0 + uComplexity * 0.5, 5.0, 10.0));
+  for(int i = 0; i < 10; i++){
+    if(i >= it) break;
+    p = -1.0 + 2.0 * fract(0.5 * p + 0.5);
+    float r2 = dot(p, p);
+    gTrap += exp(-7.0 * r2);
+    float k = s / max(r2, 1e-4);
+    p *= k;
+    scale *= k;
   }
-  for(let i=0;i<p.complexity*2;i++){
-    const xPos=((i/(p.complexity*2)+t*p.speed*0.1+i*0.13)%1)*W;
-    const col=hslToRgb((i*60+t*p.hueShift*360+t*20)%360,80*p.saturation,50*p.brightness);
-    ctx.fillStyle=`rgba(${col[0]},${col[1]},${col[2]},0.15)`;
-    ctx.fillRect(xPos,0,p.lineWidth*4,H);
-  }
+  return 0.25 * abs(p.y) / scale;
 }
-
-// ============================
-// NEW RENDERERS
-// ============================
-
-// MANDELBROT FRACTAL
-function renderMandelbrot(t, p) {
-  const FW = 256, FH = 144;
-  if(fracBuf.width!==FW){fracBuf.width=FW;fracBuf.height=FH;fracImgData=fracCtx.createImageData(FW,FH);}
-  const d = fracImgData.data;
-  const pulse = beatPulse(t,p.bpm)*p.zoomPulse;
-  const zoom = p.fractalZoom * (0.5 + 0.5*(1+Math.sin(t*p.speed*0.3)*0.3)) * (1+pulse*0.15);
-  const panX = -0.7 + Math.sin(t*p.speed*0.1)*0.1*p.morph;
-  const panY = Math.sin(t*p.speed*0.07)*0.1*p.morph;
-  const maxIter = 40 + p.complexity*8;
-  const hShift = t*p.hueShift*360;
-
-  for(let py=0;py<FH;py++){
-    for(let px=0;px<FW;px++){
-      const cx=(px/FW-0.5)*4/zoom+panX;
-      const cy=(py/FH-0.5)*2.25/zoom+panY;
-      let zx=0,zy=0,i=0;
-      while(i<maxIter && zx*zx+zy*zy<4){
-        const tmp=zx*zx-zy*zy+cx;
-        zy=2*zx*zy+cy; zx=tmp; i++;
-      }
-      const idx=(py*FW+px)*4;
-      if(i===maxIter){d[idx]=0;d[idx+1]=0;d[idx+2]=0;d[idx+3]=255;}
-      else{
-        const smooth=i+1-Math.log2(Math.log2(zx*zx+zy*zy));
-        const frac=smooth/maxIter;
-        const [r,g,b]=hslToRgb((frac*360*p.complexity+hShift)%360,90*p.saturation,50*p.brightness*frac);
-        d[idx]=r;d[idx+1]=g;d[idx+2]=b;d[idx+3]=255;
-      }
-    }
-  }
-  fracCtx.putImageData(fracImgData,0,0);
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality='high';
-  ctx.drawImage(fracBuf,0,0,W,H);
-
-  // Glow overlay
-  if(p.glow>0){
-    ctx.shadowBlur=0;
-    ctx.globalCompositeOperation='screen';
-    ctx.globalAlpha=0.2;
-    ctx.drawImage(fracBuf,0,0,W,H);
-    ctx.globalAlpha=1;
-    ctx.globalCompositeOperation='source-over';
-  }
+vec3 nrmA(vec3 p){
+  vec2 e = vec2(0.0015, 0.0);
+  return normalize(vec3(mapA(p + e.xyy) - mapA(p - e.xyy),
+                        mapA(p + e.yxy) - mapA(p - e.yxy),
+                        mapA(p + e.yyx) - mapA(p - e.yyx)));
 }
-
-// JULIA SET
-function renderJulia(t, p) {
-  const FW=256,FH=144;
-  if(fracBuf.width!==FW){fracBuf.width=FW;fracBuf.height=FH;fracImgData=fracCtx.createImageData(FW,FH);}
-  const d=fracImgData.data;
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse;
-  const zoom=p.fractalZoom*(1+pulse*0.2);
-  // Animate Julia parameter
-  const angle=t*p.speed*0.2+p.morph*Math.PI;
-  const cr=-0.7+Math.cos(angle)*0.3*p.complexity*0.3;
-  const ci=0.27+Math.sin(angle*1.3)*0.3*p.complexity*0.3;
-  const maxIter=40+p.complexity*8;
-  const hShift=t*p.hueShift*360;
-
-  for(let py=0;py<FH;py++){
-    for(let px=0;px<FW;px++){
-      let zx=(px/FW-0.5)*3.5/zoom;
-      let zy=(py/FH-0.5)*2/zoom;
-      let i=0;
-      while(i<maxIter&&zx*zx+zy*zy<4){
-        const tmp=zx*zx-zy*zy+cr;
-        zy=2*zx*zy+ci; zx=tmp; i++;
-      }
-      const idx=(py*FW+px)*4;
-      if(i===maxIter){d[idx]=0;d[idx+1]=0;d[idx+2]=0;d[idx+3]=255;}
-      else{
-        const frac=i/maxIter;
-        const [r,g,b]=hslToRgb((frac*720+hShift)%360,95*p.saturation,55*p.brightness*(0.3+frac));
-        d[idx]=r;d[idx+1]=g;d[idx+2]=b;d[idx+3]=255;
-      }
-    }
+vec3 scene(vec2 uv){
+  float a = TAU * uPhase * nCyc(0.5);
+  float dist = 2.2 / max(0.35, uFractal);
+  vec3 ro = vec3(cos(a) * dist, 0.8 + 0.4 * sin(a * 2.0), sin(a) * dist);
+  mat3 cam = camera(ro, vec3(0.0, 0.1, 0.0));
+  vec3 rd = cam * normalize(vec3(uv, 1.5 / max(0.4, uPersp)));
+  float t = 0.0, d = 0.0, trap = 0.0;
+  vec3 p = ro;
+  bool hit = false;
+  for(int i = 0; i < 140; i++){
+    p = ro + rd * t;
+    d = mapA(p);
+    if(d < 0.0008 * t + 0.0003){ hit = true; trap = gTrap; break; }
+    t += d * 0.75;
+    if(t > 8.0) break;
   }
-  fracCtx.putImageData(fracImgData,0,0);
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality='high';
-  ctx.drawImage(fracBuf,0,0,W,H);
-}
-
-// PLASMA FIELD
-function renderPlasma(t, p) {
-  const FW=256,FH=144;
-  if(fracBuf.width!==FW){fracBuf.width=FW;fracBuf.height=FH;fracImgData=fracCtx.createImageData(FW,FH);}
-  const d=fracImgData.data;
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse*0.5;
-  const hShift=t*p.hueShift*360;
-  const freq=0.02*p.density*0.4;
-  const sp=t*p.speed;
-
-  for(let py=0;py<FH;py++){
-    for(let px=0;px<FW;px++){
-      const x=px*freq*4;
-      const y=py*freq*3.5;
-      // Multiple layered sinusoids = classic plasma
-      let v=Math.sin(x+sp*2);
-      v+=Math.sin(y+sp*1.5);
-      v+=Math.sin((x+y)*0.7+sp*3);
-      v+=Math.sin(Math.sqrt(x*x+y*y)*0.8+sp);
-      v+=Math.sin((x*0.5+y*0.5+Math.sin(sp*0.5))*p.complexity*0.3)*p.complexity*0.1;
-      v=(v+p.complexity*0.1)/(2+p.complexity*0.1);
-      v=(v+1)*0.5; // 0..1
-      v=(v+pulse)%1;
-      const [r,g,b]=triColorGradient((v+hShift/360)%1,p.color1,p.color2,p.color3);
-      const br=p.brightness;
-      const idx=(py*FW+px)*4;
-      d[idx]=Math.min(255,r*br);d[idx+1]=Math.min(255,g*br);d[idx+2]=Math.min(255,b*br);d[idx+3]=255;
-    }
+  vec3 col = pal(0.66) * 0.05;
+  if(hit){
+    vec3 n = nrmA(p);
+    vec3 l = normalize(vec3(0.8, 0.7, -0.35));
+    float occ = sat(0.4 + 0.6 * mapA(p + n * 0.02) / 0.02);
+    vec3 base = pal(trap * 0.32 + 0.15) * 0.85;
+    col  = base * (sat(dot(n, l)) * 1.1 + 0.25) * occ;
+    col += palN(0.2) * pow(sat(dot(reflect(rd, n), l)), 50.0) * 2.0 * occ;
+    col += studio(reflect(rd, n)) * fres(n, rd, 3.0) * 1.1;
+    col += pal(trap * 0.25 + 0.55) * pow(1.0 - occ, 2.0) * 0.8;
+    col *= exp(-t * 0.05);
+    col *= 0.75 + 0.6 * uBeat * uZoomPulse;
   }
-  fracCtx.putImageData(fracImgData,0,0);
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality='high';
-  ctx.drawImage(fracBuf,0,0,W,H);
+  return col;
+}`};
 
-  // Extra glow pass
-  if(p.glow>5){
-    ctx.save();
-    ctx.filter=`blur(${p.glow*0.5}px)`;
-    ctx.globalCompositeOperation='screen';
-    ctx.globalAlpha=0.3;
-    ctx.drawImage(fracBuf,0,0,W,H);
-    ctx.restore();
-  }
-}
-
-// GRADIENT TUNNEL
-function renderGradientTunnel(t, p) {
-  const cx=W/2,cy=H/2;
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse;
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-  ctx.shadowBlur=p.glow;
-  const layers=Math.max(8,p.density*2);
-  const sp=t*p.speed;
-
-  ctx.save();
-  ctx.translate(cx,cy);
-  ctx.rotate(t*p.rotation*0.15);
-  ctx.translate(-cx,-cy);
-
-  for(let i=layers-1;i>=0;i--){
-    const frac=((i/layers+sp*0.3)%1);
-    const size=Math.pow(frac,p.perspective)*Math.min(W,H)*0.75*(1+pulse*0.2);
-    const hue=(i/layers*360+sp*50+t*p.hueShift*360)%360;
-    const [r,g,b]=hslToRgb(hue,85*p.saturation,50*p.brightness);
-    // Radial gradient for each ring
-    const grd=ctx.createRadialGradient(cx,cy,size*0.7,cx,cy,size);
-    grd.addColorStop(0,`rgba(${r},${g},${b},0)`);
-    grd.addColorStop(0.7,`rgba(${r},${g},${b},${frac*0.6})`);
-    grd.addColorStop(1,`rgba(${r},${g},${b},0)`);
-    ctx.fillStyle=grd;
-    ctx.shadowColor=`rgb(${r},${g},${b})`;
-    ctx.beginPath();
-    const sides=3+Math.floor(p.complexity*1.5);
-    for(let s=0;s<sides;s++){
-      const a=(s/sides)*Math.PI*2;
-      const px2=cx+Math.cos(a)*size*(W/H);
-      const py2=cy+Math.sin(a)*size;
-      s===0?ctx.moveTo(px2,py2):ctx.lineTo(px2,py2);
-    }
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
-// VORONOI STORM
-function renderVoronoi(t, p) {
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
-  const count=Math.min(40,p.density+2);
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse;
-  const sp=t*p.speed;
-  const hShift=t*p.hueShift*360;
-
-  // Generate moving seed points
-  const pts=[];
-  for(let i=0;i<count;i++){
-    const seed=i*1337.7;
-    pts.push({
-      x:W*(0.1+0.8*((Math.sin(seed+sp*0.3+Math.sin(seed*0.7)*2)*0.5+0.5))),
-      y:H*(0.1+0.8*((Math.cos(seed*1.3+sp*0.2+Math.cos(seed)*1.5)*0.5+0.5))),
-      hue:(seed*57+hShift)%360
-    });
-  }
-
-  // Pixel-sample approach via low-res buffer
-  const FW=256,FH=144;
-  if(fracBuf.width!==FW){fracBuf.width=FW;fracBuf.height=FH;fracImgData=fracCtx.createImageData(FW,FH);}
-  const d=fracImgData.data;
-  for(let py=0;py<FH;py++){
-    for(let px=0;px<FW;px++){
-      const wx=px/FW*W,wy=py/FH*H;
-      let minD=Infinity,minD2=Infinity,idx2=-1;
-      for(let i=0;i<count;i++){
-        const dd=Math.hypot(wx-pts[i].x,wy-pts[i].y);
-        if(dd<minD){minD2=minD;minD=dd;idx2=i;}
-        else if(dd<minD2){minD2=dd;}
-      }
-      // Edge detection via distance difference
-      const edge=1-(minD2-minD)/80;
-      const frac=Math.max(0,Math.min(1,edge));
-      const [r,g,b]=hslToRgb(pts[idx2].hue,80*p.saturation,(30+frac*30+pulse*10)*p.brightness);
-      const i4=(py*FW+px)*4;
-      d[i4]=r;d[i4+1]=g;d[i4+2]=b;d[i4+3]=255;
+/* ------------------------------------------------------------------ 09 */
+SCENES.nebula = { label: 'VOLUME NEBULA', src: `
+vec3 scene(vec2 uv){
+  vec3 ro = vec3(0.0, 0.0, -4.2);
+  vec3 rd = normalize(vec3(uv / max(0.4, uPersp), 1.35));
+  float ang = TAU * uPhase * nCyc(1.0);
+  vec3 drift = vec3(cos(ang), sin(ang) * 0.6, sin(ang)) * 1.15;
+  int oct = int(clamp(4.0 + uComplexity * 0.4, 4.0, 7.0));
+  vec3 col = vec3(0.0);
+  float trans = 1.0;
+  for(int i = 0; i < 80; i++){
+    float t = 0.3 + float(i) * 0.075;
+    vec3 p = ro + rd * t;
+    p.xz = rot2(TAU * uPhase * nCyc(0.25)) * p.xz;
+    float n = fbm3((p + drift) * (0.6 + uFractal * 0.3), oct);
+    float den = sat((n - 0.435 - 0.05 * (1.0 - uMorph)) * (4.0 + uDensity * 0.12));
+    if(den > 0.002){
+      float lit = 0.42 + 2.3 * exp(-length(p) * 0.5);
+      vec3 c = pal(0.04 + n * 2.4 + t * 0.02) * den * lit;
+      col += trans * c * 0.36 * (0.75 + 0.45 * uBeat);
+      trans *= 1.0 - den * 0.32;
+      if(trans < 0.02) break;
     }
   }
-  fracCtx.putImageData(fracImgData,0,0);
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality='high';
-  ctx.drawImage(fracBuf,0,0,W,H);
+  col += palN(0.05) * 0.3 / (dot(uv, uv) * 120.0 + 1.0) * (0.6 + 0.9 * uBeat);
+  float st = pow(hash12(floor(uv * 640.0) + 11.0), 62.0) * 2.4;
+  col += vec3(st) * trans;
+  return col;
+}`};
 
-  // Draw glowing centers
-  ctx.shadowBlur=p.glow*2;
-  for(let i=0;i<count;i++){
-    const [r,g,b]=hslToRgb(pts[i].hue,90*p.saturation,70*p.brightness);
-    ctx.fillStyle=`rgba(${r},${g},${b},${0.6+pulse*0.4})`;
-    ctx.shadowColor=`rgb(${r},${g},${b})`;
-    ctx.beginPath();
-    ctx.arc(pts[i].x,pts[i].y,(2+pulse*4)*p.lineWidth,0,Math.PI*2);
-    ctx.fill();
+/* ------------------------------------------------------------------ 10 */
+SCENES.flow = { label: 'SILK FLOW', src: `
+vec3 scene(vec2 uv){
+  float ang = TAU * uPhase * nCyc(1.0);
+  vec3 dr = vec3(cos(ang), sin(ang), cos(ang * 2.0) * 0.4) * 1.25;
+  vec2 p = uv * (1.1 + uFractal * 0.5);
+  vec2 g = vec2(fbm3(vec3(p * 1.4 + 11.0, 0.7) + dr, 3),
+                fbm3(vec3(p * 1.4 - 7.0, 2.3) + dr, 3)) - 0.5;
+  vec2 p2 = p + g * (0.6 + 3.2 * uWarp);
+  int oct = int(clamp(3.0 + uComplexity * 0.5, 3.0, 7.0));
+  float h = fbm3(vec3(p2 * 2.0, 5.0) + dr * 1.3, oct);
+  vec2 grad = vec2(dFdx(h), dFdy(h)) * uRes.y * 0.006;
+  vec3 n = normalize(vec3(-grad, 1.0));
+  vec3 L = normalize(vec3(0.55, 0.7, 0.55));
+  float dif = sat(dot(n, L));
+  float spe = pow(sat(dot(reflect(-L, n), vec3(0.0, 0.0, 1.0))), 38.0);
+  float iso = abs(fract(h * (2.0 + uDensity * 0.35)) - 0.5);
+  float line = exp(-iso * (34.0 / max(0.35, uLineWidth)));
+  vec3 col = pal(h * 1.7 + 0.1) * (0.18 + 1.0 * dif);
+  col += pal(h * 1.7 + 0.42) * spe * 2.0;
+  col += palN(h * 2.2 + 0.6) * line * (0.5 + 0.8 * uBeat) * 0.85;
+  col += pal(0.5) * 0.03;
+  col *= 0.7 + 0.5 * sat(1.5 - length(uv));
+  return col * 0.55;
+}`};
+
+/* ------------------------------------------------------------------ 11 */
+SCENES.liquid = { label: 'LIQUID CHROME', src: `
+float mapL(vec3 p){
+  float d = 1e9;
+  float ang = TAU * uPhase;
+  int N = int(clamp(3.0 + uComplexity, 4.0, 10.0));
+  for(int i = 0; i < 10; i++){
+    if(i >= N) break;
+    float fi = float(i);
+    float c1 = floor(1.0 + hash11(fi * 1.7) * 2.0) * max(1.0, floor(uSpeed + 0.5));
+    float c2 = floor(1.0 + hash11(fi * 3.1) * 3.0) * max(1.0, floor(uSpeed + 0.5));
+    vec3 o = vec3(sin(ang * c1 + fi * 1.1) * 1.25,
+                  cos(ang * c2 + fi * 2.3) * 0.85,
+                  sin(ang * c2 + fi * 0.7) * 1.05);
+    float r = 0.34 + 0.22 * hash11(fi * 5.3) + 0.07 * uBeat * uZoomPulse;
+    d = smin(d, length(p - o) - r, 0.3 + 0.45 * uMorph);
   }
+  float ripple = 0.035 * sin(p.x * 9.0 + ang * 2.0) * sin(p.z * 8.0 - ang) * uWarp;
+  return d + ripple;
 }
+vec3 nrmL(vec3 p){
+  vec2 e = vec2(0.0015, 0.0);
+  return normalize(vec3(mapL(p + e.xyy) - mapL(p - e.xyy),
+                        mapL(p + e.yxy) - mapL(p - e.yxy),
+                        mapL(p + e.yyx) - mapL(p - e.yyx)));
+}
+vec3 scene(vec2 uv){
+  float a = spin(0.5);
+  float dist = 4.6 / max(0.4, uFractal);
+  vec3 ro = vec3(sin(a) * dist, 0.6, -cos(a) * dist);
+  mat3 cam = camera(ro, vec3(0.0));
+  vec3 rd = cam * normalize(vec3(uv, 1.6 / max(0.4, uPersp)));
+  float t = 0.0, d = 0.0;
+  vec3 p = ro;
+  bool hit = false;
+  for(int i = 0; i < 110; i++){
+    p = ro + rd * t;
+    d = mapL(p);
+    if(d < 0.0015){ hit = true; break; }
+    t += d * 0.9;
+    if(t > 14.0) break;
+  }
+  vec3 col = studio(rd) * 0.12;
+  if(hit){
+    vec3 n = nrmL(p);
+    vec3 refl = reflect(rd, n);
+    vec3 refr = refract(rd, n, 0.72);
+    float f = 0.06 + 0.94 * fres(n, rd, 4.0);
+    vec3 env = studio(refl);
+    vec3 inside = studio(normalize(refr + n * 0.2)) * pal(0.35);
+    col = mix(inside * 0.7, env * 1.25, f);
+    vec3 l = normalize(vec3(0.6, 0.85, -0.4));
+    col += palN(0.12) * pow(sat(dot(refl, l)), 90.0) * 3.2;
+    col += pal(0.7) * pow(1.0 - sat(dot(n, -rd)), 6.0) * 0.6;
+    col *= 0.8 + 0.5 * uBeat * uZoomPulse;
+    col *= 1.9;
+  }
+  return col;
+}`};
 
-// LISSAJOUS WEB
-function renderLissajous(t, p) {
-  ctx.fillStyle=`rgba(0,0,0,0.12)`; ctx.fillRect(0,0,W,H);
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse;
-  const cx=W/2,cy=H/2;
-  const sp=t*p.speed;
-  ctx.shadowBlur=p.glow;
-
-  const curves=p.complexity+2;
-  for(let c=0;c<curves;c++){
-    const la=1+c*0.5;
-    const lb=1+(curves-c)*0.4;
-    const delta=sp*0.3+c*Math.PI/curves+p.morph*Math.PI;
-    const rx=(W*0.42)*(1+pulse*0.1)*(0.4+0.6*(c/curves));
-    const ry=(H*0.42)*(1+pulse*0.1)*(0.4+0.6*(c/curves));
-    const hue=(c/curves*360+t*p.hueShift*360+sp*40)%360;
-    const [r,g,b]=hslToRgb(hue,85*p.saturation,55*p.brightness);
-    ctx.strokeStyle=`rgba(${r},${g},${b},${0.5+0.5*(c/curves)})`;
-    ctx.shadowColor=`rgb(${r},${g},${b})`;
-    ctx.lineWidth=p.lineWidth*(0.5+c/curves);
-    ctx.beginPath();
-    const steps=800;
-    for(let i=0;i<=steps;i++){
-      const theta=(i/steps)*Math.PI*2;
-      const x=cx+rx*Math.sin(la*theta+delta);
-      const y=cy+ry*Math.sin(lb*theta);
-      i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+/* ------------------------------------------------------------------ 12 */
+SCENES.gyroid = { label: 'GYROID GLASS', src: `
+float gy(vec3 p){ return dot(sin(p), cos(p.zxy)); }
+vec3 scene(vec2 uv){
+  float s = 2.6 + uFractal * 1.8;
+  float zc = travel(TAU / s, 1.0);
+  float a = spin(0.5);
+  vec3 ro = vec3(0.0, 0.0, -3.0 + zc);
+  vec3 rd = normalize(vec3(uv / max(0.4, uPersp), 1.25));
+  rd.xy = rot2(a) * rd.xy;
+  float thick = 0.015 + 0.03 * uLineWidth;
+  vec3 col = vec3(0.0);
+  float t = 0.0;
+  float ang = TAU * uPhase * nCyc(1.0);
+  for(int i = 0; i < 96; i++){
+    vec3 p = ro + rd * t;
+    vec3 q = p;
+    q.xy = rot2(0.18 * uWarp * sin(q.z * s + ang)) * q.xy;
+    float g = gy(q * s) / (s * 1.7);
+    float shell = abs(g) - thick;
+    col += pal(0.1 + g * 0.5) * exp(-max(shell, 0.0) * 70.0) * 0.03 * (0.6 + 0.8 * uBeat);
+    if(shell < 0.0012){
+      vec2 ee = vec2(0.0025, 0.0);
+      vec3 n = normalize(vec3(gy((q + ee.xyy) * s) - gy((q - ee.xyy) * s),
+                              gy((q + ee.yxy) * s) - gy((q - ee.yxy) * s),
+                              gy((q + ee.yyx) * s) - gy((q - ee.yyx) * s))) * sign(g);
+      vec3 l = normalize(vec3(0.5, 0.75, -0.45));
+      float fade = exp(-t * 0.1);
+      col += pal(0.5 + g * 0.45) * (sat(dot(n, l)) * 1.0 + 0.16) * fade;
+      col += palN(0.18) * pow(sat(dot(reflect(rd, n), l)), 52.0) * 2.2 * fade;
+      col += studio(reflect(rd, n)) * fres(n, rd, 3.0) * 1.1 * fade;
+      col += palN(0.7) * pow(1.0 - sat(dot(n, -rd)), 8.0) * 0.5 * fade;
+      break;
     }
-    ctx.stroke();
+    t += clamp(shell * 0.4, 0.008, 0.3);
+    if(t > 20.0) break;
   }
+  col += pal(0.42) * 0.02;
+  return col * 1.6;
+}`};
+
+/* ------------------------------------------------------------------ 13 */
+SCENES.mandala = { label: 'KALEIDO MANDALA', src: `
+vec3 scene(vec2 uv){
+  float seg = max(4.0, floor(4.0 + uComplexity * 1.6));
+  float r = max(length(uv), 1e-4);
+  float a = atan(uv.y, uv.x);
+  float k = TAU / seg;
+  float af = abs(mod(a + k * 0.5, k) - k * 0.5);
+  float lr = log2(r) - uPhase * nCyc(1.0);
+  float t1 = TAU * fract(lr);
+  float aa = af * seg * (0.4 + 0.06 * uDensity);
+  vec3 q = vec3(cos(aa) * 1.4, sin(aa) * 1.4, 0.0) + vec3(cos(t1), sin(t1), 0.0) * (1.2 + uWarp * 1.4);
+  int oct = int(clamp(3.0 + uComplexity * 0.4, 3.0, 6.0));
+  float n = fbm3(q * (0.9 + uFractal * 0.6), oct);
+  float rings = abs(fract(lr * (1.0 + floor(uDensity * 0.2)) + n * 0.6) - 0.5);
+  float line = exp(-rings * (26.0 / max(0.35, uLineWidth)));
+  float petal = smoothstep(0.42, 0.5, n) * (0.4 + 0.6 * pow(1.0 - fract(lr), 2.0));
+  vec3 col = pal(n * 1.6 + fract(lr) * 0.3) * petal * 1.1;
+  col += palN(n * 2.0 + 0.4) * line * (0.7 + 1.1 * uBeat);
+  col += palN(0.1) * 0.35 / (r * 14.0 + 0.5) * (0.5 + 0.8 * uBeat);
+  col *= sat(1.35 - r * 0.75);
+  col += pal(0.5) * 0.02;
+  return col;
+}`};
+
+/* ------------------------------------------------------------------ 14 */
+SCENES.warp = { label: 'HYPERSPACE', src: `
+vec3 scene(vec2 uv){
+  vec3 col = vec3(0.0);
+  int N = int(clamp(uDensity * 7.0, 40.0, 200.0));
+  float stretch = 0.18 + 0.5 * (uSpeed / 5.0) + 0.3 * uMorph;
+  for(int i = 0; i < 200; i++){
+    if(i >= N) break;
+    float fi = float(i);
+    vec3 h = hash33(vec3(fi * 1.31, 7.13, 3.77));
+    float za = fract(h.z + uPhase * nCyc(2.0));
+    float z0 = mix(7.0, 0.09, za);
+    float z1 = z0 + stretch * (1.0 + (1.0 - za) * 2.0);
+    vec2 dir = (h.xy - 0.5) * 2.4;
+    dir *= 1.0 + dot(dir, dir) * 0.5;
+    vec2 pa = uv - dir / z1, ba = dir / z0 - dir / z1;
+    float hh = sat(dot(pa, ba) / max(1e-6, dot(ba, ba)));
+    float d = length(pa - ba * hh);
+    float w = 0.0016 * uLineWidth * (1.0 + za * 2.2);
+    float env = sat(za * 4.0) * sat((1.0 - za) * 6.0);
+    col += palN(h.x * 0.7 + za * 0.35) * (w / (d + w * 0.55)) * env * 0.3 * (0.7 + 0.7 * uBeat);
+  }
+  float r = length(uv);
+  col += palN(0.18) * 0.18 / (r * 7.0 + 0.35) * (0.5 + 0.9 * uBeat);
+  col += pal(0.62) * 0.03;
+  float ring = abs(r - 0.35 - 0.1 * wave(1.0, 0.0));
+  col += palN(0.45) * exp(-ring * 40.0) * 0.25 * uZoomPulse;
+  return col;
+}`};
+
+/* ------------------------------------------------------------------ 15 */
+SCENES.prism = { label: 'PRISM SHARDS', src: `
+vec3 backdrop(vec2 p){
+  float ang = TAU * uPhase * nCyc(1.0);
+  vec3 dr = vec3(cos(ang), sin(ang), 0.0) * 1.2;
+  float n = fbm3(vec3(p * 1.05, 0.0) + dr, 4);
+  vec3 c = pal(n * 1.6 + 0.15) * (0.07 + 0.38 * n);
+  c += palN(0.1) * pow(sat(1.0 - length(p) * 0.45), 4.0) * 0.28;
+  return c;
 }
-
-// PSYCHEDELIC TUNNEL (UV tunnel mapping)
-function renderPsychedelicTunnel(t, p) {
-  const FW=256,FH=144;
-  if(fracBuf.width!==FW){fracBuf.width=FW;fracBuf.height=FH;fracImgData=fracCtx.createImageData(FW,FH);}
-  const d=fracImgData.data;
-  const sp=t*p.speed;
-  const hShift=t*p.hueShift*360;
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse;
-  const morph=p.morph;
-
-  for(let py=0;py<FH;py++){
-    for(let px=0;px<FW;px++){
-      const nx=(px/FW-0.5)*2;
-      const ny=(py/FH-0.5)*2*(FH/FW*4);
-      // Tunnel UV mapping
-      const dist=Math.sqrt(nx*nx+ny*ny)+0.001;
-      const angle=Math.atan2(ny,nx);
-      const u=(angle/Math.PI+1)*0.5; // 0..1 angular
-      const v=((1/dist+sp*0.5*p.fractalZoom)%1); // depth
-      // Spiral twist
-      const twist=morph*Math.PI*4*v;
-      const ru=(u+twist/(Math.PI*2))%1;
-
-      // Sample a psychedelic pattern
-      let val=Math.sin(ru*p.density*2+sp*2)*0.5+0.5;
-      val+=Math.sin(v*p.complexity*10+sp*3)*0.3;
-      val+=Math.sin((ru+v)*p.complexity*5+sp)*0.2;
-      val=(val*(1+pulse*0.3))%1;
-      const [r,g,b]=hslToRgb((val*360+hShift)%360,90*p.saturation,50*p.brightness*(0.4+v*0.6));
-      const i4=(py*FW+px)*4;
-      d[i4]=r;d[i4+1]=g;d[i4+2]=b;d[i4+3]=255;
+vec3 scene(vec2 uv){
+  float sc = 1.5 + uDensity * 0.32;
+  vec2 p = uv * sc;
+  vec2 ip = floor(p), fp = fract(p);
+  float md = 8.0;
+  vec2 mr = vec2(0.0), mc = vec2(0.0);
+  for(int j = -1; j <= 1; j++){
+    for(int i = -1; i <= 1; i++){
+      vec2 g = vec2(float(i), float(j));
+      vec2 hh = hash22(ip + g);
+      float ang = TAU * uPhase * floor(1.0 + hh.x * 3.0) + hh.y * TAU;
+      vec2 o = 0.5 + 0.4 * vec2(cos(ang), sin(ang)) * (0.4 + uMorph);
+      vec2 r = g + o - fp;
+      float d = dot(r, r);
+      if(d < md){ md = d; mr = r; mc = ip + g; }
     }
   }
-  fracCtx.putImageData(fracImgData,0,0);
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality='high';
-  ctx.drawImage(fracBuf,0,0,W,H);
-}
-
-// HYPERSPACE STARFIELD
-function renderStarfield(t, p) {
-  ctx.fillStyle=`rgba(0,0,0,${0.2+beatPulse(t,p.bpm)*p.zoomPulse*0.3})`;
-  ctx.fillRect(0,0,W,H);
-  const cx=W/2,cy=H/2;
-  const count=p.density*30;
-  const sp=p.speed;
-  const pulse=beatPulse(t,p.bpm)*p.zoomPulse;
-  ctx.shadowBlur=p.glow;
-
-  for(let i=0;i<count;i++){
-    const seed=i*2654.4;
-    // Depth goes 0..1 and loops
-    const depth=(((seed%1)+t*sp*0.15)%1);
-    const angle=seed*2.399;
-    // At max distance stars are dim dots, at close they streak
-    const r=depth*Math.min(W,H)*0.7*(1+pulse*0.2);
-    const x=cx+Math.cos(angle)*r*(W/H);
-    const y=cy+Math.sin(angle)*r;
-    const prevDepth=Math.max(0.001,depth-sp*0.015);
-    const prevR=prevDepth*Math.min(W,H)*0.7;
-    const px=cx+Math.cos(angle)*prevR*(W/H);
-    const py=cy+Math.sin(angle)*prevR;
-    const hue=(seed*137+t*p.hueShift*360+depth*120)%360;
-    const [r2,g,b]=hslToRgb(hue,80*p.saturation,(50+depth*50)*p.brightness);
-    const alpha=Math.pow(depth,1.5);
-    ctx.strokeStyle=`rgba(${r2},${g},${b},${alpha})`;
-    ctx.shadowColor=`rgb(${r2},${g},${b})`;
-    ctx.lineWidth=Math.max(0.5,depth*p.lineWidth*3);
-    ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y); ctx.stroke();
-  }
-}
-
-// ============================
-// OVERLAYS
-// ============================
-function applyOverlay(t, p) {
-  if(p.overlayMode==='none') return;
-
-  if(p.overlayMode==='scanlines'){
-    for(let y=0;y<H;y+=4){ctx.fillStyle='rgba(0,0,0,0.25)';ctx.fillRect(0,y,W,2);}
-  }
-
-  if(p.overlayMode==='noise'){
-    const imageData=ctx.getImageData(0,0,W,H);
-    const d=imageData.data;
-    for(let i=0;i<d.length;i+=4*16){
-      const noise=(Math.random()-0.5)*30;
-      d[i]+=noise;d[i+1]+=noise;d[i+2]+=noise;
-    }
-    ctx.putImageData(imageData,0,0);
-  }
-
-  if(p.overlayMode==='vignette'){
-    const grd=ctx.createRadialGradient(W/2,H/2,H*0.2,W/2,H/2,H*0.8);
-    grd.addColorStop(0,'rgba(0,0,0,0)');
-    grd.addColorStop(1,'rgba(0,0,0,0.75)');
-    ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
-  }
-
-  if(p.overlayMode==='glitch'){
-    const bt=beatPulse(t,p.bpm)*p.zoomPulse;
-    if(bt>0.4){
-      const slices=3+Math.floor(bt*5);
-      for(let i=0;i<slices;i++){
-        const sy=Math.random()*H;
-        const sh=4+Math.random()*20;
-        const sx=(Math.random()-0.5)*40*bt;
-        ctx.drawImage(canvas,0,sy,W,sh,sx,sy,W,sh);
-      }
-      const imgD=ctx.getImageData(0,0,W,H);
-      const d=imgD.data;
-      const shift=Math.floor(bt*8);
-      for(let i=0;i<d.length;i+=4){
-        const x2=(i/4)%W;
-        if(x2>shift){d[i]=d[i-shift*4]||d[i];}
-      }
-      ctx.putImageData(imgD,0,0);
+  float edge = 8.0;
+  for(int j = -2; j <= 2; j++){
+    for(int i = -2; i <= 2; i++){
+      vec2 g = vec2(float(i), float(j));
+      vec2 hh = hash22(ip + g);
+      float ang = TAU * uPhase * floor(1.0 + hh.x * 3.0) + hh.y * TAU;
+      vec2 o = 0.5 + 0.4 * vec2(cos(ang), sin(ang)) * (0.4 + uMorph);
+      vec2 r = g + o - fp;
+      vec2 diff = r - mr;
+      if(dot(diff, diff) > 1e-5)
+        edge = min(edge, dot(0.5 * (mr + r), normalize(diff)));
     }
   }
+  vec2 tilt = (hash22(mc + 3.7) - 0.5) * (0.5 + 1.6 * uWarp);
+  vec3 nrm = normalize(vec3(tilt * 1.4, 0.85));
+  vec3 col = backdrop(uv * 1.6 + tilt);
+  float facet = sat(dot(nrm, normalize(vec3(0.45, 0.7, 0.55))));
+  float spec = pow(facet, 22.0);
+  col *= 0.22 + 1.05 * facet;
+  col += palN(hash12(mc + 9.1) * 0.6 + 0.2) * spec * 0.8;
+  col *= 0.5 + 0.7 * sat(1.0 - md * 1.6);
+  float w = fwidth(edge) * 1.4 + 1e-5;
+  float line = 1.0 - smoothstep(0.0, w * (1.0 + uLineWidth * 1.2), edge);
+  col += palN(hash12(mc) * 0.8 + 0.1) * line * (0.6 + 1.5 * uBeat);
+  col *= 0.7 + 0.5 * sat(1.5 - length(uv));
+  return col;
+}`};
 
-  if(p.overlayMode==='chromatic'){
-    // Chromatic aberration
-    const imgD=ctx.getImageData(0,0,W,H);
-    const d=imgD.data;
-    const shift=Math.floor(3+beatPulse(t,p.bpm)*p.zoomPulse*10);
-    const tmp=new Uint8ClampedArray(d);
-    for(let i=0;i<d.length;i+=4){
-      const x=(i/4)%W;
-      if(x+shift<W){d[i]=tmp[i+shift*4];}
-      if(x-shift>=0){d[i+2]=tmp[i-shift*4+2];}
+/* ------------------------------------------------------------------ 16 */
+SCENES.ribbon = { label: 'SPECTRUM RIBBONS', src: `
+vec3 scene(vec2 uv){
+  vec3 col = vec3(0.0);
+  int N = int(clamp(uComplexity * 1.6 + 2.0, 3.0, 16.0));
+  for(int i = 0; i < 16; i++){
+    if(i >= N) break;
+    float fn = float(i) / float(N);
+    float depth = 0.45 + fn * 1.7;
+    vec2 q = uv * depth;
+    q.y += (fn - 0.5) * 0.55 * depth;
+    float f = 1.6 + uDensity * 0.1 + fn * 2.0;
+    float ph = TAU * uPhase * nCyc(1.0 + floor(fn * 3.0)) + fn * TAU;
+    float amp = (0.22 + 0.16 * sin(fn * 8.0)) * (1.0 + 0.7 * uBeat * uZoomPulse) * (0.5 + uMorph);
+    float y  = amp * sin(q.x * f + ph) + 0.4 * amp * sin(q.x * f * 2.3 - ph * 2.0);
+    float dy = amp * f * cos(q.x * f + ph) + 0.4 * amp * f * 2.3 * cos(q.x * f * 2.3 - ph * 2.0);
+    float d = abs(q.y - y) / sqrt(1.0 + dy * dy);
+    float w = (0.006 + 0.016 * uLineWidth) * depth;
+    float br = w / (d + w * 0.6);
+    vec3 c = pal(fn * 0.8 + 0.12 + 0.1 * sin(q.x * 0.6 + ph));
+    col += c * pow(br, 1.35) * 0.55 / depth;
+    col += palN(fn * 0.8 + 0.4) * pow(br, 4.0) * 0.5 / depth;
+  }
+  col += pal(0.58) * 0.03 * sat(1.4 - abs(uv.y) * 2.0);
+  return col;
+}`};
+
+/* ==========================================================================
+   POST-PROCESSING
+   ========================================================================== */
+
+const POST_COMMON = `#version 300 es
+precision highp float;
+out vec4 fragColor;
+uniform vec2 uRes;
+float sat(float x){ return clamp(x, 0.0, 1.0); }
+mat2 rot2(float a){ float c = cos(a), s = sin(a); return mat2(c, -s, s, c); }
+`;
+
+/* trail / feedback accumulation */
+const FRAG_TRAIL = POST_COMMON + `
+uniform sampler2D uScene;
+uniform sampler2D uPrev;
+uniform float uDecay;
+uniform float uZoom;
+uniform float uRot;
+void main(){
+  vec2 uv = gl_FragCoord.xy / uRes;
+  vec2 c = (uv - 0.5);
+  c = rot2(uRot) * c / uZoom;
+  vec3 prev = texture(uPrev, c + 0.5).rgb * uDecay;
+  vec3 cur  = texture(uScene, uv).rgb;
+  fragColor = vec4(max(cur, prev), 1.0);
+}`;
+
+/* bright-pass prefilter with soft knee */
+const FRAG_PREFILTER = POST_COMMON + `
+uniform sampler2D uTex;
+uniform float uThreshold;
+uniform float uKnee;
+void main(){
+  vec2 uv = gl_FragCoord.xy / uRes;
+  vec3 c = texture(uTex, uv).rgb;
+  float br = max(c.r, max(c.g, c.b));
+  float knee = max(1e-4, uKnee);
+  float soft = sat((br - uThreshold + knee) / (2.0 * knee));
+  float w = max(br - uThreshold, knee * soft * soft) / max(br, 1e-4);
+  fragColor = vec4(c * w, 1.0);
+}`;
+
+/* 13-tap downsample (Call of Duty / Jimenez) */
+const FRAG_DOWN = POST_COMMON + `
+uniform sampler2D uTex;
+uniform vec2 uTexel;
+void main(){
+  vec2 uv = gl_FragCoord.xy / uRes;
+  vec3 a = texture(uTex, uv + uTexel * vec2(-1.0,  1.0)).rgb;
+  vec3 b = texture(uTex, uv + uTexel * vec2( 0.0,  1.0)).rgb;
+  vec3 c = texture(uTex, uv + uTexel * vec2( 1.0,  1.0)).rgb;
+  vec3 d = texture(uTex, uv + uTexel * vec2(-0.5,  0.5)).rgb;
+  vec3 e = texture(uTex, uv + uTexel * vec2( 0.5,  0.5)).rgb;
+  vec3 f = texture(uTex, uv + uTexel * vec2(-1.0,  0.0)).rgb;
+  vec3 g = texture(uTex, uv).rgb;
+  vec3 h = texture(uTex, uv + uTexel * vec2( 1.0,  0.0)).rgb;
+  vec3 i = texture(uTex, uv + uTexel * vec2(-0.5, -0.5)).rgb;
+  vec3 j = texture(uTex, uv + uTexel * vec2( 0.5, -0.5)).rgb;
+  vec3 k = texture(uTex, uv + uTexel * vec2(-1.0, -1.0)).rgb;
+  vec3 l = texture(uTex, uv + uTexel * vec2( 0.0, -1.0)).rgb;
+  vec3 m = texture(uTex, uv + uTexel * vec2( 1.0, -1.0)).rgb;
+  vec3 o = g * 0.125;
+  o += (a + c + k + m) * 0.03125;
+  o += (b + f + h + l) * 0.0625;
+  o += (d + e + i + j) * 0.125;
+  fragColor = vec4(o, 1.0);
+}`;
+
+/* 9-tap tent upsample, additively blended into the target mip */
+const FRAG_UP = POST_COMMON + `
+uniform sampler2D uTex;
+uniform vec2 uTexel;
+uniform float uRadius;
+void main(){
+  vec2 uv = gl_FragCoord.xy / uRes;
+  vec2 d = uTexel * uRadius;
+  vec3 s = texture(uTex, uv + vec2(-d.x,  d.y)).rgb;
+  s += texture(uTex, uv + vec2( 0.0,  d.y)).rgb * 2.0;
+  s += texture(uTex, uv + vec2( d.x,  d.y)).rgb;
+  s += texture(uTex, uv + vec2(-d.x,  0.0)).rgb * 2.0;
+  s += texture(uTex, uv).rgb * 4.0;
+  s += texture(uTex, uv + vec2( d.x,  0.0)).rgb * 2.0;
+  s += texture(uTex, uv + vec2(-d.x, -d.y)).rgb;
+  s += texture(uTex, uv + vec2( 0.0, -d.y)).rgb * 2.0;
+  s += texture(uTex, uv + vec2( d.x, -d.y)).rgb;
+  fragColor = vec4(s / 16.0, 1.0);
+}`;
+
+/* final composite: CA, bloom, grade, tonemap, overlays, grain */
+const FRAG_COMPOSITE = POST_COMMON + `
+uniform sampler2D uColor;
+uniform sampler2D uBloom;
+uniform float uBloomAmt;
+uniform float uChroma;
+uniform float uGrain;
+uniform float uVig;
+uniform float uExposure;
+uniform float uContrast;
+uniform float uSaturation;
+uniform float uStrobe;
+uniform float uBeatSaw;
+uniform float uBeat;
+uniform float uInvert;
+uniform float uTimeAbs;
+uniform int   uTonemap;
+uniform int   uOverlay;
+
+float hash12(vec2 p){ vec3 p3 = fract(p.xyx * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+
+vec3 acesFilm(vec3 x){
+  vec3 a = x * (x + 0.0245786) - 0.000090537;
+  vec3 b = x * (0.983729 * x + 0.4329510) + 0.238081;
+  return clamp(a / b, 0.0, 1.0);
+}
+vec3 tonemap(vec3 c){
+  if(uTonemap == 0){
+    mat3 mIn = mat3(0.59719, 0.07600, 0.02840,
+                    0.35458, 0.90834, 0.13383,
+                    0.04823, 0.01566, 0.83777);
+    mat3 mOut = mat3( 1.60475, -0.10208, -0.00327,
+                     -0.53108,  1.10813, -0.07276,
+                     -0.07367, -0.00605,  1.07602);
+    return clamp(mOut * acesFilm(mIn * c), 0.0, 1.0);
+  } else if(uTonemap == 1){
+    vec3 x = c * 1.1;
+    return clamp(x / (1.0 + x * 0.72) * 1.18, 0.0, 1.0);
+  } else if(uTonemap == 2){
+    return clamp(c / (1.0 + c), 0.0, 1.0);
+  }
+  return clamp(c, 0.0, 1.0);
+}
+vec3 sampleCA(vec2 uv, float amt){
+  vec2 c = uv - 0.5;
+  float r2 = dot(c, c);
+  vec2 off = c * amt * (0.004 + 0.012 * r2);
+  vec3 o;
+  o.r = texture(uColor, uv + off).r;
+  o.g = texture(uColor, uv).g;
+  o.b = texture(uColor, uv - off).b;
+  vec3 bl;
+  bl.r = texture(uBloom, uv + off * 1.6).r;
+  bl.g = texture(uBloom, uv).g;
+  bl.b = texture(uBloom, uv - off * 1.6).b;
+  return o + bl * uBloomAmt;
+}
+void main(){
+  vec2 uv = gl_FragCoord.xy / uRes;
+  vec2 duv = uv;
+
+  if(uOverlay == 2){ // CRT barrel
+    vec2 c = duv - 0.5;
+    c *= 1.0 + dot(c, c) * 0.09;
+    duv = c + 0.5;
+  }
+  if(uOverlay == 3){ // glitch: beat-locked band displacement
+    float band = floor(duv.y * 26.0);
+    float trig = step(0.72, hash12(vec2(band, floor(uBeatSaw * 8.0) + 0.5)));
+    duv.x += trig * (hash12(vec2(band, 7.3)) - 0.5) * 0.06 * (0.3 + uBeat);
+  }
+  if(uOverlay == 5){ // feedback echo
+    vec2 c = (duv - 0.5) * (1.0 - 0.035) + 0.5;
+    duv = mix(duv, c, 0.5);
+  }
+  duv = clamp(duv, vec2(0.0005), vec2(0.9995));
+
+  vec3 col = sampleCA(duv, uChroma * 3.0 + (uOverlay == 4 ? 1.6 : 0.0));
+
+  if(uOverlay == 4){ // halation: soft red-shifted bleed
+    vec3 hb = texture(uBloom, duv).rgb;
+    col += hb * vec3(1.0, 0.45, 0.35) * 0.55;
+  }
+  if(uOverlay == 5){
+    col += texture(uBloom, duv * 0.98 + 0.01).rgb * 0.45;
+  }
+
+  col *= uExposure;
+
+  // strobe (beat-locked, deterministic → loop safe)
+  float gate = step(uStrobe * 0.9, uBeatSaw);
+  col *= mix(1.0, gate, uStrobe);
+  col *= 1.0 + uStrobe * uBeat * 0.6;
+
+  col = tonemap(col);
+
+  float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
+  col = mix(vec3(l), col, uSaturation);
+  col = (col - 0.5) * uContrast + 0.5;
+  col = clamp(col, 0.0, 1.0);
+
+  if(uOverlay == 1 || uOverlay == 2){
+    float sl = 0.5 + 0.5 * sin(gl_FragCoord.y * 3.14159 * 0.85);
+    col *= 1.0 - 0.28 * sl;
+  }
+  if(uOverlay == 2){
+    float mask = 0.82 + 0.18 * sin(gl_FragCoord.x * 2.0944);
+    col *= mask;
+    vec2 e = abs(duv - 0.5) * 2.0;
+    float frame = 1.0 - smoothstep(0.98, 1.0, max(e.x, e.y));
+    col *= frame;
+  }
+
+  float vg = 1.0 - uVig * dot(uv - 0.5, uv - 0.5) * 1.6;
+  col *= sat(vg);
+
+  if(uGrain > 0.001){
+    float n = hash12(gl_FragCoord.xy + fract(uTimeAbs) * 431.0);
+    col += (n - 0.5) * uGrain * 0.12;
+  }
+
+  col = mix(col, 1.0 - col, uInvert);
+
+  // ordered dither to kill banding, then sRGB encode
+  float dth = (hash12(gl_FragCoord.xy * 1.7) - 0.5) / 255.0;
+  col = pow(clamp(col + dth, 0.0, 1.0), vec3(1.0 / 2.2));
+  fragColor = vec4(col, 1.0);
+}`;
+
+/* ==========================================================================
+   WEBGL2 ENGINE
+   ========================================================================== */
+
+const canvas = document.getElementById('gl');
+const errBoxHost = document.getElementById('frame');
+
+function fatal(title, msg){
+  const box = document.createElement('div');
+  box.id = 'errBox';
+  box.innerHTML = '<h3>' + title + '</h3>' + msg.replace(/[<>]/g, '');
+  errBoxHost.appendChild(box);
+  throw new Error(title + ': ' + msg);
+}
+
+const gl = canvas.getContext('webgl2', {
+  antialias: false, alpha: false, depth: false, stencil: false,
+  premultipliedAlpha: false, preserveDrawingBuffer: true,
+  powerPreference: 'high-performance'
+});
+if(!gl) fatal('GEEN WEBGL2', 'Deze browser of GPU ondersteunt WebGL2 niet. Gebruik Chrome, Edge of Firefox op een desktop met hardwareversnelling aan.');
+
+const EXT_CBF = gl.getExtension('EXT_color_buffer_float');
+const HDR_FMT = EXT_CBF ? gl.RGBA16F : gl.RGBA8;
+const HDR_TYPE = EXT_CBF ? gl.HALF_FLOAT : gl.UNSIGNED_BYTE;
+
+(function reportGpu(){
+  const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+  let name = 'WebGL2';
+  if(dbg) name = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || name;
+  const el = document.getElementById('gpuName');
+  el.textContent = (name.length > 34 ? name.slice(0, 34) + '…' : name) + (EXT_CBF ? ' · HDR' : ' · LDR');
+  el.title = name;
+})();
+
+/* ---- program helpers --------------------------------------------------- */
+function compile(type, src, tag){
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, src);
+  gl.compileShader(sh);
+  if(!gl.getShaderParameter(sh, gl.COMPILE_STATUS)){
+    const log = gl.getShaderInfoLog(sh) || '';
+    gl.deleteShader(sh);
+    fatal('SHADER FOUT · ' + tag, log);
+  }
+  return sh;
+}
+function program(fragSrc, tag){
+  const p = gl.createProgram();
+  const vs = compile(gl.VERTEX_SHADER, VERT, tag + ':vert');
+  const fs = compile(gl.FRAGMENT_SHADER, fragSrc, tag + ':frag');
+  gl.attachShader(p, vs); gl.attachShader(p, fs);
+  gl.linkProgram(p);
+  gl.deleteShader(vs); gl.deleteShader(fs);
+  if(!gl.getProgramParameter(p, gl.LINK_STATUS)){
+    const log = gl.getProgramInfoLog(p) || '';
+    gl.deleteProgram(p);
+    fatal('LINK FOUT · ' + tag, log);
+  }
+  p._loc = new Map();
+  return p;
+}
+function loc(p, name){
+  let l = p._loc.get(name);
+  if(l === undefined){ l = gl.getUniformLocation(p, name); p._loc.set(name, l); }
+  return l;
+}
+const u1f = (p, n, v) => gl.uniform1f(loc(p, n), v);
+const u1i = (p, n, v) => gl.uniform1i(loc(p, n), v);
+const u2f = (p, n, a, b) => gl.uniform2f(loc(p, n), a, b);
+const u3f = (p, n, a, b, c) => gl.uniform3f(loc(p, n), a, b, c);
+
+const vao = gl.createVertexArray();
+const draw = () => { gl.bindVertexArray(vao); gl.drawArrays(gl.TRIANGLES, 0, 3); };
+
+/* ---- scene program cache ---------------------------------------------- */
+const sceneProgs = new Map();
+function sceneProgram(mode){
+  if(sceneProgs.has(mode)) return sceneProgs.get(mode);
+  const def = SCENES[mode];
+  if(!def) return sceneProgram('tunnel');
+  const p = program(PRELUDE + def.src + EPILOGUE, 'scene/' + mode);
+  sceneProgs.set(mode, p);
+  return p;
+}
+
+const progTrail = program(FRAG_TRAIL, 'trail');
+const progPre   = program(FRAG_PREFILTER, 'prefilter');
+const progDown  = program(FRAG_DOWN, 'downsample');
+const progUp    = program(FRAG_UP, 'upsample');
+const progComp  = program(FRAG_COMPOSITE, 'composite');
+
+/* ---- render targets ---------------------------------------------------- */
+function makeTarget(w, h){
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, HDR_FMT, w, h, 0, gl.RGBA, HDR_TYPE, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const fbo = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+  if(gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE)
+    fatal('FRAMEBUFFER FOUT', 'Kon geen render target van ' + w + '×' + h + ' maken.');
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  return { tex, fbo, w, h };
+}
+function freeTarget(t){ if(!t) return; gl.deleteTexture(t.tex); gl.deleteFramebuffer(t.fbo); }
+
+let RW = 0, RH = 0;
+let tScene = null, tTrailA = null, tTrailB = null;
+let bloomMips = [];
+
+function allocTargets(w, h){
+  w = Math.max(16, Math.round(w)); h = Math.max(16, Math.round(h));
+  if(w === RW && h === RH) return;
+  RW = w; RH = h;
+  canvas.width = w; canvas.height = h;
+
+  freeTarget(tScene); freeTarget(tTrailA); freeTarget(tTrailB);
+  bloomMips.forEach(freeTarget);
+
+  tScene  = makeTarget(w, h);
+  tTrailA = makeTarget(w, h);
+  tTrailB = makeTarget(w, h);
+
+  bloomMips = [];
+  const levels = Math.max(3, Math.min(7, Math.floor(Math.log2(Math.min(w, h))) - 3));
+  let mw = w, mh = h;
+  for(let i = 0; i < levels; i++){
+    mw = Math.max(2, Math.floor(mw / 2));
+    mh = Math.max(2, Math.floor(mh / 2));
+    bloomMips.push(makeTarget(mw, mh));
+  }
+  clearTrails();
+  document.getElementById('hudRes').textContent = w + '×' + h;
+}
+function clearTrails(){
+  [tTrailA, tTrailB, tScene].forEach(t => {
+    if(!t) return;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, t.fbo);
+    gl.viewport(0, 0, t.w, t.h);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+  });
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+}
+
+function bindTex(unit, tex){
+  gl.activeTexture(gl.TEXTURE0 + unit);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+}
+function target(t){
+  gl.bindFramebuffer(gl.FRAMEBUFFER, t ? t.fbo : null);
+  const w = t ? t.w : RW, h = t ? t.h : RH;
+  gl.viewport(0, 0, w, h);
+  return [w, h];
+}
+
+/* ---- colour conversion ------------------------------------------------- */
+function srgbToLinear(hex){
+  const n = parseInt(hex.slice(1), 16);
+  const f = v => { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return [f((n >> 16) & 255), f((n >> 8) & 255), f(n & 255)];
+}
+
+/* ---- timing ------------------------------------------------------------ */
+let tAbs = 0;            // seconds on the loop timeline (may be negative during pre-roll)
+let frameNo = 0;
+let playing = true;
+let rafId = null;
+let lastTs = null;
+let fpsAcc = 0, fpsFrames = 0, fpsShown = 0;
+
+function loopPhase(){
+  const L = Math.max(0.5, P.loopDuration);
+  let ph = (tAbs / L) % 1;
+  if(ph < 0) ph += 1;
+  return ph;
+}
+
+/* ---- the pipeline ------------------------------------------------------ */
+function renderFrame(){
+  const ph = loopPhase();
+  const beats = Math.max(1, Math.round(P.bpm / 60 * P.loopDuration));
+  const beatSaw = (ph * beats) % 1;
+  const beat = Math.pow(1 - beatSaw, 3.2);
+
+  /* 1 · scene into HDR buffer */
+  const prog = sceneProgram(P.visualMode);
+  gl.useProgram(prog);
+  target(tScene);
+  u2f(prog, 'uRes', RW, RH);
+  u1f(prog, 'uTime', tAbs);
+  u1f(prog, 'uPhase', ph);
+  u1f(prog, 'uLoop', P.loopDuration);
+  u1f(prog, 'uBeat', beat);
+  u1f(prog, 'uBeatSaw', beatSaw);
+  u1f(prog, 'uBeats', beats);
+  const c1 = srgbToLinear(P.color1), c2 = srgbToLinear(P.color2), c3 = srgbToLinear(P.color3);
+  u3f(prog, 'uC1', c1[0], c1[1], c1[2]);
+  u3f(prog, 'uC2', c2[0], c2[1], c2[2]);
+  u3f(prog, 'uC3', c3[0], c3[1], c3[2]);
+  u1f(prog, 'uSpeed', P.speed);
+  u1f(prog, 'uZoomPulse', P.zoomPulse);
+  u1f(prog, 'uRotation', P.rotation);
+  u1f(prog, 'uMorph', P.morph);
+  u1f(prog, 'uHue', P.hueShift);
+  u1f(prog, 'uDensity', P.density);
+  u1f(prog, 'uLineWidth', P.lineWidth);
+  u1f(prog, 'uPersp', P.perspective);
+  u1f(prog, 'uComplexity', P.complexity);
+  u1f(prog, 'uFractal', P.fractalZoom);
+  u1f(prog, 'uWarp', P.warp);
+  u1f(prog, 'uKaleido', P.kaleido);
+  u2f(prog, 'uMirror', P.symmetry ? 1 : 0, P.symmetryY ? 1 : 0);
+  draw();
+
+  /* 2 · optional feedback trails */
+  let colorTex = tScene.tex;
+  if(P.trails > 0.005){
+    gl.useProgram(progTrail);
+    target(tTrailB);
+    u2f(progTrail, 'uRes', RW, RH);
+    u1f(progTrail, 'uDecay', P.trails);
+    u1f(progTrail, 'uZoom', 1 + 0.02 * P.trailZoom);
+    u1f(progTrail, 'uRot', 0.012 * P.trailZoom);
+    bindTex(0, tScene.tex);  u1i(progTrail, 'uScene', 0);
+    bindTex(1, tTrailA.tex); u1i(progTrail, 'uPrev', 1);
+    draw();
+    const tmp = tTrailA; tTrailA = tTrailB; tTrailB = tmp;
+    colorTex = tTrailA.tex;
+  }
+
+  /* 3 · bloom: bright pass → downsample chain → additive tent upsample */
+  const bloomOn = (P.glow > 0.01 || P.overlayMode === 4 || P.overlayMode === 5) && bloomMips.length > 1;
+  if(bloomOn){
+    gl.disable(gl.BLEND);
+    gl.useProgram(progPre);
+    let [w, h] = target(bloomMips[0]);
+    u2f(progPre, 'uRes', w, h);
+    u1f(progPre, 'uThreshold', 0.55);
+    u1f(progPre, 'uKnee', 0.35);
+    bindTex(0, colorTex); u1i(progPre, 'uTex', 0);
+    draw();
+
+    gl.useProgram(progDown);
+    for(let i = 1; i < bloomMips.length; i++){
+      const src = bloomMips[i - 1], dst = bloomMips[i];
+      const [dw, dh] = target(dst);
+      u2f(progDown, 'uRes', dw, dh);
+      u2f(progDown, 'uTexel', 1 / src.w, 1 / src.h);
+      bindTex(0, src.tex); u1i(progDown, 'uTex', 0);
+      draw();
     }
-    ctx.putImageData(imgD,0,0);
-  }
 
-  if(p.overlayMode==='crt'){
-    // Horizontal scanlines
-    for(let y=0;y<H;y+=3){ctx.fillStyle='rgba(0,0,0,0.18)';ctx.fillRect(0,y,W,1);}
-    // Vignette
-    const grd=ctx.createRadialGradient(W/2,H/2,H*0.3,W/2,H/2,H*0.9);
-    grd.addColorStop(0,'rgba(0,0,0,0)');
-    grd.addColorStop(1,'rgba(0,0,0,0.6)');
-    ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
-    // Phosphor shimmer
-    if(Math.random()>0.97){
-      ctx.fillStyle=`rgba(255,255,255,${Math.random()*0.05})`;
-      ctx.fillRect(0,Math.random()*H,W,1+Math.random()*3);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
+    gl.useProgram(progUp);
+    for(let i = bloomMips.length - 1; i > 0; i--){
+      const src = bloomMips[i], dst = bloomMips[i - 1];
+      const [dw, dh] = target(dst);
+      u2f(progUp, 'uRes', dw, dh);
+      u2f(progUp, 'uTexel', 1 / src.w, 1 / src.h);
+      u1f(progUp, 'uRadius', 1 + P.bloomRadius);
+      bindTex(0, src.tex); u1i(progUp, 'uTex', 0);
+      draw();
     }
+    gl.disable(gl.BLEND);
+  }
+
+  /* 4 · composite to the canvas */
+  gl.useProgram(progComp);
+  target(null);
+  u2f(progComp, 'uRes', RW, RH);
+  bindTex(0, colorTex); u1i(progComp, 'uColor', 0);
+  bindTex(1, bloomOn ? bloomMips[0].tex : tScene.tex); u1i(progComp, 'uBloom', 1);
+  u1f(progComp, 'uBloomAmt', bloomOn ? P.glow / 18 : 0);
+  u1f(progComp, 'uChroma', P.chroma);
+  u1f(progComp, 'uGrain', P.grain);
+  u1f(progComp, 'uVig', P.vignette);
+  u1f(progComp, 'uExposure', P.brightness);
+  u1f(progComp, 'uContrast', P.contrast);
+  u1f(progComp, 'uSaturation', P.saturation);
+  u1f(progComp, 'uStrobe', P.strobe);
+  u1f(progComp, 'uBeatSaw', beatSaw);
+  u1f(progComp, 'uBeat', beat);
+  u1f(progComp, 'uInvert', P.invert ? 1 : 0);
+  u1f(progComp, 'uTimeAbs', tAbs);
+  u1i(progComp, 'uTonemap', P.tonemap);
+  u1i(progComp, 'uOverlay', P.overlayMode);
+  draw();
+
+  frameNo++;
+  document.getElementById('beatFill').style.width = (beatSaw * 100).toFixed(1) + '%';
+  if((frameNo & 7) === 0){
+    document.getElementById('stPhase').textContent = ph.toFixed(2);
+    document.getElementById('stFrame').textContent = frameNo;
+    document.getElementById('stBeats').textContent = beats;
   }
 }
 
-function applyStrobe(t, p) {
-  if(p.strobe<=0) return;
-  if(t < 0.05) return; // skip first frame to avoid white flash on export
-  const bp=beatPulse(t,p.bpm,8);
-  if(bp>(1-p.strobe)){ctx.fillStyle=`rgba(255,255,255,${bp*0.8})`;ctx.fillRect(0,0,W,H);}
-}
-
-function applyInvert() {
-  const imgD=ctx.getImageData(0,0,W,H);
-  const d=imgD.data;
-  for(let i=0;i<d.length;i+=4){d[i]=255-d[i];d[i+1]=255-d[i+1];d[i+2]=255-d[i+2];}
-  ctx.putImageData(imgD,0,0);
-}
-
-function applySymmetry(x, y) {
-  if(x){
-    ctx.save(); ctx.translate(W,0); ctx.scale(-1,1);
-    ctx.drawImage(canvas,0,0,W/2,H,0,0,W/2,H);
-    ctx.restore();
+/* pre-roll so feedback trails are already in steady state at phase 0 */
+function prerollTrails(seconds){
+  if(P.trails <= 0.005) return;
+  const steps = Math.min(90, Math.round(seconds * 30));
+  const save = tAbs;
+  for(let i = steps; i > 0; i--){
+    tAbs = save - i / 30;
+    renderFrame();
   }
-  if(y){
-    ctx.save(); ctx.translate(0,H); ctx.scale(1,-1);
-    ctx.drawImage(canvas,0,0,W,H/2,0,0,W,H/2);
-    ctx.restore();
-  }
+  tAbs = save;
 }
 
-// ============================
-// MAIN RENDER
-// ============================
-function render() {
+function tick(ts){
+  if(!playing){ rafId = null; return; }
+  if(lastTs === null) lastTs = ts;
+  const dt = Math.min((ts - lastTs) / 1000, 0.05);
+  lastTs = ts;
+  tAbs += dt;
+  renderFrame();
+
+  fpsAcc += dt; fpsFrames++;
+  if(fpsAcc > 0.5){
+    fpsShown = Math.round(fpsFrames / fpsAcc);
+    document.getElementById('hudFps').textContent = fpsShown;
+    fpsAcc = 0; fpsFrames = 0;
+  }
+  rafId = requestAnimationFrame(tick);
+}
+function startLoop(){
+  if(rafId === null && playing){ lastTs = null; rafId = requestAnimationFrame(tick); }
+}
+
+/* ==========================================================================
+   PARAMETERS + UI
+   ========================================================================== */
+
+const RANGE_IDS = ['speed','bpm','zoomPulse','rotation','morph','warp','strobe',
+  'hueShift','saturation','brightness','contrast','density','complexity','lineWidth',
+  'perspective','fractalZoom','kaleido','glow','bloomRadius','trails','trailZoom',
+  'chroma','grain','vignette'];
+const INT_IDS   = ['bpm','density','complexity','glow','kaleido'];
+const CHECK_IDS = ['symmetry','symmetryY','invert'];
+
+let currentScene = 'tunnel';
+const P = {};
+
+function el(id){ return document.getElementById(id); }
+function num(id){ return parseFloat(el(id).value); }
+
+function updateParam(){
+  for(const id of RANGE_IDS) P[id] = INT_IDS.includes(id) ? Math.round(num(id)) : num(id);
+  for(const id of CHECK_IDS) P[id] = el(id).checked;
+  P.visualMode    = currentScene;
+  P.tonemap       = parseInt(el('tonemap').value, 10);
+  P.overlayMode   = parseInt(el('overlayMode').value, 10);
+  P.loopDuration  = parseFloat(el('loopDuration').value);
+  P.resolution    = el('resolution').value;
+  P.quality       = parseFloat(el('quality').value);
+  P.palette       = el('palette').value;
+  P.color1        = el('color1').value;
+  P.color2        = el('color2').value;
+  P.color3        = el('color3').value;
+
+  for(const id of RANGE_IDS){
+    const input = el(id), out = el(id + 'Val');
+    const min = parseFloat(input.min), max = parseFloat(input.max);
+    input.style.setProperty('--fill', (((P[id] - min) / (max - min)) * 100).toFixed(1) + '%');
+    if(out) out.textContent = INT_IDS.includes(id) ? P[id] : P[id].toFixed(2);
+  }
+  el('stLoop').textContent = P.loopDuration + 's';
+  el('hudScene').textContent = SCENES[currentScene].label;
+}
+
+/* ---- scene picker ----------------------------------------------------- */
+const SCENE_ORDER = ['tunnel','terrain','hex','rain','lasers','ribbon',
+  'bulb','menger','apollonian','gyroid','prism','mandala',
+  'nebula','flow','liquid','warp'];
+
+function buildSceneGrid(){
+  const host = el('sceneGrid');
+  host.innerHTML = '';
+  for(const key of SCENE_ORDER){
+    const b = document.createElement('button');
+    b.className = 'scene-btn' + (key === currentScene ? ' on' : '');
+    b.dataset.scene = key;
+    b.innerHTML = '<span class="dot"></span>' + SCENES[key].label;
+    b.title = SCENES[key].label;
+    b.addEventListener('click', () => setScene(key));
+    host.appendChild(b);
+  }
+}
+function setScene(key){
+  if(!SCENES[key]) return;
+  currentScene = key;
+  for(const b of el('sceneGrid').children) b.classList.toggle('on', b.dataset.scene === key);
   updateParam();
-  const loopT=t%P.loopDuration;
-  const nt=loopT/P.loopDuration;
+  clearTrails();
+  if(!playing) renderFrame();
+}
+function cycleScene(dir){
+  const i = SCENE_ORDER.indexOf(currentScene);
+  setScene(SCENE_ORDER[(i + dir + SCENE_ORDER.length) % SCENE_ORDER.length]);
+}
 
-  // Blend mode
-  ctx.globalCompositeOperation='source-over';
-  if(P.blendMode==='screen') ctx.globalCompositeOperation='screen';
-  if(P.blendMode==='add') ctx.globalCompositeOperation='lighter';
-  if(P.blendMode==='multiply') ctx.globalCompositeOperation='multiply';
-
-  switch(P.visualMode){
-    case 'grid': renderGridTunnel(nt,P); break;
-    case 'particles': renderParticles(nt,P); break;
-    case 'waveform': renderWaveform(nt,P); break;
-    case 'hexagons': renderHexagons(nt,P); break;
-    case 'scanlines': renderScanlines(nt,P); break;
-    case 'kaleidoscope': renderKaleidoscope(nt,P); break;
-    case 'matrix': renderMatrix(nt,P); break;
-    case 'laser': renderLaserGrid(nt,P); break;
-    // New
-    case 'mandelbrot': renderMandelbrot(nt,P); break;
-    case 'julia': renderJulia(nt,P); break;
-    case 'plasma': renderPlasma(nt,P); break;
-    case 'gradient_tunnel': renderGradientTunnel(nt,P); break;
-    case 'voronoi': renderVoronoi(nt,P); break;
-    case 'lissajous': renderLissajous(nt,P); break;
-    case 'tunnel3d': renderPsychedelicTunnel(nt,P); break;
-    case 'starfield': renderStarfield(nt,P); break;
+/* ---- palettes --------------------------------------------------------- */
+const PALETTES = {
+  aurora:    ['#3df5c4', '#07283a', '#7a5cff'],
+  acid:      ['#b6ff2e', '#0a1a06', '#00ffb3'],
+  magenta:   ['#ff2f6d', '#1a0416', '#ffb03a'],
+  cyber:     ['#31d8ff', '#040f2e', '#7a5cff'],
+  ember:     ['#ff7a18', '#190303', '#ffd93d'],
+  void:      ['#a05cff', '#0a0418', '#ff3ea5'],
+  chrome:    ['#ffffff', '#0b0e14', '#9fb4c7'],
+  spectrum:  ['#ff2e63', '#08d9d6', '#f9ed69'],
+  sunset:    ['#ff5f6d', '#1b1033', '#ffc371'],
+  glacier:   ['#8ce8ff', '#021a2b', '#c9f7ff'],
+  toxic:     ['#39ff14', '#03140a', '#d4ff00'],
+  ultramar:  ['#2c4bff', '#01030f', '#00e5ff'],
+  copper:    ['#ff9e5e', '#160c08', '#ffe1b3'],
+  orchid:    ['#ff6ec7', '#12021a', '#6effe0'],
+};
+function buildPalettes(){
+  const sel = el('palette');
+  sel.innerHTML = '';
+  for(const k of Object.keys(PALETTES)){
+    const o = document.createElement('option');
+    o.value = k; o.textContent = k.toUpperCase();
+    sel.appendChild(o);
   }
+  const o = document.createElement('option');
+  o.value = 'custom'; o.textContent = 'CUSTOM';
+  sel.appendChild(o);
 
-  ctx.globalCompositeOperation='source-over';
-  if(P.symmetry||P.symmetryY) applySymmetry(P.symmetry,P.symmetryY);
-  applyOverlay(t,P);
-  applyStrobe(t,P);
-  if(P.invert) applyInvert();
-
-  frameCount++;
-  document.getElementById('statusFrame').textContent=frameCount;
+  const host = el('swatches');
+  host.innerHTML = '';
+  for(const [k, c] of Object.entries(PALETTES)){
+    const b = document.createElement('button');
+    b.className = 'sw-btn';
+    b.dataset.pal = k;
+    b.title = k;
+    b.style.background = 'linear-gradient(90deg,' + c[0] + ' 0 34%,' + c[2] + ' 34% 67%,' + c[1] + ' 67% 100%)';
+    b.addEventListener('click', () => { el('palette').value = k; applyPalette(); });
+    host.appendChild(b);
+  }
+}
+function applyPalette(){
+  const k = el('palette').value;
+  if(PALETTES[k]){
+    el('color1').value = PALETTES[k][0];
+    el('color2').value = PALETTES[k][1];
+    el('color3').value = PALETTES[k][2];
+  }
+  for(const b of el('swatches').children) b.classList.toggle('on', b.dataset.pal === k);
+  updateParam();
+  if(!playing) renderFrame();
 }
 
-let lastTime=null;
-function loop(ts){
-  if(!playing) return;
-  if(lastTime===null) lastTime=ts;
-  const dt=Math.min((ts-lastTime)/1000,0.05);
-  lastTime=ts; t+=dt;
-  render();
-  animId=requestAnimationFrame(loop);
+/* ---- presets ---------------------------------------------------------- */
+const PRESETS = {
+  BERLIN:      { scene:'tunnel',   palette:'chrome',   speed:1.4, bpm:145, zoomPulse:0.45, rotation:0.15, morph:0.25, warp:0.5, strobe:0.15, hueShift:0.02, saturation:0.75, brightness:1.05, contrast:1.2, density:16, complexity:5, lineWidth:0.8, perspective:1.1, fractalZoom:1, kaleido:0, glow:12, bloomRadius:0.9, trails:0, trailZoom:0.3, chroma:0.12, grain:0.25, vignette:0.45, tonemap:0, overlay:1 },
+  IBIZA:       { scene:'liquid',   palette:'sunset',   speed:0.9, bpm:126, zoomPulse:0.5,  rotation:0.3,  morph:0.6,  warp:0.3, strobe:0,    hueShift:0.35, saturation:1.15, brightness:1.15, contrast:1.05, density:12, complexity:6, lineWidth:1,   perspective:1,   fractalZoom:1.1, kaleido:0, glow:18, bloomRadius:1.2, trails:0.18, trailZoom:0.4, chroma:0.22, grain:0.1,  vignette:0.35, tonemap:0, overlay:0 },
+  INDUSTRIAL:  { scene:'menger',   palette:'acid',     speed:1.6, bpm:160, zoomPulse:0.55, rotation:0.2,  morph:0.2,  warp:0.7, strobe:0.35, hueShift:0.1,  saturation:0.95, brightness:1,    contrast:1.3,  density:20, complexity:7, lineWidth:1.2, perspective:1,   fractalZoom:1.2, kaleido:0, glow:10, bloomRadius:0.7, trails:0,    trailZoom:0.3, chroma:0.1,  grain:0.35, vignette:0.5,  tonemap:1, overlay:3 },
+  MINIMAL:     { scene:'lasers',   palette:'cyber',    speed:0.6, bpm:128, zoomPulse:0.25, rotation:0.08, morph:0.3,  warp:0.2, strobe:0,    hueShift:0.12, saturation:1,    brightness:0.95, contrast:1.05, density:9,  complexity:3, lineWidth:0.6, perspective:1.2, fractalZoom:1,   kaleido:0, glow:16, bloomRadius:1.4, trails:0.25, trailZoom:0.2, chroma:0.15, grain:0.08, vignette:0.5,  tonemap:0, overlay:0 },
+  RAVE:        { scene:'hex',      palette:'void',     speed:2.4, bpm:150, zoomPulse:0.8,  rotation:0.8,  morph:0.7,  warp:0.8, strobe:0.3,  hueShift:0.7,  saturation:1.3,  brightness:1.25, contrast:1.1,  density:22, complexity:6, lineWidth:1.6, perspective:0.9, fractalZoom:1,   kaleido:0, glow:24, bloomRadius:1.1, trails:0.35, trailZoom:0.6, chroma:0.3,  grain:0.15, vignette:0.3,  tonemap:1, overlay:0 },
+  PSY:         { scene:'mandala',  palette:'spectrum', speed:1.2, bpm:138, zoomPulse:0.6,  rotation:0.5,  morph:0.8,  warp:0.7, strobe:0,    hueShift:0.5,  saturation:1.35, brightness:1.2,  contrast:1.1,  density:18, complexity:8, lineWidth:1,   perspective:1,   fractalZoom:1.4, kaleido:0, glow:22, bloomRadius:1.3, trails:0.3,  trailZoom:0.5, chroma:0.35, grain:0.1,  vignette:0.4,  tonemap:0, overlay:0 },
+  DEEPSPACE:   { scene:'nebula',   palette:'ultramar', speed:0.7, bpm:120, zoomPulse:0.3,  rotation:0.1,  morph:0.5,  warp:0.4, strobe:0,    hueShift:0.18, saturation:1.1,  brightness:1.1,  contrast:1.05, density:14, complexity:6, lineWidth:1,   perspective:1.1, fractalZoom:1.2, kaleido:0, glow:26, bloomRadius:1.6, trails:0.12, trailZoom:0.25, chroma:0.2, grain:0.14, vignette:0.55, tonemap:0, overlay:0 },
+  BULB:        { scene:'bulb',     palette:'ember',    speed:0.8, bpm:130, zoomPulse:0.35, rotation:0,    morph:0.7,  warp:0.3, strobe:0,    hueShift:0.08, saturation:1.1,  brightness:1.05, contrast:1.1,  density:12, complexity:8, lineWidth:1,   perspective:1,   fractalZoom:1,   kaleido:0, glow:14, bloomRadius:1,   trails:0,    trailZoom:0.3, chroma:0.18, grain:0.12, vignette:0.5,  tonemap:0, overlay:0 },
+  HYPERSPACE:  { scene:'warp',     palette:'glacier',  speed:3.5, bpm:145, zoomPulse:0.7,  rotation:0.1,  morph:0.6,  warp:0.3, strobe:0.1,  hueShift:0.2,  saturation:1,    brightness:1.2,  contrast:1.1,  density:28, complexity:4, lineWidth:1.4, perspective:1,   fractalZoom:1,   kaleido:0, glow:26, bloomRadius:1.5, trails:0.4,  trailZoom:0.15, chroma:0.25, grain:0.1,  vignette:0.45, tonemap:1, overlay:0 },
+  PRISM:       { scene:'prism',    palette:'orchid',   speed:1,   bpm:132, zoomPulse:0.4,  rotation:0.12, morph:0.6,  warp:0.6, strobe:0,    hueShift:0.3,  saturation:1.2,  brightness:1.05, contrast:1.1,  density:16, complexity:5, lineWidth:1.2, perspective:1,   fractalZoom:1,   kaleido:0, glow:16, bloomRadius:1,   trails:0,    trailZoom:0.3, chroma:0.4,  grain:0.12, vignette:0.35, tonemap:0, overlay:0 },
+  SILK:        { scene:'flow',     palette:'aurora',   speed:0.8, bpm:124, zoomPulse:0.3,  rotation:0.06, morph:0.5,  warp:0.7, strobe:0,    hueShift:0.22, saturation:1.15, brightness:1.1,  contrast:1.05, density:14, complexity:7, lineWidth:1.4, perspective:1,   fractalZoom:1.2, kaleido:0, glow:18, bloomRadius:1.3, trails:0.15, trailZoom:0.3, chroma:0.22, grain:0.1,  vignette:0.4,  tonemap:0, overlay:0 },
+  MATRIX:      { scene:'rain',     palette:'toxic',    speed:1.5, bpm:140, zoomPulse:0.3,  rotation:0,    morph:0.3,  warp:0.2, strobe:0,    hueShift:0.05, saturation:1.05, brightness:1.05, contrast:1.15, density:26, complexity:6, lineWidth:1.2, perspective:1,   fractalZoom:1,   kaleido:0, glow:14, bloomRadius:0.9, trails:0.2,  trailZoom:0.1, chroma:0.12, grain:0.2,  vignette:0.5,  tonemap:1, overlay:1 },
+  SYNTH:       { scene:'terrain',  palette:'magenta',  speed:1.1, bpm:118, zoomPulse:0.35, rotation:0.05, morph:0.5,  warp:0.4, strobe:0,    hueShift:0.12, saturation:1.2,  brightness:1.1,  contrast:1.1,  density:18, complexity:6, lineWidth:1,   perspective:1.1, fractalZoom:1,   kaleido:0, glow:20, bloomRadius:1.2, trails:0.1,  trailZoom:0.2, chroma:0.2,  grain:0.18, vignette:0.5,  tonemap:0, overlay:0 },
+  GYROID:      { scene:'gyroid',   palette:'glacier',  speed:1,   bpm:128, zoomPulse:0.4,  rotation:0.25, morph:0.5,  warp:0.6, strobe:0,    hueShift:0.15, saturation:1.1,  brightness:1.05, contrast:1.05, density:14, complexity:5, lineWidth:1.2, perspective:1,   fractalZoom:1.3, kaleido:0, glow:20, bloomRadius:1.2, trails:0.1,  trailZoom:0.3, chroma:0.2,  grain:0.1,  vignette:0.45, tonemap:0, overlay:0 },
+  GASKET:      { scene:'apollonian', palette:'copper', speed:0.9, bpm:134, zoomPulse:0.4,  rotation:0.15, morph:0.6,  warp:0.4, strobe:0,    hueShift:0.1,  saturation:1.15, brightness:1.1,  contrast:1.1,  density:12, complexity:7, lineWidth:1,   perspective:1,   fractalZoom:1.1, kaleido:0, glow:16, bloomRadius:1.1, trails:0,    trailZoom:0.3, chroma:0.18, grain:0.12, vignette:0.5,  tonemap:0, overlay:0 },
+  MANDALA:     { scene:'mandala',  palette:'orchid',   speed:1,   bpm:130, zoomPulse:0.45, rotation:0.3,  morph:0.6,  warp:0.5, strobe:0,    hueShift:0.4,  saturation:1.25, brightness:1.1,  contrast:1.1,  density:20, complexity:9, lineWidth:0.9, perspective:1,   fractalZoom:1.5, kaleido:12, glow:20, bloomRadius:1.2, trails:0.2, trailZoom:0.4, chroma:0.25, grain:0.1, vignette:0.4, tonemap:0, overlay:0 },
+};
+function buildPresets(){
+  const host = el('presetChips');
+  host.innerHTML = '';
+  for(const name of Object.keys(PRESETS)){
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.textContent = name;
+    b.addEventListener('click', () => loadPreset(name));
+    host.appendChild(b);
+  }
+}
+function loadPreset(name){
+  const pr = PRESETS[name];
+  if(!pr) return;
+  el('palette').value = pr.palette;
+  if(PALETTES[pr.palette]){
+    el('color1').value = PALETTES[pr.palette][0];
+    el('color2').value = PALETTES[pr.palette][1];
+    el('color3').value = PALETTES[pr.palette][2];
+  }
+  for(const id of RANGE_IDS) if(pr[id] !== undefined) el(id).value = pr[id];
+  el('tonemap').value = String(pr.tonemap ?? 0);
+  el('overlayMode').value = String(pr.overlay ?? 0);
+  el('symmetry').checked = !!pr.mirrorX;
+  el('symmetryY').checked = !!pr.mirrorY;
+  el('invert').checked = false;
+  for(const b of el('swatches').children) b.classList.toggle('on', b.dataset.pal === pr.palette);
+  setScene(pr.scene);
+  updateParam();
+  clearTrails();
+  toast('PRESET · ' + name);
+  if(!playing) renderFrame();
 }
 
-function togglePlay(){
-  playing=!playing;
-  document.getElementById('playBtn').textContent=playing?'⏸ PAUSE':'▶ PLAY';
-  if(playing){lastTime=null;animId=requestAnimationFrame(loop);}
-  else{cancelAnimationFrame(animId);}
+/* ---- randomiser ------------------------------------------------------- */
+const rnd = (a, b) => a + Math.random() * (b - a);
+const rndInt = (a, b) => Math.floor(rnd(a, b + 1));
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+function setRange(id, v){ el(id).value = v; }
+
+const SECTIONS = {
+  scene: () => {
+    setScene(pick(SCENE_ORDER));
+    el('overlayMode').value = String(pick([0, 0, 0, 1, 2, 3, 4, 5]));
+  },
+  motion: () => {
+    setRange('speed', rnd(0.4, 3.2).toFixed(2));
+    setRange('bpm', rndInt(118, 160));
+    setRange('zoomPulse', rnd(0.1, 0.8).toFixed(2));
+    setRange('rotation', rnd(0, 1.2).toFixed(2));
+    setRange('morph', rnd(0.1, 0.9).toFixed(2));
+    setRange('warp', rnd(0.1, 0.9).toFixed(2));
+    setRange('strobe', Math.random() < 0.7 ? 0 : rnd(0.1, 0.4).toFixed(2));
+  },
+  color: () => {
+    el('palette').value = pick(Object.keys(PALETTES));
+    applyPalette();
+    setRange('hueShift', rnd(0, 1).toFixed(3));
+    setRange('saturation', rnd(0.8, 1.4).toFixed(2));
+    setRange('brightness', rnd(0.85, 1.35).toFixed(2));
+    setRange('contrast', rnd(0.95, 1.3).toFixed(2));
+    el('tonemap').value = String(pick([0, 0, 1, 2]));
+  },
+  geometry: () => {
+    setRange('density', rndInt(6, 32));
+    setRange('complexity', rndInt(3, 9));
+    setRange('lineWidth', rnd(0.5, 2.6).toFixed(1));
+    setRange('perspective', rnd(0.7, 1.6).toFixed(2));
+    setRange('fractalZoom', rnd(0.6, 2).toFixed(2));
+    setRange('kaleido', Math.random() < 0.7 ? 0 : rndInt(4, 14));
+    el('symmetry').checked = Math.random() < 0.25;
+    el('symmetryY').checked = Math.random() < 0.15;
+  },
+  post: () => {
+    setRange('glow', rndInt(6, 30));
+    setRange('bloomRadius', rnd(0.6, 1.7).toFixed(2));
+    setRange('trails', Math.random() < 0.55 ? 0 : rnd(0.1, 0.6).toFixed(2));
+    setRange('trailZoom', rnd(0, 0.8).toFixed(2));
+    setRange('chroma', rnd(0, 0.5).toFixed(2));
+    setRange('grain', rnd(0, 0.35).toFixed(2));
+    setRange('vignette', rnd(0.2, 0.6).toFixed(2));
+  },
+};
+function randomizeSection(sec){
+  const fn = SECTIONS[sec];
+  if(!fn) return;
+  fn();
+  updateParam();
+  clearTrails();
+  if(!playing) renderFrame();
+}
+function randomizeAll(){
+  Object.keys(SECTIONS).forEach(s => SECTIONS[s]());
+  updateParam();
+  clearTrails();
+  toast('RANDOMIZED');
+  if(!playing) renderFrame();
 }
 
-function resetAnim(){t=0;frameCount=0;lastTime=null;render();}
+/* ---- sizing ----------------------------------------------------------- */
+function exportSize(){
+  const parts = P.resolution.split('x');
+  return [parseInt(parts[0], 10), parseInt(parts[1], 10)];
+}
+function applyPreviewSize(){
+  const [ew, eh] = exportSize();
+  const frame = el('frame');
+  frame.style.aspectRatio = ew + ' / ' + eh;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const avail = Math.max(240, frame.clientWidth * dpr);
+  const scale = Math.min(1, avail / ew) * P.quality;
+  allocTargets(Math.round(ew * scale), Math.round(eh * scale));
+}
 
-// ============================
-// RECORDING + MP4 EXPORT
-// ============================
+/* ---- toast ------------------------------------------------------------ */
+let toastTimer = null;
+function toast(msg){
+  const t = el('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('on'), 1600);
+}
+
+/* ==========================================================================
+   EXPORT / RECORDING
+   ========================================================================== */
+const FPS = 30;
 let exportFormat = 'webm';
-let mp4Muxer = null;
-let videoEncoder = null;
-let mp4FrameCount = 0;
-const MP4_FPS = 30;
-let mp4RecordingActive = false;
-let mp4LoopId = null;
-let mp4StartTime = null;
-let mp4Duration = 0;
-// Callback hooked into the render loop — set during MP4 recording
-let onAfterRender = null;
+let rec = { active: false };
 
-function setFormat(fmt) {
-  exportFormat = fmt;
-  document.getElementById('fmtWebm').style.background = fmt==='webm' ? '#222' : 'transparent';
-  document.getElementById('fmtWebm').style.color      = fmt==='webm' ? '#00ffaa' : '#555';
-  document.getElementById('fmtMp4').style.background  = fmt==='mp4'  ? '#222' : 'transparent';
-  document.getElementById('fmtMp4').style.color       = fmt==='mp4'  ? '#00ffaa' : '#555';
+function stamp(){
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
 }
-
-function setRecLabel(txt) {
-  const el = document.getElementById('recLabel');
-  if (el) el.textContent = txt;
-}
-
-function downloadBlob(blob, filename) {
+function fileName(ext){ return 'vjloop_' + currentScene + '_' + P.loopDuration + 's_' + stamp() + '.' + ext; }
+function download(blob, name){
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 10000);
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 15000);
 }
-
-// ---- WebM path (MediaRecorder) ----
-function startRecordingWebm() {
-  const res=v('resolution').split('x');
-  W=parseInt(res[0]);H=parseInt(res[1]);
-  canvas.width=W;canvas.height=H;
-  offscreen.width=W;offscreen.height=H;
-  const stream=canvas.captureStream(30);
-  chunks=[];
-  recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9',videoBitsPerSecond:8000000});
-  recorder.ondataavailable=e=>{ if(e.data.size>0) chunks.push(e.data); };
-  recorder.onstop=()=>{
-    const blob=new Blob(chunks,{type:'video/webm'});
-    downloadBlob(blob,'dj_loop.webm');
-    stopCountdown();
-    document.getElementById('recStatus').style.display='none';
+function recUI(on, label){
+  el('recBtn').classList.toggle('hidden', on);
+  el('stopBtn').classList.toggle('hidden', !on);
+  el('recStatus').classList.toggle('hidden', !on);
+  if(label) el('recLabel').textContent = label;
+  if(!on) el('recCountdown').textContent = '';
+}
+let cdTimer = null;
+function countdown(total){
+  clearInterval(cdTimer);
+  const start = performance.now();
+  const tickCd = () => {
+    const left = Math.max(0, Math.ceil(total - (performance.now() - start) / 1000));
+    el('recCountdown').textContent = '(' + left + 's)';
   };
-  const loopMs=parseInt(v('loopDuration'))*1000;
-  recorder.start(100);
-  document.getElementById('recBtn').classList.add('hidden');
-  document.getElementById('stopBtn').classList.remove('hidden');
-  document.getElementById('recStatus').style.display='block';
-  setRecLabel('RECORDING WEBM');
-  startCountdown(mp4Duration || parseInt(v('loopDuration')));
-  t=0;lastTime=null;
-  if(!playing) togglePlay();
-  setTimeout(()=>{ if(recorder&&recorder.state==='recording') stopRecording(); }, loopMs+200);
+  tickCd();
+  cdTimer = setInterval(tickCd, 250);
 }
 
-// ---- MP4 path: fixed-timestep render, capture after every render ----
-async function startRecordingMp4() {
-  if (!window.VideoEncoder) {
-    alert('VideoEncoder API niet ondersteund in deze browser.\nGebruik Chrome 94+ of Edge 94+.\nFallback naar WebM.');
-    exportFormat='webm'; setFormat('webm'); startRecordingWebm(); return;
-  }
-  if (!window.Mp4Muxer) {
-    alert('mp4-muxer kon niet laden. Controleer je verbinding.'); return;
-  }
+function beginExport(){
+  playing = false;
+  if(rafId !== null){ cancelAnimationFrame(rafId); rafId = null; }
+  const [w, h] = exportSize();
+  allocTargets(w, h);
+  tAbs = 0; frameNo = 0;
+  clearTrails();
+  prerollTrails(2);
+}
+function endExport(){
+  clearInterval(cdTimer);
+  recUI(false);
+  rec = { active: false };
+  applyPreviewSize();
+  clearTrails();
+  playing = true;
+  el('playBtn').textContent = '⏸ Pause';
+  startLoop();
+}
 
-  const res=v('resolution').split('x');
-  W=parseInt(res[0]);H=parseInt(res[1]);
-  canvas.width=W;canvas.height=H;
-  offscreen.width=W;offscreen.height=H;
-  mp4Duration=parseInt(v('loopDuration'));
+/* ---- WEBM (MediaRecorder, realtime capture) --------------------------- */
+function recordWebm(){
+  const mime = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm']
+    .find(m => window.MediaRecorder && MediaRecorder.isTypeSupported(m));
+  if(!mime){ toast('WEBM NIET ONDERSTEUND'); return; }
 
-  const { Muxer, ArrayBufferTarget } = Mp4Muxer;
-  const target = new ArrayBufferTarget();
+  beginExport();
+  const stream = canvas.captureStream(FPS);
+  const chunks = [];
+  const mr = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 12000000 });
+  mr.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+  mr.onstop = () => {
+    stream.getTracks().forEach(tr => tr.stop());
+    download(new Blob(chunks, { type: 'video/webm' }), fileName('webm'));
+    toast('WEBM OPGESLAGEN');
+    endExport();
+  };
+  rec = { active: true, mode: 'webm', mr: mr, raf: null };
+  recUI(true, 'RECORDING WEBM');
+  countdown(P.loopDuration);
+  mr.start(100);
+
+  let last = null;
+  const step = ts => {
+    if(!rec.active) return;
+    if(last === null) last = ts;
+    tAbs += Math.min((ts - last) / 1000, 0.05);
+    last = ts;
+    renderFrame();
+    if(tAbs >= P.loopDuration){ stopRecording(); return; }
+    rec.raf = requestAnimationFrame(step);
+  };
+  rec.raf = requestAnimationFrame(step);
+}
+
+/* ---- MP4 (WebCodecs, frame-exact fixed timestep) ---------------------- */
+async function recordMp4(){
+  if(!window.VideoEncoder){
+    toast('MP4 VEREIST CHROME/EDGE 94+');
+    exportFormat = 'webm'; syncFormatUI();
+    recordWebm();
+    return;
+  }
+  if(!window.Mp4Muxer){
+    toast('MP4-MUXER NIET GELADEN');
+    return;
+  }
+  beginExport();
+  const [w, h] = exportSize();
+  const { Muxer, ArrayBufferTarget } = window.Mp4Muxer;
+  const tgt = new ArrayBufferTarget();
   const mux = new Muxer({
-    target,
-    video: { codec:'avc', width:W, height:H, frameRate:MP4_FPS },
+    target: tgt,
+    video: { codec: 'avc', width: w, height: h, frameRate: FPS },
     fastStart: 'in-memory',
     firstTimestampBehavior: 'offset',
   });
-  mp4Muxer = mux;
-
   const enc = new VideoEncoder({
     output: (chunk, meta) => mux.addVideoChunk(chunk, meta),
-    error: (e) => console.error('VideoEncoder error:', e),
+    error: e => { console.error(e); toast('ENCODER FOUT'); },
   });
-  videoEncoder = enc;
-  await enc.configure({
-    codec: 'avc1.4d0034',
-    width: W, height: H,
-    bitrate: 8_000_000,
-    framerate: MP4_FPS,
-    latencyMode: 'quality',
-  });
+  try {
+    await enc.configure({
+      codec: 'avc1.640034',
+      width: w, height: h,
+      bitrate: 16000000,
+      framerate: FPS,
+      latencyMode: 'quality',
+    });
+  } catch(e){
+    console.error(e);
+    toast('MP4 CONFIG FOUT — VAL TERUG OP WEBM');
+    exportFormat = 'webm'; syncFormatUI();
+    endExport();
+    recordWebm();
+    return;
+  }
 
-  const totalFrames = mp4Duration * MP4_FPS;
-  const fixedDt = 1 / MP4_FPS; // deterministic time step
-  mp4FrameCount = 0;
-  mp4RecordingActive = true;
+  const total = Math.round(P.loopDuration * FPS);
+  let n = 0;
+  rec = { active: true, mode: 'mp4', raf: null, finalize: null };
+  recUI(true, 'ENCODING MP4 0%');
+  countdown(P.loopDuration);
 
-  document.getElementById('recBtn').classList.add('hidden');
-  document.getElementById('stopBtn').classList.remove('hidden');
-  document.getElementById('recStatus').style.display='block';
-  setRecLabel('ENCODING MP4 0%');
-  startCountdown(mp4Duration);
-
-  // Stop normal play, take full control with fixed timestep
-  if(playing) { playing=false; cancelAnimationFrame(animId); }
-
-  // Reset animation time cleanly
-  t = 0;
-
-  async function doFinalize() {
-    mp4RecordingActive = false;
-    onAfterRender = null;
-    window._mp4Finalize = null;
-    videoEncoder = null;
-    mp4Muxer = null;
-    setRecLabel('FINALIZING…');
+  const finalize = async () => {
+    if(!rec.active) return;
+    rec.active = false;
+    if(rec.raf) cancelAnimationFrame(rec.raf);
+    el('recLabel').textContent = 'FINALIZING…';
     try {
       await enc.flush();
       mux.finalize();
-      downloadBlob(new Blob([target.buffer], {type:'video/mp4'}), 'dj_loop.mp4');
-    } catch(e) {
-      console.error('MP4 finalize error:', e);
-      alert('MP4 export mislukt: ' + e.message);
+      download(new Blob([tgt.buffer], { type: 'video/mp4' }), fileName('mp4'));
+      toast('MP4 OPGESLAGEN');
+    } catch(e){
+      console.error(e);
+      toast('MP4 EXPORT MISLUKT');
     }
-    document.getElementById('recBtn').classList.remove('hidden');
-    document.getElementById('stopBtn').classList.add('hidden');
-    document.getElementById('recStatus').style.display='none';
-    stopCountdown();
-    // Resume normal playback
-    playing = true; lastTime = null; animId = requestAnimationFrame(loop);
-  }
+    endExport();
+  };
+  rec.finalize = finalize;
 
-  window._mp4Finalize = doFinalize;
-
-  // Drive rendering ourselves at fixed timestep via rAF
-  function fixedStepLoop() {
-    if (!mp4RecordingActive) return;
-
-    // Advance time by exactly one frame
-    t += fixedDt;
-    render(); // draw the frame
-
-    // Capture this frame
-    const timestamp = Math.round(mp4FrameCount * (1_000_000 / MP4_FPS));
+  const step = () => {
+    if(!rec.active) return;
+    tAbs = n / FPS;
+    renderFrame();
     const frame = new VideoFrame(canvas, {
-      timestamp,
-      duration: Math.round(1_000_000 / MP4_FPS)
+      timestamp: Math.round(n * 1e6 / FPS),
+      duration: Math.round(1e6 / FPS),
     });
-    enc.encode(frame, { keyFrame: mp4FrameCount % (MP4_FPS * 2) === 0 });
+    enc.encode(frame, { keyFrame: n % (FPS * 2) === 0 });
     frame.close();
-    mp4FrameCount++;
-
-    if (mp4FrameCount % 15 === 0) {
-      setRecLabel(`ENCODING MP4 ${Math.round(mp4FrameCount/totalFrames*100)}%`);
-    }
-
-    if (mp4FrameCount >= totalFrames) {
-      doFinalize();
-      return;
-    }
-    mp4LoopId = requestAnimationFrame(fixedStepLoop);
-  }
-  mp4LoopId = requestAnimationFrame(fixedStepLoop);
+    n++;
+    if(n % 10 === 0) el('recLabel').textContent = 'ENCODING MP4 ' + Math.round(n / total * 100) + '%';
+    if(n >= total){ finalize(); return; }
+    rec.raf = requestAnimationFrame(step);
+  };
+  rec.raf = requestAnimationFrame(step);
 }
 
-let _countdownInterval = null;
-function startCountdown(totalSecs) {
-  stopCountdown();
-  const start = performance.now();
-  const el = document.getElementById('recCountdown');
-  function tick() {
-    const elapsed = (performance.now() - start) / 1000;
-    const remaining = Math.max(0, Math.ceil(totalSecs - elapsed));
-    if (el) el.textContent = `(${remaining}sec.)`;
-  }
-  tick();
-  _countdownInterval = setInterval(tick, 250);
-}
-function stopCountdown() {
-  if (_countdownInterval) { clearInterval(_countdownInterval); _countdownInterval = null; }
-  const el = document.getElementById('recCountdown');
-  if (el) el.textContent = '';
-}
-
-function startRecording() {
-  if (exportFormat === 'mp4') startRecordingMp4();
-  else startRecordingWebm();
+/* ---- PNG still -------------------------------------------------------- */
+function exportPng(){
+  const savedT = tAbs, wasPlaying = playing;
+  playing = false;
+  if(rafId !== null){ cancelAnimationFrame(rafId); rafId = null; }
+  const [w, h] = exportSize();
+  allocTargets(w, h);
+  tAbs = savedT;
+  prerollTrails(2);
+  renderFrame();
+  canvas.toBlob(blob => {
+    if(blob){ download(blob, fileName('png')); toast('PNG OPGESLAGEN'); }
+    applyPreviewSize();
+    tAbs = savedT;
+    playing = wasPlaying;
+    if(playing) startLoop(); else renderFrame();
+  }, 'image/png');
 }
 
-function stopRecording() {
-  if (exportFormat === 'mp4') {
-    if (window._mp4Finalize) window._mp4Finalize();
+function startRecording(){
+  if(rec.active) return;
+  if(exportFormat === 'png') exportPng();
+  else if(exportFormat === 'mp4') recordMp4();
+  else recordWebm();
+}
+function stopRecording(){
+  if(!rec.active) return;
+  if(rec.mode === 'mp4'){ if(rec.finalize) rec.finalize(); return; }
+  rec.active = false;
+  if(rec.raf) cancelAnimationFrame(rec.raf);
+  if(rec.mr && rec.mr.state === 'recording') rec.mr.stop();
+  else endExport();
+}
+function syncFormatUI(){
+  for(const b of el('fmtSeg').children) b.classList.toggle('on', b.dataset.fmt === exportFormat);
+  el('recBtn').textContent = exportFormat === 'png' ? '⇩ Export frame' : '⏺ Record loop';
+}
+
+/* ==========================================================================
+   SHAREABLE STATE
+   ========================================================================== */
+function stateToString(){
+  const o = { s: currentScene, t: el('tonemap').value, o: el('overlayMode').value,
+    l: el('loopDuration').value, r: el('resolution').value, p: el('palette').value,
+    c: [el('color1').value, el('color2').value, el('color3').value],
+    k: CHECK_IDS.map(id => el(id).checked ? 1 : 0), v: {} };
+  for(const id of RANGE_IDS) o.v[id] = el(id).value;
+  return btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+}
+function stateFromString(str){
+  let o;
+  try { o = JSON.parse(decodeURIComponent(escape(atob(str)))); } catch(e){ return false; }
+  if(!o || typeof o !== 'object') return false;
+  if(o.v) for(const id of RANGE_IDS) if(o.v[id] !== undefined) el(id).value = o.v[id];
+  if(o.k) CHECK_IDS.forEach((id, i) => { el(id).checked = !!o.k[i]; });
+  if(o.t !== undefined) el('tonemap').value = o.t;
+  if(o.o !== undefined) el('overlayMode').value = o.o;
+  if(o.l !== undefined) el('loopDuration').value = o.l;
+  if(o.r !== undefined) el('resolution').value = o.r;
+  if(o.p !== undefined) el('palette').value = o.p;
+  if(o.c){ el('color1').value = o.c[0]; el('color2').value = o.c[1]; el('color3').value = o.c[2]; }
+  if(o.s && SCENES[o.s]) currentScene = o.s;
+  return true;
+}
+function copyLink(){
+  const url = location.origin + location.pathname + '#' + stateToString();
+  const done = () => toast('LINK GEKOPIEERD');
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(done, () => { location.hash = stateToString(); toast('LINK IN ADRESBALK'); });
   } else {
-    if(recorder&&recorder.state==='recording') recorder.stop();
-    stopCountdown();
-    document.getElementById('recBtn').classList.remove('hidden');
-    document.getElementById('stopBtn').classList.add('hidden');
+    location.hash = stateToString();
+    toast('LINK IN ADRESBALK');
   }
 }
 
-// ============================
-// PALETTES
-// ============================
-const PALETTES = {
-  acid:     ['#00ffaa','#003322','#aaff00'],
-  magenta:  ['#ff2266','#220011','#ff88cc'],
-  cyber:    ['#00ccff','#001133','#0044ff'],
-  fire:     ['#ff6600','#220000','#ffdd00'],
-  void:     ['#aa00ff','#110022','#ff00aa'],
-  white:    ['#ffffff','#111111','#aaaaaa'],
-  rainbow:  ['#ff0000','#00ff00','#0000ff'],
-  sunset:   ['#ff6b35','#f7c59f','#9b2335'],
-  ice:      ['#a8e6cf','#88d8c0','#00b4d8'],
-  toxic:    ['#39ff14','#001a00','#ccff00'],
-};
-
-function updatePalette(){
-  const pal=v('palette');
-  if(PALETTES[pal]){
-    document.getElementById('color1').value=PALETTES[pal][0];
-    document.getElementById('color2').value=PALETTES[pal][1];
-    document.getElementById('color3').value=PALETTES[pal][2]||PALETTES[pal][0];
+/* ==========================================================================
+   WIRING
+   ========================================================================== */
+function bindControls(){
+  for(const id of RANGE_IDS){
+    el(id).addEventListener('input', () => { updateParam(); if(!playing) renderFrame(); });
   }
-  updateParam();
-}
-
-// ============================
-// RANDOMIZE
-// ============================
-function rnd(min,max){return min+Math.random()*(max-min);}
-function rndInt(min,max){return Math.floor(rnd(min,max+1));}
-function rndChoice(arr){return arr[Math.floor(Math.random()*arr.length)];}
-function setRange(id,val){const el=document.getElementById(id);el.value=val;}
-function setSelect(id,val){document.getElementById(id).value=val;}
-function setCheck(id,val){document.getElementById(id).checked=val;}
-
-const ALL_MODES=['grid','particles','waveform','hexagons','scanlines','kaleidoscope','matrix','laser',
-                 'mandelbrot','julia','plasma','gradient_tunnel','voronoi','lissajous','tunnel3d','starfield'];
-
-function randomizeSection(sec){
-  if(sec==='scene'){
-    setSelect('visualMode',rndChoice(ALL_MODES));
-    setSelect('overlayMode',rndChoice(['none','none','scanlines','noise','vignette','glitch','chromatic','crt']));
-    setCheck('symmetry',Math.random()>0.6);
-    setCheck('symmetryY',Math.random()>0.8);
-    setSelect('blendMode',rndChoice(['normal','normal','screen','add']));
+  for(const id of CHECK_IDS){
+    el(id).addEventListener('change', () => { updateParam(); if(!playing) renderFrame(); });
   }
-  if(sec==='motion'){
-    setRange('speed',rnd(0.3,3).toFixed(2));
-    setRange('zoomPulse',rnd(0,0.8).toFixed(2));
-    setRange('rotation',rnd(0,1.5).toFixed(2));
-    setRange('strobe',Math.random()>0.7?rnd(0,0.6).toFixed(2):0);
-    setRange('bpm',rndInt(110,175));
-    setRange('morph',rnd(0,1).toFixed(2));
+  for(const id of ['tonemap', 'overlayMode']){
+    el(id).addEventListener('change', () => { updateParam(); if(!playing) renderFrame(); });
   }
-  if(sec==='color'){
-    const palKeys=Object.keys(PALETTES);
-    const pal=rndChoice(palKeys);
-    setSelect('palette',pal);
-    if(PALETTES[pal]){
-      document.getElementById('color1').value=PALETTES[pal][0];
-      document.getElementById('color2').value=PALETTES[pal][1];
-      document.getElementById('color3').value=PALETTES[pal][2]||PALETTES[pal][0];
+  for(const id of ['color1', 'color2', 'color3']){
+    el(id).addEventListener('input', () => {
+      el('palette').value = 'custom';
+      for(const b of el('swatches').children) b.classList.remove('on');
+      updateParam();
+      if(!playing) renderFrame();
+    });
+  }
+  el('palette').addEventListener('change', applyPalette);
+  el('loopDuration').addEventListener('change', () => { updateParam(); clearTrails(); if(!playing) renderFrame(); });
+  el('resolution').addEventListener('change', () => { updateParam(); applyPreviewSize(); if(!playing) renderFrame(); });
+  el('quality').addEventListener('change', () => { updateParam(); applyPreviewSize(); if(!playing) renderFrame(); });
+
+  for(const b of document.querySelectorAll('.rnd-btn')){
+    b.addEventListener('click', () => randomizeSection(b.dataset.rnd));
+  }
+  el('randomAllBtn').addEventListener('click', randomizeAll);
+  el('copyLinkBtn').addEventListener('click', copyLink);
+
+  el('playBtn').addEventListener('click', () => {
+    playing = !playing;
+    el('playBtn').textContent = playing ? '⏸ Pause' : '▶ Play';
+    if(playing) startLoop();
+  });
+  el('resetBtn').addEventListener('click', () => {
+    tAbs = 0; frameNo = 0; lastTs = null;
+    clearTrails();
+    renderFrame();
+  });
+  el('recBtn').addEventListener('click', startRecording);
+  el('stopBtn').addEventListener('click', stopRecording);
+  for(const b of el('fmtSeg').children){
+    b.addEventListener('click', () => { exportFormat = b.dataset.fmt; syncFormatUI(); });
+  }
+
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { applyPreviewSize(); if(!playing) renderFrame(); }, 180);
+  });
+
+  document.addEventListener('keydown', e => {
+    if(e.target.matches('input, select, textarea')) return;
+    if(e.code === 'Space'){ e.preventDefault(); el('playBtn').click(); }
+    else if(e.key === 'r' || e.key === 'R'){ rec.active ? stopRecording() : startRecording(); }
+    else if(e.key === 'n' || e.key === 'N'){ randomizeAll(); }
+    else if(e.key === '['){ cycleScene(-1); }
+    else if(e.key === ']'){ cycleScene(1); }
+    else if(e.key === 'f' || e.key === 'F'){
+      const f = el('frame');
+      if(document.fullscreenElement) document.exitFullscreen();
+      else if(f.requestFullscreen) f.requestFullscreen();
     }
-    setRange('hueShift',rnd(0,1).toFixed(2));
-    setRange('saturation',rnd(0.5,1.5).toFixed(2));
-    setRange('brightness',rnd(0.6,1.8).toFixed(2));
-    setCheck('invert',Math.random()>0.85);
-  }
-  if(sec==='geometry'){
-    setRange('density',rndInt(4,30));
-    setRange('lineWidth',rnd(0.5,5).toFixed(1));
-    setRange('perspective',rnd(0.3,2.5).toFixed(2));
-    setRange('glow',rndInt(0,30));
-    setRange('complexity',rndInt(1,8));
-    setRange('fractalZoom',rnd(0.2,3).toFixed(2));
-  }
-  updateParam();
+  });
+
+  canvas.addEventListener('webglcontextlost', e => {
+    e.preventDefault();
+    playing = false;
+    toast('WEBGL CONTEXT VERLOREN — HERLAAD DE PAGINA');
+  });
 }
 
-function randomizeAll(){['scene','motion','color','geometry'].forEach(randomizeSection);}
+/* ---- collapsible sidebar (desktop in-flow, mobile overlay) ------------ */
+const EXPANDED_ON_LOAD_FOR_DESKTOP = true;
+const EXPANDED_ON_LOAD_FOR_MOBILE  = false;
 
-// ============================
-// PRESETS
-// ============================
-const PRESETS = {
-  berlin: {
-    visualMode:'grid',overlayMode:'scanlines',symmetry:false,symmetryY:false,blendMode:'normal',
-    speed:1.2,zoomPulse:0.4,rotation:0.1,strobe:0.2,bpm:145,morph:0,
-    palette:'white',hueShift:0.05,saturation:1,brightness:1.1,invert:false,
-    density:16,lineWidth:1,perspective:1.2,glow:5,complexity:4,fractalZoom:1
-  },
-  ibiza: {
-    visualMode:'particles',overlayMode:'vignette',symmetry:true,symmetryY:false,blendMode:'screen',
-    speed:1,zoomPulse:0.5,rotation:0.3,strobe:0,bpm:128,morph:0.3,
-    palette:'magenta',hueShift:0.4,saturation:1.2,brightness:1.3,invert:false,
-    density:20,lineWidth:2,perspective:1,glow:15,complexity:5,fractalZoom:1
-  },
-  industrial: {
-    visualMode:'scanlines',overlayMode:'glitch',symmetry:false,symmetryY:false,blendMode:'normal',
-    speed:2,zoomPulse:0.6,rotation:0,strobe:0.4,bpm:160,morph:0,
-    palette:'acid',hueShift:0.1,saturation:1,brightness:0.9,invert:false,
-    density:24,lineWidth:1.5,perspective:1,glow:3,complexity:3,fractalZoom:1
-  },
-  minimal: {
-    visualMode:'laser',overlayMode:'vignette',symmetry:true,symmetryY:false,blendMode:'normal',
-    speed:0.5,zoomPulse:0.2,rotation:0.05,strobe:0,bpm:132,morph:0,
-    palette:'cyber',hueShift:0.1,saturation:1,brightness:0.8,invert:false,
-    density:8,lineWidth:0.5,perspective:1.5,glow:12,complexity:2,fractalZoom:1
-  },
-  rave: {
-    visualMode:'hexagons',overlayMode:'noise',symmetry:false,symmetryY:false,blendMode:'normal',
-    speed:2.5,zoomPulse:0.7,rotation:0.8,strobe:0.3,bpm:150,morph:0.5,
-    palette:'void',hueShift:0.8,saturation:1.3,brightness:1.5,invert:false,
-    density:18,lineWidth:2,perspective:0.8,glow:20,complexity:6,fractalZoom:1
-  },
-  acid: {
-    visualMode:'kaleidoscope',overlayMode:'glitch',symmetry:true,symmetryY:false,blendMode:'screen',
-    speed:1.8,zoomPulse:0.9,rotation:1.5,strobe:0.15,bpm:138,morph:0.7,
-    palette:'acid',hueShift:1,saturation:1.4,brightness:1.4,invert:false,
-    density:14,lineWidth:1.5,perspective:1,glow:18,complexity:7,fractalZoom:1
-  },
-  mandelbrot: {
-    visualMode:'mandelbrot',overlayMode:'vignette',symmetry:false,symmetryY:false,blendMode:'normal',
-    speed:0.3,zoomPulse:0.5,rotation:0,strobe:0,bpm:130,morph:0.4,
-    palette:'fire',hueShift:0.15,saturation:1.2,brightness:1.1,invert:false,
-    density:12,lineWidth:1,perspective:1,glow:0,complexity:5,fractalZoom:1.5
-  },
-  plasma: {
-    visualMode:'plasma',overlayMode:'crt',symmetry:false,symmetryY:false,blendMode:'normal',
-    speed:1.2,zoomPulse:0.4,rotation:0,strobe:0,bpm:128,morph:0.5,
-    palette:'rainbow',hueShift:0.3,saturation:1.3,brightness:1.2,invert:false,
-    density:16,lineWidth:1,perspective:1,glow:12,complexity:4,fractalZoom:1
-  },
-  hyperspace: {
-    visualMode:'starfield',overlayMode:'vignette',symmetry:false,symmetryY:false,blendMode:'add',
-    speed:3,zoomPulse:0.8,rotation:0,strobe:0.1,bpm:145,morph:0,
-    palette:'cyber',hueShift:0.2,saturation:1,brightness:1.4,invert:false,
-    density:30,lineWidth:2,perspective:1,glow:20,complexity:3,fractalZoom:1
-  },
-  voronoi: {
-    visualMode:'voronoi',overlayMode:'chromatic',symmetry:false,symmetryY:false,blendMode:'normal',
-    speed:0.8,zoomPulse:0.6,rotation:0,strobe:0,bpm:135,morph:0.6,
-    palette:'sunset',hueShift:0.2,saturation:1.1,brightness:1,invert:false,
-    density:18,lineWidth:2,perspective:1,glow:15,complexity:3,fractalZoom:1
-  },
-  julia: {
-    visualMode:'julia',overlayMode:'none',symmetry:true,symmetryY:true,blendMode:'normal',
-    speed:0.5,zoomPulse:0.4,rotation:0,strobe:0,bpm:130,morph:0.5,
-    palette:'ice',hueShift:0.25,saturation:1.2,brightness:1.1,invert:false,
-    density:10,lineWidth:1,perspective:1,glow:0,complexity:6,fractalZoom:1.2
-  },
-  psychedelic: {
-    visualMode:'tunnel3d',overlayMode:'chromatic',symmetry:false,symmetryY:false,blendMode:'normal',
-    speed:2,zoomPulse:0.7,rotation:0.5,strobe:0,bpm:138,morph:1,
-    palette:'rainbow',hueShift:0.5,saturation:1.5,brightness:1.3,invert:false,
-    density:20,lineWidth:1,perspective:1,glow:10,complexity:8,fractalZoom:2
-  }
-};
+function initSidebar(){
+  const sidebar = el('sidebar');
+  const toggle  = el('sidebar-toggle');
+  const overlay = el('sidebar-overlay');
+  const main    = el('main');
 
-function loadPreset(name){
-  const pr=PRESETS[name]; if(!pr) return;
-  setSelect('visualMode',pr.visualMode);
-  setSelect('overlayMode',pr.overlayMode);
-  setCheck('symmetry',pr.symmetry);
-  setCheck('symmetryY',pr.symmetryY||false);
-  setSelect('blendMode',pr.blendMode||'normal');
-  setRange('speed',pr.speed);
-  setRange('zoomPulse',pr.zoomPulse);
-  setRange('rotation',pr.rotation);
-  setRange('strobe',pr.strobe);
-  setRange('bpm',pr.bpm);
-  setRange('morph',pr.morph||0);
-  setSelect('palette',pr.palette);
-  if(PALETTES[pr.palette]){
-    document.getElementById('color1').value=PALETTES[pr.palette][0];
-    document.getElementById('color2').value=PALETTES[pr.palette][1];
-    document.getElementById('color3').value=PALETTES[pr.palette][2]||PALETTES[pr.palette][0];
+  function afterResize(){ setTimeout(() => { applyPreviewSize(); if(!playing) renderFrame(); }, 280); }
+  function collapse(){
+    sidebar.classList.add('collapsed');
+    document.body.classList.remove('sidebar-open');
+    toggle.innerHTML = '&#x25BA;';
+    toggle.title = 'Paneel uitklappen';
+    overlay.classList.add('hidden');
+    afterResize();
   }
-  setRange('hueShift',pr.hueShift);
-  setRange('saturation',pr.saturation||1);
-  setRange('brightness',pr.brightness);
-  setCheck('invert',pr.invert);
-  setRange('density',pr.density);
-  setRange('lineWidth',pr.lineWidth);
-  setRange('perspective',pr.perspective);
-  setRange('glow',pr.glow);
-  setRange('complexity',pr.complexity);
-  setRange('fractalZoom',pr.fractalZoom||1);
-  updateParam();
+  function expand(){
+    sidebar.classList.remove('collapsed');
+    document.body.classList.add('sidebar-open');
+    toggle.innerHTML = '&#x25C4;';
+    toggle.title = 'Paneel inklappen';
+    if(window.innerWidth <= 860) overlay.classList.remove('hidden');
+    afterResize();
+  }
+  const isMobile = window.innerWidth <= 860;
+  if(isMobile ? !EXPANDED_ON_LOAD_FOR_MOBILE : !EXPANDED_ON_LOAD_FOR_DESKTOP) collapse();
+  else expand();
+
+  toggle.addEventListener('click', e => {
+    e.stopPropagation();
+    sidebar.classList.contains('collapsed') ? expand() : collapse();
+  });
+  overlay.addEventListener('click', collapse);
+  main.addEventListener('click', () => {
+    if(window.innerWidth <= 860 && !sidebar.classList.contains('collapsed')) collapse();
+  });
 }
 
-// Init
-updateParam();
-render();
+/* ---- boot ------------------------------------------------------------- */
+(function boot(){
+  buildPalettes();
+  buildPresets();
+  const restored = location.hash.length > 1 ? stateFromString(location.hash.slice(1)) : false;
+  buildSceneGrid();
+  bindControls();
+  syncFormatUI();
+  if(!restored) applyPalette();
+  for(const b of el('swatches').children) b.classList.toggle('on', b.dataset.pal === el('palette').value);
+  updateParam();
+  initSidebar();
+  applyPreviewSize();
+  renderFrame();
+  startLoop();
+})();
 
-// Expose all interactive functions globally
-window.togglePlay=togglePlay; window.resetAnim=resetAnim;
-window.randomizeAll=randomizeAll; window.randomizeSection=randomizeSection;
-window.startRecording=startRecording; window.stopRecording=stopRecording;
-window.loadPreset=loadPreset; window.updatePalette=updatePalette;
-window.updateParam=updateParam; window.setFormat=setFormat;
-} // end _init
 </script>
 </body>
 </html>
