@@ -203,6 +203,11 @@
 
   /* scene picker */
   .scenes { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .scene-cat {
+    grid-column: 1 / -1; margin: 9px 0 2px; font-size: 8px;
+    letter-spacing: 1.6px; color: var(--dimmer); text-transform: uppercase;
+  }
+  .scene-cat:first-child { margin-top: 0; }
   .scene-btn {
     background: #10141c; border: 1px solid var(--border);
     border-radius: 4px; color: var(--dim);
@@ -234,7 +239,7 @@
 
   .swatches { display: flex; gap: 4px; flex-wrap: wrap; }
   .sw-btn {
-    width: 26px; height: 18px; border-radius: 3px; cursor: pointer;
+    width: 22px; height: 16px; border-radius: 3px; cursor: pointer;
     border: 1px solid var(--border-hi); padding: 0;
   }
   .sw-btn.on { border-color: #fff; box-shadow: 0 0 0 1px #fff inset; }
@@ -382,7 +387,7 @@
       <div class="section-title">Motion <button class="rnd-btn" data-rnd="motion">RND</button></div>
       <div class="row"><label class="k">Speed</label><input type="range" id="speed" min="0.25" max="5" step="0.05" value="1"><span class="val" id="speedVal">1.00</span></div>
       <div class="row"><label class="k">BPM</label><input type="range" id="bpm" min="80" max="200" step="1" value="140"><span class="val" id="bpmVal">140</span></div>
-      <div class="row"><label class="k">BEAT PUNCH</label><input type="range" id="beatPunch" min="0" max="1" step="0.05" value="0.35"><span class="val" id="beatPunchVal">0.35</span></div>
+      <div class="row"><label class="k">BEAT PUNCH</label><input type="range" id="beatPunch" min="0" max="1" step="0.05" value="0"><span class="val" id="beatPunchVal">0.00</span></div>
       <div class="row"><label class="k">Beat pulse</label><input type="range" id="zoomPulse" min="0" max="1" step="0.01" value="0.3"><span class="val" id="zoomPulseVal">0.30</span></div>
       <div class="row"><label class="k">Roll</label><input type="range" id="rotation" min="0" max="2" step="0.01" value="0.2"><span class="val" id="rotationVal">0.20</span></div>
       <div class="row"><label class="k">Morph</label><input type="range" id="morph" min="0" max="1" step="0.01" value="0.4"><span class="val" id="morphVal">0.40</span></div>
@@ -520,8 +525,8 @@
 
 <script>
 /* VJ LOOP FORGE v3 — GPU raymarch engine (WebGL2)
-   version = "20260915-122619"  (internal build id, never surfaced in the UI) */
-const version = "20260915-122619";
+   version = "20260916-201229"  (internal build id, never surfaced in the UI) */
+const version = "20260916-201229";
 
 /* ==========================================================================
    GLSL — shared prelude, per-scene bodies, post-processing chain
@@ -578,6 +583,7 @@ float lscale(){ return max(0.125, uLoop / 8.0); }            // 8 s is the refer
 float nCyc(float base){ return max(1.0, floor(base * uSpeed * lscale() + 0.5)); }
 float travel(float period, float base){ return uPhase * period * nCyc(base); }
 float spin(float base){ return mod(uPhase * TAU * floor(base * uRotation * 2.0 * lscale() + 0.5), TAU); }
+float cyc(float base){ return mod(uPhase * TAU * nCyc(base), TAU); }   // folded: exact at the wrap
 float wave(float base, float off){ return sin(TAU * (uPhase * nCyc(base) + off)); }
 vec3  orbit(float base, float radius){
   float a = TAU * uPhase * nCyc(base);
@@ -638,6 +644,32 @@ mat3 camera(vec3 ro, vec3 ta){
   vec3 u = cross(f, r);
   return mat3(r, u, f);
 }
+/* ---- extras for the neon-loop scene pack ------------------------------- */
+float pmod(inout vec2 p, float n){                 // polar repeat, returns cell id
+  float k = TAU / n;
+  float a = atan(p.y, p.x);
+  float id = floor(a / k + 0.5);
+  a -= k * id;
+  p = vec2(cos(a), sin(a)) * length(p);
+  return id;
+}
+float sdBox2(vec2 p, vec2 b){ vec2 d = abs(p) - b; return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0); }
+float sdSeg2(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a; return length(pa - ba * sat(dot(pa, ba) / max(1e-6, dot(ba, ba)))); }
+float sdNgon(vec2 p, float r, float n){
+  float k = TAU / n;
+  float a = mod(atan(p.y, p.x) + k * 0.5, k) - k * 0.5;
+  return length(p) * cos(a) - r * cos(k * 0.5);
+}
+float ngonR(vec2 p, float n){                      // polygonal "radius" of p
+  float k = TAU / n;
+  float a = mod(atan(p.y, p.x) + k * 0.5, k) - k * 0.5;
+  return length(p) * cos(a) / cos(k * 0.5);
+}
+float aaStep(float d, float w){ return 1.0 - smoothstep(0.0, max(w, 1e-5), d); }
+float glowL(float d, float w){ return (w * w) / (d * d + w * w); }
+float sdCyl(vec3 p, float r, float h){ vec2 d = abs(vec2(length(p.xz), p.y)) - vec2(r, h); return min(max(d.x, d.y), 0.0) + length(max(d, 0.0)); }
+float sdCapY(vec3 p, float r, float h){ p.y -= clamp(p.y, -h, h); return length(p) - r; }
+
 vec3 studio(vec3 rd){
   float h = sat(rd.y * 0.5 + 0.5);
   vec3 c = mix(pal(0.62) * 0.22, pal(0.18) * 0.7, h);
@@ -1590,6 +1622,1167 @@ void main(){
   fragColor = vec4(col, 1.0);
 }`;
 
+/* ============================================================================
+   SCENE PACK — TUNNELS & CORRIDORS
+   Ring-stack scenes advance a whole number of rings per loop, so the geometry
+   at phase 1 sits exactly where it sat at phase 0. Anything continuous is
+   driven by ring depth (zi), which is identical at the wrap; anything discrete
+   is selected by mod(id, M) where the advance per loop is a multiple of M.
+   ========================================================================== */
+
+SCENES.panelring = { label: 'PANEL RING TUNNEL', src: `
+vec3 scene(vec2 uv){
+  float M = 4.0;
+  float adv = uPhase * nCyc(1.2) * M;
+  float fr = fract(adv), b0 = floor(adv);
+  float segs = max(8.0, floor(uDensity * 1.4));
+  float r = length(uv);
+  float px = fwidth(r) * 1.3 + 0.0015;
+  vec3 col = vec3(0.0);
+  for(int i = 1; i <= 26; i++){
+    float zi = float(i) - fr;
+    float id = float(i) + b0;
+    float R = (1.5 / max(0.4, uPersp)) / (zi * 0.42);
+    if(R < 0.075) break;                                  // stop before rings pile up at the centre
+    float fade = exp(-zi * 0.12) * sat(R * 3.0);
+    vec2 q = rot2(zi * 0.09 * uWarp + spin(0.4)) * uv;
+    float cid = pmod(q, segs);
+    float gapw = (TAU * R / segs) * 0.34;
+    float wdt = R * 0.15 * (0.5 + uLineWidth * 0.5);
+    float d = sdBox2(vec2(q.x - R, q.y), vec2(wdt, gapw));
+    float lit = step(0.30, hash12(vec2(cid, mod(id, M))));
+    float tone = hash12(vec2(cid * 1.7, mod(id, M) + 3.0));
+    vec3 c = pal(0.08 + tone * 0.5 + zi * 0.015);
+    col += c * lit * (aaStep(d, px * (1.0 + R)) * 0.75 + glowL(d, wdt * 0.9) * 0.45) * fade * (0.6 + 0.7 * uBeat);
+    col += pal(0.55) * aaStep(abs(d) - wdt * 0.05, px * 2.5) * 0.18 * fade * (1.0 - lit);
+  }
+  col += pal(0.5) * 0.02 * sat(1.0 - r);
+  return col;
+}`};
+
+SCENES.ledbars = { label: 'LED BAR TUNNEL', src: `
+vec3 scene(vec2 uv){
+  float M = 2.0;
+  float adv = uPhase * nCyc(1.6) * M;
+  float fr = fract(adv), b0 = floor(adv);
+  float segs = max(10.0, floor(uDensity * 2.0));
+  float px = fwidth(length(uv)) * 1.3 + 0.0015;
+  vec3 col = vec3(0.0);
+  for(int i = 1; i <= 24; i++){
+    float zi = float(i) - fr;
+    float id = float(i) + b0;
+    float fade = exp(-zi * 0.14);
+    float band = mod(id, M);
+    vec2 q = rot2(zi * 0.05 * uWarp + spin(0.3) + band * 0.12) * uv;
+    float cid = pmod(q, segs);
+    for(int k = 0; k < 2; k++){
+      float rr = (1.15 + float(k) * 0.55) / max(0.4, uPersp) / (zi * 0.42);
+      if(rr < 0.07 || rr > 2.4) continue;
+      float lw = rr * 0.10 * (0.5 + uLineWidth * 0.5);
+      float lh = (TAU * rr / segs) * 0.22;
+      float d = sdBox2(vec2(q.x - rr, q.y), vec2(lw, lh));
+      float on = step(0.22, hash12(vec2(cid + float(k) * 13.0, band)));
+      vec3 c = pal(0.05 + float(k) * 0.4 + band * 0.18);
+      col += c * on * (aaStep(d, px * (1.0 + rr)) * 0.55 + glowL(d, lw * 1.4) * 0.35) * fade * sat(rr * 3.5) * (0.5 + 0.8 * uBeat);
+    }
+  }
+  return col * 0.85;
+}`};
+
+SCENES.dotrings = { label: 'DOT RING TUNNEL', src: `
+vec3 scene(vec2 uv){
+  float adv = uPhase * nCyc(1.4) * 2.0;
+  float fr = fract(adv);
+  float dots = max(14.0, floor(uDensity * 2.6));
+  float px = fwidth(length(uv)) * 1.3 + 0.0012;
+  vec3 col = vec3(0.0);
+  for(int i = 1; i <= 30; i++){
+    float zi = float(i) - fr;
+    float R = (1.3 / max(0.4, uPersp)) / (zi * 0.36);
+    if(R > 3.0) continue;
+    if(R < 0.055) break;
+    float fade = exp(-zi * 0.10) * sat(R * 4.0);
+    vec2 q = rot2(zi * 0.16 * (0.3 + uWarp) + spin(0.5)) * uv;
+    pmod(q, dots);
+    float rad = R * 0.055 * (0.6 + uLineWidth * 0.5) + 0.002;
+    float d = length(vec2(q.x - R, q.y)) - rad;
+    vec3 c = pal(0.12 + zi * 0.035);
+    col += c * (aaStep(d, px * (1.0 + R)) * 0.75 + glowL(d, rad * 1.5) * 0.22) * fade * (0.55 + 0.8 * uBeat);
+  }
+  col += pal(0.3) * 0.02 * sat(1.2 - length(uv) * 1.3);
+  return col * 0.9;
+}`};
+
+SCENES.polytunnel = { label: 'POLYGON TUNNEL', src: `
+vec3 scene(vec2 uv){
+  float adv = uPhase * nCyc(1.0) * 2.0;
+  float fr = fract(adv);
+  float sides = floor(3.0 + floor(uComplexity * 0.75));
+  float px = fwidth(length(uv)) * 1.3 + 0.0012;
+  vec3 col = vec3(0.0);
+  for(int i = 1; i <= 28; i++){
+    float zi = float(i) - fr;
+    float R = (1.45 / max(0.4, uPersp)) / (zi * 0.40);
+    if(R > 3.4) continue;
+    if(R < 0.07) break;
+    float fade = exp(-zi * 0.10) * sat(R * 3.0);
+    vec2 q = rot2(zi * (0.10 + 0.5 * uWarp) + spin(0.5)) * uv;
+    float w = clamp(R * 0.022, 0.0015, 0.011) * (0.4 + uLineWidth * 0.8);
+    float d = abs(sdNgon(q, R, sides)) - w;
+    vec3 c = pal(0.06 + zi * 0.05);
+    col += c * (aaStep(d, px * 2.0) * 0.9 + glowL(d, w * 3.0) * 0.5) * fade * (0.55 + 0.8 * uBeat);
+  }
+  return col * 1.05;
+}`};
+
+SCENES.hexspiral = { label: 'HEX SPIRAL', src: `
+vec3 scene(vec2 uv){
+  float sides = floor(3.0 + floor(uComplexity * 0.6));
+  float rn = ngonR(rot2(spin(0.4)) * uv, sides);
+  float lr = log(max(rn, 1e-4)) * (1.6 + uDensity * 0.08);
+  float sp = lr - uPhase * nCyc(1.0) * 2.0;                 // whole ring steps per loop
+  float f = abs(fract(sp) - 0.5);
+  float px = fwidth(sp) * 1.3 + 0.002;
+  float w = 0.06 * (0.4 + uLineWidth * 0.7);
+  float line = aaStep(f - w, px) * 0.85 + glowL(f - w, w * 2.2) * 0.55;
+  float arms = max(1.0, floor(2.0 + uMorph * 5.0));
+  float a = atan(uv.y, uv.x) * arms / TAU + lr * (0.2 + uWarp * 0.8);
+  float spiral = pow(0.5 + 0.5 * cos(TAU * fract(a - uPhase * nCyc(1.0))), 2.5);
+  vec3 col = pal(0.08 + fract(sp) * 0.5) * line * (0.5 + 0.9 * spiral) * (0.6 + 0.7 * uBeat);
+  col += palN(0.2) * pow(sat(1.0 - rn * 1.4), 6.0) * 0.5;
+  col *= exp(-max(0.0, rn - 0.1) * 0.5);
+  return col * 1.2;
+}`};
+
+SCENES.diamondgate = { label: 'DIAMOND GATES', src: `
+vec3 scene(vec2 uv){
+  float M = 6.0;
+  float adv = uPhase * nCyc(1.0) * M;
+  float fr = fract(adv), b0 = floor(adv);
+  float px = fwidth(length(uv)) * 1.3 + 0.0015;
+  vec3 col = vec3(0.0);
+  for(int i = 1; i <= 18; i++){
+    float zi = float(i) - fr;
+    float id = float(i) + b0;
+    float sc = (1.2 / max(0.4, uPersp)) / (zi * 0.44);
+    if(sc < 0.06) break;
+    float fade = exp(-zi * 0.16) * sat(sc * 2.2) * sat(2.4 - sc * 0.8);
+    vec2 h = (hash22(vec2(mod(id, M), 7.0)) - 0.5) * (0.35 + uMorph * 0.9);
+    vec2 q = rot2(PI * 0.25 + zi * 0.06 * uWarp + spin(0.3)) * (uv - h * sc);
+    float w = clamp(sc * 0.022, 0.002, 0.016) * (0.4 + uLineWidth * 0.8);
+    float d = abs(sdBox2(q, vec2(sc * 0.62, sc * 0.62)) + sc * 0.12) - w;
+    vec3 c = pal(0.1 + mod(id, M) * 0.14);
+    col += c * (aaStep(d, px * 2.0) * 0.8 + glowL(d, w * 3.0) * 0.5) * fade * (0.5 + 0.9 * uBeat);
+  }
+  return col;
+}`};
+
+SCENES.stairwell = { label: 'NEON STAIRWELL', src: `
+vec3 scene(vec2 uv){
+  float adv = uPhase * nCyc(1.2) * 2.0;
+  float fr = fract(adv);
+  vec2 p = rot2(spin(0.25)) * uv;
+  float px = fwidth(p.y) * 1.4 + 0.0012;
+  float k = 1.0 / max(0.4, uPersp);
+  float vp = 0.16;                                  // vanishing point, just above centre
+  float A = (0.58 + 0.22 * uMorph) * k;             // vertical spread of the treads
+  float B = 0.88 * k;                               // width of the nearest tread
+  vec3 col = vec3(0.0);
+  for(int i = 1; i <= 20; i++){
+    float zi = float(i) - fr;
+    float yi = vp - A / zi;
+    float yN = vp - A / (zi + 1.0);
+    float wi = B / zi;
+    if(wi < 0.012) break;
+    float hi = wi * 1.05;                           // corridor height at this depth
+    float fade = exp(-zi * 0.10) * sat(2.6 - wi * 1.6);
+    float th = clamp(wi * 0.022, 0.0015, 0.009) * (0.5 + uLineWidth * 0.8);
+
+    float rh = max((yN - yi) * 0.5, 0.0008);
+    float riser = sdBox2(vec2(p.x, p.y - (yi + yN) * 0.5), vec2(wi, rh));
+    float grad = sat(1.0 - (p.y - yi) / max(rh * 2.0, 1e-4));      // bright at the tread, falling off up
+    col += pal(0.55 + zi * 0.02) * aaStep(riser, px * 2.0) * (0.05 + 0.30 * grad * grad) * fade;
+
+    float edge = sdBox2(vec2(p.x, p.y - yi), vec2(wi, th));
+    col += pal(0.05 + zi * 0.04) * (aaStep(edge, px * 2.0) * 1.2 + glowL(edge, th * 2.6) * 0.40)
+           * fade * (0.5 + 0.9 * uBeat);
+
+    float side = sdBox2(vec2(abs(p.x) - wi, p.y - yi - hi * 0.42), vec2(th, hi * 0.42));
+    col += palN(0.42) * (aaStep(side, px * 2.0) * 0.45 + glowL(side, th * 2.0) * 0.18) * fade;
+
+    if(mod(float(i), 2.0) < 0.5){                                  // sparse ceiling strips
+      float top = sdBox2(vec2(p.x, p.y - yi - hi * 0.84), vec2(wi * 0.55, th * 0.8));
+      col += pal(0.30 + zi * 0.03) * (aaStep(top, px * 2.0) * 0.35 + glowL(top, th * 2.0) * 0.15) * fade;
+    }
+  }
+  col += palN(0.15) * pow(sat(1.0 - length(vec2(p.x, (p.y - vp) * 1.6)) * 3.2), 4.0) * 0.5
+         * (0.6 + 0.8 * uBeat);
+  return col * 1.15;
+}`};
+
+SCENES.trusstunnel = { label: 'TRUSS TUNNEL', src: `
+vec3 scene(vec2 uv){
+  float adv = uPhase * nCyc(1.2) * 2.0;
+  float fr = fract(adv);
+  float sides = floor(3.0 + floor(uComplexity * 0.5));
+  float px = fwidth(length(uv)) * 1.4 + 0.0015;
+  vec3 col = vec3(0.0);
+  float w = 0.004 * (0.5 + uLineWidth * 0.8);
+  for(int i = 1; i <= 20; i++){
+    float zi = float(i) - fr;
+    float z2 = zi + 1.0;
+    float R1 = (1.5 / max(0.4, uPersp)) / (zi * 0.42);
+    float R2 = (1.5 / max(0.4, uPersp)) / (z2 * 0.42);
+    if(R1 < 0.09) break;
+    float fade = exp(-zi * 0.13) * sat(R1 * 2.5);
+    float a1 = zi * (0.08 + 0.4 * uWarp) + spin(0.4);
+    float a2 = z2 * (0.08 + 0.4 * uWarp) + spin(0.4);
+    float ring = abs(sdNgon(rot2(a1) * uv, R1, sides)) - w * (1.0 + R1);
+    col += pal(0.1 + zi * 0.03) * (aaStep(ring, px) * 0.7 + glowL(ring, w * 6.0) * 0.5) * fade;
+    for(int j = 0; j < 8; j++){
+      if(float(j) >= sides) break;
+      float ang = TAU * float(j) / sides;
+      vec2 c1 = rot2(-a1) * (vec2(cos(ang), sin(ang)) * R1 / cos(PI / sides));
+      vec2 c2 = rot2(-a2) * (vec2(cos(ang), sin(ang)) * R2 / cos(PI / sides));
+      float d = sdSeg2(uv, c1, c2) - w * 0.8;
+      col += palN(0.55) * (aaStep(d, px) * 0.8 + glowL(d, w * 5.0) * 0.6) * fade * (0.5 + 0.9 * uBeat);
+    }
+  }
+  return col * 0.95;
+}`};
+
+SCENES.gridbox = { label: 'GRID BOX CORRIDOR', src: `
+vec3 scene(vec2 uv){
+  vec2 p = rot2(spin(0.3)) * uv / max(0.4, uPersp);
+  float m = max(abs(p.x), abs(p.y));
+  if(m < 1e-4) return palN(0.1) * 1.2;
+  float z = 1.0 / m;
+  float along = (abs(p.x) > abs(p.y)) ? p.y / m : p.x / m;
+  float wall = (abs(p.x) > abs(p.y)) ? sign(p.x) : sign(p.y) * 2.0;
+  float cells = max(2.0, floor(uDensity * 0.35));
+  float zz = z * 0.6 + travel(1.0, 2.0);
+  vec2 g = vec2(zz, along * cells * 0.5);
+  vec2 gf = abs(fract(g) - 0.5);
+  vec2 fw = fwidth(g) * 1.2 + 1e-5;
+  float e = min(gf.x / fw.x, gf.y / fw.y);
+  float line = aaStep(e - uLineWidth * 1.4, 1.0);
+  float fade = exp(-z * 0.06) * sat(z * 0.5);
+  vec3 c = pal(0.05 + fract(zz) * 0.5 + wall * 0.06);
+  vec3 col = c * line * (1.6 + 2.2 * uBeat) * fade;
+  col += pal(0.62) * 0.05 * fade;
+  col += palN(0.25) * pow(sat(1.0 - m * 1.6), 8.0) * (0.6 + 0.9 * uBeat);
+  return col;
+}`};
+
+SCENES.chromehall = { label: 'CHROME HALL', src: `
+float gTube;
+float mapH(vec3 p){
+  vec3 q = p;
+  q.xy = rot2(sin(q.z * PI * 0.25) * 0.25 * uWarp) * q.xy;
+  float hall = 1.75 - length(max(abs(q.xy) - vec2(0.70, 0.50), 0.0));
+  vec3 r = q;
+  r.z = mod(r.z, 2.0) - 1.0;
+  float rib = max(hall - 0.30, abs(r.z) - 0.11);          // rings standing out of the wall
+  vec3 t = q;
+  t.x = abs(t.x) - 1.05;
+  t.z = mod(t.z, 4.0) - 2.0;
+  gTube = min(length(vec2(t.x, t.y - 0.95)) - 0.05,
+              length(vec2(t.z * 0.6, t.y - 0.95)) - 0.045);
+  return min(min(hall, rib), gTube);
+}
+vec3 nrmH(vec3 p){
+  vec2 e = vec2(0.002, 0.0);
+  return normalize(vec3(mapH(p + e.xyy) - mapH(p - e.xyy),
+                        mapH(p + e.yxy) - mapH(p - e.yxy),
+                        mapH(p + e.yyx) - mapH(p - e.yyx)));
+}
+vec3 scene(vec2 uv){
+  vec3 ro = vec3(0.35, -0.25, mod(travel(4.0, 2.0), 4.0));
+  vec3 rd = normalize(vec3(uv / max(0.4, uPersp), 1.25));
+  rd.xz = rot2(0.12 * wave(1.0, 0.0)) * rd.xz;
+  float t = 0.0;
+  vec3 p = ro, glow = vec3(0.0);
+  bool hit = false;
+  for(int i = 0; i < 110; i++){
+    p = ro + rd * t;
+    float d = mapH(p);
+    glow += pal(0.12 + p.z * 0.06) * exp(-max(gTube, 0.0) * 18.0) * 0.075 * (0.6 + 0.8 * uBeat);
+    if(d < 0.0025){ hit = true; break; }
+    t += d * 0.8;
+    if(t > 30.0) break;
+  }
+  vec3 col = glow;
+  if(hit){
+    vec3 n = nrmH(p);
+    vec3 refl = reflect(rd, n);
+    float fade = exp(-t * 0.055);
+    col += pal(0.6) * 0.22 * fade;
+    col += studio(refl) * (0.25 + 0.75 * fres(n, rd, 3.2)) * fade * 1.1;
+    col += pal(0.1 + p.z * 0.05) * pow(sat(dot(refl, normalize(vec3(0.2, 1.0, 0.1)))), 18.0) * 1.4 * fade;
+  }
+  return col * 1.5;
+}`};
+
+SCENES.ductwork = { label: 'DUCTWORK', src: `
+vec3 scene(vec2 uv){
+  float M = 3.0;
+  float adv = uPhase * nCyc(1.4) * M;
+  float fr = fract(adv), b0 = floor(adv);
+  float segs = max(8.0, floor(uDensity * 1.1));
+  float px = fwidth(length(uv)) * 1.3 + 0.0015;
+  vec3 col = vec3(0.0);
+  for(int i = 1; i <= 22; i++){
+    float zi = float(i) - fr;
+    float id = float(i) + b0;
+    float R = (1.6 / max(0.4, uPersp)) / (zi * 0.44);
+    if(R < 0.08) break;
+    float fade = exp(-zi * 0.13) * sat(R * 3.0);
+    vec2 q = rot2(zi * 0.07 * uWarp + spin(0.35)) * uv;
+    float cid = pmod(q, segs);
+    float h1 = hash12(vec2(cid, mod(id, M)));
+    float h2 = hash12(vec2(cid + 5.0, mod(id, M) + 2.0));
+    float len = R * (0.12 + 0.30 * h1);
+    float gapw = (TAU * R / segs) * 0.32;
+    float d = sdBox2(vec2(q.x - R + len * 0.5, q.y), vec2(len, gapw));
+    vec3 metal = pal(0.55) * (0.10 + 0.35 * h2);
+    col += metal * aaStep(d, px * (1.0 + R)) * fade;
+    float slot = sdBox2(vec2(q.x - R + len * 0.5, q.y), vec2(len * 0.28, gapw * 0.30));
+    float on = step(0.55, h2);
+    col += pal(0.08 + h1 * 0.3) * on * (aaStep(slot, px * (1.0 + R)) + glowL(slot, R * 0.05 + 0.003) * 0.9)
+           * fade * (0.5 + 1.0 * uBeat);
+  }
+  col += pal(0.5) * 0.02;
+  return col;
+}`};
+
+SCENES.archrun = { label: 'ARCH RUN', src: `
+vec3 scene(vec2 uv){
+  float adv = uPhase * nCyc(1.2) * 2.0;
+  float fr = fract(adv);
+  float px = fwidth(length(uv)) * 1.4 + 0.0015;
+  vec2 p = rot2(spin(0.2)) * uv;
+  float floorY = -0.32;
+  float mir = step(p.y, floorY);
+  vec2 q = vec2(p.x, mix(p.y, 2.0 * floorY - p.y, mir));
+  vec3 col = vec3(0.0);
+  for(int i = 1; i <= 16; i++){
+    float zi = float(i) - fr;
+    float sc = (1.0 / max(0.4, uPersp)) / (zi * 0.40);
+    if(sc < 0.05) break;
+    float fade = exp(-zi * 0.18) * sat(sc * 2.2) * sat(2.2 - sc * 0.65);
+    float w = clamp(sc * 0.016, 0.002, 0.012) * (0.4 + uLineWidth * 0.8);
+    vec2 a = vec2(q.x, q.y - floorY);
+    float R = sc * 0.50;
+    float ring = abs(length(vec2(a.x, max(a.y, 0.0) * 1.15)) - R) - w;
+    float legs = max(abs(abs(a.x) - R) - w, -a.y);
+    float d = min(ring, legs);
+    vec3 c = pal(0.05 + zi * 0.045);
+    col += c * (aaStep(d, px * 2.0) * 0.85 + glowL(d, w * 3.0) * 0.40) * fade * (0.5 + 0.9 * uBeat);
+  }
+  col *= mix(1.0, 0.38, mir);
+  col += pal(0.62) * 0.02;
+  return col * 1.1;
+}`};
+
+SCENES.slats = { label: 'SLAT TUNNEL', src: `
+vec3 scene(vec2 uv){
+  float M = 2.0;
+  float adv = uPhase * nCyc(1.8) * M;
+  float fr = fract(adv), b0 = floor(adv);
+  float segs = max(12.0, floor(uDensity * 2.2));
+  float px = fwidth(length(uv)) * 1.3 + 0.0015;
+  vec3 col = vec3(0.0);
+  for(int i = 1; i <= 22; i++){
+    float zi = float(i) - fr;
+    float id = float(i) + b0;
+    float R = (1.45 / max(0.4, uPersp)) / (zi * 0.42);
+    if(R < 0.085) break;
+    float fade = exp(-zi * 0.13) * sat(R * 3.0);
+    vec2 q = rot2(zi * 0.05 + spin(0.3) + mod(id, M) * (PI / segs)) * uv;
+    float cid = pmod(q, segs);
+    float alt = mod(cid, 2.0);
+    float len = R * (0.28 + 0.22 * alt);
+    float th = (TAU * R / segs) * 0.16 * (0.6 + uLineWidth * 0.5);
+    float d = sdBox2(vec2(q.x - R + len * 0.5, q.y), vec2(len * 0.5, th));
+    vec3 c = pal(0.03 + alt * 0.42 + zi * 0.01);
+    col += c * (aaStep(d, px * (1.0 + R)) * 0.5 + glowL(d, th * 1.5) * 0.22) * fade * (0.5 + 0.9 * uBeat);
+  }
+  col += pal(0.2) * 0.04 * sat(1.0 - length(uv) * 1.2);
+  return col;
+}`};
+
+SCENES.pipeline = { label: 'PIPELINE', src: `
+vec3 scene(vec2 uv){
+  float adv = uPhase * nCyc(1.6) * 2.0;
+  float fr = fract(adv);
+  float pipes = max(4.0, floor(uDensity * 0.6));
+  float px = fwidth(length(uv)) * 1.3 + 0.0012;
+  vec2 p = rot2(spin(0.35)) * uv;
+  vec2 q = p;
+  float cid = pmod(q, pipes);
+  float rr = 0.42 + 0.12 * sin(cid * 2.3);
+  vec3 col = vec3(0.0);
+  float tube = abs(q.y) - 0.012 * (0.5 + uLineWidth * 0.8) - abs(q.x) * 0.012;
+  float rad = length(q);
+  float mask = sat((rad - 0.02) * 40.0);
+  col += pal(0.1 + cid * 0.07) * (aaStep(tube, px * 2.0) * 0.30 + glowL(tube, 0.02) * 0.22) * mask;
+  for(int i = 1; i <= 20; i++){
+    float zi = float(i) - fr;
+    float R = rr / (zi * 0.34) * (1.0 / max(0.4, uPersp));
+    if(R > 3.0) continue;
+    if(R < 0.06) break;
+    float fade = exp(-zi * 0.12) * sat(R * 4.0);
+    float nr = 0.03 * R + 0.003;
+    float d = length(vec2(q.x - R, q.y)) - nr;
+    col += palN(0.45 + cid * 0.05) * (aaStep(d, px * (1.0 + R)) + glowL(d, nr * 2.4) * 0.8)
+           * fade * (0.5 + 1.0 * uBeat);
+  }
+  col += palN(0.2) * pow(sat(1.0 - length(uv) * 2.0), 6.0) * 0.45;
+  return col * 0.9;
+}`};
+
+SCENES.mirrorhall = { label: 'MIRROR HALL', src: `
+vec3 scene(vec2 uv){
+  vec2 p = uv;
+  p.x = abs(p.x);
+  p.y = abs(p.y) * (1.0 + 0.0 * uMirror.x);
+  p = p / max(0.4, uPersp);
+  float m = max(p.x, p.y);
+  if(m < 1e-4) return palN(0.15) * 1.4;
+  float z = 1.0 / m;
+  float along = (p.x > p.y) ? p.y / m : p.x / m;
+  float zz = z * 0.55 + uPhase * nCyc(2.0) * 4.0;      // whole 4-cell steps per loop
+  float cells = max(2.0, floor(uDensity * 0.3));
+  float strip = abs(fract(along * cells) - 0.5);
+  float fwz = fwidth(zz) * 1.2 + 1e-5;
+  float fws = fwidth(along * cells) * 1.2 + 1e-5;
+  float bar = aaStep(abs(fract(zz) - 0.5) / fwz - uLineWidth * 1.6, 1.0);
+  float rail = aaStep(strip / fws - uLineWidth * 1.2, 1.0);
+  float fade = exp(-z * 0.055) * sat(z * 0.6);
+  float fl = mod(floor(uPhase * 4.0 * max(1.0, floor(uBeats * 0.25 + 0.5))), 4.0);
+  float gl = step(0.55, hash12(vec2(mod(floor(zz), 4.0), floor(along * cells) + fl)));
+  vec3 col = pal(0.04 + fract(zz) * 0.55) * bar * (1.4 + 2.0 * uBeat) * fade;
+  col += pal(0.5) * rail * 0.8 * fade;
+  col += palN(0.3) * gl * bar * 0.7 * fade;
+  col += palN(0.22) * pow(sat(1.0 - m * 1.5), 9.0) * (0.5 + 1.0 * uBeat);
+  return col;
+}`};
+
+SCENES.vortex = { label: 'VORTEX SHAFT', src: `
+vec3 scene(vec2 uv){
+  vec2 p = rot2(spin(0.5)) * uv;
+  float r = max(length(p), 1e-4);
+  float a = atan(p.y, p.x);
+  float lr = log(r) * (1.4 + uDensity * 0.07);
+  float arms = max(1.0, floor(2.0 + uMorph * 6.0));
+  float s = lr * (0.6 + uWarp * 1.4) + a * arms / TAU - uPhase * nCyc(1.0) * 2.0;
+  float f = abs(fract(s) - 0.5);
+  float px = fwidth(s) * 1.3 + 0.004;
+  float w = 0.10 * (0.4 + uLineWidth * 0.7);
+  float rib = aaStep(f - w, px) * 0.8 + glowL(f - w, w * 2.0) * 0.6;
+  float ring = abs(fract(lr - uPhase * nCyc(1.0) * 2.0) - 0.5);
+  float rl = glowL(ring - 0.04, 0.07) * 0.4;
+  vec3 col = pal(0.06 + fract(s) * 0.5) * rib * (0.6 + 0.8 * uBeat);
+  col += pal(0.62) * rl;
+  col *= exp(-r * 0.7);
+  col += palN(0.18) * pow(sat(1.0 - r * 2.2), 5.0) * 0.9 * (0.6 + 0.8 * uBeat);
+  return col * 0.85;
+}`};
+
+SCENES.cagecubes = { label: 'CAGE CUBES', src: `
+vec3 scene(vec2 uv){
+  float M = 5.0;
+  float adv = uPhase * nCyc(1.0) * M;
+  float fr = fract(adv), b0 = floor(adv);
+  float px = fwidth(length(uv)) * 1.3 + 0.0015;
+  vec3 col = vec3(0.0);
+  float w = 0.0035 * (0.5 + uLineWidth * 0.8);
+  for(int i = 1; i <= 14; i++){
+    float zi = float(i) - fr;
+    float id = float(i) + b0;
+    float fade = exp(-zi * 0.2);
+    vec2 off = (hash22(vec2(mod(id, M), 3.0)) - 0.5) * (0.4 + uMorph * 1.2);
+    float e1 = (0.42 / max(0.4, uPersp)) / (zi * 0.5);
+    float e2 = (0.42 / max(0.4, uPersp)) / ((zi + 0.85) * 0.5);
+    if(e1 < 0.01) continue;
+    float ang = zi * 0.22 * (0.3 + uWarp) + spin(0.4) + mod(id, M);
+    vec2 c = uv - off * e1 * 1.6;
+    vec2 f1 = rot2(ang) * c, f2 = rot2(ang * 1.0) * (c * (e1 / e2));
+    float d = abs(sdBox2(f1, vec2(e1))) - w * (1.0 + e1);
+    d = min(d, abs(sdBox2(f2, vec2(e1))) - w * (1.0 + e1));
+    for(int k = 0; k < 4; k++){
+      float aa = PI * 0.25 + float(k) * PI * 0.5;
+      vec2 v = vec2(cos(aa), sin(aa)) * 1.4142;
+      vec2 p1 = rot2(-ang) * (v * e1) + off * e1 * 1.6;
+      vec2 p2 = rot2(-ang) * (v * e2) + off * e1 * 1.6;
+      d = min(d, sdSeg2(uv, p1, p2) - w);
+    }
+    vec3 cc = pal(0.08 + mod(id, M) * 0.15);
+    col += cc * (aaStep(d, px * (1.0 + e1)) * 0.85 + glowL(d, w * 7.0) * 0.6) * fade * (0.5 + 0.9 * uBeat);
+  }
+  return col;
+}`};
+
+SCENES.wireglobe = { label: 'WIRE GLOBE', src: `
+vec3 scene(vec2 uv){
+  float R = 0.62 + 0.06 * wave(1.0, 0.0) * uMorph;
+  float r = length(uv);
+  vec3 col = vec3(0.0);
+  float px = fwidth(r) * 1.3 + 0.0015;
+  float lat = max(3.0, floor(uDensity * 0.5));
+  float lon = max(3.0, floor(uDensity * 0.5));
+  float w = 0.004 * (0.5 + uLineWidth * 0.9);
+  if(r < R){
+    float zc = sqrt(max(R * R - r * r, 0.0));
+    for(int s = 0; s < 2; s++){
+      float zs = (s == 0) ? zc : -zc;
+      vec3 q = vec3(uv, zs);
+      q.xz = rot2(spin(0.6)) * q.xz;
+      q.yz = rot2(0.35 * wave(1.0, 0.12) * uWarp) * q.yz;
+      float th = acos(clamp(q.z / R, -1.0, 1.0));
+      float ph = atan(q.y, q.x);
+      float gl = abs(fract(th * lat / PI) - 0.5);
+      float gm = abs(fract(ph * lon / TAU + uPhase * nCyc(1.0)) - 0.5);
+      float fl = fwidth(th * lat / PI) * 1.2 + 1e-4;
+      float fm = fwidth(ph * lon / TAU) * 1.2 + 1e-4;
+      float line = max(aaStep(gl / fl - uLineWidth * 1.3, 1.0), aaStep(gm / fm - uLineWidth * 1.3, 1.0));
+      float dim = (s == 0) ? 1.0 : 0.32;
+      col += pal(0.08 + th * 0.2) * line * dim * (0.6 + 0.8 * uBeat);
+    }
+  }
+  float rim = abs(r - R) - w;
+  col += palN(0.5) * (aaStep(rim, px) * 0.7 + glowL(rim, w * 6.0) * 0.8) * (0.6 + 0.9 * uBeat);
+  col += pal(0.2) * pow(sat(1.0 - r / R), 3.0) * 0.12;
+  return col * 1.1;
+}`};
+
+SCENES.datacore = { label: 'DATA CORE', src: `
+float mapDC(vec3 p, out float em){
+  vec3 q = p;
+  q.xz = rot2(spin(0.5)) * q.xz;
+  q.xy = rot2(0.4 * wave(1.0, 0.0) * uWarp) * q.xy;
+  float cell = 0.28;
+  vec3 id = floor(q / cell);
+  vec3 lp = mod(q, cell) - cell * 0.5;
+  float keep = step(0.42, hash13(id * 0.31 + 4.0));
+  float shell = abs(length(q) - 0.75) - 0.30;
+  float blocks = sdBox(lp, vec3(cell * 0.34 * keep));   // empty cells shrink to a point
+  em = step(0.80, hash13(id * 0.17 + 9.0)) * keep;
+  return max(blocks, shell);
+}
+vec3 scene(vec2 uv){
+  vec3 ro = vec3(0.0, 0.0, -2.6);
+  vec3 rd = normalize(vec3(uv / max(0.4, uPersp), 1.4));
+  float t = 0.0, em = 0.0, emh = 0.0;
+  vec3 p = ro, glow = vec3(0.0);
+  bool hit = false;
+  for(int i = 0; i < 96; i++){
+    p = ro + rd * t;
+    float d = mapDC(p, em);
+    glow += pal(0.1 + em * 0.4) * exp(-max(d, 0.0) * 40.0) * 0.012 * em;
+    if(d < 0.0025){ hit = true; emh = em; break; }
+    t += max(0.006, d * 0.85);
+    if(t > 7.0) break;
+  }
+  vec3 col = glow * (1.0 + 2.0 * uBeat);
+  if(hit){
+    vec2 e = vec2(0.0018, 0.0);
+    float dummy;
+    vec3 n = normalize(vec3(mapDC(p + e.xyy, dummy) - mapDC(p - e.xyy, dummy),
+                            mapDC(p + e.yxy, dummy) - mapDC(p - e.yxy, dummy),
+                            mapDC(p + e.yyx, dummy) - mapDC(p - e.yyx, dummy)));
+    vec3 l = normalize(vec3(0.5, 0.8, -0.5));
+    col += pal(0.58) * (0.08 + 0.5 * sat(dot(n, l)));
+    col += palN(0.3) * pow(sat(dot(reflect(rd, n), l)), 40.0) * 0.9;
+    col += pal(0.12) * emh * (0.9 + 1.2 * uBeat);
+    col += pal(0.8) * fres(n, rd, 3.5) * 0.5;
+  }
+  float fl = (1.0 - sat(length(uv) * 1.1));
+  col += pal(0.25) * pow(fl, 4.0) * 0.1;
+  return col * 1.15;
+}`};
+
+/* ============================================================================
+   SCENE PACK — KALEIDOSCOPES, PORTALS, NEON GRAPHICS & OBJECTS
+   Same loop contract as the rest: every animated term is either spin()/wave()/
+   travel() or a fract() whose phase advance per loop is a whole number.
+   ========================================================================== */
+
+SCENES.crystalkal = { label: 'CRYSTAL KALEIDO', src: `
+vec3 shard(vec2 p){
+  vec2 ip = floor(p), fp = fract(p);
+  float md = 8.0; vec2 mc = vec2(0.0), mr = vec2(0.0);
+  for(int j = -1; j <= 1; j++){
+    for(int i = -1; i <= 1; i++){
+      vec2 g = vec2(float(i), float(j));
+      vec2 h = hash22(ip + g);
+      float a = cyc(1.0 + h.x * 2.0) + h.y * TAU;
+      vec2 o = 0.5 + 0.4 * vec2(cos(a), sin(a));
+      vec2 r = g + o - fp;
+      float d = dot(r, r);
+      if(d < md){ md = d; mc = ip + g; mr = r; }
+    }
+  }
+  vec3 nrm = normalize(vec3((hash22(mc + 2.3) - 0.5) * 2.2, 1.0));
+  float fac = sat(dot(nrm, normalize(vec3(0.4, 0.7, 0.6))));
+  vec3 c = pal(hash12(mc) * 0.7 + 0.1) * (0.08 + 1.5 * pow(fac, 2.0));
+  c += palN(hash12(mc + 8.0) * 0.5) * pow(fac, 20.0) * 1.8;
+  c *= 0.15 + 1.0 * sat(1.0 - md * 2.6);
+  return c;
+}
+vec3 scene(vec2 uv){
+  float segs = max(4.0, floor(6.0 + floor(uComplexity * 0.8)) * 2.0);
+  vec2 p = rot2(spin(0.5)) * uv * (1.1 + uDensity * 0.10);
+  float r = length(uv);
+  p /= 0.35 + r * 0.8;                       // keep detail toward the centre
+  pmod(p, segs);
+  p.y = abs(p.y);
+  p = rot2(0.5 * wave(1.0, 0.0) * uWarp) * p;
+  vec3 col = shard(p * (1.0 + 0.5 * uFractal));
+  col += shard(p * 2.13 + 11.0) * 0.30;
+  col *= 0.45 + 0.7 * uBeat;
+  col += palN(0.2) * pow(sat(1.0 - r * 1.6), 7.0) * 0.5;
+  return col * 1.25;
+}`};
+
+SCENES.burstkal = { label: 'BURST KALEIDO', src: `
+vec3 scene(vec2 uv){
+  float segs = max(6.0, floor(4.0 + floor(uComplexity * 0.7)) * 2.0);
+  vec2 p = rot2(spin(0.4)) * uv;
+  float r = max(length(p), 1e-4);
+  pmod(p, segs);
+  p.y = abs(p.y);
+  float a = atan(p.y, p.x);
+  vec3 col = vec3(0.0);
+  int rings = int(clamp(3.0 + uDensity * 0.2, 3.0, 8.0));
+  for(int i = 0; i < 8; i++){
+    if(i >= rings) break;
+    float fi = float(i) / float(rings);
+    float rr = 0.14 + fi * 0.62;
+    float puff = 0.02 + 0.05 * fi;
+    float ph = fract(fi * 0.37 + uPhase * nCyc(1.0));
+    float pulse = 0.65 + 0.35 * cos(TAU * ph);
+    float spikes = max(2.0, floor(3.0 + fi * 5.0));
+    float sp = cos(a * spikes) * 0.5 + 0.5;
+    float d = length(vec2(p.x - rr * (0.9 + 0.2 * sp), p.y)) - puff * pulse;
+    col += pal(0.05 + fi * 0.55) * (aaStep(d, 0.006) * 0.35 + glowL(d, puff * 1.1) * 0.30) * (0.45 + 0.9 * uBeat);
+    float streak = abs(p.y) - (0.004 + 0.02 * fi) * (0.5 + uLineWidth);
+    col += palN(0.3 + fi * 0.3) * glowL(max(streak, abs(p.x - rr) - 0.28), 0.012) * 0.22;
+  }
+  col += palN(0.12) * pow(sat(1.0 - r * 2.4), 7.0) * 0.55 * (0.6 + 0.8 * uBeat);
+  col *= exp(-r * 0.6);
+  return col;
+}`};
+
+SCENES.petalkal = { label: 'PETAL KALEIDO', src: `
+vec3 scene(vec2 uv){
+  float segs = max(6.0, floor(5.0 + floor(uComplexity * 0.6)) * 2.0);
+  vec2 p = rot2(spin(0.45)) * uv;
+  float r = max(length(p), 1e-4);
+  pmod(p, segs);
+  p.y = abs(p.y);
+  vec3 col = vec3(0.0);
+  int rows = int(clamp(2.0 + uDensity * 0.18, 2.0, 6.0));
+  for(int i = 0; i < 6; i++){
+    if(i >= rows) break;
+    float fi = float(i) / float(rows);
+    float rr = 0.18 + fi * 0.60;
+    float sw = 0.10 + 0.06 * (1.0 - fi);
+    float bend = (0.4 + uMorph) * 0.5 * wave(1.0, fi * 0.3);
+    vec2 q = vec2(p.x - rr, p.y);
+    q = rot2(bend) * q;
+    float ell = length(vec2(q.x / max(1e-3, sw * 1.9), q.y / max(1e-3, sw))) - 1.0;
+    float petal = ell * sw;
+    float w = 0.007 * (0.5 + uLineWidth * 0.8);
+    float outline = abs(petal) - w;
+    col += pal(0.04 + fi * 0.45) * glowL(petal, sw * 0.35) * 0.05;
+    col += palN(0.2 + fi * 0.4) * (aaStep(outline, 0.004) * 0.6 + glowL(outline, w * 2.2) * 0.22)
+           * (0.5 + 0.9 * uBeat);
+  }
+  col += palN(0.1) * pow(sat(1.0 - r * 2.6), 6.0) * 0.55;
+  col *= exp(-max(0.0, r - 0.2) * 0.5);
+  return col;
+}`};
+
+SCENES.starweave = { label: 'STAR WEAVE', src: `
+vec3 scene(vec2 uv){
+  float n = max(5.0, floor(5.0 + floor(uComplexity * 1.2)));
+  float R = 0.72;
+  float px = fwidth(length(uv)) * 1.3 + 0.0015;
+  float w = 0.0035 * (0.4 + uLineWidth * 0.9);
+  vec3 col = vec3(0.0);
+  float rot = spin(0.5);
+  float skip = max(2.0, floor(2.0 + uMorph * 4.0));
+  for(int i = 0; i < 20; i++){
+    if(float(i) >= n) break;
+    float a1 = TAU * float(i) / n + rot;
+    float a2 = TAU * (float(i) + skip) / n + rot;
+    float rr = R * (0.85 + 0.15 * cos(TAU * (uPhase * nCyc(1.0) + float(i) / n)));
+    vec2 p1 = vec2(cos(a1), sin(a1)) * rr;
+    vec2 p2 = vec2(cos(a2), sin(a2)) * rr;
+    float d = sdSeg2(uv, p1, p2) - w;
+    col += pal(0.05 + float(i) / n * 0.6) * (aaStep(d, px * 2.0) * 0.8 + glowL(d, w * 8.0) * 0.7)
+           * (0.5 + 0.9 * uBeat);
+    float node = length(uv - p1) - w * 3.0;
+    col += palN(0.3) * glowL(node, w * 6.0) * 0.5;
+  }
+  float ring = abs(length(uv) - R) - w * 0.7;
+  col += pal(0.6) * glowL(ring, w * 5.0) * 0.35;
+  return col * 1.05;
+}`};
+
+SCENES.portal = { label: 'PORTAL RING', src: `
+vec3 scene(vec2 uv){
+  vec2 p = rot2(spin(0.2)) * uv;
+  float r = max(length(p), 1e-4);
+  float a = atan(p.y, p.x);
+  vec3 col = vec3(0.0);
+  float R = 0.52 + 0.05 * wave(1.0, 0.0) * uZoomPulse;
+  for(int i = 0; i < 4; i++){
+    float fi = float(i) / 4.0;
+    float rr = R * (0.90 + fi * 0.11);
+    float w = (0.004 + fi * 0.006) * (0.5 + uLineWidth * 0.8);
+    float wob = 0.012 * sin(a * (3.0 + float(i)) + cyc(1.0) + fi * 4.0) * uMorph;
+    float d = abs(r - rr + wob) - w;
+    col += pal(0.05 + fi * 0.5) * (glowL(d, w * 2.2) * 0.55 + aaStep(d, 0.003) * 0.9) * (0.55 + 0.8 * uBeat);
+  }
+  float rays = max(10.0, floor(uDensity * 1.4));
+  float ra = fract(a / TAU * rays + 0.5) - 0.5;
+  float lane = mod(floor(a / TAU * rays), rays);
+  float len = hash11(lane) * 0.5 + 0.4;
+  float amp = step(0.45, hash11(lane + 17.0));
+  float ray = abs(ra) / (0.5 / rays) ;
+  col += pal(0.22) * exp(-ray * 2.2) * exp(-max(0.0, r - 0.52) * (4.0 / len))
+         * smoothstep(0.42, 0.66, r) * amp * 1.1 * (0.5 + 0.9 * uBeat);
+  int nb = int(clamp(6.0 + uComplexity * 1.4, 6.0, 18.0));
+  for(int i = 0; i < 18; i++){
+    if(i >= nb) break;
+    float fi = float(i) / float(nb);
+    float ang = cyc(0.5 + fi) + fi * TAU * 3.7;
+    float rad = 0.30 + 0.62 * fract(fi * 7.31);
+    vec2 bp = vec2(cos(ang) * rad, sin(ang) * rad * 0.8);
+    float br = 0.018 + 0.05 * fract(fi * 3.7);
+    float d = length(p - bp) - br;
+    col += pal(0.1 + fi * 0.7) * (glowL(d, br * 1.1) * 0.55 + aaStep(d, br * 0.7) * 0.18);
+  }
+  col += palN(0.12) * pow(sat(1.0 - r * 1.9), 6.0) * 0.7 * (0.6 + 0.8 * uBeat);
+  return col;
+}`};
+
+SCENES.lightspeed = { label: 'LIGHT SPEED', src: `
+vec3 scene(vec2 uv){
+  vec2 p = rot2(spin(0.15)) * uv;
+  float r = max(length(p), 1e-4);
+  float a = atan(p.y, p.x);
+  vec3 col = vec3(0.0);
+  float lanes = max(24.0, floor(uDensity * 7.0));
+  for(int k = 0; k < 3; k++){
+    float fk = float(k);
+    float off = fk * 0.37;
+    float idx = mod(floor(a / TAU * lanes + off), lanes);
+    float fa = fract(a / TAU * lanes + off) - 0.5;
+    float h = hash11(idx + fk * 31.0);
+    float speed = 1.0 + floor(h * 3.0);
+    float head = fract(h * 5.7 + uPhase * nCyc(speed));
+    float streak = exp(-abs(fa) * (30.0 / (0.4 + uLineWidth)));
+    float along = sat(1.0 - abs(r - head * 1.35) * (2.4 + 3.0 * h));
+    col += pal(0.04 + h * 0.6 + fk * 0.08) * streak * pow(along, 1.1) * (0.6 + 0.8 * uBeat) * 2.6;
+  }
+  float floorY = -0.30;
+  if(p.y < floorY){
+    float z = 1.0 / max(1e-3, (floorY - p.y));
+    float xx = p.x * z;
+    float zz = z * 0.35 + travel(1.0, 3.0);
+    vec2 g = vec2(zz, xx * 0.8);
+    vec2 gf = abs(fract(g) - 0.5);
+    vec2 fw = fwidth(g) * 1.2 + 1e-5;
+    float e = min(gf.x / fw.x, gf.y / fw.y);
+    col += pal(0.55) * aaStep(e - uLineWidth * 1.3, 1.0) * exp(-z * 0.07) * 1.1;
+  }
+  col += palN(0.1) * pow(sat(1.0 - r * 2.2), 5.0) * 0.8 * (0.6 + 0.9 * uBeat);
+  return col;
+}`};
+
+SCENES.bokehdrift = { label: 'BOKEH DRIFT', src: `
+vec3 scene(vec2 uv){
+  vec3 col = vec3(0.0);
+  int n = int(clamp(8.0 + uComplexity * 3.0, 8.0, 28.0));
+  for(int i = 0; i < 28; i++){
+    if(i >= n) break;
+    float fi = float(i);
+    float h1 = hash11(fi * 1.37), h2 = hash11(fi * 2.71 + 5.0), h3 = hash11(fi * 4.13 + 9.0);
+    float depth = 0.3 + h3 * 1.7;
+    float ang = cyc(0.5 + h1) + h2 * TAU;
+    vec2 c = vec2(cos(ang), sin(cyc(0.3 + h2) + h1 * 3.0)) * (0.35 + h2 * 0.7) / depth;
+    float rad = (0.035 + 0.08 * h1) / depth * (0.5 + uMorph * 0.6);
+    float d = length(uv - c) - rad;
+    vec3 cc = pal(0.06 + h2 * 0.75);
+    float edge = aaStep(d, rad * 0.22);
+    col += cc * (edge * 0.8 + glowL(d, rad * 0.6) * 0.7) / (0.5 + depth);
+    col += palN(0.4 + h1 * 0.3) * aaStep(abs(d + rad * 0.06) - rad * 0.05, rad * 0.1) * 0.9 / (0.5 + depth);
+  }
+  col *= 0.8 + 0.6 * uBeat;
+  col += pal(0.62) * 0.05;
+  col += palN(0.2) * pow(sat(1.0 - length(uv) * 1.4), 4.0) * 0.25;
+  return col;
+}`};
+
+SCENES.ringrush = { label: 'RING RUSH', src: `
+vec3 scene(vec2 uv){
+  vec2 p = rot2(spin(0.25)) * uv;
+  float r = max(length(p), 1e-4);
+  float a = atan(p.y, p.x);
+  float ripple = 0.045 * uWarp * sin(a * max(2.0, floor(3.0 + uMorph * 7.0)) + cyc(1.0));
+  float rings = max(2.0, floor(uDensity * 0.35));
+  float s = (r + ripple) * rings - uPhase * nCyc(2.0) * 2.0;
+  float f = abs(fract(s) - 0.5);
+  float px = fwidth(s) * 1.3 + 0.01;
+  float w = 0.13 * (0.4 + uLineWidth * 0.7);
+  vec3 col = pal(0.04 + fract(s) * 0.55) * (aaStep(f - w, px) * 0.55 + glowL(f - w, w * 1.8) * 0.9)
+             * (0.55 + 0.85 * uBeat);
+  col *= exp(-r * 0.85);
+  col += palN(0.15) * pow(sat(1.0 - r * 2.0), 5.0) * 1.2 * (0.6 + 0.8 * uBeat);
+  return col * 1.2;
+}`};
+
+SCENES.pinwheel = { label: 'PINWHEEL FAN', src: `
+vec3 scene(vec2 uv){
+  vec2 p = rot2(spin(0.6)) * uv;
+  float r = max(length(p), 1e-4);
+  float a = atan(p.y, p.x);
+  float blades = max(2.0, floor(2.0 + uComplexity * 0.9));
+  float lr = log(r) * (1.0 + uWarp * 2.2);
+  float s = a * blades / TAU + lr - uPhase * nCyc(1.0);
+  float f = 0.5 + 0.5 * cos(TAU * s);
+  float feather = pow(f, 1.6 + 6.0 * (1.0 - uMorph));
+  float fine = 0.5 + 0.5 * cos(TAU * (s * max(2.0, floor(uDensity * 0.5))));
+  vec3 col = pal(0.03 + f * 0.5 + r * 0.25) * feather * (0.45 + 0.6 * fine) * (0.6 + 0.7 * uBeat);
+  col += palN(0.35) * pow(feather, 5.0) * pow(fine, 3.0) * 0.5;
+  col *= 0.35 + 0.9 * sat(1.3 - r);
+  col += palN(0.1) * pow(sat(1.0 - r * 3.0), 4.0) * 0.5;
+  return col * 1.25;
+}`};
+
+SCENES.lissajous = { label: 'LISSAJOUS NEON', src: `
+vec3 scene(vec2 uv){
+  vec2 p = rot2(spin(0.3)) * uv;
+  float fx = max(1.0, floor(2.0 + uComplexity * 0.3));
+  float fy = fx + max(1.0, floor(1.0 + uMorph * 3.0));
+  float ph = cyc(1.0);
+  float w = 0.006 * (0.4 + uLineWidth * 0.9);
+  float best = 9.0, bestT = 0.0;
+  vec2 prev = vec2(sin(ph), 0.0) * 0.72;
+  for(int i = 1; i <= 96; i++){
+    float t = float(i) / 96.0 * TAU;
+    vec2 c = vec2(sin(t * fx + ph), sin(t * fy)) * 0.72;
+    float d = sdSeg2(p, prev, c);
+    if(d < best){ best = d; bestT = t; }
+    prev = c;
+  }
+  float d = best - w;
+  vec3 col = pal(0.05 + length(p) * 0.75) * (aaStep(d, 0.004) * 0.95 + glowL(d, w * 3.5) * 0.65)
+             * (0.55 + 0.85 * uBeat);
+  float head = 0.5 + 0.5 * cos(bestT - cyc(2.0));
+  col += palN(0.3) * glowL(best - w, w * 2.5) * pow(head, 10.0) * 1.3;
+  col += pal(0.62) * 0.02;
+  return col * 1.15;
+}`};
+
+SCENES.spirograph = { label: 'SPIROGRAPH WEB', src: `
+vec3 scene(vec2 uv){
+  vec2 p = rot2(spin(0.4)) * uv;
+  float n = max(6.0, floor(8.0 + floor(uDensity * 0.9)));
+  float step0 = max(2.0, floor(2.0 + uMorph * 6.0));
+  float R = 0.78;
+  float w = 0.0022 * (0.4 + uLineWidth * 0.9);
+  float px = fwidth(length(p)) * 1.2 + 0.0012;
+  vec3 col = vec3(0.0);
+  float breathe = 0.9 + 0.1 * wave(1.0, 0.0);
+  for(int i = 0; i < 48; i++){
+    if(float(i) >= n) break;
+    float a1 = TAU * float(i) / n;
+    float a2 = TAU * (float(i) * step0) / n + 0.35 * wave(1.0, 0.25) * uWarp;
+    vec2 p1 = vec2(cos(a1), sin(a1)) * R * breathe;
+    vec2 p2 = vec2(cos(a2), sin(a2)) * R * breathe;
+    float d = sdSeg2(p, p1, p2) - w;
+    col += pal(0.04 + float(i) / n * 0.65) * (aaStep(d, px * 2.0) * 0.55 + glowL(d, w * 9.0) * 0.45);
+  }
+  col *= 0.6 + 0.8 * uBeat;
+  col += palN(0.2) * pow(sat(1.0 - length(p) * 1.5), 6.0) * 0.5;
+  return col;
+}`};
+
+SCENES.zigzag = { label: 'ZIGZAG BOLT', src: `
+vec3 scene(vec2 uv){
+  vec2 p = rot2(spin(0.2)) * uv;
+  float seg = max(4.0, floor(4.0 + uComplexity * 0.8));
+  float w = 0.004 * (0.5 + uLineWidth * 1.0);
+  float shift = mod(floor(uPhase * nCyc(1.0) * 4.0), 4.0);
+  float best = 9.0, branch = 9.0;
+  for(int i = 0; i < 14; i++){
+    if(float(i) >= seg) break;
+    float t0 = float(i) / seg, t1 = (float(i) + 1.0) / seg;
+    float x0 = (hash11(float(i) * 1.7 + shift) - 0.5) * (0.30 + 0.7 * uMorph);
+    float x1 = (hash11((float(i) + 1.0) * 1.7 + shift) - 0.5) * (0.30 + 0.7 * uMorph);
+    vec2 a = vec2(x0, 0.85 - t0 * 1.7);
+    vec2 b = vec2(x1, 0.85 - t1 * 1.7);
+    best = min(best, sdSeg2(p, a, b));
+    if(hash11(float(i) * 5.3 + shift) > 0.55){
+      vec2 c = b + vec2((hash11(float(i) * 9.1 + shift) - 0.5) * 0.7, -0.22);
+      branch = min(branch, sdSeg2(p, b, c));
+    }
+  }
+  float d = best - w;
+  float db = branch - w * 0.7;
+  vec3 col = palN(0.15) * (aaStep(d, 0.003) * 1.0 + glowL(d, w * 2.5) * 0.5) * (0.6 + 0.9 * uBeat);
+  col += palN(0.15) * (aaStep(db, 0.003) * 0.6 + glowL(db, w * 2.0) * 0.3) * (0.6 + 0.9 * uBeat);
+  col += pal(0.05) * glowL(min(d, db), w * 10.0) * 0.28 * (0.5 + 0.9 * uBeat);
+  col += pal(0.55) * glowL(min(d, db), w * 34.0) * 0.08;
+  float spark = pow(hash12(floor(uv * 300.0) + shift), 45.0) * 2.0;
+  col += palN(0.4) * spark * exp(-min(best, branch) * 6.0);
+  return col;
+}`};
+
+SCENES.wingform = { label: 'WING FORM', src: `
+vec3 scene(vec2 uv){
+  vec2 p = uv;
+  p.x = abs(p.x);
+  p = rot2(0.12 * wave(1.0, 0.0)) * p;
+  float flap = 0.55 + 0.45 * (0.5 + 0.5 * cos(cyc(2.0)));
+  vec3 col = vec3(0.0);
+  float w = 0.006 * (0.5 + uLineWidth * 0.9);
+  int lobes = int(clamp(2.0 + uComplexity * 0.4, 2.0, 5.0));
+  for(int i = 0; i < 5; i++){
+    if(i >= lobes) break;
+    float fi = float(i) / float(lobes);
+    float sx = (0.30 + fi * 0.34) * flap;
+    float sy = 0.22 + fi * 0.26;
+    vec2 q = p - vec2(sx * 0.9, 0.04 + fi * 0.05);
+    q = rot2(-0.45 + fi * 0.5) * q;
+    float ell = length(vec2(q.x / max(0.05, sx), q.y / max(0.05, sy))) - 1.0;
+    float d = abs(ell) * min(sx, sy) - w;
+    vec3 c = pal(0.04 + fi * 0.55);
+    col += c * (aaStep(d, 0.004) * 0.85 + glowL(d, w * 2.5) * 0.40) * (0.55 + 0.85 * uBeat);
+    col += c * glowL(ell * min(sx, sy), 0.035) * 0.05;
+  }
+  float body = sdBox2(vec2(p.x, p.y * 0.55), vec2(0.012, 0.16)) - 0.006;
+  col += palN(0.3) * (aaStep(body, 0.004) * 0.8 + glowL(body, 0.012) * 0.35);
+  int np = int(clamp(6.0 + uDensity * 0.6, 6.0, 22.0));
+  for(int i = 0; i < 22; i++){
+    if(i >= np) break;
+    float fi = float(i);
+    float h1 = hash11(fi * 1.7), h2 = hash11(fi * 3.3 + 2.0);
+    float ang = cyc(0.5 + h1) + h2 * TAU;
+    vec2 c = vec2(cos(ang), sin(ang * 0.8)) * (0.45 + 0.55 * h2);
+    float d = length(uv - c) - (0.006 + 0.012 * h1);
+    col += pal(0.1 + h2 * 0.8) * glowL(d, 0.014) * 0.45;
+  }
+  return col * 0.9;
+}`};
+
+SCENES.wavebands = { label: 'WAVE BANDS', src: `
+vec3 scene(vec2 uv){
+  vec2 p = rot2(spin(0.15)) * uv;
+  p.y = abs(p.y);
+  vec3 col = vec3(0.0);
+  int n = int(clamp(3.0 + uDensity * 0.35, 3.0, 10.0));
+  for(int i = 0; i < 10; i++){
+    if(i >= n) break;
+    float fi = float(i) / float(n);
+    float amp = (0.10 + 0.22 * fi) * (0.4 + uMorph);
+    float f = max(1.0, floor(1.0 + fi * 3.0 + uComplexity * 0.3));
+    float ph = cyc(1.0 + floor(fi * 3.0)) + fi * TAU;
+    float y = amp * sin(p.x * f * 2.2 + ph) + 0.35 * amp * sin(p.x * f * 4.0 - ph * 2.0);
+    float base = 0.06 + fi * 0.34;
+    float th = (0.008 + 0.014 * (1.0 - fi)) * (0.5 + uLineWidth * 0.7);
+    float d = abs(p.y - base - y) - th;
+    vec3 c = pal(0.03 + fi * 0.6);
+    col += c * (aaStep(d, 0.004) * 0.7 + glowL(d, th * 2.0) * 0.40) * (0.55 + 0.8 * uBeat);
+  }
+  col += pal(0.62) * 0.03;
+  col *= 0.5 + 0.9 * sat(1.4 - length(uv));
+  return col * 0.8;
+}`};
+
+SCENES.voxelcube = { label: 'VOXEL CUBE', src: `
+float gEmV;
+float mapV(vec3 p){
+  vec3 q = p;
+  q.xz = rot2(spin(0.5)) * q.xz;
+  q.yz = rot2(0.45 * wave(1.0, 0.0) * uWarp) * q.yz;
+  float cell = 0.5 / max(1.0, floor(2.0 + uComplexity * 0.5));
+  vec3 id = floor(q / cell);
+  vec3 lp = mod(q, cell) - cell * 0.5;
+  float keep = step(0.30, hash13(id * 0.21 + 3.0));
+  float sz = cell * 0.36 * keep;
+  float d = sdBox(lp, vec3(sz));
+  float shell = sdBox(q, vec3(0.5));
+  gEmV = step(0.86, hash13(id * 0.13 + 7.0)) * keep;
+  return max(d, shell);
+}
+vec3 nrmV(vec3 p){
+  vec2 e = vec2(0.0015, 0.0);
+  return normalize(vec3(mapV(p + e.xyy) - mapV(p - e.xyy),
+                        mapV(p + e.yxy) - mapV(p - e.yxy),
+                        mapV(p + e.yyx) - mapV(p - e.yyx)));
+}
+vec3 scene(vec2 uv){
+  vec3 ro = vec3(0.0, 0.12, -2.1);
+  vec3 rd = normalize(vec3(uv / max(0.4, uPersp), 1.45));
+  float t = 0.0, em = 0.0;
+  vec3 p = ro, glow = vec3(0.0);
+  bool hit = false;
+  for(int i = 0; i < 100; i++){
+    p = ro + rd * t;
+    float d = mapV(p);
+    glow += pal(0.08 + gEmV * 0.4) * exp(-max(d, 0.0) * 45.0) * 0.02 * gEmV;
+    if(d < 0.002){ hit = true; em = gEmV; break; }
+    t += max(0.004, d * 0.8);
+    if(t > 6.0) break;
+  }
+  vec3 col = glow * (1.0 + 2.2 * uBeat);
+  if(hit){
+    vec3 n = nrmV(p);
+    vec3 l = normalize(vec3(0.45, 0.8, -0.5));
+    col += pal(0.58) * (0.07 + 0.55 * sat(dot(n, l)));
+    col += studio(reflect(rd, n)) * fres(n, rd, 3.0) * 0.9;
+    col += palN(0.28) * pow(sat(dot(reflect(rd, n), l)), 48.0) * 1.1;
+    col += pal(0.1) * em * (1.0 + 1.4 * uBeat);
+  } else {
+    float fy = (-0.55 - ro.y) / min(-1e-3, rd.y);
+    if(fy > 0.0 && fy < 40.0){
+      vec3 fp = ro + rd * fy;
+      float fall = exp(-length(fp.xz) * 0.55);
+      col += pal(0.12) * fall * 0.35 * (0.6 + 0.9 * uBeat);
+      col += palN(0.3) * fall * pow(sat(1.0 - length(fp.xz) * 0.3), 6.0) * 0.25;
+    }
+  }
+  return col * 1.1;
+}`};
+
+SCENES.citylights = { label: 'CITY LIGHTS', src: `
+float gWin;
+float mapC(vec3 p){
+  float cell = 9.0;
+  vec2 id = floor(p.xz / cell);
+  vec2 lp = mod(p.xz, cell) - cell * 0.5;
+  float h = 2.0 + hash12(id * 1.7) * 9.0;
+  vec2 bw = vec2(1.1 + hash12(id * 2.3) * 1.1, 1.1 + hash12(id * 3.1) * 1.1);
+  float b = sdBox(vec3(lp.x, p.y - h * 0.5, lp.y), vec3(bw.x, h * 0.5, bw.y));
+  vec2 face = (abs(lp.x) > abs(lp.y)) ? vec2(lp.y, sign(lp.x)) : vec2(lp.x, sign(lp.y) + 2.0);
+  vec2 g = vec2(face.x * 2.6, p.y * 2.2);
+  vec2 gf = abs(fract(g) - 0.5);
+  gWin = step(0.62, hash12(floor(g) + id * 3.0 + face.y * 17.0)) * step(b, 0.04)
+         * step(gf.x, 0.22) * step(gf.y, 0.30);
+  return b;
+}
+vec3 scene(vec2 uv){
+  vec3 ro = vec3(0.0, 2.2, mod(travel(9.0, 2.0), 9.0));
+  vec3 rd = normalize(vec3(uv / max(0.4, uPersp), 1.15));
+  rd.xz = rot2(spin(0.25) * 0.25) * rd.xz;
+  rd.yz = rot2(-0.06) * rd.yz;
+  float t = 0.2;
+  vec3 col = vec3(0.0), p = ro;
+  bool hit = false;
+  float win = 0.0;
+  for(int i = 0; i < 110; i++){
+    p = ro + rd * t;
+    float d = mapC(p);
+    col += pal(0.06 + gWin * 0.5) * gWin * exp(-max(d, 0.0) * 55.0) * 0.007 * exp(-t * 0.045);
+    if(d < 0.006 * t){ hit = true; win = gWin; break; }
+    t += max(0.03, d * 0.75);
+    if(t > 70.0) break;
+  }
+  if(hit){
+    float fade = exp(-t * 0.035);
+    vec2 e = vec2(0.02, 0.0);
+    vec3 n = normalize(vec3(mapC(p + e.xyy) - mapC(p - e.xyy),
+                            mapC(p + e.yxy) - mapC(p - e.yxy),
+                            mapC(p + e.yyx) - mapC(p - e.yyx)));
+    col += pal(0.58) * (0.02 + 0.08 * sat(dot(n, normalize(vec3(0.4, 0.7, -0.5))))) * fade;
+    col += pal(0.62) * 0.018 * fade;
+    col += pal(0.05) * win * (0.75 + 0.8 * uBeat) * fade;
+    float road = sat(1.0 - abs(p.y) * 3.0);
+    col += palN(0.2) * road * 0.18 * fade;
+  } else {
+    col += mix(pal(0.72) * 0.03, pal(0.3) * 0.12, sat(rd.y * 3.0));
+    float st = pow(hash12(floor(uv * 520.0) + 7.0), 64.0) * 2.0;
+    col += vec3(st) * sat(rd.y * 4.0);
+  }
+  float haze = 1.0 - exp(-t * 0.035);
+  col += pal(0.25) * haze * 0.10;
+  return col;
+}`};
+
+SCENES.torusknot = { label: 'TORUS KNOT', src: `
+float mapK(vec3 p){
+  p.xz = rot2(spin(0.5)) * p.xz;
+  p.yz = rot2(0.5 * wave(1.0, 0.0)) * p.yz;
+  float a = atan(p.z, p.x);
+  float r = length(p.xz) - 1.0;
+  float pp = max(2.0, floor(2.0 + uComplexity * 0.3));
+  float qq = max(3.0, floor(3.0 + uMorph * 4.0));
+  float k = a * qq / pp + cyc(1.0);
+  vec2 q = vec2(r, p.y);
+  q = rot2(k) * q;
+  float th = 0.16 + 0.10 * uFractal;
+  float tube = length(vec2(abs(q.x) - 0.42, q.y)) - th;
+  return tube * 0.7;
+}
+vec3 nrmK(vec3 p){
+  vec2 e = vec2(0.0018, 0.0);
+  return normalize(vec3(mapK(p + e.xyy) - mapK(p - e.xyy),
+                        mapK(p + e.yxy) - mapK(p - e.yxy),
+                        mapK(p + e.yyx) - mapK(p - e.yyx)));
+}
+vec3 scene(vec2 uv){
+  vec3 ro = vec3(0.0, 0.0, -3.4);
+  vec3 rd = normalize(vec3(uv / max(0.4, uPersp), 1.5));
+  float t = 0.0;
+  vec3 p = ro, glow = vec3(0.0);
+  bool hit = false;
+  for(int i = 0; i < 110; i++){
+    p = ro + rd * t;
+    float d = mapK(p);
+    glow += pal(0.1 + float(i) * 0.003) * exp(-max(d, 0.0) * 22.0) * 0.012 * (0.6 + 0.8 * uBeat);
+    if(d < 0.0025){ hit = true; break; }
+    t += max(0.006, d * 0.8);
+    if(t > 9.0) break;
+  }
+  vec3 col = glow;
+  if(hit){
+    vec3 n = nrmK(p);
+    vec3 l = normalize(vec3(0.5, 0.75, -0.5));
+    col += pal(0.5 + 0.2 * n.y) * (0.1 + 0.7 * sat(dot(n, l)));
+    col += palN(0.25) * pow(sat(dot(reflect(rd, n), l)), 44.0) * 2.0;
+    col += studio(reflect(rd, n)) * fres(n, rd, 3.4) * 1.0;
+    col += pal(0.05) * pow(1.0 - sat(dot(n, -rd)), 6.0) * 0.8;
+  }
+  col += pal(0.4) * 0.02;
+  return col * 1.15;
+}`};
+
+SCENES.plasmarings = { label: 'PLASMA RINGS', src: `
+vec3 scene(vec2 uv){
+  vec2 p = rot2(spin(0.3)) * uv;
+  float r = max(length(p), 1e-4);
+  float a = atan(p.y, p.x);
+  float ang = cyc(1.0);
+  vec3 dr = vec3(cos(ang), sin(ang), 0.0) * 1.3;
+  float n = fbm3(vec3(p * (1.1 + uFractal * 0.7), 0.0) + dr, int(clamp(3.0 + uComplexity * 0.4, 3.0, 6.0)));
+  float rings = max(2.0, floor(uDensity * 0.3));
+  float s = (r + (n - 0.5) * (0.25 + uWarp * 0.5)) * rings - uPhase * nCyc(2.0) * 2.0;
+  float f = abs(fract(s) - 0.5);
+  float px = fwidth(s) * 1.3 + 0.012;
+  float w = 0.16 * (0.4 + uLineWidth * 0.6);
+  vec3 col = pal(0.04 + n * 1.4) * (aaStep(f - w, px) * 0.35 + glowL(f - w, w * 1.6) * 1.0)
+             * (0.55 + 0.85 * uBeat);
+  col += pal(0.45 + n * 0.5) * pow(sat(1.0 - r * 1.3), 3.0) * 0.35;
+  col *= exp(-r * 0.6);
+  col += palN(0.1) * pow(sat(1.0 - r * 2.6), 5.0) * 0.9;
+  return col * 1.2;
+}`};
+
 /* ==========================================================================
    WEBGL2 ENGINE
    ========================================================================== */
@@ -1969,27 +3162,45 @@ function updateParam(){
 }
 
 /* ---- scene picker ----------------------------------------------------- */
-const SCENE_ORDER = ['tunnel','terrain','hex','rain','lasers','ribbon',
-  'bulb','menger','apollonian','gyroid','prism','mandala',
-  'nebula','flow','liquid','warp'];
+const SCENE_GROUPS = [
+  { name: 'TUNNELS',   keys: ['tunnel','panelring','ledbars','dotrings','polytunnel',
+                              'hexspiral','slats','ductwork','pipeline','trusstunnel'] },
+  { name: 'CORRIDORS', keys: ['gridbox','mirrorhall','chromehall','archrun','stairwell',
+                              'diamondgate','cagecubes','vortex'] },
+  { name: 'FRACTAL',   keys: ['bulb','menger','apollonian','gyroid','mandala','hex','prism',
+                              'crystalkal','burstkal','petalkal','starweave','spirograph'] },
+  { name: 'SPACE',     keys: ['warp','lightspeed','portal','nebula','citylights','rain',
+                              'bokehdrift','ringrush','plasmarings'] },
+  { name: 'FLOW',      keys: ['flow','ribbon','wavebands','pinwheel','lissajous','zigzag',
+                              'wingform','lasers','terrain'] },
+  { name: 'OBJECTS',   keys: ['liquid','voxelcube','torusknot','wireglobe','datacore'] },
+];
+const SCENE_ORDER = SCENE_GROUPS.reduce((a, g) => a.concat(g.keys), []);
 
 function buildSceneGrid(){
   const host = el('sceneGrid');
   host.innerHTML = '';
-  for(const key of SCENE_ORDER){
-    const b = document.createElement('button');
-    b.className = 'scene-btn' + (key === currentScene ? ' on' : '');
-    b.dataset.scene = key;
-    b.innerHTML = '<span class="dot"></span>' + SCENES[key].label;
-    b.title = SCENES[key].label;
-    b.addEventListener('click', () => setScene(key));
-    host.appendChild(b);
+  for(const g of SCENE_GROUPS){
+    const h = document.createElement('div');
+    h.className = 'scene-cat';
+    h.textContent = g.name;
+    host.appendChild(h);
+    for(const key of g.keys){
+      if(!SCENES[key]) continue;
+      const b = document.createElement('button');
+      b.className = 'scene-btn' + (key === currentScene ? ' on' : '');
+      b.dataset.scene = key;
+      b.innerHTML = '<span class="dot"></span>' + SCENES[key].label;
+      b.title = SCENES[key].label;
+      b.addEventListener('click', () => setScene(key));
+      host.appendChild(b);
+    }
   }
 }
 function setScene(key){
   if(!SCENES[key]) return;
   currentScene = key;
-  for(const b of el('sceneGrid').children) b.classList.toggle('on', b.dataset.scene === key);
+  for(const b of el('sceneGrid').querySelectorAll('.scene-btn')) b.classList.toggle('on', b.dataset.scene === key);
   updateParam();
   clearTrails();
   if(!playing) renderFrame();
@@ -2015,6 +3226,52 @@ const PALETTES = {
   ultramar:  ['#2c4bff', '#01030f', '#00e5ff'],
   copper:    ['#ff9e5e', '#160c08', '#ffe1b3'],
   orchid:    ['#ff6ec7', '#12021a', '#6effe0'],
+  inferno:   ['#ff2d00', '#150200', '#ffb300'],
+  lagoon:    ['#00ffd5', '#00202b', '#0077ff'],
+  neonoir:   ['#ff0059', '#06060a', '#00e0ff'],
+  sakura:    ['#ffb7d5', '#1a0a14', '#ff5f9e'],
+  lime:      ['#c8ff00', '#0d1400', '#00ff85'],
+  tangerine: ['#ff8a00', '#1a0d00', '#ff2d55'],
+  iris:      ['#7b61ff', '#080418', '#00d4ff'],
+  venom:     ['#7cff00', '#06120a', '#b400ff'],
+  coral:     ['#ff6f61', '#180808', '#ffd6a5'],
+  arctic:    ['#e8f7ff', '#031018', '#5bc8ff'],
+  cobalt:    ['#0055ff', '#01040f', '#9fd0ff'],
+  amethyst:  ['#b26bff', '#0e0418', '#ff9de2'],
+  jade:      ['#00e08c', '#04140f', '#d4ffb0'],
+  rust:      ['#d94f00', '#120603', '#ffb26b'],
+  blush:     ['#ff8fa3', '#150a10', '#ffe0e9'],
+  plasma:    ['#ff00d4', '#0a0012', '#00fff0'],
+  sodium:    ['#ffb347', '#120c02', '#fff3c4'],
+  mint:      ['#7cffcb', '#04160f', '#4facfe'],
+  berry:     ['#ff2e88', '#140418', '#8a2eff'],
+  gold:      ['#ffd700', '#140f00', '#fff8dc'],
+  steel:     ['#b8c6d9', '#080b10', '#5b7794'],
+  oxide:     ['#ff4d00', '#0f0604', '#00b3ff'],
+  lotus:     ['#ff77e1', '#100418', '#ffe66d'],
+  abyss:     ['#0affef', '#000508', '#0a4dff'],
+  flare:     ['#ffee00', '#180a00', '#ff3c00'],
+  moss:      ['#6bbf59', '#050d04', '#d3f8b6'],
+  bubble:    ['#00c2ff', '#04101a', '#ff6ec7'],
+  ruby:      ['#ff0033', '#100004', '#ff99ad'],
+  vapor:     ['#ff71ce', '#0d0221', '#01cdfe'],
+  lemon:     ['#f6ff00', '#101400', '#00ffa3'],
+  ash:       ['#d8d8d8', '#0a0a0a', '#8a8a8a'],
+  tropic:    ['#00ffa3', '#02161c', '#ffdd00'],
+  electric:  ['#00f0ff', '#02040f', '#f5ff00'],
+  dusk:      ['#ff7b54', '#120a1a', '#7b6cff'],
+  petrol:    ['#00a8a8', '#01100f', '#a8ff00'],
+  candy:     ['#ff5fa2', '#12071a', '#5fd0ff'],
+  bruise:    ['#8a2be2', '#0b0210', '#00ffc8'],
+  saffron:   ['#ffc300', '#1a0f00', '#ff5400'],
+  seafoam:   ['#a8fff0', '#02171a', '#3ab7ff'],
+  magma:     ['#ff3d00', '#0c0301', '#ffe066'],
+  indigo:    ['#4b2eff', '#020214', '#ff2ecc'],
+  pistache:  ['#b8ff7a', '#0a1206', '#ffd166'],
+  cyanotype: ['#4fc3f7', '#020a14', '#e1f5fe'],
+  fuchsia:   ['#ff00a0', '#12000c', '#ffd400'],
+  lagoonite: ['#12e6c8', '#031a18', '#ff8f4d'],
+  duotone:   ['#ff4b6e', '#0a0a12', '#3ad6ff'],
 };
 function buildPalettes(){
   const sel = el('palette');
@@ -2054,6 +3311,16 @@ function applyPalette(){
 
 /* ---- presets ---------------------------------------------------------- */
 const PRESETS = {
+  NEONDUCT:     { scene:'panelring',   palette:'magenta',   speed:1.1, bpm:140, beatPunch:0.5, zoomPulse:0.45, rotation:0.15, morph:0.25, warp:0.5, strobe:0.15, hueShift:0.02, saturation:0.75, brightness:1.05, contrast:1.1, density:20, complexity:5, lineWidth:1.2, perspective:1.1, fractalZoom:1, kaleido:0, glow:20, bloomRadius:1.1, trails:0, trailZoom:0.3, chroma:0.12, grain:0.25, vignette:0.45, tonemap:0, overlay:0 },
+  LEDRING:      { scene:'ledbars',   palette:'cyber',   speed:1.8, bpm:150, beatPunch:0.65, zoomPulse:0.45, rotation:0.15, morph:0.25, warp:0.5, strobe:0.15, hueShift:0.02, saturation:1.2, brightness:1.05, contrast:1.2, density:26, complexity:5, lineWidth:1.0, perspective:1.1, fractalZoom:1, kaleido:0, glow:22, bloomRadius:0.9, trails:0, trailZoom:0.3, chroma:0.12, grain:0.25, vignette:0.45, tonemap:0, overlay:0 },
+  GRIDHALL:     { scene:'gridbox',   palette:'ultramar',   speed:1.2, bpm:128, beatPunch:0.35, zoomPulse:0.45, rotation:0.1, morph:0.25, warp:0.5, strobe:0.15, hueShift:0.02, saturation:0.75, brightness:1.05, contrast:1.2, density:14, complexity:5, lineWidth:1.0, perspective:1.1, fractalZoom:1, kaleido:0, glow:18, bloomRadius:0.9, trails:0.15, trailZoom:0.3, chroma:0.12, grain:0.25, vignette:0.45, tonemap:0, overlay:1 },
+  STARGATE:     { scene:'portal',   palette:'sunset',   speed:0.9, bpm:126, beatPunch:0.45, zoomPulse:0.45, rotation:0.15, morph:0.25, warp:0.5, strobe:0.15, hueShift:0.02, saturation:0.75, brightness:1.05, contrast:1.2, density:16, complexity:5, lineWidth:0.8, perspective:1.1, fractalZoom:1, kaleido:0, glow:26, bloomRadius:1.5, trails:0.2, trailZoom:0.3, chroma:0.3, grain:0.25, vignette:0.45, tonemap:0, overlay:0 },
+  HYPERLANE:    { scene:'lightspeed',   palette:'spectrum',   speed:2.2, bpm:150, beatPunch:0.6, zoomPulse:0.45, rotation:0.15, morph:0.25, warp:0.5, strobe:0.15, hueShift:0.02, saturation:1.3, brightness:1.05, contrast:1.2, density:24, complexity:5, lineWidth:0.8, perspective:1.1, fractalZoom:1, kaleido:0, glow:24, bloomRadius:0.9, trails:0.3, trailZoom:0.3, chroma:0.35, grain:0.25, vignette:0.45, tonemap:0, overlay:0 },
+  CRYSTAL:      { scene:'crystalkal',   palette:'glacier',   speed:0.8, bpm:132, beatPunch:0.3, zoomPulse:0.45, rotation:0.15, morph:0.25, warp:0.5, strobe:0.15, hueShift:0.02, saturation:0.75, brightness:1.05, contrast:1.15, density:12, complexity:7, lineWidth:0.8, perspective:1.1, fractalZoom:1.2, kaleido:0, glow:18, bloomRadius:0.9, trails:0, trailZoom:0.3, chroma:0.12, grain:0.25, vignette:0.45, tonemap:0, overlay:0 },
+  FANSPIRAL:    { scene:'pinwheel',   palette:'orchid',   speed:1.0, bpm:124, beatPunch:0.25, zoomPulse:0.45, rotation:0.15, morph:0.7, warp:0.6, strobe:0.15, hueShift:0.02, saturation:0.75, brightness:1.05, contrast:1.2, density:18, complexity:5, lineWidth:0.8, perspective:1.1, fractalZoom:1, kaleido:0, glow:20, bloomRadius:0.9, trails:0.25, trailZoom:0.3, chroma:0.12, grain:0.25, vignette:0.45, tonemap:0, overlay:0 },
+  METROPOLIS:   { scene:'citylights',   palette:'ember',   speed:1.2, bpm:120, beatPunch:0.2, zoomPulse:0.45, rotation:0.15, morph:0.25, warp:0.5, strobe:0.15, hueShift:0.02, saturation:1.05, brightness:1.05, contrast:1.2, density:14, complexity:5, lineWidth:0.8, perspective:1.1, fractalZoom:1, kaleido:0, glow:16, bloomRadius:0.9, trails:0, trailZoom:0.3, chroma:0.12, grain:0.2, vignette:0.55, tonemap:0, overlay:0 },
+  BOLT:         { scene:'zigzag',   palette:'acid',   speed:1.4, bpm:146, beatPunch:0.8, zoomPulse:0.45, rotation:0.15, morph:0.25, warp:0.5, strobe:0.2, hueShift:0.02, saturation:0.75, brightness:1.05, contrast:1.2, density:16, complexity:6, lineWidth:0.8, perspective:1.1, fractalZoom:1, kaleido:0, glow:24, bloomRadius:0.9, trails:0.2, trailZoom:0.3, chroma:0.12, grain:0.25, vignette:0.45, tonemap:0, overlay:3 },
+  KNOT:         { scene:'torusknot',   palette:'copper',   speed:0.7, bpm:118, beatPunch:0.25, zoomPulse:0.45, rotation:0.3, morph:0.6, warp:0.5, strobe:0.15, hueShift:0.02, saturation:0.75, brightness:1.05, contrast:1.2, density:16, complexity:5, lineWidth:0.8, perspective:1.1, fractalZoom:1.1, kaleido:0, glow:18, bloomRadius:1.3, trails:0, trailZoom:0.3, chroma:0.12, grain:0.25, vignette:0.45, tonemap:0, overlay:0 },
   BERLIN:      { scene:'tunnel',   palette:'chrome',   speed:1.4, bpm:145, beatPunch:0.45, zoomPulse:0.45, rotation:0.15, morph:0.25, warp:0.5, strobe:0.15, hueShift:0.02, saturation:0.75, brightness:1.05, contrast:1.2, density:16, complexity:5, lineWidth:0.8, perspective:1.1, fractalZoom:1, kaleido:0, glow:12, bloomRadius:0.9, trails:0, trailZoom:0.3, chroma:0.12, grain:0.25, vignette:0.45, tonemap:0, overlay:1 },
   IBIZA:       { scene:'liquid',   palette:'sunset',   speed:0.9, bpm:126, beatPunch:0.3, zoomPulse:0.5,  rotation:0.3,  morph:0.6,  warp:0.3, strobe:0,    hueShift:0.35, saturation:1.15, brightness:1.15, contrast:1.05, density:12, complexity:6, lineWidth:1,   perspective:1,   fractalZoom:1.1, kaleido:0, glow:18, bloomRadius:1.2, trails:0.18, trailZoom:0.4, chroma:0.22, grain:0.1,  vignette:0.35, tonemap:0, overlay:0 },
   INDUSTRIAL:  { scene:'menger',   palette:'acid',     speed:1.6, bpm:160, beatPunch:0.6, zoomPulse:0.55, rotation:0.2,  morph:0.2,  warp:0.7, strobe:0.35, hueShift:0.1,  saturation:0.95, brightness:1,    contrast:1.3,  density:20, complexity:7, lineWidth:1.2, perspective:1,   fractalZoom:1.2, kaleido:0, glow:10, bloomRadius:0.7, trails:0,    trailZoom:0.3, chroma:0.1,  grain:0.35, vignette:0.5,  tonemap:1, overlay:3 },
@@ -2119,7 +3386,7 @@ const SECTIONS = {
   motion: () => {
     setRange('speed', rnd(0.4, 3.2).toFixed(2));
     setRange('bpm', rndInt(118, 160));
-    setRange('beatPunch', rnd(0.15, 0.8).toFixed(2));
+    setRange('beatPunch', Math.random() < 0.45 ? 0 : rnd(0.15, 0.8).toFixed(2));
     setRange('zoomPulse', rnd(0.1, 0.8).toFixed(2));
     setRange('rotation', rnd(0, 1.2).toFixed(2));
     setRange('morph', rnd(0.1, 0.9).toFixed(2));

@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Borgo delle Dune · walking routes</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<!-- version history
+# version : 20260917-151801 - Initial version: portfolio demo route finder for the fictional Borgo delle Dune campsite
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sidebar-w: 336px;
+  --toggle-w: 28px;
+  --paper:#F6F0E3; --paper-2:#EEE5D1; --card:#FFFCF5;
+  --ink:#1F2B27; --ink-soft:#5C6A62; --line:rgba(31,43,39,.13);
+  --pine:#1F4E45; --pine-2:#2E7D7A; --coral:#E4674A; --coral-dark:#C5503A;
+  --apricot:#F7DAC4; --meadow:#F3F6EC; --hedge:#B3CC9C; --amber:#E3A62F;
+  --field:#E7E1CF; --sea:#6FB7C9;
+  --display:'Fraunces', Georgia, 'Times New Roman', serif;
+  --body:'Figtree', 'Segoe UI', Helvetica, Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  height:100vh; height:100dvh;
+  display:flex; overflow:hidden;
+  font-family:var(--body); color:var(--ink); background:var(--paper);
+  -webkit-font-smoothing:antialiased;
+}
+button,input{font:inherit;color:inherit}
+
+/* ---------- sidebar ---------- */
+#sidebar{
+  width:var(--sidebar-w); min-width:var(--sidebar-w);
+  display:flex; flex-direction:column;
+  overflow:visible; position:relative; flex-shrink:0; z-index:1002;
+  transition:width .25s ease, min-width .25s ease;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.25 0 0 0 0 0.15 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
+    var(--paper);
+  border-right:1px solid var(--line);
+}
+#sidebar-header,#sidebar-body,#sidebar-footer{overflow:hidden}
+#sidebar.collapsed{width:var(--toggle-w); min-width:var(--toggle-w)}
+#sidebar.collapsed > *:not(#sidebar-toggle){display:none}
+#sidebar-toggle{
+  position:absolute; top:50%; right:-16px; transform:translateY(-50%);
+  width:16px; height:64px;
+  border:1px solid rgba(0,0,0,.1); border-left:none; border-radius:0 6px 6px 0;
+  background:var(--coral); color:#fff; font-size:.75rem; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .15s, width .15s; z-index:1003; flex-shrink:0;
+  box-shadow:2px 0 6px rgba(0,0,0,.15); padding:0;
+}
+#sidebar-toggle:hover{background:var(--coral-dark); width:20px}
+#sidebar-overlay{display:none; position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:1001}
+#sidebar-overlay.hidden{display:none !important}
+
+#sidebar-header{padding:26px 24px 18px; position:relative}
+.eyebrow{
+  font-size:.68rem; letter-spacing:.18em; text-transform:uppercase; font-weight:700;
+  color:var(--pine-2); display:flex; align-items:center; gap:8px;
+}
+.eyebrow::before{content:""; width:18px; height:2px; background:var(--coral); border-radius:2px}
+h1{
+  font-family:var(--display); font-weight:800; font-size:2.15rem; line-height:1.02;
+  margin:10px 0 8px; letter-spacing:-.01em; color:var(--pine);
+  font-variation-settings:"opsz" 144;
+}
+h1 em{font-style:italic; font-weight:500; color:var(--coral)}
+.lede{margin:0; color:var(--ink-soft); font-size:.9rem; line-height:1.45}
+.waves{display:block; margin-top:14px; width:100%; height:10px}
+
+#sidebar-body{flex:1; overflow-y:auto; padding:0 24px 20px}
+#sidebar-footer{
+  padding:12px 24px 16px; border-top:1px solid var(--line);
+  font-size:.74rem; color:var(--ink-soft); line-height:1.45;
+}
+#sidebar-footer code{font-size:.72rem; background:var(--paper-2); padding:1px 5px; border-radius:4px}
+
+.card{
+  background:var(--card); border:1px solid var(--line); border-radius:16px;
+  padding:16px; box-shadow:0 1px 0 rgba(255,255,255,.8) inset, 0 8px 24px -18px rgba(31,78,69,.5);
+}
+.section-title{
+  font-family:var(--display); font-weight:700; font-size:1.02rem; color:var(--pine);
+  margin:22px 0 10px;
+}
+.field{position:relative; display:flex; align-items:center; gap:10px}
+.field + .field{margin-top:10px}
+.pin{
+  width:26px; height:26px; border-radius:50%; flex-shrink:0;
+  display:grid; place-items:center; color:#fff; font-weight:700; font-size:.78rem;
+}
+.pin.a{background:var(--pine)}
+.pin.b{background:var(--coral)}
+.field input{
+  flex:1; min-width:0; border:1.5px solid var(--line); background:var(--paper);
+  border-radius:10px; padding:10px 12px; font-size:.95rem; outline:none;
+  transition:border-color .15s, background .15s;
+}
+.field input:focus{border-color:var(--pine-2); background:#fff}
+.field input.invalid{border-color:var(--coral)}
+.connector{position:absolute; left:12px; top:30px; width:2px; height:18px;
+  background:repeating-linear-gradient(var(--ink-soft) 0 3px, transparent 3px 6px); opacity:.35}
+.row{display:flex; gap:8px; margin-top:14px}
+.btn{
+  white-space:nowrap;
+  border:1.5px solid var(--line); background:var(--paper); border-radius:999px;
+  padding:8px 14px; font-size:.84rem; font-weight:600; cursor:pointer;
+  transition:transform .12s, background .15s, border-color .15s;
+}
+.btn:hover{background:#fff; border-color:var(--pine-2)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--pine); color:#fff; border-color:var(--pine); flex:1}
+.btn.primary:hover{background:var(--pine-2); border-color:var(--pine-2)}
+.btn.primary:disabled{opacity:.45; cursor:not-allowed}
+.btn.icon{padding:8px 11px}
+
+#routeContent{margin-top:14px}
+.empty{font-size:.86rem; color:var(--ink-soft); line-height:1.45}
+.summary{display:flex; gap:10px}
+.stat{
+  flex:1; background:var(--paper); border-radius:12px; padding:10px 12px;
+  display:flex; flex-direction:column;
+}
+.stat .v{font-family:var(--display); font-weight:800; font-size:1.55rem; color:var(--pine); line-height:1.05}
+.stat .l{font-size:.7rem; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-soft); margin-top:3px}
+.steps{list-style:none; margin:14px 0 0; padding:0 0 0 4px}
+.steps li{
+  position:relative; padding:5px 0 5px 20px; font-size:.87rem; line-height:1.35;
+  border-left:2px dashed rgba(31,78,69,.25);
+}
+.steps li::before{
+  content:""; position:absolute; left:-6px; top:9px; width:10px; height:10px; border-radius:50%;
+  background:var(--card); border:2px solid var(--pine-2);
+}
+.steps li:first-child::before{background:var(--pine); border-color:var(--pine)}
+.steps li:last-child{border-left-color:transparent}
+.steps li:last-child::before{background:var(--coral); border-color:var(--coral)}
+.steps .street{font-weight:600}
+.steps .d{color:var(--ink-soft); white-space:nowrap}
+
+.toggles label{display:flex; align-items:center; gap:10px; font-size:.88rem; padding:5px 0; cursor:pointer}
+.toggles input{accent-color:var(--pine); width:16px; height:16px}
+
+.legend{display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; font-size:.8rem}
+.legend span{display:flex; align-items:center; gap:8px}
+.sw{width:16px; height:12px; border-radius:3px; border:1px solid rgba(0,0,0,.08); flex-shrink:0}
+.sw.route{height:4px; border:none; background:repeating-linear-gradient(90deg,var(--coral) 0 5px,transparent 5px 8px)}
+
+.stats{display:grid; grid-template-columns:repeat(3,1fr); gap:8px}
+.stats div{background:var(--paper-2); border-radius:10px; padding:8px 10px}
+.stats b{display:block; font-family:var(--display); font-size:1.1rem; color:var(--pine)}
+.stats small{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-soft)}
+
+/* ---------- map ---------- */
+#main{flex:1; position:relative; min-width:0; display:flex; flex-direction:column}
+#maparea{flex:1; position:relative; overflow:hidden; background:var(--field)}
+#mapinner{position:absolute; inset:0}
+#mapSvg{width:100%; height:100%; display:block; touch-action:none; cursor:grab; user-select:none; -webkit-user-select:none}
+#mapSvg.dragging{cursor:grabbing}
+.hit{fill:transparent; stroke:transparent; cursor:pointer; pointer-events:all}
+.hit:hover{stroke:var(--coral); stroke-width:2px; vector-effect:non-scaling-stroke; fill:rgba(228,103,74,.12)}
+.hit.special:hover{stroke:var(--pine-2); fill:rgba(46,125,122,.14)}
+.power-box{fill:var(--amber); stroke:#7A5510; stroke-width:.8px; vector-effect:non-scaling-stroke}
+.sel-ring{fill:none; stroke-width:2.5px; vector-effect:non-scaling-stroke}
+
+.zoomctrls{
+  position:absolute; right:14px; top:14px; display:flex; flex-direction:column;
+  background:var(--card); border-radius:14px; border:1px solid var(--line);
+  box-shadow:0 10px 24px -16px rgba(0,0,0,.5); overflow:hidden; z-index:5;
+}
+.zoomctrls button{
+  width:40px; height:40px; border:none; background:transparent; cursor:pointer;
+  font-size:1.15rem; color:var(--pine); display:grid; place-items:center;
+}
+.zoomctrls button + button{border-top:1px solid var(--line)}
+.zoomctrls button:hover{background:var(--paper)}
+
+.tooltip{
+  position:absolute; pointer-events:none; z-index:6;
+  background:var(--ink); color:#fff; font-size:.78rem; padding:6px 9px; border-radius:8px;
+  white-space:nowrap; opacity:0; transform:translate(-50%,-130%); transition:opacity .12s;
+}
+.tooltip.show{opacity:1}
+.tooltip b{font-weight:700}
+
+#bottom-panel{
+  position:absolute; left:50%; bottom:max(16px, env(safe-area-inset-bottom));
+  transform:translateX(-50%); z-index:5;
+  display:flex; align-items:center; gap:12px;
+  background:var(--card); border:1px solid var(--line); border-radius:999px;
+  padding:8px 8px 8px 18px; box-shadow:0 14px 30px -18px rgba(0,0,0,.55);
+  max-width:calc(100% - 32px); font-size:.88rem;
+}
+#bottom-panel .msg{white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+#bottom-panel .msg b{color:var(--pine)}
+#bottom-panel .btn{white-space:nowrap}
+
+/* ---------- entrance motion ---------- */
+@keyframes rise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+.reveal{animation:rise .55s cubic-bezier(.2,.7,.2,1) both}
+.d1{animation-delay:.05s}.d2{animation-delay:.12s}.d3{animation-delay:.19s}.d4{animation-delay:.26s}.d5{animation-delay:.33s}
+@keyframes mapIn{from{opacity:0; filter:saturate(.4)} to{opacity:1; filter:none}}
+#mapinner{animation:mapIn .8s ease both .1s}
+@keyframes dash{to{stroke-dashoffset:-22}}
+.route-line{animation:dash 1.2s linear infinite}
+@media (prefers-reduced-motion: reduce){
+  .reveal,#mapinner,.route-line{animation:none}
+}
+
+@media (max-width: 640px){
+  #sidebar{position:fixed; top:0; left:0; bottom:0; z-index:1002; box-shadow:2px 0 20px rgba(0,0,0,.2)}
+  #sidebar-overlay{display:block}
+  #table-panel, #bottom-panel{margin-left:var(--toggle-w); transition:margin-left .25s ease}
+  body.sidebar-open #table-panel, body.sidebar-open #bottom-panel{margin-left:0}
+  #main{margin-left:var(--toggle-w)}
+  #bottom-panel{margin-left:0; left:50%; font-size:.82rem}
+  h1{font-size:1.9rem}
+}
+</style>
+</head>
+<body>
+<div id="sidebar-overlay"></div>
+
+<aside id="sidebar">
+  <button id="sidebar-toggle" title="Collapse sidebar">&#x25C4;</button>
+
+  <div id="sidebar-header">
+    <div class="eyebrow reveal d1">FabRoute &middot; portfolio demo</div>
+    <h1 class="reveal d2">Borgo delle Dune <em>on foot</em></h1>
+    <p class="lede reveal d3">A made-up seaside campsite with 1,000 pitches. Pick two, and the shortest walking route is drawn on the map.</p>
+    <svg class="waves reveal d3" viewBox="0 0 280 10" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,5 Q10,0 20,5 T40,5 T60,5 T80,5 T100,5 T120,5 T140,5 T160,5 T180,5 T200,5 T220,5 T240,5 T260,5 T280,5" fill="none" stroke="#6FB7C9" stroke-width="1.6"/>
+    </svg>
+  </div>
+
+  <div id="sidebar-body">
+    <div class="card reveal d4">
+      <div class="field">
+        <span class="pin a">A</span>
+        <input id="fromInput" list="plotList" placeholder="From pitch, e.g. 12" autocomplete="off" inputmode="text" aria-label="From">
+        <span class="connector"></span>
+      </div>
+      <div class="field">
+        <span class="pin b">B</span>
+        <input id="toInput" list="plotList" placeholder="To pitch or place, e.g. Beach bar" autocomplete="off" inputmode="text" aria-label="To">
+      </div>
+      <datalist id="plotList"></datalist>
+      <div class="row">
+        <button class="btn primary" id="routeBtn" disabled>Route</button>
+        <button class="btn icon" id="swapBtn" title="Swap start and destination" aria-label="Swap">&#x21C5;</button>
+        <button class="btn" id="randomBtn" title="Pick two random pitches">Surprise me</button>
+      </div>
+      <div id="routeContent"><div class="empty">Type two pitch numbers, or tap two pitches on the map.</div></div>
+    </div>
+
+    <div class="reveal d5">
+      <div class="section-title">Map layers</div>
+      <div class="toggles">
+        <label><input type="checkbox" id="togglePower"> Power stations (staff view)</label>
+        <label><input type="checkbox" id="toggleGraph"> Walking graph (nodes &amp; edges)</label>
+      </div>
+
+      <div class="section-title">Legend</div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--meadow)"></i>Campsite pitch</span>
+        <span><i class="sw" style="background:var(--apricot)"></i>Tour-operator pitch</span>
+        <span><i class="sw" style="background:var(--amber)"></i>Power station</span>
+        <span><i class="sw route"></i>Walking route</span>
+      </div>
+
+      <div class="section-title">The data</div>
+      <div class="stats" id="stats"></div>
+    </div>
+  </div>
+
+  <div id="sidebar-footer">
+    Fictional site. Graph in <code>data.js</code>, map in <code>map-svg.js</code>, routing with Dijkstra in plain JavaScript. No build step, no backend.
+  </div>
+</aside>
+
+<main id="main">
+  <div id="maparea">
+    <div id="mapinner"></div>
+    <div class="zoomctrls">
+      <button id="zoomIn" title="Zoom in" aria-label="Zoom in">+</button>
+      <button id="zoomReset" title="Show whole map" aria-label="Show whole map">&#x2922;</button>
+      <button id="zoomOut" title="Zoom out" aria-label="Zoom out">&minus;</button>
+    </div>
+    <div class="tooltip" id="tooltip"></div>
+    <div id="bottom-panel">
+      <span class="msg" id="bottomMsg">Tap a pitch to set your start</span>
+      <button class="btn" id="detailsBtn">Directions</button>
+    </div>
+  </div>
+</main>
+
+<script src="data.js"></script>
+<script src="map-svg.js"></script>
+<script>
+const current_version = "20260917-151801";
+
+const EXPANDED_ON_LOAD_FOR_DESKTOP = true;
+const EXPANDED_ON_LOAD_FOR_MOBILE  = false;
+
+// ---------- sidebar (collapsible pattern) ----------
+(function () {
+  const sidebar = document.getElementById('sidebar');
+  const toggle  = document.getElementById('sidebar-toggle');
+  const overlay = document.getElementById('sidebar-overlay');
+  const main    = document.getElementById('main');
+
+  function collapse() {
+    sidebar.classList.add('collapsed');
+    document.body.classList.remove('sidebar-open');
+    toggle.innerHTML = '&#x25BA;';
+    toggle.title = 'Expand sidebar';
+    overlay.classList.add('hidden');
+  }
+  function expand() {
+    sidebar.classList.remove('collapsed');
+    document.body.classList.add('sidebar-open');
+    toggle.innerHTML = '&#x25C4;';
+    toggle.title = 'Collapse sidebar';
+    if (window.innerWidth <= 640) overlay.classList.remove('hidden');
+  }
+
+  const isMobile = window.innerWidth <= 640;
+  if (isMobile ? !EXPANDED_ON_LOAD_FOR_MOBILE : !EXPANDED_ON_LOAD_FOR_DESKTOP) {
+    collapse();
+  } else {
+    expand();
+  }
+
+  toggle.addEventListener('click', e => {
+    e.stopPropagation();
+    sidebar.classList.contains('collapsed') ? expand() : collapse();
+  });
+  overlay.addEventListener('click', collapse);
+  if (main) {
+    main.addEventListener('click', () => {
+      if (window.innerWidth <= 640 && !sidebar.classList.contains('collapsed')) collapse();
+    });
+  }
+  window.sidebarApi = { expand, collapse };
+})();
+
+// The background map is injected before anything reads #mapSvg.
+const svg = injectMapSvg();
+
+const VBW = 1218.9, VBH = 870.236;
+const WALK_SPEED = 1.3;             // m/s, relaxed stroll
+const SVGNS = 'http://www.w3.org/2000/svg';
+const MIN_W = VBW / 14;             // deepest zoom
+
+function dist(a, b){ return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+function svgEl(tag, attrs){
+  const el = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) el.setAttribute(k, attrs[k]);
+  return el;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ---------- graph ----------
+const ADJ = new Map();
+const NODE_STREETS = new Map();
+let totalLength = 0;
+for (const id in NODES){ ADJ.set(id, []); NODE_STREETS.set(id, new Set()); }
+for (const [u, v, street] of EDGES){
+  if (!ADJ.has(u) || !ADJ.has(v)) continue;
+  const w = dist(NODES[u], NODES[v]);
+  totalLength += w;
+  ADJ.get(u).push({to: v, w, street});
+  ADJ.get(v).push({to: u, w, street});
+  NODE_STREETS.get(u).add(street);
+  NODE_STREETS.get(v).add(street);
+}
+
+class MinHeap {
+  constructor(){ this.a = []; }
+  get size(){ return this.a.length; }
+  push(item){
+    const a = this.a; a.push(item);
+    let i = a.length - 1;
+    while (i > 0){
+      const p = (i - 1) >> 1;
+      if (a[p][0] <= a[i][0]) break;
+      [a[p], a[i]] = [a[i], a[p]]; i = p;
+    }
+  }
+  pop(){
+    const a = this.a, top = a[0], last = a.pop();
+    if (a.length){
+      a[0] = last;
+      let i = 0;
+      for (;;){
+        const l = 2 * i + 1, r = l + 1;
+        let m = i;
+        if (l < a.length && a[l][0] < a[m][0]) m = l;
+        if (r < a.length && a[r][0] < a[m][0]) m = r;
+        if (m === i) break;
+        [a[m], a[i]] = [a[i], a[m]]; i = m;
+      }
+    }
+    return top;
+  }
+}
+
+// Dijkstra: returns {nodes, segs:[{street,w}]} or null
+function pathBetween(src, dst){
+  if (!ADJ.has(src) || !ADJ.has(dst)) return null;
+  if (src === dst) return {nodes: [src], segs: []};
+  const best = new Map([[src, 0]]);
+  const prev = new Map();
+  const heap = new MinHeap();
+  heap.push([0, src]);
+  while (heap.size){
+    const [d, u] = heap.pop();
+    if (d > best.get(u)) continue;
+    if (u === dst) break;
+    for (const e of ADJ.get(u)){
+      const nd = d + e.w;
+      if (nd < (best.has(e.to) ? best.get(e.to) : Infinity)){
+        best.set(e.to, nd);
+        prev.set(e.to, {from: u, street: e.street, w: e.w});
+        heap.push([nd, e.to]);
+      }
+    }
+  }
+  if (!prev.has(dst)) return null;
+  const nodes = [dst], segs = [];
+  let cur = dst;
+  while (cur !== src){
+    const p = prev.get(cur);
+    segs.push({street: p.street, w: p.w});
+    nodes.push(p.from);
+    cur = p.from;
+  }
+  nodes.reverse(); segs.reverse();
+  return {nodes, segs};
+}
+
+// ---------- plot lookup ----------
+const isPitch = p => /^\d+$/.test(p.key);
+const GUEST_PLOTS = PLOTS.filter(p => p.color !== 'power');
+const POWER_PLOTS = PLOTS.filter(p => p.color === 'power');
+const BY_KEY = new Map(GUEST_PLOTS.map(p => [p.key.toLowerCase(), p]));
+function findPlot(text){
+  const t = String(text || '').trim().toLowerCase();
+  return t ? (BY_KEY.get(t) || null) : null;
+}
+function plotLabel(p){ return isPitch(p) ? 'pitch ' + p.key : p.key; }
+function plotStreet(p){
+  const s = NODE_STREETS.get(p.node);
+  return s && s.size ? [...s][0] : '';
+}
+
+const datalist = document.getElementById('plotList');
+[...GUEST_PLOTS]
+  .sort((a, b) => (isPitch(b) - isPitch(a)) || a.key.localeCompare(b.key, undefined, {numeric: true}))
+  .forEach(p => { const o = document.createElement('option'); o.value = p.key; datalist.appendChild(o); });
+
+// ---------- overlay layers ----------
+const graphLayer  = svgEl('g', {id: 'graphLayer', style: 'display:none', 'pointer-events': 'none'});
+const powerLayer  = svgEl('g', {id: 'powerLayer', style: 'display:none', 'pointer-events': 'none'});
+const routeLayer  = svgEl('g', {id: 'routeLayer', 'pointer-events': 'none'});
+const hitLayer    = svgEl('g', {id: 'hitLayer'});
+const markerLayer = svgEl('g', {id: 'markerLayer', 'pointer-events': 'none'});
+svg.append(graphLayer, powerLayer, routeLayer, hitLayer, markerLayer);
+
+for (const [u, v] of EDGES){
+  const a = NODES[u], b = NODES[v];
+  if (!a || !b) continue;
+  graphLayer.appendChild(svgEl('line', {x1: a[0], y1: a[1], x2: b[0], y2: b[1],
+    stroke: '#2E7D7A', 'stroke-width': 1.4, 'vector-effect': 'non-scaling-stroke', opacity: .75}));
+}
+for (const id in NODES){
+  const [x, y] = NODES[id];
+  graphLayer.appendChild(svgEl('circle', {cx: x, cy: y, r: 1.8, fill: '#1F4E45'}));
+}
+for (const p of POWER_PLOTS){
+  powerLayer.appendChild(svgEl('rect', {x: p.x - 2.6, y: p.y - 2.6, width: 5.2, height: 5.2, rx: 1, class: 'power-box'}));
+}
+for (const p of GUEST_PLOTS){
+  const c = svgEl('circle', {cx: p.x, cy: p.y, r: isPitch(p) ? 8.6 : 12, class: 'hit' + (isPitch(p) ? '' : ' special')});
+  c.dataset.key = p.key;
+  hitLayer.appendChild(c);
+}
+
+// ---------- viewBox zoom & pan ----------
+// The viewBox always has the same aspect ratio as the map area, so a route can
+// fill a portrait phone screen instead of being letterboxed.
+function aspect(){
+  const r = svg.getBoundingClientRect();
+  return (r.width > 0 && r.height > 0) ? r.width / r.height : VBW / VBH;
+}
+function fullView(){
+  const a = aspect();
+  const w = Math.max(VBW, VBH * a), h = w / a;
+  return {x: (VBW - w) / 2, y: (VBH - h) / 2, w, h};
+}
+function clampVB(v){
+  const a = aspect();
+  const full = fullView();
+  const w = Math.min(Math.max(v.w, MIN_W), full.w);
+  const h = w / a;
+  let cx = v.x + v.w / 2, cy = v.y + v.h / 2;
+  cx = w >= VBW - 0.5 ? VBW / 2 : Math.min(Math.max(cx, 0), VBW);
+  cy = h >= VBH - 0.5 ? VBH / 2 : Math.min(Math.max(cy, 0), VBH);
+  return {x: cx - w / 2, y: cy - h / 2, w, h};
+}
+let vb = fullView();
+let anim = null;
+
+function applyVB(){
+  svg.setAttribute('viewBox', `${vb.x.toFixed(2)} ${vb.y.toFixed(2)} ${vb.w.toFixed(2)} ${vb.h.toFixed(2)}`);
+  sizeMarkers();
+}
+function unitsPerPx(){
+  const r = svg.getBoundingClientRect();
+  return r.width > 0 ? vb.w / r.width : 1;
+}
+function clientToSvg(cx, cy){
+  const r = svg.getBoundingClientRect();
+  const k = unitsPerPx();
+  return [vb.x + (cx - r.left) * k, vb.y + (cy - r.top) * k];
+}
+function animateTo(target, ms = 380){
+  target = clampVB(target);
+  if (anim) cancelAnimationFrame(anim);
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches){ vb = target; applyVB(); return; }
+  const from = {...vb}, t0 = performance.now();
+  const step = now => {
+    const t = Math.min(1, (now - t0) / ms);
+    const e = 1 - Math.pow(1 - t, 3);
+    vb = {
+      x: from.x + (target.x - from.x) * e, y: from.y + (target.y - from.y) * e,
+      w: from.w + (target.w - from.w) * e, h: from.h + (target.h - from.h) * e,
+    };
+    applyVB();
+    anim = t < 1 ? requestAnimationFrame(step) : null;
+  };
+  anim = requestAnimationFrame(step);
+}
+function zoomAt(px, py, factor, animate){
+  const target = {x: px - (px - vb.x) * factor, y: py - (py - vb.y) * factor, w: vb.w * factor, h: vb.h * factor};
+  if (target.w < MIN_W || target.w > fullView().w){
+    // Past a zoom limit: clamp the width but keep the anchor point still.
+    const w = Math.min(Math.max(target.w, MIN_W), fullView().w), f = w / vb.w;
+    target.x = px - (px - vb.x) * f; target.y = py - (py - vb.y) * f; target.w = w; target.h = vb.h * f;
+  }
+  if (animate) animateTo(target, 220); else { vb = clampVB(target); applyVB(); }
+}
+function fitToPoints(pts){
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  pts.forEach(([x, y]) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); });
+  const a = aspect(), pad = 40;
+  const bottomRoom = 70 * (VBW / Math.max(1, svg.getBoundingClientRect().width)); // keep clear of the bottom pill
+  const w = Math.max(x1 - x0 + pad * 2, (y1 - y0 + pad * 2 + bottomRoom) * a, VBW / 6);
+  const h = w / a;
+  animateTo({x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - h / 2 + bottomRoom / 2, w, h});
+}
+
+const pointers = new Map();
+let dragMoved = false, pinchStart = null, lastPan = null;
+
+svg.addEventListener('wheel', e => {
+  e.preventDefault();
+  const [px, py] = clientToSvg(e.clientX, e.clientY);
+  zoomAt(px, py, Math.exp(e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0016)), false);
+}, {passive: false});
+
+svg.addEventListener('pointerdown', e => {
+  if (anim){ cancelAnimationFrame(anim); anim = null; }
+  pointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
+  if (pointers.size === 1){
+    dragMoved = false;
+    lastPan = {x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY};
+  } else if (pointers.size === 2){
+    const [p1, p2] = [...pointers.values()];
+    pinchStart = {d: Math.hypot(p1.x - p2.x, p1.y - p2.y), w: vb.w};
+    dragMoved = true;
+  }
+});
+window.addEventListener('pointermove', e => {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, {x: e.clientX, y: e.clientY});
+  if (pointers.size === 2 && pinchStart){
+    const [p1, p2] = [...pointers.values()];
+    const d = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+    if (d > 0){
+      const [mx, my] = clientToSvg((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+      zoomAt(mx, my, (pinchStart.w * pinchStart.d / d) / vb.w, false);
+    }
+    return;
+  }
+  if (pointers.size === 1 && lastPan){
+    if (Math.hypot(e.clientX - lastPan.sx, e.clientY - lastPan.sy) > 5){
+      dragMoved = true;
+      svg.classList.add('dragging');
+      hideTooltip();
+    }
+    if (dragMoved){
+      const k = unitsPerPx();
+      vb = clampVB({...vb, x: vb.x - (e.clientX - lastPan.x) * k, y: vb.y - (e.clientY - lastPan.y) * k});
+      applyVB();
+    }
+    lastPan.x = e.clientX; lastPan.y = e.clientY;
+  }
+});
+function endPointer(e){
+  if (!pointers.has(e.pointerId)) return;
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinchStart = null;
+  if (pointers.size === 1){
+    const p = [...pointers.values()][0];
+    lastPan = {x: p.x, y: p.y, sx: p.x, sy: p.y};
+  }
+  if (pointers.size === 0){ lastPan = null; svg.classList.remove('dragging'); }
+}
+window.addEventListener('pointerup', endPointer);
+window.addEventListener('pointercancel', endPointer);
+
+document.getElementById('zoomIn').addEventListener('click', () => zoomAt(vb.x + vb.w / 2, vb.y + vb.h / 2, 0.6, true));
+document.getElementById('zoomOut').addEventListener('click', () => zoomAt(vb.x + vb.w / 2, vb.y + vb.h / 2, 1 / 0.6, true));
+document.getElementById('zoomReset').addEventListener('click', () => animateTo(fullView()));
+// The map area also changes size when the sidebar opens or closes, so watch the
+// element itself rather than the window.
+const refit = () => { vb = clampVB(vb); applyVB(); };
+if ('ResizeObserver' in window) new ResizeObserver(refit).observe(document.getElementById('maparea'));
+else window.addEventListener('resize', refit);
+
+// ---------- tooltip ----------
+const tooltip = document.getElementById('tooltip');
+const maparea = document.getElementById('maparea');
+function hideTooltip(){ tooltip.classList.remove('show'); }
+hitLayer.addEventListener('pointerover', e => {
+  if (e.pointerType === 'touch' || pointers.size) return;
+  const key = e.target.dataset && e.target.dataset.key;
+  const p = key && findPlot(key);
+  if (!p) return;
+  const kind = !isPitch(p) ? 'facility' : (p.color === 'yellow' ? 'tour-operator pitch' : 'campsite pitch');
+  tooltip.innerHTML = `<b>${escapeHtml(isPitch(p) ? 'Pitch ' + p.key : p.key)}</b> &middot; ${escapeHtml(kind)}<br>${escapeHtml(plotStreet(p))}`;
+  tooltip.classList.add('show');
+});
+hitLayer.addEventListener('pointermove', e => {
+  const r = maparea.getBoundingClientRect();
+  tooltip.style.left = (e.clientX - r.left) + 'px';
+  tooltip.style.top  = (e.clientY - r.top) + 'px';
+});
+hitLayer.addEventListener('pointerout', hideTooltip);
+
+// ---------- selection & routing ----------
+const fromInput = document.getElementById('fromInput');
+const toInput   = document.getElementById('toInput');
+const routeBtn  = document.getElementById('routeBtn');
+const routeContent = document.getElementById('routeContent');
+const bottomMsg = document.getElementById('bottomMsg');
+let lastResult = null;
+
+function refreshInputs(){
+  const f = findPlot(fromInput.value), t = findPlot(toInput.value);
+  fromInput.classList.toggle('invalid', !!fromInput.value.trim() && !f);
+  toInput.classList.toggle('invalid', !!toInput.value.trim() && !t);
+  routeBtn.disabled = !(f && t);
+  return {f, t};
+}
+
+function drawMarker(p, letter, color){
+  const g = svgEl('g', {class: 'marker', 'data-x': p.x, 'data-y': p.y});
+  g.appendChild(svgEl('circle', {cx: 0, cy: 0, r: 13, fill: color, opacity: .18}));
+  g.appendChild(svgEl('circle', {cx: 0, cy: 0, r: 8.5, fill: color, stroke: '#fff', 'stroke-width': 2}));
+  const t = svgEl('text', {x: 0, y: 0.5, 'text-anchor': 'middle', 'dominant-baseline': 'central',
+    fill: '#fff', 'font-size': 9, 'font-weight': 700, 'font-family': 'Figtree, Segoe UI, sans-serif'});
+  t.textContent = letter;
+  g.appendChild(t);
+  markerLayer.appendChild(g);
+}
+function sizeMarkers(){
+  const k = Math.min(unitsPerPx(), 1.4);
+  markerLayer.querySelectorAll('.marker').forEach(g => {
+    g.setAttribute('transform', `translate(${g.dataset.x} ${g.dataset.y}) scale(${(k * 1.05).toFixed(3)})`);
+  });
+}
+
+function clearRoute(){
+  routeLayer.replaceChildren();
+  markerLayer.replaceChildren();
+  lastResult = null;
+}
+
+function showSelectionOnly(){
+  clearRoute();
+  const f = findPlot(fromInput.value), t = findPlot(toInput.value);
+  if (f) drawMarker(f, 'A', '#1F4E45');
+  if (t) drawMarker(t, 'B', '#E4674A');
+  sizeMarkers();
+  if (f && !t) bottomMsg.innerHTML = `Start: <b>${escapeHtml(plotLabel(f))}</b>. Now tap a destination`;
+  else if (!f && t) bottomMsg.innerHTML = `Destination: <b>${escapeHtml(plotLabel(t))}</b>. Now pick a start`;
+  else if (!f && !t) bottomMsg.textContent = 'Tap a pitch to set your start';
+}
+
+function updateUrl(f, t){
+  try {
+    const u = new URL(window.location.href);
+    if (f && t){ u.searchParams.set('from', f.key); u.searchParams.set('to', t.key); }
+    else { u.searchParams.delete('from'); u.searchParams.delete('to'); }
+    history.replaceState(null, '', u);
+  } catch (err) { /* file:// or sandboxed frames may refuse; the route still works */ }
+}
+
+function route(fit = true){
+  const {f, t} = refreshInputs();
+  if (!f || !t){ showSelectionOnly(); return; }
+  clearRoute();
+
+  if (f === t){
+    drawMarker(f, 'A', '#1F4E45');
+    sizeMarkers();
+    routeContent.innerHTML = '<div class="empty">Start and destination are the same place. You have arrived.</div>';
+    bottomMsg.innerHTML = `<b>${escapeHtml(plotLabel(f))}</b>: you are already there`;
+    return;
+  }
+
+  const result = pathBetween(f.node, t.node);
+  if (!result){
+    routeContent.innerHTML = '<div class="empty">No walking route found between these two places.</div>';
+    bottomMsg.textContent = 'No route found';
+    return;
+  }
+
+  const pts = [[f.x, f.y], ...result.nodes.map(n => NODES[n]), [t.x, t.y]];
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+  routeLayer.appendChild(svgEl('path', {d, fill: 'none', stroke: '#fff', 'stroke-width': 9,
+    'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke', opacity: .9}));
+  routeLayer.appendChild(svgEl('path', {d, fill: 'none', stroke: '#E4674A', 'stroke-width': 5,
+    'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'vector-effect': 'non-scaling-stroke', opacity: .28}));
+  routeLayer.appendChild(svgEl('path', {d, fill: 'none', stroke: '#C5503A', 'stroke-width': 3.2,
+    'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-dasharray': '1 10',
+    'vector-effect': 'non-scaling-stroke', class: 'route-line'}));
+  drawMarker(f, 'A', '#1F4E45');
+  drawMarker(t, 'B', '#E4674A');
+  sizeMarkers();
+  if (fit) fitToPoints(pts);
+
+  const units = dist([f.x, f.y], NODES[result.nodes[0]])
+    + result.segs.reduce((s, e) => s + e.w, 0)
+    + dist(NODES[result.nodes[result.nodes.length - 1]], [t.x, t.y]);
+  const meters = units * M_PER_UNIT;
+  const minutes = Math.max(1, Math.round(meters / WALK_SPEED / 60));
+
+  const legs = [];
+  result.segs.forEach(seg => {
+    if (legs.length && legs[legs.length - 1].street === seg.street) legs[legs.length - 1].w += seg.w;
+    else legs.push({street: seg.street, w: seg.w});
+  });
+
+  let html = '<div class="summary">'
+    + `<div class="stat"><span class="v">${Math.round(meters)} m</span><span class="l">distance</span></div>`
+    + `<div class="stat"><span class="v">${minutes} min</span><span class="l">on foot</span></div>`
+    + '</div><ul class="steps">'
+    + `<li>Leave from <span class="street">${escapeHtml(plotLabel(f))}</span></li>`;
+  legs.forEach(l => {
+    const m = Math.round(l.w * M_PER_UNIT);
+    if (m < 1) return;
+    html += `<li><span class="street">${escapeHtml(l.street)}</span> <span class="d">&middot; ${m} m</span></li>`;
+  });
+  html += `<li>Arrive at <span class="street">${escapeHtml(plotLabel(t))}</span></li></ul>`;
+  routeContent.innerHTML = html;
+  bottomMsg.innerHTML = `<b>${escapeHtml(f.key)}</b> &rarr; <b>${escapeHtml(t.key)}</b> &middot; ${Math.round(meters)} m &middot; ${minutes} min`;
+  lastResult = result;
+  updateUrl(f, t);
+}
+
+[fromInput, toInput].forEach(inp => {
+  // `input` rather than `change`: datalist picks only fire `change` on blur.
+  inp.addEventListener('input', () => {
+    const {f, t} = refreshInputs();
+    if (f && t) route(); else { showSelectionOnly(); updateUrl(null, null); }
+  });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !routeBtn.disabled) route(); });
+});
+routeBtn.addEventListener('click', () => route());
+document.getElementById('swapBtn').addEventListener('click', () => {
+  [fromInput.value, toInput.value] = [toInput.value, fromInput.value];
+  route();
+});
+document.getElementById('randomBtn').addEventListener('click', () => {
+  const pitches = GUEST_PLOTS.filter(isPitch);
+  let a, b, guard = 0;
+  do {
+    a = pitches[Math.floor(Math.random() * pitches.length)];
+    b = pitches[Math.floor(Math.random() * pitches.length)];
+    guard++;
+  } while ((a === b || dist([a.x, a.y], [b.x, b.y]) < 320) && guard < 200);
+  fromInput.value = a.key;
+  toInput.value = b.key;
+  route();
+});
+document.getElementById('detailsBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  window.sidebarApi.expand();
+});
+
+hitLayer.addEventListener('click', e => {
+  if (dragMoved) return;
+  const key = e.target.dataset && e.target.dataset.key;
+  if (!key) return;
+  const f = findPlot(fromInput.value), t = findPlot(toInput.value);
+  if (!f || (f && t)){
+    fromInput.value = key;
+    toInput.value = '';
+    updateUrl(null, null);
+    showSelectionOnly();
+  } else {
+    toInput.value = key;
+    route();
+  }
+  refreshInputs();
+});
+
+document.getElementById('togglePower').addEventListener('change', e => {
+  powerLayer.style.display = e.target.checked ? '' : 'none';
+});
+document.getElementById('toggleGraph').addEventListener('change', e => {
+  graphLayer.style.display = e.target.checked ? '' : 'none';
+});
+
+// ---------- stats ----------
+const pitchCount = GUEST_PLOTS.filter(isPitch).length;
+const facilityCount = GUEST_PLOTS.length - pitchCount;
+const streetCount = new Set(EDGES.map(e => e[2])).size;
+const statItems = [
+  [pitchCount.toLocaleString('en'), 'pitches'],
+  [facilityCount, 'facilities'],
+  [streetCount, 'streets'],
+  [Object.keys(NODES).length, 'nodes'],
+  [EDGES.length, 'edges'],
+  [(totalLength * M_PER_UNIT / 1000).toFixed(1) + ' km', 'paths'],
+];
+document.getElementById('stats').innerHTML = statItems
+  .map(([v, l]) => `<div><b>${escapeHtml(v)}</b><small>${escapeHtml(l)}</small></div>`).join('');
+
+// ---------- init ----------
+applyVB();
+(function initFromUrl(){
+  const q = new URLSearchParams(window.location.search);
+  const f = findPlot(q.get('from')), t = findPlot(q.get('to'));
+  if (f) fromInput.value = f.key;
+  if (t) toInput.value = t.key;
+  if (f && t) route(); else showSelectionOnly();
+  refreshInputs();
+})();
+</script>
+</body>
+</html>
