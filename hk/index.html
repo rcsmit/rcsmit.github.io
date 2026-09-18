@@ -1,0 +1,3066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Housekeeping board</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg: #E8EDE7;
+  --surface: #FFFFFF;
+  --surface-2: #F2F5F0;
+  --ink: #15241C;
+  --ink-2: #435449;
+  --ink-3: #66776C;
+  --line: #CCD6C9;
+  --pine: #1E5A3F;
+  --pine-2: #25704E;
+  --on-pine: #F2F9F4;
+  --on-primary: #FFFFFF;
+  --focus: #E0A526;
+  --st-occupied: #3A5C93;
+  --st-guest_left: #A1600E;
+  --st-cleaned: #15786A;
+  --st-prepped: #3B7630;
+  --urgent: #BD3326;
+  --st-occupied-bg: #E3EAF6;
+  --st-guest_left-bg: #FAEDD8;
+  --st-cleaned-bg: #DBF0EB;
+  --st-prepped-bg: #E2EFDB;
+  --urgent-bg: #FAE3E0;
+  --tag-ink: #FFFFFF;
+  --font: 'Barlow', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-cond: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', 'Segoe UI', sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1813; --surface: #17231C; --surface-2: #1E2C24; --ink: #E2EBE4; --ink-2: #A8BAAE; --ink-3: #82958A; --line: #2C3C32;
+    --pine: #133A29; --pine-2: #4FAE7F; --on-pine: #E8F5EC; --on-primary: #0C1510; --focus: #F2C14E;
+    --st-occupied: #86A6DD; --st-guest_left: #E4A650; --st-cleaned: #52C4B0; --st-prepped: #8CC877; --urgent: #F07366;
+    --st-occupied-bg: #1C2940; --st-guest_left-bg: #37270F; --st-cleaned-bg: #11322D; --st-prepped-bg: #1C3216; --urgent-bg: #3B1814;
+    --tag-ink: #0C1510;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1813; --surface: #17231C; --surface-2: #1E2C24; --ink: #E2EBE4; --ink-2: #A8BAAE; --ink-3: #82958A; --line: #2C3C32;
+  --pine: #133A29; --pine-2: #4FAE7F; --on-pine: #E8F5EC; --on-primary: #0C1510; --focus: #F2C14E;
+  --st-occupied: #86A6DD; --st-guest_left: #E4A650; --st-cleaned: #52C4B0; --st-prepped: #8CC877; --urgent: #F07366;
+  --st-occupied-bg: #1C2940; --st-guest_left-bg: #37270F; --st-cleaned-bg: #11322D; --st-prepped-bg: #1C3216; --urgent-bg: #3B1814;
+  --tag-ink: #0C1510;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.45; }
+body.modal-open { overflow: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.muted { color: var(--ink-3); }
+h2 { font-family: var(--font-cond); font-weight: 700; font-size: 1.5rem; line-height: 1.1; margin: 0; }
+h3 { font-size: 1.05rem; margin: 0 0 8px; }
+
+/* Header */
+.topbar { background: var(--pine); color: var(--on-pine); }
+.topbar-inner { max-width: 1360px; margin: 0 auto; padding: 14px 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand svg { flex: none; }
+.brand h1 { font-family: var(--font-cond); font-weight: 700; font-size: 1.7rem; line-height: 1; margin: 0; }
+.brand-sub { margin: 3px 0 0; font-size: .85rem; opacity: .82; }
+.demo-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; border: 1px dashed rgba(255,255,255,.5); border-radius: 10px; padding: 8px 10px; background: rgba(255,255,255,.06); }
+.demo-label { font-size: .8rem; font-weight: 700; background: #F2C14E; color: #2A1F00; border-radius: 4px; padding: 2px 7px; }
+.login-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: .9rem; }
+.role-buttons { display: inline-flex; border: 1px solid rgba(255,255,255,.55); border-radius: 8px; overflow: hidden; }
+.role-buttons button { background: transparent; border: 0; color: var(--on-pine); padding: 6px 11px; min-height: 38px; font-weight: 600; font-size: .9rem; }
+.role-buttons button + button { border-left: 1px solid rgba(255,255,255,.35); }
+.role-buttons button[aria-pressed="true"] { background: var(--on-pine); color: var(--pine); }
+.user-pick select { background: rgba(0,0,0,.22); color: var(--on-pine); border: 1px solid rgba(255,255,255,.45); border-radius: 6px; padding: 6px 8px; min-height: 38px; max-width: 220px; }
+.user-pick select option { color: #15241C; background: #FFFFFF; }
+
+.toolbar { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.toolbar-inner { max-width: 1360px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.date-control { display: flex; align-items: center; gap: 6px; }
+.date-control input { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 8px; min-height: 40px; }
+.icon-btn { width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-size: 1.3rem; line-height: 1; }
+.search { flex: 1 1 300px; display: flex; gap: 6px; align-items: center; }
+.search #bulkBtn { flex: none; }
+.search input { flex: 1 1 auto; min-width: 0; width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 12px; min-height: 40px; }
+
+.page { max-width: 1360px; margin: 0 auto; padding: 14px 16px 40px; }
+
+/* Summary tallies */
+.summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; margin-bottom: 10px; }
+.tally { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--c, var(--ink-3)); border-radius: 7px; padding: 5px 8px; text-align: left; }
+button.tally:hover { background: var(--surface-2); }
+.tally .n { font-family: var(--font-cond); font-weight: 700; font-size: 1.4rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.tally .l { font-size: .74rem; line-height: 1.15; color: var(--ink-2); }
+
+/* Tabs */
+.tabs { display: flex; flex-wrap: wrap; gap: 2px 4px; border-bottom: 2px solid var(--line); margin-bottom: 12px; }
+.tabs button { flex: none; background: none; border: 0; border-bottom: 3px solid transparent; margin-bottom: -2px; padding: 6px 9px; font-weight: 600; font-size: .93rem; color: var(--ink-2); min-height: 38px; display: inline-flex; align-items: center; gap: 5px; }
+.tabs button[aria-current="page"] { color: var(--ink); border-bottom-color: var(--pine-2); }
+.count { background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; font-size: .75rem; padding: 0 7px; min-width: 22px; text-align: center; font-variant-numeric: tabular-nums; }
+.count.hot { background: var(--urgent); border-color: var(--urgent); color: #FFFFFF; }
+
+/* View head */
+.view-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 10px; }
+.view-head h2 { font-size: 1.3rem; }
+.view-head p { margin: 2px 0 0; color: var(--ink-2); font-size: .9rem; max-width: 70ch; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 10px; font-size: .83rem; font-weight: 600; min-height: 32px; }
+.chip .c { color: var(--ink-3); font-weight: 500; margin-left: 3px; }
+.chip[aria-pressed="true"] .c { color: inherit; opacity: .75; }
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* Cards */
+.st-occupied { --sc: var(--st-occupied); --sc-bg: var(--st-occupied-bg); }
+.st-guest_left { --sc: var(--st-guest_left); --sc-bg: var(--st-guest_left-bg); }
+.st-cleaned { --sc: var(--st-cleaned); --sc-bg: var(--st-cleaned-bg); }
+.st-prepped { --sc: var(--st-prepped); --sc-bg: var(--st-prepped-bg); }
+
+/* Key tag: the house number, coloured by status */
+.tag { position: relative; display: inline-flex; align-items: center; min-width: 64px; justify-content: center; background: var(--sc, var(--ink-3)); color: var(--tag-ink); font-family: var(--font-cond); font-weight: 700; font-size: 1.4rem; line-height: 1; padding: 6px 12px 6px 24px; border-radius: 6px 16px 16px 6px; font-variant-numeric: tabular-nums; }
+.tag::before { content: ""; position: absolute; left: 8px; top: 50%; width: 8px; height: 8px; border-radius: 50%; background: var(--surface); transform: translateY(-50%); }
+.tag.small { font-size: 1.1rem; min-width: 52px; padding: 4px 10px 4px 20px; }
+.tag.small::before { left: 7px; width: 7px; height: 7px; }
+.pill { display: inline-block; font-size: .82rem; font-weight: 600; padding: 2px 9px; border-radius: 999px; background: var(--sc-bg); color: var(--sc); border: 1px solid var(--sc); }
+.badge-b2b { font-size: .78rem; font-weight: 700; background: var(--urgent); color: #FFFFFF; border-radius: 4px; padding: 2px 7px; }
+.badge-manual { font-size: .76rem; font-weight: 600; color: var(--ink-2); border: 1px dashed var(--ink-3); border-radius: 4px; padding: 1px 6px; }
+.track { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3px; }
+.seg { height: 5px; border-radius: 3px; background: var(--line); }
+.seg.on { background: var(--sc); }
+.lines { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 3px 12px; font-size: .93rem; }
+.lines dt { color: var(--ink-3); }
+.lines dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.who { font-weight: 600; }
+
+.btn { min-height: 42px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; }
+.btn:hover { background: var(--surface-2); }
+.btn-primary { background: var(--pine-2); border-color: var(--pine-2); color: var(--on-primary); }
+.btn-primary:hover { background: var(--pine-2); filter: brightness(1.08); }
+.btn-status { background: var(--sc); border-color: var(--sc); color: var(--tag-ink); }
+.btn-status:hover { background: var(--sc); filter: brightness(1.08); }
+.btn-danger { color: var(--urgent); border-color: var(--urgent); background: transparent; }
+.btn-small { min-height: 34px; padding: 4px 10px; font-size: .88rem; }
+
+.empty { padding: 28px 20px; text-align: center; color: var(--ink-2); background: var(--surface); border: 1px dashed var(--line); border-radius: 10px; }
+.empty strong { display: block; color: var(--ink); font-size: 1.05rem; margin-bottom: 4px; }
+
+/* Panels, tables */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+.panel > h2 { margin-bottom: 10px; }
+.cols { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 860px) { .cols { grid-template-columns: 1fr 1fr; } }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: .93rem; }
+th, td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
+th { font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.total td { font-weight: 700; border-top: 2px solid var(--ink-3); }
+tr.current td { background: var(--surface-2); }
+.move-list { list-style: none; margin: 0; padding: 0; }
+.move-list li { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 2px 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.move-list li:last-child { border-bottom: 0; }
+.move-meta { font-size: .9rem; color: var(--ink-2); }
+.move-time { font-family: var(--font-cond); font-weight: 700; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.ready { font-size: .82rem; font-weight: 600; }
+.ready.ok { color: var(--st-prepped); }
+.ready.no { color: var(--urgent); }
+
+/* Period report */
+.period-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; }
+.period-controls label { display: flex; flex-direction: column; font-size: .85rem; color: var(--ink-2); gap: 2px; }
+.period-controls input { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 8px; min-height: 40px; }
+.totals { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.chart-wrap { overflow-x: auto; margin: 6px 0 4px; }
+.chart-wrap svg { display: block; }
+.chart-wrap text { fill: var(--ink-3); font-family: var(--font); font-size: 11px; }
+.chart-wrap .grid-line { stroke: var(--line); stroke-width: 1; }
+.bar-dep { fill: var(--st-guest_left); }
+.bar-arr { fill: var(--st-occupied); }
+.bar-b2b { fill: var(--urgent); }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: .88rem; color: var(--ink-2); margin-bottom: 12px; }
+.legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--k); }
+.message { border-radius: 8px; padding: 10px 12px; margin: 10px 0; border: 1px solid; }
+.message.error { background: var(--urgent-bg); border-color: var(--urgent); }
+.message.warning { background: var(--st-guest_left-bg); border-color: var(--st-guest_left); }
+.message.ok { background: var(--st-prepped-bg); border-color: var(--st-prepped); }
+.message ul { margin: 6px 0 0; padding-left: 20px; font-size: .9rem; }
+
+/* Activity log */
+.log { list-style: none; margin: 0; padding: 0; }
+.log li { display: grid; grid-template-columns: 150px 1fr; gap: 2px 14px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: .93rem; }
+.log time { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.log .src { font-size: .76rem; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; margin-left: 6px; color: var(--ink-3); }
+@media (max-width: 560px) { .log li { grid-template-columns: 1fr; } }
+
+/* Admin */
+.drop { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; border: 2px dashed var(--line); border-radius: 10px; padding: 22px 14px; text-align: center; background: var(--surface-2); }
+.drop.over { border-color: var(--pine-2); }
+.drop input[type="file"] { max-width: 100%; }
+.hint { font-size: .88rem; color: var(--ink-2); margin: 8px 0; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.toggle { display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; font-size: .93rem; }
+.toggle input { width: 20px; height: 20px; margin-top: 2px; flex: none; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; align-items: end; margin-top: 12px; }
+.form-grid label, .field { display: flex; flex-direction: column; gap: 3px; font-size: .85rem; color: var(--ink-2); }
+input.text, select.text, textarea.text { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 9px; min-height: 40px; color: var(--ink); width: 100%; }
+textarea.text { min-height: 90px; resize: vertical; }
+.perm-table td { text-align: center; }
+.perm-table td:first-child, .perm-table th:first-child { text-align: left; }
+.yes { color: var(--st-prepped); font-weight: 700; }
+.no-perm { color: var(--ink-3); }
+
+/* Modal: bottom sheet on phones, centred dialog on larger screens */
+.overlay { position: fixed; inset: 0; z-index: 50; background: rgba(8, 18, 12, .55); display: flex; align-items: flex-end; justify-content: center; }
+.dialog { background: var(--surface); width: 100%; max-width: 660px; max-height: 92vh; overflow: auto; border-radius: 14px 14px 0 0; padding: 18px 18px 22px; animation: sheet-in .18s ease-out; }
+.dialog:focus { outline: none; }
+@media (min-width: 720px) { .overlay { align-items: center; padding: 24px; } .dialog { border-radius: 14px; } }
+@keyframes sheet-in { from { transform: translateY(24px); opacity: .6; } to { transform: none; opacity: 1; } }
+.dialog-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.dialog-head h2 { flex: 1 1 auto; }
+.close-btn { margin-left: auto; width: 42px; height: 42px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-size: 1.4rem; line-height: 1; }
+.dialog section { margin-top: 16px; }
+.dialog textarea.export { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .82rem; min-height: 180px; }
+
+.toast { position: fixed; left: 50%; bottom: 18px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; z-index: 60; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-weight: 600; max-width: calc(100% - 32px); transition: opacity .2s, transform .2s; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.error { background: var(--urgent); color: #FFFFFF; }
+.toast { display: flex; align-items: center; gap: 14px; }
+.toast.show.has-action { pointer-events: auto; }
+.toast-action { flex: none; background: none; border: 1.5px solid currentColor; color: inherit; border-radius: 6px; padding: 4px 14px; min-height: 36px; font-weight: 700; }
+.footnote { max-width: 1360px; margin: 0 auto; padding: 0 16px 30px; font-size: .85rem; color: var(--ink-3); }
+
+@media (max-width: 560px) {
+  .brand h1 { font-size: 1.45rem; }
+}
+/* Compact house rows */
+.rows { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 440px), 1fr)); gap: 5px 12px; }
+.row { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.row-line { display: flex; align-items: stretch; min-width: 0; }
+.row.is-mine { border-color: var(--pine-2); }
+.row.is-b2b.is-mine { border-color: var(--urgent); }
+.row.is-b2b { border-color: var(--urgent); box-shadow: inset 4px 0 0 var(--urgent); }
+.row-main { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 9px; background: none; border: 0; padding: 6px 9px; text-align: left; }
+.row.is-b2b .row-main { padding-left: 12px; }
+.row-main:hover { background: var(--surface-2); }
+.row-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.row-top { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+.row-sub { display: flex; flex-wrap: wrap; gap: 0 10px; font-size: .84rem; color: var(--ink-2); }
+.kv .k { color: var(--ink-3); }
+.row-note { font-size: .8rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.row-note::before { content: "✎ "; color: var(--focus); }
+.row .pill { font-size: .74rem; padding: 0 7px; }
+.row .badge-b2b, .row .badge-manual { font-size: .7rem; padding: 0 5px; }
+.btn-row { flex: none; width: 92px; border: 0; border-left: 1px solid var(--line); border-radius: 0; min-height: 0; padding: 6px 8px; font-size: .84rem; line-height: 1.15; white-space: normal; background: var(--sc-bg); color: var(--sc); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; text-align: center; }
+.btn-row:hover { background: var(--sc-bg); filter: brightness(.97); }
+.btn-row .verb { font-size: .72rem; font-weight: 600; color: var(--ink-2); }
+.btn-row .to { font-weight: 700; }
+.btn-row::before { content: ""; width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 50%; margin-bottom: 2px; }
+.tag.mini { font-size: .95rem; min-width: 0; padding: 2px 8px 2px 17px; border-radius: 4px 12px 12px 4px; }
+.tag.mini::before { left: 6px; width: 6px; height: 6px; }
+.taglist { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 10px; }
+.btn-head { min-height: 34px; padding: 4px 10px; font-size: .86rem; }
+
+.badge-mine { font-size: .7rem; font-weight: 700; background: var(--pine-2); color: var(--on-primary); border-radius: 4px; padding: 0 5px; }
+.row-assign { border-top: 1px dashed var(--line); padding: 4px 9px; font-size: .82rem; color: var(--ink-2); }
+.row.is-b2b .row-assign { padding-left: 12px; }
+.row-assign label { display: flex; align-items: center; gap: 8px; }
+.assign-select { flex: 1 1 auto; max-width: 240px; min-height: 32px; padding: 2px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); }
+.head-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.list-title { font-size: .92rem; color: var(--ink-2); margin: 12px 0 6px; }
+.field strong { color: var(--ink); font-size: .95rem; }
+.neutral { --sc: var(--pine-2); --sc-bg: var(--surface-2); }
+
+.badge-in { font-size: .7rem; font-weight: 700; color: var(--st-guest_left); background: var(--st-guest_left-bg); border: 1px dashed var(--st-guest_left); border-radius: 4px; padding: 0 5px; }
+.badge-time { font-size: .7rem; font-weight: 700; color: var(--st-occupied); background: var(--st-occupied-bg); border: 1px solid var(--st-occupied); border-radius: 4px; padding: 0 5px; }
+.move-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.chip-time { min-height: 30px; font-size: .76rem; padding: 2px 8px; }
+.log-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; align-items: end; margin-bottom: 10px; }
+.log-filters label { display: flex; flex-direction: column; gap: 3px; font-size: .82rem; color: var(--ink-2); }
+.test-list { list-style: none; margin: 0; padding: 0; }
+.test-list li { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
+.test-list .mark { font-weight: 700; width: 1.2em; flex: none; }
+.test-list .pass .mark { color: var(--st-prepped); }
+.test-list .fail .mark { color: var(--urgent); }
+
+.row-check { flex: none; display: flex; align-items: center; justify-content: center; padding: 0 0 0 8px; cursor: pointer; }
+.row.is-b2b .row-check { padding-left: 10px; }
+.row-check input { width: 22px; height: 22px; margin: 0; accent-color: var(--pine-2); cursor: pointer; }
+.row.is-selected { outline: 2px solid var(--pine-2); outline-offset: -1px; background: var(--surface-2); }
+.move-list li.is-selected { background: var(--surface-2); }
+.move-list .row-check { padding: 0; }
+.selbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--ink); color: var(--bg); box-shadow: 0 -4px 16px rgba(0,0,0,.18); }
+.selbar-inner { max-width: 1360px; margin: 0 auto; padding: 8px 16px calc(8px + env(safe-area-inset-bottom)); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.selbar-count { display: flex; flex-direction: column; margin-right: auto; min-width: 0; line-height: 1.2; }
+.selbar-houses { font-size: .78rem; opacity: .8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60vw; }
+.selbar .btn { background: transparent; color: var(--bg); border-color: rgba(255,255,255,.5); min-height: 36px; }
+.selbar .btn-primary { background: var(--bg); color: var(--ink); border-color: var(--bg); }
+body.has-selbar .page { padding-bottom: 90px; }
+body.has-selbar .toast { bottom: 84px; }
+
+/* Tables (computer) */
+.dtable { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; font-size: .9rem; }
+.dtable th { position: sticky; top: 0; background: var(--surface-2); font-size: .78rem; font-weight: 600; color: var(--ink-2); padding: 7px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; text-align: left; }
+.dtable th:first-child { border-top-left-radius: 10px; }
+.dtable th:last-child { border-top-right-radius: 10px; }
+.dtable td { padding: 5px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
+.dtable tbody tr:last-child td { border-bottom: 0; }
+.dtable tbody tr:hover td { background: var(--surface-2); }
+.dtable tr.is-b2b td:first-child { box-shadow: inset 4px 0 0 var(--urgent); }
+.dtable tr.is-mine td { background: color-mix(in srgb, var(--pine-2) 7%, var(--surface)); }
+.dtable tr.is-selected td { background: color-mix(in srgb, var(--pine-2) 15%, var(--surface)); }
+.dtable .c-sel { width: 36px; padding-right: 0; }
+.dtable .c-sel .row-check { padding: 0; }
+.dtable .c-house { width: 1%; }
+.dtable .c-flags .flags { display: flex; flex-wrap: wrap; gap: 3px; white-space: normal; min-width: 90px; }
+.dtable .c-flags .badge-b2b, .dtable .c-flags .badge-time, .dtable .c-flags .badge-in, .dtable .c-flags .badge-mine, .dtable .c-flags .badge-manual { font-size: .7rem; padding: 0 5px; white-space: nowrap; }
+.dtable .c-notes { white-space: normal; min-width: 140px; max-width: 260px; }
+.dtable .c-act { text-align: right; width: 1%; }
+.dtable .c-assign .assign-select { min-width: 130px; }
+.dtable .pill { font-size: .75rem; padding: 0 7px; }
+.cell-sub { display: block; font-size: .8rem; color: var(--ink-2); }
+.cell-note { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: .84rem; color: var(--ink-2); }
+.house-link { background: none; border: 0; padding: 0; cursor: pointer; }
+.house-link:hover .tag { filter: brightness(1.08); }
+.btn-set { min-height: 32px; padding: 3px 10px; font-size: .84rem; background: var(--sc-bg); color: var(--sc); border: 1px solid var(--sc); white-space: nowrap; }
+.btn-set:hover { background: var(--sc-bg); filter: brightness(.96); }
+.stack { display: grid; gap: 14px; }
+.dtable .move-time { font-size: 1rem; }
+
+/* Bulk update */
+.seg-choice { border: 0; padding: 0; margin: 12px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.seg-choice legend { font-size: .85rem; color: var(--ink-2); padding: 0; margin-bottom: 5px; }
+.seg-choice label { position: relative; }
+.seg-choice input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg-choice span { display: inline-block; padding: 6px 13px; border: 1.5px solid var(--sc); border-radius: 999px; color: var(--sc); font-weight: 600; font-size: .9rem; }
+.seg-choice input:checked + span { background: var(--sc); color: var(--tag-ink); }
+.seg-choice input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+.bulk-group h3 { font-size: .92rem; margin: 8px 0 0; }
+.bulk-group p { margin: 2px 0 0; font-size: .86rem; color: var(--ink-2); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.toolbar .btn-small { min-height: 38px; }
+
+@media (max-width: 560px) {
+  .topbar-inner { padding: 8px 12px; gap: 6px; }
+  .brand svg { width: 26px; height: 26px; }
+  .brand h1 { font-size: 1.3rem; }
+  .brand-sub { display: none; }
+  .demo-switch { width: 100%; padding: 5px 7px; gap: 4px 8px; }
+  .demo-label { font-size: .72rem; }
+  .role-buttons button { min-height: 32px; padding: 3px 8px; font-size: .82rem; }
+  .user-pick select { min-height: 32px; padding: 2px 5px; font-size: .82rem; max-width: 150px; }
+  .toolbar-inner { padding: 6px 12px; gap: 6px; }
+  .toolbar { position: static; }
+  .search { flex-basis: 100%; }
+  .tag.small { font-size: 1rem; min-width: 44px; padding: 4px 8px 4px 18px; }
+  .search input { min-height: 36px; padding: 5px 10px; }
+  .page { padding: 8px 12px 30px; }
+  .panel { padding: 12px; }
+  .summary { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .tally { padding: 4px 6px; }
+  .tally .n { font-size: 1.2rem; }
+  .tally .l { font-size: .68rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dialog { animation: none; }
+  .toast { transition: none; }
+}
+@media print {
+  body { background: #FFFFFF; color: #000000; }
+  .topbar, .toolbar, .summary, .tabs, .footnote, .no-print, #modal, .toast { display: none !important; }
+  .panel { border: 0; padding: 0; }
+  .chart-wrap { overflow: visible; }
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
+        <path d="M4 9 H22 L30 17 L22 25 H4 Z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+        <circle cx="10" cy="17" r="2.6" fill="currentColor"/>
+      </svg>
+      <div>
+        <h1>Housekeeping board</h1>
+        <p class="brand-sub" id="datasetLabel"></p>
+      </div>
+    </div>
+    <div class="demo-switch" role="group" aria-labelledby="demoLabel">
+      <span class="demo-label" id="demoLabel">Demo mode: switch role</span>
+      <div class="login-line">
+        <span>Logged in as:</span>
+        <div class="role-buttons" id="roleButtons"></div>
+        <label class="user-pick"><span class="sr-only">User</span><select id="userSelect"></select></label>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <div class="date-control">
+      <button class="icon-btn" type="button" data-action="date-prev" aria-label="Previous day">‹</button>
+      <label><span class="sr-only">Working date</span><input type="date" id="demoDate"></label>
+      <button class="icon-btn" type="button" data-action="date-next" aria-label="Next day">›</button>
+      <button class="btn btn-small" type="button" data-action="date-today">Today</button>
+    </div>
+    <div class="search">
+      <label class="sr-only" for="search">Search</label>
+      <input type="search" id="search" autocomplete="off">
+      <button class="btn btn-small" type="button" id="bulkBtn" data-action="open-bulk">Bulk update</button>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <section class="summary" id="summary" aria-label="Summary for the selected date"></section>
+  <nav class="tabs" id="tabs" aria-label="Views"></nav>
+  <main id="view"></main>
+</div>
+<p class="footnote">Demo: everything lives in this browser tab and resets when you reload. Use the date arrows to move through the booking period and watch statuses change.</p>
+
+<div id="modal" hidden></div>
+<div class="selbar" id="selbar" role="region" aria-label="Selected houses" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<noscript><p style="padding:16px">This board needs JavaScript to run.</p></noscript>
+
+<script>
+'use strict';
+const version = "20260918-134951";
+
+/* ==========================================================================
+   CONFIG: statuses and roles. Adding a role or changing a permission is a
+   one-place edit in ROLE_PERMISSIONS; every view reads from it.
+   ========================================================================== */
+const STATUSES = ['occupied', 'guest_left', 'cleaned', 'prepped'];
+const STATUS_LABEL = { occupied: 'Occupied', guest_left: 'Guest left', cleaned: 'Cleaned', prepped: 'Prepped' };
+const PREVIOUS_STATUS = { guest_left: 'occupied', cleaned: 'guest_left', prepped: 'cleaned' };
+const NEXT_STATUS = { occupied: 'guest_left', guest_left: 'cleaned', cleaned: 'prepped' };
+const DEFAULT_CHECKOUT_TIME = '10:00';
+const DEFAULT_CHECKIN_TIME = '15:00';
+const EARLY_CHECKIN_TIME = '10:00';
+const LATE_CHECKOUT_TIME = '17:30';
+
+// Shared defaults so each role only lists what differs.
+const BASE_PERMISSIONS = {
+  seeGuestNames: false,
+  settableStatuses: [],
+  anyTransition: false,
+  clearOverride: false,
+  editNotes: true,
+  bulkEdit: false,
+  assignCleans: false,
+  assignPreps: false,
+  worksOn: null, // 'clean' or 'prep': this role gets tasks assigned and sees its own first
+  editBookingTimes: false, // grant early check-in / late check-out
+  viewUnitHistory: false,
+  exportReports: false,
+  manageData: false,
+  manageUsers: false,
+};
+const ROLE_PERMISSIONS = {
+  cleaner: {
+    ...BASE_PERMISSIONS,
+    label: 'Cleaner', short: 'Cleaner',
+    tabs: ['cleans'],
+    settableStatuses: ['cleaned'],
+    bulkEdit: true,
+    worksOn: 'clean',
+  },
+  cleaning: {
+    ...BASE_PERMISSIONS,
+    label: 'Cleaning company', short: 'Clean co.',
+    tabs: ['cleans'],
+    settableStatuses: ['cleaned'],
+    bulkEdit: true,
+    assignCleans: true,
+  },
+  rep: {
+    ...BASE_PERMISSIONS,
+    label: 'Rep', short: 'Rep',
+    tabs: ['movements', 'units', 'cleans', 'preps'],
+    seeGuestNames: true,
+    settableStatuses: ['guest_left', 'prepped'],
+    bulkEdit: true,
+    editBookingTimes: true,
+    worksOn: 'prep', // reps do the preps; management assigns them
+  },
+  management: {
+    ...BASE_PERMISSIONS,
+    label: 'Management', short: 'Manager',
+    tabs: ['units', 'movements', 'cleans', 'preps', 'period', 'log', 'admin', 'tests'],
+    editBookingTimes: true,
+    seeGuestNames: true,
+    settableStatuses: ['occupied', 'guest_left', 'cleaned', 'prepped'],
+    anyTransition: true,
+    clearOverride: true,
+    bulkEdit: true,
+    assignPreps: true,
+    viewUnitHistory: true,
+    exportReports: true,
+    manageData: true,
+    manageUsers: true,
+  },
+};
+const ROLE_ORDER = ['cleaner', 'cleaning', 'rep', 'management'];
+
+// Tasks that can be assigned to individual staff. Assignments belong to one turnover,
+// so they disappear by themselves once the house is occupied again.
+const TASKS = {
+  clean: { label: 'Cleaning', who: 'Cleaner', assigneeRole: 'cleaner', permission: 'assignCleans', eligibleText: 'due out today or guest left', isEligible: (row) => isCleanTodo(row) },
+  prep: { label: 'Prep', who: 'Prep', assigneeRole: 'rep', permission: 'assignPreps', eligibleText: 'due out today, guest left or cleaned', isEligible: (row) => isCleanTodo(row) || row.status === 'cleaned' },
+};
+
+const PERMISSION_LABELS = {
+  seeGuestNames: 'See guest names',
+  anyTransition: 'Set any status (override)',
+  clearOverride: 'Return a house to automatic status',
+  editNotes: 'Edit house notes',
+  bulkEdit: 'Bulk status updates',
+  assignCleans: 'Assign cleans to cleaners',
+  assignPreps: 'Assign preps to prep staff',
+  editBookingTimes: `Grant early check-in (${EARLY_CHECKIN_TIME}) and late check-out (${LATE_CHECKOUT_TIME})`,
+  worksOn: 'Gets tasks assigned, sees own first',
+  viewUnitHistory: 'See a house’s change history',
+  exportReports: 'Export and print reports',
+  manageData: 'Upload or replace booking data',
+  manageUsers: 'Manage users and roles',
+};
+const TAB_LABELS = {
+  units: 'Houses',
+  movements: 'Arrivals & departures',
+  cleans: 'Cleans to do',
+  preps: 'Preps to do',
+  period: 'Period report',
+  log: 'Activity log',
+  admin: 'Data & users',
+  tests: 'Self-test',
+};
+
+const Permissions = {
+  of(role) { return ROLE_PERMISSIONS[role] || null; },
+  can(role, key) { const p = ROLE_PERMISSIONS[role]; return !!(p && p[key]); },
+  tabs(role) { const p = ROLE_PERMISSIONS[role]; return p ? p.tabs : []; },
+  canSetStatus(role, from, to) {
+    const p = ROLE_PERMISSIONS[role];
+    if (!p || from === to || !STATUSES.includes(to)) return false;
+    if (!p.settableStatuses.includes(to)) return false;
+    return p.anyTransition || PREVIOUS_STATUS[to] === from;
+  },
+  canAssign(role, task, row = null) {
+    const t = TASKS[task];
+    if (!t || !Permissions.can(role, t.permission)) return false;
+    return !row || t.isEligible(row);
+  },
+  bulkModes(role) {
+    return [
+      ...(Permissions.can(role, 'bulkEdit') ? ['status'] : []),
+      ...Object.keys(TASKS).filter((t) => Permissions.can(role, TASKS[t].permission)),
+    ];
+  },
+};
+
+const SYSTEM_USER = { id: 'usr-system', name: 'Automatic (dates)', role: 'system', email: '' };
+const SEED_USERS = [
+  { id: 'usr-001', name: 'Marieke Visser', role: 'management', email: 'marieke.visser@example.com' },
+  { id: 'usr-002', name: 'Luca Bianchi', role: 'rep', email: 'luca.bianchi@example.com' },
+  { id: 'usr-003', name: 'Sofie Janssens', role: 'rep', email: 'sofie.janssens@example.com' },
+  { id: 'usr-004', name: 'SparkleClean planning', role: 'cleaning', email: 'planning@sparkleclean.example.com' },
+  { id: 'usr-005', name: 'Ana Costa', role: 'cleaner', email: 'ana@sparkleclean.example.com' },
+  { id: 'usr-006', name: 'Piet de Groot', role: 'cleaner', email: 'piet@sparkleclean.example.com' },
+  { id: 'usr-007', name: 'Joanna Nowak', role: 'cleaner', email: 'joanna@sparkleclean.example.com' },
+  { id: 'usr-008', name: 'Kees Brouwer', role: 'rep', email: 'kees.brouwer@example.com' },
+  { id: 'usr-009', name: 'Mila Rossi', role: 'rep', email: 'mila.rossi@example.com' },
+];
+
+/* ==========================================================================
+   UTILITIES
+   ========================================================================== */
+const pad = (n) => String(n).padStart(2, '0');
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const naturalCompare = (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
+
+const DateUtil = {
+  today() { return DateUtil.toISO(new Date()); },
+  toISO(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; },
+  parse(iso) { const [y, m, d] = iso.split('-').map(Number); return new Date(y, m - 1, d, 12); },
+  addDays(iso, n) { const d = DateUtil.parse(iso); d.setDate(d.getDate() + n); return DateUtil.toISO(d); },
+  diff(a, b) { return Math.round((DateUtil.parse(b) - DateUtil.parse(a)) / 86400000); },
+  range(a, b) { const out = []; for (let d = a; d <= b; d = DateUtil.addDays(d, 1)) out.push(d); return out; },
+  isISO(s) { return typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && DateUtil.toISO(DateUtil.parse(s)) === s; },
+  label(iso) { return DateUtil.parse(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); },
+  weekday(iso) { return DateUtil.parse(iso).toLocaleDateString('en-GB', { weekday: 'short' }); },
+  relative(iso, ref) {
+    const n = DateUtil.diff(ref, iso);
+    if (n === 0) return 'today';
+    if (n === 1) return 'tomorrow';
+    if (n === -1) return 'yesterday';
+    return DateUtil.label(iso);
+  },
+  stamp(ts) { return new Date(ts).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' }); },
+};
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Quotes fields that contain the separator, quotes or line breaks. Values that Excel would
+// run as a formula (=, +, @, or - followed by a non-number) get a leading apostrophe.
+function csvCell(v, sep) {
+  let str = String(v ?? '');
+  if (/^[=+@\t\r]/.test(str) || /^-(?![\d.])/.test(str)) str = `'${str}`;
+  return (str.includes(sep) || /["\n\r]/.test(str) || /^\s|\s$/.test(str)) ? `"${str.replace(/"/g, '""')}"` : str;
+}
+function toCsv(rows, sep = ',') {
+  return rows.map((r) => r.map((v) => csvCell(v, sep)).join(sep)).join('\r\n');
+}
+// Default separator follows the locale: where the decimal mark is a comma (NL, DE, FR…) Excel expects ';'.
+function defaultCsvSeparator() {
+  try { return (1.5).toLocaleString().includes(',') ? ';' : ','; } catch (e) { return ','; }
+}
+
+/* ==========================================================================
+   DATA ACCESS LAYER
+   All reads and writes go through DataStore. Every method is async and
+   returns plain copies, exactly like a network API would, so the UI never
+   touches the storage directly.
+
+   Backend integration point: swap the in-memory implementation below for
+   HTTP calls without changing any UI code. For example:
+
+     async getUnits() {
+       const res = await fetch('/api/units', { headers: authHeaders() });
+       if (!res.ok) throw new Error(`GET /api/units failed (${res.status})`);
+       return res.json();
+     },
+     async updateStatus({ unitId, cycleKey, status, fromStatus }) {
+       const res = await fetch(`/api/units/${encodeURIComponent(unitId)}/status`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json', ...authHeaders() },
+         body: JSON.stringify({ cycleKey, status, fromStatus }),
+       });
+       if (!res.ok) throw new Error(`Status update failed (${res.status})`);
+       return res.json();
+     },
+
+   Or with Supabase: const { data, error } = await supabase.from('units').select('*');
+
+   Suggested tables (IDs below map directly to primary keys):
+     units            (id, house_number, notes)
+     bookings         (id, unit_id, guest_name, arrival_date, arrival_time, departure_date, departure_time)
+     status_overrides (unit_id, cycle_key, status, set_by, set_at)   -- unit.statusOverrides here
+     users            (id, name, role, email)
+     activity_log     (id, at, type, source, unit_id, house_number, from_status, to_status, user_id, demo_date, message)
+   With a real login, the server derives the user from the session instead of
+   the userId parameter, and enforces ROLE_PERMISSIONS as well (for example with
+   Supabase row-level security).
+   ========================================================================== */
+function createMemoryStore() {
+  const db = {
+    units: [],
+    bookings: [],
+    users: [],
+    activity: [],
+    settings: { assumePastTurnoversDone: false },
+    meta: { source: '', fileName: null, loadedAt: null },
+  };
+  let activitySeq = 0;
+  const clone = (v) => (typeof structuredClone === 'function' ? structuredClone(v) : JSON.parse(JSON.stringify(v)));
+  const nowIso = () => new Date().toISOString();
+  const findUnit = (id) => {
+    const u = db.units.find((x) => x.id === id);
+    if (!u) throw new Error(`House ${id} no longer exists.`);
+    return u;
+  };
+  const findUser = (id) => {
+    const u = db.users.find((x) => x.id === id);
+    if (!u) throw new Error('That user no longer exists.');
+    return u;
+  };
+  const pushActivity = (entry) => {
+    activitySeq += 1;
+    const rec = { id: `act-${String(activitySeq).padStart(6, '0')}`, at: nowIso(), source: 'manual', ...entry };
+    db.activity.push(rec);
+    return rec;
+  };
+  // Effective times follow the base times from the booking file plus any granted early/late option.
+  const applyTimes = (b) => {
+    b.arrivalTime = b.earlyCheckin && EARLY_CHECKIN_TIME < b.baseArrivalTime ? EARLY_CHECKIN_TIME : b.baseArrivalTime;
+    b.departureTime = b.lateCheckout && LATE_CHECKOUT_TIME > b.baseDepartureTime ? LATE_CHECKOUT_TIME : b.baseDepartureTime;
+    return b;
+  };
+  const normaliseBooking = (b) => applyTimes({
+    ...b,
+    baseArrivalTime: b.baseArrivalTime || b.arrivalTime || DEFAULT_CHECKIN_TIME,
+    baseDepartureTime: b.baseDepartureTime || b.departureTime || DEFAULT_CHECKOUT_TIME,
+    earlyCheckin: !!b.earlyCheckin,
+    lateCheckout: !!b.lateCheckout,
+  });
+  const houseOfUnit = (unitId) => { const u = db.units.find((x) => x.id === unitId); return u ? u.houseNumber : ''; };
+  const normaliseUnits = (units) => units.map((u) => ({ id: u.id, houseNumber: String(u.houseNumber), notes: u.notes || '', statusOverrides: { ...(u.statusOverrides || {}) }, assignments: { ...(u.assignments || {}) } }));
+
+  return {
+    async init({ users, units, bookings, source, fileName = null }) {
+      db.users = clone(users);
+      db.units = normaliseUnits(clone(units));
+      db.bookings = clone(bookings).map(normaliseBooking);
+      db.meta = { source, fileName, loadedAt: nowIso() };
+      db.activity = [];
+      activitySeq = 0;
+    },
+    async getUnits() { return clone(db.units); },
+    async getBookings() { return clone(db.bookings); },
+    async getUsers() { return clone(db.users); },
+    async getActivity() { return clone(db.activity); },
+    async getSettings() { return clone(db.settings); },
+    async getDatasetMeta() { return clone(db.meta); },
+
+    async updateStatus({ unitId, cycleKey, status, fromStatus, userId, demoDate }) {
+      if (!STATUSES.includes(status)) throw new Error(`Unknown status "${status}".`);
+      const unit = findUnit(unitId);
+      unit.statusOverrides[cycleKey] = { status, setBy: userId, setAt: nowIso() };
+      pushActivity({ type: 'status', unitId, houseNumber: unit.houseNumber, from: fromStatus, to: status, userId, demoDate, cycleKey });
+      return clone(unit);
+    },
+    async bulkUpdateStatus({ items, status, userId, demoDate }) {
+      if (!STATUSES.includes(status)) throw new Error(`Unknown status "${status}".`);
+      const units = items.map((it) => findUnit(it.unitId)); // validate everything before writing anything
+      const batchId = `bulk-${Date.now().toString(36)}`;
+      const setAt = nowIso();
+      items.forEach((it, i) => {
+        if (it.clear) delete units[i].statusOverrides[it.cycleKey];
+        else units[i].statusOverrides[it.cycleKey] = { status, setBy: userId, setAt };
+        pushActivity({ type: 'status', unitId: it.unitId, houseNumber: units[i].houseNumber, from: it.fromStatus, to: status, userId, demoDate, cycleKey: it.cycleKey, batchId, message: `Bulk update of ${items.length}${it.clear ? ', early departure reversed' : ''}` });
+      });
+      return { batchId, count: items.length };
+    },
+    // Assign (or unassign with assigneeId null) a task for the current turnover of each house.
+    async assign({ items, task, assigneeId, userId, demoDate }) {
+      const t = TASKS[task];
+      if (!t) throw new Error(`Unknown task "${task}".`);
+      const assignee = assigneeId ? findUser(assigneeId) : null;
+      if (assignee && assignee.role !== t.assigneeRole) throw new Error(`${assignee.name} isn’t ${ROLE_PERMISSIONS[t.assigneeRole].label.toLowerCase()}.`);
+      const units = items.map((it) => findUnit(it.unitId));
+      const batchId = `assign-${Date.now().toString(36)}`;
+      const nameOf = (id) => (db.users.find((u) => u.id === id) || { name: 'removed user' }).name;
+      const previous = [];
+      items.forEach((it, i) => {
+        const unit = units[i];
+        const slot = unit.assignments[it.cycleKey] || (unit.assignments[it.cycleKey] = {});
+        const prev = slot[task] || null;
+        previous.push({ unitId: it.unitId, cycleKey: it.cycleKey, task, previous: prev ? clone(prev) : null, expected: assigneeId || null });
+        if (assignee) slot[task] = { userId: assignee.id, by: userId, at: nowIso() };
+        else delete slot[task];
+        pushActivity({
+          type: 'assign', unitId: it.unitId, houseNumber: unit.houseNumber, userId, demoDate, cycleKey: it.cycleKey, batchId,
+          message: assignee ? `${t.label} assigned to ${assignee.name}${prev ? ` (was ${nameOf(prev.userId)})` : ''}` : `${t.label} unassigned${prev ? ` (was ${nameOf(prev.userId)})` : ''}`,
+        });
+      });
+      return { previous };
+    },
+    // Undo for assign(): only restores houses whose assignment wasn't changed again since.
+    async restoreAssignments({ items, userId, demoDate }) {
+      const units = items.map((it) => findUnit(it.unitId));
+      let restored = 0;
+      items.forEach((it, i) => {
+        const unit = units[i];
+        const slot = unit.assignments[it.cycleKey] || (unit.assignments[it.cycleKey] = {});
+        const current = slot[it.task] ? slot[it.task].userId : null;
+        if (current !== it.expected) return;
+        if (it.previous) slot[it.task] = clone(it.previous); else delete slot[it.task];
+        pushActivity({ type: 'assign', unitId: it.unitId, houseNumber: unit.houseNumber, userId, demoDate, cycleKey: it.cycleKey, message: `${TASKS[it.task].label} assignment undone` });
+        restored += 1;
+      });
+      return { restored, skipped: items.length - restored };
+    },
+    // Undo: put back the manual status a house had before, but only if nobody changed it since.
+    async restoreOverrides({ items, userId, demoDate }) {
+      const units = items.map((it) => findUnit(it.unitId));
+      const batchId = `undo-${Date.now().toString(36)}`;
+      let restored = 0;
+      items.forEach((it, i) => {
+        const unit = units[i];
+        const current = unit.statusOverrides[it.cycleKey] || null;
+        if ((current ? current.status : null) !== (it.expectedStatus ?? null)) return;
+        if (it.previousOverride) unit.statusOverrides[it.cycleKey] = clone(it.previousOverride);
+        else delete unit.statusOverrides[it.cycleKey];
+        pushActivity({ type: 'status', unitId: it.unitId, houseNumber: unit.houseNumber, from: it.fromStatus, to: it.toStatus, userId, demoDate, cycleKey: it.cycleKey, batchId, message: 'Undo' });
+        restored += 1;
+      });
+      return { restored, skipped: items.length - restored };
+    },
+    async clearStatusOverride({ unitId, cycleKey, fromStatus, toStatus, userId, demoDate, reason = '' }) {
+      const unit = findUnit(unitId);
+      if (!unit.statusOverrides[cycleKey]) return clone(unit);
+      delete unit.statusOverrides[cycleKey];
+      pushActivity({ type: 'status', unitId, houseNumber: unit.houseNumber, from: fromStatus, to: toStatus, userId, demoDate, cycleKey, message: reason || 'Returned to automatic status' });
+      return clone(unit);
+    },
+    // Grant or withdraw early check-in / late check-out. expectedCurrent guards undo against newer changes.
+    async setBookingOption({ bookingId, option, value, userId, demoDate, expectedCurrent }) {
+      if (!['earlyCheckin', 'lateCheckout'].includes(option)) throw new Error(`Unknown option "${option}".`);
+      const b = db.bookings.find((x) => x.id === bookingId);
+      if (!b) throw new Error('That booking no longer exists.');
+      if (expectedCurrent !== undefined && b[option] !== expectedCurrent) return { changed: false, conflict: true };
+      if (b[option] === !!value) return { changed: false };
+      b[option] = !!value;
+      applyTimes(b);
+      const message = option === 'lateCheckout'
+        ? (value ? `Late check-out ${LATE_CHECKOUT_TIME} on ${DateUtil.label(b.departureDate)}` : `Late check-out withdrawn, back to ${b.baseDepartureTime} on ${DateUtil.label(b.departureDate)}`)
+        : (value ? `Early check-in ${EARLY_CHECKIN_TIME} on ${DateUtil.label(b.arrivalDate)}` : `Early check-in withdrawn, back to ${b.baseArrivalTime} on ${DateUtil.label(b.arrivalDate)}`);
+      pushActivity({ type: 'booking', unitId: b.unitId, houseNumber: houseOfUnit(b.unitId), userId, demoDate, message });
+      return { changed: true, booking: clone(b) };
+    },
+    async updateNotes({ unitId, notes, userId, demoDate }) {
+      const unit = findUnit(unitId);
+      const clean = String(notes ?? '').slice(0, 2000);
+      if (unit.notes === clean) return clone(unit);
+      unit.notes = clean;
+      pushActivity({ type: 'note', unitId, houseNumber: unit.houseNumber, userId, demoDate, message: clean ? `Notes: ${clean.length > 80 ? clean.slice(0, 80) + '…' : clean}` : 'Notes cleared' });
+      return clone(unit);
+    },
+    async logChange(entry) { return clone(pushActivity(entry)); },
+    async logChanges(entries) { return entries.map((e) => clone(pushActivity(e))); },
+
+    // Replacing the bookings keeps manual statuses, assignments and early/late options for every
+    // turnover or stay that still exists in the new data (matched by house number + date, never by
+    // row order), and reports what could not be matched.
+    async replaceDataset({ units, bookings, source, fileName = null }, { userId, demoDate, carryOver = true }) {
+      const oldUnits = new Map(db.units.map((u) => [u.houseNumber, u]));
+      const oldBookings = db.bookings.map((b) => ({ ...b, house: houseOfUnit(b.unitId) }));
+      const newUnits = normaliseUnits(clone(units)).map((u) => ({ ...u, statusOverrides: {}, assignments: {} }));
+      const newBookings = clone(bookings).map(normaliseBooking);
+      const houseOf = new Map(newUnits.map((u) => [u.id, u.houseNumber]));
+      const valid = new Set(newUnits.map((u) => StatusEngine.initialKey(u.houseNumber)));
+      for (const b of newBookings) {
+        const h = houseOf.get(b.unitId);
+        valid.add(StatusEngine.turnoverKey(h, b.departureDate));
+        valid.add(StatusEngine.stayKey(h, b.arrivalDate));
+      }
+      const report = { statuses: 0, assignments: 0, timeOptions: 0, dropped: [] };
+      for (const u of newUnits) {
+        const old = oldUnits.get(u.houseNumber);
+        if (!old) continue;
+        if (!u.notes) u.notes = old.notes;
+        if (!carryOver) continue;
+        for (const [key, v] of Object.entries(old.statusOverrides)) {
+          if (valid.has(key)) { u.statusOverrides[key] = v; report.statuses += 1; }
+          else report.dropped.push(`House ${u.houseNumber}: status “${STATUS_LABEL[v.status]}” for ${StatusEngine.describeKey(key)}`);
+        }
+        for (const [key, slot] of Object.entries(old.assignments)) {
+          for (const [task, a] of Object.entries(slot)) {
+            if (valid.has(key)) { (u.assignments[key] = u.assignments[key] || {})[task] = a; report.assignments += 1; }
+            else report.dropped.push(`House ${u.houseNumber}: ${TASKS[task].label.toLowerCase()} assignment for ${StatusEngine.describeKey(key)}`);
+          }
+        }
+      }
+      if (carryOver) {
+        for (const [house, old] of oldUnits) {
+          if (newUnits.some((u) => u.houseNumber === house)) continue;
+          const n = Object.keys(old.statusOverrides).length + Object.values(old.assignments).reduce((t, sl) => t + Object.keys(sl).length, 0);
+          if (n) report.dropped.push(`House ${house} is no longer in the data (${n} manual ${n === 1 ? 'entry' : 'entries'})`);
+        }
+        const oldEarly = new Set(oldBookings.filter((b) => b.earlyCheckin).map((b) => `${b.house}|${b.arrivalDate}`));
+        const oldLate = new Set(oldBookings.filter((b) => b.lateCheckout).map((b) => `${b.house}|${b.departureDate}`));
+        for (const b of newBookings) {
+          const h = houseOf.get(b.unitId);
+          if (!b.earlyCheckin && oldEarly.has(`${h}|${b.arrivalDate}`)) { b.earlyCheckin = true; report.timeOptions += 1; }
+          if (!b.lateCheckout && oldLate.has(`${h}|${b.departureDate}`)) { b.lateCheckout = true; report.timeOptions += 1; }
+          applyTimes(b);
+        }
+      }
+      db.units = newUnits;
+      db.bookings = newBookings;
+      db.meta = { source, fileName, loadedAt: nowIso() };
+      const kept = carryOver ? `; kept ${report.statuses} manual statuses, ${report.assignments} assignments, ${report.timeOptions} early/late options; ${report.dropped.length} no longer matched` : '';
+      pushActivity({ type: 'data', userId, demoDate, message: `Loaded ${units.length} houses and ${bookings.length} bookings (${fileName ? `file “${fileName}”` : source})${kept}` });
+      return report;
+    },
+
+    async addUser({ name, role, email }, { userId }) {
+      if (!ROLE_PERMISSIONS[role]) throw new Error('Choose a valid role.');
+      const user = { id: `usr-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, name, role, email };
+      db.users.push(user);
+      pushActivity({ type: 'user', userId, message: `Added user ${name} as ${ROLE_PERMISSIONS[role].label}` });
+      return clone(user);
+    },
+    async updateUser(id, patch, { userId }) {
+      const user = findUser(id);
+      if (patch.role && patch.role !== user.role) {
+        if (!ROLE_PERMISSIONS[patch.role]) throw new Error('Choose a valid role.');
+        if (db.users.filter((u) => u.role === user.role).length <= 1) {
+          throw new Error(`${user.name} is the only ${ROLE_PERMISSIONS[user.role].label} user. Add another one first.`);
+        }
+      }
+      const before = { ...user };
+      if (patch.name !== undefined) user.name = patch.name;
+      if (patch.email !== undefined) user.email = patch.email;
+      if (patch.role !== undefined) user.role = patch.role;
+      const changes = [];
+      if (before.name !== user.name) changes.push(`name “${before.name}” to “${user.name}”`);
+      if (before.email !== user.email) changes.push(`email to ${user.email || '(empty)'}`);
+      if (before.role !== user.role) changes.push(`role ${ROLE_PERMISSIONS[before.role].label} to ${ROLE_PERMISSIONS[user.role].label}`);
+      if (changes.length) pushActivity({ type: 'user', userId, message: `Changed ${user.name}: ${changes.join(', ')}` });
+      return clone(user);
+    },
+    async deleteUser(id, { userId }) {
+      const user = findUser(id);
+      if (id === userId) throw new Error('You can’t delete the user you’re logged in as.');
+      if (db.users.filter((u) => u.role === user.role).length <= 1) {
+        throw new Error(`${user.name} is the only ${ROLE_PERMISSIONS[user.role].label} user and can’t be deleted.`);
+      }
+      db.users = db.users.filter((u) => u.id !== id);
+      pushActivity({ type: 'user', userId, message: `Deleted user ${user.name} (${ROLE_PERMISSIONS[user.role].label})` });
+    },
+
+    async updateSettings(patch, { userId, demoDate }) {
+      Object.assign(db.settings, patch);
+      if ('assumePastTurnoversDone' in patch) {
+        pushActivity({ type: 'setting', userId, demoDate, message: patch.assumePastTurnoversDone
+          ? 'Past turnovers without a recorded status are now treated as prepped'
+          : 'Past turnovers without a recorded status now stay “Guest left” until someone updates them' });
+      }
+      return clone(db.settings);
+    },
+  };
+}
+const DataStore = createMemoryStore();
+
+/* ==========================================================================
+   STATUS ENGINE (pure functions)
+   A house's automatic status follows its bookings on the working date:
+   - a guest is staying                -> Occupied
+   - a booking departs today           -> Occupied ("due out") until staff enter Guest left;
+                                          the house is on today's cleans list either way
+   - vacant after an earlier departure -> Prepped, or Guest left if the
+                                          "assume past turnovers done" setting is off
+   - never booked yet                  -> Prepped
+   Manual changes are stored per "cycle" (one stay, or one turnover), so they
+   hold until the next stay or turnover begins and then reset automatically.
+   ========================================================================== */
+const StatusEngine = {
+  // Cycle keys use house number + date, so they mean the same thing in every upload of the data.
+  turnoverKey(house, departureDate) { return `turnover:${house}|${departureDate}`; },
+  stayKey(house, arrivalDate) { return `stay:${house}|${arrivalDate}`; },
+  initialKey(house) { return `initial:${house}`; },
+  describeKey(key) {
+    const kind = key.slice(0, key.indexOf(':'));
+    const date = key.slice(key.lastIndexOf('|') + 1);
+    if (kind === 'turnover') return `the check-out on ${DateUtil.isISO(date) ? DateUtil.label(date) : date}`;
+    if (kind === 'stay') return `the stay from ${DateUtil.isISO(date) ? DateUtil.label(date) : date}`;
+    return 'the time before its first booking';
+  },
+  // True when the leaving guest checks out at or after the next guest's check-in on the same day,
+  // which leaves no time to clean.
+  timeClash(outgoing, incoming) {
+    return !!(outgoing && incoming && outgoing.id !== incoming.id
+      && outgoing.departureDate === incoming.arrivalDate && outgoing.departureTime >= incoming.arrivalTime);
+  },
+  evaluate(unit, bookings, date, settings) {
+    const H = unit.houseNumber;
+    const ov = unit.statusOverrides || {};
+    const departingAll = [], occupyingAll = [];
+    let arriving = null, lastDeparture = null, nextArrival = null;
+    for (const b of bookings) {
+      if (b.departureDate === date) departingAll.push(b);
+      if (b.arrivalDate === date && !arriving) arriving = b;
+      if (b.arrivalDate <= date && date < b.departureDate) occupyingAll.push(b);
+      if (b.departureDate <= date && (!lastDeparture || b.departureDate > lastDeparture.departureDate)) lastDeparture = b;
+      if (b.arrivalDate >= date && (!nextArrival
+        || b.arrivalDate < nextArrival.arrivalDate
+        || (b.arrivalDate === nextArrival.arrivalDate && b.arrivalTime < nextArrival.arrivalTime))) nextArrival = b;
+    }
+    const departing = departingAll[0] || null;
+    const occupying = occupyingAll[0] || null;
+    let autoStatus, cycleKey, turnoverKey = null, earlyDeparture = false;
+    if (departing) {
+      cycleKey = turnoverKey = StatusEngine.turnoverKey(H, departing.departureDate);
+      autoStatus = 'occupied'; // guest left is always entered by hand
+    } else if (occupying) {
+      // A guest who left before the official departure date: the turnover has already started.
+      turnoverKey = StatusEngine.turnoverKey(H, occupying.departureDate);
+      autoStatus = 'occupied';
+      const early = ov[turnoverKey];
+      if (early && early.status !== 'occupied') { cycleKey = turnoverKey; earlyDeparture = true; }
+      else cycleKey = StatusEngine.stayKey(H, occupying.arrivalDate);
+    } else if (lastDeparture) {
+      cycleKey = turnoverKey = StatusEngine.turnoverKey(H, lastDeparture.departureDate);
+      autoStatus = settings.assumePastTurnoversDone ? 'prepped' : 'guest_left';
+    } else {
+      cycleKey = StatusEngine.initialKey(H);
+      autoStatus = 'prepped';
+    }
+    const override = ov[cycleKey] || null;
+    const status = override ? override.status : autoStatus;
+    const backToBack = !!(departing && arriving && departing.id !== arriving.id);
+    const incomingToday = backToBack ? arriving : (arriving && occupying && arriving.id === occupying.id ? arriving : null);
+    return {
+      unit, bookings, cycleKey, turnoverKey, autoStatus, override, earlyDeparture,
+      status,
+      dueOut: !!departing && status === 'occupied',
+      departing, arriving, occupying, lastDeparture, nextArrival, backToBack,
+      overlap: occupyingAll.length > 1 || departingAll.length > 1,
+      clash: backToBack && StatusEngine.timeClash(departing, arriving),
+      lateOut: !!(departing && departing.lateCheckout),
+      earlyIn: !!(incomingToday && incomingToday.earlyCheckin),
+      assignment: (unit.assignments && unit.assignments[cycleKey]) || {},
+    };
+  },
+  // Where a manual status change has to be stored.
+  // - Guest still staying but marked left/cleaned/prepped: store it on the coming turnover, so it
+  //   still counts on the official departure day (early departure).
+  // - Setting a house back to what the bookings say (for example an early departure back to
+  //   occupied): remove the manual entry instead of storing a copy of the automatic status.
+  writePlan(row, toStatus) {
+    if (row.override && toStatus === row.autoStatus) return { cycleKey: row.cycleKey, clear: true };
+    if (row.cycleKey.startsWith('stay:') && toStatus !== 'occupied' && row.turnoverKey) return { cycleKey: row.turnoverKey, clear: false };
+    return { cycleKey: row.cycleKey, clear: false };
+  },
+  // On today's cleans list: guest has left, or is due out today and not yet entered as left.
+  isCleanTodo(row) { return row.status === 'guest_left' || row.dueOut; },
+  deriveAll(snap, date) {
+    const byUnit = new Map(snap.units.map((u) => [u.id, []]));
+    for (const b of snap.bookings) { const list = byUnit.get(b.unitId); if (list) list.push(b); }
+    return snap.units
+      .map((u) => StatusEngine.evaluate(u, byUnit.get(u.id).sort((a, b) => (a.arrivalDate + a.arrivalTime).localeCompare(b.arrivalDate + b.arrivalTime)), date, snap.settings))
+      .sort((a, b) => naturalCompare(a.unit.houseNumber, b.unit.houseNumber));
+  },
+  periodStats(bookings, from, to) {
+    const days = DateUtil.range(from, to).map((date) => ({ date, departures: 0, arrivals: 0, b2b: 0 }));
+    const index = new Map(days.map((d, i) => [d.date, i]));
+    const departedUnitDays = new Set();
+    for (const b of bookings) {
+      if (index.has(b.departureDate)) { days[index.get(b.departureDate)].departures += 1; departedUnitDays.add(`${b.unitId}|${b.departureDate}`); }
+    }
+    const counted = new Set();
+    for (const b of bookings) {
+      if (!index.has(b.arrivalDate)) continue;
+      days[index.get(b.arrivalDate)].arrivals += 1;
+      const key = `${b.unitId}|${b.arrivalDate}`;
+      if (departedUnitDays.has(key) && !counted.has(key)) { counted.add(key); days[index.get(b.arrivalDate)].b2b += 1; }
+    }
+    const totals = days.reduce((t, d) => ({ departures: t.departures + d.departures, arrivals: t.arrivals + d.arrivals, b2b: t.b2b + d.b2b }), { departures: 0, arrivals: 0, b2b: 0 });
+    return { days, totals };
+  },
+};
+
+/* ==========================================================================
+   DEMO DATA
+   ========================================================================== */
+// Unit IDs come from the house number, so the same house keeps its ID across uploads.
+function stableUnitId(house, used = null) {
+  const base = `U-${String(house).trim().replace(/[^A-Za-z0-9_-]+/g, '_')}`;
+  if (!used) return base;
+  let id = base, n = 2;
+  while (used.has(id)) { id = `${base}~${n}`; n += 1; }
+  used.add(id);
+  return id;
+}
+function generateFakeDataset(today, seed) {
+  const rnd = mulberry32(seed);
+  const int = (min, max) => min + Math.floor(rnd() * (max - min + 1));
+  const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
+  const FIRST = ['Anna', 'Pieter', 'Sophie', 'Lukas', 'Emma', 'Jan', 'Chloé', 'Marco', 'Giulia', 'Thomas', 'Lotte', 'Hannah', 'Oliver', 'Isabelle', 'Matteo', 'Femke', 'Julien', 'Katrin', 'Daan', 'Elena', 'Noah', 'Sanne', 'Felix', 'Amélie', 'Ruben', 'Laura', 'Max', 'Inès', 'Bram', 'Clara'];
+  const LAST = ['de Vries', 'Jansen', 'Müller', 'Dubois', 'Rossi', 'Bakker', 'Schneider', 'Martin', 'Visser', 'Smith', 'Bianchi', 'Meijer', 'Fischer', 'Lefèvre', 'van Dijk', 'Wagner', 'Moreau', 'Esposito', 'de Boer', 'Brown', 'Hoffmann', 'Mulder', 'Bernard', 'Romano', 'Peeters'];
+  const OUT_TIMES = ['09:30', '10:00', '10:00', '10:00', '10:30', '11:00'];
+  const IN_TIMES = ['14:00', '15:00', '15:00', '15:00', '16:00', '17:30'];
+  const NOTES = ['Extra towels requested for the arrival', 'Tap in the bathroom drips. Maintenance informed', 'Baby cot needed for the next guests', 'Guest asked for a late check-out', 'Check the smoke detector battery', 'Terrace furniture cushions missing'];
+
+  const unitCount = int(20, 30);
+  const windowStart = DateUtil.addDays(today, -4);
+  const windowEnd = DateUtil.addDays(today, 10);
+  const units = [];
+  const bookings = [];
+  let seq = 0;
+  const addBooking = (unitId, arrivalDate, departureDate) => {
+    seq += 1;
+    bookings.push({
+      id: `B-${String(seq).padStart(4, '0')}`, unitId, guestName: `${pick(FIRST)} ${pick(LAST)}`,
+      arrivalDate, arrivalTime: pick(IN_TIMES), departureDate, departureTime: pick(OUT_TIMES),
+    });
+  };
+
+  let houseNumber = 100;
+  for (let i = 0; i < unitCount; i++) {
+    houseNumber += rnd() < 0.2 ? 2 : 1;
+    const unit = { id: stableUnitId(String(houseNumber)), houseNumber: String(houseNumber), notes: '', statusOverrides: {}, assignments: {} };
+    units.push(unit);
+    const scenario = i % 8;
+    let cursor;
+    if (scenario === 0 || scenario === 3) {
+      // Back-to-back on the working date
+      addBooking(unit.id, DateUtil.addDays(today, -int(2, 6)), today);
+      const nights = int(3, 7);
+      addBooking(unit.id, today, DateUtil.addDays(today, nights));
+      cursor = DateUtil.addDays(today, nights + (rnd() < 0.4 ? 0 : int(1, 2)));
+    } else if (scenario === 5) {
+      // Departure on the working date, house stays empty for a while
+      addBooking(unit.id, DateUtil.addDays(today, -int(2, 5)), today);
+      cursor = DateUtil.addDays(today, int(1, 3));
+    } else if (scenario === 6) {
+      // Arrival on the working date into an empty house
+      cursor = today;
+    } else {
+      cursor = DateUtil.addDays(windowStart, -int(0, 5));
+    }
+    let first = true;
+    while (cursor < windowEnd) {
+      const forcedArrival = scenario === 6 && first;
+      first = false;
+      if (!forcedArrival && rnd() < 0.12) { cursor = DateUtil.addDays(cursor, int(1, 3)); continue; }
+      const departure = DateUtil.addDays(cursor, int(2, 7));
+      addBooking(unit.id, cursor, departure);
+      cursor = DateUtil.addDays(departure, rnd() < 0.35 ? 0 : int(1, 3));
+    }
+  }
+  // A few granted time options so the demo shows them
+  const departingToday = bookings.filter((b) => b.departureDate === today);
+  const arrivingToday = bookings.filter((b) => b.arrivalDate === today);
+  const plainDeparture = departingToday.find((b) => !arrivingToday.some((a) => a.unitId === b.unitId));
+  const plainArrival = arrivingToday.find((b) => !departingToday.some((d) => d.unitId === b.unitId));
+  const b2bDeparture = departingToday.find((b) => arrivingToday.some((a) => a.unitId === b.unitId));
+  if (plainDeparture) plainDeparture.lateCheckout = true;
+  if (plainArrival) plainArrival.earlyCheckin = true;
+  if (b2bDeparture) b2bDeparture.lateCheckout = true; // shows a time clash
+  const noteCount = Math.min(4, units.length);
+  const shuffled = [...units].sort(() => rnd() - 0.5);
+  for (let i = 0; i < noteCount; i++) shuffled[i].notes = NOTES[i % NOTES.length];
+
+  return { units, bookings, source: 'generated demo data', fileName: null };
+}
+
+/* ==========================================================================
+   SPREADSHEET IMPORT (SheetJS for .xlsx/.xls, own parser for .csv)
+   ========================================================================== */
+const SpreadsheetImport = {
+  HEADER_ALIASES: {
+    name: ['name', 'guest', 'guestname', 'naam'],
+    arrival: ['arrival', 'arrivaldate', 'checkin', 'aankomst'],
+    departure: ['departure', 'departuredate', 'checkout', 'vertrek'],
+    housenumber: ['housenumber', 'house', 'housenr', 'houseno', 'unit', 'accommodation', 'huisnummer'],
+  },
+  normaliseHeader(h) { return String(h ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]/g, ''); },
+
+  readFile(file, as) {
+    if (as === 'text' && typeof file.text === 'function') return file.text();
+    if (as === 'buffer' && typeof file.arrayBuffer === 'function') return file.arrayBuffer();
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error(`“${file.name}” couldn’t be opened.`));
+      if (as === 'text') reader.readAsText(file); else reader.readAsArrayBuffer(file);
+    });
+  },
+
+  async readMatrix(file) {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    if (!['xlsx', 'xls', 'csv'].includes(ext)) throw new Error(`“${file.name}” isn’t a spreadsheet. Upload an .xlsx, .xls or .csv file.`);
+    if (file.size === 0) throw new Error(`“${file.name}” is empty.`);
+    if (file.size > 10 * 1024 * 1024) throw new Error(`“${file.name}” is larger than 10 MB. Split it or remove unused sheets.`);
+    if (ext === 'csv') return SpreadsheetImport.parseCsv(await SpreadsheetImport.readFile(file, 'text'));
+    if (typeof XLSX === 'undefined') throw new Error('The spreadsheet reader didn’t load (check the internet connection). Save the file as .csv and upload that instead.');
+    let wb;
+    try { wb = XLSX.read(await SpreadsheetImport.readFile(file, 'buffer'), { type: 'array' }); }
+    catch (e) { throw new Error(`“${file.name}” couldn’t be read. It may be damaged or password-protected.`); }
+    const sheetName = wb.SheetNames[0];
+    if (!sheetName) throw new Error(`“${file.name}” has no sheets.`);
+    return XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '', raw: true, blankrows: true });
+  },
+
+  parseCsv(text) {
+    const src = text.replace(/^\uFEFF/, '');
+    // Detect the separator from the first line, ignoring anything inside quotes.
+    const counts = { ',': 0, ';': 0, '\t': 0 };
+    let q = false;
+    for (let i = 0; i < src.length; i++) {
+      const c = src[i];
+      if (c === '"') q = !q;
+      else if (!q && (c === '\n' || c === '\r')) break;
+      else if (!q && c in counts) counts[c] += 1;
+    }
+    const delim = Object.keys(counts).reduce((a, b) => (counts[b] > counts[a] ? b : a), ',');
+    const rows = [];
+    let row = [], field = '', inQuotes = false;
+    for (let i = 0; i < src.length; i++) {
+      const c = src[i];
+      if (inQuotes) {
+        if (c === '"') { if (src[i + 1] === '"') { field += '"'; i++; } else inQuotes = false; }
+        else field += c;
+      } else if (c === '"') inQuotes = true;
+      else if (c === delim) { row.push(field); field = ''; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else if (c !== '\r') field += c;
+    }
+    if (field !== '' || row.length) { row.push(field); rows.push(row); }
+    return rows;
+  },
+
+  validYMD(y, m, d) {
+    if (y < 2000 || y > 2100 || m < 1 || m > 12 || d < 1 || d > 31) return false;
+    const dt = new Date(y, m - 1, d, 12);
+    return dt.getFullYear() === y && dt.getMonth() === m - 1 && dt.getDate() === d;
+  },
+  validTime(h, min) { return h >= 0 && h <= 23 && min >= 0 && min <= 59; },
+
+  // Returns { date: 'YYYY-MM-DD', time: 'HH:MM' } or null
+  parseDateCell(value, defaultTime) {
+    if (value === null || value === undefined || value === '') return null;
+    if (value instanceof Date && !isNaN(value)) {
+      const hasTime = value.getHours() || value.getMinutes();
+      return { date: DateUtil.toISO(value), time: hasTime ? `${pad(value.getHours())}:${pad(value.getMinutes())}` : defaultTime };
+    }
+    if (typeof value === 'number' && isFinite(value)) {
+      if (value < 36526 || value > 73051) return null; // Excel serials for 2000-01-01 .. 2099-12-31
+      const ms = Math.round((value - 25569) * 86400000);
+      const d = new Date(ms);
+      const frac = value - Math.floor(value);
+      return {
+        date: `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`,
+        time: frac > 1e-6 ? `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}` : defaultTime,
+      };
+    }
+    const s = String(value).trim();
+    let m, y, mo, d, h = null, mi = null;
+    if ((m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})(?:[ T](\d{1,2})[:.](\d{2})(?::\d{2})?)?$/))) {
+      [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+      if (m[4] !== undefined) { h = Number(m[4]); mi = Number(m[5]); }
+    } else if ((m = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})(?:[ T](\d{1,2})[:.](\d{2})(?::\d{2})?)?$/))) {
+      [d, mo, y] = [Number(m[1]), Number(m[2]), Number(m[3])];
+      if (m[4] !== undefined) { h = Number(m[4]); mi = Number(m[5]); }
+    } else if (/^\d+(\.\d+)?$/.test(s)) {
+      return SpreadsheetImport.parseDateCell(Number(s), defaultTime);
+    } else return null;
+    if (!SpreadsheetImport.validYMD(y, mo, d)) return null;
+    if (h !== null && !SpreadsheetImport.validTime(h, mi)) return null;
+    return { date: `${y}-${pad(mo)}-${pad(d)}`, time: h !== null ? `${pad(h)}:${pad(mi)}` : defaultTime };
+  },
+
+  toDataset(matrix) {
+    const headerIdx = matrix.findIndex((r) => Array.isArray(r) && r.some((c) => String(c ?? '').trim() !== ''));
+    if (headerIdx < 0) throw new Error('The first sheet is empty.');
+    const header = matrix[headerIdx].map((h) => SpreadsheetImport.normaliseHeader(h));
+    const col = {};
+    for (const [field, aliases] of Object.entries(SpreadsheetImport.HEADER_ALIASES)) {
+      const i = header.findIndex((h) => aliases.includes(h));
+      if (i >= 0) col[field] = i;
+    }
+    const missing = Object.keys(SpreadsheetImport.HEADER_ALIASES).filter((f) => col[f] === undefined);
+    if (missing.length) {
+      const found = matrix[headerIdx].map((h) => String(h ?? '').trim()).filter(Boolean);
+      throw new Error(`Missing column${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}. The first row should hold the headers name, arrival, departure and housenumber. Found: ${found.length ? found.join(', ') : 'nothing'}.`);
+    }
+
+    const errors = [], warnings = [], parsed = [];
+    for (let i = headerIdx + 1; i < matrix.length; i++) {
+      const r = matrix[i] || [];
+      const rowNo = i + 1;
+      if (!r.some((c) => String(c ?? '').trim() !== '')) continue;
+      const name = String(r[col.name] ?? '').trim();
+      const house = String(r[col.housenumber] ?? '').trim();
+      const arrRaw = r[col.arrival];
+      const depRaw = r[col.departure];
+      const problems = [];
+      if (!house) problems.push('housenumber is empty');
+      if (!name) problems.push('name is empty');
+      const arrival = SpreadsheetImport.parseDateCell(arrRaw, DEFAULT_CHECKIN_TIME);
+      const departure = SpreadsheetImport.parseDateCell(depRaw, DEFAULT_CHECKOUT_TIME);
+      if (!arrival) problems.push(String(arrRaw ?? '').trim() ? `arrival “${String(arrRaw).trim()}” isn’t a date` : 'arrival is empty');
+      if (!departure) problems.push(String(depRaw ?? '').trim() ? `departure “${String(depRaw).trim()}” isn’t a date` : 'departure is empty');
+      if (arrival && departure && departure.date <= arrival.date) problems.push('departure must be at least one day after arrival');
+      if (problems.length) { errors.push(`Row ${rowNo}: ${problems.join('; ')}`); continue; }
+      parsed.push({ rowNo, name, house, arrival, departure });
+    }
+
+    const houseNumbers = [...new Set(parsed.map((p) => p.house))].sort(naturalCompare);
+    const usedIds = new Set();
+    const unitIdByHouse = new Map(houseNumbers.map((h) => [h, stableUnitId(h, usedIds)]));
+    const units = houseNumbers.map((h) => ({ id: unitIdByHouse.get(h), houseNumber: h, notes: '', statusOverrides: {}, assignments: {} }));
+    const bookings = parsed
+      .sort((a, b) => naturalCompare(a.house, b.house) || a.arrival.date.localeCompare(b.arrival.date))
+      .map((p, i) => ({
+        id: `B-${String(i + 1).padStart(4, '0')}`, unitId: unitIdByHouse.get(p.house), guestName: p.name,
+        arrivalDate: p.arrival.date, arrivalTime: p.arrival.time, departureDate: p.departure.date, departureTime: p.departure.time, sourceRow: p.rowNo,
+      }));
+
+    for (const h of houseNumbers) {
+      const list = bookings.filter((b) => b.unitId === unitIdByHouse.get(h));
+      for (let i = 1; i < list.length; i++) {
+        if (list[i].arrivalDate < list[i - 1].departureDate) {
+          warnings.push(`House ${h}: row ${list[i].sourceRow} (arrives ${list[i].arrivalDate}) overlaps row ${list[i - 1].sourceRow} (departs ${list[i - 1].departureDate}).`);
+        }
+      }
+    }
+    return { units, bookings, errors, warnings };
+  },
+};
+
+/* ==========================================================================
+   SELF-TEST: edge cases, run against a separate in-memory store
+   ========================================================================== */
+async function runSelfTests() {
+  const results = [];
+  const test = async (name, fn) => {
+    try { await fn(); results.push({ name, ok: true }); }
+    catch (e) { results.push({ name, ok: false, detail: e.message }); }
+  };
+  const eq = (actual, expected, what) => {
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error(`${what}: expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+  };
+  const D = (n) => DateUtil.addDays('2026-03-10', n);
+  let seq = 0;
+  const bk = (house, arr, dep, extra = {}) => ({ id: `T${++seq}`, unitId: stableUnitId(house), guestName: `Guest ${seq}`, arrivalDate: arr, arrivalTime: '15:00', departureDate: dep, departureTime: '10:00', ...extra });
+  const mkStore = async (bookings, extraHouses = []) => {
+    const st = createMemoryStore();
+    const houses = [...new Set([...bookings.map((b) => b.unitId.slice(2)), ...extraHouses])];
+    await st.init({ users: SEED_USERS, units: houses.map((h) => ({ id: stableUnitId(h), houseNumber: h })), bookings, source: 'test' });
+    return st;
+  };
+  const rowAt = async (st, house, date) => {
+    const snap = { units: await st.getUnits(), bookings: await st.getBookings(), settings: await st.getSettings() };
+    return StatusEngine.deriveAll(snap, date).find((r) => r.unit.houseNumber === house);
+  };
+  const setVia = async (st, row, to, date) => {
+    const w = StatusEngine.writePlan(row, to);
+    if (w.clear) await st.clearStatusOverride({ unitId: row.unit.id, cycleKey: w.cycleKey, fromStatus: row.status, toStatus: to, userId: 'usr-001', demoDate: date });
+    else await st.updateStatus({ unitId: row.unit.id, cycleKey: w.cycleKey, status: to, fromStatus: row.status, userId: 'usr-001', demoDate: date });
+  };
+
+  await test('Guest staying: occupied', async () => {
+    const st = await mkStore([bk('101', D(0), D(3))]);
+    eq((await rowAt(st, '101', D(1))).status, 'occupied', 'status');
+  });
+  await test('Departure day stays occupied (due out) until guest left is entered, and is on the cleans list either way', async () => {
+    const st = await mkStore([bk('101', D(0), D(3))]);
+    eq((await rowAt(st, '101', D(0))).status, 'occupied', 'arrival day');
+    let r = await rowAt(st, '101', D(3));
+    eq([r.status, r.dueOut, isCleanTodo(r)], ['occupied', true, true], 'departure day, not entered');
+    await setVia(st, r, 'guest_left', D(3));
+    r = await rowAt(st, '101', D(3));
+    eq([r.status, r.dueOut, isCleanTodo(r)], ['guest_left', false, true], 'after guest left');
+    await setVia(st, r, 'cleaned', D(3));
+    eq(isCleanTodo(await rowAt(st, '101', D(3))), false, 'after cleaning');
+  });
+  await test('A cleaner cannot clean a house before guest left is entered; a rep can enter it', async () => {
+    eq(Permissions.canSetStatus('cleaner', 'occupied', 'cleaned'), false, 'cleaner on due-out house');
+    eq(Permissions.canSetStatus('rep', 'occupied', 'guest_left'), true, 'rep enters guest left');
+  });
+  await test('Houses due out can be assigned to a cleaner before the guest has left', async () => {
+    const st = await mkStore([bk('101', D(0), D(3))]);
+    const r = await rowAt(st, '101', D(3));
+    eq([Permissions.canAssign('cleaning', 'clean', r), Permissions.canAssign('cleaning', 'clean', await rowAt(st, '101', D(1)))], [true, false], 'due out vs mid-stay');
+    await st.assign({ items: [{ unitId: r.unit.id, cycleKey: r.cycleKey }], task: 'clean', assigneeId: 'usr-005', userId: 'usr-004', demoDate: D(3) });
+    await setVia(st, r, 'guest_left', D(3));
+    eq(assigneeOfRow(await rowAt(st, '101', D(3)), 'clean'), 'usr-005', 'assignment kept after guest left');
+  });
+  await test('Setting a house back to its automatic status removes the manual entry', async () => {
+    const st = await mkStore([bk('101', D(0), D(3))]);
+    await setVia(st, await rowAt(st, '101', D(3)), 'guest_left', D(3));
+    await setVia(st, await rowAt(st, '101', D(3)), 'occupied', D(3));
+    const r = await rowAt(st, '101', D(3));
+    eq([r.status, r.override, r.dueOut], ['occupied', null, true], 'back to due out');
+  });
+  await test('Unrecorded turnover stays on the cleans list the next days (default); prepped only if the setting is on', async () => {
+    const st = await mkStore([bk('101', D(0), D(3))]);
+    const r = await rowAt(st, '101', D(5));
+    eq([r.status, isCleanTodo(r)], ['guest_left', true], 'default');
+    await st.updateSettings({ assumePastTurnoversDone: true }, { userId: 'usr-001', demoDate: D(5) });
+    eq((await rowAt(st, '101', D(5))).status, 'prepped', 'setting on');
+  });
+  await test('House without bookings is prepped', async () => {
+    const st = await mkStore([bk('101', D(0), D(3))], ['102']);
+    eq((await rowAt(st, '102', D(1))).status, 'prepped', 'status');
+  });
+  await test('Back-to-back is detected only on the turnover day', async () => {
+    const st = await mkStore([bk('101', D(0), D(3)), bk('101', D(3), D(6))]);
+    eq((await rowAt(st, '101', D(3))).backToBack, true, 'turnover day');
+    eq((await rowAt(st, '101', D(4))).backToBack, false, 'day after');
+    eq((await rowAt(st, '101', D(4))).status, 'occupied', 'next guest staying');
+  });
+  await test('Manual “cleaned” holds through the turnover and resets when the next guest arrives', async () => {
+    const st = await mkStore([bk('101', D(0), D(3)), bk('101', D(5), D(8))]);
+    await setVia(st, await rowAt(st, '101', D(3)), 'cleaned', D(3));
+    eq((await rowAt(st, '101', D(4))).status, 'cleaned', 'day after departure');
+    eq((await rowAt(st, '101', D(5))).status, 'occupied', 'next arrival');
+    eq((await rowAt(st, '101', D(9))).status, 'guest_left', 'after the next stay, nothing entered');
+  });
+  await test('Early departure: a house cleaned early stays cleaned on the official departure day', async () => {
+    const st = await mkStore([bk('101', D(0), D(4))]);
+    await setVia(st, await rowAt(st, '101', D(2)), 'guest_left', D(2));
+    let r = await rowAt(st, '101', D(2));
+    eq([r.status, r.earlyDeparture], ['guest_left', true], 'after marking left');
+    await setVia(st, r, 'cleaned', D(2));
+    eq((await rowAt(st, '101', D(3))).status, 'cleaned', 'next day');
+    eq((await rowAt(st, '101', D(4))).status, 'cleaned', 'official departure day');
+  });
+  await test('Early departure can be reversed to occupied, then the departure day works as normal', async () => {
+    const st = await mkStore([bk('101', D(0), D(4))]);
+    await setVia(st, await rowAt(st, '101', D(2)), 'guest_left', D(2));
+    await setVia(st, await rowAt(st, '101', D(2)), 'occupied', D(2));
+    eq((await rowAt(st, '101', D(2))).status, 'occupied', 'reversed');
+    const dep = await rowAt(st, '101', D(4));
+    eq([dep.status, dep.dueOut], ['occupied', true], 'departure day is due out again');
+  });
+  await test('Assignment follows the turnover and is gone once the next guest stays', async () => {
+    const st = await mkStore([bk('101', D(0), D(3)), bk('101', D(3), D(6))]);
+    const r = await rowAt(st, '101', D(3));
+    await st.assign({ items: [{ unitId: r.unit.id, cycleKey: r.cycleKey }], task: 'clean', assigneeId: 'usr-005', userId: 'usr-004', demoDate: D(3) });
+    eq(assigneeOfRow(await rowAt(st, '101', D(3)), 'clean'), 'usr-005', 'turnover day');
+    eq(assigneeOfRow(await rowAt(st, '101', D(4)), 'clean'), null, 'next stay');
+  });
+  await test('Assigning ahead: planned on the departure date, visible when that day comes', async () => {
+    const st = await mkStore([bk('101', D(0), D(3))]);
+    const future = await rowAt(st, '101', D(3));
+    await st.assign({ items: [{ unitId: future.unit.id, cycleKey: future.cycleKey }], task: 'clean', assigneeId: 'usr-006', userId: 'usr-004', demoDate: D(3) });
+    eq(assigneeOfRow(await rowAt(st, '101', D(1)), 'clean'), null, 'while occupied');
+    eq(assigneeOfRow(await rowAt(st, '101', D(3)), 'clean'), 'usr-006', 'departure day');
+  });
+  await test('Re-upload in a different row order keeps statuses, assignments and early/late options', async () => {
+    const a = bk('101', D(0), D(3)), b = bk('101', D(3), D(6)), c = bk('102', D(1), D(3));
+    const st = await mkStore([a, b, c]);
+    let r = await rowAt(st, '101', D(3));
+    await setVia(st, r, 'cleaned', D(3));
+    await st.assign({ items: [{ unitId: r.unit.id, cycleKey: r.cycleKey }], task: 'prep', assigneeId: 'usr-008', userId: 'usr-001', demoDate: D(3) });
+    await st.setBookingOption({ bookingId: a.id, option: 'lateCheckout', value: true, userId: 'usr-001', demoDate: D(3) });
+    const units = await st.getUnits();
+    const reordered = [c, b, a].map((x, i) => ({ ...x, id: `NEW-${i}` })); // new IDs, new order
+    const rep = await st.replaceDataset({ units: [...units].reverse(), bookings: reordered, source: 'test' }, { userId: 'usr-001', demoDate: D(3) });
+    r = await rowAt(st, '101', D(3));
+    eq([r.status, assigneeOfRow(r, 'prep'), r.departing.lateCheckout, r.departing.departureTime], ['cleaned', 'usr-008', true, LATE_CHECKOUT_TIME], 'after re-upload');
+    eq([rep.statuses, rep.assignments, rep.timeOptions, rep.dropped.length], [1, 1, 1, 0], 'report');
+  });
+  await test('Re-upload with a moved departure drops that turnover’s status and reports it', async () => {
+    const a = bk('101', D(0), D(3));
+    const st = await mkStore([a]);
+    await setVia(st, await rowAt(st, '101', D(3)), 'cleaned', D(3));
+    const rep = await st.replaceDataset({ units: await st.getUnits(), bookings: [{ ...a, departureDate: D(4) }], source: 'test' }, { userId: 'usr-001', demoDate: D(3) });
+    eq(rep.dropped.length, 1, 'dropped entries');
+    eq((await rowAt(st, '101', D(3))).status, 'occupied', 'status on the old date');
+  });
+  await test('Late check-out on a back-to-back day is flagged as a time clash', async () => {
+    const a = bk('101', D(0), D(3)), b = bk('101', D(3), D(6));
+    const st = await mkStore([a, b]);
+    eq((await rowAt(st, '101', D(3))).clash, false, 'normal times');
+    await st.setBookingOption({ bookingId: a.id, option: 'lateCheckout', value: true, userId: 'usr-001', demoDate: D(3) });
+    const r = await rowAt(st, '101', D(3));
+    eq([r.clash, r.lateOut, r.departing.departureTime], [true, true, LATE_CHECKOUT_TIME], 'late check-out');
+  });
+  await test('Early check-in after a 09:30 check-out is fine; at the same time as check-out it is a clash', async () => {
+    const a = bk('101', D(0), D(3), { departureTime: '09:30' }), b = bk('101', D(3), D(6));
+    const st = await mkStore([a, b]);
+    await st.setBookingOption({ bookingId: b.id, option: 'earlyCheckin', value: true, userId: 'usr-001', demoDate: D(3) });
+    let r = await rowAt(st, '101', D(3));
+    eq([r.clash, r.earlyIn, r.arriving.arrivalTime], [false, true, EARLY_CHECKIN_TIME], 'early only');
+    await st.setBookingOption({ bookingId: a.id, option: 'lateCheckout', value: true, userId: 'usr-001', demoDate: D(3) });
+    r = await rowAt(st, '101', D(3));
+    eq(r.clash, true, 'early and late');
+    const st2 = await mkStore([bk('201', D(0), D(3)), bk('201', D(3), D(6), { arrivalTime: '10:00' })]);
+    eq((await rowAt(st2, '201', D(3))).clash, true, 'out 10:00, in 10:00');
+  });
+  await test('Withdrawing a late check-out restores the original time; undo guard respects newer changes', async () => {
+    const a = bk('101', D(0), D(3), { departureTime: '10:30' });
+    const st = await mkStore([a]);
+    await st.setBookingOption({ bookingId: a.id, option: 'lateCheckout', value: true, userId: 'usr-001', demoDate: D(3) });
+    await st.setBookingOption({ bookingId: a.id, option: 'lateCheckout', value: false, userId: 'usr-001', demoDate: D(3) });
+    eq((await rowAt(st, '101', D(3))).departing.departureTime, '10:30', 'restored time');
+    const res = await st.setBookingOption({ bookingId: a.id, option: 'lateCheckout', value: false, expectedCurrent: true, userId: 'usr-001', demoDate: D(3) });
+    eq(res.conflict, true, 'stale undo refused');
+  });
+  await test('Cleaning order: back-to-back first, then the soonest next check-in, using late check-out times', async () => {
+    const st = await mkStore([bk('101', D(0), D(3)), bk('101', D(5), D(7)), bk('102', D(0), D(3)), bk('102', D(3), D(6)), bk('103', D(0), D(3)), bk('103', D(4), D(6))]);
+    const snap = { units: await st.getUnits(), bookings: await st.getBookings(), settings: await st.getSettings() };
+    const order = StatusEngine.deriveAll(snap, D(3)).sort((x, y) => { const a = cleanSortKey(x), b = cleanSortKey(y); return (a[0] - b[0]) || a[1].localeCompare(b[1]) || a[2].localeCompare(b[2]); }).map((r) => r.unit.houseNumber);
+    eq(order, ['102', '103', '101'], 'order');
+  });
+  await test('Overlapping bookings are flagged as double booked', async () => {
+    const st = await mkStore([bk('101', D(0), D(4)), bk('101', D(2), D(5))]);
+    eq((await rowAt(st, '101', D(3))).overlap, true, 'overlap');
+    eq((await rowAt(st, '101', D(1))).overlap, false, 'before overlap');
+  });
+  await test('Undo does not overwrite a newer status change', async () => {
+    const st = await mkStore([bk('101', D(0), D(3))]);
+    const r = await rowAt(st, '101', D(3));
+    await setVia(st, r, 'cleaned', D(3));
+    await setVia(st, await rowAt(st, '101', D(3)), 'prepped', D(3));
+    const res = await st.restoreOverrides({ items: [{ unitId: r.unit.id, cycleKey: r.cycleKey, previousOverride: null, expectedStatus: 'cleaned', fromStatus: 'cleaned', toStatus: 'guest_left' }], userId: 'usr-001', demoDate: D(3) });
+    eq([res.restored, (await rowAt(st, '101', D(3))).status], [0, 'prepped'], 'undo result');
+  });
+  await test('Period report counts a back-to-back turnover once', async () => {
+    const stats = StatusEngine.periodStats([bk('101', D(0), D(3)), bk('101', D(3), D(6)), bk('102', D(1), D(3))], D(3), D(3));
+    eq(stats.totals, { departures: 2, arrivals: 1, b2b: 1 }, 'totals');
+  });
+  await test('Permissions follow the role table', async () => {
+    eq(Permissions.canSetStatus('cleaner', 'guest_left', 'cleaned'), true, 'cleaner cleans');
+    eq(Permissions.canSetStatus('cleaner', 'cleaned', 'prepped'), false, 'cleaner cannot prep');
+    eq(Permissions.canSetStatus('rep', 'guest_left', 'prepped'), false, 'prep needs cleaned first');
+    eq(Permissions.can('rep', 'worksOn') && ROLE_PERMISSIONS.rep.worksOn, 'prep', 'reps get preps assigned');
+    eq(Permissions.canAssign('rep', 'prep'), false, 'reps cannot assign preps');
+    eq(Permissions.canAssign('cleaning', 'prep'), false, 'cleaning company cannot assign preps');
+    eq(Permissions.canAssign('management', 'clean'), false, 'management does not assign cleans');
+    eq(Permissions.can('rep', 'editBookingTimes'), true, 'rep grants late check-out');
+    eq(Permissions.can('cleaner', 'editBookingTimes'), false, 'cleaner cannot');
+  });
+  await test('CSV round trip with quotes, separators, line breaks and accents (both separators)', async () => {
+    const rows = [['name', 'note'], ['João “Jo” O\'Neil', 'a, b; c'], ['Chloé "the boss"', 'line 1\nline 2'], ['Müller;Sofie', ' spaced ']];
+    for (const sep of [',', ';']) eq(SpreadsheetImport.parseCsv(toCsv(rows, sep)), rows, `separator ${sep}`);
+  });
+  await test('CSV export neutralises spreadsheet formulas', async () => {
+    eq(csvCell('=SUM(A1)', ','), "'=SUM(A1)", 'formula');
+    eq(csvCell('-12', ','), '-12', 'negative number stays');
+  });
+  await test('Date parsing: European and ISO text, Excel serials, invalid dates rejected', async () => {
+    eq(SpreadsheetImport.parseDateCell('05/09/2026', '15:00'), { date: '2026-09-05', time: '15:00' }, 'day first');
+    eq(SpreadsheetImport.parseDateCell('2026-09-18 10:30', '15:00'), { date: '2026-09-18', time: '10:30' }, 'ISO with time');
+    eq(SpreadsheetImport.parseDateCell(46283.625, '10:00'), { date: '2026-09-18', time: '15:00' }, 'Excel serial');
+    eq(SpreadsheetImport.parseDateCell('31-02-2026', '15:00'), null, '31 February');
+  });
+  await test('Import gives the same house the same ID and warns about overlaps', async () => {
+    const one = SpreadsheetImport.toDataset([['name', 'arrival', 'departure', 'housenumber'], ['A', '2026-09-01', '2026-09-05', 'B 12'], ['B', '2026-09-04', '2026-09-08', 'B 12']]);
+    const two = SpreadsheetImport.toDataset([['housenumber', 'departure', 'arrival', 'name'], ['B 12', '2026-09-08', '2026-09-04', 'B'], ['A 1', '2026-09-03', '2026-09-01', 'C']]);
+    eq(one.units[0].id, two.units.find((u) => u.houseNumber === 'B 12').id, 'stable id');
+    eq(one.warnings.length, 1, 'overlap warning');
+  });
+  return results;
+}
+function isCleanTodo(row) { return StatusEngine.isCleanTodo(row); }
+function assigneeOfRow(row, task) { return row.assignment[task] ? row.assignment[task].userId : null; }
+window.runSelfTests = runSelfTests;
+
+/* ==========================================================================
+   UI STATE AND HELPERS
+   ========================================================================== */
+const state = {
+  role: 'management',
+  userId: null,
+  demoDate: DateUtil.today(),
+  tab: 'units',
+  search: '',
+  statusFilter: 'all',
+  periodFrom: null,
+  periodTo: null,
+  logLimit: 100,
+  uploadReport: null,
+  modal: null,
+  snap: null,
+  rows: [],
+  rowByUnit: new Map(),
+  userById: new Map(),
+  pendingUndo: null,
+  workFilter: { clean: null, prep: null },
+  csvSep: defaultCsvSeparator(),
+  logFilter: { day: '', person: '', action: '', house: '' },
+  testResults: null,
+  selected: new Set(),     // unit IDs ticked for a bulk operation
+  visibleUnitIds: [],      // houses shown in the current view, for "select all shown"
+};
+const $ = (sel) => document.querySelector(sel);
+const perm = () => Permissions.of(state.role);
+let lastFocus = null;
+
+async function loadSnapshot() {
+  const [units, bookings, users, activity, settings, meta] = await Promise.all([
+    DataStore.getUnits(), DataStore.getBookings(), DataStore.getUsers(),
+    DataStore.getActivity(), DataStore.getSettings(), DataStore.getDatasetMeta(),
+  ]);
+  return { units, bookings, users, activity, settings, meta };
+}
+function recomputeRows() {
+  state.rows = StatusEngine.deriveAll(state.snap, state.demoDate);
+  state.rowByUnit = new Map(state.rows.map((r) => [r.unit.id, r]));
+  for (const id of [...state.selected]) if (!state.rowByUnit.has(id)) state.selected.delete(id);
+  state.userById = new Map(state.snap.users.map((u) => [u.id, u]));
+  state.userById.set(SYSTEM_USER.id, SYSTEM_USER);
+}
+async function refresh() {
+  state.snap = await loadSnapshot();
+  recomputeRows();
+  renderAll();
+}
+function userName(id) { const u = state.userById.get(id); return u ? u.name : 'Removed user'; }
+function unitById(id) { return state.snap.units.find((u) => u.id === id) || null; }
+
+let toastTimer = null;
+// undo: { what, run } where run() reverts the change and returns { restored, skipped }
+function toast(message, kind = 'ok', undo = null) {
+  const el = $('#toast');
+  state.pendingUndo = undo;
+  el.innerHTML = `<span>${esc(message)}</span>${undo ? '<button type="button" class="toast-action" data-action="toast-undo">Undo</button>' : ''}`;
+  el.className = `toast show${kind === 'error' ? ' error' : ''}${undo ? ' has-action' : ''}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, undo ? 8000 : 3400);
+}
+function hideToast() {
+  clearTimeout(toastTimer);
+  $('#toast').className = 'toast';
+  state.pendingUndo = null;
+}
+async function undoLast() {
+  const u = state.pendingUndo;
+  if (!u) return;
+  hideToast();
+  const res = await u.run();
+  await refresh();
+  if (!res.restored) toast('Nothing to undo: the status was changed again in the meantime.', 'error');
+  else toast(res.skipped ? `Undone for ${res.restored}. ${res.skipped} changed again in the meantime and stayed as they are.` : `Undone: ${u.what}.`);
+}
+
+function matchesSearch(row) {
+  const q = state.search.trim().toLowerCase();
+  if (!q) return true;
+  if (row.unit.houseNumber.toLowerCase().includes(q)) return true;
+  if (!perm().seeGuestNames) return false;
+  return [row.departing, row.arriving, row.occupying, row.nextArrival].some((b) => b && b.guestName.toLowerCase().includes(q));
+}
+
+function statusPill(status) { return `<span class="pill st-${status}">${STATUS_LABEL[status]}</span>`; }
+function houseTag(row, small = false) {
+  return `<span class="tag st-${row.status}${small ? ' small' : ''}"><span class="sr-only">House </span>${esc(row.unit.houseNumber)}</span>`;
+}
+function track(status) {
+  const idx = STATUSES.indexOf(status);
+  return `<div class="track st-${status}" role="img" aria-label="Step ${idx + 1} of 4: ${STATUS_LABEL[status]}">${STATUSES.map((s, k) => `<span class="seg${k <= idx ? ' on' : ''}"></span>`).join('')}</div>`;
+}
+function when(date, time) { const rel = DateUtil.relative(date, state.demoDate); return rel === 'today' ? esc(time) : `${rel} ${esc(time)}`; }
+function who(b, showNames) { return showNames ? ` <span class="who">${esc(b.guestName)}</span>` : ''; }
+
+function bookingLines(row, showNames) {
+  const L = [];
+  if (row.departing) {
+    L.push(['Out', when(row.departing.departureDate, row.departing.departureTime) + who(row.departing, showNames)]);
+    if (row.backToBack) L.push(['In', when(row.arriving.arrivalDate, row.arriving.arrivalTime) + who(row.arriving, showNames)]);
+    else L.push(['Next in', row.nextArrival ? when(row.nextArrival.arrivalDate, row.nextArrival.arrivalTime) + who(row.nextArrival, showNames) : '<span class="muted">none booked</span>']);
+  } else if (row.occupying) {
+    if (row.occupying.arrivalDate === state.demoDate) L.push(['In', when(row.occupying.arrivalDate, row.occupying.arrivalTime) + who(row.occupying, showNames)]);
+    else if (showNames) L.push(['Guest', `<span class="who">${esc(row.occupying.guestName)}</span>`]);
+    L.push(['Out', when(row.occupying.departureDate, row.occupying.departureTime)]);
+  } else {
+    L.push(['Next in', row.nextArrival ? when(row.nextArrival.arrivalDate, row.nextArrival.arrivalTime) + who(row.nextArrival, showNames) : '<span class="muted">none booked</span>']);
+  }
+  return L;
+}
+function linesHtml(lines) { return `<dl class="lines">${lines.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`; }
+
+function kv(label, value) { return `<span class="kv"><span class="k">${label}</span> ${value}</span>`; }
+function usersWithRole(role) { return state.snap.users.filter((u) => u.role === role).sort((a, b) => a.name.localeCompare(b.name)); }
+function assigneeOf(row, task) { return row.assignment[task] ? row.assignment[task].userId : null; }
+function assigneeLabel(id) { return id === state.userId ? 'you' : userName(id); }
+function assignSelect(row, task, extraClass = '') {
+  const staff = usersWithRole(TASKS[task].assigneeRole);
+  const cur = assigneeOf(row, task);
+  const opts = staff.map((u) => `<option value="${esc(u.id)}"${u.id === cur ? ' selected' : ''}>${esc(u.name)}</option>`);
+  if (cur && !staff.some((u) => u.id === cur)) opts.unshift(`<option value="${esc(cur)}" selected>${esc(userName(cur))}</option>`);
+  return `<select class="assign-select ${extraClass}" data-change="assign" data-task="${task}" data-unit="${esc(row.unit.id)}" aria-label="${TASKS[task].who} for house ${esc(row.unit.houseNumber)}"><option value="">Unassigned</option>${opts.join('')}</select>`;
+}
+// opts.tasks: which task assignments to show on the row ('clean', 'prep')
+function rowItem(row, lines, opts = {}) {
+  const showPill = opts.showPill !== false;
+  const tasks = opts.tasks || [];
+  const u = row.unit;
+  const next = NEXT_STATUS[row.status];
+  const canNext = next && Permissions.canSetStatus(state.role, row.status, next);
+  const allLines = [...lines];
+  const strips = [];
+  let mine = false;
+  for (const task of tasks) {
+    const id = assigneeOf(row, task);
+    if (id && id === state.userId) mine = true;
+    if (Permissions.canAssign(state.role, task, row)) strips.push(`<div class="row-assign"><label>${TASKS[task].who}${assignSelect(row, task)}</label></div>`);
+    else if (id || TASKS[task].isEligible(row)) allLines.push([TASKS[task].who, id ? `<span class="who">${esc(assigneeLabel(id))}</span>` : '<span class="muted">unassigned</span>']);
+  }
+  return `<li class="row${row.backToBack ? ' is-b2b' : ''}${mine ? ' is-mine' : ''}${state.selected.has(u.id) ? ' is-selected' : ''}">
+    <div class="row-line">
+      ${selectBox(u)}
+      <button type="button" class="row-main" data-action="open-unit" data-unit="${esc(u.id)}">
+        ${houseTag(row, true)}
+        <span class="row-body">
+          <span class="row-top">${showPill ? statusPill(row.status) : ''}${row.backToBack ? '<span class="badge-b2b">Back-to-back</span>' : ''}${mine ? '<span class="badge-mine">Yours</span>' : ''}${timeBadges(row)}</span>
+          <span class="row-sub">${allLines.map(([k, v]) => kv(k, v)).join('')}</span>
+          ${u.notes ? `<span class="row-note"><span class="sr-only">Notes: </span>${esc(u.notes)}</span>` : ''}
+        </span>
+      </button>
+      ${canNext ? `<button class="btn btn-row st-${next}" type="button" data-action="set-status" data-unit="${esc(u.id)}" data-status="${next}" aria-label="Set house ${esc(u.houseNumber)} to ${STATUS_LABEL[next].toLowerCase()}"><span class="verb">Set to</span><span class="to">${STATUS_LABEL[next].toLowerCase()}</span></button>` : ''}
+    </div>
+    ${strips.join('')}
+  </li>`;
+}
+function timeBadges(row) {
+  let html = '';
+  if (row.overlap) html += '<span class="badge-b2b" title="Two bookings overlap on this house">Double booked</span>';
+  if (row.clash) html += `<span class="badge-b2b" title="The leaving guest checks out at or after the next guest's check-in: no time to clean">Time clash ${esc(row.departing.departureTime)}/${esc(row.arriving.arrivalTime)}</span>`;
+  if (row.lateOut) html += `<span class="badge-time">Late out ${LATE_CHECKOUT_TIME}</span>`;
+  if (row.earlyIn) html += `<span class="badge-time">Early in ${EARLY_CHECKIN_TIME}</span>`;
+  if (row.dueOut) html += '<span class="badge-in" title="Departs today; guest left has not been entered yet">Guest still in</span>';
+  if (row.earlyDeparture) html += '<span class="badge-manual">left early</span>';
+  return html;
+}
+function canSelect() { return Permissions.bulkModes(state.role).length > 0; }
+function selectBox(unit) {
+  state.visibleUnitIds.push(unit.id);
+  if (!canSelect()) return '';
+  return `<label class="row-check"><input type="checkbox" data-change="select" data-unit="${esc(unit.id)}"${state.selected.has(unit.id) ? ' checked' : ''}><span class="sr-only">Select house ${esc(unit.houseNumber)}</span></label>`;
+}
+function selectedHouses() {
+  return [...state.selected].map((id) => state.rowByUnit.get(id)).filter(Boolean).map((r) => r.unit.houseNumber).sort(naturalCompare);
+}
+function renderSelBar() {
+  const bar = $('#selbar');
+  if (!bar) return;
+  const n = state.selected.size;
+  const visibleNotSelected = state.visibleUnitIds.filter((id) => !state.selected.has(id)).length;
+  if (!canSelect() || (!n)) { bar.hidden = true; bar.innerHTML = ''; document.body.classList.remove('has-selbar'); return; }
+  const houses = selectedHouses();
+  bar.hidden = false;
+  document.body.classList.add('has-selbar');
+  bar.innerHTML = `<div class="selbar-inner">
+    <span class="selbar-count"><strong>${n} selected</strong><span class="selbar-houses">${esc(houses.slice(0, 12).join(', '))}${houses.length > 12 ? '…' : ''}</span></span>
+    <button class="btn btn-primary btn-small" type="button" data-action="bulk-selected">Bulk update</button>
+    ${visibleNotSelected ? `<button class="btn btn-small" type="button" data-action="select-visible">Select all shown (${state.visibleUnitIds.length})</button>` : ''}
+    <button class="btn btn-small" type="button" data-action="select-clear">Clear</button>
+  </div>`;
+}
+function selectAllButton() {
+  return canSelect() ? '<button class="btn btn-head" type="button" data-action="select-visible">Select all</button>' : '';
+}
+function toggleSelected(unitId, on) {
+  if (on) state.selected.add(unitId); else state.selected.delete(unitId);
+  document.querySelectorAll('input[data-change="select"]').forEach((cb) => {
+    if (cb.dataset.unit !== unitId) return;
+    cb.checked = on;
+    const holder = cb.closest('li, tr');
+    if (holder) holder.classList.toggle('is-selected', on);
+  });
+  renderSelBar();
+}
+// On a computer (wide screen) lists are shown as tables; on phones as compact rows.
+const WIDE_QUERY = '(min-width: 900px)';
+function isWide() { try { return !!(window.matchMedia && window.matchMedia(WIDE_QUERY).matches); } catch (e) { return false; } }
+function nameSub(b) { return perm().seeGuestNames ? `<span class="cell-sub">${esc(b.guestName)}</span>` : ''; }
+function incomingOf(r) {
+  if (r.backToBack) return r.arriving;
+  if (r.occupying && !r.departing && r.occupying.arrivalDate === state.demoDate) return r.occupying;
+  return r.nextArrival;
+}
+function outgoingOf(r) { return r.departing || r.occupying || (isCleanTodo(r) ? r.lastDeparture : null); }
+function assignCell(r, task) {
+  if (Permissions.canAssign(state.role, task, r)) return assignSelect(r, task);
+  const id = assigneeOf(r, task);
+  if (id) return `<span class="who">${esc(assigneeLabel(id))}</span>`;
+  return TASKS[task].isEligible(r) ? '<span class="muted">unassigned</span>' : '';
+}
+function actionCell(r) {
+  const next = NEXT_STATUS[r.status];
+  if (next && Permissions.canSetStatus(state.role, r.status, next)) {
+    return `<button class="btn btn-set st-${next}" type="button" data-action="set-status" data-unit="${esc(r.unit.id)}" data-status="${next}">Set to ${STATUS_LABEL[next].toLowerCase()}</button>`;
+  }
+  if (r.dueOut && !Permissions.canSetStatus(state.role, r.status, 'guest_left')) return '<span class="muted">waits for “guest left”</span>';
+  return '';
+}
+const TABLE_COLUMNS = {
+  select: { head: '<span class="sr-only">Select</span>', cls: 'c-sel', cell: (r) => selectBox(r.unit) },
+  house: { head: 'House', cls: 'c-house', cell: (r) => `<button type="button" class="house-link" data-action="open-unit" data-unit="${esc(r.unit.id)}" title="Open details">${houseTag(r, true)}</button>` },
+  status: { head: 'Status', cell: (r) => statusPill(r.status) },
+  flags: { head: 'Flags', cls: 'c-flags', cell: (r, opts) => {
+    const mine = (opts.tasks || []).some((t) => assigneeOf(r, t) === state.userId);
+    return `<span class="flags">${r.backToBack ? '<span class="badge-b2b">Back-to-back</span>' : ''}${mine ? '<span class="badge-mine">Yours</span>' : ''}${timeBadges(r)}</span>`;
+  } },
+  out: { head: 'Check-out', cell: (r) => { const b = outgoingOf(r); return b ? `${when(b.departureDate, b.departureTime)}${nameSub(b)}` : '<span class="muted">–</span>'; } },
+  in: { head: 'Next check-in', cell: (r) => { const b = incomingOf(r); return b ? `${when(b.arrivalDate, b.arrivalTime)}${nameSub(b)}` : '<span class="muted">none booked</span>'; } },
+  clean: { head: 'Cleaner', cls: 'c-assign', cell: (r) => assignCell(r, 'clean') },
+  prep: { head: 'Prep', cls: 'c-assign', cell: (r) => assignCell(r, 'prep') },
+  notes: { head: 'Notes', cls: 'c-notes', cell: (r) => (r.unit.notes ? `<span class="cell-note" title="${esc(r.unit.notes)}">${esc(r.unit.notes)}</span>` : '') },
+  action: { head: '<span class="sr-only">Action</span>', cls: 'c-act', cell: (r) => actionCell(r) },
+};
+function rowTable(rows, cols, opts = {}) {
+  const defs = cols.filter((k) => k !== 'select' || canSelect()).map((k) => TABLE_COLUMNS[k]);
+  const body = rows.map((r) => {
+    state.visibleUnitIds.push(r.unit.id);
+    const mine = (opts.tasks || []).some((t) => assigneeOf(r, t) === state.userId);
+    const cls = [r.backToBack && 'is-b2b', mine && 'is-mine', state.selected.has(r.unit.id) && 'is-selected'].filter(Boolean).join(' ');
+    return `<tr class="${cls}">${defs.map((c) => `<td class="${c.cls || ''}">${c.cell(r, opts)}</td>`).join('')}</tr>`;
+  }).join('');
+  return `<div class="table-wrap"><table class="dtable"><thead><tr>${defs.map((c) => `<th scope="col" class="${c.cls || ''}">${c.head}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function rowList(rows, linesFor, opts = {}) {
+  if (opts.cols && isWide()) return rowTable(rows, opts.cols, opts);
+  return `<ul class="rows">${rows.map((r) => rowItem(r, linesFor(r), opts)).join('')}</ul>`;
+}
+function bulkListButton(rows, target) {
+  if (!Permissions.can(state.role, 'bulkEdit') || !perm().settableStatuses.includes(target)) return '';
+  const eligible = rows.filter((r) => Permissions.canSetStatus(state.role, r.status, target));
+  if (eligible.length < 2) return '';
+  return `<button class="btn btn-head" type="button" data-action="open-bulk" data-mode="status" data-target="${target}" data-houses="${esc(eligible.map((r) => r.unit.houseNumber).join(' '))}">Set all ${eligible.length} to ${STATUS_LABEL[target].toLowerCase()}</button>`;
+}
+function assignListButton(rows, task) {
+  if (!Permissions.can(state.role, TASKS[task].permission)) return '';
+  const open = rows.filter((r) => !assigneeOf(r, task) && Permissions.canAssign(state.role, task, r));
+  if (!open.length) return '';
+  return `<button class="btn btn-head" type="button" data-action="open-bulk" data-mode="${task}" data-houses="${esc(open.map((r) => r.unit.houseNumber).join(' '))}">Assign ${open.length} unassigned</button>`;
+}
+
+/* Who-filter for cleans and preps: individuals start on "Mine", everyone else on "All". */
+function workFilterValue(task) {
+  const v = state.workFilter[task];
+  if (v) return v;
+  return perm().worksOn === task ? 'mine' : 'all';
+}
+function applyWorkFilter(rows, task) {
+  const v = workFilterValue(task);
+  if (v === 'all') return rows;
+  if (v === 'mine') return rows.filter((r) => assigneeOf(r, task) === state.userId);
+  if (v === 'none') return rows.filter((r) => !assigneeOf(r, task));
+  return rows.filter((r) => assigneeOf(r, task) === v);
+}
+function workChips(rows, task) {
+  const v = workFilterValue(task);
+  const isWorker = perm().worksOn === task;
+  const count = (fn) => rows.filter(fn).length;
+  const opts = [];
+  if (isWorker) opts.push(['mine', 'Mine', count((r) => assigneeOf(r, task) === state.userId)]);
+  opts.push(['all', isWorker ? 'Everyone' : 'All', rows.length]);
+  opts.push(['none', 'Unassigned', count((r) => !assigneeOf(r, task))]);
+  for (const u of usersWithRole(TASKS[task].assigneeRole)) {
+    if (isWorker && u.id === state.userId) continue;
+    opts.push([u.id, u.name, count((r) => assigneeOf(r, task) === u.id)]);
+  }
+  return `<div class="chips" role="group" aria-label="Show tasks for">${opts.map(([k, l, n]) =>
+    `<button type="button" class="chip" data-action="work-filter" data-task="${task}" data-filter="${esc(k)}" aria-pressed="${v === k}">${esc(l)}<span class="c">${n}</span></button>`).join('')}</div>`;
+}
+function workEmpty(task, what) {
+  const v = workFilterValue(task);
+  if (v === 'mine') return emptyState(`No ${what} assigned to you`, 'Tap Everyone to see all of them.');
+  if (v === 'none') return emptyState('Everything is assigned', 'Pick another filter above to see who does what.');
+  return emptyState(`No ${what} in this selection`, 'Pick another filter above.');
+}
+function emptyState(title, text) { return `<div class="empty"><strong>${esc(title)}</strong>${esc(text)}</div>`; }
+function noMatch() { return emptyState('No houses match this search', `Nothing matches “${state.search.trim()}”. Clear the search box to see everything.`); }
+
+/* ==========================================================================
+   RENDERING
+   ========================================================================== */
+function ensureValidSession() {
+  const users = state.snap.users.filter((u) => u.role === state.role);
+  if (!users.some((u) => u.id === state.userId)) state.userId = users[0] ? users[0].id : null;
+  const tabs = Permissions.tabs(state.role);
+  if (!tabs.includes(state.tab)) state.tab = tabs[0];
+}
+
+function renderAll() {
+  ensureValidSession();
+  renderHeader();
+  renderSummary();
+  renderTabs();
+  renderView();
+  renderSelBar();
+  renderModal(false);
+}
+
+function renderHeader() {
+  const meta = state.snap.meta;
+  $('#datasetLabel').textContent = `${state.snap.units.length} houses, ${state.snap.bookings.length} bookings, ${meta.fileName ? `from ${meta.fileName}` : meta.source}`;
+  $('#roleButtons').innerHTML = ROLE_ORDER.map((r) => `<button type="button" data-action="role" data-role="${r}" aria-pressed="${r === state.role}" title="${ROLE_PERMISSIONS[r].label}">${ROLE_PERMISSIONS[r].short}</button>`).join('');
+  const users = state.snap.users.filter((u) => u.role === state.role);
+  $('#userSelect').innerHTML = users.map((u) => `<option value="${esc(u.id)}"${u.id === state.userId ? ' selected' : ''}>${esc(u.name)}</option>`).join('');
+  $('#demoDate').value = state.demoDate;
+  $('#bulkBtn').hidden = !Permissions.bulkModes(state.role).length;
+  $('#search').placeholder = perm().seeGuestNames ? 'Search house number or guest name' : 'Search house number';
+}
+
+function renderSummary() {
+  const d = state.demoDate;
+  const tabs = Permissions.tabs(state.role);
+  const arrivals = state.snap.bookings.filter((b) => b.arrivalDate === d).length;
+  const departures = state.snap.bookings.filter((b) => b.departureDate === d).length;
+  const b2b = state.rows.filter((r) => r.backToBack).length;
+  const byStatus = Object.fromEntries(STATUSES.map((s) => [s, state.rows.filter((r) => r.status === s).length]));
+  const items = [
+    { n: arrivals, l: 'Arrivals', c: 'var(--st-occupied)', tab: tabs.includes('movements') ? 'movements' : null },
+    { n: departures, l: 'Departures', c: 'var(--st-guest_left)', tab: tabs.includes('movements') ? 'movements' : null },
+    { n: b2b, l: 'Back-to-back', c: 'var(--urgent)', tab: tabs.includes('units') ? 'units' : (tabs.includes('cleans') ? 'cleans' : null), filter: tabs.includes('units') ? 'b2b' : null },
+    ...STATUSES.map((s) => ({
+      n: byStatus[s], l: STATUS_LABEL[s], c: `var(--st-${s})`,
+      tab: tabs.includes('units') ? 'units' : (s === 'guest_left' && tabs.includes('cleans') ? 'cleans' : (s === 'cleaned' && tabs.includes('preps') ? 'preps' : null)),
+      filter: tabs.includes('units') ? s : null,
+    })),
+  ];
+  $('#summary').setAttribute('aria-label', `Summary for ${DateUtil.label(d)}`);
+  $('#summary').innerHTML = items.map((it) => {
+    const inner = `<span class="n">${it.n}</span><span class="l">${esc(it.l)}</span>`;
+    return it.tab
+      ? `<button type="button" class="tally" style="--c:${it.c}" data-action="jump" data-tab="${it.tab}" data-filter="${it.filter || ''}">${inner}</button>`
+      : `<div class="tally" style="--c:${it.c}">${inner}</div>`;
+  }).join('');
+}
+
+function renderTabs() {
+  const count = (task, fn) => {
+    const rows = state.rows.filter(fn);
+    return perm().worksOn === task ? rows.filter((r) => assigneeOf(r, task) === state.userId) : rows;
+  };
+  const cleans = count('clean', isCleanTodo);
+  const preps = count('prep', (r) => r.status === 'cleaned');
+  const hot = cleans.some((r) => r.backToBack);
+  const badge = { cleans: `<span class="count${hot ? ' hot' : ''}">${cleans.length}</span>`, preps: `<span class="count">${preps.length}</span>` };
+  $('#tabs').innerHTML = Permissions.tabs(state.role).map((t) =>
+    `<button type="button" data-action="tab" data-tab="${t}"${t === state.tab ? ' aria-current="page"' : ''}>${TAB_LABELS[t]}${badge[t] || ''}</button>`).join('');
+}
+
+function renderView() {
+  const views = { units: viewUnits, movements: viewMovements, cleans: viewCleans, preps: viewPreps, period: viewPeriod, log: viewLog, admin: viewAdmin, tests: viewTests };
+  state.visibleUnitIds = [];
+  $('#view').innerHTML = (views[state.tab] || viewCleans)();
+  state.visibleUnitIds = [...new Set(state.visibleUnitIds)];
+  renderSelBar();
+  if (state.tab === 'admin') bindDropZone();
+  if (state.tab === 'tests' && !state.testResults && !state.testsRunning) { state.testsRunning = true; runTestsInView().finally(() => { state.testsRunning = false; }); }
+}
+
+/* ---- Houses ---- */
+function viewUnits() {
+  if (!state.rows.length) return emptyState('No houses loaded', 'Upload a booking file or generate demo data under Data & users.');
+  const searched = state.rows.filter(matchesSearch);
+  const count = (k) => (k === 'all' ? searched.length : k === 'b2b' ? searched.filter((r) => r.backToBack).length : searched.filter((r) => r.status === k).length);
+  const filters = [['all', 'All'], ['b2b', 'Back-to-back'], ...STATUSES.map((s) => [s, STATUS_LABEL[s]])];
+  const rows = searched.filter((r) => {
+    if (state.statusFilter === 'all') return true;
+    if (state.statusFilter === 'b2b') return r.backToBack;
+    return r.status === state.statusFilter;
+  });
+  const showNames = perm().seeGuestNames;
+  return `<div class="view-head"><div class="chips" role="group" aria-label="Filter by status">${filters.map(([k, l]) =>
+      `<button type="button" class="chip" data-action="status-filter" data-filter="${k}" aria-pressed="${state.statusFilter === k}">${l}<span class="c">${count(k)}</span></button>`).join('')}</div>
+    <div class="head-actions">${rows.length ? selectAllButton() : ''}</div></div>
+    ${rows.length
+      ? rowList(rows, (r) => bookingLines(r, showNames), { tasks: ['clean', 'prep'], cols: ['select', 'house', 'status', 'flags', 'out', 'in', 'clean', 'prep', 'notes', 'action'] })
+      : (state.search.trim() ? noMatch() : emptyState('No houses with this status', 'Pick another filter above.'))}`;
+}
+
+/* ---- Cleans to do ---- */
+function cleanSortKey(row) {
+  const next = row.nextArrival ? `${row.nextArrival.arrivalDate} ${row.nextArrival.arrivalTime}` : '9999-99-99 99:99';
+  const out = row.departing ? row.departing.departureTime : (row.lastDeparture ? row.lastDeparture.departureTime : '99:99');
+  // back-to-back first; within that, houses the guest already left before those still due out
+  return [(row.backToBack ? 0 : 2) + (row.dueOut ? 1 : 0), next, out];
+}
+function viewCleans() {
+  const all = state.rows.filter(isCleanTodo);
+  const searched = all.filter(matchesSearch).sort((a, b) => {
+    const ka = cleanSortKey(a), kb = cleanSortKey(b);
+    return (ka[0] - kb[0]) || ka[1].localeCompare(kb[1]) || ka[2].localeCompare(kb[2]) || naturalCompare(a.unit.houseNumber, b.unit.houseNumber);
+  });
+  const rows = applyWorkFilter(searched, 'clean');
+  const b2b = all.filter((r) => r.backToBack).length;
+  const unassigned = all.filter((r) => !assigneeOf(r, 'clean')).length;
+  const stillIn = all.filter((r) => r.dueOut).length;
+  const head = `<div class="view-head"><div><h2>Cleans to do</h2>
+    <p>${all.length} to clean: ${all.length - stillIn} guest left, ${stillIn} still in${b2b ? `; ${b2b} back-to-back first` : ''}${unassigned ? `; ${unassigned} unassigned` : ''}.${Permissions.can(state.role, 'assignCleans') ? ' To plan tomorrow, move the date forward.' : ''}</p></div>
+    <div class="head-actions">${all.length ? selectAllButton() : ''}${assignListButton(searched, 'clean')}${bulkListButton(rows, 'cleaned')}</div></div>`;
+  if (!all.length) return head + emptyState(`No cleans on ${DateUtil.label(state.demoDate)}`, 'Houses appear here on their departure day, before and after the guest leaves.');
+  if (!searched.length) return head + noMatch();
+  const list = rows.length ? rowList(rows, (r) => {
+    const out = r.departing || r.lastDeparture;
+    return [
+      ['Out', out ? when(out.departureDate, out.departureTime) : '<span class="muted">unknown</span>'],
+      ['Next in', r.nextArrival ? when(r.nextArrival.arrivalDate, r.nextArrival.arrivalTime) : '<span class="muted">none booked</span>'],
+      ...(r.dueOut && !Permissions.canSetStatus(state.role, r.status, 'guest_left') ? [['', '<span class="muted">cleaning can start once “guest left” is entered</span>']] : []),
+    ];
+  }, { showPill: false, tasks: ['clean'], cols: ['select', 'house', 'status', 'flags', 'out', 'in', 'clean', 'notes', 'action'] }) : workEmpty('clean', 'cleans');
+  return head + workChips(searched, 'clean') + list;
+}
+
+/* ---- Preps to do ---- */
+function viewPreps() {
+  const key = (r) => (r.nextArrival ? `${r.nextArrival.arrivalDate} ${r.nextArrival.arrivalTime}` : '9999-99-99 99:99');
+  const sortRows = (list) => list.sort((a, b) => key(a).localeCompare(key(b)) || naturalCompare(a.unit.houseNumber, b.unit.houseNumber));
+  const ready = sortRows(state.rows.filter((r) => r.status === 'cleaned' && matchesSearch(r)));
+  const coming = sortRows(state.rows.filter((r) => isCleanTodo(r) && matchesSearch(r)));
+  const searched = [...ready, ...coming];
+  const readyRows = applyWorkFilter(ready, 'prep');
+  const comingRows = applyWorkFilter(coming, 'prep');
+  const showNames = perm().seeGuestNames;
+  const lines = (r) => [
+    ['Next in', r.nextArrival ? when(r.nextArrival.arrivalDate, r.nextArrival.arrivalTime) + who(r.nextArrival, showNames) : '<span class="muted">none booked</span>'],
+  ];
+  const head = `<div class="view-head"><div><h2>Preps to do</h2>
+    <p>${ready.length} cleaned and ready to prepare, soonest check-in first. ${coming.length} more still to be cleaned.</p></div>
+    <div class="head-actions">${searched.length ? selectAllButton() : ''}${assignListButton(searched, 'prep')}${bulkListButton(readyRows, 'prepped')}</div></div>`;
+  if (!searched.length) return head + (state.search.trim() ? noMatch() : emptyState('Nothing to prepare', 'Houses show up here once guests leave.'));
+  const readyHtml = readyRows.length ? rowList(readyRows, lines, { showPill: false, tasks: ['prep'], cols: ['select', 'house', 'flags', 'in', 'prep', 'notes', 'action'] }) : workEmpty('prep', 'preps ready');
+  const comingHtml = comingRows.length ? `<h3 class="list-title">Still to be cleaned (${comingRows.length})</h3>${rowList(comingRows, lines, { tasks: ['clean', 'prep'], cols: ['select', 'house', 'status', 'flags', 'out', 'in', 'clean', 'prep', 'notes', 'action'] })}` : '';
+  return head + workChips(searched, 'prep') + `<h3 class="list-title">Ready to prep (${readyRows.length})</h3>` + readyHtml + comingHtml;
+}
+
+/* ---- Arrivals & departures ---- */
+// The booking on the other side of a same-day turnover, for clash checks.
+function neighbourBooking(b, option) {
+  return state.snap.bookings.find((x) => x.unitId === b.unitId && x.id !== b.id
+    && (option === 'lateCheckout' ? x.arrivalDate === b.departureDate : x.departureDate === b.arrivalDate)) || null;
+}
+function neighbourClash(b, option) {
+  const other = neighbourBooking(b, option);
+  return option === 'lateCheckout' ? StatusEngine.timeClash(b, other) : StatusEngine.timeClash(other, b);
+}
+function timeToggle(b, option) {
+  const label = option === 'lateCheckout' ? `Late out ${LATE_CHECKOUT_TIME}` : `Early in ${EARLY_CHECKIN_TIME}`;
+  if (!Permissions.can(state.role, 'editBookingTimes')) return b[option] ? `<span class="badge-time">${label}</span>` : '';
+  return `<button type="button" class="chip chip-time" data-action="toggle-time" data-booking="${esc(b.id)}" data-option="${option}" aria-pressed="${!!b[option]}">${label}</button>`;
+}
+function viewMovements() {
+  const showNames = perm().seeGuestNames;
+  const q = state.search.trim().toLowerCase();
+  const match = (b) => {
+    if (!q) return true;
+    const u = unitById(b.unitId);
+    return (u && u.houseNumber.toLowerCase().includes(q)) || (showNames && b.guestName.toLowerCase().includes(q));
+  };
+  const wide = isWide();
+  const days = [state.demoDate, DateUtil.addDays(state.demoDate, 1)];
+  const sections = days.map((day, i) => {
+    const deps = state.snap.bookings.filter((b) => b.departureDate === day && match(b)).sort((a, b) => a.departureTime.localeCompare(b.departureTime) || naturalCompare(unitById(a.unitId).houseNumber, unitById(b.unitId).houseNumber));
+    const arrs = state.snap.bookings.filter((b) => b.arrivalDate === day && match(b)).sort((a, b) => a.arrivalTime.localeCompare(b.arrivalTime) || naturalCompare(unitById(a.unitId).houseNumber, unitById(b.unitId).houseNumber));
+    const depUnits = new Set(state.snap.bookings.filter((b) => b.departureDate === day).map((b) => b.unitId));
+    const arrUnits = new Set(state.snap.bookings.filter((b) => b.arrivalDate === day).map((b) => b.unitId));
+    const parts = (b, kind) => {
+      const row = state.rowByUnit.get(b.unitId);
+      const unit = unitById(b.unitId);
+      const option = kind === 'dep' ? 'lateCheckout' : 'earlyCheckin';
+      const isB2b = kind === 'dep' ? arrUnits.has(b.unitId) : depUnits.has(b.unitId);
+      let extra = '';
+      if (i === 0 && row) {
+        if (kind === 'arr') extra = row.status === 'prepped' ? '<span class="ready ok">Ready</span>' : `<span class="ready no">Not ready: ${STATUS_LABEL[row.status].toLowerCase()}</span>`;
+        else if (row.departing && row.departing.id === b.id && Permissions.canSetStatus(state.role, row.status, 'guest_left')) extra = `<button class="btn btn-small btn-status st-guest_left" type="button" data-action="set-status" data-unit="${esc(row.unit.id)}" data-status="guest_left">Set to guest left</button>`;
+        else extra = statusPill(row.status);
+      }
+      return {
+        unitId: b.unitId,
+        selected: state.selected.has(b.unitId),
+        sel: selectBox(unit),
+        tag: `<span class="tag small st-${i === 0 && row ? row.status : 'occupied'}"><span class="sr-only">House </span>${esc(unit.houseNumber)}</span>`,
+        time: `<span class="move-time">${esc(kind === 'dep' ? b.departureTime : b.arrivalTime)}</span>`,
+        guest: showNames ? `<span class="who">${esc(b.guestName)}</span>` : '',
+        stay: kind === 'dep' ? `stayed from ${esc(DateUtil.label(b.arrivalDate))}` : `until ${esc(DateUtil.label(b.departureDate))}`,
+        flags: `${isB2b ? '<span class="badge-b2b">Back-to-back</span>' : ''}${neighbourClash(b, option) ? '<span class="badge-b2b">Time clash</span>' : ''}`,
+        extra,
+        toggle: timeToggle(b, option),
+      };
+    };
+    const li = (p) => `<li class="${p.selected ? 'is-selected' : ''}">
+        ${p.sel || '<span></span>'}${p.tag}
+        <div>${p.time}<div class="move-meta">${p.guest} ${p.stay} ${p.flags}</div></div>
+        <div class="move-side">${p.extra}${p.toggle}</div>
+      </li>`;
+    const tr = (p) => `<tr class="${p.selected ? 'is-selected' : ''}">
+        ${canSelect() ? `<td class="c-sel">${p.sel}</td>` : ''}
+        <td class="c-house"><button type="button" class="house-link" data-action="open-unit" data-unit="${esc(p.unitId)}" title="Open details">${p.tag}</button></td>
+        <td>${p.time}</td>${showNames ? `<td>${p.guest}</td>` : ''}<td>${p.stay}</td>
+        <td class="c-flags"><span class="flags">${p.flags}</span></td><td>${p.extra}</td><td>${p.toggle}</td>
+      </tr>`;
+    const list = (arr, kind, emptyText) => {
+      if (!arr.length) return `<p class="muted">${emptyText}</p>`;
+      const ps = arr.map((b) => parts(b, kind));
+      if (!wide) return `<ul class="move-list">${ps.map(li).join('')}</ul>`;
+      const heads = [
+        canSelect() ? '<th class="c-sel"><span class="sr-only">Select</span></th>' : '',
+        '<th class="c-house">House</th>',
+        `<th>${kind === 'dep' ? 'Check-out' : 'Check-in'}</th>`,
+        showNames ? '<th>Guest</th>' : '',
+        `<th>${kind === 'dep' ? 'Stay' : 'Stays'}</th>`,
+        '<th class="c-flags">Flags</th>',
+        `<th>${i === 0 ? (kind === 'dep' ? 'Status' : 'House ready?') : ''}</th>`,
+        `<th>${kind === 'dep' ? 'Late check-out' : 'Early check-in'}</th>`,
+      ].join('');
+      return `<div class="table-wrap"><table class="dtable"><thead><tr>${heads}</tr></thead><tbody>${ps.map(tr).join('')}</tbody></table></div>`;
+    };
+    const title = i === 0 ? DateUtil.label(day) : `Next day, ${DateUtil.label(day)}`;
+    return `<section class="panel"><h2>${esc(title)}</h2>
+      <div class="${wide ? 'stack' : 'cols'}">
+        <div><h3>Departures (${deps.length})</h3>${list(deps, 'dep', q ? 'No matching departures.' : 'No departures.')}</div>
+        <div><h3>Arrivals (${arrs.length})</h3>${list(arrs, 'arr', q ? 'No matching arrivals.' : 'No arrivals.')}</div>
+      </div></section>`;
+  });
+  return `<div class="view-head"><div><h2>Arrivals & departures</h2>
+    <p>Who leaves and who arrives, with check-out and check-in times. For arrivals on the working date you can see whether the house is ready.</p></div>
+    <div class="head-actions">${selectAllButton()}</div></div>${sections.join('')}`;
+}
+
+/* ---- Period report ---- */
+function periodData() {
+  let from = state.periodFrom, to = state.periodTo, message = '';
+  if (!DateUtil.isISO(from) || !DateUtil.isISO(to)) return { error: 'Choose both a start and an end date.' };
+  if (from > to) return { error: 'The start date is after the end date. Swap them to see the report.' };
+  if (DateUtil.diff(from, to) > 365) { to = DateUtil.addDays(from, 365); message = `Showing the first 366 days, up to ${DateUtil.label(to)}.`; }
+  return { from, to, message, ...StatusEngine.periodStats(state.snap.bookings, from, to) };
+}
+function periodChart(days) {
+  const max = Math.max(1, ...days.flatMap((d) => [d.departures, d.arrivals, d.b2b]));
+  const step = Math.max(1, Math.ceil(max / 4));
+  const top = Math.ceil(max / step) * step;
+  const groupW = 38, barW = 9, gap = 2, padL = 30, padR = 8, padT = 10, padB = 36, H = 210;
+  const W = padL + days.length * groupW + padR;
+  const plotH = H - padT - padB;
+  const y = (v) => padT + plotH - (v / top) * plotH;
+  const labelEvery = Math.ceil(days.length / 40);
+  let svg = '';
+  for (let v = 0; v <= top; v += step) {
+    svg += `<line class="grid-line" x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}"/><text x="${padL - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+  }
+  days.forEach((d, i) => {
+    const x0 = padL + i * groupW + (groupW - (3 * barW + 2 * gap)) / 2;
+    [['bar-dep', d.departures, 'departures'], ['bar-arr', d.arrivals, 'arrivals'], ['bar-b2b', d.b2b, 'back-to-back']].forEach(([cls, v, name], k) => {
+      if (v > 0) svg += `<rect class="${cls}" x="${x0 + k * (barW + gap)}" y="${y(v)}" width="${barW}" height="${y(0) - y(v)}" rx="1.5"><title>${esc(DateUtil.label(d.date))}: ${v} ${name}</title></rect>`;
+    });
+    if (i % labelEvery === 0) {
+      const cx = padL + i * groupW + groupW / 2;
+      svg += `<text x="${cx}" y="${H - padB + 15}" text-anchor="middle">${DateUtil.parse(d.date).getDate()}</text><text x="${cx}" y="${H - padB + 28}" text-anchor="middle">${esc(DateUtil.weekday(d.date).slice(0, 2))}</text>`;
+    }
+  });
+  return `<div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Departures, arrivals and back-to-back turnovers per day">${svg}</svg></div>
+    <div class="legend"><span style="--k:var(--st-guest_left)">Departures</span><span style="--k:var(--st-occupied)">Arrivals</span><span style="--k:var(--urgent)">Back-to-back</span></div>`;
+}
+function viewPeriod() {
+  const data = periodData();
+  const canExport = perm().exportReports;
+  const controls = `<div class="period-controls no-print">
+      <label>From<input type="date" id="periodFrom" value="${esc(state.periodFrom || '')}"></label>
+      <label>To<input type="date" id="periodTo" value="${esc(state.periodTo || '')}"></label>
+      ${canExport && !data.error ? '<button class="btn" type="button" data-action="export-period">Export CSV</button><button class="btn" type="button" data-action="print-period">Print</button>' : ''}
+    </div>`;
+  let body;
+  if (data.error) body = `<div class="message error">${esc(data.error)}</div>`;
+  else {
+    const t = data.totals;
+    body = `${data.message ? `<div class="message warning">${esc(data.message)}</div>` : ''}
+      <div class="totals">
+        <div class="tally" style="--c:var(--st-guest_left)"><span class="n">${t.departures}</span><span class="l">Departures</span></div>
+        <div class="tally" style="--c:var(--st-occupied)"><span class="n">${t.arrivals}</span><span class="l">Arrivals</span></div>
+        <div class="tally" style="--c:var(--urgent)"><span class="n">${t.b2b}</span><span class="l">Back-to-back turnovers</span></div>
+      </div>
+      ${periodChart(data.days)}
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th class="num">Departures</th><th class="num">Arrivals</th><th class="num">Back-to-back</th></tr></thead>
+        <tbody>${data.days.map((d) => `<tr><td>${esc(DateUtil.label(d.date))}</td><td class="num">${d.departures}</td><td class="num">${d.arrivals}</td><td class="num">${d.b2b}</td></tr>`).join('')}
+        <tr class="total"><td>Total</td><td class="num">${t.departures}</td><td class="num">${t.arrivals}</td><td class="num">${t.b2b}</td></tr></tbody>
+      </table></div>`;
+  }
+  const range = data.error ? '' : `${DateUtil.label(data.from)} to ${DateUtil.label(data.to)}`;
+  return `<section class="panel" id="periodReport">
+    <div class="view-head"><div><h2>Period report</h2><p>${esc(range || 'Pick a date range.')} A back-to-back turnover is a departure and an arrival on the same house on the same day.</p></div>${controls}</div>
+    ${body}</section>`;
+}
+
+/* ---- Activity log ---- */
+function describeActivity(a) {
+  const house = a.houseNumber ? `House ${esc(a.houseNumber)}: ` : '';
+  if (a.type === 'status') {
+    const change = `${esc(STATUS_LABEL[a.from] || a.from || '?')} → ${esc(STATUS_LABEL[a.to] || a.to)}`;
+    return `${house}${change}${a.message ? ` <span class="muted">(${esc(a.message)})</span>` : ''}`;
+  }
+  return `${house}${esc(a.message || '')}`;
+}
+const LOG_CATEGORIES = {
+  status: 'Status change (manual)',
+  auto: 'Status change (automatic)',
+  undo: 'Undo',
+  assign: 'Assignment',
+  booking: 'Check-in/out times',
+  note: 'Notes',
+  data: 'Data upload',
+  admin: 'Users and settings',
+};
+function logCategory(a) {
+  if (a.message && (a.message === 'Undo' || /undone$/.test(a.message))) return 'undo';
+  if (a.type === 'status') return a.source === 'auto' ? 'auto' : 'status';
+  if (a.type === 'user' || a.type === 'setting') return 'admin';
+  return a.type;
+}
+function logDay(a) { return a.demoDate || DateUtil.toISO(new Date(a.at)); }
+function houseMatcher(text) {
+  const tokens = String(text).split(/[\s,;]+/).map((t) => t.trim().toLowerCase()).filter(Boolean);
+  if (!tokens.length) return null;
+  return (house) => {
+    if (!house) return false;
+    const h = String(house).toLowerCase();
+    return tokens.some((t) => {
+      if (t === h) return true;
+      const range = t.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+      if (range && /^\d+$/.test(h)) { const lo = Math.min(+range[1], +range[2]), hi = Math.max(+range[1], +range[2]); return +h >= lo && +h <= hi; }
+      return /^\d+$/.test(t) && /^\d+$/.test(h) && Number(t) === Number(h);
+    });
+  };
+}
+function filteredLog() {
+  const f = state.logFilter;
+  const q = state.search.trim().toLowerCase();
+  const houseOk = houseMatcher(f.house);
+  return [...state.snap.activity].reverse().filter((a) => {
+    if (f.day && logDay(a) !== f.day) return false;
+    if (f.person && a.userId !== f.person) return false;
+    if (f.action && logCategory(a) !== f.action) return false;
+    if (houseOk && !houseOk(a.houseNumber)) return false;
+    if (q) {
+      const text = [a.houseNumber, userName(a.userId), a.message, STATUS_LABEL[a.from], STATUS_LABEL[a.to], LOG_CATEGORIES[logCategory(a)]].filter(Boolean).join(' ').toLowerCase();
+      if (!text.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function logResultsHtml() {
+  const all = state.snap.activity;
+  const list = filteredLog();
+  const shown = list.slice(0, state.logLimit);
+  const filtered = list.length !== all.length;
+  const summary = `<p class="hint" role="status">${filtered ? `${list.length} of ${all.length} entries match` : `${all.length} entries`}, newest first.</p>`;
+  if (!all.length) return emptyState('No activity yet', 'Status changes, notes and uploads will be listed here.');
+  if (!list.length) return summary + emptyState('No matching activity', 'Change or clear the filters.');
+  return summary + `<section class="panel"><ul class="log">${shown.map((a) => `<li>
+      <time datetime="${esc(a.at)}">${esc(DateUtil.stamp(a.at))}</time>
+      <div>${describeActivity(a)}<div class="muted">${esc(userName(a.userId))}${a.demoDate ? `, working date ${esc(DateUtil.label(a.demoDate))}` : ''}<span class="src">${esc(LOG_CATEGORIES[logCategory(a)] || a.type)}</span></div></div>
+    </li>`).join('')}</ul>
+    ${list.length > shown.length ? `<div class="row-actions"><button class="btn" type="button" data-action="log-more">Show ${Math.min(100, list.length - shown.length)} more</button></div>` : ''}</section>`;
+}
+function viewLog() {
+  const f = state.logFilter;
+  const acts = state.snap.activity;
+  const days = [...new Set(acts.map(logDay))].sort().reverse();
+  const people = [...new Set(acts.map((a) => a.userId))].map((id) => [id, userName(id)]).sort((a, b) => a[1].localeCompare(b[1]));
+  const cats = Object.keys(LOG_CATEGORIES).filter((c) => acts.some((a) => logCategory(a) === c));
+  const opt = (v, l, sel) => `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(l)}</option>`;
+  const any = f.day || f.person || f.action || f.house;
+  return `<div class="view-head"><div><h2>Activity log</h2>
+      <p>Filter by working day, person, action or house. The search box at the top searches the text too.</p></div>
+      ${perm().exportReports ? '<div class="head-actions"><button class="btn btn-head" type="button" data-action="log-export">Export CSV</button></div>' : ''}</div>
+    <div class="log-filters">
+      <label>Working day<select class="text" id="logDay">${opt('', 'All days', f.day)}${days.map((d) => opt(d, DateUtil.label(d), f.day)).join('')}</select></label>
+      <label>Person<select class="text" id="logPerson">${opt('', 'Everyone', f.person)}${people.map(([id, n]) => opt(id, n, f.person)).join('')}</select></label>
+      <label>Action<select class="text" id="logAction">${opt('', 'All actions', f.action)}${cats.map((c) => opt(c, LOG_CATEGORIES[c], f.action)).join('')}</select></label>
+      <label>House<input class="text" type="search" id="logHouse" value="${esc(f.house)}" placeholder="104 or 101-110" autocomplete="off"></label>
+      ${any ? '<button class="btn btn-head" type="button" data-action="log-clear">Clear filters</button>' : ''}
+    </div>
+    <div id="logResults">${logResultsHtml()}</div>`;
+}
+function updateLogResults() { const box = $('#logResults'); if (box) box.innerHTML = logResultsHtml(); }
+function exportLog() {
+  const rows = [['time', 'working_date', 'person', 'action', 'house', 'from', 'to', 'details'],
+    ...filteredLog().map((a) => [DateUtil.toISO(new Date(a.at)) + ' ' + new Date(a.at).toTimeString().slice(0, 8), a.demoDate || '', userName(a.userId),
+      LOG_CATEGORIES[logCategory(a)] || a.type, a.houseNumber || '', STATUS_LABEL[a.from] || '', STATUS_LABEL[a.to] || '', a.message || ''])];
+  openModal({ type: 'export', title: 'Export activity log', rows, filename: `activity-log_${state.demoDate}.csv` });
+}
+
+/* ---- Self-test ---- */
+function viewTests() {
+  const r = state.testResults;
+  const head = `<div class="view-head"><div><h2>Self-test</h2>
+    <p>Runs the edge cases of the status engine, re-uploads, early/late times, CSV and permissions against a separate test store. Your data is not touched. Also available in the browser console as runSelfTests().</p></div>
+    <div class="head-actions"><button class="btn btn-head" type="button" data-action="run-tests">Run again</button></div></div>`;
+  if (!r) return head + '<p class="hint">Running…</p>';
+  const failed = r.filter((x) => !x.ok).length;
+  return head + `<div class="message ${failed ? 'error' : 'ok'}" role="status"><strong>${r.length - failed} of ${r.length} checks passed.</strong></div>
+    <section class="panel"><ul class="test-list">${r.map((x) => `<li class="${x.ok ? 'pass' : 'fail'}"><span class="mark" aria-hidden="true">${x.ok ? '✓' : '✗'}</span><span><span class="sr-only">${x.ok ? 'Passed' : 'Failed'}: </span>${esc(x.name)}${x.ok ? '' : `<br><span class="muted">${esc(x.detail)}</span>`}</span></li>`).join('')}</ul></section>`;
+}
+async function runTestsInView() {
+  state.testResults = null;
+  if (state.tab === 'tests') renderView();
+  state.testResults = await runSelfTests();
+  if (state.tab === 'tests') renderView();
+}
+
+/* ---- Data & users ---- */
+function uploadReportHtml() {
+  const r = state.uploadReport;
+  if (!r) return '';
+  const list = (items, max = 12) => (items && items.length
+    ? `<ul>${items.slice(0, max).map((e) => `<li>${esc(e)}</li>`).join('')}${items.length > max ? `<li>…and ${items.length - max} more</li>` : ''}</ul>` : '');
+  return `<div class="message ${r.status === 'working' ? 'ok' : r.status}" role="${r.status === 'error' ? 'alert' : 'status'}">
+    <strong>${esc(r.message)}</strong>
+    ${r.errors && r.errors.length ? `<div>Skipped rows:</div>${list(r.errors)}` : ''}
+    ${r.warnings && r.warnings.length ? `<div>Check these:</div>${list(r.warnings)}` : ''}
+    ${r.dropped && r.dropped.length ? `<div>Removed because the booking changed or disappeared:</div>${list(r.dropped)}` : ''}
+  </div>`;
+}
+function viewAdmin() {
+  const p = perm();
+  const meta = state.snap.meta;
+  const dataPanel = p.manageData ? `<section class="panel">
+      <h2>Booking data</h2>
+      <p class="hint">Loaded ${esc(DateUtil.stamp(meta.loadedAt))}: ${state.snap.units.length} houses and ${state.snap.bookings.length} bookings (${esc(meta.fileName ? meta.fileName : meta.source)}).</p>
+      <label class="drop" id="dropZone">
+        <strong>Upload an Excel or CSV file</strong>
+        <span class="hint">Drop it here or choose a file. Uploading replaces the bookings. Manual statuses, assignments and early/late options are kept wherever the same house and date still exist; anything that no longer matches is listed.</span>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv">
+      </label>
+      <p class="hint">The first sheet needs a header row with <b>name</b>, <b>arrival</b>, <b>departure</b> and <b>housenumber</b>. Dates can be Excel dates or text such as 2026-09-18 or 18-09-2026, with an optional time (18-09-2026 15:00). Without a time, check-out is ${DEFAULT_CHECKOUT_TIME} and check-in ${DEFAULT_CHECKIN_TIME}.</p>
+      ${uploadReportHtml()}
+      <div class="row-actions">
+        <button class="btn" type="button" data-action="download-template">Get a template</button>
+        <button class="btn" type="button" data-action="regenerate">Generate new demo data</button>
+      </div>
+      <label class="toggle"><input type="checkbox" id="assumeToggle"${state.snap.settings.assumePastTurnoversDone ? ' checked' : ''}>
+        <span>Treat earlier turnovers as prepped when nobody recorded them. Switch this off to keep such houses on “Guest left” until someone updates them.</span></label>
+    </section>` : '';
+
+  const roleOptions = (sel) => ROLE_ORDER.map((r) => `<option value="${r}"${r === sel ? ' selected' : ''}>${ROLE_PERMISSIONS[r].label}</option>`).join('');
+  const users = [...state.snap.users].sort((a, b) => ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role) || a.name.localeCompare(b.name));
+  const usersPanel = p.manageUsers ? `<section class="panel">
+      <h2>Users and roles</h2>
+      <p class="hint">Login is simulated in this demo. Each user has an ID, role and email so a real sign-in can replace the role switch later.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Role</th><th>Email</th><th><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody>${users.map((u) => `<tr>
+          <td><input class="text" type="text" value="${esc(u.name)}" data-change="user-name" data-user="${esc(u.id)}" aria-label="Name" maxlength="80"></td>
+          <td><select class="text" data-change="user-role" data-user="${esc(u.id)}" aria-label="Role for ${esc(u.name)}">${roleOptions(u.role)}</select></td>
+          <td><input class="text" type="email" value="${esc(u.email)}" data-change="user-email" data-user="${esc(u.id)}" aria-label="Email for ${esc(u.name)}" placeholder="name@example.com"></td>
+          <td>${u.id === state.userId ? '<span class="muted">You</span>' : `<button class="btn btn-small btn-danger" type="button" data-action="delete-user" data-user="${esc(u.id)}">Delete</button>`}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+      <div class="form-grid">
+        <label>Name<input class="text" type="text" id="newUserName" maxlength="80" autocomplete="off"></label>
+        <label>Role<select class="text" id="newUserRole">${roleOptions('rep')}</select></label>
+        <label>Email<input class="text" type="email" id="newUserEmail" placeholder="name@example.com" autocomplete="off"></label>
+        <button class="btn btn-primary" type="button" data-action="add-user">Add user</button>
+      </div>
+    </section>` : '';
+
+  const keys = Object.keys(PERMISSION_LABELS);
+  const permPanel = `<section class="panel">
+      <h2>What each role can do</h2>
+      <div class="table-wrap"><table class="perm-table">
+        <thead><tr><th>Permission</th>${ROLE_ORDER.map((r) => `<th>${ROLE_PERMISSIONS[r].label}</th>`).join('')}</tr></thead>
+        <tbody>
+          <tr><td>Views</td>${ROLE_ORDER.map((r) => `<td>${ROLE_PERMISSIONS[r].tabs.map((t) => TAB_LABELS[t]).join(', ')}</td>`).join('')}</tr>
+          <tr><td>Can mark</td>${ROLE_ORDER.map((r) => `<td>${ROLE_PERMISSIONS[r].settableStatuses.map((s) => STATUS_LABEL[s]).join(', ')}</td>`).join('')}</tr>
+          ${keys.map((k) => `<tr><td>${PERMISSION_LABELS[k]}</td>${ROLE_ORDER.map((r) => { const v = ROLE_PERMISSIONS[r][k]; return v ? `<td class="yes">${typeof v === 'string' ? esc(TASKS[v].label) : 'Yes'}</td>` : '<td class="no-perm">No</td>'; }).join('')}</tr>`).join('')}
+        </tbody>
+      </table></div>
+    </section>`;
+  return `<div class="view-head"><div><h2>Data & users</h2></div></div>${dataPanel}${usersPanel}${permPanel}`;
+}
+
+/* ---- Modal ---- */
+function timesSection(row) {
+  const p = perm();
+  const outgoing = row.departing || row.occupying;
+  const incoming = row.backToBack ? row.arriving
+    : (row.occupying && row.occupying.arrivalDate === state.demoDate ? row.occupying : row.nextArrival);
+  const items = [];
+  if (outgoing) items.push([outgoing, 'lateCheckout', `Late check-out ${LATE_CHECKOUT_TIME}`, `Check-out ${DateUtil.label(outgoing.departureDate)}, normally ${outgoing.baseDepartureTime}`]);
+  if (incoming) items.push([incoming, 'earlyCheckin', `Early check-in ${EARLY_CHECKIN_TIME}`, `Check-in ${DateUtil.label(incoming.arrivalDate)}, normally ${incoming.baseArrivalTime}`]);
+  const rendered = items.map(([b, option, label, sub]) => {
+    const who = p.seeGuestNames ? `, ${esc(b.guestName)}` : '';
+    if (p.editBookingTimes) {
+      return `<label class="toggle"><input type="checkbox" data-change="booking-option" data-booking="${esc(b.id)}" data-option="${option}"${b[option] ? ' checked' : ''}>
+        <span><strong>${label}</strong><br><span class="muted">${esc(sub)}${who}</span></span></label>`;
+    }
+    return b[option] ? `<p><strong>${label}</strong> <span class="muted">(${esc(sub)}${who})</span></p>` : '';
+  }).filter(Boolean);
+  const clash = StatusEngine.timeClash(outgoing, incoming)
+    ? `<div class="message error">Time clash: the leaving guest checks out at ${esc(outgoing.departureTime)} but the next guest arrives at ${esc(incoming.arrivalTime)} on ${esc(DateUtil.label(incoming.arrivalDate))}. There is no time to clean.</div>` : '';
+  if (!rendered.length && !clash) return '';
+  return `<section><h3>Check-in and check-out times</h3>${clash}${rendered.join('')}</section>`;
+}
+function assignSection(row) {
+  const parts = Object.keys(TASKS).map((task) => {
+    const t = TASKS[task];
+    const id = assigneeOf(row, task);
+    if (Permissions.canAssign(state.role, task, row)) return `<label class="field">${t.who}${assignSelect(row, task, 'text')}</label>`;
+    if (!id && !t.isEligible(row)) return '';
+    return `<div class="field">${t.who}<strong>${id ? esc(assigneeLabel(id)) : 'Unassigned'}</strong></div>`;
+  }).filter(Boolean);
+  return parts.length ? `<section><h3>Assigned to</h3><div class="form-grid">${parts.join('')}</div></section>` : '';
+}
+function unitModalHtml(row) {
+  const p = perm();
+  const u = row.unit;
+  const buttons = STATUSES.filter((s) => Permissions.canSetStatus(state.role, row.status, s))
+    .map((s) => `<button class="btn btn-status st-${s}" type="button" data-action="set-status" data-unit="${esc(u.id)}" data-status="${s}">${p.anyTransition ? 'Set to' : 'Mark'} ${STATUS_LABEL[s].toLowerCase()}</button>`).join('');
+  const clear = row.override && p.clearOverride
+    ? `<button class="btn" type="button" data-action="clear-override" data-unit="${esc(u.id)}">Return to automatic (${STATUS_LABEL[row.autoStatus].toLowerCase()})</button>` : '';
+  const statusNote = row.override
+    ? `Set to ${STATUS_LABEL[row.status].toLowerCase()} by ${esc(userName(row.override.setBy))} at ${esc(DateUtil.stamp(row.override.setAt))}. Based on the bookings alone it would be ${STATUS_LABEL[row.autoStatus].toLowerCase()}.`
+    : 'Status follows the bookings automatically.';
+  const current = new Set([row.departing, row.arriving, row.occupying].filter(Boolean).map((b) => b.id));
+  const bookingRows = row.bookings.map((b) => `<tr${current.has(b.id) ? ' class="current"' : ''}>
+      ${p.seeGuestNames ? `<td>${esc(b.guestName)}</td>` : ''}
+      <td>${esc(DateUtil.label(b.arrivalDate))} ${esc(b.arrivalTime)}</td>
+      <td>${esc(DateUtil.label(b.departureDate))} ${esc(b.departureTime)}</td></tr>`).join('');
+  const history = p.viewUnitHistory ? state.snap.activity.filter((a) => a.unitId === u.id).slice(-15).reverse() : [];
+  return `<div class="dialog-head">${houseTag(row)}<h2 id="dlgTitle">House ${esc(u.houseNumber)}</h2>${statusPill(row.status)}${row.backToBack ? '<span class="badge-b2b">Back-to-back</span>' : ''}
+      <button class="close-btn" type="button" data-action="close-modal" aria-label="Close">×</button></div>
+    ${track(row.status)}
+    <p class="hint">${statusNote}</p>
+    ${buttons || clear ? `<div class="row-actions">${buttons}${clear}</div>` : ''}
+    ${linesHtml(bookingLines(row, p.seeGuestNames))}
+    ${timesSection(row)}
+    ${assignSection(row)}
+    <section>
+      <label class="field" for="unitNotes"><h3>Notes</h3></label>
+      <textarea class="text" id="unitNotes" data-unit="${esc(u.id)}" maxlength="2000" placeholder="Maintenance issues or special requests, for example “extra towels needed”"${p.editNotes ? '' : ' readonly'}>${esc(u.notes)}</textarea>
+      ${p.editNotes ? `<div class="row-actions"><button class="btn btn-primary" type="button" data-action="save-notes" data-unit="${esc(u.id)}">Save notes</button></div>` : ''}
+    </section>
+    <section>
+      <h3>Bookings</h3>
+      ${row.bookings.length ? `<div class="table-wrap"><table><thead><tr>${p.seeGuestNames ? '<th>Guest</th>' : ''}<th>Check-in</th><th>Check-out</th></tr></thead><tbody>${bookingRows}</tbody></table></div>` : '<p class="muted">No bookings for this house.</p>'}
+    </section>
+    ${p.viewUnitHistory ? `<section><h3>History</h3>${history.length
+      ? `<ul class="log">${history.map((a) => `<li><time datetime="${esc(a.at)}">${esc(DateUtil.stamp(a.at))}</time><div>${describeActivity(a)}<div class="muted">${esc(userName(a.userId))}</div></div></li>`).join('')}</ul>`
+      : '<p class="muted">No changes recorded yet.</p>'}</section>` : ''}`;
+}
+function exportCsv(m) { return toCsv(m.rows, state.csvSep); }
+function exportModalHtml(m) {
+  return `<div class="dialog-head"><h2 id="dlgTitle">${esc(m.title)}</h2><button class="close-btn" type="button" data-action="close-modal" aria-label="Close">×</button></div>
+    <fieldset class="seg-choice"><legend>Separator</legend>
+      <label class="neutral"><input type="radio" name="csvSep" value=";"${state.csvSep === ';' ? ' checked' : ''}><span>Semicolon (Dutch, German, French Excel)</span></label>
+      <label class="neutral"><input type="radio" name="csvSep" value=","${state.csvSep === ',' ? ' checked' : ''}><span>Comma (English Excel, Google Sheets)</span></label>
+    </fieldset>
+    <p class="hint">Download the file, or copy the text and paste it into a spreadsheet. Some embedded viewers block downloads; copying always works.</p>
+    <label class="sr-only" for="exportText">CSV content</label>
+    <textarea class="text export" id="exportText" readonly>${esc(exportCsv(m))}</textarea>
+    <div class="row-actions"><button class="btn btn-primary" type="button" data-action="download-export">Download ${esc(m.filename)}</button><button class="btn" type="button" data-action="copy-export">Copy CSV</button></div>`;
+}
+function confirmModalHtml(m) {
+  return `<div class="dialog-head"><h2 id="dlgTitle">${esc(m.title)}</h2><button class="close-btn" type="button" data-action="close-modal" aria-label="Close">×</button></div>
+    <p>${esc(m.message)}</p>
+    <div class="row-actions"><button class="btn btn-danger" type="button" data-action="confirm-yes">${esc(m.confirmLabel)}</button><button class="btn" type="button" data-action="close-modal">Cancel</button></div>`;
+}
+function parseHouseList(text, rows) {
+  const byNumber = new Map(rows.map((r) => [r.unit.houseNumber.toLowerCase(), r]));
+  const found = [], unknown = [], seen = new Set();
+  const add = (r) => { if (!seen.has(r.unit.id)) { seen.add(r.unit.id); found.push(r); } };
+  for (const token of String(text).split(/[\s,;]+/).map((t) => t.trim()).filter(Boolean)) {
+    const key = token.toLowerCase();
+    if (byNumber.has(key)) { add(byNumber.get(key)); continue; }
+    const range = key.match(/^(\d+)\s*[-–]\s*(\d+)$/);
+    if (range) {
+      let a = Number(range[1]), b = Number(range[2]);
+      if (a > b) [a, b] = [b, a];
+      if (b - a > 2000) { unknown.push(token); continue; }
+      let hit = false;
+      for (let n = a; n <= b; n++) { const r = byNumber.get(String(n)); if (r) { add(r); hit = true; } }
+      if (!hit) unknown.push(token);
+      continue;
+    }
+    if (/^\d+$/.test(key) && byNumber.has(String(Number(key)))) { add(byNumber.get(String(Number(key)))); continue; }
+    unknown.push(token);
+  }
+  return { found, unknown };
+}
+function bulkPlan(m) {
+  const { found, unknown } = parseHouseList(m.text, state.rows);
+  const change = [], already = [], blocked = [];
+  for (const r of found) {
+    if (m.mode === 'status') {
+      if (r.status === m.target) already.push(r);
+      else if (Permissions.canSetStatus(state.role, r.status, m.target)) change.push(r);
+      else blocked.push(r);
+    } else {
+      const target = m.assignee || null;
+      if (!Permissions.canAssign(state.role, m.mode, r)) blocked.push(r);
+      else if (assigneeOf(r, m.mode) === target) already.push(r);
+      else change.push(r);
+    }
+  }
+  const byHouse = (a, b) => naturalCompare(a.unit.houseNumber, b.unit.houseNumber);
+  return { change: change.sort(byHouse), already: already.sort(byHouse), blocked: blocked.sort(byHouse), unknown };
+}
+function defaultBulkTarget() {
+  const allowed = perm().settableStatuses;
+  return ['cleaned', 'prepped', 'guest_left', 'occupied'].find((s) => allowed.includes(s)) || allowed[0];
+}
+function bulkModeLabel(mode) { return mode === 'status' ? 'Status' : `${TASKS[mode].who} assignment`; }
+function bulkChangeLabel(m) {
+  if (m.mode === 'status') return `set to ${STATUS_LABEL[m.target].toLowerCase()}`;
+  return m.assignee ? `assigned to ${userName(m.assignee)}` : `unassigned (${TASKS[m.mode].label.toLowerCase()})`;
+}
+function miniTags(rows) { return `<div class="taglist">${rows.map((r) => `<span class="tag mini st-${r.status}" title="${STATUS_LABEL[r.status]}">${esc(r.unit.houseNumber)}</span>`).join('')}</div>`; }
+function bulkPreviewHtml(m) {
+  if (!m.text.trim()) return '<p class="hint">Type house numbers to see what will change.</p>';
+  const plan = bulkPlan(m);
+  const what = bulkChangeLabel(m);
+  let html = '';
+  if (plan.change.length) html += `<div class="bulk-group"><h3>Will be ${esc(what)} (${plan.change.length})</h3>${miniTags(plan.change)}</div>`;
+  if (plan.already.length) html += `<div class="bulk-group"><h3>Already ${esc(what)} (${plan.already.length})</h3>${miniTags(plan.already)}</div>`;
+  if (plan.blocked.length) {
+    let why;
+    if (m.mode === 'status') {
+      const prev = PREVIOUS_STATUS[m.target];
+      why = perm().anyTransition ? '' : `Your role can only set houses to ${STATUS_LABEL[m.target].toLowerCase()} when they are ${prev ? STATUS_LABEL[prev].toLowerCase() : 'in the right step'}.`;
+    } else {
+      why = `${TASKS[m.mode].label} can only be assigned for houses that are ${TASKS[m.mode].eligibleText}.`;
+    }
+    html += `<div class="bulk-group"><h3>Skipped (${plan.blocked.length})</h3><p>${why} Colours show the current status.</p>${miniTags(plan.blocked)}</div>`;
+  }
+  if (plan.unknown.length) html += `<div class="bulk-group"><h3>Not found (${plan.unknown.length})</h3><p>${plan.unknown.map(esc).join(', ')}</p></div>`;
+  return html;
+}
+function bulkActionsHtml(m) {
+  const n = m.text.trim() ? bulkPlan(m).change.length : 0;
+  let label = 'Nothing to change';
+  if (n) {
+    const houses = `${n} house${n > 1 ? 's' : ''}`;
+    if (m.mode === 'status') label = `Set ${houses} to ${STATUS_LABEL[m.target].toLowerCase()}`;
+    else label = m.assignee ? `Assign ${houses} to ${userName(m.assignee)}` : `Unassign ${houses}`;
+  }
+  return `<button class="btn btn-primary" type="button" data-action="bulk-apply"${n ? '' : ' disabled'}>${esc(label)}</button>
+    <button class="btn" type="button" data-action="close-modal">Cancel</button>`;
+}
+function bulkModalHtml(m) {
+  const modes = Permissions.bulkModes(state.role);
+  const modePicker = modes.length > 1
+    ? `<fieldset class="seg-choice"><legend>What to change</legend>${modes.map((md) =>
+      `<label class="neutral"><input type="radio" name="bulkMode" value="${md}"${md === m.mode ? ' checked' : ''}><span>${bulkModeLabel(md)}</span></label>`).join('')}</fieldset>` : '';
+  let options;
+  if (m.mode === 'status') {
+    options = `<fieldset class="seg-choice"><legend>New status</legend>${perm().settableStatuses.map((st) =>
+      `<label class="st-${st}"><input type="radio" name="bulkTarget" value="${st}"${st === m.target ? ' checked' : ''}><span>${STATUS_LABEL[st]}</span></label>`).join('')}</fieldset>`;
+  } else {
+    const staff = usersWithRole(TASKS[m.mode].assigneeRole);
+    options = `<fieldset class="seg-choice"><legend>Assign to</legend>${staff.map((u) =>
+      `<label class="neutral"><input type="radio" name="bulkAssignee" value="${esc(u.id)}"${u.id === m.assignee ? ' checked' : ''}><span>${esc(u.name)}</span></label>`).join('')}
+      <label class="neutral"><input type="radio" name="bulkAssignee" value=""${!m.assignee ? ' checked' : ''}><span>Nobody</span></label></fieldset>
+      ${staff.length ? '' : `<p class="hint">There are no ${ROLE_PERMISSIONS[TASKS[m.mode].assigneeRole].label.toLowerCase()} users yet. Management can add them under Data & users.</p>`}`;
+  }
+  return `<div class="dialog-head"><h2 id="dlgTitle">Bulk update</h2><button class="close-btn" type="button" data-action="close-modal" aria-label="Close">×</button></div>
+    <label class="field" for="bulkInput">House numbers</label>
+    <textarea class="text" id="bulkInput" rows="3" autocomplete="off" spellcheck="false" placeholder="101 104 110-115">${esc(m.text)}</textarea>
+    <p class="hint">Separate with spaces, commas or new lines. Ranges like 110-115 work.</p>
+    ${modePicker}${options}
+    <div id="bulkPreview" aria-live="polite">${bulkPreviewHtml(m)}</div>
+    <div class="row-actions" id="bulkActions">${bulkActionsHtml(m)}</div>`;
+}
+function updateBulkPreview() {
+  const m = state.modal;
+  if (!m || m.type !== 'bulk') return;
+  $('#bulkPreview').innerHTML = bulkPreviewHtml(m);
+  $('#bulkActions').innerHTML = bulkActionsHtml(m);
+}
+function defaultAssignee(task) {
+  const staff = usersWithRole(TASKS[task].assigneeRole);
+  return staff[0] ? staff[0].id : null;
+}
+function openBulk(text, { mode, target, assignee } = {}) {
+  const modes = Permissions.bulkModes(state.role);
+  if (!modes.length) return;
+  const m = modes.includes(mode) ? mode : modes[0];
+  openModal({
+    type: 'bulk', text: text || '', mode: m,
+    target: perm().settableStatuses.includes(target) ? target : defaultBulkTarget(),
+    assignee: m !== 'status' ? (assignee || defaultAssignee(m)) : null,
+  });
+  const input = $('#bulkInput');
+  if (input) { input.focus(); input.setSelectionRange(input.value.length, input.value.length); }
+}
+function setBulkMode(mode) {
+  const m = state.modal;
+  if (!m || m.type !== 'bulk' || !Permissions.bulkModes(state.role).includes(mode)) return;
+  m.mode = mode;
+  m.assignee = mode === 'status' ? null : defaultAssignee(mode);
+  renderModal(false);
+  const radio = document.querySelector('input[name="bulkMode"]:checked');
+  if (radio) radio.focus();
+}
+async function applyBulk() {
+  const m = state.modal;
+  if (!m || m.type !== 'bulk' || !Permissions.bulkModes(state.role).includes(m.mode)) return;
+  const plan = bulkPlan(m);
+  if (!plan.change.length) { toast('Nothing to change.', 'error'); return; }
+  const n = plan.change.length;
+  const houses = `${n} house${n > 1 ? 's' : ''}`;
+  const skipped = plan.blocked.length + plan.unknown.length;
+  const skippedText = skipped ? ` ${skipped} skipped.` : '';
+  if (m.mode === 'status') {
+    const writes = plan.change.map((r) => ({ r, w: StatusEngine.writePlan(r, m.target) }));
+    const undoItems = writes.map(({ r, w }) => {
+      const existing = r.unit.statusOverrides[w.cycleKey];
+      return { unitId: r.unit.id, cycleKey: w.cycleKey, previousOverride: existing ? { ...existing } : null, expectedStatus: w.clear ? null : m.target, fromStatus: m.target, toStatus: r.status };
+    });
+    await DataStore.bulkUpdateStatus({
+      items: writes.map(({ r, w }) => ({ unitId: r.unit.id, cycleKey: w.cycleKey, fromStatus: r.status, clear: w.clear })),
+      status: m.target, userId: state.userId, demoDate: state.demoDate,
+    });
+    state.selected.clear();
+    closeModal();
+    await refresh();
+    toast(`${houses} set to ${STATUS_LABEL[m.target].toLowerCase()}.${skippedText}`, 'ok', {
+      what: `${houses} back to the previous status`,
+      run: () => DataStore.restoreOverrides({ items: undoItems, userId: state.userId, demoDate: state.demoDate }),
+    });
+  } else {
+    const res = await DataStore.assign({
+      items: plan.change.map((r) => ({ unitId: r.unit.id, cycleKey: r.cycleKey })),
+      task: m.mode, assigneeId: m.assignee || null, userId: state.userId, demoDate: state.demoDate,
+    });
+    state.selected.clear();
+    closeModal();
+    await refresh();
+    toast(`${houses} ${bulkChangeLabel(m)}.${skippedText}`, 'ok', {
+      what: `${houses} back to the previous assignment`,
+      run: () => DataStore.restoreAssignments({ items: res.previous, userId: state.userId, demoDate: state.demoDate }),
+    });
+  }
+}
+
+/* Single-house assignment from a row or the house details */
+async function assignTask(unitId, task, assigneeId) {
+  const row = state.rowByUnit.get(unitId);
+  if (!row) return;
+  if (!Permissions.canAssign(state.role, task, row)) { toast('Your role can’t assign this.', 'error'); await refresh(); return; }
+  if ((assigneeOf(row, task) || '') === (assigneeId || '')) return;
+  const res = await DataStore.assign({ items: [{ unitId, cycleKey: row.cycleKey }], task, assigneeId: assigneeId || null, userId: state.userId, demoDate: state.demoDate });
+  await refresh();
+  toast(assigneeId ? `House ${row.unit.houseNumber}: ${TASKS[task].label.toLowerCase()} assigned to ${userName(assigneeId)}.` : `House ${row.unit.houseNumber}: ${TASKS[task].label.toLowerCase()} unassigned.`, 'ok', {
+    what: `house ${row.unit.houseNumber} has its previous assignment again`,
+    run: () => DataStore.restoreAssignments({ items: res.previous, userId: state.userId, demoDate: state.demoDate }),
+  });
+}
+
+/* Demo only: spread today's work over the staff so every role has something to see */
+async function seedAssignments() {
+  const snap = await loadSnapshot();
+  const rows = StatusEngine.deriveAll(snap, state.demoDate);
+  const byRole = (role) => snap.users.filter((u) => u.role === role);
+  const planner = byRole('cleaning')[0];
+  const manager = byRole('management')[0];
+  const plan = async (task, list, actor) => {
+    const staff = byRole(TASKS[task].assigneeRole);
+    if (!staff.length || !actor) return;
+    for (let i = 0; i < staff.length; i++) {
+      const items = list.filter((_, k) => k % staff.length === i).map((r) => ({ unitId: r.unit.id, cycleKey: r.cycleKey }));
+      if (items.length) await DataStore.assign({ items, task, assigneeId: staff[i].id, userId: actor.id, demoDate: state.demoDate });
+    }
+  };
+  const rep = byRole('rep')[0];
+  // Demo history: earlier turnovers were cleaned and prepped, except one forgotten house
+  const backlog = rows.filter((r) => !r.dueOut && r.status === 'guest_left' && r.lastDeparture && r.lastDeparture.departureDate < state.demoDate);
+  const done = backlog.slice(1);
+  if (rep && done.length) {
+    await DataStore.bulkUpdateStatus({ items: done.map((r) => ({ unitId: r.unit.id, cycleKey: r.cycleKey, fromStatus: r.status })), status: 'prepped', userId: rep.id, demoDate: state.demoDate });
+  }
+  // About half of today's departures already confirmed as left by a rep
+  const due = rows.filter((r) => r.dueOut);
+  const left = due.filter((_, k) => k % 2 === 0);
+  if (rep && left.length) {
+    await DataStore.bulkUpdateStatus({ items: left.map((r) => ({ unitId: r.unit.id, cycleKey: r.cycleKey, fromStatus: r.status })), status: 'guest_left', userId: rep.id, demoDate: state.demoDate });
+  }
+  const cleans = due.sort((a, b) => Number(b.backToBack) - Number(a.backToBack));
+  await plan('clean', cleans.slice(0, Math.ceil(cleans.length * 0.7)), planner);
+  await plan('prep', cleans.filter((r) => r.backToBack), manager);
+}
+
+function renderModal(focus) {
+  const root = $('#modal');
+  if (!state.modal) { root.innerHTML = ''; root.hidden = true; document.body.classList.remove('modal-open'); return; }
+  let content = '';
+  let draft = null;
+  const ta = root.querySelector('#unitNotes');
+  if (state.modal.type === 'unit') {
+    const row = state.rowByUnit.get(state.modal.unitId);
+    if (!row) { state.modal = null; renderModal(false); return; }
+    if (ta && ta.dataset.unit === state.modal.unitId && ta.value !== row.unit.notes) draft = ta.value;
+    content = unitModalHtml(row);
+  } else if (state.modal.type === 'export') content = exportModalHtml(state.modal);
+  else if (state.modal.type === 'confirm') content = confirmModalHtml(state.modal);
+  else if (state.modal.type === 'bulk') content = bulkModalHtml(state.modal);
+  root.hidden = false;
+  document.body.classList.add('modal-open');
+  root.innerHTML = `<div class="overlay" data-action="overlay"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgTitle" tabindex="-1">${content}</div></div>`;
+  if (draft !== null) { const t = root.querySelector('#unitNotes'); if (t) t.value = draft; }
+  if (focus) root.querySelector('.dialog').focus();
+}
+function openModal(modal) {
+  if (!state.modal) lastFocus = document.activeElement;
+  state.modal = modal;
+  renderModal(true);
+}
+function closeModal() {
+  state.modal = null;
+  renderModal(false);
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus();
+  lastFocus = null;
+}
+
+/* ==========================================================================
+   ACTIONS
+   ========================================================================== */
+async function setDemoDate(newDate) {
+  if (!DateUtil.isISO(newDate) || newDate === state.demoDate) { $('#demoDate').value = state.demoDate; return; }
+  const before = new Map(state.rows.map((r) => [r.unit.id, r.status]));
+  const after = StatusEngine.deriveAll(state.snap, newDate);
+  const changes = after.filter((r) => before.get(r.unit.id) !== r.status);
+  if (changes.length) {
+    await DataStore.logChanges(changes.map((r) => ({
+      type: 'status', source: 'auto', unitId: r.unit.id, houseNumber: r.unit.houseNumber,
+      from: before.get(r.unit.id), to: r.status, userId: SYSTEM_USER.id, demoDate: newDate, cycleKey: r.cycleKey,
+    })));
+  }
+  state.demoDate = newDate;
+  await refresh();
+}
+
+async function setStatus(unitId, toStatus) {
+  const row = state.rowByUnit.get(unitId);
+  if (!row) return;
+  if (!Permissions.canSetStatus(state.role, row.status, toStatus)) {
+    toast(`${ROLE_PERMISSIONS[state.role].label} can’t change ${STATUS_LABEL[row.status].toLowerCase()} to ${STATUS_LABEL[toStatus].toLowerCase()}.`, 'error');
+    return;
+  }
+  const plan = StatusEngine.writePlan(row, toStatus);
+  const existing = row.unit.statusOverrides[plan.cycleKey];
+  const previousOverride = existing ? { ...existing } : null;
+  if (plan.clear) {
+    await DataStore.clearStatusOverride({ unitId, cycleKey: plan.cycleKey, fromStatus: row.status, toStatus, userId: state.userId, demoDate: state.demoDate, reason: row.earlyDeparture ? 'Early departure reversed' : 'Back to automatic status' });
+  } else {
+    await DataStore.updateStatus({ unitId, cycleKey: plan.cycleKey, status: toStatus, fromStatus: row.status, userId: state.userId, demoDate: state.demoDate });
+  }
+  await refresh();
+  const early = row.status === 'occupied' && !plan.clear && plan.cycleKey !== row.cycleKey;
+  toast(`House ${row.unit.houseNumber} set to ${STATUS_LABEL[toStatus].toLowerCase()}${early ? ' (guest left early)' : ''}.`, 'ok', {
+    what: `house ${row.unit.houseNumber} is ${STATUS_LABEL[row.status].toLowerCase()} again`,
+    run: () => DataStore.restoreOverrides({ items: [{ unitId, cycleKey: plan.cycleKey, previousOverride, expectedStatus: plan.clear ? null : toStatus, fromStatus: toStatus, toStatus: row.status }], userId: state.userId, demoDate: state.demoDate }),
+  });
+}
+
+async function clearOverride(unitId) {
+  const row = state.rowByUnit.get(unitId);
+  if (!row || !row.override || !Permissions.can(state.role, 'clearOverride')) return;
+  await DataStore.clearStatusOverride({ unitId, cycleKey: row.cycleKey, fromStatus: row.status, toStatus: row.autoStatus, userId: state.userId, demoDate: state.demoDate });
+  await refresh();
+  toast(`House ${row.unit.houseNumber} follows the bookings again (${STATUS_LABEL[row.autoStatus].toLowerCase()}).`, 'ok', {
+    what: `house ${row.unit.houseNumber} is ${STATUS_LABEL[row.status].toLowerCase()} again`,
+    run: () => DataStore.restoreOverrides({ items: [{ unitId, cycleKey: row.cycleKey, previousOverride: { ...row.override }, expectedStatus: null, fromStatus: row.autoStatus, toStatus: row.status }], userId: state.userId, demoDate: state.demoDate }),
+  });
+}
+
+async function setBookingOption(bookingId, option, value) {
+  if (!Permissions.can(state.role, 'editBookingTimes')) { toast('Your role can’t change check-in or check-out times.', 'error'); await refresh(); return; }
+  const res = await DataStore.setBookingOption({ bookingId, option, value, userId: state.userId, demoDate: state.demoDate });
+  await refresh();
+  if (!res.changed) return;
+  const b = res.booking;
+  const house = (unitById(b.unitId) || {}).houseNumber || '';
+  const other = neighbourBooking(b, option);
+  const clash = option === 'lateCheckout' ? StatusEngine.timeClash(b, other) : StatusEngine.timeClash(other, b);
+  const what = option === 'lateCheckout'
+    ? (value ? `late check-out ${LATE_CHECKOUT_TIME}` : `check-out back to ${b.baseDepartureTime}`)
+    : (value ? `early check-in ${EARLY_CHECKIN_TIME}` : `check-in back to ${b.baseArrivalTime}`);
+  const clashText = clash ? ` Time clash: out ${option === 'lateCheckout' ? b.departureTime : other.departureTime}, next in ${option === 'lateCheckout' ? other.arrivalTime : b.arrivalTime}.` : '';
+  toast(`House ${house}: ${what}.${clashText}`, clash ? 'error' : 'ok', {
+    what: `house ${house} has its previous time again`,
+    run: async () => {
+      const r = await DataStore.setBookingOption({ bookingId, option, value: !value, expectedCurrent: !!value, userId: state.userId, demoDate: state.demoDate });
+      return { restored: r.changed ? 1 : 0, skipped: r.changed ? 0 : 1 };
+    },
+  });
+}
+
+async function saveNotes(unitId) {
+  if (!Permissions.can(state.role, 'editNotes')) return;
+  const ta = $('#unitNotes');
+  if (!ta) return;
+  const unit = await DataStore.updateNotes({ unitId, notes: ta.value.trim(), userId: state.userId, demoDate: state.demoDate });
+  await refresh();
+  toast(`Notes saved for house ${unit.houseNumber}.`);
+}
+
+async function handleUpload(file) {
+  if (!file) return;
+  if (!Permissions.can(state.role, 'manageData')) { toast('Only management can upload data.', 'error'); return; }
+  state.uploadReport = { status: 'working', message: `Reading ${file.name}…` };
+  renderView();
+  try {
+    const matrix = await SpreadsheetImport.readMatrix(file);
+    const result = SpreadsheetImport.toDataset(matrix);
+    if (!result.bookings.length) {
+      state.uploadReport = { status: 'error', message: `No usable bookings in “${file.name}”. Nothing was changed.`, errors: result.errors, warnings: [] };
+    } else {
+      const carry = await DataStore.replaceDataset({ units: result.units, bookings: result.bookings, source: 'uploaded file', fileName: file.name }, { userId: state.userId, demoDate: state.demoDate });
+      const skipped = result.errors.length ? ` ${result.errors.length} row${result.errors.length > 1 ? 's were' : ' was'} skipped.` : '';
+      const kept = carry.statuses + carry.assignments + carry.timeOptions
+        ? ` Kept ${carry.statuses} manual status${carry.statuses === 1 ? '' : 'es'}, ${carry.assignments} assignment${carry.assignments === 1 ? '' : 's'} and ${carry.timeOptions} early/late option${carry.timeOptions === 1 ? '' : 's'} that still match a booking.` : '';
+      state.uploadReport = {
+        status: result.errors.length || result.warnings.length || carry.dropped.length ? 'warning' : 'ok',
+        message: `Imported ${result.bookings.length} bookings for ${result.units.length} houses from “${file.name}”.${skipped}${kept}`,
+        errors: result.errors, warnings: result.warnings, dropped: carry.dropped,
+      };
+      state.modal = null;
+    }
+  } catch (err) {
+    state.uploadReport = { status: 'error', message: err.message || 'The file couldn’t be read.', errors: [], warnings: [] };
+  }
+  await refresh();
+}
+
+async function regenerate() {
+  const ds = generateFakeDataset(state.demoDate, (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0);
+  await DataStore.replaceDataset(ds, { userId: state.userId, demoDate: state.demoDate, carryOver: false });
+  await seedAssignments();
+  state.uploadReport = { status: 'ok', message: `Generated ${ds.bookings.length} bookings for ${ds.units.length} houses around ${DateUtil.label(state.demoDate)}.`, errors: [], warnings: [] };
+  state.modal = null;
+  await refresh();
+}
+
+function downloadText(filename, text) {
+  try {
+    const blob = new Blob(['\uFEFF' + text], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    return true;
+  } catch (e) { return false; }
+}
+async function copyText(text) {
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); return true; }
+  } catch (e) { /* fall back to selection copy below */ }
+  const ta = $('#exportText');
+  if (!ta) return false;
+  ta.focus();
+  ta.select();
+  try { return document.execCommand('copy'); } catch (e) { return false; }
+}
+
+function exportPeriod() {
+  const data = periodData();
+  if (data.error) { toast(data.error, 'error'); return; }
+  const rows = [['date', 'weekday', 'departures', 'arrivals', 'back_to_back'],
+    ...data.days.map((d) => [d.date, DateUtil.weekday(d.date), d.departures, d.arrivals, d.b2b]),
+    ['total', '', data.totals.departures, data.totals.arrivals, data.totals.b2b]];
+  openModal({ type: 'export', title: 'Export period report', rows, filename: `period-report_${data.from}_${data.to}.csv` });
+}
+function openTemplate() {
+  const d = state.demoDate;
+  const rows = [['name', 'arrival', 'departure', 'housenumber'],
+    ['Anna de Vries', `${d} 15:00`, `${DateUtil.addDays(d, 4)} 10:00`, '101'],
+    ['Lukas Müller', DateUtil.addDays(d, 4), DateUtil.addDays(d, 11), '101'],
+    ['Chloé Dubois', `${DateUtil.addDays(d, 1)} 16:00`, `${DateUtil.addDays(d, 8)} 10:30`, '102']];
+  openModal({ type: 'export', title: 'Booking file template', rows, filename: 'bookings-template.csv' });
+}
+
+async function addUser() {
+  const name = $('#newUserName').value.trim();
+  const role = $('#newUserRole').value;
+  const email = $('#newUserEmail').value.trim();
+  if (!name) { toast('Enter a name for the new user.', 'error'); $('#newUserName').focus(); return; }
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('That email address doesn’t look right.', 'error'); $('#newUserEmail').focus(); return; }
+  await DataStore.addUser({ name, role, email }, { userId: state.userId });
+  await refresh();
+  toast(`Added ${name} as ${ROLE_PERMISSIONS[role].label}.`);
+}
+async function updateUserField(id, field, value) {
+  try {
+    if (field === 'name' && !value.trim()) throw new Error('A user needs a name.');
+    if (field === 'email' && value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) throw new Error('That email address doesn’t look right.');
+    await DataStore.updateUser(id, { [field]: value.trim() }, { userId: state.userId });
+    await refresh();
+    toast('User updated.');
+  } catch (err) {
+    toast(err.message, 'error');
+    await refresh();
+  }
+}
+
+async function runConfirmed() {
+  const m = state.modal;
+  if (!m || m.type !== 'confirm') return;
+  closeModal();
+  try {
+    if (m.kind === 'delete-user') { await DataStore.deleteUser(m.payload, { userId: state.userId }); toast('User deleted.'); }
+  } catch (err) { toast(err.message, 'error'); }
+  await refresh();
+}
+
+/* ==========================================================================
+   EVENTS
+   ========================================================================== */
+async function onClick(e) {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action;
+  if (action === 'overlay' && e.target !== el) return;
+  try {
+    switch (action) {
+      case 'role':
+        state.role = el.dataset.role; state.userId = null; state.statusFilter = 'all'; state.modal = null; state.workFilter = { clean: null, prep: null }; state.selected.clear();
+        renderAll();
+        toast(`Now logged in as ${ROLE_PERMISSIONS[state.role].label}.`);
+        break;
+      case 'tab': state.tab = el.dataset.tab; renderTabs(); renderView(); break;
+      case 'jump':
+        state.tab = el.dataset.tab;
+        if (el.dataset.filter) state.statusFilter = el.dataset.filter;
+        renderTabs(); renderView();
+        break;
+      case 'status-filter': state.statusFilter = el.dataset.filter; renderView(); break;
+      case 'date-prev': await setDemoDate(DateUtil.addDays(state.demoDate, -1)); break;
+      case 'date-next': await setDemoDate(DateUtil.addDays(state.demoDate, 1)); break;
+      case 'date-today': await setDemoDate(DateUtil.today()); break;
+      case 'set-status': await setStatus(el.dataset.unit, el.dataset.status); break;
+      case 'clear-override': await clearOverride(el.dataset.unit); break;
+      case 'open-unit': openModal({ type: 'unit', unitId: el.dataset.unit }); break;
+      case 'save-notes': await saveNotes(el.dataset.unit); break;
+      case 'overlay':
+      case 'close-modal': closeModal(); break;
+      case 'export-period': exportPeriod(); break;
+      case 'print-period':
+        try { window.print(); } catch (err) { toast('Printing isn’t available here. Export the CSV instead.', 'error'); }
+        break;
+      case 'download-export':
+        if (state.modal && state.modal.type === 'export') {
+          if (!downloadText(state.modal.filename, exportCsv(state.modal))) toast('The download was blocked. Use Copy CSV instead.', 'error');
+        }
+        break;
+      case 'copy-export':
+        if (state.modal && state.modal.type === 'export') toast(await copyText(exportCsv(state.modal)) ? 'CSV copied.' : 'Copying failed. Select the text and copy it by hand.', 'ok');
+        break;
+      case 'download-template': openTemplate(); break;
+      case 'regenerate': await regenerate(); break;
+      case 'add-user': await addUser(); break;
+      case 'delete-user': {
+        const u = state.userById.get(el.dataset.user);
+        if (u) openModal({ type: 'confirm', kind: 'delete-user', payload: u.id, title: `Delete ${u.name}?`, message: `${u.name} (${ROLE_PERMISSIONS[u.role].label}) will lose access. Their past activity stays in the log.`, confirmLabel: 'Delete user' });
+        break;
+      }
+      case 'confirm-yes': await runConfirmed(); break;
+      case 'open-bulk': openBulk(el.dataset.houses, { mode: el.dataset.mode, target: el.dataset.target }); break;
+      case 'work-filter': state.workFilter[el.dataset.task] = el.dataset.filter; renderView(); break;
+      case 'bulk-apply': await applyBulk(); break;
+      case 'toast-undo': await undoLast(); break;
+      case 'bulk-selected': openBulk(selectedHouses().join(' '), {}); break;
+      case 'select-visible':
+        state.visibleUnitIds.forEach((id) => state.selected.add(id));
+        renderView();
+        toast(`${state.selected.size} house${state.selected.size === 1 ? '' : 's'} selected.`);
+        break;
+      case 'select-clear': state.selected.clear(); renderView(); break;
+      case 'log-more': state.logLimit += 100; updateLogResults(); break;
+      case 'log-clear': state.logFilter = { day: '', person: '', action: '', house: '' }; state.logLimit = 100; renderView(); break;
+      case 'log-export': exportLog(); break;
+      case 'run-tests': await runTestsInView(); break;
+      case 'toggle-time': {
+        const b = state.snap.bookings.find((x) => x.id === el.dataset.booking);
+        if (b) await setBookingOption(b.id, el.dataset.option, !b[el.dataset.option]);
+        break;
+      }
+      default: break;
+    }
+  } catch (err) {
+    console.error(err);
+    toast(err.message || 'Something went wrong.', 'error');
+  }
+}
+
+async function onChange(e) {
+  const t = e.target;
+  try {
+    if (t.id === 'userSelect') { state.userId = t.value; state.workFilter = { clean: null, prep: null }; renderTabs(); renderView(); toast(`Now logged in as ${userName(state.userId)}.`); }
+    else if (t.dataset.change === 'select') toggleSelected(t.dataset.unit, t.checked);
+    else if (t.dataset.change === 'assign') await assignTask(t.dataset.unit, t.dataset.task, t.value);
+    else if (t.dataset.change === 'booking-option') await setBookingOption(t.dataset.booking, t.dataset.option, t.checked);
+    else if (t.name === 'csvSep') { state.csvSep = t.value; renderModal(false); const r = document.querySelector('input[name="csvSep"]:checked'); if (r) r.focus(); }
+    else if (['logDay', 'logPerson', 'logAction'].includes(t.id)) {
+      state.logFilter[{ logDay: 'day', logPerson: 'person', logAction: 'action' }[t.id]] = t.value;
+      state.logLimit = 100;
+      renderView();
+      const again = $(`#${t.id}`); if (again) again.focus();
+    }
+    else if (t.name === 'bulkMode') setBulkMode(t.value);
+    else if (t.name === 'bulkAssignee' && state.modal && state.modal.type === 'bulk') { state.modal.assignee = t.value || null; updateBulkPreview(); }
+    else if (t.id === 'demoDate') await setDemoDate(t.value);
+    else if (t.name === 'bulkTarget' && state.modal && state.modal.type === 'bulk') { state.modal.target = t.value; updateBulkPreview(); }
+    else if (t.id === 'periodFrom' || t.id === 'periodTo') {
+      if (t.id === 'periodFrom') state.periodFrom = t.value; else state.periodTo = t.value;
+      renderView();
+      const next = $(`#${t.id}`);
+      if (next) next.focus();
+    } else if (t.id === 'fileInput') { const f = t.files && t.files[0]; t.value = ''; await handleUpload(f); }
+    else if (t.id === 'assumeToggle') {
+      await DataStore.updateSettings({ assumePastTurnoversDone: t.checked }, { userId: state.userId, demoDate: state.demoDate });
+      await refresh();
+    } else if (t.dataset.change === 'user-role') await updateUserField(t.dataset.user, 'role', t.value);
+    else if (t.dataset.change === 'user-name') await updateUserField(t.dataset.user, 'name', t.value);
+    else if (t.dataset.change === 'user-email') await updateUserField(t.dataset.user, 'email', t.value);
+  } catch (err) {
+    console.error(err);
+    toast(err.message || 'Something went wrong.', 'error');
+  }
+}
+
+function onKeydown(e) {
+  if (!state.modal) return;
+  if (e.key === 'Escape') { e.preventDefault(); closeModal(); return; }
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey) && state.modal.type === 'bulk') { e.preventDefault(); applyBulk().catch((err) => toast(err.message, 'error')); return; }
+  if (e.key === 'Tab') {
+    const dialog = $('#modal .dialog');
+    if (!dialog) return;
+    const focusables = [...dialog.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter((x) => !x.disabled);
+    if (!focusables.length) return;
+    const first = focusables[0], last = focusables[focusables.length - 1];
+    if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+}
+
+function bindDropZone() {
+  const zone = $('#dropZone');
+  if (!zone) return;
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('over');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    handleUpload(f).catch((err) => toast(err.message, 'error'));
+  });
+}
+
+async function init() {
+  const today = DateUtil.today();
+  const seed = Number(today.replace(/-/g, ''));
+  await DataStore.init({ users: SEED_USERS, ...generateFakeDataset(today, seed) });
+  state.demoDate = today;
+  state.periodFrom = DateUtil.addDays(today, -4);
+  state.periodTo = DateUtil.addDays(today, 10);
+  await seedAssignments();
+  try {
+    const mq = window.matchMedia(WIDE_QUERY);
+    const onChangeWidth = () => { if (state.snap) renderView(); };
+    if (mq.addEventListener) mq.addEventListener('change', onChangeWidth); else if (mq.addListener) mq.addListener(onChangeWidth);
+  } catch (e) { /* no matchMedia: phone layout */ }
+  document.addEventListener('click', (e) => { onClick(e); });
+  document.addEventListener('change', (e) => { onChange(e); });
+  document.addEventListener('keydown', onKeydown);
+  $('#search').addEventListener('input', (e) => { state.search = e.target.value; renderView(); });
+  document.addEventListener('input', (e) => {
+    if (e.target.id === 'bulkInput' && state.modal && state.modal.type === 'bulk') { state.modal.text = e.target.value; updateBulkPreview(); }
+    if (e.target.id === 'logHouse') { state.logFilter.house = e.target.value; state.logLimit = 100; updateLogResults(); }
+  });
+  await refresh();
+}
+
+init().catch((err) => {
+  console.error(err);
+  document.getElementById('view').innerHTML = `<div class="message error"><strong>The board couldn’t start.</strong> ${esc(err.message)}</div>`;
+});
+</script>
+</body>
+</html>
