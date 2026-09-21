@@ -14,7 +14,6 @@
 # version : 20260622-101000 - Fixed Voyager basemap showing as blank grey tiles: it needs the "rastertiles/voyager/" subpath on CartoDB, unlike the other styles
 # version : 20260804-120000 - Narrower popups on mobile (recalculated at popup-open time, plus CSS max-width safety net); bottom table panel now only lists rows visible within the current map viewport, refreshing on pan/zoom
 # version : 20260804-121500 - Mobile popup width now fixed at 75% of screen width (was capped at 220px, which could look too narrow relative to content on some screens)
-# version : 20260921-113202 - Replaced CARTO raster tiles with OpenFreeMap vector tiles (MapLibre GL via maplibre-gl-leaflet): styles Positron/Dark/Bright/Liberty/Fiord + no-label variants (symbol layers stripped client-side); old saved basemap preferences are migrated; print waits for the vector map to redraw
 -->
 <html lang="en">
 <head>
@@ -24,7 +23,6 @@
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   <style>
@@ -407,12 +405,10 @@
 
     <div class="section-label">Map style</div>
     <select id="basemap-select">
-      <option value="positron">Light</option>
-      <option value="dark">Dark</option>
-      <option value="bright">Bright</option>
-      <option value="liberty">Liberty</option>
-      <option value="fiord">Fiord</option>
-      <option value="positron_nolabels">Light (no labels)</option>
+      <option value="light_all">Light</option>
+      <option value="dark_all">Dark</option>
+      <option value="voyager">Voyager</option>
+      <option value="light_nolabels">Light (no labels)</option>
       <option value="dark_nolabels">Dark (no labels)</option>
     </select>
 
@@ -445,10 +441,8 @@
   </div>
 </div>
 
-<script>const current_version = "20260921-113202";</script>
+<script>const current_version = "20260804-121500";</script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
-<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 const SHEET_ID   = "1W26AXb91InFg7Lw6TR1mkVh3dm-OQbhGAx0BgNrJdok";
@@ -503,7 +497,7 @@ const markersById = {}; // rowId -> { marker, cluster }
 })();
 
 // ── MAP ──────────────────────────────────────────────────────────────────────
-const map = L.map('map', { center: [41.9028, 12.4964], zoom: 12, maxZoom: 19 });
+const map = L.map('map', { center: [41.9028, 12.4964], zoom: 12 });
 window._leafletMap = map;
 // Keep the bottom table panel in sync with what's actually visible on the map.
 map.on('moveend', () => refreshTableForViewport());
@@ -516,75 +510,38 @@ map.on('popupopen', (e) => {
   p.options.maxWidth = window.innerWidth <= 640 ? Math.round(window.innerWidth * 0.75) : 340;
   p.update();
 });
-// ── BASEMAP STYLE SWITCHER (OpenFreeMap, vector tiles via MapLibre GL) ────────
-// https://openfreemap.org/quick_start/ — free, no API key. Styles are served
-// from tiles.openfreemap.org/styles/<name>. Attribution is taken from the style's
-// sources by maplibre-gl-leaflet and shown in Leaflet's attribution control.
-// "No labels" variants don't exist upstream, so the style JSON is fetched and
-// all symbol layers (labels, POI icons, shields) are stripped client-side.
-const OFM_STYLE_BASE = 'https://tiles.openfreemap.org/styles/';
-const DEFAULT_BASEMAP = 'positron';
-const BASEMAPS = {
-  positron:          { style: 'positron' },
-  dark:              { style: 'dark' },
-  bright:            { style: 'bright' },
-  liberty:           { style: 'liberty' },
-  fiord:             { style: 'fiord' },
-  positron_nolabels: { style: 'positron', noLabels: true },
-  dark_nolabels:     { style: 'dark',     noLabels: true },
-};
-// Migrate preferences saved by the previous (CARTO) version of this page.
-const LEGACY_BASEMAP_KEYS = {
-  light_all: 'positron', dark_all: 'dark', voyager: 'bright',
-  light_nolabels: 'positron_nolabels', dark_nolabels: 'dark_nolabels',
+// ── BASEMAP STYLE SWITCHER ────────────────────────────────────────────────────
+// CartoDB serves "light_all"/"dark_all" (+ "_nolabels" variants) directly,
+// but "voyager" lives under a "rastertiles/" subpath — without it the tiles 404
+// and you just see a grey background.
+const BASEMAP_URLS = {
+  light_all:        'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  dark_all:         'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  voyager:          'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+  light_nolabels:   'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
+  dark_nolabels:    'https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png',
 };
 
-let basemapLayer = null;   // L.maplibreGL layer
-let basemapSeq = 0;        // guards against out-of-order async style loads
+let basemapLayer = L.tileLayer(BASEMAP_URLS.light_all, {
+  attribution: '© OpenStreetMap © CartoDB', subdomains: 'abcd', maxZoom: 19
+}).addTo(map);
 
-async function resolveBasemapStyle(key) {
-  const cfg = BASEMAPS[key];
-  const url = OFM_STYLE_BASE + cfg.style;
-  if (!cfg.noLabels) return url;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('Style fetch failed: HTTP ' + res.status);
-  const style = await res.json();
-  style.layers = (style.layers || []).filter(l => l.type !== 'symbol');
-  return style;
-}
-
-async function setBasemap(key) {
-  if (!BASEMAPS[key]) key = DEFAULT_BASEMAP;
-  const seq = ++basemapSeq;
-  let style;
-  try {
-    style = await resolveBasemapStyle(key);
-  } catch (e) {
-    console.warn('Basemap style could not be prepared, falling back to labelled style:', e);
-    style = OFM_STYLE_BASE + BASEMAPS[key].style;
-  }
-  if (seq !== basemapSeq) return;   // a newer selection superseded this one
-
-  const glMap = basemapLayer && basemapLayer.getMaplibreMap();
-  if (glMap) {
-    glMap.setStyle(style);          // reuse the WebGL context instead of recreating the layer
-  } else {
-    basemapLayer = L.maplibreGL({
-      style,
-      preserveDrawingBuffer: true   // keeps the canvas printable
-    }).addTo(map);
-  }
-  try { localStorage.setItem('renato-basemap', key); } catch(e) {}
+function setBasemap(style) {
+  if (basemapLayer) map.removeLayer(basemapLayer);
+  const url = BASEMAP_URLS[style] || BASEMAP_URLS.light_all;
+  basemapLayer = L.tileLayer(url, {
+    attribution: '© OpenStreetMap © CartoDB', subdomains: 'abcd', maxZoom: 19
+  }).addTo(map);
+  basemapLayer.bringToBack();
+  try { localStorage.setItem('renato-basemap', style); } catch(e) {}
 }
 
 (function() {
   const select = document.getElementById('basemap-select');
-  let saved = DEFAULT_BASEMAP;
-  try { saved = localStorage.getItem('renato-basemap') || DEFAULT_BASEMAP; } catch(e) {}
-  if (LEGACY_BASEMAP_KEYS[saved]) saved = LEGACY_BASEMAP_KEYS[saved];
-  if (!BASEMAPS[saved]) saved = DEFAULT_BASEMAP;
+  let saved = 'light_all';
+  try { saved = localStorage.getItem('renato-basemap') || 'light_all'; } catch(e) {}
   select.value = saved;
-  setBasemap(saved);
+  if (saved !== 'light_all') setBasemap(saved);
   select.addEventListener('change', () => setBasemap(select.value));
 })();
 
@@ -931,11 +888,7 @@ let printNumberLayer = null;   // layer group holding the temporary numbered mar
 let printSavedClusters = [];   // cluster groups removed from the map for printing
 let printSavedView = null;     // { center, zoom } to restore after printing
 
-let printPrepared = false;     // true between preparePrint() and cleanupPrint()
-
 function preparePrint() {
-  if (printPrepared) return;   // printMap() may already have prepared the page
-  printPrepared = true;
   const { idToNumber, list } = assignPrintNumbers(filteredData);
 
   // Swap the clustered circle markers for plain numbered pins so every point
@@ -960,7 +913,7 @@ function preparePrint() {
 
   printSavedView = { center: map.getCenter(), zoom: map.getZoom() };
   if (list.length) {
-    map.fitBounds(L.latLngBounds(list.map(e=>[e.lat,e.lon])), { padding: [30,30], maxZoom: 16, animate: false });
+    map.fitBounds(L.latLngBounds(list.map(e=>[e.lat,e.lon])), { padding: [30,30], maxZoom: 16 });
   }
   map.invalidateSize();
 
@@ -968,7 +921,6 @@ function preparePrint() {
 }
 
 function cleanupPrint() {
-  printPrepared = false;
   if (printNumberLayer) { map.removeLayer(printNumberLayer); printNumberLayer = null; }
   printSavedClusters.forEach(g => g.addTo(map));
   printSavedClusters = [];
@@ -980,11 +932,9 @@ function cleanupPrint() {
 }
 
 function printMap() {
-  // Vector tiles need a moment to redraw at the print extent, so prepare the
-  // page first, give MapLibre time to render, then open the print dialog.
-  // (Ctrl+P still works via the beforeprint handler, without the delay.)
-  preparePrint();
-  setTimeout(() => window.print(), 1200);
+  // Give Leaflet a tick before opening the print dialog (not strictly required,
+  // but keeps the call symmetrical with the beforeprint/afterprint handlers below).
+  setTimeout(() => window.print(), 50);
 }
 window.printMap = printMap;
 window.addEventListener('beforeprint', preparePrint);

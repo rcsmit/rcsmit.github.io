@@ -7,10 +7,6 @@
  <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" />
-<script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
-<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
-<script src="basemap.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap');
 
@@ -333,7 +329,8 @@ const TILES = {
   ocean:  { url:'https://server.arcgisonline.com/ArcGIS/rest/services/Ocean/World_Ocean_Base/MapServer/tile/{z}/{y}/{x}', opts:{ attribution:'© Esri', maxZoom:16 } },
   topo:   { url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', opts:{ attribution:'© OpenStreetMap © OpenTopoMap', subdomains:'abc', maxZoom:17 } },
 };
-let tileLayer = addBaseMap(map);   // or addBaseMap(map, 'liberty') for a different style
+let tileLayer = L.tileLayer(TILES.bright.url, TILES.bright.opts).addTo(map);
+
 // ── Helpers ────────────────────────────────
 const isLight  = () => currentStyle === 'bright' || currentStyle === 'ocean';
 const drawCol  = () => isLight() ? '#333333' : '#e8ff47';
