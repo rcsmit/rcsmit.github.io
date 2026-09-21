@@ -733,9 +733,10 @@ const map = L.map('map', {
   center: CONFIG.MAP_CENTER, zoom: CONFIG.MAP_ZOOM,
   minZoom: CONFIG.MAP_MIN_ZOOM, maxZoom: CONFIG.MAP_MAX_ZOOM,
 });
-L.tileLayer(CONFIG.TILE_URL, {
-  attribution: CONFIG.TILE_ATTR, subdomains: CONFIG.TILE_SUBS, maxZoom: CONFIG.TILE_MAXZ,
-}).addTo(map);
+// L.tileLayer(CONFIG.TILE_URL, {
+//   attribution: CONFIG.TILE_ATTR, subdomains: CONFIG.TILE_SUBS, maxZoom: CONFIG.TILE_MAXZ,
+// }).addTo(map);
+addBaseMap(map);   // or addBaseMap(map, 'liberty') for a different style
 
 // ── Color helpers ─────────────────────────────────────────────
 // Convert hex to rgba for the cluster outer ring

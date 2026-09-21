@@ -9,9 +9,10 @@ const coordinates = [
   const map = L.map('map').setView([51.505, -0.09], 13); // Initial location and zoom
   
   // Add base tiles (map background)
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-  }).addTo(map);
+  // L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  //   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  // }).addTo(map);
+  addBaseMap(map);   // or addBaseMap(map, 'liberty') for a different style
   
   // Add markers for each coordinate
   coordinates.forEach((coordinate) => {

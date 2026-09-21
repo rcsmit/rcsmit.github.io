@@ -11,6 +11,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" />
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+
+<script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+<script src="basemap.js"></script>
 
 <style>
 :root {
@@ -442,9 +450,6 @@ header { background: var(--surface); border-bottom: 1px solid var(--border); box
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
-
 <script>
 /* ╔══════════════════════════════════════════════════════════════╗
    ║  ★  UNIVERSAL CONFIG — only section you need to change  ★   ║
@@ -631,10 +636,11 @@ const map = L.map('map', {
   center: CONFIG.MAP_CENTER, zoom: CONFIG.MAP_ZOOM,
   minZoom: CONFIG.MAP_MIN_ZOOM, maxZoom: CONFIG.MAP_MAX_ZOOM,
 });
-L.tileLayer(CONFIG.TILE_URL, {
-  attribution: CONFIG.TILE_ATTR, subdomains: CONFIG.TILE_SUBS, maxZoom: CONFIG.TILE_MAXZ,
-}).addTo(map);
+// L.tileLayer(CONFIG.TILE_URL, {
+//   attribution: CONFIG.TILE_ATTR, subdomains: CONFIG.TILE_SUBS, maxZoom: CONFIG.TILE_MAXZ,
+// }).addTo(map);
 
+addBaseMap(map);   // or addBaseMap(map, 'liberty') for a different style
 
 const cluster = L.markerClusterGroup({
   maxClusterRadius:        CONFIG.CLUSTER_RADIUS,

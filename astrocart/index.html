@@ -8,6 +8,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Josefin+Sans:wght@100;300;400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css" />
+<script src="https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js"></script>
+<script src="basemap.js"></script>
+
 <style>
   :root {
     --gold: #c9a84c;
@@ -260,7 +265,8 @@ const STYLES = {
   topo:      {url:'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',                   attr:'© OpenTopoMap', sub:'abc'},
   light:     {url:'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',     attr:'© CARTO', sub:'abcd'},
 };
-let tileLayer = L.tileLayer(STYLES.dark.url,{attribution:STYLES.dark.attr,subdomains:STYLES.dark.sub,maxZoom:18}).addTo(map);
+// let tileLayer = L.tileLayer(STYLES.dark.url,{attribution:STYLES.dark.attr,subdomains:STYLES.dark.sub,maxZoom:18}).addTo(map);
+let tileLayer = addBaseMap(map);
 function setStyle(key,btn){
   document.querySelectorAll('.style-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
   map.removeLayer(tileLayer);
