@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<!-- version = "20260924-153417" -->
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Minimumloon vs prijsindex</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #ffffff;
+    --surface: #f3f5f8;
+    --fg: #1b2330;
+    --muted: #5b6676;
+    --line: #d9dee6;
+    --accent: #1f5fbf;
+    --accent-fg: #ffffff;
+    --danger-bg: #fdecea;
+    --danger-fg: #8a1f17;
+    --plot-grid: #e3e7ee;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161d;
+      --surface: #1b212b;
+      --fg: #e6eaf0;
+      --muted: #9aa5b5;
+      --line: #2c3442;
+      --accent: #6ea4ff;
+      --accent-fg: #0d1522;
+      --danger-bg: #3a1a18;
+      --danger-fg: #ffb4ab;
+      --plot-grid: #2a3140;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+  }
+
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 20px 64px;
+  }
+
+  h1 {
+    margin: 0 0 24px;
+    font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.2rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+    margin-bottom: 24px;
+  }
+
+  .control {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1 1 200px;
+    max-width: 360px;
+  }
+
+  .control label {
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  select {
+    width: 100%;
+    padding: 9px 12px;
+    font: inherit;
+    color: var(--fg);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+  }
+
+  select:disabled { opacity: 0.6; }
+
+  .control-check {
+    flex: 0 0 auto;
+    justify-content: flex-end;
+  }
+
+  .control .check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 0;
+    font-size: 1rem;
+    color: var(--fg);
+    cursor: pointer;
+  }
+
+  .check input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .chart {
+    width: 100%;
+    height: 540px;
+    margin-bottom: 28px;
+  }
+
+  .status {
+    padding: 14px 16px;
+    margin-bottom: 24px;
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--muted);
+  }
+
+  .status[hidden] { display: none; }
+
+  .status.error {
+    background: var(--danger-bg);
+    color: var(--danger-fg);
+  }
+
+  .status button {
+    margin-left: 12px;
+    padding: 6px 12px;
+    font: inherit;
+    color: var(--accent-fg);
+    background: var(--accent);
+    border: 0;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  .note {
+    margin: 0 0 14px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    max-width: 80ch;
+  }
+
+  .note a { color: var(--accent); overflow-wrap: anywhere; }
+
+  @media (max-width: 720px) {
+    main { padding: 20px 12px 48px; }
+    .chart { height: 460px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Minimumloon vs prijsindex</h1>
+
+  <div class="controls">
+    <div class="control">
+      <label for="refDate">Reference date = 100</label>
+      <select id="refDate" disabled></select>
+    </div>
+    <div class="control">
+      <label for="startYear">Grafiek beginnen in</label>
+      <select id="startYear" disabled></select>
+    </div>
+    <div class="control control-check">
+      <label class="check"><input type="checkbox" id="showEvents" checked> Gebeurtenissen tonen</label>
+    </div>
+  </div>
+
+  <div id="status" class="status" role="status" aria-live="polite">Gegevens laden…</div>
+
+  <div id="chartIndex" class="chart" hidden></div>
+  <div id="chartDual" class="chart" hidden></div>
+
+  <p class="note">Bron CPI:<br>
+    Consumentenprijzen; prijsindex 2015=100, 1996-2025: <a href="https://www.cbs.nl/nl-nl/cijfers/detail/83131NED" target="_blank" rel="noopener">https://www.cbs.nl/nl-nl/cijfers/detail/83131NED</a><br>
+    Consumentenprijzen; CPI 2025=100, index en mutaties: <a href="https://opendata.cbs.nl/#/CBS/nl/dataset/86141NED/table" target="_blank" rel="noopener">https://opendata.cbs.nl/#/CBS/nl/dataset/86141NED/table</a></p>
+
+  <p class="note">Deze tabel bevat cijfers over het prijsverloop van een pakket goederen en diensten dat een gemiddeld Nederlands huishouden aanschaft. Dit wordt de consumentenprijsindex (CPI) genoemd. In de tabel staat ook de afgeleide consumentenprijsindex: dit is de CPI waarin het effect van veranderingen in de tarieven van productgebonden belastingen (bijvoorbeeld btw en accijns op alcohol en tabak) en subsidies en van consumptiegebonden belastingen (bijvoorbeeld motorrijtuigenbelasting) is verwijderd.</p>
+
+  <p class="note">Bron minimumloon: <a href="https://nl.wikipedia.org/wiki/Minimumloon" target="_blank" rel="noopener">https://nl.wikipedia.org/wiki/Minimumloon</a></p>
+</main>
+
+<script>
+const version = "20260924-153417";
+
+(function () {
+  "use strict";
+
+  // ---------------------------------------------------------------------
+  // Configuration
+  // ---------------------------------------------------------------------
+  const SHEET_ID = "11bCLM4-lLZ56-XJjBjvXyXJ11P3PiNjV6Yl96x-tEnM";
+  const SHEET_NAME = "data";
+  const SHEET_URL =
+    "https://docs.google.com/spreadsheets/d/" + SHEET_ID +
+    "/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent(SHEET_NAME);
+
+  const PREFERRED_REFERENCE_DATE = "1-1-2015";
+  const FALLBACK_REFERENCE_INDEX = 3;
+  const DEFAULT_START_YEAR = 2012;
+  const VALUE_COLUMNS = ["CPI", "CPI_afgeleid", "loon_40", "loon_38", "loon_36", "modaal_bruto"];
+  const REQUIRED_COLUMNS = ["datum"].concat(VALUE_COLUMNS);
+
+  // Events drawn as vertical lines. Only events inside the visible date range
+  // are shown. Add, remove or edit entries here (date = yyyy-mm-dd).
+  const EVENTS = [
+    { date: "1973-10-17", label: "Oliecrisis (OPEC-embargo)" },
+    { date: "1984-01-01", label: "Minimumloon -3%" },
+    { date: "2002-01-01", label: "Euro-contanten" },
+    { date: "2008-09-15", label: "Val Lehman Brothers" },
+    { date: "2012-10-01", label: "BTW 19% naar 21%" },
+    { date: "2020-03-11", label: "Coronapandemie (WHO)" },
+    { date: "2022-02-24", label: "Inval Oekraïne" },
+    { date: "2023-01-01", label: "Minimumloon +10,15%" },
+    { date: "2024-01-01", label: "Minimumloon: 36-urige werkweek" },
+    { date: "2025-06-13", label: "Twaalfdaagse oorlog Israël-Iran" },
+    { date: "2026-02-28", label: "Iranoorlog (VS en Israël)" }
+  ];
+
+  // Series shown in the first chart (same order and names as the original).
+  const INDEX_SERIES = [
+    "CPI_index_",
+    "CPI_afgeleid_index_",
+    "loon_40_index_",
+    "loon_38_index_",
+    "loon_36_index_",
+    "modaal_bruto_index_",
+    "loon_40_index_div_CPI_index_",
+    "loon_38_index_div_CPI_index_",
+    "loon_36_index_div_CPI_index_",
+    "modaal_bruto_index_div_CPI_index_"
+  ];
+
+  // ---------------------------------------------------------------------
+  // DOM
+  // ---------------------------------------------------------------------
+  const elSelect = document.getElementById("refDate");
+  const elStartYear = document.getElementById("startYear");
+  const elEvents = document.getElementById("showEvents");
+  const elStatus = document.getElementById("status");
+  const elChartIndex = document.getElementById("chartIndex");
+  const elChartDual = document.getElementById("chartDual");
+
+  let rows = null; // parsed sheet rows, null until loaded
+
+  // ---------------------------------------------------------------------
+  // Data loading
+  // ---------------------------------------------------------------------
+
+  /** Minimal RFC 4180 CSV parser (quoted fields, escaped quotes, CRLF). */
+  function parseCsv(text) {
+    if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+    const records = [];
+    let record = [];
+    let field = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQuotes) {
+        if (c === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; }
+          else inQuotes = false;
+        } else {
+          field += c;
+        }
+      } else if (c === '"') {
+        inQuotes = true;
+      } else if (c === ",") {
+        record.push(field); field = "";
+      } else if (c === "\n" || c === "\r") {
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        record.push(field); field = "";
+        records.push(record); record = [];
+      } else {
+        field += c;
+      }
+    }
+    if (field !== "" || record.length > 0) {
+      record.push(field);
+      records.push(record);
+    }
+    return records.filter(function (r) {
+      return r.some(function (cell) { return cell.trim() !== ""; });
+    });
+  }
+
+  /**
+   * Parse a number as Google Sheets exports it. Depending on the sheet locale
+   * this is "21,55" (decimal comma, optionally "1.234,56") or "21.55".
+   */
+  function toNumber(value) {
+    if (value === undefined || value === null) return null;
+    let s = String(value).trim().replace(/\s/g, "");
+    if (s === "") return null;
+    if (s.indexOf(",") !== -1) {
+      s = s.replace(/\./g, "").replace(",", ".");
+    }
+    const n = Number(s);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  /** "1-7-1969" (d-m-yyyy) -> "1969-07-01"; anything else is returned unchanged. */
+  function toIsoDate(label) {
+    const m = /^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/.exec(label);
+    if (!m) return label;
+    const day = Number(m[1]);
+    const month = Number(m[2]);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return label;
+    return m[3] + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+  }
+
+  /** Fetch the Google Sheet and return an array of row objects. */
+  async function getData() {
+    const response = await fetch(SHEET_URL, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("Google Sheets gaf status " + response.status + " terug.");
+    }
+    const records = parseCsv(await response.text());
+    if (records.length < 2) {
+      throw new Error("De spreadsheet bevat geen gegevens.");
+    }
+
+    const header = records[0].map(function (h) { return h.trim(); });
+    const missing = REQUIRED_COLUMNS.filter(function (c) { return header.indexOf(c) === -1; });
+    if (missing.length > 0) {
+      throw new Error(
+        "Ontbrekende kolommen: " + missing.join(", ") +
+        ". Controleer of de spreadsheet openbaar toegankelijk is en het tabblad '" + SHEET_NAME + "' bestaat."
+      );
+    }
+
+    const result = [];
+    for (let r = 1; r < records.length; r++) {
+      const rec = records[r];
+      const row = {};
+      header.forEach(function (name, idx) {
+        const raw = rec[idx] === undefined ? "" : rec[idx];
+        row[name] = idx === 0 ? raw.trim() : toNumber(raw);
+      });
+      // The sheet uses 0 for "not available" (e.g. CPI_afgeleid before 2013).
+      // A price index or wage of 0 is never real, so treat it as missing.
+      VALUE_COLUMNS.forEach(function (name) {
+        if (row[name] === 0) row[name] = null;
+      });
+      row.date = toIsoDate(row.datum);
+      const yearMatch = /^(\d{4})-\d{2}-\d{2}$/.exec(row.date);
+      row.year = yearMatch ? Number(yearMatch[1]) : null;
+      result.push(row);
+    }
+    return result;
+  }
+
+  // ---------------------------------------------------------------------
+  // Calculations
+  // ---------------------------------------------------------------------
+  function indexValue(value, ref) {
+    if (value === null || ref === null || ref === 0) return null;
+    return (value / ref) * 100;
+  }
+
+  function ratioValue(a, b) {
+    if (a === null || b === null || b === 0) return null;
+    return (a / b) * 100;
+  }
+
+  /**
+   * Index every series to the reference date (= 100) and divide the wage
+   * indexes by the CPI index. Returns column arrays keyed by series name.
+   */
+  function calculateIndexes(data, refRow) {
+    const out = {};
+
+    const sources = {
+      CPI_index_: "CPI",
+      CPI_afgeleid_index_: "CPI_afgeleid",
+      loon_40_index_: "loon_40",
+      loon_38_index_: "loon_38",
+      loon_36_index_: "loon_36",
+      modaal_bruto_index_: "modaal_bruto"
+    };
+
+    Object.keys(sources).forEach(function (target) {
+      const source = sources[target];
+      const ref = refRow ? refRow[source] : null;
+      out[target] = data.map(function (r) { return indexValue(r[source], ref); });
+    });
+
+    ["loon_40", "loon_38", "loon_36", "modaal_bruto"].forEach(function (name) {
+      out[name + "_index_div_CPI_index_"] = out[name + "_index_"].map(function (v, i) {
+        return ratioValue(v, out.CPI_index_[i]);
+      });
+    });
+
+    return out;
+  }
+
+  /** Min/max over all plotted index series; null when there is no data. */
+  function getYAxisRange(columns) {
+    let min = Infinity;
+    let max = -Infinity;
+    INDEX_SERIES.forEach(function (name) {
+      columns[name].forEach(function (v) {
+        if (v === null) return;
+        if (v < min) min = v;
+        if (v > max) max = v;
+      });
+    });
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return null;
+    if (min === max) { min -= 1; max += 1; }
+    return [min, max];
+  }
+
+  // ---------------------------------------------------------------------
+  // Plotting
+  // ---------------------------------------------------------------------
+  function isNarrow() {
+    return window.matchMedia("(max-width: 720px)").matches;
+  }
+
+  function themeColors() {
+    const css = getComputedStyle(document.documentElement);
+    return {
+      fg: css.getPropertyValue("--fg").trim(),
+      muted: css.getPropertyValue("--muted").trim(),
+      grid: css.getPropertyValue("--plot-grid").trim()
+    };
+  }
+
+  /**
+   * Vertical event lines with rotated labels for the events that fall inside
+   * the visible date range. Needs a real date axis, so it is skipped when the
+   * sheet dates could not all be parsed.
+   */
+  function eventOverlay(dates) {
+    const overlay = { shapes: [], annotations: [] };
+    if (!elEvents.checked || dates.length === 0) return overlay;
+
+    const isoDate = /^\d{4}-\d{2}-\d{2}$/;
+    let min = null;
+    let max = null;
+    for (let i = 0; i < dates.length; i++) {
+      if (!isoDate.test(dates[i])) return overlay;
+      if (min === null || dates[i] < min) min = dates[i];
+      if (max === null || dates[i] > max) max = dates[i];
+    }
+
+    const theme = themeColors();
+    EVENTS.forEach(function (event) {
+      if (event.date < min || event.date > max) return;
+      overlay.shapes.push({
+        type: "line",
+        xref: "x",
+        yref: "paper",
+        x0: event.date,
+        x1: event.date,
+        y0: 0,
+        y1: 1,
+        layer: "below",
+        line: { color: theme.muted, width: 1, dash: "dot" }
+      });
+      overlay.annotations.push({
+        xref: "x",
+        yref: "paper",
+        x: event.date,
+        y: 1,
+        text: event.label,
+        textangle: -90,
+        showarrow: false,
+        xanchor: "right",
+        yanchor: "top",
+        xshift: -2,
+        font: { size: 11, color: theme.muted }
+      });
+    });
+    return overlay;
+  }
+
+  function baseLayout(title, wideLegendX, dates) {
+    const theme = themeColors();
+    const overlay = eventOverlay(dates);
+    const narrow = isNarrow();
+    const layout = {
+      title: { text: title },
+      paper_bgcolor: "rgba(0,0,0,0)",
+      plot_bgcolor: "rgba(0,0,0,0)",
+      font: { color: theme.fg },
+      hovermode: "x unified",
+      shapes: overlay.shapes,
+      annotations: overlay.annotations,
+      xaxis: { title: { text: "Date" }, gridcolor: theme.grid, automargin: true },
+      margin: narrow ? { l: 55, r: 15, t: 60, b: 20 } : { l: 70, r: 20, t: 70, b: 50 }
+    };
+    if (narrow) {
+      layout.legend = { orientation: "h", x: 0, xanchor: "left", y: -0.25, yanchor: "top" };
+    } else {
+      layout.legend = { x: wideLegendX, y: 1 };
+    }
+    return layout;
+  }
+
+  function plotIndexChart(dates, columns, referenceDate, yRange) {
+    const traces = INDEX_SERIES.map(function (name) {
+      return { type: "scatter", mode: "lines", x: dates, y: columns[name], name: name };
+    });
+
+    const layout = baseLayout("Indexed Values (" + referenceDate + " = 100)", 1.02, dates);
+    layout.legend.title = { text: "Variables" };
+    layout.yaxis = {
+      title: { text: "Index (" + referenceDate + " = 100)" },
+      side: "left",
+      gridcolor: themeColors().grid,
+      hoverformat: ".1f"
+    };
+    if (yRange) layout.yaxis.range = yRange;
+
+    return Plotly.react(elChartIndex, traces, layout, { responsive: true, displaylogo: false });
+  }
+
+  function plotDualChart(data, dates, columns, referenceDate, yRange) {
+    const traces = [
+      { type: "scatter", mode: "lines", x: dates, y: columns.CPI_index_, name: "CPI Index_" },
+      { type: "scatter", mode: "lines", x: dates, y: columns.CPI_afgeleid_index_, name: "CPI Afgeleid Index_" },
+      { type: "scatter", mode: "lines", x: dates, y: data.map(function (r) { return r.loon_40; }), name: "Loon 40", yaxis: "y2" },
+      { type: "scatter", mode: "lines", x: dates, y: data.map(function (r) { return r.loon_38; }), name: "Loon 38", yaxis: "y2" },
+      { type: "scatter", mode: "lines", x: dates, y: data.map(function (r) { return r.loon_36; }), name: "Loon 36", yaxis: "y2" }
+    ];
+
+    const layout = baseLayout("Indexed Values with Dual Y-Axis (" + referenceDate + " = 100)", 1.15, dates);
+    layout.yaxis = {
+      title: { text: "CPI Index (" + referenceDate + " = 100)" },
+      side: "left",
+      gridcolor: themeColors().grid,
+      hoverformat: ".1f"
+    };
+    if (yRange) layout.yaxis.range = yRange;
+    layout.yaxis2 = {
+      title: { text: "Loon" },
+      overlaying: "y",
+      side: "right",
+      showgrid: false,
+      hoverformat: ".1f"
+    };
+    if (!isNarrow()) layout.margin.r = 200;
+
+    return Plotly.react(elChartDual, traces, layout, { responsive: true, displaylogo: false });
+  }
+
+  // ---------------------------------------------------------------------
+  // UI
+  // ---------------------------------------------------------------------
+  function showStatus(message, isError, withRetry) {
+    elStatus.hidden = false;
+    elStatus.classList.toggle("error", Boolean(isError));
+    elStatus.textContent = message;
+    if (withRetry) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "Opnieuw proberen";
+      button.addEventListener("click", init);
+      elStatus.appendChild(button);
+    }
+  }
+
+  function hideStatus() {
+    elStatus.hidden = true;
+    elStatus.textContent = "";
+    elStatus.classList.remove("error");
+  }
+
+  function render() {
+    if (!rows) return;
+    const refRow = rows[Number(elSelect.value)];
+    if (!refRow) return;
+    const referenceDate = refRow.datum;
+    const startYear = Number(elStartYear.value);
+
+    // Index over the full history, then show only the rows from the start year on.
+    const allColumns = calculateIndexes(rows, refRow);
+    const visible = [];
+    rows.forEach(function (r, i) {
+      if (r.year === null || r.year >= startYear) visible.push(i);
+    });
+    const viewRows = visible.map(function (i) { return rows[i]; });
+    const dates = viewRows.map(function (r) { return r.date; });
+    const columns = {};
+    Object.keys(allColumns).forEach(function (name) {
+      columns[name] = visible.map(function (i) { return allColumns[name][i]; });
+    });
+    const yRange = getYAxisRange(columns);
+
+    elChartIndex.hidden = false;
+    elChartDual.hidden = false;
+    plotIndexChart(dates, columns, referenceDate, yRange);
+    plotDualChart(viewRows, dates, columns, referenceDate, yRange);
+
+    const missing = VALUE_COLUMNS.filter(function (k) { return refRow[k] === null; });
+    if (missing.length > 0) {
+      showStatus(
+        "Voor " + referenceDate + " ontbreekt de waarde van: " + missing.join(", ") +
+        ". Reeksen die daarvan afhangen worden niet getoond; kies een latere referentiedatum om ze te zien.",
+        false,
+        false
+      );
+    } else {
+      hideStatus();
+    }
+  }
+
+  function populateSelect(data) {
+    elSelect.textContent = "";
+    data.forEach(function (row, i) {
+      const option = document.createElement("option");
+      option.value = String(i);
+      option.textContent = row.datum;
+      elSelect.appendChild(option);
+    });
+    let defaultIndex = data.findIndex(function (r) { return r.datum === PREFERRED_REFERENCE_DATE; });
+    if (defaultIndex === -1) defaultIndex = Math.min(FALLBACK_REFERENCE_INDEX, data.length - 1);
+    elSelect.selectedIndex = defaultIndex;
+    elSelect.disabled = false;
+  }
+
+  function populateStartYears(data) {
+    const years = [];
+    data.forEach(function (r) {
+      if (r.year !== null && years.indexOf(r.year) === -1) years.push(r.year);
+    });
+    years.sort(function (a, b) { return a - b; });
+
+    elStartYear.textContent = "";
+    years.forEach(function (y) {
+      const option = document.createElement("option");
+      option.value = String(y);
+      option.textContent = String(y);
+      elStartYear.appendChild(option);
+    });
+
+    if (years.length === 0) {
+      // No parseable dates: fall back to a value that keeps every row visible.
+      const option = document.createElement("option");
+      option.value = "0";
+      option.textContent = "alle jaren";
+      elStartYear.appendChild(option);
+      elStartYear.selectedIndex = 0;
+    } else {
+      let defaultIndex = years.findIndex(function (y) { return y >= DEFAULT_START_YEAR; });
+      if (defaultIndex === -1) defaultIndex = 0;
+      elStartYear.selectedIndex = defaultIndex;
+    }
+    elStartYear.disabled = false;
+  }
+
+  async function init() {
+    elSelect.disabled = true;
+    elStartYear.disabled = true;
+    showStatus("Gegevens laden…", false, false);
+    try {
+      rows = await getData();
+      populateSelect(rows);
+      populateStartYears(rows);
+      render();
+    } catch (err) {
+      rows = null;
+      elChartIndex.hidden = true;
+      elChartDual.hidden = true;
+      showStatus("De gegevens konden niet worden geladen. " + (err && err.message ? err.message : String(err)), true, true);
+    }
+  }
+
+  elSelect.addEventListener("change", render);
+  elStartYear.addEventListener("change", render);
+  elEvents.addEventListener("change", render);
+  window.matchMedia("(max-width: 720px)").addEventListener("change", render);
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+
+  init();
+})();
+</script>
+</body>
+</html>
