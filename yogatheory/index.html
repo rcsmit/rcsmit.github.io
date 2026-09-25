@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- version = "20260925-135000" -->
+<title>Yoga Philosophy in Motion</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,500;1,500&family=Alegreya+Sans:wght@400;500;700&family=Tiro+Devanagari+Sanskrit&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #0c1018;
+    --panel: #151d2b;
+    --ink: #ece6d7;
+    --muted: #a2a7b4;
+    --faint: #646d80;
+    --line: #273044;
+    --gold: #ffd98a;
+    --silver: #dfe8ff;
+    --serif: "Alegreya", Georgia, "Times New Roman", serif;
+    --sans: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+    --deva: "Tiro Devanagari Sanskrit", "Noto Serif Devanagari", "Mangal", serif;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--ground); }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16px; line-height: 1.55;
+    padding-inline: 16px; padding-block: 48px 64px;
+  }
+  main { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
+  .eyebrow { margin: 0; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  h1 { margin: 8px 0 0; font-family: var(--serif); font-weight: 500; font-size: clamp(30px, 5vw, 46px); line-height: 1.1; text-wrap: balance; }
+  h1 em { color: var(--gold); }
+  .lede { margin: 12px 0 0; color: var(--muted); max-width: 60ch; }
+
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 900px) { .cards { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .cards { grid-template-columns: 1fr; } }
+  a.card {
+    display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: inherit;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px 22px 20px; transition: border-color .25s, transform .25s;
+  }
+  a.card:hover { border-color: var(--c); transform: translateY(-2px); }
+  a.card:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .deva { font-family: var(--deva); font-size: 26px; line-height: 1.3; color: var(--c); }
+  .card h2 { margin: 0; font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 24px; line-height: 1.2; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .meta { margin-top: auto; padding-top: 10px; font-size: 13px; color: var(--faint); display: flex; justify-content: space-between; gap: 8px; }
+  .meta b { color: var(--c); font-weight: 500; }
+
+  .tip {
+    display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; align-items: start;
+    background: var(--panel); border: 1px solid var(--line); border-left: 3px solid #5fb0e8;
+    border-radius: 12px; padding: 18px 20px;
+  }
+  .tip svg { grid-row: span 3; width: 26px; height: 26px; color: #5fb0e8; margin-top: 2px; }
+  .tip h3 { margin: 0; font-family: var(--serif); font-weight: 500; font-size: 20px; }
+  .tip p { margin: 0; color: var(--muted); font-size: 15px; max-width: 70ch; }
+  .tip .status { color: var(--ink); font-size: 14px; }
+  .tip .status b { color: #5fb0e8; font-weight: 500; }
+
+  footer { border-top: 1px solid var(--line); padding-top: 16px; color: var(--faint); font-size: 14px; }
+  @media (prefers-reduced-motion: reduce) { a.card { transition: none; } a.card:hover { transform: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Sāṃkhya · Yoga</p>
+    <h1>Yoga philosophy, <em>animated</em></h1>
+    <p class="lede">Three interactive animations of classical Indian yoga philosophy. Start with the map of reality that Patañjali builds on, follow his Yoga Sūtra book by book, then watch the Bhagavad Gītā's dialogue unfold on the battlefield.</p>
+  </header>
+
+  <div class="cards">
+    <a class="card" href="tattvas.html" style="--c: var(--silver)">
+      <span class="deva" lang="sa">पुरुष · प्रकृति</span>
+      <h2>The Twenty-Five Tattvas</h2>
+      <p>How the world unfolds from Puruṣa and Prakṛti: intellect, ego, mind, senses and elements, then the way back to kaivalya.</p>
+      <span class="meta"><span>11 stages · Sāṃkhya-kārikā</span><b>Open →</b></span>
+    </a>
+    <a class="card" href="yoga-sutra.html" style="--c: var(--gold)">
+      <span class="deva" lang="sa">योगसूत्र</span>
+      <h2>The Yoga Sūtra, book by book</h2>
+      <p>Sixteen scenes across Patañjali's four books, from the stilled lake of the mind to the seer standing alone.</p>
+      <span class="meta"><span>4 books · 195 sūtras</span><b>Open →</b></span>
+    </a>
+    <a class="card" href="bhagavad-gita.html" style="--c: #ef8a4a">
+      <span class="deva" lang="sa">भगवद्गीता</span>
+      <h2>The Bhagavad Gītā, chapter by chapter</h2>
+      <p>Arjuna drops his bow, Kṛṣṇa answers. From the self that cannot be killed to the cosmic form and back to the chariot.</p>
+      <span class="meta"><span>18 chapters · 700 verses</span><b>Open →</b></span>
+    </a>
+  </div>
+
+  <aside class="tip" aria-label="Narration tip">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 6h3l4-3v10L5 10H2z" fill="currentColor"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.5 3.5a6 6 0 0 1 0 9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+    <h3>For the best narration, use Microsoft Edge</h3>
+    <p>Each page can read its text aloud with the Narrate button. The voice comes from your browser, and Edge's "Natural" voices sound far more human than Chrome's or Firefox's. In Edge, choose a voice with "Natural" in its name from the Voice menu. For the Sanskrit, make sure a Hindi voice is installed.</p>
+    <p class="status" id="browserStatus"></p>
+  </aside>
+
+  <footer>Made by René Smit.</footer>
+</main>
+<script>
+const version = "20260925-135000";
+(function () {
+  const el = document.getElementById('browserStatus');
+  const ua = navigator.userAgent || '';
+  if (/Edg\//.test(ua)) el.innerHTML = '<b>You are using Edge.</b> You will get the best voices.';
+  else el.textContent = 'You are not using Edge, so narration works but may sound more robotic.';
+})();
+</script>
+</body>
+</html>

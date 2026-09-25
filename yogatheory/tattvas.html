@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Twenty-Five Tattvas</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Alegreya+Sans:wght@400;500;700&family=Tiro+Devanagari+Sanskrit&display=swap">
+<style>
+  /* version = "20260925-130500" */
+  :root {
+    color-scheme: dark;
+    --ground: #0c1018;
+    --ground-2: #121926;
+    --panel: #151d2b;
+    --ink: #ece6d7;
+    --muted: #a2a7b4;
+    --faint: #626b7d;
+    --line: #273044;
+    --sattva: #f2e3b8;
+    --gold: #ffd98a;
+    --rajas: #e2583e;
+    --tamas: #8b80e0;
+    --purusha: #dfe8ff;
+    --serif: "Alegreya", Georgia, "Times New Roman", serif;
+    --sans: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+    --deva: "Tiro Devanagari Sanskrit", "Noto Serif Devanagari", "Kohinoor Devanagari", "Mangal", serif;
+  }
+  html { background: var(--ground); }
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+    padding-inline: 16px;
+    padding-block: 28px 56px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+
+  header { display: flex; flex-direction: column; gap: 10px; }
+  .eyebrow { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  h1 {
+    font-family: var(--serif); font-weight: 500; margin: 0;
+    font-size: clamp(30px, 4.4vw, 50px); line-height: 1.08; text-wrap: balance; letter-spacing: -.01em;
+  }
+  h1 em { font-style: italic; color: var(--gold); }
+  h1 .p { font-style: italic; color: var(--purusha); }
+  .lede { max-width: 64ch; color: var(--muted); margin: 0; }
+
+  .stage-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+  @media (max-width: 980px) { .stage-grid { grid-template-columns: minmax(0, 1fr); } }
+
+  .stage { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .canvas-box {
+    position: relative; border-radius: 14px; overflow: hidden;
+    border: 1px solid var(--line); background: var(--ground-2);
+  }
+  canvas { display: block; width: 100%; height: auto; }
+
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .btns { display: flex; gap: 6px; }
+  button.ctl {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    height: 38px; min-width: 38px; padding: 0 12px; border-radius: 19px;
+    background: var(--panel); color: var(--ink); border: 1px solid var(--line);
+    font: 500 14px/1 var(--sans); cursor: pointer;
+  }
+  button.ctl:hover { border-color: var(--faint); }
+  button.ctl:focus-visible, .seg:focus-visible, .chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  button.ctl svg { width: 14px; height: 14px; fill: currentColor; }
+  button.play { background: var(--sattva); color: #1a1a14; border-color: var(--sattva); min-width: 92px; }
+  button.play:hover { border-color: #fff; }
+
+  .speed { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .speed input { width: 110px; accent-color: var(--sattva); }
+  .speed output { min-width: 3.2em; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .narr { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .narr .ctl[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+  .narr label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  .narr input[type="checkbox"] { accent-color: var(--sattva); width: 15px; height: 15px; }
+  .narr select { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; height: 32px; padding: 0 8px; max-width: min(260px, 100%); font: 13px var(--sans); }
+  .narr .note { color: var(--faint); }
+  .scrub { display: flex; gap: 4px; flex: 1; min-width: 200px; }
+  .seg { flex: 1; height: 24px; position: relative; background: none; border: 0; padding: 0; cursor: pointer; border-radius: 4px; }
+  .seg::before, .seg i { content: ""; position: absolute; left: 0; top: 10px; height: 4px; border-radius: 2px; }
+  .seg::before { right: 0; background: var(--line); }
+  .seg i { width: 0; background: var(--sattva); }
+  .seg.ret i { background: var(--purusha); }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend b { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .legend em { font-family: var(--serif); color: var(--ink); }
+
+  aside.panel {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px 22px 20px; display: flex; flex-direction: column; gap: 10px;
+    min-height: 420px;
+  }
+  @media (max-width: 980px) { aside.panel { min-height: 0; } }
+  .panel .step { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin: 0; font-variant-numeric: tabular-nums; }
+  .panel .deva { font-family: var(--deva); font-size: 30px; line-height: 1.3; color: var(--gold); margin: 4px 0 0; }
+  .panel h2 { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 28px; line-height: 1.15; margin: 0; text-wrap: balance; }
+  .panel .en { color: var(--muted); margin: 0; font-size: 15px; }
+  .panel .text { margin: 6px 0 0; max-width: 60ch; }
+  .panel .text i { font-family: var(--serif); }
+  .tags { display: flex; flex-direction: column; gap: 6px; margin-top: auto; padding-top: 12px; }
+  .tags span {
+    font-size: 13px; color: var(--muted); border-left: 2px solid var(--line); padding-left: 10px;
+  }
+  .panel .fade { transition: opacity .35s ease; }
+  .panel.swap .fade { opacity: 0; }
+
+  section.strip { display: flex; flex-direction: column; gap: 14px; }
+  .strip-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .strip-head h3 { font-family: var(--serif); font-weight: 500; font-size: 24px; margin: 0; }
+  .count { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
+  .count b { color: var(--gold); font-weight: 700; }
+  .groups { display: grid; grid-template-columns: 1fr 1fr 2fr 4fr; gap: 18px; }
+  @media (max-width: 980px) { .groups { grid-template-columns: 1fr 1fr; } .g-evo, .g-only { grid-column: 1 / -1; } }
+  .group { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .group h4 { margin: 0; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .group h4 i { display: block; text-transform: none; letter-spacing: 0; font-family: var(--serif); font-size: 14px; color: var(--faint); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font: 400 14px/1 var(--serif); font-style: italic; color: var(--faint);
+    background: transparent; border: 1px solid var(--line); border-radius: 999px;
+    padding: 7px 11px; cursor: pointer; transition: color .4s, border-color .4s, background .4s;
+  }
+  .chip small { font-family: var(--sans); font-style: normal; font-size: 12px; margin-left: 4px; opacity: .8; }
+  .chip.on { color: var(--ink); border-color: var(--c, var(--sattva)); background: color-mix(in srgb, var(--c, var(--sattva)) 12%, transparent); }
+  .chip.now { box-shadow: 0 0 0 1px var(--c, var(--sattva)); }
+
+  footer.notes {
+    border-top: 1px solid var(--line); padding-top: 20px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px; color: var(--muted); font-size: 14px;
+  }
+  @media (max-width: 760px) { footer.notes { grid-template-columns: 1fr; } }
+  footer.notes h5 { margin: 0 0 6px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); font-weight: 500; }
+  footer.notes p { margin: 0 0 8px; max-width: 62ch; }
+  .verse { font-family: var(--serif); font-style: italic; color: var(--ink); font-size: 16px; line-height: 1.5; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .panel .fade, .chip { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Sāṃkhya · the map of reality behind Patañjali's Yoga</p>
+    <h1>How the world unfolds from <span class="p">Puruṣa</span> and <em>Prakṛti</em></h1>
+    <p class="lede">Classical Yoga explains the world as 25 principles, the <i>tattvas</i>. One is pure consciousness. The other 24 are nature and everything it turns into, from intellect down to earth. Watch them unfold one by one, then fold back up again.</p>
+  </header>
+
+  <div class="stage-grid">
+    <div class="stage">
+      <div class="canvas-box" id="box">
+        <canvas id="cv" aria-label="Animated diagram of the 25 tattvas unfolding from Puruṣa and Prakṛti" role="img"></canvas>
+      </div>
+      <div class="controls">
+        <div class="btns">
+          <button class="ctl" id="prev" aria-label="Previous stage"><svg viewBox="0 0 16 16"><path d="M11 2 4 8l7 6z"/></svg></button>
+          <button class="ctl play" id="play"><svg viewBox="0 0 16 16" id="playIcon"><path d="M4 2v12l10-6z"/></svg><span id="playLabel">Play</span></button>
+          <button class="ctl" id="next" aria-label="Next stage"><svg viewBox="0 0 16 16"><path d="M5 2l7 6-7 6z"/></svg></button>
+        </div>
+        <div class="scrub" id="scrub" aria-label="Stages"></div>
+        <label class="speed" for="speed">Speed <input type="range" id="speed" min="0.2" max="2" step="0.05" value="0.6"><output id="speedOut" for="speed">0.6×</output></label>
+      </div>
+      <div class="narr" id="narr">
+        <button class="ctl" id="narrBtn" aria-pressed="false"><svg viewBox="0 0 16 16"><path d="M2 6h3l4-3v10L5 10H2z"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.5 3.5a6 6 0 0 1 0 9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span id="narrLabel">Narrate</span></button>
+        <label for="narrSkt"><input type="checkbox" id="narrSkt" checked> Read Sanskrit</label>
+        <label for="narrVoice">Voice <select id="narrVoice"></select></label>
+        <span class="note" id="narrNote"></span>
+      </div>
+      <div class="legend" aria-label="The three guṇas">
+        <span><b style="background:var(--sattva)"></b><em>sattva</em> clarity, light</span>
+        <span><b style="background:var(--rajas)"></b><em>rajas</em> activity, passion</span>
+        <span><b style="background:var(--tamas)"></b><em>tamas</em> inertia, weight</span>
+      </div>
+    </div>
+
+    <aside class="panel" id="panel" aria-live="polite">
+      <p class="step fade" id="pStep">Stage 1 of 11</p>
+      <p class="deva fade" id="pDeva" lang="sa"></p>
+      <h2 class="fade" id="pIast"></h2>
+      <p class="en fade" id="pEn"></p>
+      <p class="text fade" id="pText"></p>
+      <div class="tags fade" id="pTags"></div>
+    </aside>
+  </div>
+
+  <section class="strip">
+    <div class="strip-head">
+      <h3>The 25 tattvas</h3>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="groups" id="groups"></div>
+  </section>
+
+  <footer class="notes">
+    <div>
+      <h5>Sāṃkhya-kārikā, verse 3</h5>
+      <p class="verse">mūlaprakṛtir avikṛtir mahadādyāḥ prakṛtivikṛtayaḥ sapta ·<br>ṣoḍaśakas tu vikāro na prakṛtir na vikṛtiḥ puruṣaḥ</p>
+      <p>“Root nature is not produced. The seven beginning with Mahat are both produced and producing. The sixteen are products only. Puruṣa is neither source nor product.” The groups above follow this verse.</p>
+    </div>
+    <div>
+      <h5>About this scheme</h5>
+      <p>The sequence follows Īśvarakṛṣṇa's <i>Sāṃkhya-kārikā</i> (c. 4th–5th century CE), which Patañjali's <i>Yoga Sūtra</i> takes as its metaphysics. The levels named in the panel (<i>viśeṣa, aviśeṣa, liṅga-mātra, aliṅga</i>) come from Yoga Sūtra II.19 as read by Vyāsa's commentary.</p>
+      <p>Later texts vary some details, for example deriving the senses from different guṇas or merging the order of the elements with Vedānta cosmology. The diagram is a map of principles, not a timeline of physical events.</p>
+    </div>
+  </footer>
+</div>
+
+<script>
+const version = "20260925-130500";
+
+const C = {
+  sattva: '#f2e3b8', gold: '#ffd98a', rajas: '#e2583e', tamas: '#8b80e0', purusha: '#dfe8ff',
+  manas: '#fff2cf', jn: '#f2e3b8', ka: '#f0a878', ta: '#b0a4f5',
+  ink: '#ece6d7', muted: '#a2a7b4', faint: '#626b7d', bg: '#121926', bg0: '#0c1018'
+};
+const ELEM = ['#a9bfe6', '#bfe0cf', '#ef7a3c', '#4f9fd8', '#b58a52'];
+
+const STAGES = [
+  { dur: 10, deva: 'पुरुष · प्रकृति', iast: 'Puruṣa & Prakṛti', en: 'Consciousness and nature',
+    text: 'Sāṃkhya, the philosophy Patañjali\'s Yoga builds on, starts from two uncreated realities. <i>Puruṣa</i> is pure consciousness: it witnesses, but it never acts or changes. <i>Prakṛti</i> is primordial nature, the source of everything else. Here it rests unmanifest (<i>avyakta</i>), its three guṇas in perfect balance. Sāṃkhya counts many puruṣas, one for each being, but only one Prakṛti.',
+    tags: ['Yoga Sūtra II.19 · Prakṛti is <i>aliṅga</i>, “without a mark”', 'Sāṃkhya-kārikā 3 · Puruṣa is neither source nor product'] },
+  { dur: 9, deva: 'गुणक्षोभ', iast: 'Guṇa-kṣobha', en: 'The guṇas are stirred',
+    text: 'Sattva (clarity), rajas (activity) and tamas (inertia) held each other in equilibrium (<i>sāmyāvasthā</i>). The mere nearness of Puruṣa (<i>saṃyoga</i>) upsets that balance. Rajas moves first. Consciousness does nothing, yet nature starts to unfold as if for its sake, like a blind man carrying a lame man who can see the road.',
+    tags: ['Sāṃkhya-kārikā 21 · the lame and the blind', 'Sāṃkhya-kārikā 12–13 · the three guṇas'] },
+  { dur: 8, deva: 'महत् · बुद्धि', iast: 'Mahat · Buddhi', en: 'The great principle, intellect',
+    text: 'The first product of Prakṛti is <i>Mahat</i>, “the great one”, called <i>buddhi</i> in the individual: the power to discern, decide and will. Sattva dominates it, so buddhi is clear enough to reflect Puruṣa\'s light. That reflection is why the mind seems conscious, though it is still matter.',
+    tags: ['Yoga Sūtra II.19 · <i>liṅga-mātra</i>, “mere mark”', 'Sāṃkhya-kārikā 22–23'] },
+  { dur: 9, deva: 'अहंकार', iast: 'Ahaṃkāra', en: 'The I-maker',
+    text: 'From buddhi comes <i>ahaṃkāra</i>, the sense of “I” and “mine”. It divides by guṇa. The sattvic side (<i>vaikārika</i>) produces the mind and the organs. The tamasic side (<i>bhūtādi</i>) produces the subtle elements. The rajasic side (<i>taijasa</i>) supplies the energy for both.',
+    tags: ['Yoga Sūtra II.19 · <i>aviśeṣa</i>, as <i>asmitā-mātra</i>', 'Sāṃkhya-kārikā 24–25'] },
+  { dur: 7, deva: 'मनस्', iast: 'Manas', en: 'Mind, the coordinator',
+    text: '<i>Manas</i> gathers what the senses report, shapes it into perceptions and passes it up to ahaṃkāra and buddhi. It also directs the organs of action. Buddhi, ahaṃkāra and manas together form the <i>antaḥkaraṇa</i>, the “inner instrument”.',
+    tags: ['Yoga Sūtra II.19 · <i>viśeṣa</i>, “specific”', 'Sāṃkhya-kārikā 27, 33'] },
+  { dur: 8, deva: 'ज्ञानेन्द्रिय', iast: 'Jñānendriyas', en: 'The five senses',
+    text: 'Five capacities of knowing: hearing (<i>śrotra</i>), touch (<i>tvak</i>), sight (<i>cakṣus</i>), taste (<i>rasanā</i>) and smell (<i>ghrāṇa</i>). They are powers, not the physical ear or eye. Each one registers exactly one of the subtle elements that appear later.',
+    tags: ['Yoga Sūtra II.19 · <i>viśeṣa</i>', 'Sāṃkhya-kārikā 26'] },
+  { dur: 8, deva: 'कर्मेन्द्रिय', iast: 'Karmendriyas', en: 'The five organs of action',
+    text: 'Five capacities of acting: speech (<i>vāk</i>), grasping (<i>pāṇi</i>), moving (<i>pāda</i>), excreting (<i>pāyu</i>) and procreating (<i>upastha</i>). With manas and the senses they make up the eleven products of sattvic ahaṃkāra.',
+    tags: ['Yoga Sūtra II.19 · <i>viśeṣa</i>', 'Sāṃkhya-kārikā 26'] },
+  { dur: 8, deva: 'तन्मात्र', iast: 'Tanmātras', en: 'The five subtle elements',
+    text: '<i>Tanmātra</i> means “that only”: the pure potential of sound (<i>śabda</i>), touch (<i>sparśa</i>), form (<i>rūpa</i>), taste (<i>rasa</i>) and smell (<i>gandha</i>). They come from tamasic ahaṃkāra and are too fine for ordinary perception. They are still producers: the gross world grows out of them.',
+    tags: ['Yoga Sūtra II.19 · <i>aviśeṣa</i>, “unspecified”', 'Sāṃkhya-kārikā 38'] },
+  { dur: 10, deva: 'महाभूत', iast: 'Mahābhūtas', en: 'The five gross elements',
+    text: 'The gross elements build up step by step. Space (<i>ākāśa</i>) carries only sound. Air (<i>vāyu</i>) adds touch, fire (<i>tejas</i>) adds form, water (<i>ap</i>) adds taste and earth (<i>pṛthivī</i>) adds smell. The dots around each element count its qualities. All 23 products of Prakṛti are now present.',
+    tags: ['Yoga Sūtra II.19 · <i>viśeṣa</i>', 'Sāṃkhya-kārikā 38'] },
+  { dur: 10, deva: 'व्यक्त', iast: 'Vyakta', en: 'The manifest world',
+    text: 'Everything we experience is woven from these 25 principles. Each sense meets its element, manas orders the reports, ahaṃkāra claims them and buddhi decides. Yoga says all of this “seen” exists for the seer: first for experience (<i>bhoga</i>), and in the end for liberation (<i>apavarga</i>).',
+    tags: ['Yoga Sūtra II.18 · <i>bhogāpavargārthaṃ dṛśyam</i>', 'Sāṃkhya-kārikā 56–57'] },
+  { dur: 12, deva: 'कैवल्य', iast: 'Pratiprasava · Kaivalya', en: 'The way back',
+    text: 'Yoga practice runs the sequence in reverse (<i>pratiprasava</i>). Each tattva dissolves into its source, the guṇas come to rest, and Puruṣa is recognised as separate from everything Prakṛti produced. That aloneness of the seer is <i>kaivalya</i>, the goal of the Yoga Sūtra.',
+    tags: ['Yoga Sūtra II.10 · subtle afflictions end by <i>pratiprasava</i>', 'Yoga Sūtra IV.34 · <i>kaivalya</i>'] }
+];
+const LAST = STAGES.length - 1;
+
+const TATTVAS = [
+  { g: 'neither', iast: 'Puruṣa', en: 'consciousness', st: 0, c: C.purusha },
+  { g: 'root', iast: 'Prakṛti', en: 'nature', st: 0, c: C.sattva },
+  { g: 'evo', iast: 'Mahat', en: 'intellect', st: 2, c: C.gold },
+  { g: 'evo', iast: 'Ahaṃkāra', en: 'I-maker', st: 3, c: C.rajas },
+  { g: 'evo', iast: 'śabda', en: 'sound', st: 7, c: C.ta },
+  { g: 'evo', iast: 'sparśa', en: 'touch', st: 7, c: C.ta },
+  { g: 'evo', iast: 'rūpa', en: 'form', st: 7, c: C.ta },
+  { g: 'evo', iast: 'rasa', en: 'taste', st: 7, c: C.ta },
+  { g: 'evo', iast: 'gandha', en: 'smell', st: 7, c: C.ta },
+  { g: 'only', iast: 'Manas', en: 'mind', st: 4, c: C.manas },
+  { g: 'only', iast: 'śrotra', en: 'hearing', st: 5, c: C.jn },
+  { g: 'only', iast: 'tvak', en: 'touch', st: 5, c: C.jn },
+  { g: 'only', iast: 'cakṣus', en: 'sight', st: 5, c: C.jn },
+  { g: 'only', iast: 'rasanā', en: 'taste', st: 5, c: C.jn },
+  { g: 'only', iast: 'ghrāṇa', en: 'smell', st: 5, c: C.jn },
+  { g: 'only', iast: 'vāk', en: 'speech', st: 6, c: C.ka },
+  { g: 'only', iast: 'pāṇi', en: 'grasping', st: 6, c: C.ka },
+  { g: 'only', iast: 'pāda', en: 'moving', st: 6, c: C.ka },
+  { g: 'only', iast: 'pāyu', en: 'excreting', st: 6, c: C.ka },
+  { g: 'only', iast: 'upastha', en: 'procreating', st: 6, c: C.ka },
+  { g: 'only', iast: 'ākāśa', en: 'space', st: 8, c: ELEM[0] },
+  { g: 'only', iast: 'vāyu', en: 'air', st: 8, c: ELEM[1] },
+  { g: 'only', iast: 'tejas', en: 'fire', st: 8, c: ELEM[2] },
+  { g: 'only', iast: 'ap', en: 'water', st: 8, c: ELEM[3] },
+  { g: 'only', iast: 'pṛthivī', en: 'earth', st: 8, c: ELEM[4] }
+];
+const GROUPS = [
+  { id: 'neither', cls: 'g-nei', t: 'Neither source nor product', s: 'na prakṛtir na vikṛtiḥ' },
+  { id: 'root', cls: 'g-root', t: 'Root, not produced', s: 'mūlaprakṛti' },
+  { id: 'evo', cls: 'g-evo', t: 'Produced and producing', s: 'prakṛti-vikṛti · 7' },
+  { id: 'only', cls: 'g-only', t: 'Produced only', s: 'vikāra · 16' }
+];
+
+const ROW = {
+  jn: [['śrotra', 'hearing'], ['tvak', 'touch'], ['cakṣus', 'sight'], ['rasanā', 'taste'], ['ghrāṇa', 'smell']],
+  ka: [['vāk', 'speech'], ['pāṇi', 'grasping'], ['pāda', 'moving'], ['pāyu', 'excreting'], ['upastha', 'procreating']],
+  ta: [['śabda', 'sound'], ['sparśa', 'touch'], ['rūpa', 'form'], ['rasa', 'taste'], ['gandha', 'smell']],
+  bh: [['ākāśa', 'space'], ['vāyu', 'air'], ['tejas', 'fire'], ['ap', 'water'], ['pṛthivī', 'earth']]
+};
+
+const LAYOUTS = {
+  land: {
+    w: 1000, h: 690, mode: 'land',
+    P: [150, 125], K: [500, 128], R: 80, kLabel: 'right',
+    B: [500, 250], A: [500, 335], hS: [300, 390], hR: [500, 415], hT: [700, 390], M: [300, 455],
+    jn: [150, 225, 300, 375, 450].map(x => [x, 540]),
+    ka: [187, 262, 337, 412, 487].map(x => [x, 628]),
+    ta: [560, 630, 700, 770, 840].map(x => [x, 485]),
+    bh: [560, 630, 700, 770, 840].map(x => [x, 620]),
+    groups: { jn: [124, 540, 'right'], ka: [160, 628, 'right'], ta: [868, 485, 'left'], bh: [868, 620, 'left'] }
+  },
+  port: {
+    w: 600, h: 1070, mode: 'port',
+    P: [120, 120], K: [410, 160], R: 80, kLabel: 'above',
+    B: [300, 305], A: [300, 385], hS: [150, 450], hR: [300, 470], hT: [450, 450], M: [150, 515],
+    jn: [0, 1, 2, 3, 4].map(i => [70, 650 + i * 92]),
+    ka: [0, 1, 2, 3, 4].map(i => [225, 650 + i * 92]),
+    ta: [0, 1, 2, 3, 4].map(i => [380, 650 + i * 92]),
+    bh: [0, 1, 2, 3, 4].map(i => [530, 650 + i * 92]),
+    groups: { jn: [70, 650, 'top'], ka: [225, 650, 'top'], ta: [380, 650, 'top'], bh: [530, 650, 'top'] }
+  }
+};
+const GROUP_TXT = { jn: ['SENSES', 'jñānendriya'], ka: ['ACTION', 'karmendriya'], ta: ['SUBTLE', 'tanmātra'], bh: ['GROSS', 'mahābhūta'] };
+
+const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const box = document.getElementById('box');
+let L, s = 1, cw = 0, ch = 0, dpr = 1, k = 1;
+let nodes = [], edges = [], groupsDraw = [];
+let cur = 0, t = 0, p = 0, clock = 0, last = performance.now();
+let playing = !reduced;
+
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = x => 1 - Math.pow(1 - clamp(x), 3);
+const easeBack = x => { x = clamp(x); const c1 = 1.6, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const V = pt => [pt[0] * s, pt[1] * s];
+
+function rgba(hex, a) {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${clamp(a)})`;
+}
+
+/* ---------- stars and Prakṛti particles ---------- */
+const stars = Array.from({ length: 110 }, () => ({ x: Math.random(), y: Math.random(), r: Math.random() * 1.1 + .2, ph: Math.random() * 6.28 }));
+const GCOL = [C.sattva, C.rajas, C.tamas];
+const particles = Array.from({ length: 260 }, (_, i) => ({
+  g: i % 3, ang: Math.random() * Math.PI * 2, rad: Math.sqrt(Math.random()), sp: .22 + Math.random() * .08,
+  ph: Math.random() * 6.28, wob: .6 + Math.random()
+}));
+const plural = [[-70, -45], [62, -62], [-92, 38], [78, 52], [-30, 78], [30, -92]];
+
+/* ---------- build geometry ---------- */
+function build() {
+  nodes = []; edges = []; groupsDraw = [];
+  const Kc = V(L.K), R = L.R * s;
+  const kBottom = [Kc[0], Kc[1] + R * .75];
+  const node = (id, pos, st, d, r, color, iast, en, extra = {}) => {
+    const n = Object.assign({ id, x: V(pos)[0], y: V(pos)[1], st, d, r: r * k, color, iast, en, side: 'below' }, extra);
+    nodes.push(n); return n;
+  };
+  const edge = (a, b, st, d, color, extra = {}) => {
+    edges.push(Object.assign({ ax: a[0], ay: a[1], bx: b[0], by: b[1], st, d, color, seed: Math.random() }, extra));
+  };
+
+  const B = node('buddhi', L.B, 2, 0, 17, C.gold, 'Mahat · Buddhi', 'intellect', { side: 'right', big: true, rays: true });
+  const A = node('ahamkara', L.A, 3, 0, 14, C.rajas, 'Ahaṃkāra', 'I-maker', { side: 'right', big: true, tri: true });
+  const hS = node('hS', L.hS, 3, .38, 4.5, C.sattva, 'sāttvika', '', { side: 'right', hub: true });
+  const hR = node('hR', L.hR, 3, .44, 4.5, C.rajas, 'rājasa', '', { side: 'right', hub: true });
+  const hT = node('hT', L.hT, 3, .5, 4.5, C.tamas, 'tāmasa', '', { side: 'right', hub: true });
+  const M = node('manas', L.M, 4, 0, 11, C.manas, 'Manas', 'mind', { side: 'right' });
+
+  edge(kBottom, [B.x, B.y], 2, 0, C.gold, { dots: 4 });
+  edge(V(L.P), [B.x, B.y], 2, .45, C.purusha, { ray: true, dots: 0 });
+  edge([B.x, B.y], [A.x, A.y], 3, 0, C.gold, { dots: 3 });
+  edge([A.x, A.y], [hS.x, hS.y], 3, .3, C.sattva, { cx: hS.x, cy: A.y });
+  edge([A.x, A.y], [hR.x, hR.y], 3, .34, C.rajas, {});
+  edge([A.x, A.y], [hT.x, hT.y], 3, .4, C.tamas, { cx: hT.x, cy: A.y });
+  edge([hR.x, hR.y], [hS.x, hS.y], 3, .6, C.rajas, { dash: true, dots: 2 });
+  edge([hR.x, hR.y], [hT.x, hT.y], 3, .6, C.rajas, { dash: true, dots: 2 });
+  edge([hS.x, hS.y], [M.x, M.y], 4, 0, C.manas, {});
+
+  const rows = {};
+  ['jn', 'ka', 'ta', 'bh'].forEach(key => {
+    rows[key] = L[key].map((pos, i) => {
+      const st = { jn: 5, ka: 6, ta: 7, bh: 8 }[key];
+      const col = key === 'bh' ? ELEM[i] : C[key];
+      return node(key + i, pos, st, i * .08, key === 'bh' ? 10 : 8.5, col, ROW[key][i][0], ROW[key][i][1], { q: key === 'bh' ? i + 1 : 0 });
+    });
+  });
+  rows.jn.forEach((n, i) => edge([hS.x, hS.y], [n.x, n.y], 5, i * .08, C.jn, { cx: n.x, cy: hS.y }));
+  rows.ka.forEach((n, i) => edge([hS.x, hS.y], [n.x, n.y], 6, i * .08, C.ka, { cx: n.x, cy: hS.y }));
+  rows.ta.forEach((n, i) => edge([hT.x, hT.y], [n.x, n.y], 7, i * .08, C.ta, { cx: n.x, cy: hT.y }));
+  rows.bh.forEach((n, j) => {
+    edge([rows.ta[j].x, rows.ta[j].y], [n.x, n.y], 8, j * .08, ELEM[j], { dots: 2 });
+    for (let i = 0; i < j; i++) edge([rows.ta[i].x, rows.ta[i].y], [n.x, n.y], 8, .1 + j * .08, C.ta, { faint: true, dots: 1 });
+  });
+  // perception: each element reaches its sense
+  rows.bh.forEach((n, i) => {
+    const jn = rows.jn[i];
+    let cx, cy;
+    if (L.mode === 'land') { cx = (n.x + jn.x) / 2; cy = 700 * s; }
+    else { cx = (n.x + jn.x) / 2; cy = n.y + 40 * s; }
+    edge([n.x, n.y], [jn.x, jn.y], 9, i * .07, C.purusha, { cx, cy, dash: true, faint: true, dots: 2 });
+  });
+
+  for (const key in L.groups) {
+    const [gx, gy, al] = L.groups[key];
+    groupsDraw.push({ key, x: gx * s, y: gy * s, al, st: { jn: 5, ka: 6, ta: 7, bh: 8 }[key] });
+  }
+}
+
+function resize() {
+  const w = box.clientWidth;
+  L = w < 560 ? LAYOUTS.port : LAYOUTS.land;
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  s = w / L.w; cw = w; ch = Math.round(w * L.h / L.w);
+  k = clamp(s * 1.15, .72, 1.12);
+  cv.style.height = ch + 'px';
+  cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  build();
+}
+
+/* ---------- visibility ---------- */
+function appear(st, d, win = .3, lead = .3) {
+  if (cur === LAST) return dissolve(st);
+  if (st < cur) return 1;
+  if (st > cur) return 0;
+  return ease((p - lead - d) / win);
+}
+function edgeReveal(e) {
+  if (cur === LAST) return dissolve(e.st) > 0 ? 1 : 0;
+  if (e.st < cur) return 1;
+  if (e.st > cur) return 0;
+  return ease((p - e.d) / .45);
+}
+function dissolve(st) {
+  if (st === 0) return 1;
+  const o = 9 - st; // perception links go first, buddhi last
+  const start = o / 8 * .55;
+  return 1 - ease((p - start) / .12);
+}
+function agitation() {
+  if (cur === 0) return 0;
+  if (cur === 1) return ease(p / .8);
+  if (cur === LAST) return 1 - ease((p - .62) / .25);
+  return 1;
+}
+function rayAlpha() {
+  if (cur === 0) return 0;
+  if (cur === 1) return ease(p / .5);
+  if (cur === LAST) return 1 - ease((p - .82) / .15);
+  return 1;
+}
+
+/* ---------- drawing ---------- */
+function bez(e, u) {
+  const cx = e.cx ?? (e.ax + e.bx) / 2, cy = e.cy ?? (e.ay + e.by) / 2;
+  const m = 1 - u;
+  return [m * m * e.ax + 2 * m * u * cx + u * u * e.bx, m * m * e.ay + 2 * m * u * cy + u * u * e.by];
+}
+
+function drawEdge(e) {
+  const f = edgeReveal(e);
+  if (f <= 0) return;
+  const a = cur === LAST ? dissolve(e.st) : 1;
+  if (a <= 0) return;
+  const base = e.ray ? .22 : e.faint ? .14 : .3;
+  ctx.save();
+  ctx.strokeStyle = rgba(e.color, base * a);
+  ctx.lineWidth = e.faint ? 1 : 1.3;
+  if (e.dash || e.ray) ctx.setLineDash([3, 5]);
+  if (e.dash || e.ray) ctx.lineDashOffset = -clock * 12;
+  ctx.beginPath();
+  const steps = 28;
+  for (let i = 0; i <= steps; i++) {
+    const [x, y] = bez(e, (i / steps) * f);
+    i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  }
+  ctx.stroke();
+  ctx.restore();
+
+  const n = e.dots ?? 3;
+  if (f < .98 || n === 0) return;
+  const back = cur === LAST;
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < n; i++) {
+    let u = (clock * .22 + i / n + e.seed) % 1;
+    if (back) u = 1 - u;
+    const [x, y] = bez(e, u);
+    const al = Math.sin(u * Math.PI) * a * (e.faint ? .55 : .95);
+    const r = (e.faint ? 1.4 : 2) * k;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r * 4);
+    g.addColorStop(0, rgba(e.color, al));
+    g.addColorStop(1, rgba(e.color, 0));
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x, y, r * 4, 0, 6.283); ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+}
+
+function drawBackground() {
+  const g = ctx.createRadialGradient(cw * .5, ch * .18, 0, cw * .5, ch * .3, Math.max(cw, ch) * .9);
+  g.addColorStop(0, '#172035');
+  g.addColorStop(.55, C.bg);
+  g.addColorStop(1, C.bg0);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, cw, ch);
+  for (const st of stars) {
+    const a = .18 + .22 * Math.sin(clock * .8 + st.ph);
+    ctx.fillStyle = rgba('#cfd8ea', a);
+    ctx.beginPath(); ctx.arc(st.x * cw, st.y * ch, st.r, 0, 6.283); ctx.fill();
+  }
+}
+
+function drawPurusha() {
+  const [x, y] = V(L.P);
+  const ret = cur === LAST ? ease((p - .7) / .3) : 0;
+  const glowR = (46 + 18 * ret) * k;
+  // plurality of puruṣas
+  for (const [dx, dy] of plural) {
+    const px = x + dx * s, py = y + dy * s;
+    const a = .22 + .1 * Math.sin(clock * .7 + dx);
+    ctx.fillStyle = rgba(C.purusha, a);
+    ctx.beginPath(); ctx.arc(px, py, 1.8 * k, 0, 6.283); ctx.fill();
+  }
+  const g = ctx.createRadialGradient(x, y, 0, x, y, glowR);
+  g.addColorStop(0, rgba(C.purusha, .55 + .25 * ret));
+  g.addColorStop(.25, rgba(C.purusha, .18 + .1 * ret));
+  g.addColorStop(1, rgba(C.purusha, 0));
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, glowR, 0, 6.283); ctx.fill();
+  // still rings: unchanging witness
+  ctx.strokeStyle = rgba(C.purusha, .22);
+  ctx.lineWidth = 1;
+  for (let i = 1; i <= 3; i++) {
+    ctx.beginPath(); ctx.arc(x, y, (10 + i * 9) * k, 0, 6.283); ctx.stroke();
+  }
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); ctx.arc(x, y, 5 * k, 0, 6.283); ctx.fill();
+  label(x, y + 42 * k, 'Puruṣa', 'pure consciousness', 1, 'center', true);
+}
+
+function drawRays() {
+  const a = rayAlpha();
+  if (a <= 0) return;
+  const [px, py] = V(L.P);
+  const [kx, ky] = V(L.K);
+  const R = L.R * s;
+  const base = Math.atan2(py - ky, px - kx);
+  for (let i = -3; i <= 3; i++) {
+    const ang = base + i * .16;
+    const tx = kx + Math.cos(ang) * R * .9, ty = ky + Math.sin(ang) * R * .9;
+    const g = ctx.createLinearGradient(px, py, tx, ty);
+    g.addColorStop(0, rgba(C.purusha, .32 * a));
+    g.addColorStop(1, rgba(C.purusha, .04 * a));
+    ctx.strokeStyle = g; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(tx, ty); ctx.stroke();
+    const u = (clock * .35 + (i + 3) / 7) % 1;
+    const dx = px + (tx - px) * u, dy = py + (ty - py) * u;
+    ctx.fillStyle = rgba(C.purusha, Math.sin(u * Math.PI) * .7 * a);
+    ctx.beginPath(); ctx.arc(dx, dy, 1.6 * k, 0, 6.283); ctx.fill();
+  }
+}
+
+function drawPrakriti() {
+  const [cx, cy] = V(L.K);
+  const R = L.R * s;
+  const ag = agitation();
+  const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 1.5);
+  halo.addColorStop(0, rgba('#c9b6e8', .12 + .06 * ag));
+  halo.addColorStop(1, rgba('#c9b6e8', 0));
+  ctx.fillStyle = halo;
+  ctx.beginPath(); ctx.arc(cx, cy, R * 1.5, 0, 6.283); ctx.fill();
+
+  ctx.globalCompositeOperation = 'lighter';
+  const pr = 1.5 * k;
+  for (const q of particles) {
+    const spMul = 1 + ag * (q.g === 1 ? 2.6 : q.g === 0 ? .9 : .2);
+    const ang = q.ang + clock * q.sp * spMul;
+    const wob = 1 + ag * .28 * Math.sin(clock * (1.3 + q.g * .7) * q.wob + q.ph);
+    let rr = q.rad * R * wob;
+    // tamas sinks slightly, sattva rises, when stirred
+    const lift = ag * (q.g === 0 ? -.12 : q.g === 2 ? .12 : 0) * R;
+    const x = cx + Math.cos(ang) * rr;
+    const y = cy + Math.sin(ang) * rr * .82 + lift;
+    ctx.fillStyle = rgba(GCOL[q.g], q.g === 2 ? .85 : .7);
+    ctx.beginPath(); ctx.arc(x, y, pr, 0, 6.283); ctx.fill();
+  }
+  ctx.globalCompositeOperation = 'source-over';
+
+  if (L.kLabel === 'right') label(cx + R + 18 * k, cy - 6, 'Prakṛti', cur === 0 ? 'unmanifest nature' : 'primordial nature', 1, 'left', true);
+  else label(cx, cy - R - 34, 'Prakṛti', 'primordial nature', 1, 'center', true);
+}
+
+function label(x, y, main, sub, a, align = 'center', big = false) {
+  if (a <= 0.01) return;
+  ctx.textAlign = align;
+  ctx.textBaseline = 'alphabetic';
+  const fs = big ? (L.mode === 'port' ? 15 : 17) : (L.mode === 'port' ? 12.5 : 13.5);
+  ctx.font = `italic 500 ${fs}px Alegreya, Georgia, serif`;
+  ctx.fillStyle = rgba(C.ink, a);
+  ctx.fillText(main, x, y);
+  if (sub) {
+    ctx.font = `400 ${L.mode === 'port' ? 11 : 12}px "Alegreya Sans", system-ui, sans-serif`;
+    ctx.fillStyle = rgba(C.muted, a);
+    ctx.fillText(sub, x, y + fs * .95);
+  }
+}
+
+function drawNode(n) {
+  const a = appear(n.st, n.d);
+  if (a <= 0) return;
+  const growing = n.st === cur && cur !== LAST;
+  const sc = growing ? easeBack((p - .3 - n.d) / .3) : 1;
+  const r = Math.max(0, n.r * sc);
+  const { x, y } = n;
+
+  const gl = ctx.createRadialGradient(x, y, 0, x, y, r * 3.2 + 2);
+  gl.addColorStop(0, rgba(n.color, .38 * a));
+  gl.addColorStop(1, rgba(n.color, 0));
+  ctx.fillStyle = gl;
+  ctx.beginPath(); ctx.arc(x, y, r * 3.2 + 2, 0, 6.283); ctx.fill();
+
+  // birth ring
+  if (growing) {
+    const bp = (p - .3 - n.d) / .5;
+    if (bp > 0 && bp < 1) {
+      ctx.strokeStyle = rgba(n.color, (1 - bp) * .6);
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(x, y, r + bp * 36 * k, 0, 6.283); ctx.stroke();
+    }
+  }
+
+  ctx.fillStyle = rgba(C.bg, a);
+  ctx.beginPath(); ctx.arc(x, y, r + 2, 0, 6.283); ctx.fill();
+
+  if (n.tri) {
+    const rot = clock * .5;
+    [C.sattva, C.rajas, C.tamas].forEach((col, i) => {
+      ctx.fillStyle = rgba(col, .92 * a);
+      ctx.beginPath(); ctx.moveTo(x, y);
+      ctx.arc(x, y, r, rot + i * 2.094, rot + (i + 1) * 2.094);
+      ctx.closePath(); ctx.fill();
+    });
+    ctx.fillStyle = rgba(C.bg, a);
+    ctx.beginPath(); ctx.arc(x, y, r * .42, 0, 6.283); ctx.fill();
+  } else {
+    ctx.fillStyle = rgba(n.color, .9 * a);
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill();
+  }
+
+  if (n.rays) {
+    ctx.strokeStyle = rgba(C.gold, .35 * a);
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 12; i++) {
+      const an = i * .5236 + clock * .12;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(an) * (r + 4), y + Math.sin(an) * (r + 4));
+      ctx.lineTo(x + Math.cos(an) * (r + 9 * k), y + Math.sin(an) * (r + 9 * k));
+      ctx.stroke();
+    }
+  }
+
+  if (n.q) {
+    for (let i = 0; i < n.q; i++) {
+      const an = -Math.PI / 2 + i * 1.2566 + clock * .25;
+      ctx.fillStyle = rgba(C.ink, .85 * a);
+      ctx.beginPath(); ctx.arc(x + Math.cos(an) * (r + 5 * k), y + Math.sin(an) * (r + 5 * k), 1.5 * k, 0, 6.283); ctx.fill();
+    }
+  }
+
+  if (n.hub) {
+    ctx.font = `italic 400 ${L.mode === 'port' ? 11 : 12}px Alegreya, Georgia, serif`;
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = rgba(n.color, .85 * a);
+    ctx.fillText(n.iast, x + r + 7, y + 1);
+    return;
+  }
+  if (n.side === 'right') {
+    ctx.textBaseline = 'alphabetic';
+    label(x + r + 12 * k, y - 1, n.iast, n.en, a, 'left', n.big);
+  } else {
+    label(x, y + r + 16 * k, n.iast, n.en, a, 'center');
+  }
+}
+
+function drawGroups() {
+  for (const g of groupsDraw) {
+    const a = appear(g.st, 0, .3, .1);
+    if (a <= 0) continue;
+    const [cap, sk] = GROUP_TXT[g.key];
+    ctx.textBaseline = 'alphabetic';
+    let x = g.x, y1, y2;
+    if (g.al === 'top') { ctx.textAlign = 'center'; y1 = g.y - 30 * k - 14; y2 = g.y - 17 * k - 6; }
+    else { ctx.textAlign = g.al; y1 = g.y - 2; y2 = g.y + 12; }
+    ctx.font = `700 ${L.mode === 'port' ? 9.5 : 10}px "Alegreya Sans", system-ui, sans-serif`;
+    ctx.fillStyle = rgba(C.faint, a);
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '1.5px';
+    ctx.fillText(cap, x, y1);
+    if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+    ctx.font = `italic 400 ${L.mode === 'port' ? 11 : 12}px Alegreya, Georgia, serif`;
+    ctx.fillStyle = rgba(C.muted, a);
+    ctx.fillText(sk, x, y2);
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, cw, ch);
+  drawBackground();
+  drawRays();
+  for (const e of edges) drawEdge(e);
+  drawPrakriti();
+  drawPurusha();
+  for (const n of nodes) drawNode(n);
+  drawGroups();
+}
+
+/* ---------- UI ---------- */
+const scrub = document.getElementById('scrub');
+const segs = STAGES.map((st, i) => {
+  const b = document.createElement('button');
+  b.className = 'seg' + (i === LAST ? ' ret' : '');
+  b.setAttribute('aria-label', `Stage ${i + 1}: ${st.iast}`);
+  b.title = st.iast;
+  b.appendChild(document.createElement('i'));
+  b.addEventListener('click', () => go(i));
+  scrub.appendChild(b);
+  return b;
+});
+
+const groupsEl = document.getElementById('groups');
+const chips = [];
+GROUPS.forEach(g => {
+  const wrap = document.createElement('div');
+  wrap.className = 'group ' + g.cls;
+  wrap.innerHTML = `<h4>${g.t}<i>${g.s}</i></h4><div class="chips"></div>`;
+  const cc = wrap.querySelector('.chips');
+  TATTVAS.filter(tt => tt.g === g.id).forEach(tt => {
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.style.setProperty('--c', tt.c);
+    b.innerHTML = `${tt.iast}<small>${tt.en}</small>`;
+    b.title = `Go to the stage where ${tt.iast} appears`;
+    b.addEventListener('click', () => go(tt.st));
+    cc.appendChild(b);
+    chips.push({ el: b, st: tt.st });
+  });
+  groupsEl.appendChild(wrap);
+});
+
+const panel = document.getElementById('panel');
+const pStep = document.getElementById('pStep'), pDeva = document.getElementById('pDeva'), pIast = document.getElementById('pIast'),
+  pEn = document.getElementById('pEn'), pText = document.getElementById('pText'), pTags = document.getElementById('pTags');
+const countEl = document.getElementById('count');
+let swapTimer = null;
+
+function fillPanel(immediate) {
+  const st = STAGES[cur];
+  const put = () => {
+    pStep.textContent = `Stage ${cur + 1} of ${STAGES.length}`;
+    pDeva.textContent = st.deva;
+    pIast.textContent = st.iast;
+    pEn.textContent = st.en;
+    pText.innerHTML = st.text;
+    pTags.innerHTML = st.tags.map(x => `<span>${x}</span>`).join('');
+    panel.classList.remove('swap');
+  };
+  clearTimeout(swapTimer);
+  if (immediate || reduced) { put(); return; }
+  panel.classList.add('swap');
+  swapTimer = setTimeout(put, 280);
+}
+
+function updateChips() {
+  let n = 0;
+  chips.forEach(c => {
+    const on = cur === LAST ? c.st === 0 : c.st <= cur;
+    c.el.classList.toggle('on', on);
+    c.el.classList.toggle('now', c.st === cur && cur !== LAST && cur !== 1);
+    if (on) n++;
+  });
+  countEl.innerHTML = cur === LAST
+    ? `Dissolving back into Prakṛti · <b>Puruṣa</b> stands alone`
+    : `<b>${n}</b> of 25 tattvas manifest`;
+}
+
+function updateScrub() {
+  segs.forEach((b, i) => {
+    const w = i < cur ? 100 : i === cur ? p * 100 : 0;
+    b.firstChild.style.width = w + '%';
+    b.setAttribute('aria-current', i === cur ? 'step' : 'false');
+  });
+}
+
+const playBtn = document.getElementById('play'), playLabel = document.getElementById('playLabel'), playIcon = document.getElementById('playIcon');
+function setPlaying(v) {
+  playing = v;
+  narrPlayState(v);
+  playLabel.textContent = v ? 'Pause' : 'Play';
+  playIcon.innerHTML = v ? '<path d="M3 2h4v12H3zM9 2h4v12H9z"/>' : '<path d="M4 2v12l10-6z"/>';
+  if (v && cur === LAST && t >= STAGES[LAST].dur) go(0);
+}
+
+function go(i, auto) {
+  cur = (i + STAGES.length) % STAGES.length;
+  t = 0; p = 0;
+  fillPanel(false);
+  updateChips();
+  speakScene();
+}
+
+playBtn.addEventListener('click', () => setPlaying(!playing));
+document.getElementById('prev').addEventListener('click', () => go(cur - 1));
+document.getElementById('next').addEventListener('click', () => go(cur + 1));
+document.addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return;
+  if (e.key === 'ArrowRight') { go(cur + 1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft') { go(cur - 1); e.preventDefault(); }
+  else if (e.key === ' ') { setPlaying(!playing); e.preventDefault(); }
+});
+
+/* speed control: 1 = original pace, default 0.6 */
+let speed = 0.6;
+try { const v = parseFloat(localStorage.getItem('yogaAnimSpeed')); if (v >= .2 && v <= 2) speed = v; } catch (e) {}
+const speedIn = document.getElementById('speed'), speedOut = document.getElementById('speedOut');
+function showSpeed() { speedIn.value = speed; speedOut.textContent = (Math.round(speed * 100) / 100) + '×'; }
+speedIn.addEventListener('input', () => { speed = parseFloat(speedIn.value); showSpeed(); try { localStorage.setItem('yogaAnimSpeed', String(speed)); } catch (e) {} });
+showSpeed();
+
+/* ---------------- narration (Web Speech API) ---------------- */
+const NAR = { on: false, skt: true, token: 0, pending: 0, en: null, hi: null, idleSince: 0 };
+const synth = window.speechSynthesis;
+const narrBtn = document.getElementById('narrBtn'), narrLabel = document.getElementById('narrLabel');
+const sktBox = document.getElementById('narrSkt'), voiceSel = document.getElementById('narrVoice'), narrNote = document.getElementById('narrNote');
+function iastToDeva(src) {
+  const V = [['ai', 'ऐ', 'ै'], ['au', 'औ', 'ौ'], ['ā', 'आ', 'ा'], ['ī', 'ई', 'ी'], ['ū', 'ऊ', 'ू'], ['ṝ', 'ॠ', 'ॄ'], ['ṛ', 'ऋ', 'ृ'], ['ḷ', 'ऌ', 'ॢ'], ['a', 'अ', ''], ['i', 'इ', 'ि'], ['u', 'उ', 'ु'], ['e', 'ए', 'े'], ['o', 'ओ', 'ो']];
+  const K = [['kh', 'ख'], ['gh', 'घ'], ['ch', 'छ'], ['jh', 'झ'], ['ṭh', 'ठ'], ['ḍh', 'ढ'], ['th', 'थ'], ['dh', 'ध'], ['ph', 'फ'], ['bh', 'भ'], ['k', 'क'], ['g', 'ग'], ['ṅ', 'ङ'], ['c', 'च'], ['j', 'ज'], ['ñ', 'ञ'], ['ṭ', 'ट'], ['ḍ', 'ड'], ['ṇ', 'ण'], ['t', 'त'], ['d', 'द'], ['n', 'न'], ['p', 'प'], ['b', 'ब'], ['m', 'म'], ['y', 'य'], ['r', 'र'], ['l', 'ल'], ['v', 'व'], ['ś', 'श'], ['ṣ', 'ष'], ['s', 'स'], ['h', 'ह']];
+  const s = src.normalize('NFC').toLowerCase().replace(/-/g, '').replace(/…/g, ' ').replace(/·/g, ' । ');
+  const find = (L, i) => L.find(e => s.startsWith(e[0], i));
+  let out = '', i = 0;
+  while (i < s.length) {
+    const k = find(K, i);
+    if (k) { i += k[0].length; out += k[1]; const v = find(V, i); if (v) { i += v[0].length; out += v[2]; } else out += '्'; continue; }
+    const v = find(V, i);
+    if (v) { i += v[0].length; out += v[1]; continue; }
+    const ch = s[i++];
+    out += ch === 'ṃ' || ch === 'ṁ' ? 'ं' : ch === 'ḥ' ? 'ः' : (ch === '’' || ch === "'") ? 'ऽ' : ch;
+  }
+  return out;
+}
+function forEnglish(html) {
+  const d = document.createElement('div'); d.innerHTML = html;
+  return d.textContent.replace(/\s*\([^)]*\d[^)]*\)/g, '').replace(/→/g, ', leading to').replace(/[’‘]/g, "'").replace(/[“”]/g, '"')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+function sentences(html) { return (forEnglish(html).match(/[^.!?]+[.!?]+["']?\s*|[^.!?]+$/g) || []).map(x => x.trim()).filter(Boolean); }
+function narrationParts(i) {
+  const out = [];
+  if (typeof STAGES !== 'undefined') {
+    const s = STAGES[i];
+    out.push([forEnglish(s.en) + '.', 'en']);
+    if (NAR.skt && NAR.hi) out.push([s.deva.replace(/ · /g, ' । '), 'hi']);
+    sentences(s.text).forEach(x => out.push([x, 'en']));
+  } else {
+    const s = SCENES[i];
+    out.push([forEnglish(s.en) + '.', 'en']);
+    s.sutras.forEach(([r, k, e]) => { if (NAR.skt && NAR.hi) out.push([iastToDeva(k), 'hi']); sentences(e).forEach(x => out.push([x, 'en'])); });
+    sentences(s.text).forEach(x => out.push([x, 'en']));
+  }
+  return out;
+}
+function speakScene() {
+  if (!NAR.on || !synth) return;
+  const tok = ++NAR.token;
+  synth.cancel(); NAR.pending = 0; NAR.idleSince = 0;
+  narrationParts(cur).forEach(([text, lang]) => {
+    const u = new SpeechSynthesisUtterance(text);
+    if (lang === 'hi') { u.voice = NAR.hi; u.lang = NAR.hi.lang; u.rate = .85; }
+    else { if (NAR.en) { u.voice = NAR.en; u.lang = NAR.en.lang; } else u.lang = 'en-US'; u.rate = .95; }
+    NAR.pending++;
+    const done = () => { if (tok === NAR.token) NAR.pending = Math.max(0, NAR.pending - 1); };
+    u.onend = done; u.onerror = done;
+    synth.speak(u);
+  });
+  if (!playing) synth.pause();
+}
+function narrBusy(now) {
+  if (!NAR.on || !synth || NAR.pending <= 0) return false;
+  // recover if the engine silently dropped the queue
+  if (!synth.speaking && !synth.pending && !synth.paused) { if (!NAR.idleSince) NAR.idleSince = now; else if (now - NAR.idleSince > 1500) { NAR.pending = 0; return false; } }
+  else NAR.idleSince = 0;
+  return true;
+}
+function narrPlayState(v) { if (!NAR.on || !synth) return; if (v) synth.resume(); else synth.pause(); }
+function voiceScore(v) {
+  let s = 0; const n = v.name;
+  if (/Natural|Neural|Online/i.test(n)) s += 50;
+  if (/Google/i.test(n)) s += 20;
+  if (/Samantha|Daniel|Serena|Karen|Moira|Arthur|Martha/i.test(n)) s += 15;
+  if (/^en-GB/i.test(v.lang)) s += 6; if (/^en-US/i.test(v.lang)) s += 5; if (/^en-IN/i.test(v.lang)) s += 4;
+  if (v.localService) s += 1;
+  return s;
+}
+function loadVoices() {
+  if (!synth) return;
+  const all = synth.getVoices();
+  const en = all.filter(v => /^en(-|_|$)/i.test(v.lang)).sort((a, b) => voiceScore(b) - voiceScore(a));
+  NAR.hi = all.find(v => /^sa(-|_|$)/i.test(v.lang)) || all.find(v => /^hi(-|_|$)/i.test(v.lang)) || all.find(v => /^mr(-|_|$)|^ne(-|_|$)/i.test(v.lang)) || null;
+  let saved = null; try { saved = localStorage.getItem('yogaNarrVoice'); } catch (e) {}
+  voiceSel.innerHTML = en.map(v => `<option value="${v.name.replace(/"/g, '&quot;')}">${v.name} (${v.lang})</option>`).join('') || '<option>Default voice</option>';
+  NAR.en = en.find(v => v.name === saved) || en[0] || null;
+  if (NAR.en) voiceSel.value = NAR.en.name;
+  sktBox.disabled = !NAR.hi;
+  narrNote.textContent = NAR.hi ? '' : 'No Hindi or Sanskrit voice on this device, so Sanskrit is skipped.';
+}
+if (!synth || typeof SpeechSynthesisUtterance === 'undefined') {
+  document.getElementById('narr').hidden = true;
+} else {
+  try { const v = localStorage.getItem('yogaNarrSkt'); if (v !== null) NAR.skt = v === '1'; } catch (e) {}
+  sktBox.checked = NAR.skt;
+  loadVoices();
+  if (typeof synth.addEventListener === 'function') synth.addEventListener('voiceschanged', loadVoices); else synth.onvoiceschanged = loadVoices;
+  narrBtn.addEventListener('click', () => {
+    NAR.on = !NAR.on;
+    narrBtn.setAttribute('aria-pressed', NAR.on ? 'true' : 'false');
+    narrLabel.textContent = NAR.on ? 'Narration on' : 'Narrate';
+    if (NAR.on) { if (!NAR.en && !NAR.hi) loadVoices(); speakScene(); } else { NAR.token++; NAR.pending = 0; synth.cancel(); }
+  });
+  sktBox.addEventListener('change', () => { NAR.skt = sktBox.checked; try { localStorage.setItem('yogaNarrSkt', NAR.skt ? '1' : '0'); } catch (e) {} if (NAR.on) speakScene(); });
+  voiceSel.addEventListener('change', () => { NAR.en = synth.getVoices().find(v => v.name === voiceSel.value) || NAR.en; try { localStorage.setItem('yogaNarrVoice', voiceSel.value); } catch (e) {} if (NAR.on) speakScene(); });
+  window.addEventListener('pagehide', () => synth.cancel());
+}
+
+function frame(now) {
+  const dt = clamp((now - last) / 1000, 0, .05) * speed;
+  last = now;
+  clock += dt * (reduced ? .35 : 1);
+  const dur = STAGES[cur].dur;
+  t = Math.min(dur, t + dt * (reduced ? 2.5 : 1));
+  p = t / dur;
+  if (playing && t >= dur && !narrBusy(now)) go(cur + 1, true);
+  draw();
+  updateScrub();
+  requestAnimationFrame(frame);
+}
+
+new ResizeObserver(() => resize()).observe(box);
+resize();
+if (reduced) { t = STAGES[0].dur; }
+setPlaying(playing);
+fillPanel(true);
+updateChips();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

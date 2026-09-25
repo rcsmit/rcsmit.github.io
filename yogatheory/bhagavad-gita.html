@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bhagavad Gītā in Motion</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Alegreya+Sans:wght@400;500;700&family=Tiro+Devanagari+Sanskrit&display=swap">
+<style>
+  /* version = "20260925-130500" */
+  :root {
+    color-scheme: dark;
+    --ground: #0c1018;
+    --ground-2: #121926;
+    --panel: #151d2b;
+    --ink: #ece6d7;
+    --muted: #a2a7b4;
+    --faint: #646d80;
+    --line: #273044;
+    --sattva: #f2e3b8;
+    --gold: #ffd98a;
+    --accent: #ef8a4a;
+    --serif: "Alegreya", Georgia, "Times New Roman", serif;
+    --sans: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+    --deva: "Tiro Devanagari Sanskrit", "Noto Serif Devanagari", "Kohinoor Devanagari", "Mangal", serif;
+  }
+  html { background: var(--ground); }
+  body { background: var(--ground); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.55; padding-inline: 16px; padding-block: 28px 56px; }
+  .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 26px; }
+  header { display: flex; flex-direction: column; gap: 10px; }
+  .eyebrow { font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  h1 { font-family: var(--serif); font-weight: 500; margin: 0; font-size: clamp(30px, 4.4vw, 50px); line-height: 1.08; text-wrap: balance; letter-spacing: -.01em; }
+  h1 em { font-style: italic; color: var(--gold); }
+  .lede { max-width: 66ch; color: var(--muted); margin: 0; }
+
+  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  @media (max-width: 700px) { .tabs { grid-template-columns: 1fr; } }
+  .tab { text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; color: var(--muted); cursor: pointer; display: flex; flex-direction: column; gap: 2px; font: inherit; transition: border-color .3s, color .3s; }
+  .tab .n { font: 700 11px/1.2 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
+  .tab .nm { font: italic 500 19px/1.2 var(--serif); color: var(--ink); }
+  .tab .c { font-size: 13px; }
+  .tab.on { border-color: var(--bc); color: var(--ink); background: color-mix(in srgb, var(--bc) 9%, var(--panel)); }
+  .tab.on .n { color: var(--bc); }
+
+  .stage-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start; }
+  @media (max-width: 1000px) { .stage-grid { grid-template-columns: minmax(0, 1fr); } }
+  .stage { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  @media (min-width: 1001px) { .stage { position: sticky; top: calc(16px + env(safe-area-inset-top, 0px)); } }
+  .canvas-box { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); background: var(--ground-2); }
+  canvas { display: block; width: 100%; }
+
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .btns { display: flex; gap: 6px; }
+  button.ctl { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; min-width: 38px; padding: 0 12px; border-radius: 19px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); font: 500 14px/1 var(--sans); cursor: pointer; }
+  button.ctl:hover { border-color: var(--faint); }
+  button.ctl svg { width: 14px; height: 14px; fill: currentColor; }
+  button.play { background: var(--sattva); color: #1a1a14; border-color: var(--sattva); min-width: 92px; }
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .speed { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+  .speed input { width: 110px; accent-color: var(--sattva); }
+  .speed output { min-width: 3.2em; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .narr { display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+  .narr .ctl[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+  .narr label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  .narr input[type="checkbox"] { accent-color: var(--sattva); width: 15px; height: 15px; }
+  .narr select { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; height: 32px; padding: 0 8px; max-width: min(260px, 100%); font: 13px var(--sans); }
+  .narr .note { color: var(--faint); }
+  .scrub { display: flex; gap: 3px; flex: 1; min-width: 220px; }
+  .seg { flex: 1; height: 24px; position: relative; background: none; border: 0; padding: 0; cursor: pointer; border-radius: 4px; }
+  .seg.first { margin-left: 8px; }
+  .seg.first.b0 { margin-left: 0; }
+  .seg::before, .seg i { content: ""; position: absolute; left: 0; top: 10px; height: 4px; border-radius: 2px; }
+  .seg::before { right: 0; background: var(--line); }
+  .seg i { width: 0; background: var(--bc); }
+
+  aside.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px 22px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .panel .fade { transition: opacity .3s ease; }
+  .panel.swap .fade { opacity: 0; }
+  .panel .step { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0; font-variant-numeric: tabular-nums; }
+  .panel .deva { font-family: var(--deva); font-size: 28px; line-height: 1.35; color: var(--gold); margin: 2px 0 0; }
+  .panel h2 { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 27px; line-height: 1.15; margin: 0; text-wrap: balance; }
+  .panel .en { color: var(--muted); margin: 0; font-size: 15px; }
+  .sutras { display: flex; flex-direction: column; gap: 12px; margin: 8px 0 2px; }
+  .su { display: grid; grid-template-columns: 46px 1fr; gap: 2px 10px; }
+  .su .ref { grid-row: span 2; font: 700 12px/1.7 var(--sans); color: var(--accent); font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+  .su .skt { margin: 0; font-family: var(--serif); font-style: italic; color: var(--sattva); font-size: 15.5px; line-height: 1.4; }
+  .su .tr { margin: 0; font-size: 15px; }
+  .panel .text { margin: 4px 0 0; }
+  .panel .text i, .list i { font-family: var(--serif); }
+  .list { margin: 4px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .list dt { font-family: var(--serif); font-style: italic; color: var(--sattva); }
+  .list dd { margin: 0; color: var(--muted); }
+
+  section.map { display: flex; flex-direction: column; gap: 14px; }
+  .map-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .map-head h3 { font-family: var(--serif); font-weight: 500; font-size: 24px; margin: 0; }
+  .map-head span { color: var(--muted); font-size: 14px; }
+  .chapters { display: flex; flex-direction: column; gap: 6px; }
+  .crow { display: grid; grid-template-columns: 250px 1fr; gap: 12px; align-items: center; }
+  @media (max-width: 700px) { .crow { grid-template-columns: 1fr; gap: 3px; margin-bottom: 6px; } }
+  .crow h4 { margin: 0; font: 400 14px/1.3 var(--sans); color: var(--muted); display: flex; gap: 8px; align-items: baseline; }
+  .crow h4 .no { font-variant-numeric: tabular-nums; color: var(--faint); min-width: 1.6em; }
+  .crow h4 b { font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 15px; color: var(--ink); }
+  .crow.hit h4 .no { color: var(--bc); }
+  .dots { display: flex; flex-wrap: wrap; gap: 3px; }
+  .sd { width: 8px; height: 8px; border-radius: 50%; padding: 0; border: 0; cursor: pointer; background: color-mix(in srgb, var(--bc) 24%, var(--ground)); transition: transform .2s, background .25s; }
+  .sd.hit { background: var(--bc); }
+  .sd:hover { transform: scale(1.6); }
+  .hover-note { min-height: 1.5em; font-size: 14px; color: var(--muted); margin: 0; }
+  .hover-note b { color: var(--ink); font-weight: 500; }
+
+  footer.notes { border-top: 1px solid var(--line); padding-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; color: var(--muted); font-size: 14px; }
+  @media (max-width: 760px) { footer.notes { grid-template-columns: 1fr; } }
+  footer.notes h5 { margin: 0 0 6px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); font-weight: 500; }
+  footer.notes p { margin: 0 0 8px; max-width: 62ch; }
+  @media (prefers-reduced-motion: reduce) { .panel .fade, .sd, .tab { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Kurukṣetra · 18 chapters · 700 verses</p>
+    <h1>The <em>Bhagavad Gītā</em>, chapter by chapter</h1>
+    <p class="lede">On a battlefield, between two armies, a warrior loses his nerve and his charioteer answers him. Fifteen animated scenes follow their conversation, from Arjuna dropping his bow to Arjuna picking it up again.</p>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="Parts"></nav>
+
+  <div class="stage-grid">
+    <div class="stage">
+      <div class="canvas-box" id="box">
+        <canvas id="cv" role="img" aria-label="Animated scene illustrating the current chapter of the Bhagavad Gītā"></canvas>
+      </div>
+      <div class="controls">
+        <div class="btns">
+          <button class="ctl" id="prev" aria-label="Previous scene"><svg viewBox="0 0 16 16"><path d="M11 2 4 8l7 6z"/></svg></button>
+          <button class="ctl play" id="play"><svg viewBox="0 0 16 16" id="playIcon"><path d="M4 2v12l10-6z"/></svg><span id="playLabel">Play</span></button>
+          <button class="ctl" id="next" aria-label="Next scene"><svg viewBox="0 0 16 16"><path d="M5 2l7 6-7 6z"/></svg></button>
+        </div>
+        <div class="scrub" id="scrub" aria-label="Scenes"></div>
+        <label class="speed" for="speed">Speed <input type="range" id="speed" min="0.2" max="2" step="0.05" value="0.6"><output id="speedOut" for="speed">0.6×</output></label>
+      </div>
+      <div class="narr" id="narr">
+        <button class="ctl" id="narrBtn" aria-pressed="false"><svg viewBox="0 0 16 16"><path d="M2 6h3l4-3v10L5 10H2z"/><path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.5 3.5a6 6 0 0 1 0 9" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg><span id="narrLabel">Narrate</span></button>
+        <label for="narrSkt"><input type="checkbox" id="narrSkt" checked> Read Sanskrit</label>
+        <label for="narrVoice">Voice <select id="narrVoice"></select></label>
+        <span class="note" id="narrNote"></span>
+      </div>
+    </div>
+
+    <aside class="panel" id="panel" aria-live="polite">
+      <p class="step fade" id="pStep"></p>
+      <p class="deva fade" id="pDeva" lang="sa"></p>
+      <h2 class="fade" id="pIast"></h2>
+      <p class="en fade" id="pEn"></p>
+      <div class="sutras fade" id="pSutras"></div>
+      <p class="text fade" id="pText"></p>
+      <dl class="list fade" id="pList"></dl>
+    </aside>
+  </div>
+
+  <section class="map">
+    <div class="map-head">
+      <h3>All 700 verses</h3>
+      <span>Bright dots are the verses in the current scene. Click any dot to jump.</span>
+    </div>
+    <div class="chapters" id="chapters"></div>
+    <p class="hover-note" id="hoverNote"></p>
+  </section>
+
+  <footer class="notes">
+    <div>
+      <h5>Text and numbering</h5>
+      <p>The Gītā is chapters 23–40 of the Bhīṣma Parva of the Mahābhārata. Verse numbers follow the common 700-verse text that Śaṅkara commented on. Some editions add Arjuna's question at the start of chapter 13, which gives 701 and shifts that chapter's numbers by one.</p>
+      <p>The English renderings are short working translations. The three groups of six chapters (action, devotion, knowledge) are a traditional reading aid, not divisions in the text itself.</p>
+    </div>
+    <div>
+      <h5>Images in the scenes</h5>
+      <p>Most images come from the verses themselves: worn-out clothes (2.22), the tortoise (2.58), the lamp in a windless place (6.19), pearls on a thread (7.7), a thousand suns (11.12), the upside-down tree (15.1). The Gītā borrows Sāṃkhya's guṇas and tattvas but places them inside one divine reality. Chapter 13 shows the difference: one knower in every field.</p>
+    </div>
+  </footer>
+</div>
+
+<script>
+const version = "20260925-130500";
+const TAU = Math.PI * 2;
+const C = { ink: '#ece6d7', muted: '#a2a7b4', faint: '#646d80', bg: '#121926', bg0: '#0c1018', sattva: '#f2e3b8', gold: '#ffd98a', rajas: '#e2583e', tamas: '#8b80e0', moon: '#dfe8ff', krishna: '#5b82e8' };
+const PARTS = [
+  { n: 'Chapters 1–6', name: 'Karma', en: 'The way of action', col: '#ef8a4a' },
+  { n: 'Chapters 7–12', name: 'Bhakti', en: 'The way of devotion', col: '#f2a7c0' },
+  { n: 'Chapters 13–18', name: 'Jñāna', en: 'The way of knowledge', col: '#a9c8ff' }
+];
+const CH = [[47, 'Arjuna-viṣāda', "Arjuna's despair"], [72, 'Sāṅkhya', 'Knowledge of the self'], [43, 'Karma', 'Action'], [42, 'Jñāna-karma-saṃnyāsa', 'Knowledge and action'], [29, 'Karma-saṃnyāsa', 'Renouncing action'], [47, 'Dhyāna', 'Meditation'], [30, 'Jñāna-vijñāna', 'Knowledge and realisation'], [28, 'Akṣara-brahma', 'The imperishable'], [34, 'Rāja-vidyā', 'The royal secret'], [42, 'Vibhūti', 'Divine glories'], [55, 'Viśvarūpa-darśana', 'The cosmic form'], [20, 'Bhakti', 'Devotion'], [34, 'Kṣetra-kṣetrajña', 'The field and its knower'], [27, 'Guṇa-traya', 'The three guṇas'], [20, 'Puruṣottama', 'The supreme person'], [24, 'Daivāsura-sampad', 'Divine and demonic natures'], [28, 'Śraddhā-traya', 'Three kinds of faith'], [78, 'Mokṣa-saṃnyāsa', 'Liberation']];
+const partOf = ch => ch <= 6 ? 0 : ch <= 12 ? 1 : 2;
+
+const SCENES = [
+  { refs: [[1, 1, 47]], deva: 'अर्जुनविषाद', iast: 'Arjuna-viṣāda', en: 'Arjuna loses heart',
+    sutras: [['1.1', 'dharma-kṣetre kuru-kṣetre samavetā yuyutsavaḥ', 'On the field of dharma, the field of the Kurus, gathered and eager to fight…'],
+             ['1.47', 'visṛjya sa-śaraṃ cāpaṃ śoka-saṃvigna-mānasaḥ', 'Arjuna sank down in the chariot, let go of his bow and arrows, his mind overwhelmed with grief.']],
+    text: 'Two related families face each other at Kurukṣetra. Conches sound. Arjuna asks his charioteer Kṛṣṇa to drive between the armies so he can see who he must fight. He sees teachers, grandfathers, uncles, brothers, sons and friends (1.26). His limbs give way, his bow slips (1.29), and he refuses to fight. The rest of the Gītā is Kṛṣṇa\'s answer.' },
+  { refs: [[2, 11, 30]], deva: 'देही', iast: 'Dehī', en: 'The self that cannot be killed',
+    sutras: [['2.20', 'na jāyate mriyate vā kadācin', 'It is never born and never dies. Unborn, eternal, ancient, it is not killed when the body is killed.'],
+             ['2.22', 'vāsāṃsi jīrṇāni yathā vihāya navāni gṛhṇāti naro ’parāṇi', 'As a person throws off worn-out clothes and puts on new ones, the embodied self leaves worn-out bodies and enters new ones.'],
+             ['2.23', 'nainaṃ chindanti śastrāṇi nainaṃ dahati pāvakaḥ', 'Weapons do not cut it, fire does not burn it, water does not wet it, wind does not dry it.']],
+    text: 'Kṛṣṇa\'s first answer is metaphysical. What Arjuna fears to kill cannot be killed. The self passes through childhood, youth and old age, then into another body, the way a person changes clothes (2.13). The wise do not grieve for the living or the dead (2.11).' },
+  { refs: [[2, 47, 72], [5, 10, 10]], deva: 'कर्मयोग', iast: 'Karma-yoga', en: 'Act, but let go of the fruit',
+    sutras: [['2.47', 'karmaṇy evādhikāras te mā phaleṣu kadācana', 'Your right is to the action alone, never to its fruits. Do not act for the fruit, and do not cling to inaction.'],
+             ['2.48', 'siddhy-asiddhyoḥ samo bhūtvā samatvaṃ yoga ucyate', 'Stay the same in success and failure. That evenness is called yoga.'],
+             ['2.58', 'yadā saṃharate cāyaṃ kūrmo ’ṅgānīva sarvaśaḥ', 'When one draws the senses back from their objects, as a tortoise draws in its limbs, wisdom is steady.']],
+    text: 'This is the Gītā\'s most famous teaching. Arjuna should still act, and fight, but without being bound to how it turns out. Yoga here means skill in action (2.50). Chapter 5 adds an image: one who acts without clinging stays untouched, like a lotus leaf on water (5.10).' },
+  { refs: [[3, 1, 43]], deva: 'यज्ञचक्र', iast: 'Yajña-cakra', en: 'The wheel of offering',
+    sutras: [['3.14', 'annād bhavanti bhūtāni parjanyād anna-sambhavaḥ', 'Beings come from food, food from rain, rain from offering, and offering comes from action.'],
+             ['3.16', 'evaṃ pravartitaṃ cakraṃ nānuvartayatīha yaḥ … moghaṃ pārtha sa jīvati', 'Whoever does not keep this turning wheel moving, living only for the senses, lives in vain.'],
+             ['3.35', 'śreyān sva-dharmo viguṇaḥ para-dharmāt sv-anuṣṭhitāt', 'Better your own duty done imperfectly than another\'s done well.']],
+    text: 'No one can stop acting, even for a moment (3.5). So the question is how to act. Kṛṣṇa pictures the world as a wheel of exchange: beings act, action becomes offering, offering brings rain, rain brings food, food sustains beings. Taking without giving back breaks the wheel.' },
+  { refs: [[4, 1, 42]], deva: 'अवतार', iast: 'Avatāra', en: 'Whenever dharma declines',
+    sutras: [['4.7', 'yadā yadā hi dharmasya glānir bhavati bhārata', 'Whenever dharma declines and adharma rises, I send myself forth.'],
+             ['4.8', 'dharma-saṃsthāpanārthāya sambhavāmi yuge yuge', 'To protect the good, to end wrongdoing and to re-establish dharma, I come into being age after age.'],
+             ['4.37', 'jñānāgniḥ sarva-karmāṇi bhasmasāt kurute tathā', 'As a blazing fire turns firewood to ash, the fire of knowledge turns all karma to ash.']],
+    text: 'Here Kṛṣṇa reveals who he is. He has been born many times and remembers every birth. Arjuna does not (4.5). He is unborn, yet he takes birth through his own power whenever the world needs it.' },
+  { refs: [[6, 10, 47]], deva: 'निवातस्थ दीप', iast: 'Nivāta-stha dīpa', en: 'A lamp where no wind blows',
+    sutras: [['6.19', 'yathā dīpo nivāta-stho neṅgate sopamā smṛtā', 'As a lamp in a windless place does not flicker: that is the image of a yogi\'s controlled mind.'],
+             ['6.34', 'cañcalaṃ hi manaḥ kṛṣṇa pramāthi balavad dṛḍham', 'The mind is restless, turbulent, strong and stubborn. I think it is as hard to hold as the wind.'],
+             ['6.35', 'abhyāsena tu kaunteya vairāgyeṇa ca gṛhyate', 'It is held by practice and by non-attachment.']],
+    text: 'Chapter 6 teaches meditation: a clean place, a seat neither too high nor too low, the body straight, the gaze steady (6.11–13). Arjuna objects that the mind is like the wind. Kṛṣṇa agrees, then gives the same answer as Yoga Sūtra I.12: practice and letting go.' },
+  { refs: [[7, 1, 30]], deva: 'सूत्रे मणिगणा इव', iast: 'Sūtre maṇi-gaṇā iva', en: 'Pearls on a thread',
+    sutras: [['7.4', 'bhūmir āpo ’nalo vāyuḥ khaṃ mano buddhir eva ca ahaṅkāra itīyaṃ me', 'Earth, water, fire, air, space, mind, intellect and ego: this is my eightfold lower nature.'],
+             ['7.5', 'jīva-bhūtāṃ mahā-bāho yayedaṃ dhāryate jagat', 'Know my other, higher nature: the life in all beings, which holds up the world.'],
+             ['7.7', 'mayi sarvam idaṃ protaṃ sūtre maṇi-gaṇā iva', 'All this is strung on me, like pearls on a thread.']],
+    text: 'Here the Gītā takes Sāṃkhya\'s categories and rearranges them. The elements and the inner instruments are one of Kṛṣṇa\'s two natures, not a separate reality. Kṛṣṇa is the taste in water, the light of the sun and moon, and Om in the Vedas (7.8).',
+    list: [['bhūmi', 'earth'], ['āpaḥ', 'water'], ['anala', 'fire'], ['vāyu', 'air'], ['kham', 'space'], ['manas', 'mind'], ['buddhi', 'intellect'], ['ahaṅkāra', 'ego']] },
+  { refs: [[8, 1, 28]], deva: 'ब्रह्मणो अहः', iast: 'Brahmaṇo ’haḥ', en: 'The day and night of Brahmā',
+    sutras: [['8.17', 'sahasra-yuga-paryantam ahar yad brahmaṇo viduḥ', 'Those who know day and night know that a day of Brahmā lasts a thousand ages, and his night a thousand more.'],
+             ['8.18', 'avyaktād vyaktayaḥ sarvāḥ prabhavanty ahar-āgame', 'At the coming of day all manifest things arise from the unmanifest. At the coming of night they dissolve back into it.'],
+             ['8.20', 'paras tasmāt tu bhāvo ’nyo ’vyakto ’vyaktāt sanātanaḥ', 'Beyond that unmanifest is another, eternal unmanifest that does not perish when all beings perish.']],
+    text: 'The cosmos breathes in and out on an immense scale. Worlds appear and dissolve again and again (8.19). Kṛṣṇa points past the whole cycle to the imperishable (akṣara). Whoever reaches it does not return.' },
+  { refs: [[9, 1, 34], [12, 1, 20]], deva: 'पत्रं पुष्पं फलं तोयम्', iast: 'Patraṃ puṣpaṃ phalaṃ toyam', en: 'A leaf, a flower, a fruit, water',
+    sutras: [['9.26', 'patraṃ puṣpaṃ phalaṃ toyaṃ yo me bhaktyā prayacchati', 'Whoever offers me a leaf, a flower, a fruit or water with love, I accept that offering of love.'],
+             ['9.27', 'yat karoṣi yad aśnāsi yaj juhoṣi dadāsi yat', 'Whatever you do, eat, offer, give or endure, do it as an offering to me.'],
+             ['12.13', 'adveṣṭā sarva-bhūtānāṃ maitraḥ karuṇa eva ca', 'Without hatred for any being, friendly and compassionate…']],
+    text: 'Devotion needs no wealth or ritual skill. The smallest thing, given with love, is enough. Chapter 12 describes the devotee Kṛṣṇa loves: free of hatred, friendly and compassionate, the same in honour and dishonour, content with whatever comes (12.13–19).' },
+  { refs: [[10, 1, 42]], deva: 'विभूति', iast: 'Vibhūti', en: 'Among all things, I am the best',
+    sutras: [['10.20', 'aham ātmā guḍākeśa sarva-bhūtāśaya-sthitaḥ', 'I am the self in the heart of every being. I am their beginning, middle and end.'],
+             ['10.41', 'yad yad vibhūtimat sattvaṃ śrīmad ūrjitam eva vā', 'Whatever is glorious, beautiful or mighty, know it comes from a spark of my splendour.']],
+    text: 'Arjuna asks how to think of Kṛṣṇa, and Kṛṣṇa lists his glories, category by category. Wherever something is the finest of its kind, that is where to see him. He ends by saying he holds up the whole universe with a single fragment of himself (10.42).',
+    list: [['ravi', 'among lights, the sun (10.21)'], ['śaśī', 'among stars, the moon (10.21)'], ['meru', 'among peaks, Meru (10.23)'], ['sāgara', 'among waters, the ocean (10.24)'], ['ekam akṣaram', 'among words, Om (10.25)'], ['aśvattha', 'among trees, the sacred fig (10.26)'], ['jāhnavī', 'among rivers, the Ganges (10.31)'], ['a-kāra', 'among letters, A (10.33)'], ['kusumākara', 'among seasons, spring (10.35)'], ['mauna', 'among secrets, silence (10.38)']] },
+  { refs: [[11, 1, 55]], deva: 'विश्वरूप', iast: 'Viśvarūpa', en: 'The cosmic form',
+    sutras: [['11.12', 'divi sūrya-sahasrasya bhaved yugapad utthitā', 'If a thousand suns rose at once in the sky, that might resemble the splendour of that great being.'],
+             ['11.28', 'yathā nadīnāṃ bahavo ’mbu-vegāḥ samudram evābhimukhā dravanti', 'As many rivers rush toward the ocean, these heroes of the world pour into your blazing mouths.'],
+             ['11.32', 'kālo ’smi loka-kṣaya-kṛt pravṛddhaḥ', 'I am Time, grown mighty, destroyer of worlds.']],
+    text: 'Arjuna asks to see Kṛṣṇa\'s universal form and receives divine sight (11.8). He sees countless eyes, arms and faces, all the gods and all beings, and both armies swept into the fire of time. Terrified, he begs Kṛṣṇa to return to his familiar form (11.45). Kṛṣṇa becomes gentle again (11.50).' },
+  { refs: [[13, 1, 34]], deva: 'क्षेत्र · क्षेत्रज्ञ', iast: 'Kṣetra & kṣetrajña', en: 'The field and the knower of the field',
+    sutras: [['13.1', 'idaṃ śarīraṃ kaunteya kṣetram ity abhidhīyate', 'This body is called the field. The one who knows it is called the knower of the field.'],
+             ['13.2', 'kṣetrajñaṃ cāpi māṃ viddhi sarva-kṣetreṣu bhārata', 'Know me as the knower in every field.'],
+             ['13.33', 'yathā prakāśayaty ekaḥ kṛtsnaṃ lokam imaṃ raviḥ', 'As the one sun lights up this whole world, the knower of the field lights up the whole field.']],
+    text: 'The field is made of the same 24 principles as in Sāṃkhya: the elements, ego, intellect, the unmanifest, the ten senses, the mind and the five sense objects (13.5). But where Sāṃkhya counts a separate puruṣa for each being, the Gītā says one knower is present in every field.' },
+  { refs: [[14, 1, 27], [17, 1, 28]], deva: 'गुणत्रय', iast: 'Guṇa-traya', en: 'The three ropes',
+    sutras: [['14.5', 'sattvaṃ rajas tama iti guṇāḥ prakṛti-sambhavāḥ', 'Sattva, rajas and tamas, born of nature, bind the imperishable self to the body.'],
+             ['14.20', 'guṇān etān atītya trīn dehī deha-samudbhavān', 'Going beyond these three guṇas, which give rise to the body, the embodied self is freed from birth, death, old age and sorrow.'],
+             ['14.23', 'guṇā vartanta ity evaṃ yo ’vatiṣṭhati neṅgate', 'Knowing "it is only the guṇas moving", one stays firm and unshaken.']],
+    text: '<i>Guṇa</i> also means rope. Each one binds in its own way. Sattva binds through attachment to happiness and knowledge, rajas through craving and action, and tamas through carelessness and sleep (14.6–8). Chapter 17 sorts faith, food, sacrifice, austerity and giving into the same three kinds.',
+    list: [['sattva', 'binds with happiness and knowledge'], ['rajas', 'binds with craving and action'], ['tamas', 'binds with carelessness and sleep']] },
+  { refs: [[15, 1, 20]], deva: 'अश्वत्थ', iast: 'Ūrdhva-mūlam aśvattham', en: 'The upside-down tree',
+    sutras: [['15.1', 'ūrdhva-mūlam adhaḥ-śākham aśvatthaṃ prāhur avyayam', 'They speak of an eternal fig tree with roots above and branches below. Its leaves are the Vedic hymns. Whoever knows it knows the Veda.'],
+             ['15.3', 'aśvattham enaṃ su-virūḍha-mūlam asaṅga-śastreṇa dṛḍhena chittvā', 'Cut down this firmly rooted fig tree with the strong axe of non-attachment.']],
+    text: 'The world is a tree rooted in the divine above, spreading down into countless branches. The guṇas nourish them and sense objects are their buds (15.2). Cut the tree with non-attachment, then seek the place from which no one returns (15.4). Kṛṣṇa is the supreme person, beyond both the perishable and the imperishable (15.18).' },
+  { refs: [[18, 63, 78]], deva: 'नष्टो मोहः', iast: 'Naṣṭo mohaḥ', en: 'Delusion is gone',
+    sutras: [['18.63', 'vimṛśyaitad aśeṣeṇa yathecchasi tathā kuru', 'Reflect on all of this fully, then do as you choose.'],
+             ['18.66', 'sarva-dharmān parityajya mām ekaṃ śaraṇaṃ vraja', 'Let go of all duties and take refuge in me alone. I will free you from all wrong. Do not grieve.'],
+             ['18.73', 'naṣṭo mohaḥ smṛtir labdhā tvat-prasādān mayācyuta', 'My delusion is gone, my memory restored by your grace. I stand firm, free of doubt. I will do as you say.']],
+    text: 'After 700 verses the scene returns to the chariot. Kṛṣṇa leaves the choice to Arjuna, then gives his final, most intimate teaching. Arjuna stands up. Sañjaya, who has narrated the whole dialogue to the blind king, closes: where Kṛṣṇa and Arjuna are, there is fortune, victory and justice (18.78).' }
+];
+SCENES.forEach(s => { s.b = partOf(s.refs[0][0]); });
+const DUR = 13;
+
+/* ---------------- canvas ---------------- */
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+const box = document.getElementById('box');
+let W = 800, H = 500, S = 500, port = false, dpr = 1, FS = 1;
+let cur = 0, t = 0, p = 0, clock = 0, last = performance.now();
+const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let playing = !reduced;
+
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = x => { x = clamp(x); return 1 - Math.pow(1 - x, 3); };
+const seg = (x, a, b) => clamp((x - a) / (b - a));
+const lerp = (a, b, u) => a + (b - a) * u;
+const fs = n => n * FS;
+function hexRGB(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function rgba(h, a) { const [r, g, b] = hexRGB(h); return `rgba(${r},${g},${b},${clamp(a)})`; }
+function mix(h1, h2, u, a = 1) { const A = hexRGB(h1), B = hexRGB(h2); return `rgba(${Math.round(lerp(A[0], B[0], u))},${Math.round(lerp(A[1], B[1], u))},${Math.round(lerp(A[2], B[2], u))},${clamp(a)})`; }
+function rnd(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+
+function circ(x, y, r, col, a = 1) { if (a <= 0 || r <= 0) return; ctx.fillStyle = rgba(col, a); ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); }
+function ring(x, y, r, col, a = 1, lw = 1) { if (a <= 0 || r <= 0) return; ctx.strokeStyle = rgba(col, a); ctx.lineWidth = lw; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke(); }
+function glow(x, y, r, col, a) { if (a <= 0 || r <= 0) return; const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(col, a)); g.addColorStop(1, rgba(col, 0)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill(); }
+function line(x1, y1, x2, y2, col, a = 1, lw = 1, dash) { if (a <= 0) return; ctx.save(); ctx.strokeStyle = rgba(col, a); ctx.lineWidth = lw; if (dash) { ctx.setLineDash(dash); ctx.lineDashOffset = -clock * 14; } ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore(); }
+function txt(str, x, y, o = {}) {
+  const a = o.a ?? 1; if (a <= 0.01) return;
+  const size = fs(o.size || 13);
+  ctx.font = o.f === 'serif' ? `italic 500 ${size}px Alegreya, Georgia, serif`
+    : o.f === 'caps' ? `700 ${size}px "Alegreya Sans", system-ui, sans-serif`
+    : o.f === 'deva' ? `${size}px "Tiro Devanagari Sanskrit", "Noto Serif Devanagari", serif`
+    : `400 ${size}px "Alegreya Sans", system-ui, sans-serif`;
+  ctx.textAlign = o.align || 'center'; ctx.textBaseline = o.base || 'alphabetic';
+  const ls = 'letterSpacing' in ctx;
+  if (o.f === 'caps' && ls) ctx.letterSpacing = '1.4px';
+  ctx.fillStyle = rgba(o.col || C.ink, a);
+  ctx.fillText(str, x, y);
+  if (ls) ctx.letterSpacing = '0px';
+}
+function lab(x, y, main, sub, a = 1, align = 'center', col) {
+  txt(main, x, y, { f: 'serif', size: 14, a, align, col });
+  if (sub) txt(sub, x, y + fs(14), { size: 11.5, col: C.muted, a, align });
+}
+function bez(ax, ay, cx, cy, bx, by, u) { const m = 1 - u; return [m * m * ax + 2 * m * u * cx + u * u * bx, m * m * ay + 2 * m * u * cy + u * u * by]; }
+function curve(ax, ay, cx, cy, bx, by, col, a, lw = 1, f = 1) {
+  if (a <= 0 || f <= 0) return;
+  ctx.strokeStyle = rgba(col, a); ctx.lineWidth = lw; ctx.beginPath();
+  for (let i = 0; i <= 30; i++) { const [x, y] = bez(ax, ay, cx, cy, bx, by, (i / 30) * f); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.stroke();
+}
+function flowDots(ax, ay, cx, cy, bx, by, col, a, n = 3, sp = .3, seed = 0, rev = false) {
+  if (a <= 0) return;
+  for (let i = 0; i < n; i++) {
+    let u = (clock * sp + i / n + seed) % 1; if (rev) u = 1 - u;
+    const [x, y] = bez(ax, ay, cx, cy, bx, by, u);
+    glow(x, y, fs(6), col, Math.sin(u * Math.PI) * a);
+  }
+}
+function capsLabel(str, x, y, a = 1, align = 'center', col = C.faint) { txt(str, x, y, { f: 'caps', size: 10, col, a, align }); }
+
+// shared particle cloud (guṇas)
+const PTS = Array.from({ length: 220 }, (_, i) => ({ g: i % 3, ang: rnd(i) * TAU, rad: Math.sqrt(rnd(i + 500)), sp: .2 + rnd(i + 900) * .12, ph: rnd(i + 1300) * TAU }));
+const GC = [C.sattva, C.rajas, C.tamas];
+
+const ELEM = ['#b58a52', '#4f9fd8', '#ef7a3c', '#bfe0cf', '#a9bfe6'];
+
+/* ---------------- shared figures ---------------- */
+function person(x, y, h, col, a, sit = 0, bow = 0, raise = 0) {
+  if (a <= 0) return;
+  ctx.save(); ctx.strokeStyle = rgba(col, a); ctx.fillStyle = rgba(col, a); ctx.lineCap = 'round'; ctx.lineWidth = Math.max(1.5, h * .06);
+  const hipY = lerp(y - h * .45, y - h * .12, sit), lean = sit * .45;
+  const sx = x + Math.sin(lean) * h * .33, sy = hipY - Math.cos(lean) * h * .33;
+  // legs
+  ctx.beginPath();
+  if (sit < .5) { ctx.moveTo(x, hipY); ctx.lineTo(x - h * .1, y); ctx.moveTo(x, hipY); ctx.lineTo(x + h * .1, y); }
+  else { ctx.moveTo(x, hipY); ctx.lineTo(x + h * .22, hipY + h * .05); ctx.lineTo(x + h * .08, y); }
+  ctx.moveTo(x, hipY); ctx.lineTo(sx, sy); ctx.stroke();
+  ctx.beginPath(); ctx.arc(sx + Math.sin(lean) * h * .1, sy - Math.cos(lean) * h * .12 + sit * h * .02, h * .085, 0, TAU); ctx.fill();
+  // arms + bow
+  const ay = sy + h * .05;
+  if (bow < .5) {
+    const bx = sx + h * .22, by = ay - h * .05 - raise * h * .25;
+    ctx.beginPath(); ctx.moveTo(sx, ay); ctx.lineTo(bx, by); ctx.stroke();
+    ctx.lineWidth = Math.max(1.2, h * .035); ctx.strokeStyle = rgba('#d9b877', a);
+    ctx.beginPath(); ctx.arc(bx - h * .3, by, h * .38, -.9, .9); ctx.stroke();
+    ctx.strokeStyle = rgba('#d9b877', a * .6); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(bx - h * .3 + Math.cos(-.9) * h * .38, by + Math.sin(-.9) * h * .38); ctx.lineTo(bx - h * .3 + Math.cos(.9) * h * .38, by + Math.sin(.9) * h * .38); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.moveTo(sx, ay); ctx.lineTo(sx + h * .12, ay + h * .2); ctx.stroke();
+    ctx.lineWidth = Math.max(1.2, h * .035); ctx.strokeStyle = rgba('#d9b877', a * .8);
+    ctx.beginPath(); ctx.arc(x - h * .1, y + h * .3, h * .36, -Math.PI * .8, -Math.PI * .2); ctx.stroke();
+  }
+  ctx.restore();
+}
+function chariot(cx, cy, s, a, T, moving) {
+  const w = s * 1.25, h = s * .42, wr = s * .34;
+  ctx.save(); ctx.globalAlpha = a;
+  // horses
+  for (let k = 0; k < 2; k++) {
+    const hx = cx + w * .95 + k * s * .18, hy = cy - s * .05 - k * s * .04, bob = moving ? Math.sin(T * 8 + k) * s * .03 : 0;
+    ctx.fillStyle = k ? '#e8e2d4' : '#cfc8b8';
+    ctx.beginPath(); ctx.ellipse(hx, hy + bob, s * .32, s * .12, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = s * .07; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(hx + s * .25, hy + bob); ctx.lineTo(hx + s * .4, hy - s * .22 + bob); ctx.stroke();
+    ctx.lineWidth = s * .04;
+    for (let l = 0; l < 2; l++) { ctx.beginPath(); ctx.moveTo(hx + (l ? s * .2 : -s * .2), hy + bob); ctx.lineTo(hx + (l ? s * .22 : -s * .22) + (moving ? Math.sin(T * 8 + l * 2 + k) * s * .06 : 0), hy + s * .34); ctx.stroke(); }
+  }
+  ctx.strokeStyle = '#8a6a44'; ctx.lineWidth = s * .03; ctx.beginPath(); ctx.moveTo(cx + w * .5, cy - h * .3); ctx.lineTo(cx + w * .8, cy - s * .08); ctx.stroke();
+  // body
+  ctx.fillStyle = '#6b4e2e'; ctx.strokeStyle = '#d9b877'; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(cx - w / 2, cy); ctx.lineTo(cx + w / 2, cy); ctx.lineTo(cx + w * .42, cy - h); ctx.lineTo(cx - w * .5, cy - h * .8); ctx.closePath(); ctx.fill(); ctx.stroke();
+  // wheel
+  const wx = cx - w * .12, wy = cy + wr * .45;
+  ctx.strokeStyle = '#d9b877'; ctx.lineWidth = s * .035; ctx.beginPath(); ctx.arc(wx, wy, wr, 0, TAU); ctx.stroke();
+  const rot = moving ? T * 4 : 0; ctx.lineWidth = 1;
+  for (let k = 0; k < 8; k++) { const an = rot + k * TAU / 8; ctx.beginPath(); ctx.moveTo(wx, wy); ctx.lineTo(wx + Math.cos(an) * wr, wy + Math.sin(an) * wr); ctx.stroke(); }
+  // banner (kapi-dhvaja, 1.20)
+  const fx = cx - w * .44, fy = cy - h - s * 1.5;
+  ctx.strokeStyle = '#d9b877'; ctx.lineWidth = s * .025; ctx.beginPath(); ctx.moveTo(fx, cy - h * .8); ctx.lineTo(fx, fy); ctx.stroke();
+  ctx.fillStyle = '#e2583e'; ctx.beginPath(); ctx.moveTo(fx, fy); ctx.quadraticCurveTo(fx + s * .3, fy + s * .06 + Math.sin(T * 3) * s * .04, fx + s * .45, fy + s * .12); ctx.lineTo(fx, fy + s * .26); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function battlefield(p, T, o) {
+  const hz = H * (port ? .58 : .62);
+  const dawn = o.dawn || 0;
+  let g = ctx.createLinearGradient(0, 0, 0, hz);
+  g.addColorStop(0, mix('#101726', '#23324f', dawn)); g.addColorStop(1, mix('#2a2a3c', '#e8a860', dawn * .75));
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, hz);
+  if (dawn > 0) glow(W * .5, hz, S * .7, '#ffd98a', .35 * dawn);
+  g = ctx.createLinearGradient(0, hz, 0, H); g.addColorStop(0, '#221d18'); g.addColorStop(1, '#100d0b');
+  ctx.fillStyle = g; ctx.fillRect(0, hz, W, H - hz);
+  line(0, hz, W, hz, '#6b5a44', .6);
+  // armies
+  const sp = fs(port ? 8 : 9), span = W * (port ? .3 : .3);
+  [[-1, '#d9c48a', 'Pāṇḍavas'], [1, '#d9826a', 'Kauravas']].forEach(([side, col, nm]) => {
+    for (let r = 0; r < 4; r++) for (let k = 0; k * sp < span; k++) {
+      const x = side < 0 ? fs(10) + k * sp + (r % 2) * sp / 2 : W - fs(10) - k * sp - (r % 2) * sp / 2, y = hz + fs(10) + r * fs(11);
+      const sway = Math.sin(T * 1.5 + k * .7 + r) * .6;
+      line(x, y, x + sway, y - fs(8), col, .75, 1.3); circ(x + sway, y - fs(9.5), fs(1.8), col, .85);
+      if (r === 0 && k % 5 === 2) { line(x, y - fs(8), x, y - fs(26), col, .6, 1); ctx.fillStyle = rgba(col, .7); ctx.beginPath(); ctx.moveTo(x, y - fs(26)); ctx.lineTo(x - side * fs(9), y - fs(23) + Math.sin(T * 3 + k) * 1.5); ctx.lineTo(x, y - fs(20)); ctx.fill(); }
+    }
+    txt(nm, side < 0 ? fs(10) + span / 2 : W - fs(10) - span / 2, hz + fs(66), { f: 'serif', size: 14, col, a: .9 });
+    if (o.conch > 0) for (let q = 0; q < 3; q++) { const u = (T * .6 + q / 3) % 1; ctx.strokeStyle = rgba(col, (1 - u) * .5 * o.conch); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(side < 0 ? span * .5 : W - span * .5, hz - fs(10), u * S * .3, Math.PI * 1.05, Math.PI * 1.95); ctx.stroke(); }
+  });
+  // chariot
+  const cs = S * (port ? .13 : .12), cx = o.cx, cy = hz + fs(port ? 30 : 34);
+  if (o.haze > 0) glow(cx, cy - cs, S * .35, '#5a6fa0', .45 * o.haze);
+  if (o.light > 0) glow(cx + cs * .3, cy - cs, S * .3, C.krishna, .35 * o.light);
+  chariot(cx, cy, cs, 1, T, o.moving);
+  // Kṛṣṇa, charioteer
+  glow(cx + cs * .38, cy - cs * .75, cs * .6, C.krishna, .5);
+  person(cx + cs * .38, cy - cs * .42, cs * .62, '#6f93ff', 1, 1, 1);
+  // Arjuna
+  person(cx - cs * .12, cy - cs * .42, cs * (1 - .15 * o.sit), '#f2e3b8', 1, o.sit, o.bowDown, o.raise || 0);
+  txt('Kṛṣṇa', cx + cs * .9, cy - cs * 1.5, { f: 'serif', size: 13, col: '#9fb7ff', align: 'left' });
+  txt('Arjuna', cx - cs * .9, cy - cs * 1.95, { f: 'serif', size: 13, col: C.sattva, align: 'right' });
+  return { hz, cx, cy, cs };
+}
+
+/* ---------------- scenes ---------------- */
+function s1(p, T) {
+  const move = ease(seg(p, .18, .42));
+  const sit = ease(seg(p, .64, .74));
+  const b = battlefield(p, T, { cx: lerp(W * .32, W * .5, move), moving: move > 0 && move < 1, sit, bowDown: p > .7 ? 1 : 0, haze: ease(seg(p, .66, .8)), conch: 1 - ease(seg(p, .16, .26)) });
+  capsLabel('Kurukṣetra · the field of dharma', 16, fs(20), 1, 'left');
+  const gz = ease(seg(p, .44, .5)) * (1 - ease(seg(p, .62, .68)));
+  const KIN = ['teachers', 'grandfathers', 'uncles', 'brothers', 'sons', 'friends'];
+  KIN.forEach((k, i) => {
+    const side = i % 2 ? 1 : -1, tx = side < 0 ? W * (.06 + i * .04) : W * (.94 - (i - 1) * .04), ty = b.hz + fs(4);
+    line(b.cx - b.cs * .1, b.cy - b.cs * 1.2, tx, ty - fs(12), C.sattva, .3 * gz, 1, [3, 4]);
+    txt(k, tx, b.hz - fs(26) - (i % 3) * fs(14), { size: 12, col: C.sattva, a: gz });
+  });
+  txt(p < .18 ? 'the conches sound (1.12–19)' : p < .44 ? '"Place my chariot between the armies" (1.21)' : p < .64 ? 'He sees his own family on both sides (1.26)' : 'viṣāda · he sits down and drops his bow (1.47)', W / 2, fs(port ? 44 : 22), { size: 13, col: p >= .64 ? '#a9bfe6' : C.muted, align: port ? 'center' : 'center' });
+}
+function s2(p, T) {
+  const cx = W * .5, cy = H * .54;
+  const k = Math.floor(clock / 2.4) % 5, f = (clock / 2.4) % 1;
+  const HT = [.42, .72, .88, .8, .42], NM = ['childhood', 'youth', 'adulthood', 'old age', 'a new body'];
+  const hh = S * .6;
+  const draw = (idx, a) => {
+    const h = hh * HT[idx], bend = idx === 3 ? .18 : 0, base = cy + hh * .42;
+    ctx.save(); ctx.strokeStyle = rgba('#cfc6b4', a); ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+    const hip = base - h * .45, sh = hip - h * .33;
+    ctx.beginPath(); ctx.moveTo(cx - h * .1, base); ctx.lineTo(cx, hip); ctx.lineTo(cx + h * .1, base);
+    ctx.moveTo(cx, hip); ctx.lineTo(cx + bend * h, sh);
+    ctx.moveTo(cx + bend * h, sh + h * .03); ctx.lineTo(cx - h * .16 + bend * h, hip - h * .02); ctx.moveTo(cx + bend * h, sh + h * .03); ctx.lineTo(cx + h * .16 + bend * h, hip - h * .02); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx + bend * h * 1.2, sh - h * .1, h * .085, 0, TAU); ctx.stroke(); ctx.restore();
+    return sh + h * .08;
+  };
+  const cross = f > .8 ? (f - .8) / .2 : 0;
+  const chestY = draw(k, 1 - cross);
+  if (cross > 0) draw((k + 1) % 5, cross);
+  const nextChest = cross > 0 ? draw((k + 1) % 5, 0) : chestY;
+  const ly = lerp(chestY, nextChest, cross);
+  glow(cx, ly, fs(50), '#fff4d6', .5); circ(cx, ly, fs(6), '#ffffff');
+  txt('dehī · the embodied self', cx + fs(16), ly - fs(12), { f: 'serif', size: 13, align: 'left', col: C.gold });
+  const aB = 1 - ease(seg(p, .5, .56));
+  txt(NM[k], cx, cy + hh * .42 + fs(22), { size: 13, col: C.muted, a: aB });
+  txt('like changing worn-out clothes (2.22)', cx, fs(24), { f: 'serif', size: 15, col: C.sattva, a: aB });
+  const aF = ease(seg(p, .54, .62));
+  const F = [['śastra', 'not cut by weapons', '#cfd6e4'], ['pāvaka', 'not burned by fire', '#ef7a3c'], ['āpaḥ', 'not wetted by water', '#4f9fd8'], ['māruta', 'not dried by wind', '#bfe0cf']];
+  F.forEach(([sk, en, col], i) => {
+    const y = lerp(H * .18, H * .78, i / 3);
+    const lx = port ? 16 : W * .06;
+    txt(sk, lx, y - fs(2), { f: 'serif', size: 14, align: 'left', col, a: aF });
+    txt(en, lx, y + fs(12), { size: 11.5, align: 'left', col: C.muted, a: aF });
+    if (aF > 0) for (let q = 0; q < 7; q++) {
+      const u = (T * .35 + q / 7 + i * .13) % 1, x = lerp(W * (port ? .35 : .25), W * .95, u), yy = y + Math.sin(u * 9 + q) * fs(6);
+      const a = aF * Math.sin(u * Math.PI);
+      if (i === 0) line(x, yy, x + fs(14), yy, col, a, 1.5);
+      else if (i === 1) glow(x, yy, fs(7), col, a * .8);
+      else if (i === 2) circ(x, yy, fs(2.5), col, a);
+      else line(x, yy, x + fs(20), yy - fs(2), col, a * .7, 1);
+    }
+  });
+  txt('na hanyate · it is not killed', cx, fs(24), { f: 'serif', size: 15, col: C.gold, a: aF });
+}
+function s3(p, T) {
+  const ax = W * (port ? .16 : .14), ay = H * .7, ah = S * .3;
+  const detach = ease(seg(p, .5, .62));
+  const wob = (1 - detach) * .12 * Math.sin(T * 3.1);
+  ctx.save(); ctx.translate(ax, ay); ctx.rotate(wob); person(0, 0, ah, C.sattva, 1, 0, 0); ctx.restore();
+  const period = 1.6;
+  const tx = W * .86;
+  for (let k = 0; k < 7; k++) {
+    const id = Math.floor(T / period) - k; if (id < 0) continue;
+    const age = T - (Math.floor(T / period) - k) * period;
+    const hit = rnd(id * 1.7) > .45, ty = H * (.25 + .5 * rnd(id * 2.3));
+    const ex = tx + (hit ? 0 : fs(30) * (rnd(id) - .5) * 3), ey = ty + (hit ? 0 : fs(30));
+    if (age < .7) { const u = age / .7; const x = lerp(ax + ah * .3, ex, u), y = lerp(ay - ah * .75, ey, u) - Math.sin(u * Math.PI) * fs(30); line(x - fs(10), y + fs(1), x, y, '#d9b877', 1, 1.6); }
+    else {
+      const fa = Math.max(0, 1 - (age - .7) / (period * 5));
+      const rise = detach * (age - .7) * fs(30);
+      if (hit) { glow(ex, ey - rise, fs(14), C.gold, .6 * fa); circ(ex, ey - rise, fs(3.5), C.gold, fa); }
+      else { line(ex - fs(4), ey - fs(4) - rise, ex + fs(4), ey + fs(4) - rise, '#8a90a0', fa); line(ex + fs(4), ey - fs(4) - rise, ex - fs(4), ey + fs(4) - rise, '#8a90a0', fa); }
+      if (detach < 1) curve(ex, ey, (ex + ax) / 2, ey - fs(60), ax, ay - ah * .9, hit ? C.gold : '#8a90a0', .35 * fa * (1 - detach), 1);
+    }
+  }
+  for (let r = 0; r < 3; r++) { const y = H * (.25 + r * .25); ring(tx, y, fs(14), '#6b5a44', .6, 1.2); ring(tx, y, fs(6), '#6b5a44', .6, 1.2); }
+  txt('siddhi · success', tx, H * .12, { size: 11.5, col: C.gold, align: 'center' });
+  txt('asiddhi · failure', tx, H * .92, { size: 11.5, col: '#8a90a0', align: 'center' });
+  const mood = Math.sin(T * 2.2) > 0 ? 'elated' : 'crushed';
+  txt(mood, ax, ay - ah * 1.25, { size: 12, col: mood === 'elated' ? C.gold : '#a9bfe6', a: 1 - detach });
+  txt('karmaṇy evādhikāras te', 16, fs(24), { f: 'serif', size: 16, align: 'left', col: C.sattva });
+  txt('your right is to the action, never its fruit', 16, fs(40), { size: 12, align: 'left', col: C.muted });
+  txt('samatvaṃ yoga ucyate', W / 2, H - fs(port ? 40 : 18), { f: 'serif', size: 16, col: C.gold, a: detach });
+  txt('evenness is yoga', W / 2, H - fs(port ? 24 : 2) , { size: 12, col: C.muted, a: port ? detach : 0 });
+}
+function s4(p, T) {
+  const cx = W * .5, cy = H * .53, R = S * .32;
+  const N = [['karma', 'action', '#e9b48f'], ['yajña', 'offering', '#ef7a3c'], ['parjanya', 'rain', '#8fc1e8'], ['anna', 'food', '#c8d98a'], ['bhūtāni', 'beings', '#f2e3b8']];
+  const pos = N.map((_, i) => { const a = -Math.PI / 2 + i * TAU / 5; return [cx + Math.cos(a) * R, cy + Math.sin(a) * R, a]; });
+  const all = ease(seg(p, .42, .5));
+  N.forEach(([sk, en, col], i) => {
+    const a = ease(seg(p, i * .08, i * .08 + .08));
+    const j = (i + 1) % 5, [x1, y1, a1] = pos[i], [x2, y2, a2] = pos[j];
+    const am = (a1 + (a2 < a1 ? a2 + TAU : a2)) / 2, mx = cx + Math.cos(am) * R * 1.12, my = cy + Math.sin(am) * R * 1.12;
+    const ea = i < 4 ? ease(seg(p, (i + 1) * .08, (i + 1) * .08 + .06)) : all;
+    curve(x1, y1, mx, my, x2, y2, col, .45 * ea, 1.6, ea);
+    if (ea > .98) flowDots(x1, y1, mx, my, x2, y2, col, 1, 3, .35, i * .2);
+  });
+  N.forEach(([sk, en, col], i) => {
+    const a = ease(seg(p, i * .08, i * .08 + .08)); const [x, y, an] = pos[(i + 1) % 5 === 0 ? i : i];
+    glow(x, y, fs(26), col, .45 * a);
+    if (i === 0) { circ(x, y, fs(6), col, a); ring(x, y, fs(10), col, a * .6); }
+    else if (i === 1) { ctx.fillStyle = rgba(col, a); ctx.beginPath(); ctx.moveTo(x, y - fs(12) - Math.sin(T * 8) * 2); ctx.quadraticCurveTo(x + fs(8), y, x, y + fs(5)); ctx.quadraticCurveTo(x - fs(8), y, x, y - fs(12) - Math.sin(T * 8) * 2); ctx.fill(); }
+    else if (i === 2) { [[-5, 0, 6], [2, -3, 7], [8, 1, 5]].forEach(([dx, dy, r]) => circ(x + fs(dx), y + fs(dy) - fs(3), fs(r), col, a)); for (let q = 0; q < 4; q++) { const u = (T * 1.5 + q / 4) % 1; line(x - fs(6) + q * fs(4), y + fs(5) + u * fs(10), x - fs(7) + q * fs(4), y + fs(9) + u * fs(10), col, a * (1 - u)); } }
+    else if (i === 3) { line(x, y + fs(10), x, y - fs(10), col, a, 1.5); for (let q = 0; q < 4; q++) { circ(x - fs(3), y - fs(8) + q * fs(4), fs(1.8), col, a); circ(x + fs(3), y - fs(6) + q * fs(4), fs(1.8), col, a); } }
+    else { for (let q = -1; q <= 1; q++) { circ(x + q * fs(7), y - fs(5), fs(2.6), col, a); line(x + q * fs(7), y - fs(2), x + q * fs(7), y + fs(8), col, a, 2); } }
+    const out = [Math.cos(an), Math.sin(an)];
+    const lx = x + out[0] * fs(34), ly = y + out[1] * fs(30) + fs(4);
+    lab(lx, ly - fs(4), sk, en, a, Math.abs(out[0]) < .3 ? 'center' : out[0] > 0 ? 'left' : 'right');
+  });
+  const aC = ease(seg(p, .52, .62));
+  glow(cx, cy, fs(40), C.gold, .35 * aC); txt('brahman', cx, cy + fs(2), { f: 'serif', size: 15, col: C.gold, a: aC }); txt('the imperishable source (3.15)', cx, cy + fs(18), { size: 11, col: C.muted, a: aC });
+  const aX = ease(seg(p, .72, .8));
+  const gx = port ? W * .84 : W * .86, gy = port ? H * .9 : H * .82;
+  if (aX > 0) { const [bx, by] = pos[3]; flowDots(bx, by, (bx + gx) / 2, gy, gx, gy, '#8a90a0', aX, 3, .4); circ(gx, gy, fs(5), '#8a90a0', aX); txt('takes, gives nothing back', gx, gy + fs(20), { size: 11, col: C.muted, a: aX, align: port ? 'right' : 'center' }); txt('lives in vain (3.16)', gx, gy + fs(33), { size: 11, col: C.muted, a: aX, align: port ? 'right' : 'center' }); }
+  capsLabel('cakra · the turning wheel', 16, fs(20), 1, 'left');
+}
+function s5(p, T) {
+  const x0 = 16, x1 = W - 16, yB = H * .8, yT = H * .3;
+  const f = ease(seg(p, .02, .9));
+  line(x0, yB, x1, yB, C.faint, .5); line(x0, yB, x0, yT - fs(20), C.faint, .5);
+  txt('dharma', x0 + fs(6), yT - fs(24), { f: 'serif', size: 13, align: 'left', col: C.muted });
+  txt('time → yuge yuge, age after age', x1, yB + fs(18), { size: 11.5, align: 'right', col: C.faint });
+  const cyc = 4, val = u => { const c = u * cyc, fr = c - Math.floor(c); return .95 - .8 * Math.pow(fr, 1.4); };
+  ctx.strokeStyle = rgba(C.gold, .9); ctx.lineWidth = 2; ctx.beginPath();
+  const n = 400;
+  for (let i = 0; i <= n * f; i++) { const u = i / n; const x = lerp(x0, x1, u), y = lerp(yB, yT, val(u)); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+  ctx.stroke();
+  for (let k = 1; k < cyc; k++) {
+    const u = k / cyc; if (f < u) continue;
+    const x = lerp(x0, x1, u), a = clamp((f - u) * 12);
+    const lowY = lerp(yB, yT, .15);
+    const g = ctx.createLinearGradient(0, 0, 0, lowY); g.addColorStop(0, rgba(C.krishna, 0)); g.addColorStop(1, rgba('#9fb7ff', .55 * a));
+    ctx.fillStyle = g; ctx.fillRect(x - fs(6), 0, fs(12), lowY);
+    glow(x, lowY, fs(26), '#9fb7ff', .6 * a); circ(x, lowY, fs(4), '#ffffff', a);
+    txt('sambhavāmi', x, fs(20) + (k % 2) * fs(14), { f: 'serif', size: 12.5, col: '#9fb7ff', a });
+    txt('glāni · decline', x - fs(6), lowY + fs(22), { size: 11, col: C.rajas, a: a * .9, align: 'right' });
+  }
+  txt('yadā yadā hi dharmasya glānir bhavati…', W / 2, H - fs(port ? 14 : 12), { f: 'serif', size: 14, col: C.sattva, a: ease(seg(p, .1, .2)) });
+}
+function s6(p, T) {
+  const cx = W * .5, ly = H * .7;
+  const calm = ease(seg(p, .3, .64));
+  // meditator silhouette
+  const mh = S * .62;
+  ctx.fillStyle = rgba('#1a2336', 1); ctx.beginPath(); ctx.ellipse(cx, ly - mh * .05, mh * .42, mh * .12, 0, 0, TAU); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx - mh * .26, ly - mh * .1); ctx.quadraticCurveTo(cx - mh * .3, ly - mh * .55, cx - mh * .12, ly - mh * .62); ctx.lineTo(cx + mh * .12, ly - mh * .62); ctx.quadraticCurveTo(cx + mh * .3, ly - mh * .55, cx + mh * .26, ly - mh * .1); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, ly - mh * .74, mh * .11, 0, TAU); ctx.fill();
+  // wind
+  const wind = 1 - calm;
+  for (let k = 0; k < 16; k++) {
+    const u = (T * .7 + k / 16) % 1, y = ly - fs(40) + (rnd(k + 30) - .5) * S * .5;
+    const x = lerp(-fs(40), W + fs(40), u);
+    const stop = calm > .05 && Math.abs(x - cx) < S * .12 * (.4 + calm) ? 0 : 1;
+    line(x, y, x + fs(30), y + Math.sin(u * 6 + k) * fs(3), '#a9bfe6', .35 * wind * stop, 1.2);
+  }
+  // chimney of practice and letting go
+  const gw = S * .1 * (.4 + calm * .6);
+  if (calm > 0) {
+    ctx.strokeStyle = rgba('#dfe8ff', .5 * calm); ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.moveTo(cx - gw, ly); ctx.quadraticCurveTo(cx - gw * 1.4, ly - fs(50), cx - gw * .7, ly - fs(95) * calm); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + gw, ly); ctx.quadraticCurveTo(cx + gw * 1.4, ly - fs(50), cx + gw * .7, ly - fs(95) * calm); ctx.stroke();
+    txt('abhyāsa', cx - gw * 1.6, ly - fs(40), { f: 'serif', size: 14, align: 'right', col: '#dfe8ff', a: calm });
+    txt('practice', cx - gw * 1.6, ly - fs(26), { size: 11.5, align: 'right', col: C.muted, a: calm });
+    txt('vairāgya', cx + gw * 1.6, ly - fs(40), { f: 'serif', size: 14, align: 'left', col: '#dfe8ff', a: calm });
+    txt('letting go', cx + gw * 1.6, ly - fs(26), { size: 11.5, align: 'left', col: C.muted, a: calm });
+  }
+  // lamp
+  ctx.fillStyle = '#b8864a'; ctx.beginPath(); ctx.ellipse(cx, ly + fs(4), fs(22), fs(7), 0, 0, Math.PI); ctx.fill();
+  ctx.fillStyle = '#d9a35c'; ctx.beginPath(); ctx.ellipse(cx, ly + fs(4), fs(22), fs(4), 0, 0, TAU); ctx.fill();
+  const tilt = wind * (.5 * Math.sin(T * 5.3) + .3 * Math.sin(T * 11.7)), fh = fs(34) * (1 + wind * .25 * Math.sin(T * 13));
+  glow(cx, ly - fh * .5, fs(60) * (1 + calm * .3), C.gold, .35 + .15 * calm);
+  ctx.save(); ctx.translate(cx, ly); ctx.rotate(tilt);
+  const g = ctx.createLinearGradient(0, 0, 0, -fh); g.addColorStop(0, '#ff9a3c'); g.addColorStop(.5, '#ffd98a'); g.addColorStop(1, '#fff6e0');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(0, -fh); ctx.quadraticCurveTo(fs(10), -fh * .35, 0, 0); ctx.quadraticCurveTo(-fs(10), -fh * .35, 0, -fh); ctx.fill(); ctx.restore();
+  txt(wind > .5 ? 'cañcalaṃ hi manaḥ · the mind is restless as the wind' : 'yathā dīpo nivāta-sthaḥ · a lamp where no wind blows', W / 2, fs(24), { f: 'serif', size: 15, col: wind > .5 ? '#a9bfe6' : C.gold });
+}
+const PEARLS = [['bhūmi', 'earth', ELEM[0]], ['āpaḥ', 'water', ELEM[1]], ['anala', 'fire', ELEM[2]], ['vāyu', 'air', ELEM[3]], ['kham', 'space', ELEM[4]], ['manas', 'mind', '#fff2cf'], ['buddhi', 'intellect', '#ffd98a'], ['ahaṅkāra', 'ego', '#e2a07a']];
+function s7(p, T) {
+  const cx = W * .5, cy = H * .54, R = S * (port ? .27 : .33);
+  const lit = ease(seg(p, .5, .78));
+  ring(cx, cy, R, C.gold, .2 + .5 * lit, 1.2 + lit);
+  if (lit > 0 && lit < 1) { const an = -Math.PI / 2 + lit * TAU; glow(cx + Math.cos(an) * R, cy + Math.sin(an) * R, fs(20), '#ffffff', .8); }
+  const nb = 64;
+  for (let i = 0; i < nb; i++) {
+    if (i % 8 === 0) continue;
+    const an = -Math.PI / 2 + i * TAU / nb, a = ease(seg(p, .05 + (i / nb) * .4, .1 + (i / nb) * .4));
+    circ(cx + Math.cos(an) * R, cy + Math.sin(an) * R, fs(3.2), '#e8e2f2', .75 * a);
+  }
+  PEARLS.forEach(([sk, en, col], k) => {
+    const i = k * 8, an = -Math.PI / 2 + i * TAU / nb, a = ease(seg(p, .05 + (i / nb) * .4, .1 + (i / nb) * .4));
+    const x = cx + Math.cos(an) * R, y = cy + Math.sin(an) * R;
+    glow(x, y, fs(20), col, .5 * a); circ(x, y, fs(8), col, a); circ(x - fs(2.5), y - fs(2.5), fs(2.4), '#ffffff', .6 * a);
+    const lx = cx + Math.cos(an) * (R + fs(34)), ly = cy + Math.sin(an) * (R + fs(26)) + fs(2);
+    lab(lx, ly, sk, en, a, Math.abs(Math.cos(an)) < .3 ? 'center' : Math.cos(an) > 0 ? 'left' : 'right');
+  });
+  glow(cx, cy, R * .7, '#9fb7ff', .18 * lit);
+  txt('mayi sarvam idaṃ protam', cx, cy - fs(6), { f: 'serif', size: 16, col: C.gold, a: lit });
+  txt('all this is strung on me', cx, cy + fs(12), { size: 12, col: C.muted, a: lit });
+  txt('aparā prakṛti · my eightfold lower nature (7.4)', cx, cy + fs(6), { size: 12, col: C.muted, a: ease(seg(p, .1, .2)) * (1 - lit) });
+  capsLabel('small beads · the living beings, my higher nature (7.5)', W / 2, H - fs(12), ease(seg(p, .3, .4)), 'center');
+}
+const COS = Array.from({ length: 300 }, (_, i) => ({ r: Math.pow(rnd(i + 1100), .7), a: rnd(i + 1200) * TAU, g: i % 3, arm: i % 2 }));
+function s8(p, T) {
+  const cx = W * .5, cy = H * .56;
+  const e = p < .1 ? 0 : p < .42 ? ease(seg(p, .1, .42)) : p < .56 ? 1 : 1 - ease(seg(p, .56, .88));
+  const day = p >= .1 && p < .56;
+  // sky arc
+  const ax = W * .5, ay = H * .2, ar = S * .32;
+  ctx.strokeStyle = rgba(C.faint, .5); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(ax, ay + ar * .6, ar, Math.PI * 1.1, Math.PI * 1.9); ctx.stroke();
+  const u = day ? seg(p, .1, .56) : seg(p < .1 ? p + 1 : p, .56, 1.1);
+  const an = Math.PI * 1.1 + u * Math.PI * .8, sx = ax + Math.cos(an) * ar, sy = ay + ar * .6 + Math.sin(an) * ar;
+  if (day) { glow(sx, sy, fs(24), '#ffcf6a', .6); circ(sx, sy, fs(7), '#ffcf6a'); } else { circ(sx, sy, fs(7), '#dfe8ff'); circ(sx + fs(3), sy - fs(2), fs(6), C.bg); }
+  txt(day ? 'day of Brahmā · a thousand ages' : 'night of Brahmā · a thousand ages', ax, ay + ar * .6 - ar - fs(14), { f: 'serif', size: 14, col: day ? C.gold : '#a9bfe6' });
+  ctx.globalCompositeOperation = 'lighter';
+  COS.forEach((q, i) => {
+    const rr = q.r * S * .38 * e, ang = q.a + (1 - e) * 4 + T * .05 + q.r * 2.2 * e;
+    const x = cx + Math.cos(ang) * rr, y = cy + Math.sin(ang) * rr * .55;
+    circ(x, y, fs(1.4), GC[q.g], .75 * Math.max(.15, e));
+  });
+  ctx.globalCompositeOperation = 'source-over';
+  glow(cx, cy, fs(30), '#c9b6e8', .4 * (1 - e) + .1);
+  txt('avyakta · the unmanifest', cx, cy + fs(50) * (1 - e) + fs(20) + e * S * .24, { size: 12, col: C.muted });
+  txt(e > .5 && day ? 'all beings arise (8.18)' : !day && e < .5 ? 'all beings dissolve (8.18)' : '', 16, H - fs(14), { size: 12, align: 'left', col: C.muted });
+  const aE = ease(seg(p, .88, .96));
+  ring(cx, cy, S * .44, '#ffffff', .35 * aE, 1.2);
+  txt('beyond this, an unmanifest that never perishes (8.20)', W - 16, H - fs(14), { size: 12, align: 'right', col: '#ffffff', a: aE });
+}
+function s9(p, T) {
+  const cx = W * .5, cy = H * .3;
+  const pulse = 1 + .05 * Math.sin(T * 2);
+  glow(cx, cy, fs(70) * pulse, C.krishna, .35); glow(cx, cy, fs(30), '#dfe8ff', .5); circ(cx, cy, fs(6), '#ffffff');
+  const O = [['patram', 'a leaf', '#8fd18a'], ['puṣpam', 'a flower', '#f2a7c0'], ['phalam', 'a fruit', '#ef9a4a'], ['toyam', 'water', '#8fc1e8']];
+  O.forEach(([sk, en, col], i) => {
+    const sx = W * (.2 + i * .2), sy = H * .82;
+    const st = .04 + i * .1, u = ease(seg(p, st, st + .22));
+    const [x, y] = bez(sx, sy, sx, cy + fs(40), cx, cy, u);
+    const a = 1 - seg(u, .9, 1);
+    if (u >= .99 && p < st + .32) glow(cx, cy, fs(60), col, .5 * (1 - (p - st - .22) / .1));
+    ctx.save(); ctx.translate(x, y); ctx.globalAlpha = a;
+    if (i === 0) { ctx.rotate(.5); ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(0, 0, fs(12), fs(5), 0, 0, TAU); ctx.fill(); line(-fs(12), 0, fs(12), 0, '#2e5a2e', 1); }
+    else if (i === 1) { for (let k = 0; k < 5; k++) { const an = k * TAU / 5 + T * .3; ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(Math.cos(an) * fs(5), Math.sin(an) * fs(5), fs(5), fs(3), an, 0, TAU); ctx.fill(); } circ(0, 0, fs(3), '#ffd98a'); }
+    else if (i === 2) { circ(0, 0, fs(8), col); line(0, -fs(8), fs(2), -fs(12), '#6b8a44', 1, 1.5); }
+    else { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(0, -fs(11)); ctx.quadraticCurveTo(fs(8), fs(2), 0, fs(7)); ctx.quadraticCurveTo(-fs(8), fs(2), 0, -fs(11)); ctx.fill(); }
+    ctx.restore();
+    lab(sx, sy + fs(28), sk, en, 1 - ease(seg(p, .5, .56)));
+  });
+  txt('bhaktyā prayacchati · offered with love', cx, cy + fs(60), { f: 'serif', size: 15, col: C.gold, a: ease(seg(p, .1, .2)) });
+  const aA = ease(seg(p, .56, .64));
+  const A = [['karoṣi', 'you do'], ['aśnāsi', 'you eat'], ['juhoṣi', 'you offer'], ['dadāsi', 'you give'], ['tapasyasi', 'you endure']];
+  A.forEach(([sk, en], i) => {
+    const sx = W * (.1 + i * .2), sy = H * .86;
+    if (aA > 0) for (let q = 0; q < 3; q++) { const u = (T * .3 + q / 3 + i * .17) % 1; const [x, y] = bez(sx, sy - fs(20), sx, cy + fs(60), cx, cy, u); glow(x, y, fs(6), '#f2e3b8', aA * Math.sin(u * Math.PI)); }
+    txt(sk, sx, sy, { f: 'serif', size: 13.5, a: aA }); txt(en, sx, sy + fs(14), { size: 11, col: C.muted, a: aA });
+  });
+}
+const VIB = [['ravi', 'sun', 'Among lights I am the radiant sun', '10.21'], ['śaśī', 'moon', 'Among the stars I am the moon', '10.21'], ['meru', 'peak', 'Among peaks I am Meru', '10.23'], ['sāgara', 'ocean', 'Among waters I am the ocean', '10.24'], ['om', 'om', 'Among words I am the one syllable', '10.25'], ['aśvattha', 'tree', 'Among trees I am the sacred fig', '10.26'], ['jāhnavī', 'river', 'Among rivers I am the Ganges', '10.31'], ['a-kāra', 'a', 'Among letters I am the letter A', '10.33'], ['kusumākara', 'spring', 'Among seasons I am spring', '10.35'], ['mauna', 'silence', 'Among secrets I am silence', '10.38']];
+function vicon(kind, x, y, a, T) {
+  const c = C.gold;
+  switch (kind) {
+    case 'sun': circ(x, y, fs(6), '#ffcf6a', a); for (let k = 0; k < 8; k++) { const an = k * TAU / 8 + T * .2; line(x + Math.cos(an) * fs(8), y + Math.sin(an) * fs(8), x + Math.cos(an) * fs(11), y + Math.sin(an) * fs(11), '#ffcf6a', a, 1.4); } break;
+    case 'moon': circ(x, y, fs(8), '#dfe8ff', a); circ(x + fs(4), y - fs(3), fs(7), C.bg, 1); break;
+    case 'peak': ctx.fillStyle = rgba('#c8b8ff', a); ctx.beginPath(); ctx.moveTo(x - fs(11), y + fs(7)); ctx.lineTo(x, y - fs(9)); ctx.lineTo(x + fs(11), y + fs(7)); ctx.fill(); break;
+    case 'ocean': for (let k = 0; k < 3; k++) { ctx.strokeStyle = rgba('#4f9fd8', a); ctx.lineWidth = 1.5; ctx.beginPath(); for (let i = 0; i <= 20; i++) { const xx = x - fs(11) + i * fs(1.1), yy = y - fs(5) + k * fs(5) + Math.sin(i * .8 + T * 2 + k) * fs(1.5); i ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); } ctx.stroke(); } break;
+    case 'om': txt('ॐ', x, y + fs(7), { f: 'deva', size: 20, col: c, a }); break;
+    case 'tree': line(x, y + fs(9), x, y - fs(2), '#8a6a44', a, 2); circ(x, y - fs(5), fs(8), '#8fd18a', a); break;
+    case 'river': ctx.strokeStyle = rgba('#8fc1e8', a); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x - fs(4), y - fs(10)); ctx.bezierCurveTo(x + fs(10), y - fs(4), x - fs(10), y + fs(3), x + fs(4), y + fs(10)); ctx.stroke(); break;
+    case 'a': txt('अ', x, y + fs(7), { f: 'deva', size: 20, col: c, a }); break;
+    case 'spring': for (let k = 0; k < 5; k++) { const an = k * TAU / 5; ctx.fillStyle = rgba('#f2a7c0', a); ctx.beginPath(); ctx.ellipse(x + Math.cos(an) * fs(5), y + Math.sin(an) * fs(5), fs(5), fs(3), an, 0, TAU); ctx.fill(); } circ(x, y, fs(2.5), '#ffd98a', a); break;
+    case 'silence': ring(x, y, fs(8), '#dfe8ff', a, 1.2); break;
+  }
+}
+function s10(p, T) {
+  const cx = W * .5, cy = H * .5, R = S * .36;
+  const idx = Math.min(9, Math.floor(p * 10.8));
+  const all = ease(seg(p, .93, 1));
+  glow(cx, cy, fs(50), C.krishna, .35); circ(cx, cy, fs(5), '#ffffff');
+  VIB.forEach(([sk, kind, line_, ref], i) => {
+    const an = -Math.PI / 2 + i * TAU / 10, x = cx + Math.cos(an) * R, y = cy + Math.sin(an) * R;
+    const now = i === idx && all < .5, done = i <= idx;
+    const a = Math.max(done ? .85 : .25, all);
+    if (now) { glow(x, y, fs(34), C.gold, .45); line(cx, cy, x, y, C.gold, .4, 1.2); flowDots(cx, cy, cx, cy, x, y, C.gold, 1, 2, .4); }
+    if (all > 0) line(cx, cy, x, y, C.gold, .25 * all, 1);
+    vicon(kind, x, y, a, T);
+    const lx = cx + Math.cos(an) * (R + fs(26)), ly = cy + Math.sin(an) * (R + fs(22)) + fs(4);
+    txt(sk, lx, ly, { f: 'serif', size: 12.5, a, align: Math.abs(Math.cos(an)) < .3 ? 'center' : Math.cos(an) > 0 ? 'left' : 'right' });
+  });
+  const [sk, kind, ln, ref] = VIB[idx];
+  txt(all > .5 ? 'Whatever is glorious comes from a spark of my splendour' : `"${ln}"`, cx, H - fs(port ? 30 : 16), { f: 'serif', size: 15, col: C.sattva });
+  txt(all > .5 ? '10.41' : ref, cx, H - fs(port ? 14 : 1), { size: 11.5, col: C.muted, a: port ? 1 : 0 });
+  txt(all > .5 ? '' : ref, W - 16, fs(20), { size: 12, col: C.gold, align: 'right', a: port ? 0 : 1 });
+  capsLabel('vibhūti · among each kind, I am the best', 16, fs(20), 1, 'left');
+}
+function s11(p, T) {
+  const cx = W * .5, cy = H * .5;
+  const blaze = ease(seg(p, 0, .25)), inflow = ease(seg(p, .28, .38)) * (1 - ease(seg(p, .7, .78)));
+  const kala = ease(seg(p, .6, .68)) * (1 - ease(seg(p, .84, .9))), calm = ease(seg(p, .86, .96));
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, S * .8);
+  g.addColorStop(0, rgba('#fff2cf', .55 * blaze * (1 - calm))); g.addColorStop(.35, rgba('#ef8a4a', .25 * blaze * (1 - calm))); g.addColorStop(1, rgba('#ef8a4a', 0));
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 90; i++) {
+    const ring_ = 1 + (i % 5), an = rnd(i + 1500) * TAU + T * .06 * (ring_ % 2 ? 1 : -1), rr = S * (.08 + ring_ * .08) * (.6 + .4 * blaze);
+    const x = cx + Math.cos(an) * rr, y = cy + Math.sin(an) * rr * .8;
+    const a = blaze * (1 - calm) * (.4 + .6 * rnd(i + 1600));
+    if (i % 3 === 0) { ctx.save(); ctx.translate(x, y); ctx.strokeStyle = rgba('#fff2cf', a * .8); ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(0, 0, fs(6), fs(3), 0, 0, TAU); ctx.stroke(); circ(0, 0, fs(1.6), '#2a1a10', a); ctx.restore(); }
+    else { glow(x, y, fs(10), '#ffd98a', a * .8); circ(x, y, fs(2), '#ffffff', a); }
+  }
+  if (inflow > 0) for (let k = 0; k < 120; k++) {
+    const u = (T * .25 + rnd(k + 1700)) % 1, an = rnd(k + 1800) * TAU, r0 = S * .75;
+    const rr = r0 * (1 - u), sw = an + u * 2.2;
+    const x = cx + Math.cos(sw) * rr, y = cy + Math.sin(sw) * rr * .8;
+    circ(x, y, fs(1.8), k % 4 ? '#a9c8ff' : C.rajas, inflow * (.3 + .7 * u));
+  }
+  glow(cx, cy, fs(60) * (1 + inflow * .5), C.rajas, .45 * inflow);
+  txt('a thousand suns rising at once (11.12)', cx, fs(24), { f: 'serif', size: 15, col: '#fff2cf', a: blaze * (1 - inflow) * (1 - calm) });
+  txt('like rivers rushing into the ocean (11.28)', cx, fs(24), { f: 'serif', size: 15, col: '#a9c8ff', a: inflow * (1 - kala) });
+  txt('like moths into a flame (11.29)', cx, fs(42), { size: 12.5, col: C.muted, a: inflow * (1 - kala) });
+  txt('कालोऽस्मि', cx, cy - fs(14), { f: 'deva', size: 46, col: '#fff2cf', a: kala });
+  txt('kālo ’smi · I am Time', cx, cy + fs(42), { f: 'serif', size: 18, col: C.gold, a: kala });
+  glow(cx, cy, fs(70), C.krishna, .4 * calm); circ(cx, cy, fs(6), '#dfe8ff', calm);
+  txt('saumya · the gentle form again (11.50)', cx, cy + fs(60), { f: 'serif', size: 15, col: '#9fb7ff', a: calm });
+}
+const FIELD = [['pṛthivī', 0], ['ap', 0], ['tejas', 0], ['vāyu', 0], ['ākāśa', 0], ['ahaṃkāra', 1], ['buddhi', 1], ['avyakta', 1], ['śrotra', 2], ['tvak', 2], ['cakṣus', 2], ['rasanā', 2], ['ghrāṇa', 2], ['vāk', 3], ['pāṇi', 3], ['pāda', 3], ['pāyu', 3], ['upastha', 3], ['manas', 4], ['śabda', 5], ['sparśa', 5], ['rūpa', 5], ['rasa', 5], ['gandha', 5]];
+const FCOL = ['#b58a52', '#ffd98a', '#f2e3b8', '#f0a878', '#fff2cf', '#b0a4f5'];
+function s13(p, T) {
+  const sunX = W * .5, sunY = H * .12;
+  const cols = port ? 4 : 6, rows = 24 / cols;
+  const gw = port ? W - 48 : W * .46, tw = gw / cols, th = fs(port ? 30 : 28);
+  const gx = W * .5 - gw / 2, gy = port ? H * .3 : H * .4;
+  FIELD.forEach(([nm, grp], i) => {
+    const a = ease(seg(p, i * .015, i * .015 + .06));
+    const x = gx + (i % cols) * tw, y = gy + Math.floor(i / cols) * th;
+    ctx.fillStyle = rgba(FCOL[grp], .12 * a); ctx.fillRect(x + 1.5, y + 1.5, tw - 3, th - 3);
+    ctx.strokeStyle = rgba(FCOL[grp], .45 * a); ctx.lineWidth = 1; ctx.strokeRect(x + 1.5, y + 1.5, tw - 3, th - 3);
+    txt(nm, x + tw / 2, y + th / 2 + fs(4), { f: 'serif', size: 12, col: FCOL[grp], a });
+  });
+  const fieldBottom = gy + rows * th;
+  txt('kṣetra · the field of this body: 24 principles (13.5)', W / 2, fieldBottom + fs(18), { size: 12, col: C.muted, a: ease(seg(p, .3, .38)) });
+  const sides = port ? [[W * .25, H * .86], [W * .75, H * .86]] : [[W * .1, H * .6], [W * .9, H * .6]];
+  const aS = ease(seg(p, .36, .44));
+  sides.forEach(([x, y]) => { for (let i = 0; i < 12; i++) { const xx = x - fs(30) + (i % 4) * fs(15), yy = y - fs(18) + Math.floor(i / 4) * fs(12); ctx.strokeStyle = rgba(FCOL[i % 6], .45 * aS); ctx.strokeRect(xx, yy, fs(13), fs(10)); } txt('another field', x, y + fs(32), { size: 11, col: C.faint, a: aS }); });
+  const aK = ease(seg(p, .44, .54));
+  glow(sunX, sunY, fs(50), '#fff2cf', .6 * aK); circ(sunX, sunY, fs(8), '#ffffff', aK);
+  txt('kṣetrajña · the knower of the field', sunX + fs(20), sunY + fs(4), { f: 'serif', size: 14, align: 'left', col: C.gold, a: aK });
+  const aR = ease(seg(p, .56, .7));
+  const targets = [[W * .5, gy], ...sides.map(([x, y]) => [x, y - fs(20)])];
+  targets.forEach(([x, y], i) => {
+    const g = ctx.createLinearGradient(sunX, sunY, x, y); g.addColorStop(0, rgba('#fff2cf', .5 * aR)); g.addColorStop(1, rgba('#fff2cf', .05 * aR));
+    ctx.strokeStyle = g; ctx.lineWidth = i ? 1.5 : 3; ctx.beginPath(); ctx.moveTo(sunX, sunY); ctx.lineTo(x, y); ctx.stroke();
+    flowDots(sunX, sunY, (sunX + x) / 2, (sunY + y) / 2, x, y, '#ffffff', aR, 3, .3, i * .3);
+  });
+  if (aR > 0) { ctx.fillStyle = rgba('#fff2cf', .06 * aR); ctx.fillRect(gx, gy, gw, rows * th); }
+  txt('one sun lights the whole world (13.33)', W / 2, H - fs(14), { f: 'serif', size: 15, col: '#fff2cf', a: ease(seg(p, .72, .8)) });
+}
+function s14(p, T) {
+  const cx = W * .5, cy = H * .52;
+  const loose = ease(seg(p, .5, .8));
+  const tight = seg(p, .08, .45);
+  const pulse = (1 - loose) * .06 * Math.sin(T * 3);
+  glow(cx, cy, fs(40) + fs(40) * loose, '#fff4d6', .35 + .35 * loose); circ(cx, cy, fs(6) + fs(3) * loose, '#ffffff');
+  const RP = [['sattva', 'happiness and knowledge', C.sattva, .16, .3], ['rajas', 'craving and action', C.rajas, .22, -.5], ['tamas', 'carelessness and sleep', C.tamas, .28, 1.1]];
+  RP.forEach(([sk, en, col, rr, tilt], i) => {
+    const a = ease(seg(p, .02 + i * .07, .1 + i * .07)) * (1 - loose * .92);
+    const rx = S * rr * (1 + loose * 1.4 + pulse), ry = rx * .42, rot = tilt + T * (.2 + i * .07) * (i % 2 ? -1 : 1);
+    ctx.save(); ctx.setLineDash([fs(6), fs(3)]); ctx.lineDashOffset = -T * 20 * (i + 1); ctx.strokeStyle = rgba(col, .9 * a); ctx.lineWidth = 3 - loose * 2;
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, rot, 0, TAU); ctx.stroke(); ctx.restore();
+    const lx = port ? 16 : W * .06, ly = H * (.16 + i * .1);
+    txt(sk, lx, ly, { f: 'serif', size: 15, align: 'left', col, a: Math.max(a, .3) });
+    txt('binds with ' + en, lx, ly + fs(14), { size: 11.5, align: 'left', col: C.muted, a: Math.max(a, .3) });
+  });
+  txt('dehī · the embodied self', cx, cy + fs(28), { f: 'serif', size: 13, col: C.gold, a: 1 - loose });
+  txt('guṇātīta · beyond the three guṇas', cx, H - fs(port ? 34 : 30), { f: 'serif', size: 16, col: '#ffffff', a: ease(seg(p, .78, .86)) });
+  txt('"it is only the guṇas moving": unshaken (14.23)', cx, H - fs(port ? 16 : 12), { size: 12, col: C.muted, a: ease(seg(p, .84, .92)) });
+}
+function s15(p, T) {
+  const rx = W * .5, ry = H * .1;
+  const grow = ease(seg(p, 0, .45)), cut = seg(p, .56, .62), fall = ease(seg(p, .62, .85));
+  const cutY = H * .3;
+  const g = ctx.createLinearGradient(0, 0, 0, ry + fs(20)); g.addColorStop(0, rgba('#fff2cf', .35)); g.addColorStop(1, rgba('#fff2cf', 0));
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, ry + fs(20));
+  // roots above
+  for (let k = 0; k < 9; k++) { const an = -Math.PI / 2 + (k - 4) * .28; curve(rx, ry, rx + Math.cos(an) * fs(30), ry + Math.sin(an) * fs(20) + fs(10), rx + Math.cos(an) * fs(60), ry + Math.sin(an) * fs(40), '#fff2cf', .7, 1.4); }
+  txt('ūrdhva-mūlam · roots above, in the divine', rx + fs(70), ry - fs(14), { f: 'serif', size: 13, align: 'left', col: '#fff2cf', a: port ? 0 : 1 });
+  if (port) txt('roots above', rx + fs(64), ry + fs(4), { f: 'serif', size: 13, align: 'left', col: '#fff2cf' });
+  const maxD = 6;
+  function br(x, y, ang, len, d, id) {
+    const prog = clamp(grow * (maxD + 1) - d);
+    if (prog <= 0) return;
+    const ex = x + Math.sin(ang) * len * prog, ey = y + Math.cos(ang) * len * prog;
+    const below = y > cutY || ey > cutY;
+    const drop = below ? fall * H * .5 : 0, fa = below ? 1 - fall : 1;
+    const col = d === 0 ? '#c9a878' : GC[id % 3];
+    line(x, y + drop, ex, ey + drop, d < 2 ? '#c9a878' : col, (.5 + .4 * (1 - d / maxD)) * fa, Math.max(1, (maxD - d) * .9));
+    if (d === maxD && prog >= 1) { circ(ex, ey + drop + fs(2), fs(2.2), GC[id % 3], .85 * fa); }
+    if (d < maxD) { const sp = .42 + .12 * rnd(id); br(ex, ey, ang - sp, len * .74, d + 1, id * 2 + 1); br(ex, ey, ang + sp, len * .74, d + 1, id * 2 + 2); }
+  }
+  br(rx, ry, 0, H * .17, 0, 1);
+  txt('adhaḥ-śākham · branches below, fed by the guṇas', W - 16, H * .4, { size: 12, align: 'right', col: C.muted, a: grow * (1 - fall) });
+  txt('chandāṃsi parṇāni · its leaves are the hymns', 16, H * .92, { size: 12, align: 'left', col: C.muted, a: grow * (1 - fall) });
+  if (cut > 0 && cut < 1) { const x = lerp(W * .2, W * .8, cut); line(W * .2, cutY, x, cutY, '#ffffff', .9, 2.5); glow(x, cutY, fs(20), '#ffffff', .8); }
+  const aA = ease(seg(p, .54, .6)) * (1 - ease(seg(p, .9, .96)));
+  txt('asaṅga-śastra · the axe of non-attachment', W / 2, cutY - fs(10), { f: 'serif', size: 14, col: '#ffffff', a: aA });
+  txt('seek the place from which none return (15.4)', W / 2, H * .7, { f: 'serif', size: 15, col: '#fff2cf', a: ease(seg(p, .86, .94)) });
+}
+function s18(p, T) {
+  const rise = ease(seg(p, .5, .66));
+  const b = battlefield(p, T, { cx: W * .5, moving: false, sit: 1 - rise, bowDown: rise > .5 ? 0 : 1, raise: ease(seg(p, .64, .74)), haze: 1 - ease(seg(p, .36, .5)), light: ease(seg(p, .08, .2)), dawn: ease(seg(p, .6, .9)), conch: ease(seg(p, .8, .88)) });
+  const aL = ease(seg(p, .1, .2)) * (1 - ease(seg(p, .5, .56)));
+  if (aL > 0) { const kx = b.cx + b.cs * .38, ky = b.cy - b.cs * .8, axx = b.cx - b.cs * .12, ayy = b.cy - b.cs * .9; flowDots(kx, ky, (kx + axx) / 2, ky - b.cs, axx, ayy, '#9fb7ff', aL, 4, .4); }
+  const lines = [[.1, .36, 'sarva-dharmān parityajya · take refuge in me alone (18.66)', '#9fb7ff'], [.36, .62, 'naṣṭo mohaḥ · my delusion is gone (18.73)', '#dfe8ff'], [.62, .84, 'kariṣye vacanaṃ tava · I will do as you say', C.gold], [.84, 1.1, 'where Kṛṣṇa and Arjuna are, there is victory (18.78)', C.gold]];
+  lines.forEach(([a0, a1, s, col]) => txt(s, W / 2, fs(port ? 44 : 22), { f: 'serif', size: port ? 13.5 : 15, col, a: ease(seg(p, a0, a0 + .05)) * (1 - ease(seg(p, a1 - .03, a1))) }));
+  capsLabel('Kurukṣetra · the same field, 700 verses later', 16, port ? fs(18) : H - fs(12), 1, 'left');
+}
+const DRAW = [s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s13, s14, s15, s18];
+
+/* ---------------- engine ---------------- */
+function resize() {
+  const w = box.clientWidth;
+  port = w < 600;
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  W = w; H = Math.round(port ? w * 1.25 : w * .62); S = Math.min(W, H);
+  FS = clamp(W / 820, port ? .86 : .82, 1.1);
+  cv.style.height = H + 'px';
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function background() {
+  const g = ctx.createRadialGradient(W * .5, H * .25, 0, W * .5, H * .35, Math.max(W, H) * .9);
+  g.addColorStop(0, '#172035'); g.addColorStop(.55, C.bg); g.addColorStop(1, C.bg0);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  background();
+  ctx.save(); DRAW[cur](p, clock); ctx.restore();
+  const f = 1 - ease(t / .6);
+  if (f > 0) { ctx.fillStyle = rgba(C.bg0, f); ctx.fillRect(0, 0, W, H); }
+}
+
+/* ---------------- UI ---------------- */
+const $ = id => document.getElementById(id);
+const tabs = PARTS.map((b, i) => {
+  const el = document.createElement('button');
+  el.className = 'tab'; el.style.setProperty('--bc', b.col);
+  el.innerHTML = `<span class="n">${b.n}</span><span class="nm">${b.name}</span><span class="c">${b.en}</span>`;
+  el.addEventListener('click', () => go(SCENES.findIndex(s => s.b === i)));
+  $('tabs').appendChild(el); return el;
+});
+const segs = SCENES.map((s, i) => {
+  const b = document.createElement('button');
+  const first = i === 0 || SCENES[i - 1].b !== s.b;
+  b.className = 'seg' + (first ? ' first' : '') + (i === 0 ? ' b0' : '');
+  b.style.setProperty('--bc', PARTS[s.b].col);
+  b.setAttribute('aria-label', `Scene ${i + 1}: ${s.iast}`); b.title = s.iast;
+  b.appendChild(document.createElement('i'));
+  b.addEventListener('click', () => go(i));
+  $('scrub').appendChild(b); return b;
+});
+const dotEls = [], rowEls = [];
+CH.forEach(([n, sk, en], ci) => {
+  const ch = ci + 1, col = PARTS[partOf(ch)].col;
+  const row = document.createElement('div'); row.className = 'crow'; row.style.setProperty('--bc', col);
+  row.innerHTML = `<h4><span class="no">${ch}</span><span><b>${sk}</b> · ${en}</span></h4><div class="dots"></div>`;
+  const dots = row.querySelector('.dots');
+  for (let v = 1; v <= n; v++) {
+    const d = document.createElement('button');
+    d.className = 'sd'; d.style.setProperty('--bc', col);
+    const title = `${ch}.${v} · ${sk} yoga`;
+    d.title = title; d.setAttribute('aria-label', title);
+    const note = () => { $('hoverNote').innerHTML = `<b>${ch}.${v}</b> · chapter ${ch}, ${en.toLowerCase()}`; };
+    d.addEventListener('mouseenter', note); d.addEventListener('focus', note);
+    d.addEventListener('click', () => go(sceneFor(ch, v)));
+    dots.appendChild(d); dotEls.push({ el: d, ch, v });
+  }
+  $('chapters').appendChild(row); rowEls.push(row);
+});
+function sceneFor(ch, v) {
+  let best = 0, bd = 1e9;
+  SCENES.forEach((s, i) => s.refs.forEach(([c, a, z]) => { const d = Math.abs(c - ch) * 1000 + (v < a ? a - v : v > z ? v - z : 0); if (d < bd) { bd = d; best = i; } }));
+  return best;
+}
+const inScene = (s, ch, v) => s.refs.some(([c, a, z]) => c === ch && v >= a && v <= z);
+
+let swapTimer = null;
+function fillPanel(immediate) {
+  const s = SCENES[cur], b = PARTS[s.b];
+  const chs = [...new Set(s.refs.map(r => r[0]))].join(', ');
+  document.documentElement.style.setProperty('--accent', b.col);
+  const put = () => {
+    $('pStep').textContent = `${b.name} · chapter${chs.includes(',') ? 's' : ''} ${chs} · scene ${cur + 1} of ${SCENES.length}`;
+    $('pDeva').textContent = s.deva;
+    $('pIast').textContent = s.iast;
+    $('pEn').textContent = s.en;
+    $('pSutras').innerHTML = s.sutras.map(([r, k, e]) => `<div class="su"><span class="ref">${r}</span><p class="skt" lang="sa-Latn">${k}</p><p class="tr">${e}</p></div>`).join('');
+    $('pText').innerHTML = s.text;
+    $('pList').innerHTML = (s.list || []).map(([a, z]) => `<dt>${a}</dt><dd>${z}</dd>`).join('');
+    $('pList').hidden = !s.list;
+    $('panel').classList.remove('swap');
+  };
+  clearTimeout(swapTimer);
+  if (immediate || reduced) { put(); return; }
+  $('panel').classList.add('swap'); swapTimer = setTimeout(put, 260);
+}
+function updateMap() {
+  const s = SCENES[cur];
+  tabs.forEach((el, i) => el.classList.toggle('on', i === s.b));
+  dotEls.forEach(d => d.el.classList.toggle('hit', inScene(s, d.ch, d.v)));
+  rowEls.forEach((r, i) => r.classList.toggle('hit', s.refs.some(x => x[0] === i + 1)));
+}
+function updateScrub() { segs.forEach((b, i) => { b.firstChild.style.width = (i < cur ? 100 : i === cur ? p * 100 : 0) + '%'; b.setAttribute('aria-current', i === cur ? 'step' : 'false'); }); }
+function setPlaying(v) { playing = v; narrPlayState(v); $('playLabel').textContent = v ? 'Pause' : 'Play'; $('playIcon').innerHTML = v ? '<path d="M3 2h4v12H3zM9 2h4v12H9z"/>' : '<path d="M4 2v12l10-6z"/>'; }
+function go(i) { cur = (i + SCENES.length) % SCENES.length; t = 0; p = 0; fillPanel(false); updateMap(); speakScene(); }
+$('play').addEventListener('click', () => setPlaying(!playing));
+$('prev').addEventListener('click', () => go(cur - 1));
+$('next').addEventListener('click', () => go(cur + 1));
+document.addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('button') && (e.key === ' ' || e.key === 'Enter')) return;
+  if (e.key === 'ArrowRight') { go(cur + 1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft') { go(cur - 1); e.preventDefault(); }
+  else if (e.key === ' ') { setPlaying(!playing); e.preventDefault(); }
+});
+/* speed control: 1 = original pace, default 0.6 */
+let speed = 0.6;
+try { const v = parseFloat(localStorage.getItem('yogaAnimSpeed')); if (v >= .2 && v <= 2) speed = v; } catch (e) {}
+const speedIn = document.getElementById('speed'), speedOut = document.getElementById('speedOut');
+function showSpeed() { speedIn.value = speed; speedOut.textContent = (Math.round(speed * 100) / 100) + '×'; }
+speedIn.addEventListener('input', () => { speed = parseFloat(speedIn.value); showSpeed(); try { localStorage.setItem('yogaAnimSpeed', String(speed)); } catch (e) {} });
+showSpeed();
+
+/* ---------------- narration (Web Speech API) ---------------- */
+const NAR = { on: false, skt: true, token: 0, pending: 0, en: null, hi: null, idleSince: 0 };
+const synth = window.speechSynthesis;
+const narrBtn = document.getElementById('narrBtn'), narrLabel = document.getElementById('narrLabel');
+const sktBox = document.getElementById('narrSkt'), voiceSel = document.getElementById('narrVoice'), narrNote = document.getElementById('narrNote');
+function iastToDeva(src) {
+  const V = [['ai', 'ऐ', 'ै'], ['au', 'औ', 'ौ'], ['ā', 'आ', 'ा'], ['ī', 'ई', 'ी'], ['ū', 'ऊ', 'ू'], ['ṝ', 'ॠ', 'ॄ'], ['ṛ', 'ऋ', 'ृ'], ['ḷ', 'ऌ', 'ॢ'], ['a', 'अ', ''], ['i', 'इ', 'ि'], ['u', 'उ', 'ु'], ['e', 'ए', 'े'], ['o', 'ओ', 'ो']];
+  const K = [['kh', 'ख'], ['gh', 'घ'], ['ch', 'छ'], ['jh', 'झ'], ['ṭh', 'ठ'], ['ḍh', 'ढ'], ['th', 'थ'], ['dh', 'ध'], ['ph', 'फ'], ['bh', 'भ'], ['k', 'क'], ['g', 'ग'], ['ṅ', 'ङ'], ['c', 'च'], ['j', 'ज'], ['ñ', 'ञ'], ['ṭ', 'ट'], ['ḍ', 'ड'], ['ṇ', 'ण'], ['t', 'त'], ['d', 'द'], ['n', 'न'], ['p', 'प'], ['b', 'ब'], ['m', 'म'], ['y', 'य'], ['r', 'र'], ['l', 'ल'], ['v', 'व'], ['ś', 'श'], ['ṣ', 'ष'], ['s', 'स'], ['h', 'ह']];
+  const s = src.normalize('NFC').toLowerCase().replace(/-/g, '').replace(/…/g, ' ').replace(/·/g, ' । ');
+  const find = (L, i) => L.find(e => s.startsWith(e[0], i));
+  let out = '', i = 0;
+  while (i < s.length) {
+    const k = find(K, i);
+    if (k) { i += k[0].length; out += k[1]; const v = find(V, i); if (v) { i += v[0].length; out += v[2]; } else out += '्'; continue; }
+    const v = find(V, i);
+    if (v) { i += v[0].length; out += v[1]; continue; }
+    const ch = s[i++];
+    out += ch === 'ṃ' || ch === 'ṁ' ? 'ं' : ch === 'ḥ' ? 'ः' : (ch === '’' || ch === "'") ? 'ऽ' : ch;
+  }
+  return out;
+}
+function forEnglish(html) {
+  const d = document.createElement('div'); d.innerHTML = html;
+  return d.textContent.replace(/\s*\([^)]*\d[^)]*\)/g, '').replace(/→/g, ', leading to').replace(/[’‘]/g, "'").replace(/[“”]/g, '"')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+function sentences(html) { return (forEnglish(html).match(/[^.!?]+[.!?]+["']?\s*|[^.!?]+$/g) || []).map(x => x.trim()).filter(Boolean); }
+function narrationParts(i) {
+  const out = [];
+  if (typeof STAGES !== 'undefined') {
+    const s = STAGES[i];
+    out.push([forEnglish(s.en) + '.', 'en']);
+    if (NAR.skt && NAR.hi) out.push([s.deva.replace(/ · /g, ' । '), 'hi']);
+    sentences(s.text).forEach(x => out.push([x, 'en']));
+  } else {
+    const s = SCENES[i];
+    out.push([forEnglish(s.en) + '.', 'en']);
+    s.sutras.forEach(([r, k, e]) => { if (NAR.skt && NAR.hi) out.push([iastToDeva(k), 'hi']); sentences(e).forEach(x => out.push([x, 'en'])); });
+    sentences(s.text).forEach(x => out.push([x, 'en']));
+  }
+  return out;
+}
+function speakScene() {
+  if (!NAR.on || !synth) return;
+  const tok = ++NAR.token;
+  synth.cancel(); NAR.pending = 0; NAR.idleSince = 0;
+  narrationParts(cur).forEach(([text, lang]) => {
+    const u = new SpeechSynthesisUtterance(text);
+    if (lang === 'hi') { u.voice = NAR.hi; u.lang = NAR.hi.lang; u.rate = .85; }
+    else { if (NAR.en) { u.voice = NAR.en; u.lang = NAR.en.lang; } else u.lang = 'en-US'; u.rate = .95; }
+    NAR.pending++;
+    const done = () => { if (tok === NAR.token) NAR.pending = Math.max(0, NAR.pending - 1); };
+    u.onend = done; u.onerror = done;
+    synth.speak(u);
+  });
+  if (!playing) synth.pause();
+}
+function narrBusy(now) {
+  if (!NAR.on || !synth || NAR.pending <= 0) return false;
+  // recover if the engine silently dropped the queue
+  if (!synth.speaking && !synth.pending && !synth.paused) { if (!NAR.idleSince) NAR.idleSince = now; else if (now - NAR.idleSince > 1500) { NAR.pending = 0; return false; } }
+  else NAR.idleSince = 0;
+  return true;
+}
+function narrPlayState(v) { if (!NAR.on || !synth) return; if (v) synth.resume(); else synth.pause(); }
+function voiceScore(v) {
+  let s = 0; const n = v.name;
+  if (/Natural|Neural|Online/i.test(n)) s += 50;
+  if (/Google/i.test(n)) s += 20;
+  if (/Samantha|Daniel|Serena|Karen|Moira|Arthur|Martha/i.test(n)) s += 15;
+  if (/^en-GB/i.test(v.lang)) s += 6; if (/^en-US/i.test(v.lang)) s += 5; if (/^en-IN/i.test(v.lang)) s += 4;
+  if (v.localService) s += 1;
+  return s;
+}
+function loadVoices() {
+  if (!synth) return;
+  const all = synth.getVoices();
+  const en = all.filter(v => /^en(-|_|$)/i.test(v.lang)).sort((a, b) => voiceScore(b) - voiceScore(a));
+  NAR.hi = all.find(v => /^sa(-|_|$)/i.test(v.lang)) || all.find(v => /^hi(-|_|$)/i.test(v.lang)) || all.find(v => /^mr(-|_|$)|^ne(-|_|$)/i.test(v.lang)) || null;
+  let saved = null; try { saved = localStorage.getItem('yogaNarrVoice'); } catch (e) {}
+  voiceSel.innerHTML = en.map(v => `<option value="${v.name.replace(/"/g, '&quot;')}">${v.name} (${v.lang})</option>`).join('') || '<option>Default voice</option>';
+  NAR.en = en.find(v => v.name === saved) || en[0] || null;
+  if (NAR.en) voiceSel.value = NAR.en.name;
+  sktBox.disabled = !NAR.hi;
+  narrNote.textContent = NAR.hi ? '' : 'No Hindi or Sanskrit voice on this device, so Sanskrit is skipped.';
+}
+if (!synth || typeof SpeechSynthesisUtterance === 'undefined') {
+  document.getElementById('narr').hidden = true;
+} else {
+  try { const v = localStorage.getItem('yogaNarrSkt'); if (v !== null) NAR.skt = v === '1'; } catch (e) {}
+  sktBox.checked = NAR.skt;
+  loadVoices();
+  if (typeof synth.addEventListener === 'function') synth.addEventListener('voiceschanged', loadVoices); else synth.onvoiceschanged = loadVoices;
+  narrBtn.addEventListener('click', () => {
+    NAR.on = !NAR.on;
+    narrBtn.setAttribute('aria-pressed', NAR.on ? 'true' : 'false');
+    narrLabel.textContent = NAR.on ? 'Narration on' : 'Narrate';
+    if (NAR.on) { if (!NAR.en && !NAR.hi) loadVoices(); speakScene(); } else { NAR.token++; NAR.pending = 0; synth.cancel(); }
+  });
+  sktBox.addEventListener('change', () => { NAR.skt = sktBox.checked; try { localStorage.setItem('yogaNarrSkt', NAR.skt ? '1' : '0'); } catch (e) {} if (NAR.on) speakScene(); });
+  voiceSel.addEventListener('change', () => { NAR.en = synth.getVoices().find(v => v.name === voiceSel.value) || NAR.en; try { localStorage.setItem('yogaNarrVoice', voiceSel.value); } catch (e) {} if (NAR.on) speakScene(); });
+  window.addEventListener('pagehide', () => synth.cancel());
+}
+
+function frame(now) {
+  const dt = clamp((now - last) / 1000, 0, .05) * speed; last = now;
+  clock += dt * (reduced ? .4 : 1);
+  t = Math.min(DUR, t + dt * (reduced ? 3 : 1));
+  p = t / DUR;
+  if (playing && t >= DUR && !narrBusy(now)) go(cur + 1);
+  draw(); updateScrub();
+  requestAnimationFrame(frame);
+}
+new ResizeObserver(resize).observe(box);
+resize();
+setPlaying(playing);
+fillPanel(true); updateMap();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
