@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<!-- version = "20260927-144700" -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Handstand Counter</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --text:#1d2330; --muted:#6b7385; --line:#e2e5eb;
+    --ar:1.7778; --extra:0px; --accent:#2f6fed; --ok:#1f9d55; --warn:#e8890c; --bad:#c9372c; --none:#b8bfcc;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#12151b; --card:#1b2029; --text:#e6e9ef; --muted:#9aa3b5; --line:#2c3340;
+      --accent:#5b8ff5; --ok:#35c07a; --warn:#f0a13a; --bad:#e5594d; --none:#4a5364;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  main{max-width:1100px;margin:0 auto;padding:16px}
+  h1{font-size:1.4rem;margin:.2rem 0 1rem}
+  h2{font-size:1.05rem;margin:0 0 .7rem}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+  details.card{padding:0}
+  details.card > summary{padding:14px;cursor:pointer;font-weight:600;font-size:1.05rem;list-style:none;display:flex;align-items:center;gap:8px}
+  details.card > summary::-webkit-details-marker{display:none}
+  details.card > summary::before{content:"▸";color:var(--muted);transition:transform .15s}
+  details.card[open] > summary::before{transform:rotate(90deg)}
+  details.card > summary .sumTxt{font-weight:400;font-size:.83rem;color:var(--muted);margin-left:auto;text-align:right}
+  .detailsBody{padding:0 14px 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+  label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted)}
+  label.chk{flex-direction:row;align-items:center;gap:8px;color:var(--text)}
+  label small{font-size:.75rem;color:var(--muted);line-height:1.3}
+  input[type=number],select{padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--text);font-size:.95rem}
+  button{padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:.95rem;cursor:pointer}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .hint{color:var(--muted);font-size:.83rem;margin:.4rem 0 0}
+  .stage{position:relative;width:100%;background:#000;border-radius:10px;overflow:hidden}
+  .stage video,.stage canvas{display:block;width:100%;height:auto}
+  .stage canvas{position:absolute;inset:0;pointer-events:none}
+  progress{width:100%;height:10px}
+  .progLabel{display:flex;justify-content:space-between;gap:10px;font-size:.83rem;color:var(--muted);margin:.5rem 0 .2rem}
+  .progLabel b{color:var(--text);font-weight:600}
+  #timeline{width:100%;height:46px;display:block;cursor:pointer;border-radius:6px;background:var(--bg)}
+  .legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.8rem;color:var(--muted);margin-top:6px}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+  .stat{background:var(--bg);border-radius:10px;padding:10px 12px}
+  .stat b{display:block;font-size:1.5rem;line-height:1.2}
+  .stat span{font-size:.8rem;color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:600;font-size:.8rem}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .bar{height:14px;border-radius:4px;background:var(--none);min-width:2px}
+  .bar.ok{background:var(--ok)}
+  tr.click{cursor:pointer}
+  tr.click:hover{background:var(--bg)}
+  .ok{color:var(--ok)} .bad{color:var(--bad)}
+  .scroll{max-height:380px;overflow:auto}
+  .hidden{display:none !important}
+  #err{color:var(--bad);font-weight:600}
+  @media (max-width:600px){ main{padding:10px} .stat b{font-size:1.25rem} }
+  /* desktop: video max 90% of window height, statistics to the right */
+  @media (min-width:1000px){
+    main{max-width:none}
+    .workspace{display:flex;gap:14px;align-items:flex-start}
+    .workspace > .card{margin-bottom:0}
+    .playerCard{flex:0 1 auto;width:calc((90vh - var(--extra)) * var(--ar) + 30px);min-width:360px;position:sticky;top:10px}
+    #results{flex:1 1 360px;min-width:340px;max-height:calc(100vh - 20px);overflow:auto;position:sticky;top:10px}
+    #results .scroll{max-height:none;overflow:visible}
+    .workspace{margin-bottom:14px}
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>Handstand Counter</h1>
+
+  <section class="card">
+    <h2>1. Video</h2>
+    <div class="row">
+      <input type="file" id="file" accept="video/*">
+      <button class="primary" id="btnRun" disabled>Analyze</button>
+      <button id="btnStop" disabled>Stop</button>
+    </div>
+    <p class="hint">Film from the side with your whole body in frame. The video stays on your device.</p>
+
+    <div id="modelWrap" class="hidden">
+      <div class="progLabel"><b id="modelStage">Loading model…</b><span id="modelTxt"></span></div>
+      <progress id="modelProg" value="0" max="1"></progress>
+    </div>
+    <div id="progWrap" class="hidden">
+      <div class="progLabel"><b id="progTitle">Analyzing video</b><span id="progTxt"></span></div>
+      <progress id="prog" value="0" max="1"></progress>
+    </div>
+    <p id="err"></p>
+  </section>
+
+  <details class="card" id="settingsBox">
+    <summary>2. Settings <span class="sumTxt" id="settingsSummary"></span></summary>
+    <div class="detailsBody">
+      <div class="grid">
+        <label>Frames per second to analyze
+          <input type="number" id="fps" value="15" min="5" max="60" step="1">
+          <small>Higher = more accurate timing, slower analysis.</small></label>
+        <label>Pose model
+          <select id="model">
+            <option value="lite">Lite (fast)</option>
+            <option value="full" selected>Full (recommended)</option>
+            <option value="heavy">Heavy (accurate, slow)</option>
+          </select>
+          <small>Changing this or the fps requires a new analysis.</small></label>
+        <label>Video speed-up (factor)
+          <input type="number" id="speed" value="1" min="0.1" max="32" step="0.25">
+          <small>2 = video plays 2× faster than real life. Durations are converted to real time.</small></label>
+        <label>Successful from (s)
+          <input type="number" id="minSucc" value="1.0" min="0.1" step="0.1">
+          <small>Minimum hold time for an attempt to count as successful.</small></label>
+        <label>Max. deviation from vertical (°)
+          <input type="number" id="tol" value="12.5" min="2.5" max="60" step="0.5">
+          <small>How far the torso (and legs, if required) may lean and still count as a hold.</small></label>
+        <label>Min. attempt duration (s)
+          <input type="number" id="minAtt" value="0.3" min="0" step="0.1">
+          <small>Shorter inversions (e.g. a half kick-up) are ignored.</small></label>
+        <label>Bridge gaps up to (s)
+          <input type="number" id="gap" value="0.3" min="0" step="0.05">
+          <small>Short drop-outs (a missed detection or a quick wobble) shorter than this don't split one attempt or hold into two.</small></label>
+        <label>Min. landmark visibility (0–1)
+          <input type="number" id="vis" value="0.4" min="0" max="1" step="0.05">
+          <small>Frames where the pose detector is less sure about shoulders, wrists, hips and ankles are treated as "no pose".</small></label>
+        <label class="chk"><input type="checkbox" id="strict" checked> Also require vertical legs
+          </label>
+        <label class="chk"><input type="checkbox" id="legsTog" checked> Timer starts only when legs are together
+          </label>
+        <label>Max. ankle distance (× torso length) <span id="legsCm"></span>
+          <input type="number" id="legsMax" value="0.15" min="0.05" max="1.5" step="0.025">
+          <small>Used with "legs together". Distance between the ankles relative to shoulder–hip length; lower = stricter. The cm value assumes a ~50 cm torso. Too strict makes the timer stutter because ankle points jitter a few cm.</small></label>
+      </div>
+      <p class="hint">Attempt = hips and ankles above the shoulders. Hold = torso within the angle from vertical, ankles above hips, hands below shoulders; with "Also require vertical legs" the hip-to-ankle line must be within the angle too. Without it, tuck, pike and other bent-leg shapes also count. With "Timer starts only when legs are together" the hold (and timer) only starts once the ankles are close together, so the kick-up with split legs isn't counted. Settings from "Video speed-up" onward update the results instantly without re-analyzing.</p>
+      <p class="hint">For strongly sped-up video, raise the frames per second: 15 fps on a 4× video is only ~4 fps in real time.</p>
+    </div>
+  </details>
+
+  <div class="workspace">
+  <section class="card playerCard">
+    <div class="stage" id="stage">
+      <video id="video" playsinline muted controls></video>
+      <canvas id="overlay"></canvas>
+    </div>
+    <canvas id="timeline" class="hidden" style="margin-top:10px"></canvas>
+    <div class="legend hidden" id="legend">
+      <span><i style="background:var(--none)"></i>no pose</span>
+      <span><i style="background:var(--warn)"></i>inverted</span>
+      <span><i style="background:var(--ok)"></i>handstand</span>
+      <span>Top strip: attempts (green = successful, red = not)</span>
+      <span>Click the timeline to jump</span>
+    </div>
+  </section>
+
+  <section class="card hidden" id="results">
+    <h2>3. Summary</h2>
+    <div class="stats" id="stats"></div>
+
+    <h2 style="margin-top:18px">Hold time distribution (per second)</h2>
+    <table id="binTable">
+      <thead><tr><th>Hold time</th><th class="num">Attempts</th><th class="num">Cumulative ≥</th><th style="width:45%"></th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h2 style="margin-top:18px">All attempts</h2>
+    <div class="scroll">
+      <table id="attTable">
+        <thead><tr><th>#</th><th>Start</th><th class="num">Inverted</th><th class="num">Hold</th><th>Result</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="btnCsv">Download CSV</button>
+      <button class="primary" id="btnExport">Save video with results</button>
+      <button id="btnCancelSave" class="hidden">Cancel</button>
+    </div>
+    <div id="saveWrap" class="hidden">
+      <div class="progLabel"><b id="saveTitle">Saving video</b><span id="saveTxt"></span></div>
+      <progress id="saveProg" value="0" max="1"></progress>
+    </div>
+    <p class="hint">The video is rendered frame by frame to MP4 (30 fps, without sound). Older browsers fall back to real-time recording as WebM.</p>
+  </section>
+  </div>
+</main>
+
+<script type="module">
+const version = "20260927-144700";
+
+import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs";
+
+const WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm";
+const MODEL_URL = v => `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${v}/float16/1/pose_landmarker_${v}.task`;
+const BONES = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+const KEY = [11,12,15,16,23,24,27,28];
+// fixed colors for drawing on top of the video (and in the exported video)
+const VPAL = { ok:"#35c07a", warn:"#f0a13a", bad:"#e5594d", none:"#4a5364", text:"#e6e9ef", bg:"#12151b" };
+
+const $ = id => document.getElementById(id);
+const video = $("video"), overlay = $("overlay"), octx = overlay.getContext("2d");
+const timeline = $("timeline"), tctx = timeline.getContext("2d");
+
+let landmarker = null, loadedModel = null, vision = null;
+const modelBuffers = {};
+let frames = [], step = 1/15, busy = false, exporting = false, stopReq = false, tsOffset = 0;
+let result = null, fileName = "video", vAspect = 1;
+
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const pagePal = () => ({ ok:css("--ok"), warn:css("--warn"), bad:css("--bad"), none:css("--none"), text:css("--text"), bg:css("--bg") });
+const fmtT = t => { const m = Math.floor(t/60), s = t - m*60; return `${m}:${s.toFixed(1).padStart(4,"0")}`; };
+const fmtD = d => `${d.toFixed(1)} s`;
+const fmtClock = s => { s = Math.max(0, Math.round(s)); const h = Math.floor(s/3600), m = Math.floor(s%3600/60), sec = s%60;
+  return h ? `${h}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}` : `${m}:${String(sec).padStart(2,"0")}`; };
+const fmtMB = b => (b / 1048576).toFixed(1) + " MB";
+const settings = () => ({
+  tol: +$("tol").value, minSucc: +$("minSucc").value, minAtt: +$("minAtt").value,
+  gap: +$("gap").value, vis: +$("vis").value, strict: $("strict").checked,
+  speed: Math.max(0.1, +$("speed").value || 1),
+  legsTog: $("legsTog").checked, legsMax: +$("legsMax").value || 0.15
+});
+
+function updateSettingsSummary(){
+  const s = settings();
+  $("legsCm").textContent = `≈ ${Math.round(s.legsMax * 50)} cm`; // assuming a ~50 cm shoulder–hip length
+  $("settingsSummary").textContent =
+    `${$("fps").value} fps · ${$("model").value} · ${s.speed}× · ≥${s.minSucc} s · ${s.tol}°${s.strict ? " + legs" : ""}${s.legsTog ? " · legs together" : ""}`;
+}
+["fps","model","speed","minSucc","tol","minAtt","gap","vis","strict","legsTog","legsMax"].forEach(id => $(id).addEventListener("input", updateSettingsSummary));
+updateSettingsSummary();
+
+/* ---------- load video ---------- */
+$("file").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  fileName = f.name.replace(/\.[^.]+$/, "");
+  $("err").textContent = "";
+  if (video.src) URL.revokeObjectURL(video.src);
+  video.src = URL.createObjectURL(f);
+  frames = []; result = null;
+  ["results","timeline","legend","progWrap","saveWrap"].forEach(id => $(id).classList.add("hidden"));
+  video.onloadedmetadata = () => {
+    overlay.width = video.videoWidth; overlay.height = video.videoHeight;
+    document.documentElement.style.setProperty("--ar", (video.videoWidth / video.videoHeight).toFixed(4));
+    fitPlayer();
+    requestAnimationFrame(drawPageTimeline);
+    octx.clearRect(0,0,overlay.width,overlay.height);
+    $("btnRun").disabled = false;
+  };
+});
+
+/* ---------- model loading with progress ---------- */
+function setModelProgress(stage, frac, txt){
+  $("modelWrap").classList.remove("hidden");
+  $("modelStage").textContent = stage;
+  const p = $("modelProg");
+  if (frac == null) p.removeAttribute("value"); else p.value = frac;
+  $("modelTxt").textContent = txt || "";
+}
+
+async function downloadModel(m){
+  if (modelBuffers[m]) return modelBuffers[m];
+  const res = await fetch(MODEL_URL(m));
+  if (!res.ok) throw new Error(`Model download failed (HTTP ${res.status})`);
+  const total = +res.headers.get("Content-Length") || 0;
+  if (!res.body){
+    const buf = new Uint8Array(await res.arrayBuffer());
+    modelBuffers[m] = buf; return buf;
+  }
+  const reader = res.body.getReader();
+  const chunks = []; let got = 0;
+  for (;;){
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value); got += value.length;
+    if (total) setModelProgress(`Downloading ${m} model…`, 0.9 * got / total, `${fmtMB(got)} / ${fmtMB(total)} (${Math.round(100 * got / total)}%)`);
+    else setModelProgress(`Downloading ${m} model…`, null, fmtMB(got));
+  }
+  const buf = new Uint8Array(got); let off = 0;
+  chunks.forEach(c => { buf.set(c, off); off += c.length; });
+  modelBuffers[m] = buf;
+  return buf;
+}
+
+async function ensureModel(){
+  const m = $("model").value;
+  if (landmarker && loadedModel === m) return;
+  if (landmarker) { landmarker.close(); landmarker = null; }
+  setModelProgress(`Downloading ${m} model…`, 0, "starting");
+  const buf = await downloadModel(m);
+  setModelProgress("Initializing runtime…", 0.93, fmtMB(buf.length) + " downloaded");
+  if (!vision) vision = await FilesetResolver.forVisionTasks(WASM);
+  setModelProgress("Initializing pose detector…", 0.96, "");
+  const opts = d => ({ baseOptions:{ modelAssetBuffer: buf, delegate:d }, runningMode:"VIDEO", numPoses:1 });
+  try { landmarker = await PoseLandmarker.createFromOptions(vision, opts("GPU")); }
+  catch {
+    setModelProgress("Initializing pose detector (CPU)…", 0.98, "GPU unavailable");
+    landmarker = await PoseLandmarker.createFromOptions(vision, opts("CPU"));
+  }
+  loadedModel = m;
+  setModelProgress(`Model ready (${m})`, 1, "");
+}
+
+function seekTo(t){
+  return new Promise(res => {
+    let done = false;
+    const fin = () => { if (!done){ done = true; video.removeEventListener("seeked", fin); res(); } };
+    video.addEventListener("seeked", fin);
+    setTimeout(fin, 2000);
+    video.currentTime = t;
+  });
+}
+
+/* ---------- per-frame measurements ---------- */
+function angFromUp(a, b){ // angle of vector a->b relative to straight up, in degrees
+  const dx = b.x - a.x, dy = a.y - b.y;
+  return Math.atan2(Math.abs(dx), dy) * 180 / Math.PI;
+}
+function measure(lm, aspect){
+  const mid = (i,j) => ({ x:(lm[i].x + lm[j].x)/2*aspect, y:(lm[i].y + lm[j].y)/2 });
+  const sh = mid(11,12), hp = mid(23,24), an = mid(27,28), wr = mid(15,16);
+  const vis = KEY.reduce((s,i) => s + (lm[i].visibility ?? 1), 0) / KEY.length;
+  return {
+    vis, shY:sh.y, hpY:hp.y, anY:an.y, wrY:wr.y,
+    torso: angFromUp(sh, hp), leg: angFromUp(hp, an),
+    lm: lm.map(p => [+p.x.toFixed(4), +p.y.toFixed(4), +(p.visibility ?? 1).toFixed(2)])
+  };
+}
+
+/* ---------- ETA helper ---------- */
+function makeEta(){
+  const t0 = performance.now(); let tPrev = t0, rate = 0, n = 0;
+  return {
+    tick(){ const now = performance.now(), dt = (now - tPrev) / 1000; tPrev = now; n++;
+      // first tick includes warm-up: seed from the 2nd, then smooth over recent ticks
+      if (n === 2) rate = dt; else if (n > 2) rate = 0.95 * rate + 0.05 * dt; },
+    elapsed(){ return (performance.now() - t0) / 1000; },
+    left(remaining){ return n < 5 ? null : remaining * rate; }
+  };
+}
+
+/* ---------- analysis ---------- */
+$("btnRun").addEventListener("click", analyse);
+$("btnStop").addEventListener("click", () => { stopReq = true; });
+
+function lockUI(lock){
+  $("btnRun").disabled = lock; $("btnStop").disabled = !lock;
+  ["file","model","fps","btnExport","btnCsv"].forEach(id => $(id).disabled = lock);
+  video.controls = !lock;
+}
+
+async function analyse(){
+  if (busy || exporting || !video.src) return;
+  $("err").textContent = "";
+  const dur = video.duration;
+  if (!isFinite(dur) || dur <= 0){ $("err").textContent = "Unknown video duration; try an MP4 or MOV file."; return; }
+  busy = true; stopReq = false;
+  lockUI(true);
+  video.pause();
+  try {
+    await ensureModel();
+    $("progWrap").classList.remove("hidden");
+    $("progTitle").textContent = "Analyzing video";
+    const fps = Math.max(5, Math.min(60, +$("fps").value || 15));
+    step = 1 / fps;
+    const n = Math.floor(dur * fps);
+    const aspect = video.videoWidth / video.videoHeight;
+    vAspect = aspect;
+    frames = [];
+    let lastTs = tsOffset;
+    const eta = makeEta();
+    for (let i = 0; i <= n; i++){
+      if (stopReq) break;
+      const t = Math.min(i * step, Math.max(0, dur - 0.001));
+      await seekTo(t);
+      const ts = Math.max(lastTs + 1, tsOffset + Math.round(t * 1000));
+      lastTs = ts;
+      const r = landmarker.detectForVideo(video, ts);
+      const lm = r.landmarks && r.landmarks[0];
+      const f = lm ? { t, detected:true, ...measure(lm, aspect) } : { t, detected:false };
+      frames.push(f);
+      octx.clearRect(0,0,overlay.width,overlay.height);
+      drawSkeleton(octx, overlay.width, overlay.height, f, classify(f, settings()));
+      eta.tick();
+      const done = i + 1, left = eta.left(n + 1 - done);
+      $("prog").value = done / (n + 1);
+      $("progTxt").textContent = `Frame ${done} / ${n + 1} · ${fmtClock(eta.elapsed())} elapsed · ${left == null ? "estimating…" : `~${fmtClock(left)} left`}`;
+    }
+    tsOffset = lastTs + 1000;
+    if (frames.length) recompute();
+    if (stopReq) $("progTxt").textContent += " — stopped, results up to here";
+    else $("progTxt").textContent = `Done: ${frames.length} frames analyzed in ${fmtClock(eta.elapsed())}`;
+  } catch (e){
+    console.error(e);
+    $("err").textContent = "Analysis error: " + (e.message || e);
+  } finally {
+    busy = false;
+    lockUI(false);
+    video.currentTime = 0;
+  }
+}
+
+/* ---------- classification ---------- */
+// distance between the ankles relative to torso (shoulder-mid to hip-mid) length
+function legGap(f){
+  const L = f.lm, mx = (i,j) => (L[i][0] + L[j][0]) / 2 * vAspect, my = (i,j) => (L[i][1] + L[j][1]) / 2;
+  const torso = Math.hypot(mx(11,12) - mx(23,24), my(11,12) - my(23,24)) || 1e-6;
+  return Math.hypot((L[27][0] - L[28][0]) * vAspect, L[27][1] - L[28][1]) / torso;
+}
+function classify(f, s){
+  if (!f.detected || f.vis < s.vis) return { ok:false, inv:false, hold:false };
+  const inv = f.hpY < f.shY && f.anY < f.shY;
+  const hold = inv && f.anY < f.hpY && f.torso <= s.tol && f.wrY >= f.shY - 0.02 && (!s.strict || f.leg <= s.tol)
+    && (!s.legsTog || legGap(f) <= s.legsMax);
+  return { ok:true, inv, hold };
+}
+function smooth(arr){ // 3-frame majority vote, removes single-frame outliers
+  return arr.map((v,i) => {
+    const a = arr[i-1] ?? v, b = arr[i+1] ?? v;
+    return (a + v + b) >= 2;
+  });
+}
+// Works in real time: video time × speed factor. vStart/vEnd = position in the video.
+function segments(flags, from, to, gap, minDur, sp){
+  const out = []; let cur = null; const st = step * sp;
+  for (let i = from; i <= to; i++){
+    if (!flags[i]) continue;
+    const t = frames[i].t * sp;
+    if (cur && t - cur.end <= gap + st * 0.5){ cur.end = t; cur.endIdx = i; }
+    else { if (cur) out.push(cur); cur = { start:t, end:t, startIdx:i, endIdx:i }; }
+  }
+  if (cur) out.push(cur);
+  out.forEach(sg => {
+    sg.dur = sg.end - sg.start + st;
+    sg.vStart = frames[sg.startIdx].t;
+    sg.vEnd = frames[sg.endIdx].t;
+  });
+  return out.filter(sg => sg.dur >= minDur);
+}
+
+function recompute(){
+  if (!frames.length) return;
+  const s = settings();
+  const cls = frames.map(f => classify(f, s));
+  const inv = smooth(cls.map(c => c.inv ? 1 : 0));
+  const hold = smooth(cls.map(c => c.hold ? 1 : 0)).map((h,i) => h && inv[i]);
+  const attempts = segments(inv, 0, frames.length - 1, s.gap, s.minAtt, s.speed).map(a => {
+    const holds = segments(hold, a.startIdx, a.endIdx, s.gap, 0, s.speed)
+      .map(h => ({ vStart:h.vStart, vEnd:h.vEnd, dur:Math.min(h.dur, a.dur) }));
+    const holdDur = holds.reduce((m,h) => Math.max(m, h.dur), 0);
+    return { ...a, holds, hold: holdDur, success: holdDur >= s.minSucc };
+  });
+  result = { s, cls:cls.map((c,i) => ({ ...c, inv:inv[i], hold:hold[i] })), attempts };
+  render();
+}
+["speed","tol","minSucc","minAtt","gap","vis","strict","legsTog","legsMax"].forEach(id => $(id).addEventListener("input", recompute));
+
+/* ---------- live hold timer state at video time t ---------- */
+function timerState(t){
+  if (!result) return null;
+  const { attempts:A, s } = result;
+  let idx = -1;
+  for (let i = 0; i < A.length; i++){ if (A[i].vStart <= t) idx = i; else break; }
+  const prevSucc = A.slice(0, Math.max(0, idx)).filter(a => a.success).length;
+  if (idx < 0) return { mode:"none", attemptNo:0, succCount:0 };
+  const a = A[idx];
+  const inAttempt = t <= a.vEnd + step;
+  if (inAttempt){
+    let best = 0, running = null;
+    for (const h of a.holds){
+      if (t >= h.vStart && t <= h.vEnd + step){ running = Math.min(h.dur, (t - h.vStart + step) * s.speed); best = Math.max(best, running); }
+      else if (t > h.vEnd + step) best = Math.max(best, h.dur);
+    }
+    const reached = best >= s.minSucc;
+    return { mode: running != null ? "run" : "wait", val: running != null ? running : best,
+             reached, attemptNo: idx + 1, succCount: prevSucc + (reached ? 1 : 0) };
+  }
+  return { mode:"frozen", val:a.hold, reached:a.success, attemptNo: idx + 1, succCount: prevSucc + (a.success ? 1 : 0) };
+}
+
+/* ---------- drawing (shared by live preview and export) ---------- */
+function drawSkeleton(c, W, H, f, cl){
+  if (!f || !f.detected) return;
+  const color = cl.hold ? VPAL.ok : cl.inv ? VPAL.warn : "#ffffff";
+  c.lineWidth = Math.max(3, W / 250); c.strokeStyle = color; c.fillStyle = color;
+  BONES.forEach(([a,b]) => {
+    const p = f.lm[a], q = f.lm[b];
+    if (p[2] < 0.3 || q[2] < 0.3) return;
+    c.beginPath(); c.moveTo(p[0]*W, p[1]*H); c.lineTo(q[0]*W, q[1]*H); c.stroke();
+  });
+  KEY.forEach(i => { const p = f.lm[i]; if (p[2] < 0.3) return;
+    c.beginPath(); c.arc(p[0]*W, p[1]*H, c.lineWidth * 1.3, 0, Math.PI*2); c.fill(); });
+}
+
+function pill(c, x, y, w, h, r, fill){
+  c.fillStyle = fill; c.beginPath();
+  if (c.roundRect) c.roundRect(x, y, w, h, r); else c.rect(x, y, w, h);
+  c.fill();
+}
+
+function drawHud(c, W, H, t){
+  const st = timerState(t);
+  if (!st) return;
+  const u = Math.min(W, H);
+  const pad = u * 0.025;
+  // top-left: running tally
+  const fs1 = Math.round(u * 0.045);
+  c.font = `600 ${fs1}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  c.textBaseline = "middle";
+  const tally = `Attempts ${st.attemptNo} · ✔ ${st.succCount}`;
+  const tw = c.measureText(tally).width;
+  pill(c, pad, pad, tw + fs1, fs1 * 1.7, fs1 * 0.35, "rgba(0,0,0,.6)");
+  c.fillStyle = VPAL.text; c.fillText(tally, pad + fs1 / 2, pad + fs1 * 0.85);
+  if (st.mode === "none") return;
+
+  // top-right: hold timer
+  const fs2 = Math.round(u * 0.11);
+  c.font = `700 ${fs2}px ui-monospace, "SF Mono", Menlo, Consolas, monospace`;
+  const txt = st.val.toFixed(1) + " s";
+  const w2 = c.measureText("00.0 s").width;
+  const boxW = Math.max(w2, c.measureText(txt).width) + fs2 * 0.6, boxH = fs2 * 1.45;
+  const bx = W - pad - boxW, by = pad;
+  let bg;
+  if (st.mode === "frozen") bg = st.reached ? VPAL.ok : VPAL.bad;
+  else if (st.mode === "run") bg = st.reached ? VPAL.ok : "rgba(0,0,0,.65)";
+  else bg = st.reached ? VPAL.ok : "rgba(0,0,0,.65)";
+  pill(c, bx, by, boxW, boxH, fs2 * 0.2, bg);
+  c.fillStyle = "#ffffff"; c.textAlign = "center";
+  c.fillText(txt, bx + boxW / 2, by + boxH / 2 + fs2 * 0.04);
+  // small caption under the timer
+  const fs3 = Math.round(u * 0.035);
+  c.font = `600 ${fs3}px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  const cap = st.mode === "frozen" ? (st.reached ? "✔ successful" : "✘ not successful")
+            : st.mode === "run" ? "holding" : "inverted";
+  const cw = c.measureText(cap).width + fs3;
+  pill(c, bx + boxW - cw, by + boxH + fs3 * 0.35, cw, fs3 * 1.6, fs3 * 0.3, "rgba(0,0,0,.6)");
+  c.fillStyle = st.mode === "run" && !st.reached ? VPAL.warn : "#ffffff";
+  c.fillText(cap, bx + boxW - cw / 2, by + boxH + fs3 * 1.15);
+  c.textAlign = "start";
+}
+
+function drawTimelineOn(c, x, y, w, h, tNow, pal){
+  if (!result) return;
+  const dur = video.duration || frames[frames.length-1].t + step;
+  const bandY = y + h * 0.35, bandH = h * 0.65;
+  result.cls.forEach((cl,i) => {
+    const fx = x + frames[i].t / dur * w, bw = Math.max(1, step / dur * w + 0.5);
+    c.fillStyle = cl.hold ? pal.ok : cl.inv ? pal.warn : pal.none;
+    c.globalAlpha = cl.ok || cl.inv ? 1 : 0.35;
+    c.fillRect(fx, bandY, bw, bandH);
+  });
+  c.globalAlpha = 1;
+  result.attempts.forEach(a => {
+    const ax = x + a.vStart / dur * w, bw = Math.max(2, (a.vEnd - a.vStart + step) / dur * w);
+    c.fillStyle = a.success ? pal.ok : pal.bad;
+    c.fillRect(ax, y, bw, h * 0.25);
+  });
+  const px = x + tNow / dur * w, lw = Math.max(2, h / 23);
+  c.fillStyle = pal.text;
+  c.fillRect(px - lw / 2, y, lw, h);
+}
+
+function frameIndexAt(t){ return Math.max(0, Math.min(frames.length - 1, Math.round(t / step))); }
+
+/* ---------- page rendering ---------- */
+function render(){
+  const { attempts, s } = result;
+  ["results","timeline","legend"].forEach(id => $(id).classList.remove("hidden"));
+  fitPlayer();
+
+  const succ = attempts.filter(a => a.success);
+  const longest = attempts.reduce((m,a) => Math.max(m, a.hold), 0);
+  const totalHold = attempts.reduce((m,a) => m + a.hold, 0);
+  const avgSucc = succ.length ? succ.reduce((m,a) => m + a.hold, 0) / succ.length : 0;
+  const rate = attempts.length ? Math.round(100 * succ.length / attempts.length) : 0;
+  $("stats").innerHTML = [
+    [attempts.length, "Attempts"],
+    [succ.length, `Successful (≥ ${s.minSucc.toFixed(1)} s)`],
+    [attempts.length - succ.length, "Unsuccessful"],
+    [rate + "%", "Success rate"],
+    [fmtD(longest), "Longest hold"],
+    [fmtD(avgSucc), "Avg. hold (successful)"],
+    [fmtD(totalHold), "Total hold time"]
+  ].map(([v,l]) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`).join("");
+
+  const maxBin = attempts.length ? Math.floor(longest) : 0;
+  const bins = Array.from({ length:maxBin + 1 }, () => 0);
+  attempts.forEach(a => bins[Math.floor(a.hold)]++);
+  const peak = Math.max(1, ...bins);
+  $("binTable").querySelector("tbody").innerHTML = attempts.length ? bins.map((c,k) => {
+    const cum = attempts.filter(a => a.hold >= k).length;
+    return `<tr><td>${k}–${k+1} s</td><td class="num">${c}</td><td class="num">${cum}</td>
+      <td><div class="bar ${k >= s.minSucc ? "ok" : ""}" style="width:${(100 * c / peak).toFixed(1)}%"></div></td></tr>`;
+  }).join("") : `<tr><td colspan="4">No attempts found. Check that your whole body is in frame, or lower the visibility threshold.</td></tr>`;
+
+  const ta = $("attTable").querySelector("tbody");
+  ta.innerHTML = attempts.map((a,i) => `<tr class="click" data-t="${a.vStart}">
+      <td>${i+1}</td><td>${fmtT(a.vStart)}</td><td class="num">${fmtD(a.dur)}</td><td class="num">${fmtD(a.hold)}</td>
+      <td class="${a.success ? "ok" : "bad"}">${a.success ? "✔ successful" : "✘ unsuccessful"}</td></tr>`).join("");
+  ta.querySelectorAll("tr").forEach(tr => tr.addEventListener("click", () => {
+    if (exporting) return;
+    video.currentTime = Math.max(0, +tr.dataset.t - 0.5); video.play();
+    $("stage").scrollIntoView({ behavior:"smooth", block:"center" });
+  }));
+
+  drawCurrent();
+}
+
+function drawPageTimeline(){
+  if (!result) return;
+  const dpr = devicePixelRatio || 1;
+  const w = timeline.clientWidth * dpr, h = 46 * dpr;
+  timeline.width = w; timeline.height = h;
+  tctx.clearRect(0,0,w,h);
+  drawTimelineOn(tctx, 0, 0, w, h, video.currentTime, pagePal());
+}
+timeline.addEventListener("click", e => {
+  if (exporting || !video.duration) return;
+  const r = timeline.getBoundingClientRect();
+  video.currentTime = (e.clientX - r.left) / r.width * video.duration;
+});
+window.addEventListener("resize", () => { fitPlayer(); drawPageTimeline(); });
+
+// desktop: video + timeline + legend together fit in 90% of the window height
+function fitPlayer(){
+  const root = document.documentElement.style;
+  if (!matchMedia("(min-width:1000px)").matches){ root.setProperty("--extra", "0px"); return; }
+  for (let k = 0; k < 3; k++){ // legend height depends on column width, so settle in a few passes
+    const tl = timeline.classList.contains("hidden") ? 0 : timeline.offsetHeight + 10;
+    const lg = $("legend").classList.contains("hidden") ? 0 : $("legend").offsetHeight + 6;
+    root.setProperty("--extra", (tl + lg) + "px");
+  }
+}
+
+function drawCurrent(){
+  if (busy || !result || !frames.length) return;
+  const t = video.currentTime, W = overlay.width, H = overlay.height;
+  octx.clearRect(0,0,W,H);
+  const i = frameIndexAt(t);
+  drawSkeleton(octx, W, H, frames[i], result.cls[i]);
+  drawHud(octx, W, H, t);
+  drawPageTimeline();
+}
+function loop(){ drawCurrent(); if (!video.paused && !video.ended) requestAnimationFrame(loop); }
+video.addEventListener("play", () => { if (!busy) requestAnimationFrame(loop); });
+video.addEventListener("seeked", () => { if (!busy) drawCurrent(); });
+
+/* ---------- export video with overlay + timeline ---------- */
+// Preferred: WebCodecs + MP4 muxer, rendered frame by frame with exact timestamps
+// (no real-time recording, so no frozen or dropped frames; works with the tab in the background).
+// Fallback for browsers without WebCodecs: MediaRecorder in real time (WebM).
+const EXPORT_FPS = 30;
+const MUXER_URL = "https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.mjs";
+
+$("btnExport").addEventListener("click", exportVideo);
+$("btnCancelSave").addEventListener("click", () => { stopReq = true; });
+
+function exportGeometry(){
+  const vw = video.videoWidth, vh = video.videoHeight;
+  const sc = Math.min(1, 1920 / Math.max(vw, vh));
+  const W = Math.round(vw * sc / 2) * 2, H = Math.round(vh * sc / 2) * 2;
+  const TL = Math.round(Math.max(40, H * 0.08) / 2) * 2;
+  return { W, H, TL };
+}
+
+function makeExportDrawer(c, W, H, TL){
+  return t => {
+    c.drawImage(video, 0, 0, W, H);
+    const i = frameIndexAt(t);
+    drawSkeleton(c, W, H, frames[i], result.cls[i]);
+    drawHud(c, W, H, t);
+    c.fillStyle = VPAL.bg; c.fillRect(0, H, W, TL);
+    const m = Math.round(TL * 0.15);
+    drawTimelineOn(c, m, H + m, W - 2 * m, TL - 2 * m, t, VPAL);
+  };
+}
+
+function downloadBlob(blob, name){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+
+// H.264 first (plays everywhere), VP9-in-MP4 if the browser has no H.264 encoder
+async function pickEncoderConfig(width, height){
+  const avc = ["avc1.640033", "avc1.640032", "avc1.640028", "avc1.4d0033", "avc1.4d0028", "avc1.42003e", "avc1.42001f"];
+  const vp9 = ["vp09.00.41.08", "vp09.00.40.08", "vp09.00.31.08"];
+  const tries = [...avc.map(c => ["avc", { codec:c, avc:{ format:"avc" } }]), ...vp9.map(c => ["vp9", { codec:c }])];
+  for (const [mux, extra] of tries){
+    const cfg = { width, height, bitrate: 8_000_000, framerate: EXPORT_FPS, ...extra };
+    try { const r = await VideoEncoder.isConfigSupported(cfg); if (r.supported) return { cfg, mux }; } catch {}
+  }
+  return null;
+}
+
+async function exportVideo(){
+  if (!result || busy || exporting) return;
+  $("err").textContent = "";
+  exporting = true; stopReq = false;
+  lockUI(true);
+  video.pause();
+  $("saveWrap").classList.remove("hidden");
+  $("saveTitle").textContent = "Saving video";
+  $("saveProg").value = 0;
+  $("saveTxt").textContent = "starting…";
+  $("btnCancelSave").classList.remove("hidden");
+  try {
+    let done = false;
+    if ("VideoEncoder" in window && "VideoFrame" in window){
+      const g = exportGeometry();
+      const pick = await pickEncoderConfig(g.W, g.H + g.TL);
+      if (pick) { await exportWebCodecs(pick, g); done = true; }
+    }
+    if (!done) await exportMediaRecorder();
+  } catch (e){
+    console.error(e);
+    $("err").textContent = "Saving failed: " + (e.message || e);
+    $("saveTxt").textContent = "Saving failed: " + (e.message || e);
+  } finally {
+    exporting = false;
+    $("btnCancelSave").classList.add("hidden");
+    lockUI(false);
+    video.pause();
+    drawCurrent();
+  }
+}
+
+async function exportWebCodecs({ cfg, mux }, { W, H, TL }){
+  const { Muxer, ArrayBufferTarget } = await import(MUXER_URL);
+  const cv = document.createElement("canvas");
+  cv.width = W; cv.height = H + TL;
+  const c = cv.getContext("2d", { alpha:false });
+  const draw = makeExportDrawer(c, W, H, TL);
+
+  const muxer = new Muxer({
+    target: new ArrayBufferTarget(),
+    video: { codec: mux, width: W, height: H + TL, frameRate: EXPORT_FPS },
+    fastStart: "in-memory"
+  });
+  let encErr = null;
+  const encoder = new VideoEncoder({
+    output: (chunk, meta) => muxer.addVideoChunk(chunk, meta),
+    error: e => { encErr = e; }
+  });
+  encoder.configure(cfg);
+
+  const dur = video.duration;
+  const n = Math.max(1, Math.floor(dur * EXPORT_FPS));
+  const frameUs = Math.round(1e6 / EXPORT_FPS);
+  const eta = makeEta();
+  for (let i = 0; i < n; i++){
+    if (stopReq || encErr) break;
+    const t = Math.min(i / EXPORT_FPS, Math.max(0, dur - 0.001));
+    await seekTo(t);
+    draw(t);
+    const vf = new VideoFrame(cv, { timestamp: i * frameUs, duration: frameUs });
+    encoder.encode(vf, { keyFrame: i % (EXPORT_FPS * 2) === 0 });
+    vf.close();
+    // backpressure: don't let the encoder queue grow without bound
+    while (encoder.encodeQueueSize > 8 && !encErr) await new Promise(r => setTimeout(r, 5));
+    eta.tick();
+    const left = eta.left(n - i - 1);
+    $("saveProg").value = (i + 1) / n;
+    $("saveTxt").textContent = `Frame ${i + 1} / ${n} · ${fmtClock(eta.elapsed())} elapsed · ${left == null ? "estimating…" : `~${fmtClock(left)} left`}`;
+  }
+  if (encErr){ try { encoder.close(); } catch {} throw encErr; }
+  if (stopReq){
+    try { encoder.close(); } catch {}
+    $("saveTxt").textContent = "Saving cancelled";
+    return;
+  }
+  $("saveTxt").textContent = "Finishing file…";
+  await encoder.flush();
+  encoder.close();
+  muxer.finalize();
+  const blob = new Blob([muxer.target.buffer], { type: "video/mp4" });
+  const name = `${fileName}_handstand.mp4`;
+  downloadBlob(blob, name);
+  $("saveProg").value = 1;
+  $("saveTxt").textContent = `Saved ${name} (${fmtMB(blob.size)}) in ${fmtClock(eta.elapsed())}`;
+}
+
+async function exportMediaRecorder(){
+  if (!window.MediaRecorder || !HTMLCanvasElement.prototype.captureStream)
+    throw new Error("your browser can't create video files. Try a recent Chrome, Edge, Safari or Firefox.");
+  const { W, H, TL } = exportGeometry();
+  const cv = document.createElement("canvas");
+  cv.width = W; cv.height = H + TL;
+  const c = cv.getContext("2d");
+  const draw = makeExportDrawer(c, W, H, TL);
+  const mime = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm", "video/mp4"]
+    .find(m => MediaRecorder.isTypeSupported(m)) || "";
+  const stream = cv.captureStream(EXPORT_FPS);
+  const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8_000_000 } : { videoBitsPerSecond: 8_000_000 });
+  const chunks = [];
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  const stopped = new Promise(res => rec.onstop = res);
+  $("saveTitle").textContent = "Saving video (real time — keep this tab visible)";
+  try {
+    await seekTo(0);
+    draw(0);
+    rec.start();
+    const dur = video.duration, t0 = performance.now();
+    let finished = false;
+    const ended = new Promise(res => {
+      const finish = () => { finished = true; res(); };
+      video.addEventListener("ended", finish, { once:true });
+      const poll = () => { if (stopReq){ video.pause(); finish(); } else if (!finished) setTimeout(poll, 200); };
+      poll();
+    });
+    // redraw on a steady timer so the stream never stalls, even if the video frame hasn't changed
+    const timer = setInterval(() => {
+      if (finished) return;
+      const t = video.currentTime;
+      draw(t);
+      $("saveProg").value = Math.min(1, t / dur);
+      $("saveTxt").textContent = `${fmtClock(t)} / ${fmtClock(dur)} · ${fmtClock((performance.now() - t0) / 1000)} elapsed · ~${fmtClock(dur - t)} left`;
+    }, 1000 / EXPORT_FPS);
+    await video.play();
+    await ended;
+    clearInterval(timer);
+    draw(video.currentTime);
+    await new Promise(r => setTimeout(r, 300));
+    rec.stop();
+    await stopped;
+    if (stopReq){ $("saveTxt").textContent = "Saving cancelled"; return; }
+    const type = (mime || chunks[0]?.type || "video/webm").split(";")[0];
+    const ext = type.includes("mp4") ? "mp4" : "webm";
+    const blob = new Blob(chunks, { type });
+    downloadBlob(blob, `${fileName}_handstand.${ext}`);
+    $("saveProg").value = 1;
+    $("saveTxt").textContent = `Saved ${fileName}_handstand.${ext} (${fmtMB(blob.size)})`;
+  } finally {
+    if (rec.state !== "inactive") rec.stop();
+    stream.getTracks().forEach(tr => tr.stop());
+  }
+}
+
+/* ---------- CSV export ---------- */
+$("btnCsv").addEventListener("click", () => {
+  if (!result) return;
+  const rows = [["speed_factor", result.s.speed], [],
+    ["attempt","start_video_s","start_real_s","inverted_s","hold_s","successful"]];
+  result.attempts.forEach((a,i) => rows.push([i+1, a.vStart.toFixed(2), a.start.toFixed(2), a.dur.toFixed(2), a.hold.toFixed(2), a.success ? "yes" : "no"]));
+  rows.push([]);
+  rows.push(["hold_time_bin","count"]);
+  const maxBin = Math.floor(result.attempts.reduce((m,a) => Math.max(m,a.hold), 0));
+  for (let k = 0; k <= maxBin && result.attempts.length; k++)
+    rows.push([`${k}-${k+1}s`, result.attempts.filter(a => Math.floor(a.hold) === k).length]);
+  const blob = new Blob([rows.map(r => r.join(",")).join("\n")], { type:"text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = `${fileName}_handstand.csv`; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+</script>
+</body>
+</html>
