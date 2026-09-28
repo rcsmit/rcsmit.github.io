@@ -43,8 +43,9 @@
 # version : 20260928-153100 - Removed the year span from the summary text at the top
 # version : 20260928-153300 - Removed forced print page breaks before Skills and Education (blocks no longer split, so no gaps needed)
 # version : 20260928-153500 - Grouped employer rows: dot, name and separator never wrap apart
+# version : 20260928-155000 - Timeline: skip jobs whose startDate is after endDate (console warning) instead of drawing an overflowing bar; bars clipped to the chart
 -->
-<script>const current_version = "20260928-153500";</script>
+<script>const current_version = "20260928-155000";</script>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -308,7 +309,7 @@ body {
   padding-right: 8px; font-size: 12.5px; color: var(--ink-mid);
   text-align: right; line-height: 1.3; font-family: var(--font-body);
 }
-.gantt-bars { flex: 1; position: relative; height: 32px; min-width: 0; }
+.gantt-bars { flex: 1; position: relative; height: 32px; min-width: 0; overflow: hidden; }
 .gantt-grid-line {
   position: absolute; top: 0; bottom: 0;
   width: 1px; background: var(--rule); pointer-events: none;
@@ -1093,7 +1094,9 @@ function buildGanttSection(workData) {
   });
   const rows = Object.values(empMap).sort((a,b) => sortKey(a.name) - sortKey(b.name));
 
-  const allYears = rows.flatMap(r => r.jobs.flatMap(j => [toDecYear(j.startDate), toDecYear(j.endDate)]));
+  const allYears = rows.flatMap(r => r.jobs
+    .filter(j => toDecYear(j.endDate) >= toDecYear(j.startDate))
+    .flatMap(j => [toDecYear(j.startDate), toDecYear(j.endDate)]));
   const YEAR_START = Math.floor(Math.min(...allYears));
   const YEAR_END   = Math.ceil(Math.max(...allYears));
   const YEAR_COUNT = YEAR_END - YEAR_START;
@@ -1152,6 +1155,11 @@ function buildGanttSection(workData) {
     row.jobs.forEach(job => {
       const s = toDecYear(job.startDate);
       const e = toDecYear(job.endDate);
+      // A start date after the end date is a data error: skip the bar instead of drawing it across the chart
+      if (!(e >= s)) {
+        console.warn('CV timeline: skipped "' + row.name + ' – ' + job.position.trim() + '": startDate ' + job.startDate + ' is after endDate ' + job.endDate);
+        return;
+      }
       const bar = el('div', 'gantt-bar');
       bar.style.left       = pct(s);
       bar.style.width      = pctW(s,e);
