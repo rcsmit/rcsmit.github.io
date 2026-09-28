@@ -7,7 +7,6 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
 
 <!-- version history
 # version : 20260531-120000 - Initial version: single-column Word-ready CV (static)
@@ -39,12 +38,8 @@
 # version : 20260531-183000 - Wrap only after en-dash using wbr, not mid-word
 # version : 20260531-184000 - Widen label column to 155px to prevent date wrapping on desktop
 # version : 20260531-185000 - Print page breaks before Skills (sidebar) and Education (main)
-# version : 20260928-153500 - Save-as-PDF button (A4, entries never split) and QR code button (link to rcsmit.github.io/cv or vCard, PNG download)
-# version : 20260928-153100 - Removed the year span from the summary text at the top
-# version : 20260928-153300 - Removed forced print page breaks before Skills and Education (blocks no longer split, so no gaps needed)
-# version : 20260928-153500 - Grouped employer rows: dot, name and separator never wrap apart
 -->
-<script>const current_version = "20260928-153500";</script>
+<script>const current_version = "20260531-185000";</script>
 
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -262,9 +257,6 @@ body {
 .work-company { display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; }
 .work-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .work-company-name { font-size: 14.5px; color: var(--ink-mid); font-weight: 400; }
-.work-company-multi { display: flex; flex-wrap: wrap; gap: 2px 8px; }
-.work-company-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-.work-company-sep { color: var(--ink-light); margin-left: 3px; }
 .work-loc { font-size: 13.5px; color: var(--ink-light); margin-top: 1px; }
 .work-sub-periods { font-size: 13px; color: var(--ink-light); margin-top: 3px; font-style: italic; }
 .work-highlights { margin-top: 5px; list-style: none; display: flex; flex-direction: column; gap: 1px; }
@@ -446,71 +438,7 @@ body {
   :root { --label-w: 80px; }
 }
 
-/* ══════════════════════════════
-   TOOLBAR (PDF / QR)
-══════════════════════════════ */
-.main-tagline, .sb-tagline, .work-highlights li, .sb-cert, .qr-hint { text-wrap: pretty; }
-.cv-toolbar { position: fixed; top: 1rem; right: 1rem; display: flex; gap: 0.5rem; z-index: 900; }
-.cv-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-family: var(--font-body); font-size: 13px; font-weight: 500;
-  padding: 8px 14px; border-radius: 999px;
-  border: 1px solid var(--rule-strong); background: var(--paper); color: var(--sidebar-accent);
-  cursor: pointer; line-height: 1.2; box-shadow: 0 2px 10px rgba(0,0,0,0.12);
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-.cv-btn:hover { background: var(--sidebar-accent); color: #fff; border-color: var(--sidebar-accent); }
-.cv-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.cv-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
-.cv-btn.primary { background: var(--sidebar-accent); color: #fff; border-color: var(--sidebar-accent); }
-.cv-btn.primary:hover { filter: brightness(1.12); }
-.cv-btn:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
-@media (max-width: 640px) {
-  body { padding-bottom: 4.5rem; }
-  .cv-toolbar { top: auto; bottom: 1rem; right: 1rem; }
-}
-
-/* ══════════════════════════════
-   QR MODAL
-══════════════════════════════ */
-.qr-modal { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-.qr-modal[hidden] { display: none; }
-.qr-backdrop { position: absolute; inset: 0; background: rgba(28,28,26,0.45); }
-.qr-dialog {
-  position: relative; background: var(--paper); border-radius: 10px;
-  padding: 1.4rem 1.5rem 1.5rem; width: 100%; max-width: 340px;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
-  display: flex; flex-direction: column; gap: 0.9rem;
-}
-.qr-head { display: flex; justify-content: space-between; align-items: center; }
-.qr-title { font-family: var(--font-display); font-size: 24px; font-weight: 600; color: var(--ink); }
-.qr-close { border: none; background: none; font-size: 24px; line-height: 1; color: var(--ink-light); cursor: pointer; padding: 2px 8px; border-radius: 4px; }
-.qr-close:hover { color: var(--ink); background: var(--accent-soft); }
-.qr-tabs { display: flex; gap: 3px; padding: 3px; border: 1px solid var(--rule-strong); border-radius: 999px; }
-.qr-tab { flex: 1; border: none; background: none; cursor: pointer; padding: 6px 10px; border-radius: 999px; font-family: var(--font-body); font-size: 13px; font-weight: 500; color: var(--ink-mid); }
-.qr-tab[aria-selected="true"] { background: var(--sidebar-accent); color: #fff; }
-.qr-box { display: flex; align-items: center; justify-content: center; background: #fff; border: 1px solid var(--rule); border-radius: 8px; min-height: 256px; padding: 8px; }
-.qr-box canvas { width: 240px; height: 240px; image-rendering: pixelated; display: block; }
-.qr-msg { font-size: 13px; color: var(--ink-light); text-align: center; padding: 1rem; line-height: 1.5; }
-.qr-url { font-size: 12.5px; color: var(--ink-mid); word-break: break-all; text-align: center; }
-.qr-url[hidden] { display: none; }
-.qr-hint { font-size: 12.5px; color: var(--ink-light); line-height: 1.5; }
-.qr-actions .cv-btn { width: 100%; justify-content: center; box-shadow: none; }
-
-@page { size: A4; margin: 14mm 12mm 16mm 12mm; }
-
 @media print {
-  .cv-toolbar, .qr-modal { display: none !important; }
-  html, body { min-height: 0 !important; height: auto !important; }
-  body { orphans: 3; widows: 3; }
-  /* Never split an entry, a list item or a sidebar block across pages */
-  .work-entry, .edu-entry, .work-highlights li, .lang-row, .gantt-row,
-  .sb-section, .gantt-wrap { break-inside: avoid; page-break-inside: avoid; }
-  .section-title, .main-header { break-after: avoid; page-break-after: avoid; }
-  .work-period, .edu-year { white-space: nowrap; }
-  /* Backgrounds stay white, but keep the small colour marks — otherwise the timeline prints empty */
-  .gantt-bar, .work-dot, .lang-bar-bg, .lang-bar-fill { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .gantt-bar { transition: none; cursor: default; }
   body { background: white !important; padding: 0; }
   .cv-shell { box-shadow: none; border-radius: 0; }
   .cv-sidebar { background: white !important; -webkit-print-color-adjust: economy; print-color-adjust: economy; }
@@ -518,6 +446,7 @@ body {
   .gantt-row.group-camping, .gantt-row.group-hospitality { background: white !important; }
   .photo-wrap { background: #eee !important; }
   .cv-tooltip { display: none; }
+  .print-break-before { break-before: page; }
 
   /* 11pt body → scale everything relative to that */
   .work-highlights li, .work-sub-periods, .work-loc      { font-size: 10pt !important; }
@@ -536,49 +465,13 @@ body {
 </head>
 <body>
 
-<div class="cv-toolbar" role="toolbar" aria-label="CV actions">
-  <button type="button" class="cv-btn" id="btn-pdf" title="Opens the print dialog — choose “Save as PDF” as the destination">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
-    Save as PDF
-  </button>
-  <button type="button" class="cv-btn" id="btn-qr" aria-haspopup="dialog">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3z"/><path d="M20 14v.01"/><path d="M17 20h3v-3"/><path d="M14 20v.01"/></svg>
-    QR code
-  </button>
-</div>
-
 <div class="cv-shell" id="cv-shell">
   <div class="loading" style="padding:4rem;width:100%;text-align:center;">Loading CV…</div>
 </div>
 <div id="cv-tooltip" class="cv-tooltip"></div>
 
-<div class="qr-modal" id="qr-modal" hidden>
-  <div class="qr-backdrop" data-qr-close></div>
-  <div class="qr-dialog" role="dialog" aria-modal="true" aria-labelledby="qr-title">
-    <div class="qr-head">
-      <div class="qr-title" id="qr-title">QR code</div>
-      <button type="button" class="qr-close" data-qr-close aria-label="Close">&times;</button>
-    </div>
-    <div class="qr-tabs" role="tablist">
-      <button type="button" class="qr-tab" role="tab" data-mode="link" aria-selected="true">Link to CV</button>
-      <button type="button" class="qr-tab" role="tab" data-mode="vcard" aria-selected="false">Contact card</button>
-    </div>
-    <div class="qr-box" id="qr-box"></div>
-    <div class="qr-url" id="qr-url"></div>
-    <div class="qr-hint" id="qr-hint"></div>
-    <div class="qr-actions">
-      <button type="button" class="cv-btn primary" id="qr-download">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
-        Download PNG
-      </button>
-    </div>
-  </div>
-</div>
-
 <script>
 const CV_URL = 'https://raw.githubusercontent.com/rcsmit/streamlit_scripts/refs/heads/main/input/cv_rene_smit_json_resume.json';
-// Public address of this CV page — the QR code links here (basics.url in the JSON overrides it)
-const CV_PAGE_URL = 'https://rcsmit.github.io/cv/';
 
 // ── DISPLAY MODE ─────────────────────────────────────────────
 // false = compact: summer jobs shown as "Summer YYYY, YYYY, …"
@@ -759,7 +652,7 @@ function buildSidebar(data) {
   // Skills
   const skillNames = (data.skills || []).map(s => s.name);
   if (skillNames.length) {
-    const skillBlock = el('div', 'sb-section');
+    const skillBlock = el('div', 'sb-section print-break-before');
     skillBlock.appendChild(el('div', 'sb-title', 'Skills'));
     const pills = el('div', 'sb-skills');
     skillNames.forEach(s => pills.appendChild(el('span', 'sb-skill', s)));
@@ -846,16 +739,15 @@ function renderGroupBlock(emps, blockTitle, blockLoc, entries) {
   body.appendChild(el('div', 'work-title', blockTitle));
 
   // Multi-dot company row
-  const companyRow = el('div', 'work-company work-company-multi');
+  const companyRow = el('div', 'work-company');
+  companyRow.style.flexWrap = 'wrap';
+  companyRow.style.gap = '6px';
   emps.forEach((emp, i) => {
-    // dot + name (+ separator) form one unbreakable item, so a line never breaks between them
-    const item = el('span', 'work-company-item');
+    if (i > 0) companyRow.appendChild(document.createTextNode(' · '));
     const dot = el('span', 'work-dot');
     dot.style.background = emp.color.color;
-    item.appendChild(dot);
-    item.appendChild(el('span', 'work-company-name', emp.name));
-    if (i < emps.length - 1) item.appendChild(el('span', 'work-company-sep', '·'));
-    companyRow.appendChild(item);
+    companyRow.appendChild(dot);
+    companyRow.appendChild(el('span', 'work-company-name', emp.name));
   });
   body.appendChild(companyRow);
 
@@ -1053,7 +945,7 @@ function buildWorkSection(workData) {
    EDUCATION SECTION
 ════════════════════════ */
 function buildEducationSection(eduData) {
-  const section = el('section', 'section');
+  const section = el('section', 'section print-break-before');
   section.appendChild(el('div', 'section-title', 'Education'));
   eduData.forEach(e => {
     const entry = el('div', 'edu-entry');
@@ -1127,7 +1019,6 @@ function buildGanttSection(workData) {
       else el.textContent = useShort ? String(y).slice(2) : String(y);
     });
   }
-  window.cvUpdateGanttAxis = updateAxisLabels;
   setTimeout(updateAxisLabels, 0);
   window.addEventListener('resize', updateAxisLabels);
 
@@ -1211,8 +1102,10 @@ function buildPage(data) {
   // Main header (name + tagline repeated large in main area)
   const header = el('div', 'main-header');
   header.appendChild(el('div', 'main-name', data.basics.name));
+  const yearStart = data.work.reduce((min,j) => j.startDate<min ? j.startDate : min, '9999').split('-')[0];
+  const yearEnd   = data.work.reduce((max,j) => j.endDate  >max ? j.endDate   : max, '0000').split('-')[0];
   const tagline = el('div', 'main-tagline');
-  tagline.textContent = data.basics.summary || '';
+  tagline.textContent = (data.basics.summary||'') + '  ·  ' + yearStart + ' – ' + yearEnd;
   header.appendChild(tagline);
   main.appendChild(header);
 
@@ -1293,194 +1186,11 @@ ${shellHTML}
 }
 
 /* ════════════════════════
-   SAVE AS PDF
-════════════════════════ */
-let CV_DATA = null;
-const ORIGINAL_TITLE = document.title;
-
-// ASCII-only file name: browsers drop accented download names ("René" → "Rene")
-function fileBase() {
-  const SPECIAL = { 'ß':'ss','Ł':'L','ł':'l','Ø':'O','ø':'o','Æ':'AE','æ':'ae','Œ':'OE','œ':'oe','Đ':'D','đ':'d','Þ':'Th','þ':'th' };
-  const name = String((CV_DATA && CV_DATA.basics && CV_DATA.basics.name) || 'René Smit').trim()
-    .replace(/[ßŁłØøÆæŒœĐđÞþ]/g, ch => SPECIAL[ch])
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, '_').replace(/[^A-Za-z0-9_\-]/g, '');
-  return 'CV' + (name ? '_' + name : '');
-}
-
-function refreshAxis() {
-  if (typeof window.cvUpdateGanttAxis === 'function') window.cvUpdateGanttAxis();
-}
-
-document.getElementById('btn-pdf').addEventListener('click', () => {
-  tooltip.classList.remove('visible');
-  document.title = fileBase();              // becomes the suggested PDF file name
-  window.print();
-});
-window.addEventListener('beforeprint', refreshAxis);
-window.addEventListener('afterprint', () => { document.title = ORIGINAL_TITLE; refreshAxis(); });
-const printMq = window.matchMedia('print');
-if (printMq.addEventListener) printMq.addEventListener('change', refreshAxis);
-else if (printMq.addListener) printMq.addListener(refreshAxis);
-
-/* ════════════════════════
-   QR CODE
-════════════════════════ */
-const qrModal    = document.getElementById('qr-modal');
-const qrBox      = document.getElementById('qr-box');
-const qrUrlEl    = document.getElementById('qr-url');
-const qrHint     = document.getElementById('qr-hint');
-const qrDownload = document.getElementById('qr-download');
-const qrTabs     = Array.from(qrModal.querySelectorAll('.qr-tab'));
-let qrMode = 'link', qrCanvas = null, qrLastFocus = null;
-
-function cvPageUrl() {
-  const fromJson = CV_DATA && CV_DATA.basics && String(CV_DATA.basics.url || '').trim();
-  return /^https?:\/\//i.test(fromJson || '') ? fromJson : CV_PAGE_URL;
-}
-
-function normalizePhone(raw) {
-  let s = String(raw || '').replace(/\(0\)/g, '').replace(/[^\d+]/g, '');
-  s = s.replace(/^00/, '+');
-  // drop the national trunk 0 written after a country code (+31 06…, +49 015…)
-  s = s.replace(/^\+(20|27|31|32|33|34|36|41|43|44|45|46|47|48|49|60|61|62|63|64|66|81|82|84|86|90|91|92|94|95)0/, '+$1');
-  return s;
-}
-
-function vcEscape(v) {
-  return String(v).replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1');
-}
-
-function buildVCard() {
-  const b = (CV_DATA && CV_DATA.basics) || { name: 'René Smit' };
-  const full = String(b.name || '').trim();
-  const parts = full.split(/\s+/).filter(Boolean);
-  const family = parts.length > 1 ? parts.pop() : '';
-  const given = parts.join(' ');
-  const lines = ['BEGIN:VCARD', 'VERSION:3.0',
-    'N:' + vcEscape(family) + ';' + vcEscape(given) + ';;;',
-    'FN:' + vcEscape(full)];
-  if (b.label) lines.push('TITLE:' + vcEscape(String(b.label).trim()));
-  if (b.phone) lines.push('TEL;TYPE=CELL:' + normalizePhone(b.phone));
-  if (b.email) lines.push('EMAIL;TYPE=INTERNET:' + String(b.email).trim());
-  lines.push('URL:' + cvPageUrl());
-  lines.push('END:VCARD');
-  return lines.join('\r\n');
-}
-
-function showQrMessage(msg) {
-  qrCanvas = null;
-  qrBox.innerHTML = '';
-  qrBox.appendChild(el('div', 'qr-msg', msg));
-  qrDownload.disabled = true;
-}
-
-function drawQR(text) {
-  if (typeof qrcode !== 'function') {
-    showQrMessage('The QR library could not be loaded. Check your internet connection and reload the page.');
-    return;
-  }
-  // Encode as UTF-8 so "René" survives
-  qrcode.stringToBytes = s => Array.from(new TextEncoder().encode(s));
-  let qr;
-  try { qr = qrcode(0, 'M'); qr.addData(text); qr.make(); }
-  catch (err) { showQrMessage('This text is too long for a QR code.'); return; }
-  const n = qr.getModuleCount(), quiet = 4, total = n + quiet * 2;
-  const scale = Math.max(8, Math.ceil(1024 / total));
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = total * scale;
-  const ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#1c1c1a';
-  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
-    if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
-  }
-  canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', qrMode === 'link' ? 'QR code linking to this CV' : 'QR code with contact details');
-  qrBox.innerHTML = '';
-  qrBox.appendChild(canvas);
-  qrCanvas = canvas;
-  qrDownload.disabled = false;
-}
-
-function renderQR() {
-  if (qrMode === 'link') {
-    const u = cvPageUrl();
-    qrUrlEl.hidden = false;
-    qrUrlEl.textContent = u;
-    qrHint.textContent = 'Scanning opens this CV online.';
-    drawQR(u);
-  } else {
-    const b = (CV_DATA && CV_DATA.basics) || {};
-    const bits = ['name'];
-    if (b.phone) bits.push('phone number');
-    if (b.email) bits.push('email');
-    bits.push('CV link');
-    const list = bits.length > 1 ? bits.slice(0, -1).join(', ') + ' and ' + bits[bits.length - 1] : bits[0];
-    qrUrlEl.hidden = true;
-    qrHint.textContent = 'Scanning adds the ' + list + ' to the phone’s contacts.';
-    drawQR(buildVCard());
-  }
-}
-
-function setQrMode(mode) {
-  qrMode = mode;
-  qrTabs.forEach(t => t.setAttribute('aria-selected', String(t.dataset.mode === mode)));
-  renderQR();
-}
-
-function openQR() {
-  qrLastFocus = document.activeElement;
-  tooltip.classList.remove('visible');
-  qrModal.hidden = false;
-  setQrMode(qrMode);
-  const t = qrTabs.find(x => x.dataset.mode === qrMode);
-  if (t) t.focus();
-}
-
-function closeQR() {
-  qrModal.hidden = true;
-  if (qrLastFocus && qrLastFocus.focus) qrLastFocus.focus();
-}
-
-function downloadQR() {
-  if (!qrCanvas) return;
-  const fileName = fileBase() + '_QR_' + (qrMode === 'link' ? 'link' : 'contact') + '.png';
-  qrCanvas.toBlob(blob => {
-    if (!blob) return;
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
-  }, 'image/png');
-}
-
-document.getElementById('btn-qr').addEventListener('click', openQR);
-qrModal.querySelectorAll('[data-qr-close]').forEach(n => n.addEventListener('click', closeQR));
-qrTabs.forEach(t => t.addEventListener('click', () => setQrMode(t.dataset.mode)));
-qrDownload.addEventListener('click', downloadQR);
-document.addEventListener('keydown', ev => {
-  if (qrModal.hidden) return;
-  if (ev.key === 'Escape') { closeQR(); return; }
-  if (ev.key === 'Tab') {
-    const f = Array.from(qrModal.querySelectorAll('button')).filter(n => !n.disabled && n.offsetParent !== null);
-    if (!f.length) return;
-    const first = f[0], last = f[f.length - 1];
-    if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
-    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
-  }
-});
-
-/* ════════════════════════
    FETCH
 ════════════════════════ */
 fetch(CV_URL)
   .then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-  .then(data => { CV_DATA = data; buildPage(data); })
+  .then(data => buildPage(data))
   .catch(err => {
     document.getElementById('cv-shell').innerHTML =
       `<div class="error" style="padding:2rem;">Could not load CV data: ${err.message}</div>`;
