@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Housekeeping board</title>
+<meta name="theme-color" content="#17636B">
+<script>try{var t=localStorage.getItem("hk-board-theme");document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light");}catch(e){document.documentElement.setAttribute("data-theme","light");}</script>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,49 +13,42 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
-  --bg: #E8EDE7;
+  /* Day (default): Resalys-inspired deep teal, orange accent, cool slate text */
+  --bg: #EDF1F2;
   --surface: #FFFFFF;
-  --surface-2: #F2F5F0;
-  --ink: #15241C;
-  --ink-2: #435449;
-  --ink-3: #66776C;
-  --line: #CCD6C9;
-  --pine: #1E5A3F;
-  --pine-2: #25704E;
-  --on-pine: #F2F9F4;
+  --surface-2: #F4F7F8;
+  --ink: #26363C;
+  --ink-2: #485A61;
+  --ink-3: #5F7077;
+  --line: #D2DBDE;
+  --pine: #17636B;
+  --pine-2: #0F7C7F;
+  --on-pine: #FFFFFF;
   --on-primary: #FFFFFF;
-  --focus: #E0A526;
-  --st-occupied: #3A5C93;
-  --st-guest_left: #A1600E;
-  --st-cleaned: #15786A;
+  --accent: #F39C34;
+  --focus: #C97205;
+  --st-occupied: #2F5F94;
+  --st-guest_left: #A85200;
+  --st-cleaned: #0B7A75;
   --st-prepped: #3B7630;
-  --urgent: #BD3326;
-  --st-occupied-bg: #E3EAF6;
-  --st-guest_left-bg: #FAEDD8;
-  --st-cleaned-bg: #DBF0EB;
-  --st-prepped-bg: #E2EFDB;
-  --urgent-bg: #FAE3E0;
+  --urgent: #BF3A2B;
+  --st-occupied-bg: #E1ECF6;
+  --st-guest_left-bg: #FCEBD5;
+  --st-cleaned-bg: #D9F0EE;
+  --st-prepped-bg: #E2F0DA;
+  --urgent-bg: #FBE4E0;
   --tag-ink: #FFFFFF;
   --font: 'Barlow', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-cond: 'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', 'Segoe UI', sans-serif;
   color-scheme: light;
 }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0F1813; --surface: #17231C; --surface-2: #1E2C24; --ink: #E2EBE4; --ink-2: #A8BAAE; --ink-3: #82958A; --line: #2C3C32;
-    --pine: #133A29; --pine-2: #4FAE7F; --on-pine: #E8F5EC; --on-primary: #0C1510; --focus: #F2C14E;
-    --st-occupied: #86A6DD; --st-guest_left: #E4A650; --st-cleaned: #52C4B0; --st-prepped: #8CC877; --urgent: #F07366;
-    --st-occupied-bg: #1C2940; --st-guest_left-bg: #37270F; --st-cleaned-bg: #11322D; --st-prepped-bg: #1C3216; --urgent-bg: #3B1814;
-    --tag-ink: #0C1510;
-    color-scheme: dark;
-  }
-}
+/* Night: switched on by hand with the switch in the header (no automatic OS switching) */
 :root[data-theme="dark"] {
-  --bg: #0F1813; --surface: #17231C; --surface-2: #1E2C24; --ink: #E2EBE4; --ink-2: #A8BAAE; --ink-3: #82958A; --line: #2C3C32;
-  --pine: #133A29; --pine-2: #4FAE7F; --on-pine: #E8F5EC; --on-primary: #0C1510; --focus: #F2C14E;
-  --st-occupied: #86A6DD; --st-guest_left: #E4A650; --st-cleaned: #52C4B0; --st-prepped: #8CC877; --urgent: #F07366;
-  --st-occupied-bg: #1C2940; --st-guest_left-bg: #37270F; --st-cleaned-bg: #11322D; --st-prepped-bg: #1C3216; --urgent-bg: #3B1814;
-  --tag-ink: #0C1510;
+  --bg: #0D1A1D; --surface: #14262A; --surface-2: #1B3036; --ink: #E3EEF0; --ink-2: #ABBFC4; --ink-3: #88A0A6; --line: #2A4249;
+  --pine: #0F3F47; --pine-2: #3DBDB6; --on-pine: #E6F5F6; --on-primary: #06191B; --accent: #F5B25A; --focus: #F5B25A;
+  --st-occupied: #86B4E4; --st-guest_left: #F0A64D; --st-cleaned: #52CBC2; --st-prepped: #93CB7A; --urgent: #F27A6B;
+  --st-occupied-bg: #182C42; --st-guest_left-bg: #382811; --st-cleaned-bg: #0F332F; --st-prepped-bg: #1C3316; --urgent-bg: #3B1B17;
+  --tag-ink: #0A1719;
   color-scheme: dark;
 }
 
@@ -70,14 +65,15 @@ h2 { font-family: var(--font-cond); font-weight: 700; font-size: 1.5rem; line-he
 h3 { font-size: 1.05rem; margin: 0 0 8px; }
 
 /* Header */
-.topbar { background: var(--pine); color: var(--on-pine); }
+.topbar { background: var(--pine); color: var(--on-pine); border-bottom: 4px solid var(--accent); }
+.topbar :focus-visible { outline-color: #FFFFFF; }
 .topbar-inner { max-width: 1360px; margin: 0 auto; padding: 14px 16px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
 .brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .brand svg { flex: none; }
 .brand h1 { font-family: var(--font-cond); font-weight: 700; font-size: 1.7rem; line-height: 1; margin: 0; }
 .brand-sub { margin: 3px 0 0; font-size: .85rem; opacity: .82; }
 .demo-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; border: 1px dashed rgba(255,255,255,.5); border-radius: 10px; padding: 8px 10px; background: rgba(255,255,255,.06); }
-.demo-label { font-size: .8rem; font-weight: 700; background: #F2C14E; color: #2A1F00; border-radius: 4px; padding: 2px 7px; }
+.demo-label { font-size: .8rem; font-weight: 700; background: var(--accent); color: #2A1F00; border-radius: 4px; padding: 2px 7px; }
 .login-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; font-size: .9rem; }
 .role-buttons { display: inline-flex; border: 1px solid rgba(255,255,255,.55); border-radius: 8px; overflow: hidden; }
 .role-buttons button { background: transparent; border: 0; color: var(--on-pine); padding: 6px 11px; min-height: 38px; font-weight: 600; font-size: .9rem; }
@@ -85,6 +81,16 @@ h3 { font-size: 1.05rem; margin: 0 0 8px; }
 .role-buttons button[aria-pressed="true"] { background: var(--on-pine); color: var(--pine); }
 .user-pick select { background: rgba(0,0,0,.22); color: var(--on-pine); border: 1px solid rgba(255,255,255,.45); border-radius: 6px; padding: 6px 8px; min-height: 38px; max-width: 220px; }
 .user-pick select option { color: #15241C; background: #FFFFFF; }
+
+.theme-switch { display: inline-flex; align-items: center; gap: 9px; background: transparent; border: 0; color: var(--on-pine); font-weight: 600; font-size: .9rem; padding: 4px 2px; min-height: 40px; }
+.theme-track { position: relative; flex: none; width: 56px; height: 30px; border-radius: 999px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.6); }
+.theme-thumb { position: absolute; top: 2px; left: 2px; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #2A1F00; display: flex; align-items: center; justify-content: center; transition: transform .2s ease, background .2s ease; }
+.theme-thumb svg { width: 15px; height: 15px; }
+.theme-thumb .i-moon { display: none; }
+.theme-switch[aria-checked="true"] .theme-thumb { transform: translateX(26px); background: #DCEBEE; color: #0F3F47; }
+.theme-switch[aria-checked="true"] .i-sun { display: none; }
+.theme-switch[aria-checked="true"] .i-moon { display: block; }
+.theme-label { min-width: 3.2em; text-align: left; }
 
 .toolbar { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
 .toolbar-inner { max-width: 1360px; margin: 0 auto; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
@@ -352,6 +358,9 @@ body.has-selbar .toast { bottom: 84px; }
 
 @media (max-width: 560px) {
   .topbar-inner { padding: 8px 12px; gap: 6px; }
+  .brand { flex: 1 1 auto; }
+  .theme-switch { order: 2; margin-left: auto; }
+  .demo-switch { order: 3; }
   .brand svg { width: 26px; height: 26px; }
   .brand h1 { font-size: 1.3rem; }
   .brand-sub { display: none; }
@@ -374,6 +383,7 @@ body.has-selbar .toast { bottom: 84px; }
 @media (prefers-reduced-motion: reduce) {
   .dialog { animation: none; }
   .toast { transition: none; }
+  .theme-thumb { transition: none; }
 }
 @media print {
   body { background: #FFFFFF; color: #000000; }
@@ -404,6 +414,14 @@ body.has-selbar .toast { bottom: 84px; }
         <label class="user-pick"><span class="sr-only">User</span><select id="userSelect"></select></label>
       </div>
     </div>
+    <button class="theme-switch" type="button" id="themeSwitch" role="switch" aria-checked="false" data-action="theme">
+      <span class="theme-track" aria-hidden="true"><span class="theme-thumb">
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="4.2" fill="currentColor" stroke="none"/><path d="M12 2.5v2.6M12 18.9v2.6M2.5 12h2.6M18.9 12h2.6M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg>
+      </span></span>
+      <span class="theme-label" id="themeLabel">Day</span>
+      <span class="sr-only">Night mode</span>
+    </button>
   </div>
 </header>
 
@@ -438,7 +456,7 @@ body.has-selbar .toast { bottom: 84px; }
 
 <script>
 'use strict';
-const version = "20260918-134951";
+const version = "20260929-230500";
 
 /* ==========================================================================
    CONFIG: statuses and roles. Adding a role or changing a permission is a
@@ -1852,6 +1870,20 @@ function workEmpty(task, what) {
 function emptyState(title, text) { return `<div class="empty"><strong>${esc(title)}</strong>${esc(text)}</div>`; }
 function noMatch() { return emptyState('No houses match this search', `Nothing matches “${state.search.trim()}”. Clear the search box to see everything.`); }
 
+/* ---- Day / night theme (day is the default; the choice is remembered when storage is available) ---- */
+function currentTheme() { return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
+function applyTheme(theme, persist) {
+  const dark = theme === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  const btn = document.getElementById('themeSwitch');
+  if (btn) btn.setAttribute('aria-checked', String(dark));
+  const label = document.getElementById('themeLabel');
+  if (label) label.textContent = dark ? 'Night' : 'Day';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', dark ? '#0F3F47' : '#17636B');
+  if (persist) { try { localStorage.setItem('hk-board-theme', dark ? 'dark' : 'light'); } catch (e) { /* storage unavailable: keep for this session only */ } }
+}
+
 /* ==========================================================================
    RENDERING
    ========================================================================== */
@@ -2899,6 +2931,7 @@ async function onClick(e) {
   if (action === 'overlay' && e.target !== el) return;
   try {
     switch (action) {
+      case 'theme': applyTheme(currentTheme() === 'dark' ? 'light' : 'dark', true); break;
       case 'role':
         state.role = el.dataset.role; state.userId = null; state.statusFilter = 'all'; state.modal = null; state.workFilter = { clean: null, prep: null }; state.selected.clear();
         renderAll();
@@ -3034,6 +3067,7 @@ function bindDropZone() {
 }
 
 async function init() {
+  applyTheme(currentTheme(), false);
   const today = DateUtil.today();
   const seed = Number(today.replace(/-/g, ''));
   await DataStore.init({ users: SEED_USERS, ...generateFakeDataset(today, seed) });
