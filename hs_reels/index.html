@@ -21,8 +21,9 @@ version history
 # version : 20261006-130000 - Sheet loading made robust: gviz headers=1, case-insensitive headers, empty/duplicate header cells ignored, url built from reel_id when url is empty
 # version : 20261006-131000 - sanitizeInstagramUrl also handles urls with an account name (instagram.com/<username>/reel/<id>/); fallback always ends with a slash
 # version : 20261006-132000 - Row id shown above each post; switch off with SHOW_IDS = false in the config block
+# version : 20261009-134500 - Search bar (collection, caption_in_video, caption, tags, user; all collections, all words must match) and QR code dialog for the current url incl. deeplink (PNG download, copy link)
 -->
-<script>const current_version = "20261006-132000";</script>
+<script>const current_version = "20261009-134500";</script>
 <style>
   :root{
     --ig-black:#0a0a0a;
@@ -122,6 +123,49 @@ version history
     font-size:13px; font-weight:600; font-family:inherit;
   }
 
+  /* ---------- search ---------- */
+  .search-row{ max-width:600px; margin:0 auto; padding:0 20px 12px; }
+  .search-box{ position:relative; }
+  .search-box input{
+    width:100%; padding:10px 38px 10px 38px; border-radius:10px;
+    border:1px solid var(--ig-border); background:#efefef; color:var(--ig-black);
+    font-size:15px; font-family:inherit; outline:none;
+    -webkit-appearance:none; appearance:none;
+  }
+  .search-box input:focus{ background:#fff; border-color:var(--ig-gray); }
+  .search-box .icon{ position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--ig-gray); pointer-events:none; font-size:14px; }
+  .search-box .clear{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    width:28px; height:28px; border:0; border-radius:50%; background:transparent;
+    color:var(--ig-gray); font-size:18px; line-height:1; cursor:pointer; display:none;
+  }
+  .search-box.has-text .clear{ display:block; }
+  #search-info{ font-size:12px; color:var(--ig-gray); padding:6px 4px 0; min-height:18px; }
+
+  .icon-btn{
+    border:1px solid var(--ig-border); background:var(--ig-card); color:var(--ig-black);
+    border-radius:999px; padding:7px 14px; font-size:13px; font-weight:600;
+    cursor:pointer; font-family:inherit; white-space:nowrap;
+  }
+  .icon-btn:hover{ background:#f2f2f2; }
+
+  .post-id .coll{ font-weight:500; margin-left:8px; opacity:.8; }
+
+  /* ---------- QR dialog ---------- */
+  #qr-dialog{
+    border:0; border-radius:14px; padding:22px; width:min(92vw,360px);
+    box-shadow:0 10px 40px rgba(0,0,0,.3); text-align:center; color:var(--ig-black);
+  }
+  #qr-dialog::backdrop{ background:rgba(0,0,0,.5); }
+  #qr-dialog h2{ margin:0 0 14px; font-size:17px; }
+  #qr-canvas{ width:240px; height:240px; image-rendering:pixelated; border:1px solid var(--ig-border); border-radius:6px; }
+  #qr-url{
+    margin:12px 0 14px; font-size:12px; color:var(--ig-gray);
+    word-break:break-all; user-select:all;
+  }
+  #qr-warn{ color:#c0392b; font-size:12px; margin:0 0 10px; display:none; }
+  .qr-actions{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+
   .empty-note{ text-align:center; color:var(--ig-gray); font-size:13px; padding:12px; }
 </style>
 </head>
@@ -130,6 +174,15 @@ version history
 <header>
   <div class="header-inner">
     <div class="brand"><span class="dot"></span>Insta Collections</div>
+    <button type="button" class="icon-btn" id="qr-btn" title="Create a QR code for this page">QR code</button>
+  </div>
+  <div class="search-row">
+    <div class="search-box" id="search-box">
+      <span class="icon">&#128269;</span>
+      <input type="search" id="search-input" placeholder="Search collection, caption, tags, user…" autocomplete="off" enterkeyhint="search" aria-label="Search">
+      <button type="button" class="clear" id="search-clear" aria-label="Clear search">&times;</button>
+    </div>
+    <div id="search-info"></div>
   </div>
   <div class="chip-row" id="chip-row"></div>
 </header>
@@ -139,6 +192,19 @@ version history
   <div id="feed-view" style="display:none;"></div>
 </main>
 
+<dialog id="qr-dialog">
+  <h2>QR code</h2>
+  <canvas id="qr-canvas" width="240" height="240"></canvas>
+  <div id="qr-url"></div>
+  <p id="qr-warn">This page is opened from a local file, so the QR code will not work on other devices. Open the hosted version first.</p>
+  <div class="qr-actions">
+    <button type="button" class="icon-btn" id="qr-download">Download PNG</button>
+    <button type="button" class="icon-btn" id="qr-copy">Copy link</button>
+    <button type="button" class="icon-btn" id="qr-close">Close</button>
+  </div>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 /* ---------------------------------------------------------------------- *
  * Config — edit these two to point at your sheet                         *
@@ -158,13 +224,15 @@ const EMBED_GAP_MS = 300;
 
 /* Fallback data so the page still demonstrates itself if the sheet can't be reached */
 const FALLBACK_ROWS = [
-  { id:"1", collection:"demo", url:"https://www.instagram.com/reel/C1a2B3c4D5e/", date_added:"2026-06-01T10:00:00+00:00", added_by:"rene", caption:"Acro jam sunset session", tags:"acro,sunset", type:"reel", status:"active" },
-  { id:"2", collection:"demo", url:"https://www.instagram.com/p/C1a2B3c4D5f/", date_added:"2026-06-02T10:00:00+00:00", added_by:"cat", caption:"Handstand progress week 4", tags:"handstand,training", type:"post", status:"active" },
-  { id:"3", collection:"demo", url:"https://www.instagram.com/reel/C1a2B3c4D5g/", date_added:"2026-06-03T10:00:00+00:00", added_by:"rene", caption:"Chiang Mai community circle", tags:"community,chiangmai", type:"reel", status:"active" },
+  { id:"1", collection:"demo", url:"https://www.instagram.com/reel/C1a2B3c4D5e/", date_added:"2026-06-01T10:00:00+00:00", added_by:"rene", caption:"Acro jam sunset session", caption_in_video:"", user:"rene", tags:"acro,sunset", type:"reel", status:"active" },
+  { id:"2", collection:"demo", url:"https://www.instagram.com/p/C1a2B3c4D5f/", date_added:"2026-06-02T10:00:00+00:00", added_by:"cat", caption:"Handstand progress week 4", caption_in_video:"week 4", user:"cat", tags:"handstand,training", type:"post", status:"active" },
+  { id:"3", collection:"demo", url:"https://www.instagram.com/reel/C1a2B3c4D5g/", date_added:"2026-06-03T10:00:00+00:00", added_by:"rene", caption:"Chiang Mai community circle", caption_in_video:"", user:"rene", tags:"community,chiangmai", type:"reel", status:"active" },
 ];
 
 let ALL_ROWS = [];
 let ACTIVE_COLLECTION = null;
+let SEARCH_QUERY = "";
+const SEARCH_FIELDS = ["collection", "caption_in_video", "caption", "tags", "user", "added_by"];
 let feedObserver = null;
 let anyEmbedMeasured = false;
 let renderGeneration = 0;
@@ -289,11 +357,28 @@ function dedupeRows(rows) {
   return result;
 }
 
+/* Lowercase + strip diacritics so "cafe" finds "café" */
+function normalizeText(s) {
+  return (s || "").toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function searchTerms() {
+  return normalizeText(SEARCH_QUERY).split(/\s+/).filter(Boolean);
+}
+
+function rowMatches(row, terms) {
+  const haystack = normalizeText(SEARCH_FIELDS.map(f => row[f] || "").join(" \n "));
+  return terms.every(t => haystack.includes(t));
+}
+
+/* Without a search: the active collection. With a search: all collections. */
 function activeRows() {
-  const filtered = ALL_ROWS.filter(r =>
-    (r.status || "active").toLowerCase() !== "hidden" &&
-    (!ACTIVE_COLLECTION || r.collection === ACTIVE_COLLECTION)
-  );
+  const terms = searchTerms();
+  const filtered = ALL_ROWS.filter(r => {
+    if ((r.status || "active").toLowerCase() === "hidden") return false;
+    if (terms.length) return rowMatches(r, terms);
+    return !ACTIVE_COLLECTION || r.collection === ACTIVE_COLLECTION;
+  });
   return dedupeRows(filtered);
 }
 
@@ -308,10 +393,11 @@ function renderChips() {
   chipRow.innerHTML = "";
   collections.forEach(c => {
     const chip = document.createElement("button");
-    chip.className = "chip" + (c === ACTIVE_COLLECTION ? " active" : "");
+    chip.className = "chip" + (!SEARCH_QUERY.trim() && c === ACTIVE_COLLECTION ? " active" : "");
     chip.innerHTML = `${escapeHTML(c)}<span class="count">${countFor(c)}</span>`;
     chip.addEventListener("click", () => {
       ACTIVE_COLLECTION = c;
+      setSearch("", true);
       setCollectionInURL(c);
       renderChips();
       renderFeed();
@@ -331,8 +417,12 @@ function renderFeed() {
   embedQueue = [];
   activeEmbeds = 0;
 
+  const searching = searchTerms().length > 0;
+  const info = document.getElementById("search-info");
+  if (info) info.textContent = searching ? `${rows.length} result${rows.length === 1 ? "" : "s"} in all collections` : "";
+
   if (!rows.length) {
-    feed.innerHTML = `<div class="empty-note">No links in this collection yet.</div>`;
+    feed.innerHTML = `<div class="empty-note">${searching ? "No posts match your search." : "No links in this collection yet."}</div>`;
     return;
   }
 
@@ -351,7 +441,7 @@ function renderFeed() {
     card.dataset.url = row.url;
     const rowId = row.id || row.reel_id || "";
     card.innerHTML = `
-      ${SHOW_IDS && rowId ? `<div class="post-id">${escapeHTML(rowId)}</div>` : ""}
+      ${(SHOW_IDS && rowId) || searching ? `<div class="post-id">${SHOW_IDS ? escapeHTML(rowId) : ""}${searching && row.collection ? `<span class="coll">${SHOW_IDS && rowId ? "· " : ""}${escapeHTML(row.collection)}</span>` : ""}</div>` : ""}
       <div class="post-embed-slot">Loading embed…</div>
     `;
     feed.appendChild(card);
@@ -473,6 +563,109 @@ function showEmbedFallback(slot, cleanUrl) {
 }
 
 /* ---------------------------------------------------------------------- *
+ * Search                                                                  *
+ * ---------------------------------------------------------------------- */
+let searchTimer = null;
+
+function setSearch(value, silent) {
+  SEARCH_QUERY = value;
+  const input = document.getElementById("search-input");
+  if (input.value !== value) input.value = value;
+  document.getElementById("search-box").classList.toggle("has-text", !!value);
+  if (!silent) { renderChips(); renderFeed(); }
+}
+
+function initSearch() {
+  const input = document.getElementById("search-input");
+  input.addEventListener("input", () => {
+    document.getElementById("search-box").classList.toggle("has-text", !!input.value);
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => setSearch(input.value), 300);
+  });
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { clearTimeout(searchTimer); setSearch(input.value); input.blur(); }
+    if (e.key === "Escape") { clearTimeout(searchTimer); setSearch(""); }
+  });
+  document.getElementById("search-clear").addEventListener("click", () => {
+    clearTimeout(searchTimer);
+    setSearch("");
+    input.focus();
+  });
+}
+
+/* ---------------------------------------------------------------------- *
+ * QR code for the current url (including the ?collection deeplink)        *
+ * ---------------------------------------------------------------------- */
+function currentShareUrl() {
+  const url = new URL(window.location.href);
+  url.hash = "";
+  /* Make sure the deeplink of the active collection is present */
+  if (ACTIVE_COLLECTION && !url.search) url.search = "?" + encodeURIComponent(ACTIVE_COLLECTION);
+  return url.toString();
+}
+
+function drawQR(text) {
+  const canvas = document.getElementById("qr-canvas");
+  const ctx = canvas.getContext("2d");
+  const qr = qrcode(0, "M");   /* type 0 = pick the smallest version that fits */
+  qr.addData(text, "Byte");
+  qr.make();
+  const n = qr.getModuleCount();
+  const quiet = 4;
+  const size = 960;                              /* internal resolution, good for printing */
+  const cell = Math.floor(size / (n + quiet * 2));
+  const total = cell * (n + quiet * 2);
+  canvas.width = canvas.height = total;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, total, total);
+  ctx.fillStyle = "#000000";
+  for (let r = 0; r < n; r++)
+    for (let c = 0; c < n; c++)
+      if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * cell, (r + quiet) * cell, cell, cell);
+}
+
+function initQR() {
+  const dialog = document.getElementById("qr-dialog");
+  const urlBox = document.getElementById("qr-url");
+  let shownUrl = "";
+
+  document.getElementById("qr-btn").addEventListener("click", () => {
+    shownUrl = currentShareUrl();
+    urlBox.textContent = shownUrl;
+    document.getElementById("qr-warn").style.display = window.location.protocol === "file:" ? "block" : "none";
+    try {
+      drawQR(shownUrl);
+    } catch (e) {
+      console.warn("QR generation failed:", e);
+      urlBox.textContent = "Could not create the QR code (is the QR library blocked?)";
+    }
+    if (typeof dialog.showModal === "function") dialog.showModal(); else dialog.setAttribute("open", "");
+  });
+
+  document.getElementById("qr-close").addEventListener("click", () => dialog.close());
+  dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
+
+  document.getElementById("qr-download").addEventListener("click", () => {
+    const a = document.createElement("a");
+    const name = (ACTIVE_COLLECTION || "insta-collections").replace(/[^A-Za-z0-9_-]+/g, "_");
+    a.download = `qr-${name}.png`;
+    a.href = document.getElementById("qr-canvas").toDataURL("image/png");
+    a.click();
+  });
+
+  document.getElementById("qr-copy").addEventListener("click", async (e) => {
+    const btn = e.currentTarget;
+    try {
+      await navigator.clipboard.writeText(shownUrl);
+      btn.textContent = "Copied ✓";
+    } catch (err) {
+      btn.textContent = "Copy failed";
+    }
+    setTimeout(() => { btn.textContent = "Copy link"; }, 1500);
+  });
+}
+
+/* ---------------------------------------------------------------------- *
  * Init                                                                    *
  * ---------------------------------------------------------------------- */
 (async function init() {
@@ -487,6 +680,8 @@ function showEmbedFallback(slot, cleanUrl) {
 
   document.getElementById("status-msg").style.display = "none";
   document.getElementById("feed-view").style.display = "flex";
+  initSearch();
+  initQR();
   renderChips();
   renderFeed();
 })();
