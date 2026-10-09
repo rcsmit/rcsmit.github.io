@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insta Collections</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<!--
+version history
+# version : 20260809-150000 - Initial version: grid + scroll feed viewer, collection switcher, CSV-from-Sheets loader
+# version : 20260809-153000 - Removed grid view (kept scroll feed only), added deep-link support (?collection or bare ?name), renamed to index.html
+# version : 20260809-160000 - Removed custom post header (duplicated Instagram's own), strip tracking params from embed URLs, dedupe repeated links
+# version : 20260809-161000 - Strip leftover tracking-param fragments (e.g. ?igsh=...) from displayed captions, for rows saved before the bot-side fix
+# version : 20260809-162000 - Crop Instagram embed's own like/comment/share row + comment box off the bottom (approximate, cross-origin iframe)
+# version : 20260809-163000 - Removed post-foot (our own caption/tags block); each card is now just the embed itself
+# version : 20260809-164000 - Fix leftover whitespace between cropped embed and card border (collapse min-height/flex-centering once loaded)
+# version : 20260809-165000 - Reverted footer-crop feature (20260809-162000/164000); embed now renders full and uncropped
+# version : 20261006-123000 - Fallback "Open on Instagram" link for posts that cannot be embedded (private/removed/embedding disabled; Instagram then redirects the iframe to a login page that sends X-Frame-Options: deny)
+# version : 20261006-124000 - Embeds load through a queue (max 3 at a time) to avoid Instagram throttling; only rows of the active collection are queued; failed cards get a Retry button
+# version : 20261006-125000 - Embeds are plain iframes on https://www.instagram.com/<reel|p>/<id>/embed (embed.js removed); height taken from the embed's MEASURE message
+# version : 20261006-130000 - Sheet loading made robust: gviz headers=1, case-insensitive headers, empty/duplicate header cells ignored, url built from reel_id when url is empty
+# version : 20261006-131000 - sanitizeInstagramUrl also handles urls with an account name (instagram.com/<username>/reel/<id>/); fallback always ends with a slash
+# version : 20261006-132000 - Row id shown above each post; switch off with SHOW_IDS = false in the config block
+-->
+<script>const current_version = "20261006-132000";</script>
+<style>
+  :root{
+    --ig-black:#0a0a0a;
+    --ig-gray:#8e8e8e;
+    --ig-border:#dbdbdb;
+    --ig-bg:#fafafa;
+    --ig-card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ig-bg);
+    color:var(--ig-black);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--ig-border);
+  }
+  .header-inner{
+    max-width:600px; margin:0 auto;
+    padding:14px 20px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    font-weight:700; font-size:20px; letter-spacing:-.02em;
+  }
+  .brand .dot{
+    width:10px;height:10px;border-radius:50%;
+    background:linear-gradient(135deg,#f58529,#dd2a7b,#8134af,#515bd4);
+  }
+
+  /* ---------- collection chips ---------- */
+  .chip-row{
+    max-width:600px; margin:0 auto;
+    padding:0 20px 14px;
+    display:flex; gap:8px; overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .chip-row::-webkit-scrollbar{ display:none; }
+  .chip{
+    flex:0 0 auto;
+    padding:7px 16px;
+    border-radius:999px;
+    border:1px solid var(--ig-border);
+    background:var(--ig-card);
+    font-size:13px; font-weight:600;
+    cursor:pointer; white-space:nowrap;
+    transition:background .15s,color .15s,border-color .15s;
+  }
+  .chip.active{ background:var(--ig-black); color:#fff; border-color:var(--ig-black); }
+  .chip .count{ opacity:.55; font-weight:500; margin-left:4px; }
+  .chip.active .count{ opacity:.8; }
+
+  main{ max-width:600px; margin:0 auto; padding:20px; min-height:60vh; }
+
+  #status-msg{
+    text-align:center; color:var(--ig-gray); font-size:14px; padding:60px 20px;
+  }
+
+  /* ---------- feed / scroll view ---------- */
+  #feed-view{ display:flex; flex-direction:column; gap:24px; max-width:470px; margin:0 auto; }
+  .post-card{
+    background:var(--ig-card);
+    border:1px solid var(--ig-border);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .post-embed-slot{ min-height:200px; background:#f2f2f2; display:flex; align-items:center; justify-content:center; color:var(--ig-gray); font-size:13px; }
+
+  .post-id{
+    padding:8px 14px; font-size:12px; font-weight:600; color:var(--ig-gray);
+    border-bottom:1px solid var(--ig-border); background:var(--ig-card);
+    font-variant-numeric:tabular-nums;
+  }
+
+  .ig-embed-frame{ display:block; width:100%; height:600px; border:0; background:var(--ig-card); }
+
+  .embed-fallback{ text-align:center; padding:24px 16px; }
+  .embed-fallback p{ margin:0 0 10px; color:var(--ig-gray); font-size:13px; }
+  .embed-fallback a{
+    display:inline-block; padding:8px 18px; border-radius:999px;
+    background:var(--ig-black); color:#fff; font-size:13px; font-weight:600;
+    text-decoration:none;
+  }
+  .embed-fallback .actions{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  .embed-fallback button{
+    padding:8px 18px; border-radius:999px; cursor:pointer;
+    border:1px solid var(--ig-border); background:var(--ig-card); color:var(--ig-black);
+    font-size:13px; font-weight:600; font-family:inherit;
+  }
+
+  .empty-note{ text-align:center; color:var(--ig-gray); font-size:13px; padding:12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="brand"><span class="dot"></span>Insta Collections</div>
+  </div>
+  <div class="chip-row" id="chip-row"></div>
+</header>
+
+<main>
+  <div id="status-msg">Loading collection…</div>
+  <div id="feed-view" style="display:none;"></div>
+</main>
+
+<script>
+/* ---------------------------------------------------------------------- *
+ * Config — edit these two to point at your sheet                         *
+ * ---------------------------------------------------------------------- */
+const SPREADSHEET_ID = "1VxN3uBwHLji9Eig8YA7DJs9cVBWN2QIV74no16lb8fY";
+const WORKSHEET_NAME = "handstand";
+const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:csv&headers=1&sheet=${encodeURIComponent(WORKSHEET_NAME)}`;
+
+/* Show the row id above each post — set to false to switch it off */
+const SHOW_IDS = true;
+
+/* How long to wait for an embed to report that it rendered before showing the fallback */
+const EMBED_TIMEOUT_MS = 10000;
+/* Embeds are loaded through a queue so Instagram doesn't throttle us */
+const MAX_CONCURRENT_EMBEDS = 3;
+const EMBED_GAP_MS = 300;
+
+/* Fallback data so the page still demonstrates itself if the sheet can't be reached */
+const FALLBACK_ROWS = [
+  { id:"1", collection:"demo", url:"https://www.instagram.com/reel/C1a2B3c4D5e/", date_added:"2026-06-01T10:00:00+00:00", added_by:"rene", caption:"Acro jam sunset session", tags:"acro,sunset", type:"reel", status:"active" },
+  { id:"2", collection:"demo", url:"https://www.instagram.com/p/C1a2B3c4D5f/", date_added:"2026-06-02T10:00:00+00:00", added_by:"cat", caption:"Handstand progress week 4", tags:"handstand,training", type:"post", status:"active" },
+  { id:"3", collection:"demo", url:"https://www.instagram.com/reel/C1a2B3c4D5g/", date_added:"2026-06-03T10:00:00+00:00", added_by:"rene", caption:"Chiang Mai community circle", tags:"community,chiangmai", type:"reel", status:"active" },
+];
+
+let ALL_ROWS = [];
+let ACTIVE_COLLECTION = null;
+let feedObserver = null;
+let anyEmbedMeasured = false;
+let renderGeneration = 0;
+let embedQueue = [];
+let activeEmbeds = 0;
+
+/* ---------------------------------------------------------------------- *
+ * CSV parsing (handles quoted fields with commas/newlines/escaped quotes) *
+ * ---------------------------------------------------------------------- */
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i], next = text[i + 1];
+    if (inQuotes) {
+      if (c === '"' && next === '"') { field += '"'; i++; }
+      else if (c === '"') { inQuotes = false; }
+      else { field += c; }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\r') { /* skip */ }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
+      else field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+
+  /* Headers are case-insensitive; empty header cells and duplicate names are ignored
+     (the first column with a given name wins), so extra helper columns can't break the sheet. */
+  const header = rows.shift().map(h => h.trim().toLowerCase());
+  return rows
+    .filter(r => r.some(v => v.trim() !== ""))
+    .map(r => {
+      const obj = {};
+      header.forEach((h, idx) => {
+        if (h && !(h in obj)) obj[h] = (r[idx] || "").trim();
+      });
+      return normalizeRow(obj);
+    })
+    .filter(r => r.url);
+}
+
+/* Use the url column when filled; otherwise build the url from reel_id */
+function normalizeRow(row) {
+  if (!row.url && row.reel_id) {
+    const kind = /^(post|p)$/i.test(row.type || "") ? "p" : "reel";
+    row.url = `https://www.instagram.com/${kind}/${row.reel_id}/`;
+  }
+  return row;
+}
+
+/* gviz wraps CSV cleanly (unlike its JSON endpoint), so a plain fetch + parse works */
+async function loadRows() {
+  try {
+    const res = await fetch(SHEET_CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (!rows.length) throw new Error("Sheet returned no rows");
+    return rows;
+  } catch (e) {
+    console.warn("Could not load sheet, using fallback data:", e);
+    const msg = document.getElementById("status-msg");
+    if (msg) msg.textContent = "⚠ Could not reach the sheet — showing demo data.";
+    return FALLBACK_ROWS;
+  }
+}
+
+/* ---------------------------------------------------------------------- *
+ * Deep link handling                                                      *
+ * index.html?berlin            -> collection "berlin"                     *
+ * index.html?collection=berlin -> also works                              *
+ * ---------------------------------------------------------------------- */
+function getCollectionFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("collection")) return params.get("collection");
+
+  const raw = window.location.search.replace(/^\?/, "");
+  if (!raw) return null;
+  const firstPart = raw.split("&")[0].split("=")[0];
+  return firstPart ? decodeURIComponent(firstPart) : null;
+}
+
+function setCollectionInURL(collection) {
+  const url = new URL(window.location.href);
+  url.search = collection ? "?" + encodeURIComponent(collection) : "";
+  window.history.replaceState(null, "", url);
+}
+
+/* ---------------------------------------------------------------------- *
+ * Helpers                                                                 *
+ * ---------------------------------------------------------------------- */
+function escapeHTML(s) {
+  return (s || "").replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+}
+
+/* Strip tracking params (?igsh=..., ?utm_source=..., etc.) so the embed widget
+   doesn't render the raw query string as fallback text, and so identical posts
+   shared with different tracking params are recognized as duplicates. */
+function sanitizeInstagramUrl(url) {
+  /* The optional first group lets links with an account name
+     (instagram.com/<username>/reel/<id>/) resolve to the same canonical url as instagram.com/reel/<id>/ */
+  const match = (url || "").match(/instagram\.com\/(?:[A-Za-z0-9._]+\/)?(reel|reels|p|tv)\/([A-Za-z0-9_-]+)/i);
+  if (!match) {
+    const bare = (url || "").split("?")[0];
+    return bare.endsWith("/") ? bare : bare + "/";
+  }
+  const kind = match[1].toLowerCase() === "reels" ? "reel" : match[1].toLowerCase();
+  return `https://www.instagram.com/${kind}/${match[2]}/`;
+}
+
+function dedupeRows(rows) {
+  const seen = new Set();
+  const result = [];
+  for (const row of rows) {
+    const key = sanitizeInstagramUrl(row.url);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(row);
+  }
+  return result;
+}
+
+function activeRows() {
+  const filtered = ALL_ROWS.filter(r =>
+    (r.status || "active").toLowerCase() !== "hidden" &&
+    (!ACTIVE_COLLECTION || r.collection === ACTIVE_COLLECTION)
+  );
+  return dedupeRows(filtered);
+}
+
+/* ---------------------------------------------------------------------- *
+ * Rendering                                                               *
+ * ---------------------------------------------------------------------- */
+function renderChips() {
+  const chipRow = document.getElementById("chip-row");
+  const collections = [...new Set(ALL_ROWS.map(r => r.collection).filter(Boolean))].sort();
+  const countFor = (c) => ALL_ROWS.filter(r => r.collection === c && (r.status || "active").toLowerCase() !== "hidden").length;
+
+  chipRow.innerHTML = "";
+  collections.forEach(c => {
+    const chip = document.createElement("button");
+    chip.className = "chip" + (c === ACTIVE_COLLECTION ? " active" : "");
+    chip.innerHTML = `${escapeHTML(c)}<span class="count">${countFor(c)}</span>`;
+    chip.addEventListener("click", () => {
+      ACTIVE_COLLECTION = c;
+      setCollectionInURL(c);
+      renderChips();
+      renderFeed();
+    });
+    chipRow.appendChild(chip);
+  });
+}
+
+function renderFeed() {
+  const feed = document.getElementById("feed-view");
+  const rows = activeRows();
+  feed.innerHTML = "";
+
+  if (feedObserver) feedObserver.disconnect();
+  /* New render: forget everything still waiting from the previous collection */
+  renderGeneration++;
+  embedQueue = [];
+  activeEmbeds = 0;
+
+  if (!rows.length) {
+    feed.innerHTML = `<div class="empty-note">No links in this collection yet.</div>`;
+    return;
+  }
+
+  feedObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        enqueueEmbed(entry.target.querySelector(".post-embed-slot"), entry.target.dataset.url);
+        feedObserver.unobserve(entry.target);
+      }
+    });
+  }, { rootMargin: "300px 0px" });
+
+  rows.forEach(row => {
+    const card = document.createElement("div");
+    card.className = "post-card";
+    card.dataset.url = row.url;
+    const rowId = row.id || row.reel_id || "";
+    card.innerHTML = `
+      ${SHOW_IDS && rowId ? `<div class="post-id">${escapeHTML(rowId)}</div>` : ""}
+      <div class="post-embed-slot">Loading embed…</div>
+    `;
+    feed.appendChild(card);
+    feedObserver.observe(card);
+  });
+}
+
+/* ---------------------------------------------------------------------- *
+ * Embed queue: at most MAX_CONCURRENT_EMBEDS are loading at any moment.   *
+ * A slot is released when the embed reports it rendered, or on timeout.   *
+ * ---------------------------------------------------------------------- */
+function enqueueEmbed(slot, url) {
+  if (!slot) return;
+  embedQueue.push({ slot, url, gen: renderGeneration });
+  pumpQueue();
+}
+
+function pumpQueue() {
+  while (activeEmbeds < MAX_CONCURRENT_EMBEDS && embedQueue.length) {
+    const job = embedQueue.shift();
+    if (job.gen !== renderGeneration || !job.slot.isConnected) continue;
+    activeEmbeds++;
+    startEmbed(job);
+  }
+}
+
+function startEmbed(job) {
+  const { slot } = job;
+  const cleanUrl = sanitizeInstagramUrl(job.url);
+  let finished = false;
+  let timer = null;
+
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(timer);
+    if (job.gen === renderGeneration) {
+      activeEmbeds = Math.max(0, activeEmbeds - 1);
+      setTimeout(pumpQueue, EMBED_GAP_MS);
+    }
+  };
+
+  slot.dataset.rendered = "";
+  slot._finishEmbed = finish;
+
+  /* Direct embed URL built from the post id: https://www.instagram.com/<reel|p>/<id>/embed */
+  const frame = document.createElement("iframe");
+  frame.src = `${cleanUrl}embed`;
+  frame.className = "ig-embed-frame";
+  frame.setAttribute("scrolling", "no");
+  frame.setAttribute("allowtransparency", "true");
+  frame.setAttribute("allowfullscreen", "true");
+  frame.setAttribute("loading", "eager");
+  frame.setAttribute("title", "Instagram post");
+  /* load also fires for Instagram's login redirect, so it only frees the queue;
+     "rendered" is still decided by the MEASURE message below */
+  frame.addEventListener("load", () => setTimeout(finish, EMBED_GAP_MS));
+  slot.innerHTML = "";
+  slot.appendChild(frame);
+
+  timer = setTimeout(() => {
+    checkEmbed(slot, cleanUrl);
+    finish();
+  }, EMBED_TIMEOUT_MS);
+}
+
+/* ---------------------------------------------------------------------- *
+ * Embed failure handling                                                  *
+ * Posts that are private, removed or have embedding disabled make        *
+ * Instagram redirect the iframe to its login page, which sends           *
+ * X-Frame-Options: deny (the console error). The iframe is cross-origin, *
+ * so we cannot inspect it; instead we listen for the MEASURE messages    *
+ * that a correctly rendered embed posts to the parent window.            *
+ * ---------------------------------------------------------------------- */
+window.addEventListener("message", (ev) => {
+  if (ev.origin !== "https://www.instagram.com") return;
+  let data = ev.data;
+  if (typeof data === "string") {
+    try { data = JSON.parse(data); } catch (e) { return; }
+  }
+  if (!data || data.type !== "MEASURE") return;
+  anyEmbedMeasured = true;
+  document.querySelectorAll(".post-embed-slot iframe").forEach(frame => {
+    if (frame.contentWindow === ev.source) {
+      /* The embed page reports its content height; without embed.js we apply it ourselves */
+      const h = data.details && Number(data.details.height);
+      if (h > 0) frame.style.height = Math.ceil(h) + "px";
+      const slot = frame.closest(".post-embed-slot");
+      if (slot) {
+        slot.dataset.rendered = "1";
+        if (slot._finishEmbed) slot._finishEmbed();
+      }
+    }
+  });
+});
+
+function checkEmbed(slot, cleanUrl) {
+  if (!slot || !slot.isConnected || slot.dataset.rendered === "1") return;
+  const hasIframe = !!slot.querySelector("iframe");
+  // If an iframe exists but no embed has ever reported back, we cannot tell
+  // whether the protocol changed or this one failed — leave it alone.
+  if (hasIframe && !anyEmbedMeasured) return;
+  showEmbedFallback(slot, cleanUrl);
+}
+
+function showEmbedFallback(slot, cleanUrl) {
+  slot.innerHTML = `
+    <div class="embed-fallback">
+      <p>This post didn't load.</p>
+      <div class="actions">
+        <button type="button" class="retry-btn">Retry</button>
+        <a href="${escapeHTML(cleanUrl)}" target="_blank" rel="noopener noreferrer">Open on Instagram ↗</a>
+      </div>
+    </div>`;
+  slot.querySelector(".retry-btn").addEventListener("click", () => {
+    slot.innerHTML = "Loading embed…";
+    enqueueEmbed(slot, cleanUrl);
+  });
+}
+
+/* ---------------------------------------------------------------------- *
+ * Init                                                                    *
+ * ---------------------------------------------------------------------- */
+(async function init() {
+  ALL_ROWS = await loadRows();
+  const collections = [...new Set(ALL_ROWS.map(r => r.collection).filter(Boolean))].sort();
+
+  const requested = getCollectionFromURL();
+  const matched = requested
+    ? collections.find(c => c.toLowerCase() === requested.toLowerCase())
+    : null;
+  ACTIVE_COLLECTION = matched || collections[0] || null;
+
+  document.getElementById("status-msg").style.display = "none";
+  document.getElementById("feed-view").style.display = "flex";
+  renderChips();
+  renderFeed();
+})();
+</script>
+
+</body>
+</html>
