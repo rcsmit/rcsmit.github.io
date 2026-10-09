@@ -707,6 +707,7 @@
 
 <!-- ═══════════════════ SCRIPT ═══════════════════ -->
 <script>
+const version = "20261009-141445";
 // ════════════════════════════════════════════════════════════════
 //  LOCATIONS
 // ════════════════════════════════════════════════════════════════
@@ -726,6 +727,7 @@ const LOCATIONS = [
   {name:"Berlin",           lat:52.5200,  lon:13.4050,   timezone:"Europe/Berlin"},
   {name:"Lisbon",           lat:38.7169,  lon:-9.1399,   timezone:"Europe/Lisbon"},
   {name:"Rome",             lat:41.9102,  lon:12.3712,   timezone:"Europe/Rome"},
+  {name:"Fabulous Rome",    lat:41.77745, lon:12.39593,  timezone:"Europe/Rome"},
   {name:"Venezia",          lat:45.4408,  lon:12.3155,   timezone:"Europe/Rome"},
   {name:"Hoi An",           lat:15.8801,  lon:108.3380,  timezone:"Asia/Ho_Chi_Minh"},
   {name:"Ho Chi Minh City", lat:10.7769,  lon:106.7009,  timezone:"Asia/Ho_Chi_Minh"},
@@ -893,14 +895,17 @@ async function fetchAndRender() {
     const d    = json.daily;
 
     DF = d.time.map((t, i) => {
-      const date = new Date(t);
+      // Parse "yyyy-mm-dd" as calendar parts — never via local-time Date getters,
+      // which shift the day depending on the browser's timezone
+      const [yy, mm, dd] = t.split('-').map(Number);
+      const date = new Date(Date.UTC(yy, mm - 1, dd));
       return {
         date,
         dateStr:              t,
-        day:                  date.getDate(),
-        month:                date.getMonth() + 1,
-        year:                 date.getFullYear(),
-        doy:                  dayOfYear(date),
+        day:                  dd,
+        month:                mm,
+        year:                 yy,
+        doy:                  climDoy(yy, mm, dd),
         temp_max:             d.temperature_2m_max[i],
         temp_min:             d.temperature_2m_min[i],
         temp_mean:            d.temperature_2m_mean[i],
@@ -1409,19 +1414,13 @@ function renderWeatherspark(where) {
   document.getElementById('ws-prec-title').textContent  = `Precipitation History — ${where}`;
   document.getElementById('ws-chance-title').textContent = `Precipitation Chance — ${where}`;
 
-  // Helper: doy → fake timestamp string for x-axis
-  function doyToStr(doy) {
-    const base = new Date(2001, 0, 1);
-    base.setDate(base.getDate() + doy - 1);
-    return base.toISOString().slice(0,10);
-  }
-
-  const monthTicks  = [1,32,60,91,121,152,182,213,244,274,305,335].map(d=>doyToStr(d));
+  const monthTicks  = [1,2,3,4,5,6,7,8,9,10,11,12].map(m => `2000-${String(m).padStart(2,'0')}-01`);
   const monthLabels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
   const baseWs = {
     plot_bgcolor:'#fff', paper_bgcolor:'#fff',
-    xaxis:{tickvals:monthTicks, ticktext:monthLabels, showgrid:false, zeroline:false},
+    // hoverformat hides the dummy reference year in the unified hover header
+    xaxis:{tickvals:monthTicks, ticktext:monthLabels, showgrid:false, zeroline:false, hoverformat:'%d %b'},
     margin:{l:60,r:20,t:50,b:100},
     height:420, hovermode:'x unified',
     legend:{orientation:'h', x:0, y:-0.22, xanchor:'left', yanchor:'top', bgcolor:'rgba(255,255,255,0.7)', borderwidth:0},
@@ -1450,10 +1449,10 @@ function renderWeatherspark(where) {
     };
   });
 
-  // Smooth 14-day rolling
-  function smooth(arr, key, w=14) {
+  // Smooth 15-day centered rolling window (a trailing window shifts the curves ~1 week later)
+  function smooth(arr, key, half=7) {
     return arr.map((_,i) => {
-      const sl = arr.slice(Math.max(0,i-w+1),i+1).map(x=>x[key]).filter(x=>x!=null);
+      const sl = arr.slice(Math.max(0,i-half), i+half+1).map(x=>x[key]).filter(x=>x!=null);
       return sl.length ? avg(sl) : null;
     });
   }
@@ -1515,7 +1514,8 @@ function renderWeatherspark(where) {
     });
   }
 
-  const todayDoy  = dayOfYear(new Date());
+  const now       = new Date();
+  const todayDoy  = climDoy(now.getFullYear(), now.getMonth() + 1, now.getDate());
   const todayStr  = doyToStr(todayDoy);
 
   Plotly.newPlot('chart-ws-temp', tempTraces, {
@@ -1639,7 +1639,7 @@ function renderWeatherspark(where) {
      hoverinfo:'skip', showlegend:false},
     {x:xChance, y:smChance, type:'scatter', mode:'lines', name:`${toShow}>${thresh}`,
      line:{color:'rgba(50,110,185,0.9)',width:2.5},
-     hovertemplate:'%{x}: <b>%{y:.0f}%</b><extra></extra>'},
+     hovertemplate:'%{x|%d %b}: <b>%{y:.0f}%</b><extra></extra>'},
   ], {
     ...baseWs,
     title:{text:`Chance of ${toShow} > ${thresh} — ${where}`, font:{size:14}, x:0.5},
@@ -1689,10 +1689,16 @@ function pct(sorted, p) {
 }
 function uniqueSorted(arr) { return [...new Set(arr)].sort((a,b)=>a-b); }
 
-function dayOfYear(date) {
-  const start = new Date(date.getFullYear(), 0, 0);
-  const diff  = date - start;
-  return Math.floor(diff / 86400000);
+// Climatological day-of-year on a leap reference year (2000): 1..366.
+// Every calendar date always maps to the same slot (Mar 1 = 61 in every year,
+// Feb 29 = 60 only exists in leap years), so leap years don't shift by a day.
+function climDoy(y, m, d) {
+  return Math.round((Date.UTC(2000, m - 1, d) - Date.UTC(2000, 0, 1)) / 86400000) + 1;
+}
+
+// Climatological doy → "2000-mm-dd" string for the x-axis (pure UTC, no timezone shift)
+function doyToStr(doy) {
+  return new Date(Date.UTC(2000, 0, doy)).toISOString().slice(0, 10);
 }
 
 // Linear regression → {slope, intercept, r2, p}
