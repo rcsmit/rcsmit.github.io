@@ -601,6 +601,18 @@
     </div>
   </div>
 
+  <div class="ctrl-group">
+    <label>Weather model</label>
+    <select id="sel-model">
+      <option value="best_match">Best match (IFS + ERA5, default)</option>
+      <option value="era5">ERA5 — 25 km, 1940–now (consistent)</option>
+      <option value="era5_seamless">ERA5 seamless (ERA5 + ERA5-Land)</option>
+      <option value="ecmwf_ifs">ECMWF IFS — 9 km, 2017–now</option>
+      <option value="cerra">CERRA — 5 km, Europe, 1985–Jun 2021</option>
+    </select>
+    <div id="model-note" style="font-size:.72rem;color:var(--muted);line-height:1.4"></div>
+  </div>
+
 </aside>
 
 <div id="sidebar-overlay" class="hidden"></div>
@@ -707,7 +719,7 @@
 
 <!-- ═══════════════════ SCRIPT ═══════════════════ -->
 <script>
-const version = "20261009-141445";
+const version = "20261009-143300";
 // ════════════════════════════════════════════════════════════════
 //  LOCATIONS
 // ════════════════════════════════════════════════════════════════
@@ -822,6 +834,23 @@ let CURRENT_LOC = '';  // location name of currently loaded data
     });
   });
 
+  // Weather model: needs a new API call, so reload automatically once data is loaded
+  const MODEL_NOTES = {
+    best_match:    'Switches from ERA5 to 9 km IFS in 2017 — may cause a jump in long-term trends.',
+    era5:          'One source for the whole period: best for trends. Coarse grid, so light rain is overcounted.',
+    era5_seamless: 'ERA5 combined with ERA5-Land (land variables only; precipitation comes from ERA5).',
+    ecmwf_ifs:     'Highest resolution, but only from 2017. Earlier dates return empty values.',
+    cerra:         'Europe only, until June 2021. Outside that range values are empty.',
+  };
+  const selModel  = document.getElementById('sel-model');
+  const modelNote = document.getElementById('model-note');
+  function updateModelNote() { modelNote.textContent = MODEL_NOTES[selModel.value] || ''; }
+  updateModelNote();
+  selModel.addEventListener('change', () => {
+    updateModelNote();
+    if (DF.length && CURRENT_LOC) fetchAndRender();
+  });
+
   // Legend
   const tbody = document.getElementById('legend-tbody');
   LEGEND_DATA.forEach(([v,u,d]) => {
@@ -878,11 +907,13 @@ async function fetchAndRender() {
     "wind_speed_10m_max","sunshine_duration"
   ].join(',');
 
+  const model = document.getElementById('sel-model').value;
   const tz  = loc.timezone.replace('/','%2F');
   const url = `https://archive-api.open-meteo.com/v1/archive`
     + `?latitude=${loc.lat}&longitude=${loc.lon}`
     + `&start_date=${from}&end_date=${until}`
-    + `&daily=${daily_vars}&timezone=${tz}`;
+    + `&daily=${daily_vars}&timezone=${tz}`
+    + (model !== 'best_match' ? `&models=${model}` : '');
 
   try {
     const res  = await fetch(url);
@@ -890,7 +921,12 @@ async function fetchAndRender() {
       startRetryCountdown(60);
       return;
     }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) {
+      // Open-Meteo returns {"error":true,"reason":"..."} — show the reason (e.g. unknown model)
+      let reason = '';
+      try { reason = (await res.json()).reason || ''; } catch (_) { /* no JSON body */ }
+      throw new Error(`HTTP ${res.status}${reason ? ' — ' + reason : ''}`);
+    }
     const json = await res.json();
     const d    = json.daily;
 
@@ -924,7 +960,8 @@ async function fetchAndRender() {
 
     renderAll(loc.name);
     CURRENT_LOC = loc.name;
-    setStatus(`✓ ${DF.length} days loaded for ${loc.name}`);
+    const modelLabel = document.getElementById('sel-model').selectedOptions[0].textContent.split(' —')[0].split(' (')[0];
+    setStatus(`✓ ${DF.length} days loaded for ${loc.name} (${modelLabel})`);
     document.getElementById('empty-state').classList.add('hidden');
   } catch(e) {
     setStatus(`✗ Error: ${e.message}`);
