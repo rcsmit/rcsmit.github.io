@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<!-- version history
+# version : 20261026-225000 - Initial version: client-side port of the Streamlit NEVO cosine-similarity explorer
+# version : 20261027-002500 - Fix Plotly 404 on cdnjs (load from jsDelivr with fallbacks); progress bars for library download, matrix computation, comparison and subset sweep
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nutrient similarity explorer</title>
+<meta name="description" content="Re-runs the cosine-similarity analysis of Cardinaals et al. (Nutrients 2026) on the Dutch NEVO database in your browser and shows how each design choice changes the results.">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>const current_version = "20261027-002500";</script>
+<style>
+:root {
+  --sidebar-w: 300px;
+  --toggle-w: 28px;
+  --paper: #f5f1e8;
+  --paper-2: #ede7d9;
+  --card: #fbf9f4;
+  --ink: #1f1c17;
+  --ink-2: #5b5548;
+  --ink-3: #8d8676;
+  --rule: #d9d1bf;
+  --current: #0f6b6b;
+  --current-soft: #d5e8e6;
+  --paperset: #9a9385;
+  --a: #0f6b6b;
+  --b: #c0533a;
+  --warn: #9a5b00;
+  --warn-bg: #fbecd2;
+  --err: #a3261b;
+  --err-bg: #f8dcd6;
+  --serif: "Newsreader", Georgia, serif;
+  --sans: "Atkinson Hyperlegible", "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  overflow: hidden;
+  background: var(--paper);
+  background-image:
+    radial-gradient(circle at 12% 8%, rgba(15,107,107,.06), transparent 40%),
+    radial-gradient(circle at 92% 90%, rgba(192,83,58,.05), transparent 45%),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* ---------- Sidebar ---------- */
+#sidebar {
+  width: var(--sidebar-w); min-width: var(--sidebar-w);
+  display: flex; flex-direction: column;
+  overflow: visible; position: relative; flex-shrink: 0;
+  z-index: 1002;
+  background: var(--paper-2);
+  border-right: 1px solid var(--rule);
+  transition: width .25s ease, min-width .25s ease;
+}
+#sidebar-header, #sidebar-body, #sidebar-footer { overflow: hidden; }
+#sidebar-body { overflow-y: auto; flex: 1; padding: 4px 18px 18px; }
+#sidebar.collapsed { width: var(--toggle-w); min-width: var(--toggle-w); }
+#sidebar.collapsed > *:not(#sidebar-toggle) { display: none; }
+#sidebar-toggle {
+  position: absolute; top: 50%; right: -16px; transform: translateY(-50%);
+  width: 16px; height: 64px;
+  border: 1px solid rgba(0,0,0,.1); border-left: none; border-radius: 0 6px 6px 0;
+  background: var(--b); color: #fff; font-size: .75rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, width .15s; z-index: 1003; flex-shrink: 0;
+  box-shadow: 2px 0 6px rgba(0,0,0,.15); padding: 0;
+}
+#sidebar-toggle:hover { background: #a8432c; width: 20px; }
+#sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 1001; }
+#sidebar-overlay.hidden { display: none !important; }
+#sidebar-header { padding: 20px 18px 10px; border-bottom: 1px solid var(--rule); }
+#sidebar-header .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); }
+#sidebar-header .brand { font-family: var(--serif); font-size: 22px; font-weight: 500; line-height: 1.15; margin-top: 4px; }
+#sidebar-footer { padding: 12px 18px 16px; border-top: 1px solid var(--rule); font-size: 12px; color: var(--ink-3); }
+#sidebar-footer a { color: var(--ink-2); }
+
+.side-section { padding-top: 14px; }
+.side-section h3 {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-3); margin: 0 0 8px; font-weight: 600;
+}
+.field { margin-bottom: 12px; }
+.field > label, .field > .label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.field .hint { font-size: 12px; color: var(--ink-3); margin-top: 3px; }
+select, input[type=number], input[type=text], input[list] {
+  width: 100%; font: inherit; font-size: 14px; color: var(--ink);
+  background: var(--card); border: 1px solid var(--rule); border-radius: 6px; padding: 6px 8px;
+}
+select:focus, input:focus { outline: 2px solid var(--current); outline-offset: 1px; }
+.seg { display: flex; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--card); }
+.seg button {
+  flex: 1; font: inherit; font-size: 13px; border: 0; background: transparent; padding: 6px 4px; cursor: pointer; color: var(--ink-2);
+  border-right: 1px solid var(--rule);
+}
+.seg button:last-child { border-right: 0; }
+.seg button.on { background: var(--ink); color: var(--paper); }
+.steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.steps button {
+  font-family: var(--mono); font-size: 13px; padding: 6px 0; border: 1px solid var(--rule); border-radius: 5px;
+  background: var(--card); cursor: pointer; color: var(--ink-2);
+}
+.steps button.on { background: var(--current); border-color: var(--current); color: #fff; }
+.switch { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; font-size: 14px; margin-bottom: 10px; }
+.switch input { appearance: none; width: 34px; height: 20px; border-radius: 10px; background: var(--rule); position: relative; flex-shrink: 0; cursor: pointer; transition: background .15s; margin: 1px 0 0; }
+.switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .15s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.switch input:checked { background: var(--current); }
+.switch input:checked::after { left: 16px; }
+.switch small { display: block; color: var(--ink-3); font-size: 12px; line-height: 1.35; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip {
+  font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--rule); background: var(--card);
+  cursor: pointer; color: var(--ink-2); line-height: 1.3;
+}
+.chip.off { text-decoration: line-through; color: var(--ink-3); background: transparent; }
+.chip.sel { background: var(--current-soft); border-color: var(--current); color: var(--ink); }
+.chip .x { margin-left: 4px; opacity: .6; }
+.btn {
+  font: inherit; font-size: 13px; font-weight: 700; padding: 7px 12px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--ink); background: var(--ink); color: var(--paper);
+}
+.btn.ghost { background: transparent; color: var(--ink); }
+.btn.small { padding: 4px 9px; font-size: 12px; }
+.btn:disabled { opacity: .5; cursor: default; }
+details.mapping { border: 1px solid var(--rule); border-radius: 6px; background: var(--card); padding: 6px 10px; }
+details.mapping summary { cursor: pointer; font-size: 13px; font-weight: 700; }
+details.mapping .field { margin: 8px 0; }
+details.mapping .field > label { font-weight: 400; font-size: 12px; }
+.file-drop {
+  display: block; border: 1.5px dashed var(--ink-3); border-radius: 8px; padding: 12px; text-align: center;
+  font-size: 13px; color: var(--ink-2); cursor: pointer; background: var(--card);
+}
+.file-drop.drag { border-color: var(--current); background: var(--current-soft); }
+.file-drop input { display: none; }
+.file-name { font-family: var(--mono); font-size: 12px; margin-top: 6px; color: var(--ink-2); word-break: break-all; }
+
+/* ---------- Main ---------- */
+#main { flex: 1; overflow-y: auto; overflow-x: hidden; min-width: 0; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 28px 36px 48px; }
+header.top h1 {
+  font-family: var(--serif); font-weight: 500; font-size: clamp(28px, 4vw, 44px); line-height: 1.05; margin: 0;
+  letter-spacing: -.01em;
+}
+header.top h1 em { font-style: italic; color: var(--current); }
+header.top p { margin: 10px 0 0; color: var(--ink-2); max-width: 760px; }
+header.top a { color: var(--ink); }
+.status { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; font-size: 13px; color: var(--ink-2); }
+.badge { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 4px; }
+.badge.same { background: var(--paper-2); color: var(--ink-2); border: 1px solid var(--rule); }
+.badge.diff { background: var(--current); color: #fff; }
+.badge.demo { background: var(--b); color: #fff; }
+.status b { color: var(--ink); font-weight: 700; }
+
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 18px; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--rule); }
+.kpi { padding: 14px 16px 14px 0; border-right: 1px solid var(--rule); }
+.kpi + .kpi { padding-left: 16px; }
+.kpi:last-child { border-right: 0; }
+.kpi .k { font-size: 12px; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; }
+.kpi .v { font-family: var(--serif); font-size: 34px; line-height: 1.1; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.kpi .d { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+
+nav.tabs { display: flex; gap: 2px; margin: 26px 0 18px; border-bottom: 1px solid var(--rule); overflow-x: auto; scrollbar-width: none; }
+nav.tabs button {
+  font-family: var(--serif); font-size: 18px; background: none; border: 0; padding: 8px 14px 10px; cursor: pointer;
+  color: var(--ink-3); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap;
+}
+nav.tabs button.on { color: var(--ink); border-bottom-color: var(--b); }
+nav.tabs button:hover { color: var(--ink); }
+
+.view { animation: rise .35s ease both; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.card { background: var(--card); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
+.card h2 { font-family: var(--serif); font-weight: 500; font-size: 21px; margin: 0 0 2px; }
+.card .sub { color: var(--ink-3); font-size: 13px; margin: 0 0 10px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid32 { display: grid; grid-template-columns: 3fr 2fr; gap: 16px; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 14px; }
+.controls .field { margin: 0; }
+.controls .grow { flex: 1; min-width: 220px; }
+.note { font-size: 13px; color: var(--ink-3); margin: 8px 0 0; }
+.msg { padding: 12px 14px; border-radius: 8px; font-size: 14px; margin: 16px 0; }
+.msg.warn { background: var(--warn-bg); color: var(--warn); }
+.msg.err { background: var(--err-bg); color: var(--err); }
+.mini-kpis { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.mini-kpis > div { background: var(--card); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 14px; }
+.mini-kpis .k { font-size: 12px; color: var(--ink-3); }
+.mini-kpis .v { font-family: var(--serif); font-size: 26px; font-variant-numeric: tabular-nums; }
+
+.tbl-wrap { overflow: auto; max-height: 560px; border: 1px solid var(--rule); border-radius: 8px; background: var(--card); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--paper-2); white-space: nowrap; }
+th { position: sticky; top: 0; background: var(--paper-2); font-weight: 700; cursor: pointer; user-select: none; z-index: 1; }
+th.num, td.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+th .arrow { color: var(--ink-3); font-size: 10px; margin-left: 3px; }
+td.wrapc { white-space: normal; min-width: 220px; }
+tr:hover td { background: #f3efe5; }
+.bar { position: relative; min-width: 120px; }
+.bar span.fill { position: absolute; left: 0; top: 4px; bottom: 4px; background: var(--current-soft); border-radius: 3px; }
+.bar span.val { position: relative; font-family: var(--mono); }
+.pos { color: var(--current); }
+.neg { color: var(--b); }
+.plot { width: 100%; }
+
+/* Empty state */
+.empty { display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; margin-top: 28px; }
+.empty .big-drop {
+  border: 2px dashed var(--ink-3); border-radius: 14px; padding: 40px 24px; text-align: center; background: var(--card); cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.empty .big-drop.drag { border-color: var(--current); background: var(--current-soft); }
+.empty .big-drop .t { font-family: var(--serif); font-size: 24px; }
+.empty .big-drop .s { color: var(--ink-2); margin-top: 6px; }
+.empty ol { padding-left: 20px; margin: 0; color: var(--ink-2); }
+.empty ol li { margin-bottom: 8px; }
+.empty h3 { font-family: var(--serif); font-weight: 500; font-size: 20px; margin: 0 0 10px; }
+.loading { font-family: var(--mono); font-size: 13px; color: var(--ink-2); padding: 18px 0; }
+.loading::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--current); margin-right: 8px; animation: pulse 1s infinite ease-in-out; }
+@keyframes pulse { 50% { opacity: .2; } }
+
+/* Progress */
+.progress {
+  position: sticky; top: 0; z-index: 20; margin: 16px 0 0; padding: 10px 14px 12px;
+  background: rgba(251,249,244,.96); border: 1px solid var(--rule); border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(31,28,23,.08); backdrop-filter: blur(4px);
+}
+.progress.hidden { display: none; }
+.progress-row { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; margin-bottom: 7px; }
+.progress-row .lbl { color: var(--ink); font-weight: 700; }
+.progress-row .pct { font-family: var(--mono); color: var(--ink-2); white-space: nowrap; }
+.progress-track { height: 6px; border-radius: 3px; background: var(--paper-2); overflow: hidden; position: relative; }
+.progress-fill { height: 100%; width: 0; background: var(--current); border-radius: 3px; }
+.progress.indet .progress-fill { width: 35% !important; position: absolute; animation: slide 1.1s ease-in-out infinite; }
+@keyframes slide { 0% { left: -35%; } 100% { left: 100%; } }
+.inline-progress { padding: 18px 0; }
+.inline-progress .progress-row { margin-bottom: 6px; }
+#app.busy .view, #app.busy .kpis, #app.busy nav.tabs { opacity: .45; pointer-events: none; transition: opacity .2s; }
+footer.foot { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 12px; color: var(--ink-3); }
+footer.foot a { color: var(--ink-2); }
+
+@media (max-width: 980px) {
+  .grid2, .grid32, .empty { grid-template-columns: 1fr; }
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi:nth-child(2) { border-right: 0; }
+  .kpi:nth-child(3) { padding-left: 0; }
+  .kpi:nth-child(n+3) { border-top: 1px solid var(--rule); }
+}
+@media (max-width: 640px) {
+  #sidebar { position: fixed; top: 0; left: 0; bottom: 0; z-index: 1002; box-shadow: 2px 0 20px rgba(0,0,0,.2); }
+  #sidebar-overlay { display: block; }
+  #main { margin-left: var(--toggle-w); }
+  .wrap { padding: 20px 16px 40px; }
+  .kpi .v { font-size: 26px; }
+  nav.tabs button { font-size: 16px; padding: 8px 10px; }
+}
+</style>
+</head>
+<body>
+<div id="sidebar-overlay"></div>
+
+<aside id="sidebar">
+  <button id="sidebar-toggle" title="Collapse sidebar">&#x25C4;</button>
+  <div id="sidebar-header">
+    <div class="eyebrow">NEVO · cosine similarity</div>
+    <div class="brand">Scenario controls</div>
+  </div>
+  <div id="sidebar-body">
+    <div class="side-section">
+      <h3>Data</h3>
+      <label class="file-drop" id="side-drop">
+        <input type="file" id="file-input" accept=".csv,.txt,.xlsx,.xls">
+        Drop a NEVO export here or <u>browse</u>
+      </label>
+      <div class="file-name" id="file-name"></div>
+      <div id="mapping-slot" style="margin-top:10px"></div>
+    </div>
+
+    <div class="side-section" id="scenario-section">
+      <h3>Scenario</h3>
+      <div class="field"><button class="btn ghost small" id="reset-btn" type="button">Reset to paper settings</button></div>
+      <div class="field">
+        <div class="label">Nutrient subset (Table 1)</div>
+        <div class="steps" id="subset-steps"></div>
+      </div>
+      <div class="field">
+        <div class="label">Nutrients in subset</div>
+        <div class="chips" id="nutrient-chips"></div>
+        <div class="hint">Click to leave a nutrient out.</div>
+      </div>
+      <div class="field">
+        <div class="label">Basis</div>
+        <div class="seg" id="basis-seg">
+          <button type="button" data-v="100g">per 100 g</button>
+          <button type="button" data-v="100kcal">per 100 kcal</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="transform-sel">Transform of %RDI</label>
+        <select id="transform-sel">
+          <option value="none">None (paper)</option>
+          <option value="cap">Cap at a multiple of RDI</option>
+          <option value="log">Log of (1 + %RDI)</option>
+          <option value="sqrt">Square root</option>
+        </select>
+        <div class="hint">Uncapped %RDI lets one extreme nutrient dominate a vector.</div>
+      </div>
+      <div class="field" id="cap-field">
+        <label for="cap-input">Cap (× RDI)</label>
+        <input type="number" id="cap-input" min="0.1" max="10" step="0.1" value="1">
+      </div>
+      <label class="switch"><input type="checkbox" id="limit-toggle"><span>Add nutrients to limit<small>Energy, saturated fat, sugars, sodium at EU reference intakes.</small></span></label>
+      <label class="switch"><input type="checkbox" id="fortify-toggle"><span>Fortify plant drinks<small>Unfortified soy, oat, almond etc. get 120 mg Ca, 0.38 µg B12, 0.75 µg D, 0.21 mg B2 per 100 ml.</small></span></label>
+    </div>
+
+    <div class="side-section">
+      <h3>Food set</h3>
+      <label class="switch"><input type="checkbox" id="exclude-toggle" checked><span>Exclude groups as in paper<small>Alcoholic drinks, miscellaneous, herbs and spices, special nutrition.</small></span></label>
+      <div class="field">
+        <div class="label">Missing values</div>
+        <div class="seg" id="missing-seg">
+          <button type="button" data-v="drop">Drop food</button>
+          <button type="button" data-v="zero">Treat as 0</button>
+        </div>
+      </div>
+      <div class="field" id="kcal-field">
+        <label for="kcal-input">Minimum kcal per 100 g</label>
+        <input type="number" id="kcal-input" min="1" max="200" step="1" value="10">
+        <div class="hint">Very low-energy foods explode on a per-kcal basis.</div>
+      </div>
+    </div>
+  </div>
+  <div id="sidebar-footer">
+    Method: <a href="https://doi.org/10.3390/nu18213473" target="_blank" rel="noopener">Cardinaals et al. 2026</a>.
+    Data: <a href="https://www.rivm.nl/en/dutch-food-composition-database" target="_blank" rel="noopener">NEVO, RIVM</a>.
+    Everything runs in your browser; no data leaves this page.
+  </div>
+</aside>
+
+<div id="main">
+  <div class="wrap">
+    <header class="top">
+      <h1>How similar are foods, <em>really</em>?</h1>
+      <p>Re-runs the cosine-similarity analysis of <a href="https://doi.org/10.3390/nu18213473" target="_blank" rel="noopener">Cardinaals et al. (Nutrients 2026)</a> on the Dutch NEVO database, and shows how each design choice the paper fixed moves the results. Every number sits next to the paper's own settings.</p>
+    </header>
+    <div class="progress hidden" id="progress" role="status" aria-live="polite">
+      <div class="progress-row"><span class="lbl" id="progress-label"></span><span class="pct" id="progress-pct"></span></div>
+      <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+    <div id="app"></div>
+    <footer class="foot">
+      RDIs from the paper's Table 1, with vitamin E at 12 mg (the paper prints µg). Nutrients to limit use EU reference intakes (Regulation 1169/2011). Cut-off 0.78 is the paper's 90th percentile. NEVO-online, RIVM, Bilthoven.
+    </footer>
+  </div>
+</div>
+
+<!-- Worker: cosine matrices off the main thread -->
+<script id="worker-src" type="text/js-worker">
+self.onmessage = function (e) {
+  const { id, type, X, n, d } = e.data;
+  const Xn = new Float64Array(n * d);
+  for (let i = 0; i < n; i++) {
+    let s = 0;
+    for (let k = 0; k < d; k++) { const v = X[i * d + k]; s += v * v; }
+    const norm = Math.sqrt(s);
+    if (norm > 0) for (let k = 0; k < d; k++) Xn[i * d + k] = X[i * d + k] / norm;
+  }
+  const totalPairs = n * (n - 1) / 2;
+  let lastPost = 0;
+  const report = done => {
+    const now = performance.now();
+    if (now - lastPost > 80) { lastPost = now; self.postMessage({ id, progress: totalPairs ? done / totalPairs : 1 }); }
+  };
+  if (type === 'cosine') {
+    const S = new Float32Array(n * n);
+    let done = 0;
+    for (let i = 0; i < n; i++) {
+      if ((i & 15) === 0) report(done);
+      done += n - i - 1;
+      S[i * n + i] = 1;
+      const oi = i * d;
+      for (let j = i + 1; j < n; j++) {
+        const oj = j * d;
+        let dot = 0;
+        for (let k = 0; k < d; k++) dot += Xn[oi + k] * Xn[oj + k];
+        if (dot > 1) dot = 1; else if (dot < 0) dot = 0;
+        S[i * n + j] = dot; S[j * n + i] = dot;
+      }
+    }
+    self.postMessage({ id, S }, [S.buffer]);
+  } else if (type === 'mean') {
+    let sum = 0, done = 0;
+    for (let i = 0; i < n; i++) {
+      if ((i & 15) === 0) report(done);
+      done += n - i - 1;
+      const oi = i * d;
+      for (let j = i + 1; j < n; j++) {
+        const oj = j * d;
+        let dot = 0;
+        for (let k = 0; k < d; k++) dot += Xn[oi + k] * Xn[oj + k];
+        sum += Math.min(1, Math.max(0, dot));
+      }
+    }
+    self.postMessage({ id, mean: sum / (n * (n - 1) / 2) });
+  }
+};
+</script>
+
+<script>
+const EXPANDED_ON_LOAD_FOR_DESKTOP = true;
+const EXPANDED_ON_LOAD_FOR_MOBILE = false;
+
+/* =========================================================================
+   Nutrient definitions (Table 1, Cardinaals et al., Nutrients 2026, 18, 3473)
+   Order follows Appendix A, Table A1.
+   ========================================================================= */
+const ALL_SUBSETS = [6, 9, 11, 15, 19, 21];
+const ESSENTIAL = [
+  { key: 'protein', label: 'Protein', rdi: 58.5, unit: 'g', cands: ['PROT'], subsets: ALL_SUBSETS },
+  { key: 'fiber', label: 'Fiber', rdi: 32.15, unit: 'g', cands: ['FIBT', 'FIB'], subsets: ALL_SUBSETS },
+  { key: 'calcium', label: 'Calcium', rdi: 1000, unit: 'mg', cands: ['CA'], subsets: ALL_SUBSETS },
+  { key: 'iron', label: 'Iron', rdi: 13.5, unit: 'mg', cands: ['FE'], subsets: ALL_SUBSETS },
+  { key: 'vit_a', label: 'Vitamin A', rdi: 740, unit: 'µg', cands: ['VITA_RAE', 'VITA_RE', 'VITA'], subsets: ALL_SUBSETS },
+  { key: 'vit_c', label: 'Vitamin C', rdi: 75, unit: 'mg', cands: ['VITC'], subsets: ALL_SUBSETS },
+  { key: 'potassium', label: 'Potassium', rdi: 3500, unit: 'mg', cands: ['K'], subsets: [9, 11, 15, 19, 21] },
+  { key: 'magnesium', label: 'Magnesium', rdi: 325, unit: 'mg', cands: ['MG'], subsets: [9, 11, 15, 19, 21] },
+  { key: 'vit_e', label: 'Vitamin E', rdi: 12, unit: 'mg', cands: ['VITE'], subsets: [9, 11, 15, 19, 21] },
+  { key: 'zinc', label: 'Zinc', rdi: 8, unit: 'mg', cands: ['ZN'], subsets: [11, 15, 19, 21] },
+  { key: 'vit_b12', label: 'Vitamin B12', rdi: 2.8, unit: 'µg', cands: ['VITB12'], subsets: [11, 15, 19, 21] },
+  { key: 'vit_d', label: 'Vitamin D', rdi: 10, unit: 'µg', cands: ['VITD'], subsets: [15, 19, 21] },
+  { key: 'thiamin', label: 'Thiamin (B1)', rdi: 0.95, unit: 'mg', cands: ['THIA'], subsets: [15, 19, 21] },
+  { key: 'riboflavin', label: 'Riboflavin (B2)', rdi: 1.6, unit: 'mg', cands: ['RIBF'], subsets: [15, 19, 21] },
+  { key: 'folate', label: 'Folate (B9)', rdi: 300, unit: 'µg', cands: ['FOLDFE', 'FOL', 'FOLE'], subsets: [15, 19, 21] },
+  { key: 'niacin', label: 'Niacin (B3)', rdi: 15.1, unit: 'mg', cands: ['NIA', 'NIAEQ'], subsets: [19, 21] },
+  { key: 'vit_b6', label: 'Vitamin B6', rdi: 1.5, unit: 'mg', cands: ['VITB6'], subsets: [19, 21] },
+  { key: 'la', label: 'Linoleic acid (LA)', rdi: 5, unit: 'g', cands: ['F18:2CN6', 'F18:2N6', 'F18_2CN6', 'FAPUN6'], subsets: [19, 21] },
+  { key: 'ala', label: 'α-linolenic acid (ALA)', rdi: 2.5, unit: 'g', cands: ['F18:3CN3', 'F18:3N3', 'F18_3CN3', 'FAPUN3'], subsets: [19, 21] },
+  { key: 'iodine', label: 'Iodine', rdi: 150, unit: 'µg', cands: ['ID'], subsets: [21] },
+  { key: 'vit_k', label: 'Vitamin K1', rdi: 70, unit: 'µg', cands: ['VITK1', 'VITK'], subsets: [21] },
+];
+const LIMIT = [
+  { key: 'energy', label: 'Energy', rdi: 2000, unit: 'kcal', cands: ['ENERCC'], subsets: [] },
+  { key: 'sat_fat', label: 'Saturated fat', rdi: 20, unit: 'g', cands: ['FASAT'], subsets: [] },
+  { key: 'sugars', label: 'Sugars', rdi: 90, unit: 'g', cands: ['SUGAR', 'SUGTOT'], subsets: [] },
+  { key: 'sodium', label: 'Sodium', rdi: 2400, unit: 'mg', cands: ['NA'], subsets: [] },
+];
+const NUT = Object.fromEntries([...ESSENTIAL, ...LIMIT].map(n => [n.key, n]));
+const ESSENTIAL_KEYS = ESSENTIAL.map(n => n.key);
+const LIMIT_KEYS = LIMIT.map(n => n.key);
+const META_CANDS = {
+  code: ['NEVO-code', 'NEVO code', 'Code'],
+  name_en: ['Engelse naam/Food name', 'Food name', 'Engelse naam', 'Name'],
+  name_nl: ['Voedingsmiddelnaam/Dutch food name', 'Voedingsmiddelnaam', 'Dutch food name'],
+  group_en: ['Food group', 'Foodgroup'],
+  group_nl: ['Voedingsmiddelgroep'],
+  fortified: ['Is verrijkt met/Is fortified with', 'Is fortified with', 'Is verrijkt met'],
+};
+const EXCLUDED_GROUP_PATTERNS = [/alcohol/i, /miscellaneous|^diversen/i, /herbs|spices|kruiden|specerijen/i, /special nutrition|speciale voeding|bijzondere voeding/i];
+const FORTIFY = { calcium: 120, vit_b12: 0.38, vit_d: 0.75, riboflavin: 0.21 };
+const PLANT_DRINK = /(?:soy|soya|soja|oat|haver|almond|amandel|rice|rijst|coconut|kokos|pea\b|erwten|cashew|hazelnut|hazelnoot).*(?:drink|drank|milk|melk)/i;
+const NOT_COW = /\b(?:cow|koe|goat|geit)/i;
+const PAPER_FOODS = [['milk', 'semi'], ['peanut', 'butter'], ['beans', 'brown'], ['fish', 'finger'], ['soy', 'drink'],
+  ['salami'], ['chicken', 'fillet'], ['mozzarella'], ['egg', 'chicken'], ['almond']];
+const T90 = 0.78;
+const TRANSFORM_LABEL = { none: 'no transform', cap: 'capped', log: 'log-scaled', sqrt: 'square root' };
+
+const DEFAULTS = { subset: 21, removed: [], basis: '100g', transform: 'none', cap: 1, include_limit: false, fortify: false,
+  exclude: true, missing: 'drop', min_kcal: 10 };
+const PAPER = { subset: 21, removed: [], basis: '100g', transform: 'none', cap: 1, include_limit: false, fortify: false };
+
+/* =========================================================================
+   State
+   ========================================================================= */
+const state = {
+  settings: structuredClone(DEFAULTS),
+  raw: null, columns: [], mapping: {}, foods: null, fileName: '', demo: false,
+  U: null, Ucur: null, fortifiedNames: [], Scur: null, Spap: null, nameIdx: new Map(),
+  view: 'Substitutes', metrics: null, token: 0,
+  sel: { sub: null, a: null, b: null, matrix: null, matrixMode: 'Current', catGroups: null, catMode: 'Current', dataFilter: '' },
+  matrixCache: new Map(), sweepCache: new Map(),
+};
+
+/* =========================================================================
+   Utilities
+   ========================================================================= */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const f2 = v => Number.isFinite(v) ? v.toFixed(2) : '–';
+const f1 = v => Number.isFinite(v) ? v.toFixed(1) : '–';
+const pct = (v, d = 0) => Number.isFinite(v) ? (100 * v).toFixed(d) + '%' : '–';
+const sgn = v => Number.isFinite(v) ? (v >= 0 ? '+' : '') + v.toFixed(2) : '–';
+const norm = s => String(s).replace(/[\s_\-]/g, '').toUpperCase();
+const codeToken = s => norm(String(s).trim().split(/[\s(\[]/)[0]);
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+
+function toNumber(v) {
+  if (v === null || v === undefined) return NaN;
+  if (typeof v === 'number') return v;
+  let s = String(v).trim();
+  if (s === '' || s === '-' || /^nan$/i.test(s)) return NaN;
+  if (/^(sp|spoor|tr|trace)$/i.test(s)) return 0;
+  s = s.replace(/^[<>]\s*/, '').replace(',', '.');
+  const n = Number(s);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+/* =========================================================================
+   Loading and mapping
+   ========================================================================= */
+function decode(buf) {
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(buf).replace(/^﻿/, ''); }
+  catch { return new TextDecoder('windows-1252').decode(buf); }
+}
+
+function readTable(buf, name) {
+  if (/\.xlsx?$/i.test(name)) {
+    const wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
+    let best = null;
+    for (const sn of wb.SheetNames) {
+      const aoa = XLSX.utils.sheet_to_json(wb.Sheets[sn], { header: 1, defval: '', raw: false });
+      if (!aoa.length) continue;
+      const header = aoa[0].map(String);
+      const score = header.filter(h => ['PROT', 'CA', 'FE', 'VITC'].includes(codeToken(h))).length * 1000 + header.length;
+      if (!best || score > best.score) best = { score, header, aoa };
+    }
+    if (!best) throw new Error('The workbook has no data.');
+    const rows = best.aoa.slice(1).map(r => Object.fromEntries(best.header.map((h, i) => [h, r[i] ?? ''])));
+    return { columns: best.header, rows };
+  }
+  const text = decode(buf);
+  const first = text.split(/\r?\n/)[0] || '';
+  const counts = ['|', ';', '\t', ','].map(c => [c, first.split(c).length - 1]);
+  counts.sort((a, b) => b[1] - a[1]);
+  if (counts[0][1] === 0) throw new Error('Could not detect a column delimiter in the first line.');
+  const res = Papa.parse(text, { delimiter: counts[0][0], header: true, skipEmptyLines: 'greedy' });
+  if (!res.meta.fields || !res.meta.fields.length) throw new Error('No header row found.');
+  return { columns: res.meta.fields, rows: res.data };
+}
+
+function autoMap(columns) {
+  const byToken = new Map(), byNorm = new Map();
+  for (const c of columns) { if (!byToken.has(codeToken(c))) byToken.set(codeToken(c), c); byNorm.set(norm(c), c); }
+  const m = {};
+  for (const n of [...ESSENTIAL, ...LIMIT]) m[n.key] = (n.cands.map(c => byToken.get(norm(c))).find(Boolean)) || null;
+  for (const [k, cands] of Object.entries(META_CANDS)) m[k] = (cands.map(c => byNorm.get(norm(c))).find(Boolean)) || null;
+  return m;
+}
+
+function tidy(rows, m) {
+  const nameCol = m.name_en || m.name_nl;
+  if (!nameCol) throw new Error('No food name column found. Map it under Column mapping.');
+  const groupCol = m.group_en || m.group_nl;
+  const foods = [];
+  rows.forEach((r, i) => {
+    const name = String(r[nameCol] ?? '').trim();
+    if (!name || name.toLowerCase() === 'nan') return;
+    const v = {};
+    for (const k of [...ESSENTIAL_KEYS, ...LIMIT_KEYS]) v[k] = m[k] ? toNumber(r[m[k]]) : NaN;
+    foods.push({
+      name, name_nl: m.name_nl ? String(r[m.name_nl] ?? '').trim() : name,
+      group: groupCol ? String(r[groupCol] ?? '').trim() || 'Ungrouped' : 'All foods',
+      code: m.code ? String(r[m.code] ?? '').trim() : String(i + 1),
+      fort: m.fortified ? String(r[m.fortified] ?? '').trim() : '', v,
+    });
+  });
+  const counts = new Map();
+  foods.forEach(f => counts.set(f.name, (counts.get(f.name) || 0) + 1));
+  foods.forEach(f => { if (counts.get(f.name) > 1) f.name = `${f.name} [${f.code}]`; });
+  return foods;
+}
+
+/* =========================================================================
+   Scenario engine
+   ========================================================================= */
+function scenKeys(s) {
+  let keys = ESSENTIAL.filter(n => n.subsets.includes(s.subset)).map(n => n.key).filter(k => !s.removed.includes(k));
+  if (s.include_limit) keys = keys.concat(LIMIT_KEYS.filter(k => !(k === 'energy' && s.basis === '100kcal')));
+  return keys;
+}
+const scenKey = s => JSON.stringify([s.subset, [...s.removed].sort(), s.basis, s.transform, s.transform === 'cap' ? s.cap : 0, s.include_limit, s.fortify]);
+function describe(s) {
+  const parts = [`${scenKeys(s).length} nutrients`, s.basis === '100kcal' ? 'per 100 kcal' : 'per 100 g',
+    s.transform === 'cap' ? `capped at ${s.cap}× RDI` : TRANSFORM_LABEL[s.transform]];
+  if (s.include_limit) parts.push('+ nutrients to limit');
+  if (s.fortify) parts.push('plant drinks fortified');
+  return parts.join(', ');
+}
+function currentScenario() {
+  const st = state.settings;
+  return { subset: st.subset, removed: st.removed.slice(), basis: st.basis, transform: st.transform, cap: +st.cap || 1,
+    include_limit: st.include_limit, fortify: st.fortify };
+}
+
+function scaleRow(food, s, keys) {
+  const out = new Float64Array(keys.length);
+  const kcal = food.v.energy;
+  for (let i = 0; i < keys.length; i++) {
+    let x = food.v[keys[i]] / NUT[keys[i]].rdi;
+    if (s.basis === '100kcal') x = x * 100 / kcal;
+    if (s.transform === 'cap') x = Math.min(x, s.cap);
+    else if (s.transform === 'log') x = Math.log10(1 + 100 * x);
+    else if (s.transform === 'sqrt') x = Math.sqrt(x);
+    out[i] = x;
+  }
+  return out;
+}
+function scaledMatrix(foods, s, keys = scenKeys(s)) {
+  const d = keys.length, X = new Float64Array(foods.length * d);
+  foods.forEach((f, i) => X.set(scaleRow(f, s, keys), i * d));
+  return { X, n: foods.length, d };
+}
+function cosinePair(a, b) {
+  let dot = 0, na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) { dot += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; }
+  if (na === 0 || nb === 0) return NaN;
+  return Math.min(1, Math.max(0, dot / Math.sqrt(na * nb)));
+}
+function contributions(a, b) {
+  let na = 0, nb = 0;
+  for (let i = 0; i < a.length; i++) { na += a[i] * a[i]; nb += b[i] * b[i]; }
+  const den = Math.sqrt(na * nb);
+  return Array.from(a, (v, i) => den > 0 ? v * b[i] / den : 0);
+}
+const isExcluded = g => EXCLUDED_GROUP_PATTERNS.some(p => p.test(String(g)));
+
+function universe(foods, scens, exclude, minKcal, missing) {
+  const needed = new Set(ESSENTIAL_KEYS);
+  scens.forEach(s => { scenKeys(s).forEach(k => needed.add(k)); if (s.basis === '100kcal') needed.add('energy'); });
+  const keys = [...needed];
+  const anyKcal = scens.some(s => s.basis === '100kcal');
+  let out = [];
+  for (const f of foods) {
+    if (exclude && isExcluded(f.group)) continue;
+    if (missing === 'drop' && keys.some(k => !Number.isFinite(f.v[k]))) continue;
+    if (anyKcal && !((f.v.energy || 0) >= minKcal)) continue;
+    if (missing === 'zero') {
+      const v = { ...f.v };
+      keys.forEach(k => { if (!Number.isFinite(v[k])) v[k] = 0; });
+      out.push({ ...f, v });
+    } else out.push(f);
+  }
+  for (const s of scens) {
+    const ks = scenKeys(s);
+    out = out.filter(f => {
+      const r = scaleRow(f, s, ks);
+      let nn = 0;
+      for (const x of r) { if (!Number.isFinite(x)) return false; nn += x * x; }
+      return nn > 0;
+    });
+  }
+  return out;
+}
+
+function plantDrink(f) {
+  const text = `${f.name} ${f.name_nl}`;
+  return PLANT_DRINK.test(text) && !NOT_COW.test(text) && !f.fort && (f.v.calcium || 0) < 50;
+}
+function fortifyFoods(foods) {
+  const names = [];
+  const out = foods.map(f => {
+    if (!plantDrink(f)) return f;
+    names.push(f.name);
+    const v = { ...f.v };
+    for (const [k, lvl] of Object.entries(FORTIFY)) v[k] = Math.max(Number.isFinite(v[k]) ? v[k] : 0, lvl);
+    return { ...f, v };
+  });
+  return { foods: out, names };
+}
+
+/* =========================================================================
+   Worker
+   ========================================================================= */
+const worker = new Worker(URL.createObjectURL(new Blob([document.getElementById('worker-src').textContent], { type: 'text/javascript' })));
+let jobId = 0;
+const pending = new Map();
+worker.onmessage = e => {
+  const p = pending.get(e.data.id);
+  if (!p) return;
+  if ('progress' in e.data) { if (p.onProgress) p.onProgress(e.data.progress); return; }
+  pending.delete(e.data.id); p.resolve(e.data);
+};
+worker.onerror = e => console.error('Worker error', e);
+function runJob(type, { X, n, d }, onProgress) {
+  const id = ++jobId;
+  return new Promise(resolve => { pending.set(id, { resolve, onProgress }); worker.postMessage({ id, type, X, n, d }, [X.buffer]); });
+}
+const hasMatrix = (s, ukey) => state.matrixCache.has(ukey + '|' + scenKey(s));
+async function getMatrix(foods, s, ukey, onProgress) {
+  const key = ukey + '|' + scenKey(s);
+  if (state.matrixCache.has(key)) return state.matrixCache.get(key);
+  const { S } = await runJob('cosine', scaledMatrix(foods, s), onProgress);
+  state.matrixCache.set(key, S);
+  while (state.matrixCache.size > 6) state.matrixCache.delete(state.matrixCache.keys().next().value);
+  return S;
+}
+
+/* =========================================================================
+   Metrics
+   ========================================================================= */
+function rankArray(a) {
+  const idx = Array.from(a, (_, i) => i).sort((i, j) => a[i] - a[j]);
+  const r = new Float64Array(a.length);
+  for (let i = 0; i < idx.length;) {
+    let j = i;
+    while (j + 1 < idx.length && a[idx[j + 1]] === a[idx[i]]) j++;
+    const avg = (i + j) / 2 + 1;
+    for (let k = i; k <= j; k++) r[idx[k]] = avg;
+    i = j + 1;
+  }
+  return r;
+}
+function pearson(a, b) {
+  const n = a.length; let ma = 0, mb = 0;
+  for (let i = 0; i < n; i++) { ma += a[i]; mb += b[i]; }
+  ma /= n; mb /= n;
+  let num = 0, da = 0, db = 0;
+  for (let i = 0; i < n; i++) { const x = a[i] - ma, y = b[i] - mb; num += x * y; da += x * x; db += y * y; }
+  return da > 0 && db > 0 ? num / Math.sqrt(da * db) : NaN;
+}
+function samplePairs(n, count, seed) {
+  const total = n * (n - 1) / 2, rnd = mulberry32(seed);
+  const I = new Int32Array(Math.min(count, total)), J = new Int32Array(I.length);
+  if (total <= count) {
+    let p = 0;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { I[p] = i; J[p] = j; p++; }
+  } else {
+    for (let p = 0; p < I.length; p++) {
+      let i = Math.floor(rnd() * n), j = Math.floor(rnd() * (n - 1));
+      if (j >= i) j++;
+      if (i > j) [i, j] = [j, i];
+      I[p] = i; J[p] = j;
+    }
+  }
+  return { I, J };
+}
+function topkRow(S, n, i, k) {
+  const vals = [], ids = [];
+  for (let j = 0; j < n; j++) {
+    if (j === i) continue;
+    const v = S[i * n + j];
+    if (vals.length < k) { vals.push(v); ids.push(j); if (vals.length === k) sortTop(vals, ids); }
+    else if (v > vals[k - 1]) {
+      let p = k - 1;
+      while (p > 0 && vals[p - 1] < v) { vals[p] = vals[p - 1]; ids[p] = ids[p - 1]; p--; }
+      vals[p] = v; ids[p] = j;
+    }
+  }
+  if (vals.length < k) sortTop(vals, ids);
+  return ids;
+}
+/* Same as topk, but yields to the browser so a progress bar can update. */
+async function topkAsync(S, n, k, onProgress) {
+  k = Math.min(k, n - 1);
+  const out = [];
+  let t = performance.now();
+  for (let i = 0; i < n; i++) {
+    out.push(topkRow(S, n, i, k));
+    if (performance.now() - t > 40) { if (onProgress) onProgress((i + 1) / n); await nextFrame(); t = performance.now(); }
+  }
+  return out;
+}
+function topk(S, n, k) {
+  k = Math.min(k, n - 1);
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const vals = [], ids = [];
+    for (let j = 0; j < n; j++) {
+      if (j === i) continue;
+      const v = S[i * n + j];
+      if (vals.length < k) { vals.push(v); ids.push(j); if (vals.length === k) sortTop(vals, ids); }
+      else if (v > vals[k - 1]) {
+        let p = k - 1;
+        while (p > 0 && vals[p - 1] < v) { vals[p] = vals[p - 1]; ids[p] = ids[p - 1]; p--; }
+        vals[p] = v; ids[p] = j;
+      }
+    }
+    if (vals.length < k) sortTop(vals, ids);
+    out.push(ids);
+  }
+  return out;
+}
+function sortTop(vals, ids) {
+  const o = vals.map((v, i) => [v, ids[i]]).sort((a, b) => b[0] - a[0]);
+  o.forEach(([v, id], i) => { vals[i] = v; ids[i] = id; });
+}
+async function topkOverlapAsync(A, B, n, k, onProgress) {
+  const ta = await topkAsync(A, n, k, f => onProgress && onProgress(f / 2));
+  const tb = await topkAsync(B, n, k, f => onProgress && onProgress(0.5 + f / 2));
+  return ta.map((ids, i) => { const set = new Set(tb[i]); return ids.filter(x => set.has(x)).length / ids.length; });
+}
+async function headerMetrics(Sc, Sp, n, same, onProgress = () => {}) {
+  let both = 0, onlyP = 0, onlyC = 0, neither = 0;
+  let t = performance.now();
+  for (let i = 0; i < n; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const p = Sp[i * n + j] >= T90, c = Sc[i * n + j] >= T90;
+      if (p && c) both++; else if (p) onlyP++; else if (c) onlyC++; else neither++;
+    }
+    if (performance.now() - t > 40) { onProgress(0.15 * (i + 1) / n); await nextFrame(); t = performance.now(); }
+  }
+  const total = n * (n - 1) / 2;
+  let rho = 1, overlap = null, meanOverlap = 1;
+  const { I, J } = samplePairs(n, 200000, 11);
+  const a = new Float64Array(I.length), b = new Float64Array(I.length);
+  for (let p = 0; p < I.length; p++) { a[p] = Sp[I[p] * n + J[p]]; b[p] = Sc[I[p] * n + J[p]]; }
+  onProgress(0.2);
+  if (!same) {
+    await nextFrame();
+    rho = pearson(rankArray(a), rankArray(b));
+    onProgress(0.35);
+    await nextFrame();
+    overlap = await topkOverlapAsync(Sp, Sc, n, 10, f => onProgress(0.35 + 0.65 * f));
+    meanOverlap = overlap.reduce((x, y) => x + y, 0) / overlap.length;
+  }
+  onProgress(1);
+  return { both, onlyP, onlyC, neither, total, rho, overlap, meanOverlap, hiP: (both + onlyP) / total, hiC: (both + onlyC) / total,
+    sampleP: a, sampleC: b };
+}
+function percentiles(vals) {
+  if (!vals.length) return { s10: NaN, s50: NaN, s90: NaN, rs: NaN };
+  const s = Float64Array.from(vals).sort();
+  const q = p => { const pos = (s.length - 1) * p, lo = Math.floor(pos), hi = Math.ceil(pos); return s[lo] + (s[hi] - s[lo]) * (pos - lo); };
+  const s10 = q(.1), s50 = q(.5), s90 = q(.9);
+  return { s10, s50, s90, rs: s50 > 0 ? (s90 - s10) / s50 : NaN };
+}
+/* Within-group pairs; between-group pairs are sampled (up to maxInter) instead of materialised. */
+function groupPairs(S, n, groups, g, maxInter = 0, rnd = Math.random) {
+  const inside = [], outside = [];
+  groups.forEach((x, i) => (x === g ? inside : outside).push(i));
+  const intra = [];
+  for (let a = 0; a < inside.length; a++) for (let b = a + 1; b < inside.length; b++) intra.push(S[inside[a] * n + inside[b]]);
+  const inter = [];
+  if (maxInter > 0 && inside.length && outside.length) {
+    const total = inside.length * outside.length;
+    if (total <= maxInter) { for (const i of inside) for (const j of outside) inter.push(S[i * n + j]); }
+    else for (let k = 0; k < maxInter; k++) inter.push(S[inside[Math.floor(rnd() * inside.length)] * n + outside[Math.floor(rnd() * outside.length)]]);
+  }
+  return { intra, inter };
+}
+function cumulativePath(fa, fb, s) {
+  let order = ESSENTIAL_KEYS.concat(s.include_limit ? LIMIT_KEYS : []);
+  if (s.basis === '100kcal') order = order.filter(k => k !== 'energy');
+  order = order.filter(k => !s.removed.includes(k));
+  const xa = scaleRow(fa, s, order), xb = scaleRow(fb, s, order);
+  return order.map((k, i) => ({
+    step: i + 1, nutrient: NUT[k].label, a: 100 * fa.v[k] / NUT[k].rdi, b: 100 * fb.v[k] / NUT[k].rdi,
+    cosine: cosinePair(xa.slice(0, i + 1), xb.slice(0, i + 1)),
+    subset: ALL_SUBSETS.find(x => NUT[k].subsets.includes(x)) ?? null,
+  }));
+}
+function findFood(names, tokens) {
+  let best = null;
+  for (const n of names) {
+    const l = n.toLowerCase();
+    if (tokens.every(t => l.includes(t)) && (!best || n.length < best.length)) best = n;
+  }
+  return best;
+}
+
+/* =========================================================================
+   Pipeline
+   ========================================================================= */
+function universeKey() {
+  const st = state.settings, cur = currentScenario();
+  const needed = new Set([...scenKeys(cur), ...scenKeys(PAPER)]);
+  return JSON.stringify([state.fileName, state.demo, JSON.stringify(state.mapping), st.exclude, st.missing,
+    cur.basis === '100kcal' ? st.min_kcal : 0, [...needed].sort(), cur.basis, cur.transform, cur.cap]);
+}
+function sameAsPaper() {
+  const st = state.settings;
+  return scenKey(currentScenario()) === scenKey(PAPER) && st.exclude && st.missing === 'drop';
+}
+
+let recomputeTimer = null;
+function scheduleRecompute() { clearTimeout(recomputeTimer); recomputeTimer = setTimeout(recompute, 120); }
+
+async function recompute() {
+  if (!state.foods) return;
+  const token = ++state.token;
+  const app = $('#app');
+  const cur = currentScenario(), st = state.settings;
+  const bail = () => { progress.hide(); app.classList.remove('busy'); };
+  if (!scenKeys(cur).length) { bail(); app.innerHTML = msg('warn', 'No nutrients left in the scenario. Add some back in the sidebar.'); return; }
+  const used = new Set([...scenKeys(cur), ...scenKeys(PAPER)]);
+  const unmapped = [...used].filter(k => !state.mapping[k]).map(k => NUT[k].label);
+  if (unmapped.length && st.missing === 'drop') {
+    bail();
+    app.innerHTML = msg('err', `These nutrients have no column, so every food would be dropped: ${esc(unmapped.join(', '))}. Map them under Column mapping, or set missing values to 0.`);
+    return;
+  }
+  await libsReady;
+  app.classList.add('busy');
+  progress.show('Building nutrient vectors…', 0.02);
+  await nextFrame();
+  const U = universe(state.foods, [PAPER, cur], st.exclude, +st.min_kcal || 10, st.missing);
+  if (token !== state.token) return;
+  if (U.length < 3) { progress.hide(); app.classList.remove('busy'); app.innerHTML = msg('err', 'Fewer than three foods remain with these settings.'); return; }
+  const fz = cur.fortify ? fortifyFoods(U) : { foods: U, names: [] };
+  const ukey = universeKey();
+  const same = sameAsPaper();
+  // Progress weights: vectors 5%, each matrix to compute ~40%, comparison the rest.
+  const needCur = !hasMatrix(cur, ukey), needPap = same ? false : !hasMatrix(PAPER, ukey);
+  const wMat = 0.4, wCur = needCur ? wMat : 0, wPap = needPap ? wMat : 0;
+  const wMetrics = same ? 0.05 : 0.15, scale = 0.95 / (wCur + wPap + wMetrics);
+  let base = 0.05;
+  const nTxt = `${U.length.toLocaleString()} × ${U.length.toLocaleString()}`;
+  const step = (label, w) => { const b0 = base; base += w * scale; return f => { if (token === state.token) progress.show(label, b0 + f * w * scale); }; };
+  const Scur = await getMatrix(fz.foods, cur, ukey, step(`Computing ${nTxt} similarities (current scenario)…`, wCur));
+  if (token !== state.token) return;
+  const Spap = same ? Scur : await getMatrix(U, PAPER, ukey, step(`Computing ${nTxt} similarities (paper settings)…`, wPap));
+  if (token !== state.token) return;
+  const metrics = await headerMetrics(Scur, Spap, U.length, same, step('Comparing with the paper…', wMetrics));
+  if (token !== state.token) return;
+  progress.show('Drawing…', 1);
+  await nextFrame();
+  Object.assign(state, { U, Ucur: fz.foods, fortifiedNames: fz.names, Scur, Spap, metrics, ukey });
+  state.nameIdx = new Map(U.map((f, i) => [f.name, i]));
+  render();
+  app.classList.remove('busy');
+  progress.hide();
+}
+
+/* Sticky progress panel. frac = null shows an indeterminate bar. */
+const progress = {
+  show(label, frac = null) {
+    const el = $('#progress');
+    el.classList.remove('hidden');
+    el.classList.toggle('indet', frac === null);
+    $('#progress-label').textContent = label;
+    $('#progress-pct').textContent = frac === null ? '' : `${Math.round(100 * Math.max(0, Math.min(1, frac)))}%`;
+    if (frac !== null) $('#progress-fill').style.width = `${100 * Math.max(0, Math.min(1, frac))}%`;
+  },
+  hide() { $('#progress').classList.add('hidden'); $('#progress-fill').style.width = '0'; },
+};
+const inlineProgress = (label, frac) => `<div class="inline-progress"><div class="progress-row"><span class="lbl">${esc(label)}</span><span class="pct">${frac === null ? '' : Math.round(100 * frac) + '%'}</span></div><div class="progress-track"><div class="progress-fill" style="width:${frac === null ? 0 : 100 * frac}%"></div></div></div>`;
+const msg = (kind, text) => `<div class="msg ${kind}">${text}</div>`;
+
+/* =========================================================================
+   Rendering
+   ========================================================================= */
+const VIEWS = ['Substitutes', 'Pair detail', 'Matrix', 'Robustness', 'Categories', 'Data'];
+const PLOT_CFG = { responsive: true, displaylogo: false, modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'] };
+function baseLayout(extra = {}) {
+  const AX = { gridcolor: '#e6dfcf', zerolinecolor: '#d9d1bf', automargin: true };
+  const merged = Object.assign({
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { family: 'Atkinson Hyperlegible, sans-serif', size: 12, color: '#1f1c17' },
+    margin: { l: 10, r: 10, t: 10, b: 10 },
+    xaxis: { gridcolor: '#e6dfcf', zerolinecolor: '#d9d1bf', automargin: true },
+    yaxis: { gridcolor: '#e6dfcf', zerolinecolor: '#d9d1bf', automargin: true },
+    legend: { orientation: 'h', y: 1.12, x: 0 },
+    hoverlabel: { font: { family: 'JetBrains Mono, monospace', size: 12 } },
+  }, extra);
+  merged.xaxis = Object.assign({}, AX, extra.xaxis || {});
+  merged.yaxis = Object.assign({}, AX, extra.yaxis || {});
+  return merged;
+}
+function plot(el, data, layout) {
+  if (!el) return;
+  if (!window.Plotly) { el.innerHTML = msg('err', 'The chart library did not load. Check your connection and reload the page.'); return; }
+  Plotly.react(el, data, baseLayout(layout), PLOT_CFG);
+}
+
+function render() {
+  const app = $('#app'), m = state.metrics, cur = currentScenario(), same = sameAsPaper();
+  const n = state.U.length;
+  const fort = state.fortifiedNames;
+  app.innerHTML = `
+    <div class="status">
+      ${state.demo ? '<span class="badge demo">Synthetic demo data</span>' : ''}
+      <span class="badge ${same ? 'same' : 'diff'}">${same ? 'Same as paper' : 'Scenario differs from paper'}</span>
+      <span><b>Current:</b> ${esc(describe(cur))}</span>
+      <span><b>Paper:</b> ${esc(describe(PAPER))}</span>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="k">Foods in analysis</div><div class="v">${n.toLocaleString()}</div><div class="d">paper: 927</div></div>
+      <div class="kpi"><div class="k">Rank agreement</div><div class="v">${f2(m.rho)}</div><div class="d">Spearman vs paper</div></div>
+      <div class="kpi"><div class="k">Top-10 neighbours kept</div><div class="v">${pct(m.meanOverlap)}</div><div class="d">average per food</div></div>
+      <div class="kpi"><div class="k">Pairs ≥ 0.78</div><div class="v">${pct(m.hiC, 1)}</div><div class="d">${sgnPp(m.hiC - m.hiP)} vs paper</div></div>
+    </div>
+    ${fort.length ? `<p class="note">Fortification applied to ${fort.length} plant drink${fort.length > 1 ? 's' : ''}: ${esc(fort.slice(0, 8).join(', '))}${fort.length > 8 ? ' …' : ''}</p>` : ''}
+    ${same && !state.demo && Math.abs(n - 927) > 50 ? '<p class="note">Food count differs from the paper\'s 927, likely a different NEVO version or group mapping.</p>' : ''}
+    <nav class="tabs">${VIEWS.map(v => `<button type="button" data-view="${v}" class="${v === state.view ? 'on' : ''}">${v}</button>`).join('')}</nav>
+    <div class="view" id="view"></div>
+    <datalist id="food-list">${state.U.map(f => `<option value="${esc(f.name)}"></option>`).join('')}</datalist>`;
+  app.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => { state.view = b.dataset.view; render(); }));
+  ({ 'Substitutes': viewSubstitutes, 'Pair detail': viewPair, 'Matrix': viewMatrix, 'Robustness': viewRobustness,
+     'Categories': viewCategories, 'Data': viewData })[state.view]($('#view'));
+}
+const sgnPp = v => Number.isFinite(v) ? `${v >= 0 ? '+' : ''}${(100 * v).toFixed(1)} pp` : '–';
+
+function defaultFood(tokens, fallback = 0) {
+  const hit = findFood(state.U.map(f => f.name), tokens);
+  return hit ?? state.U[Math.min(fallback, state.U.length - 1)].name;
+}
+function resolveFood(name, tokens, fallback = 0) {
+  return name && state.nameIdx.has(name) ? name : defaultFood(tokens, fallback);
+}
+function foodInput(id, label, value) {
+  return `<div class="field grow"><label for="${id}">${label}</label><input id="${id}" list="food-list" value="${esc(value)}" autocomplete="off" placeholder="Type to search"></div>`;
+}
+function bindFood(id, onPick) {
+  const el = document.getElementById(id);
+  const commit = () => { if (state.nameIdx.has(el.value)) onPick(el.value); };
+  el.addEventListener('change', commit);
+  el.addEventListener('input', () => { if (state.nameIdx.has(el.value)) commit(); });
+  el.addEventListener('focus', () => el.select());
+}
+
+/* Sortable table */
+function table(el, cols, rows, opts = {}) {
+  let sortKey = opts.sortKey ?? null, dir = opts.dir ?? -1;
+  const draw = () => {
+    const data = sortKey ? rows.slice().sort((a, b) => {
+      const x = a[sortKey], y = b[sortKey];
+      if (typeof x === 'string') return dir * x.localeCompare(y);
+      return dir * ((Number.isFinite(x) ? x : -Infinity) - (Number.isFinite(y) ? y : -Infinity));
+    }) : rows;
+    el.innerHTML = `<div class="tbl-wrap"${opts.maxH ? ` style="max-height:${opts.maxH}px"` : ''}><table><thead><tr>${cols.map(c =>
+      `<th data-k="${c.key}" class="${c.num ? 'num' : ''}" ${c.title ? `title="${esc(c.title)}"` : ''}>${c.label}${sortKey === c.key ? `<span class="arrow">${dir > 0 ? '▲' : '▼'}</span>` : ''}</th>`).join('')}</tr></thead><tbody>${
+      data.map(r => `<tr>${cols.map(c => {
+        const v = r[c.key];
+        if (c.bar) return `<td class="num bar"><span class="fill" style="width:${Math.max(0, Math.min(1, v)) * 100}%"></span><span class="val">${f2(v)}</span></td>`;
+        const txt = c.fmt ? c.fmt(v, r) : esc(v ?? '');
+        const cls = [c.num ? 'num' : '', c.wrap ? 'wrapc' : '', c.color ? (v > 0.005 ? 'pos' : v < -0.005 ? 'neg' : '') : ''].join(' ');
+        return `<td class="${cls}">${txt}</td>`;
+      }).join('')}</tr>`).join('')}</tbody></table></div>`;
+    el.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
+      const k = th.dataset.k;
+      if (sortKey === k) dir = -dir; else { sortKey = k; dir = typeof rows[0]?.[k] === 'string' ? 1 : -1; }
+      draw();
+    }));
+  };
+  draw();
+}
+
+/* ---------- Substitutes ---------- */
+function viewSubstitutes(el) {
+  const name = state.sel.sub = resolveFood(state.sel.sub, ['soy', 'drink']);
+  const topN = state.sel.topN || 20;
+  el.innerHTML = `<div class="controls">${foodInput('sub-food', 'Food', name)}
+    <div class="field"><label for="sub-n">Show</label><input type="number" id="sub-n" min="5" max="100" step="5" value="${topN}" style="width:90px"></div></div>
+    <div id="sub-table"></div>
+    <p class="note">A kcal ratio far from 1 means a similar nutrient pattern at very different amounts per 100 g, which cosine similarity ignores.</p>`;
+  bindFood('sub-food', v => { state.sel.sub = v; viewSubstitutes(el); });
+  $('#sub-n').addEventListener('change', e => { state.sel.topN = Math.max(5, Math.min(100, +e.target.value || 20)); viewSubstitutes(el); });
+  const n = state.U.length, i = state.nameIdx.get(name), Sc = state.Scur, Sp = state.Spap;
+  const others = [];
+  for (let j = 0; j < n; j++) if (j !== i) others.push(j);
+  const byPaper = others.slice().sort((a, b) => Sp[i * n + b] - Sp[i * n + a]);
+  const rankP = new Map(byPaper.map((j, r) => [j, r + 1]));
+  const top = others.sort((a, b) => Sc[i * n + b] - Sc[i * n + a]).slice(0, topN);
+  const base = state.U[i];
+  const rows = top.map(j => {
+    const f = state.U[j], c = Sc[i * n + j], p = Sp[i * n + j];
+    return { food: f.name, group: f.group, sim: c, paper: p, delta: c - p, rank: rankP.get(j),
+      kcal: base.v.energy > 0 ? f.v.energy / base.v.energy : NaN, protein: f.v.protein };
+  });
+  table($('#sub-table'), [
+    { key: 'food', label: 'Food', wrap: true }, { key: 'group', label: 'Group' },
+    { key: 'sim', label: 'Similarity', bar: true }, { key: 'paper', label: 'Paper', num: true, fmt: f2 },
+    { key: 'delta', label: 'Δ', num: true, fmt: sgn, color: true }, { key: 'rank', label: 'Paper rank', num: true, fmt: v => v },
+    { key: 'kcal', label: 'kcal ratio', num: true, fmt: v => Number.isFinite(v) ? v.toFixed(1) + '×' : '–', title: 'Energy per 100 g relative to the selected food' },
+    { key: 'protein', label: 'Protein g/100 g', num: true, fmt: f1 },
+  ], rows);
+}
+
+/* ---------- Pair detail ---------- */
+function viewPair(el) {
+  const a = state.sel.a = resolveFood(state.sel.a, ['milk', 'semi']);
+  const b = state.sel.b = resolveFood(state.sel.b, ['soy', 'drink'], 1);
+  const n = state.U.length, ia = state.nameIdx.get(a), ib = state.nameIdx.get(b);
+  const cur = currentScenario(), fa = state.Ucur[ia], fb = state.Ucur[ib];
+  el.innerHTML = `<div class="controls">${foodInput('pair-a', 'Food A', a)}${foodInput('pair-b', 'Food B', b)}</div>
+    <div class="mini-kpis">
+      <div><div class="k">Current similarity</div><div class="v">${f2(state.Scur[ia * n + ib])}</div></div>
+      <div><div class="k">Paper similarity</div><div class="v">${f2(state.Spap[ia * n + ib])}</div></div>
+      <div><div class="k">Energy A / B</div><div class="v">${Number.isFinite(fa.v.energy) && Number.isFinite(fb.v.energy) ? `${fa.v.energy.toFixed(0)} / ${fb.v.energy.toFixed(0)} kcal` : 'n/a'}</div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h2>%RDI per 100 g</h2><p class="sub">Log scale; dotted line at 100%.</p><div id="p-rdi" class="plot"></div></div>
+      <div class="card"><h2>What drives the similarity</h2><p class="sub">Per-nutrient terms of the cosine; they sum to the score.</p><div id="p-contrib" class="plot"></div></div>
+    </div>
+    <div class="card"><h2>Adding nutrients one at a time</h2><p class="sub">Same procedure as Appendix A, Table A1, in the paper's nutrient order.</p>
+      <div id="p-path" class="plot"></div><div id="p-path-tbl" style="margin-top:10px"></div></div>`;
+  bindFood('pair-a', v => { state.sel.a = v; viewPair(el); });
+  bindFood('pair-b', v => { state.sel.b = v; viewPair(el); });
+
+  const keys = scenKeys(cur), labels = keys.map(k => NUT[k].label);
+  const pa = keys.map(k => Math.max(0.01, 100 * fa.v[k] / NUT[k].rdi)), pb = keys.map(k => Math.max(0.01, 100 * fb.v[k] / NUT[k].rdi));
+  const h = Math.max(360, 24 * keys.length + 110);
+  const short = s => s.length > 38 ? s.slice(0, 36) + '…' : s;
+  plot($('#p-rdi'), [
+    { type: 'bar', orientation: 'h', y: labels, x: pa, name: short(a), marker: { color: '#0f6b6b' }, hovertemplate: '%{y}: %{x:.1f}%<extra>A</extra>' },
+    { type: 'bar', orientation: 'h', y: labels, x: pb, name: short(b), marker: { color: '#c0533a' }, hovertemplate: '%{y}: %{x:.1f}%<extra>B</extra>' },
+  ], { height: h, barmode: 'group', xaxis: { type: 'log', title: { text: '% RDI (log)' }, gridcolor: '#e6dfcf', automargin: true },
+       yaxis: { autorange: 'reversed', automargin: true }, legend: { orientation: 'h', y: -0.12 },
+       shapes: [{ type: 'line', x0: 100, x1: 100, yref: 'paper', y0: 0, y1: 1, line: { dash: 'dot', color: '#8d8676' } }] });
+  const contrib = contributions(scaleRow(fa, cur, keys), scaleRow(fb, cur, keys));
+  plot($('#p-contrib'), [{ type: 'bar', orientation: 'h', y: labels, x: contrib, marker: { color: '#0f6b6b' }, hovertemplate: '%{y}: %{x:.3f}<extra></extra>' }],
+    { height: h, xaxis: { title: { text: 'Contribution to cosine' }, gridcolor: '#e6dfcf', automargin: true }, yaxis: { autorange: 'reversed', automargin: true } });
+
+  const pc = cumulativePath(fa, fb, cur), pp = cumulativePath(state.U[ia], state.U[ib], PAPER);
+  plot($('#p-path'), [
+    { type: 'scatter', mode: 'lines+markers', x: pp.map(r => r.nutrient), y: pp.map(r => r.cosine), name: 'Paper settings', line: { color: '#9a9385', dash: 'dash' } },
+    { type: 'scatter', mode: 'lines+markers', x: pc.map(r => r.nutrient), y: pc.map(r => r.cosine), name: 'Current scenario', line: { color: '#0f6b6b', width: 2.5 } },
+  ], { height: 380, yaxis: { range: [0, 1.03], title: { text: 'Cosine similarity' }, gridcolor: '#e6dfcf' }, xaxis: { tickangle: -40, automargin: true }, margin: { l: 10, r: 10, t: 30, b: 10 } });
+  table($('#p-path-tbl'), [
+    { key: 'step', label: 'Step', num: true, fmt: v => v }, { key: 'nutrient', label: 'Nutrient added' },
+    { key: 'a', label: 'A (%RDI)', num: true, fmt: f1 }, { key: 'b', label: 'B (%RDI)', num: true, fmt: f1 },
+    { key: 'cosine', label: 'Cosine', num: true, fmt: f2 }, { key: 'subset', label: 'In paper subset ≥', num: true, fmt: v => v ?? '–' },
+  ], pc, { maxH: 380 });
+}
+
+/* ---------- Matrix ---------- */
+function viewMatrix(el) {
+  const names = state.U.map(f => f.name);
+  if (!state.sel.matrix) state.sel.matrix = PAPER_FOODS.map(t => findFood(names, t)).filter(Boolean);
+  state.sel.matrix = state.sel.matrix.filter(x => state.nameIdx.has(x));
+  if (!state.sel.matrix.length) state.sel.matrix = names.slice(0, 8);
+  const chosen = state.sel.matrix, mode = state.sel.matrixMode;
+  el.innerHTML = `<div class="controls">
+      <div class="field grow"><label for="mx-add">Add a food (max 25)</label><input id="mx-add" list="food-list" autocomplete="off" placeholder="Type to search"></div>
+      <div class="field"><div class="label">Show</div><div class="seg" id="mx-mode">${['Current', 'Paper', 'Difference'].map(m => `<button type="button" data-v="${m}" class="${m === mode ? 'on' : ''}">${m}</button>`).join('')}</div></div>
+    </div>
+    <div class="chips" id="mx-chips" style="margin-bottom:12px">${chosen.map(c => `<span class="chip sel" data-n="${esc(c)}">${esc(c)}<span class="x">×</span></span>`).join('')}</div>
+    <div class="card"><div id="mx-plot" class="plot"></div></div>`;
+  const add = $('#mx-add');
+  const commit = () => { if (state.nameIdx.has(add.value) && !chosen.includes(add.value) && chosen.length < 25) { chosen.push(add.value); viewMatrix(el); } };
+  add.addEventListener('change', commit);
+  add.addEventListener('input', () => { if (state.nameIdx.has(add.value)) commit(); });
+  el.querySelectorAll('#mx-chips .chip').forEach(c => c.addEventListener('click', () => { state.sel.matrix = chosen.filter(x => x !== c.dataset.n); viewMatrix(el); }));
+  el.querySelectorAll('#mx-mode button').forEach(b => b.addEventListener('click', () => { state.sel.matrixMode = b.dataset.v; viewMatrix(el); }));
+  if (chosen.length < 2) { $('#mx-plot').innerHTML = '<p class="note">Pick at least two foods.</p>'; return; }
+  const n = state.U.length, ids = chosen.map(c => state.nameIdx.get(c));
+  const z = ids.map(i => ids.map(j => {
+    const c = state.Scur[i * n + j], p = state.Spap[i * n + j];
+    return mode === 'Current' ? c : mode === 'Paper' ? p : c - p;
+  }));
+  const short = chosen.map(c => c.length > 28 ? c.slice(0, 26) + '…' : c);
+  let colorscale = [[0, '#f5f1e8'], [1, '#0f6b6b']], zmin = 0, zmax = 1;
+  if (mode === 'Difference') {
+    const lim = Math.max(0.05, ...z.flat().map(Math.abs));
+    colorscale = [[0, '#c0533a'], [0.5, '#f5f1e8'], [1, '#0f6b6b']]; zmin = -lim; zmax = lim;
+  }
+  plot($('#mx-plot'), [{ type: 'heatmap', z, x: short, y: short, zmin, zmax, colorscale,
+    text: z.map(r => r.map(v => v.toFixed(2))), texttemplate: '%{text}', hovertemplate: '%{y} × %{x}: %{z:.2f}<extra></extra>' }],
+    { height: 140 + 40 * ids.length, yaxis: { autorange: 'reversed', automargin: true }, xaxis: { tickangle: -45, automargin: true } });
+}
+
+/* ---------- Robustness ---------- */
+function viewRobustness(el) {
+  const m = state.metrics, n = state.U.length;
+  el.innerHTML = `<div class="grid32">
+      <div class="card"><h2>Every food pair: paper vs current</h2><p class="sub" id="rb-sub"></p><div id="rb-scatter" class="plot"></div></div>
+      <div class="card"><h2>Cut-off crossings</h2><p class="sub">Pairs above the paper's 0.78 cut-off.</p><div id="rb-cross"></div><div id="rb-hist" class="plot" style="margin-top:12px"></div></div>
+    </div>
+    <div class="card"><h2>Biggest movers</h2><p class="sub">Pairs whose similarity changes most under the current scenario.</p><div id="rb-movers"></div></div>
+    <div class="card"><h2>Effect of the nutrient subset</h2><p class="sub">Mean similarity per subset, holding the rest of each setting fixed. Mirrors Table 2.</p><div id="rb-sweep" class="plot">${inlineProgress('Preparing subsets…', 0)}</div></div>`;
+
+  const show = Math.min(25000, m.sampleP.length);
+  $('#rb-sub').textContent = `Sample of ${show.toLocaleString()} of ${m.total.toLocaleString()} pairs. Dashed lines: 0.78 cut-off.`;
+  plot($('#rb-scatter'), [{ type: 'scattergl', mode: 'markers', x: Array.from(m.sampleP.subarray(0, show)), y: Array.from(m.sampleC.subarray(0, show)),
+    marker: { size: 3, color: '#0f6b6b', opacity: 0.25 }, hoverinfo: 'skip' }],
+    { height: 460, xaxis: { range: [0, 1], title: { text: 'Paper settings' }, gridcolor: '#e6dfcf' }, yaxis: { range: [0, 1], title: { text: 'Current scenario' }, gridcolor: '#e6dfcf' },
+      shapes: [
+        { type: 'line', x0: 0, y0: 0, x1: 1, y1: 1, line: { color: '#8d8676', dash: 'dot' } },
+        { type: 'line', x0: T90, x1: T90, y0: 0, y1: 1, line: { color: '#9a9385', dash: 'dash' } },
+        { type: 'line', y0: T90, y1: T90, x0: 0, x1: 1, line: { color: '#9a9385', dash: 'dash' } }] });
+  table($('#rb-cross'), [{ key: 'k', label: '' }, { key: 'n', label: 'Pairs', num: true, fmt: v => v.toLocaleString() }, { key: 's', label: 'Share', num: true, fmt: v => pct(v, 1) }], [
+    { k: 'Similar in both', n: m.both, s: m.both / m.total }, { k: 'Only paper', n: m.onlyP, s: m.onlyP / m.total },
+    { k: 'Only current', n: m.onlyC, s: m.onlyC / m.total }, { k: 'Neither', n: m.neither, s: m.neither / m.total }]);
+  const ov = m.overlap || new Array(n).fill(1);
+  plot($('#rb-hist'), [{ type: 'histogram', x: ov, xbins: { start: -0.05, end: 1.05, size: 0.1 }, marker: { color: '#0f6b6b' } }],
+    { height: 220, bargap: 0.05, xaxis: { title: { text: 'Top-10 neighbours kept' }, tickformat: '.0%', gridcolor: '#e6dfcf' }, yaxis: { title: { text: 'Foods' }, gridcolor: '#e6dfcf' } });
+
+  const K = 30, mv = [];
+  let minAbs = -1;
+  const Sc = state.Scur, Sp = state.Spap;
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    const d = Sc[i * n + j] - Sp[i * n + j], a = Math.abs(d);
+    if (mv.length < K || a > minAbs) {
+      mv.push({ i, j, d, a });
+      if (mv.length >= K) { mv.sort((x, y) => y.a - x.a); mv.length = K; minAbs = mv[K - 1].a; }
+    }
+  }
+  mv.sort((x, y) => y.a - x.a);
+  table($('#rb-movers'), [{ key: 'a', label: 'Food A', wrap: true }, { key: 'b', label: 'Food B', wrap: true },
+    { key: 'p', label: 'Paper', num: true, fmt: f2 }, { key: 'c', label: 'Current', num: true, fmt: f2 }, { key: 'd', label: 'Δ', num: true, fmt: sgn, color: true }],
+    mv.filter(x => x.a > 0).map(x => ({ a: state.U[x.i].name, b: state.U[x.j].name, p: Sp[x.i * n + x.j], c: Sc[x.i * n + x.j], d: x.d })), { maxH: 420 });
+  if (!mv.some(x => x.a > 0)) $('#rb-movers').innerHTML = '<p class="note">No differences: the scenario matches the paper.</p>';
+  runSweep();
+}
+
+async function runSweep() {
+  const cur = currentScenario(), token = state.token, ukey = state.ukey;
+  const jobs = [];
+  for (const s of ALL_SUBSETS) {
+    const sp = { ...PAPER, subset: s }, sc = { ...cur, subset: s, removed: [] };
+    jobs.push({ s, key: ukey + '|' + scenKey(sp), scen: sp, foods: state.U, who: 'paper' });
+    jobs.push({ s, key: ukey + '|' + scenKey(sc), scen: sc, foods: sc.fortify ? state.Ucur : state.U, who: 'current' });
+  }
+  const todo = jobs.filter((j, i) => !state.sweepCache.has(j.key) && jobs.findIndex(x => x.key === j.key) === i);
+  const show = (doneJobs, frac, label) => {
+    const el = $('#rb-sweep');
+    if (el) el.innerHTML = inlineProgress(label, todo.length ? (doneJobs + frac) / todo.length : 1);
+  };
+  for (let k = 0; k < todo.length; k++) {
+    const j = todo[k];
+    const label = `Subset ${j.s}, ${j.who} settings (${k + 1} of ${todo.length})`;
+    show(k, 0, label);
+    const { mean } = await runJob('mean', scaledMatrix(j.foods, j.scen), f => {
+      if (token === state.token && state.view === 'Robustness') show(k, f, label);
+    });
+    state.sweepCache.set(j.key, mean);
+    if (token !== state.token || state.view !== 'Robustness') return;
+  }
+  const rows = ALL_SUBSETS.map(s => ({ s, p: state.sweepCache.get(jobs.find(j => j.s === s && j.who === 'paper').key),
+    c: state.sweepCache.get(jobs.find(j => j.s === s && j.who === 'current').key) }));
+  const el = $('#rb-sweep');
+  if (!el) return;
+  el.innerHTML = '';
+  plot(el, [
+    { type: 'scatter', mode: 'lines+markers', x: rows.map(r => r.s), y: rows.map(r => r.p), name: 'Paper settings', line: { color: '#9a9385', dash: 'dash' } },
+    { type: 'scatter', mode: 'lines+markers', x: rows.map(r => r.s), y: rows.map(r => r.c), name: 'Current settings', line: { color: '#0f6b6b', width: 2.5 } },
+  ], { height: 320, xaxis: { title: { text: 'Nutrients in subset' }, tickvals: ALL_SUBSETS, gridcolor: '#e6dfcf' },
+       yaxis: { title: { text: 'Mean cosine similarity' }, gridcolor: '#e6dfcf' }, margin: { l: 10, r: 10, t: 30, b: 10 } });
+}
+
+/* ---------- Categories ---------- */
+function viewCategories(el) {
+  const n = state.U.length, groupsArr = state.U.map(f => f.group);
+  const groups = [...new Set(groupsArr)].sort();
+  if (!state.sel.catGroups) state.sel.catGroups = groups.slice(0, 6);
+  state.sel.catGroups = state.sel.catGroups.filter(g => groups.includes(g));
+  const sel = state.sel.catGroups, mode = state.sel.catMode;
+  el.innerHTML = `<div class="card"><h2>Within-group similarity</h2><p class="sub">Median (S50) and relative span RS = (S90 − S10) / S50 of pairs inside each group, as in Table S2.</p><div id="cat-tbl"></div></div>
+    <div class="card"><h2>Within vs between groups</h2>
+      <div class="controls"><div class="field"><div class="label">Settings</div><div class="seg" id="cat-mode">${['Current', 'Paper'].map(m => `<button type="button" data-v="${m}" class="${m === mode ? 'on' : ''}">${m}</button>`).join('')}</div></div></div>
+      <div class="chips" id="cat-chips" style="margin-bottom:10px">${groups.map(g => `<span class="chip ${sel.includes(g) ? 'sel' : ''}" data-g="${esc(g)}">${esc(g)}</span>`).join('')}</div>
+      <div id="cat-plot" class="plot"></div></div>`;
+  const rows = groups.map(g => {
+    const p = percentiles(groupPairs(state.Spap, n, groupsArr, g).intra), c = percentiles(groupPairs(state.Scur, n, groupsArr, g).intra);
+    return { g, n: groupsArr.filter(x => x === g).length, p50: p.s50, c50: c.s50, prs: p.rs, crs: c.rs };
+  });
+  table($('#cat-tbl'), [{ key: 'g', label: 'Group', wrap: true }, { key: 'n', label: 'Foods', num: true, fmt: v => v },
+    { key: 'p50', label: 'S50 paper', num: true, fmt: f2 }, { key: 'c50', label: 'S50 current', num: true, fmt: f2 },
+    { key: 'prs', label: 'RS paper', num: true, fmt: f2 }, { key: 'crs', label: 'RS current', num: true, fmt: f2 }], rows, { maxH: 420 });
+  el.querySelectorAll('#cat-mode button').forEach(b => b.addEventListener('click', () => { state.sel.catMode = b.dataset.v; viewCategories(el); }));
+  el.querySelectorAll('#cat-chips .chip').forEach(c => c.addEventListener('click', () => {
+    const g = c.dataset.g; state.sel.catGroups = sel.includes(g) ? sel.filter(x => x !== g) : [...sel, g]; viewCategories(el);
+  }));
+  if (!sel.length) { $('#cat-plot').innerHTML = '<p class="note">Select one or more groups.</p>'; return; }
+  const S = mode === 'Current' ? state.Scur : state.Spap, rnd = mulberry32(3);
+  const sample = (arr, k) => { if (arr.length <= k) return arr; const out = new Array(k); for (let i = 0; i < k; i++) out[i] = arr[Math.floor(rnd() * arr.length)]; return out; };
+  const traces = [];
+  sel.forEach((g, gi) => {
+    const { intra, inter } = groupPairs(S, n, groupsArr, g, 4000, rnd);
+    [[intra, 'Within group', '#0f6b6b'], [inter, 'Other groups', '#c0533a']].forEach(([vals, name, color]) => {
+      if (!vals.length) return;
+      const s = sample(vals, 4000);
+      traces.push({ type: 'box', orientation: 'h', x: s, y: s.map(() => g), name, marker: { color }, boxpoints: false, legendgroup: name, showlegend: gi === 0 });
+    });
+  });
+  plot($('#cat-plot'), traces, { boxmode: 'group', height: Math.max(300, 70 * sel.length + 80), xaxis: { range: [0, 1], title: { text: 'Cosine similarity' }, gridcolor: '#e6dfcf' },
+    yaxis: { automargin: true, autorange: 'reversed' }, margin: { l: 10, r: 10, t: 30, b: 10 } });
+}
+
+/* ---------- Data ---------- */
+function viewData(el) {
+  const cur = currentScenario(), keys = scenKeys(cur);
+  el.innerHTML = `<div class="controls">
+      <div class="field grow"><label for="data-filter">Filter foods</label><input type="text" id="data-filter" value="${esc(state.sel.dataFilter)}" placeholder="Name or group"></div>
+      <div class="field"><button class="btn" id="dl-nn" type="button">Download top-10 neighbours (csv)</button></div>
+      <div class="field"><button class="btn ghost" id="dl-foods" type="button">Download food set (csv)</button></div>
+    </div><div id="data-tbl"></div><p class="note" id="data-note"></p>`;
+  const draw = () => {
+    const q = state.sel.dataFilter.toLowerCase();
+    const rows = state.Ucur.filter(f => !q || f.name.toLowerCase().includes(q) || f.group.toLowerCase().includes(q));
+    const shown = rows.slice(0, 400).map(f => Object.assign({ code: f.code, name: f.name, group: f.group }, Object.fromEntries(keys.map(k => [k, f.v[k]]))));
+    table($('#data-tbl'), [{ key: 'code', label: 'Code' }, { key: 'name', label: 'Food', wrap: true }, { key: 'group', label: 'Group' },
+      ...keys.map(k => ({ key: k, label: `${NUT[k].label} (${NUT[k].unit})`, num: true, fmt: f2 }))], shown, { maxH: 560 });
+    $('#data-note').textContent = `${rows.length.toLocaleString()} foods match${rows.length > 400 ? '; showing the first 400' : ''}. Values per 100 g after any fortification, before RDI scaling.`;
+  };
+  draw();
+  $('#data-filter').addEventListener('input', e => { state.sel.dataFilter = e.target.value; draw(); });
+  $('#dl-nn').addEventListener('click', async e => {
+    const btn = e.currentTarget, label = btn.textContent;
+    btn.disabled = true;
+    const n = state.U.length;
+    const nn = await topkAsync(state.Scur, n, 10, f => { progress.show('Finding the 10 nearest neighbours of every food…', f); btn.textContent = `Preparing… ${Math.round(100 * f)}%`; });
+    const lines = ['food,rank,neighbour,similarity,paper_similarity'];
+    nn.forEach((ids, i) => ids.forEach((j, r) => lines.push([state.U[i].name, r + 1, state.U[j].name, state.Scur[i * n + j].toFixed(4), state.Spap[i * n + j].toFixed(4)].map(csvCell).join(','))));
+    download('nevo_top10_neighbours.csv', lines.join('\n'));
+    progress.hide();
+    btn.disabled = false; btn.textContent = label;
+  });
+  $('#dl-foods').addEventListener('click', () => {
+    const lines = [['code', 'name', 'group', ...keys].join(',')];
+    state.Ucur.forEach(f => lines.push([f.code, f.name, f.group, ...keys.map(k => f.v[k])].map(csvCell).join(',')));
+    download('nevo_food_set.csv', lines.join('\n'));
+  });
+}
+const csvCell = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+function download(name, text) {
+  const url = URL.createObjectURL(new Blob(['﻿' + text], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+}
+
+/* =========================================================================
+   Empty state, demo data, file handling
+   ========================================================================= */
+function renderEmpty(error) {
+  $('#app').innerHTML = `${error ? msg('err', esc(error)) : ''}
+    <div class="empty">
+      <label class="big-drop" id="big-drop">
+        <input type="file" id="big-input" accept=".csv,.txt,.xlsx,.xls" hidden>
+        <div class="t">Drop the NEVO file here</div>
+        <div class="s">csv, txt or xlsx · read locally, never uploaded</div>
+      </label>
+      <div>
+        <h3>Getting the data</h3>
+        <ol>
+          <li>Request the NEVO-online data file from <a href="https://www.rivm.nl/en/dutch-food-composition-database" target="_blank" rel="noopener">RIVM</a> (free, short form).</li>
+          <li>Drop the csv or xlsx on this page. Delimiter, decimal comma and encoding are detected automatically.</li>
+          <li>Check the column mapping in the sidebar if a nutrient is flagged.</li>
+        </ol>
+        <p style="margin-top:14px"><button class="btn ghost" id="demo-btn" type="button">Try with synthetic demo data</button></p>
+        <p class="note">The demo contains semi-skimmed milk and soy drink with the paper's Table A1 values plus randomly generated foods. It shows how the tool works; its results say nothing about real foods.</p>
+      </div>
+    </div>`;
+  const drop = $('#big-drop');
+  $('#big-input').addEventListener('change', e => e.target.files[0] && loadFile(e.target.files[0]));
+  wireDrop(drop);
+  $('#demo-btn').addEventListener('click', loadDemo);
+}
+function wireDrop(el) {
+  ['dragenter', 'dragover'].forEach(ev => el.addEventListener(ev, e => { e.preventDefault(); el.classList.add('drag'); }));
+  ['dragleave', 'drop'].forEach(ev => el.addEventListener(ev, e => { e.preventDefault(); el.classList.remove('drag'); }));
+  el.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) loadFile(f); });
+}
+
+async function loadFile(file) {
+  try {
+    const mb = (file.size / 1048576).toFixed(1);
+    progress.show(`Reading ${file.name} (${mb} MB)…`, null);
+    $('#app').classList.add('busy');
+    await nextFrame();
+    const buf = await file.arrayBuffer();
+    progress.show(/\.xlsx?$/i.test(file.name) ? 'Waiting for the Excel reader…' : 'Waiting for the file parser…', null);
+    await libsReady;
+    if (!window.Papa || !window.XLSX) throw new Error('the file parser did not load. Check your connection and reload the page');
+    progress.show(`Parsing ${file.name}…`, null);
+    await nextFrame();
+    const { columns, rows } = readTable(buf, file.name);
+    Object.assign(state, { raw: rows, columns, fileName: file.name, demo: false, U: null });
+    state.mapping = autoMap(columns);
+    afterLoad();
+  } catch (err) {
+    console.error(err);
+    state.foods = null;
+    progress.hide();
+    $('#app').classList.remove('busy');
+    renderEmpty(`Could not read ${file.name}: ${err.message}`);
+  }
+}
+
+function loadDemo() {
+  const rnd = mulberry32(42);
+  const gauss = () => { const u = 1 - rnd(), v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  const cols = ['NEVO-code', 'Food group', 'Engelse naam/Food name', 'Voedingsmiddelnaam/Dutch food name', 'Is verrijkt met/Is fortified with',
+    'ENERCC', 'PROT', 'FASAT', 'SUGAR', 'FIBT', 'NA', 'K', 'CA', 'MG', 'FE', 'ZN', 'ID', 'VITA_RAE', 'VITD', 'VITE', 'VITK1', 'THIA', 'RIBF', 'NIA', 'VITB6', 'FOL', 'VITB12', 'VITC', 'F18:2CN6', 'F18:3CN3'];
+  const milk = { ENERCC: 46, PROT: 3.39, FASAT: 1.0, SUGAR: 4.7, FIBT: 0, NA: 40, K: 161, CA: 123, MG: 12, FE: 0, ZN: 0.408, ID: 14.85, VITA_RAE: 16.3, VITD: 0, VITE: 0, VITK1: 0.28, THIA: 0.0399, RIBF: 0.181, NIA: 0.106, VITB6: 0.033, FOL: 6.6, VITB12: 0.451, VITC: 0.98, 'F18:2CN6': 0.02, 'F18:3CN3': 0.01 };
+  const soy = { ENERCC: 33, PROT: 3.39, FASAT: 0.3, SUGAR: 0.2, FIBT: 0.611, NA: 30, K: 150.5, CA: 17, MG: 17.9, FE: 0.5, ZN: 0.352, ID: 1.05, VITA_RAE: 0, VITD: 0, VITE: 0.396, VITK1: 4.83, THIA: 0.02, RIBF: 0.0208, NIA: 0.196, VITB6: 0.0525, FOL: 13.8, VITB12: 0, VITC: 0, 'F18:2CN6': 0.9, 'F18:3CN3': 0.12 };
+  const scale = { ENERCC: 200, PROT: 10, FASAT: 3, SUGAR: 5, FIBT: 3, NA: 200, K: 300, CA: 80, MG: 40, FE: 1.5, ZN: 1.2, ID: 10, VITA_RAE: 100, VITD: 0.5, VITE: 1.5, VITK1: 20, THIA: 0.1, RIBF: 0.15, NIA: 2, VITB6: 0.2, FOL: 40, VITB12: 0.5, VITC: 15, 'F18:2CN6': 2, 'F18:3CN3': 0.4 };
+  const groups = ['Vegetables', 'Fruits', 'Cheese', 'Meat and poultry', 'Nuts and seeds', 'Bread', 'Legumes', 'Fish, crustacean and shellfish'];
+  const rows = [
+    { 'NEVO-code': '1', 'Food group': 'Milk and milk products', 'Engelse naam/Food name': 'Milk semi-skimmed', 'Voedingsmiddelnaam/Dutch food name': 'Melk halfvolle', ...milk },
+    { 'NEVO-code': '2', 'Food group': 'Meat substitutes and dairy substitutes', 'Engelse naam/Food name': 'Soy drink plain unsweetened', 'Voedingsmiddelnaam/Dutch food name': 'Sojadrank ongezoet', ...soy },
+    { 'NEVO-code': '3', 'Food group': 'Meat substitutes and dairy substitutes', 'Engelse naam/Food name': 'Oat drink fortified', 'Voedingsmiddelnaam/Dutch food name': 'Haverdrank verrijkt', 'Is verrijkt met/Is fortified with': 'calcium, vitamine B12', ...soy, CA: 120, VITB12: 0.38 },
+  ];
+  for (let i = 0; i < 320; i++) {
+    const g = groups[i % groups.length];
+    const r = { 'NEVO-code': String(i + 10), 'Food group': g, 'Engelse naam/Food name': `Synthetic ${g.toLowerCase().split(',')[0]} ${i + 1}`, 'Voedingsmiddelnaam/Dutch food name': `Synthetisch ${i + 1}` };
+    for (const [k, s] of Object.entries(scale)) r[k] = +(s * Math.exp(gauss()) * (rnd() < 0.2 ? 0.3 : 1)).toFixed(4);
+    rows.push(r);
+  }
+  rows.forEach(r => cols.forEach(c => { if (r[c] === undefined) r[c] = ''; }));
+  Object.assign(state, { raw: rows, columns: cols, fileName: 'synthetic demo', demo: true, U: null });
+  state.mapping = autoMap(cols);
+  afterLoad();
+}
+
+function afterLoad() {
+  $('#file-name').textContent = state.fileName;
+  state.matrixCache.clear(); state.sweepCache.clear();
+  state.sel.matrix = null; state.sel.catGroups = null;
+  renderMapping();
+  rebuildFoods();
+}
+function rebuildFoods() {
+  try {
+    state.foods = tidy(state.raw, state.mapping);
+    state.matrixCache.clear(); state.sweepCache.clear();
+    recompute();
+  } catch (err) {
+    console.error(err);
+    $('#app').innerHTML = msg('err', esc(err.message));
+  }
+}
+
+function renderMapping() {
+  const slot = $('#mapping-slot');
+  const missingNuts = ESSENTIAL.filter(n => !state.mapping[n.key]).map(n => n.label);
+  const opts = sel => ['<option value="">— none —</option>', ...state.columns.map(c => `<option value="${esc(c)}" ${c === sel ? 'selected' : ''}>${esc(c)}</option>`)].join('');
+  const meta = [['name_en', 'Food name'], ['name_nl', 'Dutch name'], ['group_en', 'Food group'], ['code', 'NEVO code'], ['fortified', 'Fortified with']];
+  const laNote = /FAPU/i.test(state.mapping.la || '') ? '<div class="hint">Linoleic acid mapped to total n-6 PUFA; slightly overstates LA.</div>' : '';
+  slot.innerHTML = `<details class="mapping" ${missingNuts.length ? 'open' : ''}>
+    <summary>Column mapping</summary>
+    ${missingNuts.length ? `<div class="msg warn" style="margin:8px 0">Not found automatically: ${esc(missingNuts.join(', '))}</div>` : '<div class="hint" style="margin-top:6px">All nutrients found.</div>'}
+    ${meta.map(([k, l]) => `<div class="field"><label>${l}</label><select data-map="${k}">${opts(state.mapping[k])}</select></div>`).join('')}
+    ${[...ESSENTIAL, ...LIMIT].map(n => `<div class="field"><label>${esc(n.label)} (${n.unit})</label><select data-map="${n.key}">${opts(state.mapping[n.key])}</select></div>`).join('')}
+    ${laNote}
+  </details>`;
+  slot.querySelectorAll('select[data-map]').forEach(s => s.addEventListener('change', () => {
+    state.mapping[s.dataset.map] = s.value || null;
+    const open = slot.querySelector('details').open;
+    renderMapping(); slot.querySelector('details').open = open;
+    rebuildFoods();
+  }));
+}
+
+/* =========================================================================
+   Sidebar controls
+   ========================================================================= */
+function syncControls() {
+  const st = state.settings;
+  $('#subset-steps').innerHTML = ALL_SUBSETS.map(s => `<button type="button" data-v="${s}" class="${s === st.subset ? 'on' : ''}">${s}</button>`).join('');
+  const inSubset = ESSENTIAL.filter(n => n.subsets.includes(st.subset));
+  st.removed = st.removed.filter(k => inSubset.some(n => n.key === k));
+  $('#nutrient-chips').innerHTML = inSubset.map(n => `<span class="chip ${st.removed.includes(n.key) ? 'off' : ''}" data-k="${n.key}" title="${esc(n.label)}">${esc(n.label)}</span>`).join('');
+  document.querySelectorAll('#basis-seg button').forEach(b => b.classList.toggle('on', b.dataset.v === st.basis));
+  document.querySelectorAll('#missing-seg button').forEach(b => b.classList.toggle('on', b.dataset.v === st.missing));
+  $('#transform-sel').value = st.transform;
+  $('#cap-input').value = st.cap;
+  $('#cap-field').style.display = st.transform === 'cap' ? '' : 'none';
+  $('#kcal-input').value = st.min_kcal;
+  $('#kcal-field').style.display = st.basis === '100kcal' ? '' : 'none';
+  $('#limit-toggle').checked = st.include_limit;
+  $('#fortify-toggle').checked = st.fortify;
+  $('#exclude-toggle').checked = st.exclude;
+}
+function changed() { syncControls(); scheduleRecompute(); }
+function wireControls() {
+  $('#subset-steps').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { state.settings.subset = +b.dataset.v; changed(); } });
+  $('#nutrient-chips').addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    const r = state.settings.removed, k = c.dataset.k;
+    state.settings.removed = r.includes(k) ? r.filter(x => x !== k) : [...r, k];
+    changed();
+  });
+  $('#basis-seg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { state.settings.basis = b.dataset.v; changed(); } });
+  $('#missing-seg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { state.settings.missing = b.dataset.v; changed(); } });
+  $('#transform-sel').addEventListener('change', e => { state.settings.transform = e.target.value; changed(); });
+  $('#cap-input').addEventListener('change', e => { state.settings.cap = Math.max(0.1, Math.min(10, +e.target.value || 1)); changed(); });
+  $('#kcal-input').addEventListener('change', e => { state.settings.min_kcal = Math.max(1, Math.min(200, +e.target.value || 10)); changed(); });
+  $('#limit-toggle').addEventListener('change', e => { state.settings.include_limit = e.target.checked; changed(); });
+  $('#fortify-toggle').addEventListener('change', e => { state.settings.fortify = e.target.checked; changed(); });
+  $('#exclude-toggle').addEventListener('change', e => { state.settings.exclude = e.target.checked; changed(); });
+  $('#reset-btn').addEventListener('click', () => { state.settings = structuredClone(DEFAULTS); changed(); });
+  $('#file-input').addEventListener('change', e => e.target.files[0] && loadFile(e.target.files[0]));
+  wireDrop($('#side-drop'));
+}
+
+/* Collapsible sidebar */
+(function () {
+  const sidebar = document.getElementById('sidebar');
+  const toggle = document.getElementById('sidebar-toggle');
+  const overlay = document.getElementById('sidebar-overlay');
+  const main = document.getElementById('main');
+  function collapse() {
+    sidebar.classList.add('collapsed'); document.body.classList.remove('sidebar-open');
+    toggle.innerHTML = '&#x25BA;'; toggle.title = 'Expand sidebar'; overlay.classList.add('hidden');
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 260);
+  }
+  function expand() {
+    sidebar.classList.remove('collapsed'); document.body.classList.add('sidebar-open');
+    toggle.innerHTML = '&#x25C4;'; toggle.title = 'Collapse sidebar';
+    if (window.innerWidth <= 640) overlay.classList.remove('hidden');
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 260);
+  }
+  const isMobile = window.innerWidth <= 640;
+  if (isMobile ? !EXPANDED_ON_LOAD_FOR_MOBILE : !EXPANDED_ON_LOAD_FOR_DESKTOP) collapse(); else expand();
+  toggle.addEventListener('click', e => { e.stopPropagation(); sidebar.classList.contains('collapsed') ? expand() : collapse(); });
+  overlay.addEventListener('click', collapse);
+  if (main) main.addEventListener('click', () => { if (window.innerWidth <= 640 && !sidebar.classList.contains('collapsed')) collapse(); });
+})();
+
+/* =========================================================================
+   Library loading (with download progress and CDN fallbacks)
+   ========================================================================= */
+const LIBS = [
+  { name: 'file parser', global: 'Papa', size: 19500, urls: [
+    'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js',
+    'https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js',
+    'https://unpkg.com/papaparse@5.4.1/papaparse.min.js'] },
+  { name: 'Excel reader', global: 'XLSX', size: 882000, urls: [
+    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
+    'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
+    'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'] },
+  { name: 'chart library', global: 'Plotly', size: 4560000, urls: [
+    'https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js',
+    'https://unpkg.com/plotly.js-dist-min@2.35.2/plotly.min.js',
+    'https://cdn.plot.ly/plotly-2.35.2.min.js'] },
+];
+const libLoaded = {};
+
+/* Fetch with byte-level progress, then run the code as a script. Falls back to a plain script tag. */
+async function fetchScript(url, onBytes) {
+  const res = await fetch(url, { mode: 'cors' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  let code;
+  if (res.body && res.body.getReader) {
+    const reader = res.body.getReader(), parts = [];
+    let got = 0;
+    for (;;) { const { done, value } = await reader.read(); if (done) break; parts.push(value); got += value.length; onBytes(got); }
+    code = new Blob(parts, { type: 'text/javascript' });
+  } else { code = await res.blob(); onBytes(code.size); }
+  const src = URL.createObjectURL(code);
+  try { await tagScript(src); } finally { URL.revokeObjectURL(src); }
+}
+function tagScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = resolve; s.onerror = () => { s.remove(); reject(new Error('load failed')); };
+    document.head.appendChild(s);
+  });
+}
+async function loadLib(lib, onBytes) {
+  for (const url of lib.urls) {
+    try { await fetchScript(url, onBytes); } catch (e) {
+      try { await tagScript(url); } catch { console.warn(`Could not load ${lib.name} from ${url}`); continue; }
+    }
+    if (window[lib.global]) return true;
+  }
+  return false;
+}
+async function loadLibs() {
+  const total = LIBS.reduce((a, l) => a + l.size, 0), got = {};
+  const update = () => {
+    const bytes = LIBS.reduce((a, l) => a + Math.min(got[l.global] || 0, l.size), 0);
+    const pending = LIBS.filter(l => !libLoaded[l.global]).map(l => l.name);
+    if (!pending.length) return;
+    const downloading = LIBS.filter(l => !libLoaded[l.global] && (got[l.global] || 0) < l.size * 0.98).map(l => l.name);
+    progress.show(downloading.length
+      ? `Loading ${downloading.join(', ')}… ${(bytes / 1048576).toFixed(1)} of ${(total / 1048576).toFixed(1)} MB`
+      : `Starting ${pending.join(', ')}…`, Math.min(bytes / total, 0.99));
+  };
+  update();
+  await Promise.all(LIBS.map(async l => {
+    libLoaded[l.global] = await loadLib(l, b => { got[l.global] = b; update(); });
+    got[l.global] = l.size; update();
+  }));
+  progress.hide();
+  const failed = LIBS.filter(l => !libLoaded[l.global]).map(l => l.name);
+  if (failed.length) {
+    const box = document.createElement('div');
+    box.innerHTML = msg('err', `Could not load the ${esc(failed.join(' and '))} from any CDN. Check your connection or ad blocker and reload the page.`);
+    $('#app').prepend(box.firstChild);
+  }
+}
+
+/* Init */
+syncControls();
+wireControls();
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => e.preventDefault());
+renderEmpty();
+const libsReady = loadLibs();
+</script>
+</body>
+</html>
