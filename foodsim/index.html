@@ -4,6 +4,7 @@
 # version : 20261027-002500 - Fix Plotly 404 on cdnjs (load from jsDelivr with fallbacks); progress bars for library download, matrix computation, comparison and subset sweep
 # version : 20261027-003300 - Link the data step to the RIVM dataset request page
 # version : 20261027-003800 - Food set download now links to the RIVM dataset request page instead of exporting NEVO data
+# version : 20261027-115800 - 25-nutrient subset (21 + energy, saturated fat, sugars, sodium) in the sidebar, Robustness sweep, Pair detail and NZO talk tab
 # version : 20261027-113800 - New "NZO talk" tab: re-runs the heatmaps of Peters & Huppertz (ICNAB-03014) with Ca+protein / 21 nutrients / current scenario, size-ratio view, look-alike pairs and whole-database 2-vs-21 nutrient comparison
 -->
 <html lang="en">
@@ -16,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script>const current_version = "20261027-113800";</script>
+<script>const current_version = "20261027-115800";</script>
 <style>
 :root {
   --sidebar-w: 300px;
@@ -111,7 +112,7 @@ select:focus, input:focus { outline: 2px solid var(--current); outline-offset: 1
 }
 .seg button:last-child { border-right: 0; }
 .seg button.on { background: var(--ink); color: var(--paper); }
-.steps { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.steps { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .steps button {
   font-family: var(--mono); font-size: 13px; padding: 6px 0; border: 1px solid var(--rule); border-radius: 5px;
   background: var(--card); cursor: pointer; color: var(--ink-2);
@@ -299,6 +300,7 @@ footer.foot a { color: var(--ink-2); }
       <div class="field">
         <div class="label">Nutrient subset (Table 1)</div>
         <div class="steps" id="subset-steps"></div>
+        <div class="hint">25 = the paper's 21 plus energy, saturated fat, sugars and sodium.</div>
       </div>
       <div class="field">
         <div class="label">Nutrients in subset</div>
@@ -358,7 +360,7 @@ footer.foot a { color: var(--ink-2); }
   <div class="wrap">
     <header class="top">
       <h1>How similar are foods, <em>really</em>?</h1>
-      <p>Re-runs the cosine-similarity analysis of <a href="https://doi.org/10.3390/nu18213473" target="_blank" rel="noopener">Cardinaals et al. (Nutrients 2026)</a> on the Dutch NEVO database, and shows how each design choice the paper fixed moves the results. Every number sits next to the paper's own settings. The <i>NZO talk</i> tab re-runs the heatmaps from the related Dutch Dairy Association presentation (Peters &amp; Huppertz, ICNAB-03014).</p>
+      <p>Re-runs the cosine-similarity analysis of <a href="https://doi.org/10.3390/nu18213473" target="_blank" rel="noopener">Cardinaals et al. (Nutrients 2026)</a> on the Dutch NEVO database, and shows how each design choice the paper fixed moves the results. Every number sits next to the paper's own settings. Subset 25 adds energy, saturated fat, sugars and sodium to the paper's 21. The <i>NZO talk</i> tab re-runs the heatmaps from the related Dutch Dairy Association presentation (Peters &amp; Huppertz, ICNAB-03014).</p>
     </header>
     <div class="progress hidden" id="progress" role="status" aria-live="polite">
       <div class="progress-row"><span class="lbl" id="progress-label"></span><span class="pct" id="progress-pct"></span></div>
@@ -431,7 +433,7 @@ const EXPANDED_ON_LOAD_FOR_MOBILE = false;
    Nutrient definitions (Table 1, Cardinaals et al., Nutrients 2026, 18, 3473)
    Order follows Appendix A, Table A1.
    ========================================================================= */
-const ALL_SUBSETS = [6, 9, 11, 15, 19, 21];
+const ALL_SUBSETS = [6, 9, 11, 15, 19, 21, 25];
 const ESSENTIAL = [
   { key: 'protein', label: 'Protein', rdi: 58.5, unit: 'g', cands: ['PROT'], subsets: ALL_SUBSETS },
   { key: 'fiber', label: 'Fiber', rdi: 32.15, unit: 'g', cands: ['FIBT', 'FIB'], subsets: ALL_SUBSETS },
@@ -461,6 +463,9 @@ const LIMIT = [
   { key: 'sugars', label: 'Sugars', rdi: 90, unit: 'g', cands: ['SUGAR', 'SUGTOT'], subsets: [] },
   { key: 'sodium', label: 'Sodium', rdi: 2400, unit: 'mg', cands: ['NA'], subsets: [] },
 ];
+/* Subset 25 = the paper's 21 plus the four nutrients to limit. */
+ESSENTIAL.forEach(n => { if (!n.subsets.includes(25)) n.subsets = [...n.subsets, 25]; });
+LIMIT.forEach(n => { n.subsets = [25]; });
 const NUT = Object.fromEntries([...ESSENTIAL, ...LIMIT].map(n => [n.key, n]));
 const ESSENTIAL_KEYS = ESSENTIAL.map(n => n.key);
 const LIMIT_KEYS = LIMIT.map(n => n.key);
@@ -591,15 +596,16 @@ function tidy(rows, m) {
    Scenario engine
    ========================================================================= */
 function scenKeys(s) {
-  let keys = ESSENTIAL.filter(n => n.subsets.includes(s.subset)).map(n => n.key).filter(k => !s.removed.includes(k));
-  if (s.include_limit) keys = keys.concat(LIMIT_KEYS.filter(k => !(k === 'energy' && s.basis === '100kcal')));
-  return keys;
+  let keys = [...ESSENTIAL, ...LIMIT].filter(n => n.subsets.includes(s.subset)).map(n => n.key);
+  if (s.include_limit) keys = keys.concat(LIMIT_KEYS.filter(k => !keys.includes(k)));
+  // Energy per 100 kcal is a constant, so it is never part of a per-kcal vector.
+  return keys.filter(k => !s.removed.includes(k) && !(k === 'energy' && s.basis === '100kcal'));
 }
 const scenKey = s => JSON.stringify([s.subset, [...s.removed].sort(), s.basis, s.transform, s.transform === 'cap' ? s.cap : 0, s.include_limit, s.fortify]);
 function describe(s) {
   const parts = [`${scenKeys(s).length} nutrients`, s.basis === '100kcal' ? 'per 100 kcal' : 'per 100 g',
     s.transform === 'cap' ? `capped at ${s.cap}× RDI` : TRANSFORM_LABEL[s.transform]];
-  if (s.include_limit) parts.push('+ nutrients to limit');
+  if (s.include_limit && s.subset !== 25) parts.push('+ nutrients to limit');
   if (s.fortify) parts.push('plant drinks fortified');
   return parts.join(', ');
 }
@@ -856,7 +862,7 @@ function groupPairs(S, n, groups, g, maxInter = 0, rnd = Math.random) {
   return { intra, inter };
 }
 function cumulativePath(fa, fb, s) {
-  let order = ESSENTIAL_KEYS.concat(s.include_limit ? LIMIT_KEYS : []);
+  let order = ESSENTIAL_KEYS.concat(s.include_limit || s.subset === 25 ? LIMIT_KEYS : []);
   if (s.basis === '100kcal') order = order.filter(k => k !== 'energy');
   order = order.filter(k => !s.removed.includes(k));
   const xa = scaleRow(fa, s, order), xb = scaleRow(fb, s, order);
@@ -1399,7 +1405,8 @@ const NZO_PANELS = [
       NZ('Kidney beans', 'kidney bean', 'kidneybonen'),
     ] },
 ];
-const NZO_MODES = [['two', 'Ca + protein'], ['paper', '21 nutrients'], ['cur', 'Current'], ['diff', 'Current − 21']];
+const NZO_MODES = [['two', 'Ca + protein'], ['paper', '21 nutrients'], ['p25', '25 nutrients'], ['cur', 'Current'], ['diff', 'Current − 21']];
+const PAPER25 = { ...PAPER, subset: 25 };
 const NZO_SCALE = [[0, '#d7303a'], [0.5, '#f5f1e8'], [1, '#4c7f3a']];
 
 function nzoMatch(foods, alts) {
@@ -1437,6 +1444,7 @@ function nzoPanelState(p) {
 function nzoScen(kind) {
   if (kind === 'two') return { s: PAPER, keys: ['calcium', 'protein'] };
   if (kind === 'paper') return { s: PAPER, keys: scenKeys(PAPER) };
+  if (kind === 'p25') return { s: PAPER25, keys: scenKeys(PAPER25) };
   const cur = currentScenario();
   return { s: cur, keys: scenKeys(cur) };
 }
@@ -1589,8 +1597,7 @@ function viewNzo(el) {
     const vals = pairs.map(([a, b]) => nzoValue(byName.get(a.name), byName.get(b.name), kind, 'cos', cache)).filter(Number.isFinite);
     return { mean: vals.length ? vals.reduce((x, y) => x + y, 0) / vals.length : NaN, hi: vals.length ? vals.filter(v => v >= T90).length / vals.length : NaN };
   };
-  const k2 = kpi('two'), k21 = kpi('paper'), kc = kpi('cur');
-  $('#nzo-kpis').innerHTML = [['Ca + protein', k2], ['21 nutrients', k21], ['Current scenario', kc]].map(([l, k]) =>
+  $('#nzo-kpis').innerHTML = [['Ca + protein', kpi('two')], ['21 nutrients', kpi('paper')], ['25 nutrients', kpi('p25')], ['Current scenario', kpi('cur')]].map(([l, k]) =>
     `<div><div class="k">${l}: mean · ≥ 0.78</div><div class="v">${f2(k.mean)} · ${pct(k.hi)}</div></div>`).join('');
 
   // Look-alikes: high cosine, very different amounts (current scenario).
@@ -1609,7 +1616,7 @@ function viewNzo(el) {
   nzoWhole();
 }
 
-/* Whole-database comparison: Ca + protein vs 21 nutrients vs current, over every pair. */
+/* Whole-database comparison: Ca + protein vs 21 vs 25 nutrients vs current, over every pair. */
 async function nzoWhole() {
   const token = state.token, ukey = state.ukey;
   state.nzoWholeCache = state.nzoWholeCache || new Map();
@@ -1618,12 +1625,17 @@ async function nzoWhole() {
   let res = state.nzoWholeCache.get(key);
   if (!res) {
     const vc = new Map();
-    const foods2 = state.U.filter(f => nzoVec(f, 'two', vc));
-    const n2 = foods2.length;
-    const S2 = n2 > 2 ? (await runJob('cosine', scaledMatrix(foods2, PAPER, ['calcium', 'protein']), f => {
-      if (token === state.token && box()) box().innerHTML = inlineProgress(`Computing ${n2.toLocaleString()} × ${n2.toLocaleString()} similarities on calcium and protein…`, f);
-    })).S : null;
-    if (token !== state.token) return;
+    const extra = {};
+    const specs = [['two', 'calcium and protein', 0], ['p25', '25 nutrients', 1]];
+    for (const [kind, label, k] of specs) {
+      const { s: sc, keys } = nzoScen(kind);
+      const fs = state.U.filter(f => nzoVec(f, kind, vc));
+      const nk = fs.length;
+      extra[kind] = { n: nk, S: nk > 2 ? (await runJob('cosine', scaledMatrix(fs, sc, keys), f => {
+        if (token === state.token && box()) box().innerHTML = inlineProgress(`Computing ${nk.toLocaleString()} × ${nk.toLocaleString()} similarities on ${label} (${k + 1} of 2)…`, f);
+      })).S : null };
+      if (token !== state.token) return;
+    }
     const summarise = (S, n, seed) => {
       if (!S || n < 3) return null;
       let sum = 0, hi = 0;
@@ -1632,12 +1644,12 @@ async function nzoWhole() {
       return { n, mean: sum / total, hi: hi / total, sample: Array.from(I, (i, p) => S[i * n + J[p]]) };
     };
     const n = state.U.length;
-    res = { two: summarise(S2, n2, 5), paper: summarise(state.Spap, n, 6), cur: summarise(state.Scur, n, 7) };
+    res = { two: summarise(extra.two.S, extra.two.n, 5), paper: summarise(state.Spap, n, 6), p25: summarise(extra.p25.S, extra.p25.n, 8), cur: summarise(state.Scur, n, 7) };
     state.nzoWholeCache.set(key, res);
     while (state.nzoWholeCache.size > 6) state.nzoWholeCache.delete(state.nzoWholeCache.keys().next().value);
   }
   if (token !== state.token || state.view !== 'NZO talk' || !box()) return;
-  const parts = [['Ca + protein', res.two, '#d7303a'], ['21 nutrients', res.paper, '#9a9385'], ['Current scenario', res.cur, '#0f6b6b']].filter(x => x[1]);
+  const parts = [['Ca + protein', res.two, '#d7303a'], ['21 nutrients', res.paper, '#9a9385'], ['25 nutrients', res.p25, '#9a5b00'], ['Current scenario', res.cur, '#0f6b6b']].filter(x => x[1]);
   box().innerHTML = `<div class="mini-kpis">${parts.map(([l, r]) =>
       `<div><div class="k">${l} · ${r.n.toLocaleString()} foods</div><div class="v">${f2(r.mean)} · ${pct(r.hi, 1)}</div><div class="k">mean · pairs ≥ 0.78</div></div>`).join('')}</div>
     <div id="nzo-whole-plot" class="plot"></div>
@@ -1818,7 +1830,7 @@ function renderMapping() {
 function syncControls() {
   const st = state.settings;
   $('#subset-steps').innerHTML = ALL_SUBSETS.map(s => `<button type="button" data-v="${s}" class="${s === st.subset ? 'on' : ''}">${s}</button>`).join('');
-  const inSubset = ESSENTIAL.filter(n => n.subsets.includes(st.subset));
+  const inSubset = [...ESSENTIAL, ...LIMIT].filter(n => n.subsets.includes(st.subset));
   st.removed = st.removed.filter(k => inSubset.some(n => n.key === k));
   $('#nutrient-chips').innerHTML = inSubset.map(n => `<span class="chip ${st.removed.includes(n.key) ? 'off' : ''}" data-k="${n.key}" title="${esc(n.label)}">${esc(n.label)}</span>`).join('');
   document.querySelectorAll('#basis-seg button').forEach(b => b.classList.toggle('on', b.dataset.v === st.basis));
@@ -1828,7 +1840,9 @@ function syncControls() {
   $('#cap-field').style.display = st.transform === 'cap' ? '' : 'none';
   $('#kcal-input').value = st.min_kcal;
   $('#kcal-field').style.display = st.basis === '100kcal' ? '' : 'none';
-  $('#limit-toggle').checked = st.include_limit;
+  $('#limit-toggle').checked = st.include_limit || st.subset === 25;
+  $('#limit-toggle').disabled = st.subset === 25;
+  $('#limit-toggle').closest('.switch').style.opacity = st.subset === 25 ? '.5' : '';
   $('#fortify-toggle').checked = st.fortify;
   $('#exclude-toggle').checked = st.exclude;
 }
