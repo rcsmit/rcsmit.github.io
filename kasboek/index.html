@@ -309,7 +309,7 @@ details.more summary { cursor: pointer; color: var(--muted); padding: 4px 0; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.3/plotly-cartesian.min.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.3/plotly.min.js';document.head.appendChild(s)"></script>
 <script>
-const version = "20261025-155332";
+const version = "20261027-133000";
 /* ===================== Kasboek: inlezen en analyseren ===================== */
 var KB = (function () {
   'use strict';
@@ -382,12 +382,32 @@ var KB = (function () {
     ie: ['income_expenses', 'in_uit', 'type'],
     mc: ['main_category', 'hoofdrub', 'hoofdrubriek', 'group'],
     cat: ['category', 'rubriek'],
-    ca: ['category_asia', 'rubriek_azie', 'asia_code'],
+    ca: ['category_asia', 'rubriek_azie', 'asia_code', 'daily_code'],
     fx: ['bedr_vr_val', 'fx_amount'],
     cur: ['val', 'currency', 'valuta'],
     rate: ['koers', 'rate']
   };
   var REQUIRED = ['source', 'date', 'amount', 'ie'];
+
+  /* Engelse codes (de Engelse handleiding en het voorbeeldbestand) naar de interne Nederlandse codes */
+  var EN_TYPE = { OUT: 'UIT', OUT_FIXED: 'UIT_VL', OUT_ASIA: 'UIT_AZIE', OUT_ASIA_FLIGHTS: 'UIT_AZIE_VLIEGTICKETS', OUT_ASIA_INSURANCE: 'UIT_AZIE_VL',
+    OUT_ASIA_PREPAID: 'UIT_AZIE_VOORAF', TRANSFER: 'KRUIS', OPENING_BALANCE: 'STARTING_BALANCE', PAPER_GAIN_LOSS: 'FICTIEVE_W_V', UNCATEGORISED: 'ONGECAT' };
+  var EN_GROUP = { SALARY: 'SALARIS', TAX_REFUNDS: 'INKOMSTEN_DIV', INTEREST: 'RENTE', MISC_IN: 'DIV_IN', GROCERIES: 'BOODSCH', EATING_OUT: 'UITGAAN',
+    MISC: 'DIV', CLOTHING_CARE: 'KLEDING_PERSVERZ', TRAVEL_NL: 'REIZEN_NL', TRAVEL_EUROPE: 'REIZEN_EUR', FIXED_COSTS: 'VASTELASTEN',
+    ASIA_DAILY: 'AZIE_DAGELIJKS', ASIA_MISC: 'AZIE_DIV', ASIA_FLIGHTS: 'AZIE_VLIEGEN', ASIA_PREP: 'AZIE_VOORAF/VISA/VERZ', PREPAID_UNUSED: 'CABANA',
+    TRANSFER: 'KRUIS', OPENING_BALANCE: 'STARTING_BALANCE', PAPER_GAIN_LOSS: 'FICTIEVE_W_V', UNCATEGORISED: 'ONGECAT' };
+  var EN_CAT = { storage_unit: 'opslagbox', health_insurance: 'zorgverz/-toeslag', housing: 'hotel', salary: 'salaris', interest: 'rente',
+    groceries: 'boodschappen', bank_fees_asia: 'bankkosten_azie', fx_costs: 'koersverschillen_wisselkosten', transfer: 'KRUIS',
+    office_suite: 'microsoft', cloud_storage: 'google storage', ai_tools: 'AI', hosting: 'internetsites', phone_internet: 'internet_telefoon_NL',
+    daily_spending: 'azie_dagelijkse_uitgaves', flights: 'vliegtickets', travel_insurance: 'reisverzekering', visa: 'visum' };
+  var EN_CODE = { c: 'e', scoot: 'bike', taxi: 'ts', tix: 'tic', tip: 'repre' };
+  function fromEnglish(o) {
+    if (EN_TYPE[o.ie]) o.ie = EN_TYPE[o.ie];
+    if (EN_GROUP[o.mc]) o.mc = EN_GROUP[o.mc];
+    if (EN_CAT[o.cat]) o.cat = EN_CAT[o.cat];
+    if (EN_CODE[o.ca]) o.ca = EN_CODE[o.ca];
+    return o;
+  }
   var REQUIRED_LABEL = { source: 'source', date: 'date', amount: 'Bedrag', ie: 'income_expenses' };
 
   function mapHeaders(headers) {
@@ -417,12 +437,12 @@ var KB = (function () {
       var src = str(g(r, 'source'));
       if (!src && !ie && isNaN(amt)) { skipped++; return; }
       var iso = isoOf(t);
-      out.push({
+      out.push(fromEnglish({
         id: str(g(r, 'id')), t: t, d: iso, ym: iso.slice(0, 7), y: +iso.slice(0, 4), m: +iso.slice(5, 7),
         source: src, amount: isNaN(amt) ? 0 : amt, desc: str(g(r, 'desc')),
         ie: ie || 'ONGECAT', mc: mc || 'ONGECAT', cat: str(g(r, 'cat')), ca: str(g(r, 'ca')).toLowerCase(),
         fx: parseNum(g(r, 'fx')), cur: str(g(r, 'cur')).toUpperCase(), rate: parseNum(g(r, 'rate'))
-      });
+      }));
     });
     if (!out.length) throw new Error('Geen enkele regel had een geldige datum.');
     out.sort(function (a, b) { return a.t - b.t; });
@@ -469,7 +489,7 @@ var KB = (function () {
   var CODE_NAMES = { bf: 'Ontbijt', l: 'Lunch', d: 'Diner', e: 'Koffie', s: 'Snacks & drinken', h: 'Huisvesting', y: 'Yoga', yoga: 'Yoga', bike: 'Scooter', ts: 'Taxi/Grab', tic: 'Vervoer & tickets', lndry: 'Wasserette', alc: 'Alcohol', alco: 'Alcohol', misc: 'Overig', misc_: 'Overig', misc__: 'Overig', 'misc-': 'Overig', miac: 'Overig', tour: 'Bezienswaardigheden', repre: 'Fooien', xmas: 'Kerstdiner', diff: 'Kasverschil', dif: 'Kasverschil', visum: 'Visum' };
   var SB_CODE = { bf: 'ontbijt', l: 'lunch', d: 'diner', e: 'koffie', s: 'snacks & drinken', h: 'huisvesting', y: 'yoga', yoga: 'yoga', bike: 'scooter', ts: 'taxi/grab', tic: 'vervoer & tickets', lndry: 'wasserette', alc: 'alcohol', alco: 'alcohol', misc: 'overig', misc_: 'overig', misc__: 'overig', 'misc-': 'overig', miac: 'overig', tour: 'bezienswaardigheden', repre: 'fooien', xmas: 'kerstdiner', diff: 'kasverschil', dif: 'kasverschil', visum: 'visum', 'in': 'in', kruis: '', _: '' };
   var SUBS = { microsoft: 'Microsoft 365', 'google storage': 'Google One', Medium: 'Medium', blendle: 'Blendle', foodlog: 'Foodlog', Midjourney: 'Midjourney', AI: 'AI-tools', ClaudeAI: 'AI-tools', 'Chess.com': 'Chess.com', skool: 'Skool', internetsites: 'Websites/hosting', internet_telefoon_NL: 'Telefoon/internet', internet_telefoon_IT: 'Telefoon/internet', internet_telefoon_AZ: 'Telefoon/internet' };
-  var GROC = { boodschappen: 'Nederland (thuis)', boodschappen_sevenum: 'Sevenum', boodschappen_caorle: 'Caorle', boodschappen_IT: 'Italië', boodschappen_it: 'Italië', boodschappen_arnhem: 'Arnhem', proteinepoeder: 'Proteïnepoeder', Proteinepoeder: 'Proteïnepoeder' };
+  var GROC = { boodschappen: 'Nederland (thuis)', boodschappen_sevenum: 'Sevenum', boodschappen_caorle: 'Caorle', boodschappen_IT: 'Italië', boodschappen_it: 'Italië', boodschappen_arnhem: 'Arnhem', proteinepoeder: 'Proteïnepoeder', Proteinepoeder: 'Proteïnepoeder', groceries_seasonal_job: 'Seizoenswerk' };
   var EXP_GROUP = { AZIE_DAGELIJKS: 'Azië dagelijks', AZIE_VLIEGEN: 'Vliegtickets', AZIE_DIV: 'Azië overig', CABANA: 'Azië overig', AZIE: 'Azië dagelijks', 'AZIE_VOORAF/VISA/VERZ': 'Visum & verzekering', REISVERZ: 'Visum & verzekering', AZIE_VOORAF: 'Visum & verzekering', VASTELASTEN: 'Vaste lasten', BOODSCH: 'Boodschappen NL', BOODSCHAPPEN: 'Boodschappen NL', DIV: 'Diversen', UITGAAN: 'Uitgaan & koffie', KLEDING_PERSVERZ: 'Kleding & zorg', REIZEN_NL: 'Reizen Europa', REIZEN_EUR: 'Reizen Europa', REIZEN_IT: 'Reizen Europa', YOGA: 'Diversen', FICTIEVE_W_V: 'Diversen', ONGECAT: 'Nog te categoriseren' };
   var INC_GROUP = { INKOMSTEN_DIV: 'Belastingteruggave', SALARIS: 'Salaris', RENTE: 'Rente', DIV: 'Overig in', DIV_IN: 'Overig in' };
   var IE_LABEL = { UIT: 'Nederland/Europa', UIT_VL: 'Vaste lasten', UIT_AZIE: 'Azië', UIT_AZ: 'Azië', UIT_AZIE_VL: 'Azië reisverzekering', UIT_AZIE_VLIEGTICKETS: 'Azië vluchten', UIT_AZIE_VOORAF: 'Azië vooraf', ONGECAT: 'Nog te categoriseren', FICTIEVE_W_V: 'Fictief' };
@@ -659,9 +679,10 @@ var KB = (function () {
     seasons.forEach(function (s) { for (var t = s.firstT; t <= s.lastT; t += DAY) { var y = new Date(t).getUTCFullYear(); asiaDaysYear[y] = (asiaDaysYear[y] || 0) + 1; } });
     var mpy = [];
     for (var y = +firstReal.d.slice(0, 4); y <= yearOfLast; y++) {
-      var endT = y < yearOfLast ? Date.UTC(y, 11, 31) : lastT, yd = Math.round((endT - Date.UTC(y, 0, 1)) / DAY) + 1;
+      var startT = y === +firstReal.d.slice(0, 4) ? firstReal.t : Date.UTC(y, 0, 1);
+      var endT = y < yearOfLast ? Date.UTC(y, 11, 31) : lastT, yd = Math.round((endT - startT) / DAY) + 1;
       var am = (asiaDaysYear[y] || 0) / 30.4375, tm = yd / 30.4375;
-      mpy.push({ year: y, asia: am, europe: tm - am, total: tm, full: y < yearOfLast });
+      mpy.push({ year: y, asia: am, europe: Math.max(0, tm - am), total: tm, full: y < yearOfLast });
     }
     out.monthsPerYear = mpy;
     var mpyMap = {}; mpy.forEach(function (x) { mpyMap[x.year] = x; });
@@ -1119,8 +1140,8 @@ function demoRecords() {
     p1: new Intl.NumberFormat('nl-NL', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 })
   };
   function fin(v) { return typeof v === 'number' && isFinite(v); }
-  function eur(v) { return fin(v) ? F.e0.format(v) : '—'; }
-  function eur2(v) { return fin(v) ? F.e2.format(v) : '—'; }
+  function eur(v) { return fin(v) ? F.e0.format(Math.abs(v) < 0.5 ? 0 : v) : '—'; }
+  function eur2(v) { return fin(v) ? F.e2.format(Math.abs(v) < 0.005 ? 0 : v) : '—'; }
   function int(v) { return fin(v) ? F.i.format(v) : '—'; }
   function pct(v) { return fin(v) ? F.p0.format(v) : '—'; }
   function dnl(iso) { if (!iso) return '—'; var p = iso.split('-'); return (+p[2]) + ' ' + MND[+p[1] - 1] + ' ' + p[0]; }

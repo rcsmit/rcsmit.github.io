@@ -4,6 +4,7 @@
 # version : 20261027-002500 - Fix Plotly 404 on cdnjs (load from jsDelivr with fallbacks); progress bars for library download, matrix computation, comparison and subset sweep
 # version : 20261027-003300 - Link the data step to the RIVM dataset request page
 # version : 20261027-003800 - Food set download now links to the RIVM dataset request page instead of exporting NEVO data
+# version : 20261027-011000 - %RDI chart: linear/log toggle (linear default), value labels with zeros marked, legend no longer overlaps the axis title
 -->
 <html lang="en">
 <head>
@@ -15,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script>const current_version = "20261027-003800";</script>
+<script>const current_version = "20261027-011000";</script>
 <style>
 :root {
   --sidebar-w: 300px;
@@ -489,7 +490,7 @@ const state = {
   raw: null, columns: [], mapping: {}, foods: null, fileName: '', demo: false,
   U: null, Ucur: null, fortifiedNames: [], Scur: null, Spap: null, nameIdx: new Map(),
   view: 'Substitutes', metrics: null, token: 0,
-  sel: { sub: null, a: null, b: null, matrix: null, matrixMode: 'Current', catGroups: null, catMode: 'Current', dataFilter: '' },
+  sel: { sub: null, a: null, b: null, rdiScale: 'linear', matrix: null, matrixMode: 'Current', catGroups: null, catMode: 'Current', dataFilter: '' },
   matrixCache: new Map(), sweepCache: new Map(),
 };
 
@@ -1092,7 +1093,14 @@ function viewPair(el) {
       <div><div class="k">Energy A / B</div><div class="v">${Number.isFinite(fa.v.energy) && Number.isFinite(fb.v.energy) ? `${fa.v.energy.toFixed(0)} / ${fb.v.energy.toFixed(0)} kcal` : 'n/a'}</div></div>
     </div>
     <div class="grid2">
-      <div class="card"><h2>%RDI per 100 g</h2><p class="sub">Log scale; dotted line at 100%.</p><div id="p-rdi" class="plot"></div></div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap">
+          <div><h2>%RDI per 100 g</h2><p class="sub">${state.sel.rdiScale === 'log'
+            ? 'Log scale exaggerates small values; zeros are drawn at 0.01% and labelled 0%.'
+            : 'Linear scale, the way the cosine weighs them.'}</p></div>
+          <div class="seg" id="rdi-scale" style="width:150px">${['linear', 'log'].map(s => `<button type="button" data-v="${s}" class="${s === state.sel.rdiScale ? 'on' : ''}">${s === 'linear' ? 'Linear' : 'Log'}</button>`).join('')}</div>
+        </div>
+        <div id="p-rdi" class="plot"></div></div>
       <div class="card"><h2>What drives the similarity</h2><p class="sub">Per-nutrient terms of the cosine; they sum to the score.</p><div id="p-contrib" class="plot"></div></div>
     </div>
     <div class="card"><h2>Adding nutrients one at a time</h2><p class="sub">Same procedure as Appendix A, Table A1, in the paper's nutrient order.</p>
@@ -1101,15 +1109,31 @@ function viewPair(el) {
   bindFood('pair-b', v => { state.sel.b = v; viewPair(el); });
 
   const keys = scenKeys(cur), labels = keys.map(k => NUT[k].label);
-  const pa = keys.map(k => Math.max(0.01, 100 * fa.v[k] / NUT[k].rdi)), pb = keys.map(k => Math.max(0.01, 100 * fb.v[k] / NUT[k].rdi));
-  const h = Math.max(360, 24 * keys.length + 110);
+  el.querySelectorAll('#rdi-scale button').forEach(btn => btn.addEventListener('click', () => { state.sel.rdiScale = btn.dataset.v; viewPair(el); }));
+  const isLog = state.sel.rdiScale === 'log';
+  const rawA = keys.map(k => 100 * fa.v[k] / NUT[k].rdi), rawB = keys.map(k => 100 * fb.v[k] / NUT[k].rdi);
+  const shown = v => isLog ? Math.max(0.01, v) : v;            // log(0) does not exist
+  const lbl = v => v === 0 ? '0%' : v < 0.1 ? '<0.1%' : v < 10 ? v.toFixed(1) + '%' : v.toFixed(0) + '%';
+  const maxV = Math.max(...rawA, ...rawB, 0.01);
+  const h = Math.max(360, 30 * keys.length + 120);
   const short = s => s.length > 38 ? s.slice(0, 36) + '…' : s;
-  plot($('#p-rdi'), [
-    { type: 'bar', orientation: 'h', y: labels, x: pa, name: short(a), marker: { color: '#0f6b6b' }, hovertemplate: '%{y}: %{x:.1f}%<extra>A</extra>' },
-    { type: 'bar', orientation: 'h', y: labels, x: pb, name: short(b), marker: { color: '#c0533a' }, hovertemplate: '%{y}: %{x:.1f}%<extra>B</extra>' },
-  ], { height: h, barmode: 'group', xaxis: { type: 'log', title: { text: '% RDI (log)' }, gridcolor: '#e6dfcf', automargin: true },
-       yaxis: { autorange: 'reversed', automargin: true }, legend: { orientation: 'h', y: -0.12 },
-       shapes: [{ type: 'line', x0: 100, x1: 100, yref: 'paper', y0: 0, y1: 1, line: { dash: 'dot', color: '#8d8676' } }] });
+  const barTrace = (raw, name, color, tag) => ({
+    type: 'bar', orientation: 'h', y: labels, x: raw.map(shown), customdata: raw, name: short(name), marker: { color },
+    text: raw.map(lbl), textposition: 'outside', cliponaxis: false,
+    textfont: { family: 'JetBrains Mono, monospace', size: 10, color: '#5b5548' },
+    hovertemplate: `%{y}: %{customdata:.2f}% RDI<extra>${tag}</extra>`,
+  });
+  const show100 = isLog || maxV >= 60;
+  plot($('#p-rdi'), [barTrace(rawA, a, '#0f6b6b', 'A'), barTrace(rawB, b, '#c0533a', 'B')], {
+    height: h, barmode: 'group', bargap: 0.25,
+    xaxis: isLog
+      ? { type: 'log', title: { text: '% RDI per 100 g (log)' }, range: [-2.2, Math.log10(Math.max(maxV, 100)) + 0.35] }
+      : { type: 'linear', title: { text: '% RDI per 100 g' }, range: [0, Math.max(maxV, show100 ? 100 : 0) * 1.18], rangemode: 'tozero' },
+    yaxis: { autorange: 'reversed' },
+    legend: { orientation: 'h', x: 0, y: 1.02, yanchor: 'bottom' },
+    margin: { l: 10, r: 20, t: 46, b: 10 },
+    shapes: show100 ? [{ type: 'line', x0: 100, x1: 100, yref: 'paper', y0: 0, y1: 1, line: { dash: 'dot', color: '#8d8676' } }] : [],
+  });
   const contrib = contributions(scaleRow(fa, cur, keys), scaleRow(fb, cur, keys));
   plot($('#p-contrib'), [{ type: 'bar', orientation: 'h', y: labels, x: contrib, marker: { color: '#0f6b6b' }, hovertemplate: '%{y}: %{x:.3f}<extra></extra>' }],
     { height: h, xaxis: { title: { text: 'Contribution to cosine' }, gridcolor: '#e6dfcf', automargin: true }, yaxis: { autorange: 'reversed', automargin: true } });
