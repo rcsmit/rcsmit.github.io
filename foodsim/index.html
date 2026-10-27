@@ -4,6 +4,7 @@
 # version : 20261027-002500 - Fix Plotly 404 on cdnjs (load from jsDelivr with fallbacks); progress bars for library download, matrix computation, comparison and subset sweep
 # version : 20261027-003300 - Link the data step to the RIVM dataset request page
 # version : 20261027-003800 - Food set download now links to the RIVM dataset request page instead of exporting NEVO data
+# version : 20261027-120300 - Link the NZO talk (ResearchGate) from the NZO talk tab and sidebar footer
 # version : 20261027-115800 - 25-nutrient subset (21 + energy, saturated fat, sugars, sodium) in the sidebar, Robustness sweep, Pair detail and NZO talk tab
 # version : 20261027-113800 - New "NZO talk" tab: re-runs the heatmaps of Peters & Huppertz (ICNAB-03014) with Ca+protein / 21 nutrients / current scenario, size-ratio view, look-alike pairs and whole-database 2-vs-21 nutrient comparison
 -->
@@ -17,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script>const current_version = "20261027-115800";</script>
+<script>const current_version = "20261027-120300";</script>
 <style>
 :root {
   --sidebar-w: 300px;
@@ -350,7 +351,7 @@ footer.foot a { color: var(--ink-2); }
     </div>
   </div>
   <div id="sidebar-footer">
-    Method: <a href="https://doi.org/10.3390/nu18213473" target="_blank" rel="noopener">Cardinaals et al. 2026</a>; heatmaps from Peters &amp; Huppertz, ICNAB-03014.
+    Method: <a href="https://doi.org/10.3390/nu18213473" target="_blank" rel="noopener">Cardinaals et al. 2026</a>; heatmaps from <a href="https://www.researchgate.net/publication/394843188_Similarity_index_NSI_for_interchanging_food_products_from_qualitative_classifications_to_quantitative_indicators" target="_blank" rel="noopener">Peters &amp; Huppertz, ICNAB-03014</a>.
     Data: <a href="https://www.rivm.nl/en/dutch-food-composition-database" target="_blank" rel="noopener">NEVO, RIVM</a>.
     Everything runs in your browser; no data leaves this page.
   </div>
@@ -1501,7 +1502,7 @@ function viewNzo(el) {
   el.innerHTML = `
     <div class="card">
       <h2>The NZO talk, re-run on your NEVO file</h2>
-      <p class="sub">Peters (Dutch Dairy Association) &amp; Huppertz (FrieslandCampina), <i>Similarity index (NSI) for interchanging food products</i>, ICNAB-03014. Same cosine method and 21 nutrients as the paper; the talk publishes no data version or food codes, so foods are matched by name. Check the matches below.</p>
+      <p class="sub">Peters (Dutch Dairy Association) &amp; Huppertz (FrieslandCampina), <a href="https://www.researchgate.net/publication/394843188_Similarity_index_NSI_for_interchanging_food_products_from_qualitative_classifications_to_quantitative_indicators" target="_blank" rel="noopener"><i>Similarity index (NSI) for interchanging food products</i></a>, ICNAB-03014. Same cosine method and 21 nutrients as the paper; the talk publishes no data version or food codes, so foods are matched by name. Check the matches below.</p>
       <div class="controls" style="margin:6px 0 0">
         <div class="field grow"><label for="nzo-panel">Heatmap from the talk</label>
           <select id="nzo-panel">${NZO_PANELS.map(x => `<option value="${x.id}" ${x.id === p.id ? 'selected' : ''}>${esc(x.title)} (${x.slide})</option>`).join('')}</select></div>
