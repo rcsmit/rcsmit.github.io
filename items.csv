@@ -60,3 +60,4 @@ Statistics,levitt,Prediction of COVID-19 deaths based on Levitt's model
 Statistics,hittekracht,Tool to calculate the heat force (in Dutch)
 Statistics,cpi_loon,Tool to compare inflation with salaries (in the Netherlands)
 Statistics,doodsoorzaken,Visualization of causes of death in the Netherlands
+Statistics,foodsim,"Nutrient similarity explorer: cosine similarity of NEVO foods (Cardinaals et al. 2026, NZO talk ICNAB-03014)"
