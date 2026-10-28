@@ -138,6 +138,36 @@ details.more summary { cursor: pointer; color: var(--muted); padding: 4px 0; }
 .drop { position: fixed; inset: 0; z-index: 60; background: color-mix(in srgb, var(--bg) 82%, transparent); display: flex; align-items: center; justify-content: center; padding: 24px; }
 .drop div { border: 2px dashed var(--accent); border-radius: 16px; padding: 40px 32px; background: var(--panel); font-size: 18px; font-weight: 600; text-align: center; max-width: 520px; }
 .drop div span { display: block; margin-top: 6px; font-size: 14px; font-weight: 400; color: var(--muted); }
+.pv-wrap { max-height: 680px; margin-top: 10px; border: 1px solid var(--line); border-radius: 8px; }
+#tb-periods { max-height: none; }
+table.pv { border-collapse: separate; border-spacing: 0; font-size: 13px; font-variant-numeric: tabular-nums; min-width: 100%; }
+table.pv th, table.pv td { padding: 5px 10px; border-bottom: 1px solid var(--grid); white-space: nowrap; text-align: right; }
+table.pv thead th { position: sticky; top: 0; z-index: 2; background: var(--panel-2); color: var(--muted); font-weight: 500; font-size: 12px; border-bottom: 1px solid var(--line); }
+table.pv thead tr.h2 th { top: 29px; }
+table.pv .rh { position: sticky; left: 0; z-index: 1; background: var(--panel); text-align: left; border-right: 1px solid var(--line); }
+table.pv thead .rh { z-index: 3; background: var(--panel-2); }
+table.pv tr.l1 td { font-weight: 600; background: var(--panel-2); }
+table.pv tr.l2 td.rh { padding-left: 28px; color: var(--muted); }
+table.pv td.sub, table.pv th.sub { font-weight: 600; border-left: 1px solid var(--line); }
+table.pv tr.gt td { font-weight: 700; border-top: 2px solid var(--line); background: var(--panel-2); }
+table.pv tr.meta td { color: var(--muted); font-size: 12px; background: var(--panel-2); }
+table.pv tr.tot td { font-weight: 700; border-top: 2px solid var(--line); }
+table.pv tr.tot2 td { font-weight: 600; }
+table.pv td.neg { color: var(--bad); }
+table.pv button.pvt { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: inherit; }
+table.pv button.pvt:hover { text-decoration: underline; }
+.pv-actions { margin-top: 10px; }
+.pv-actions .btn { min-height: 34px; padding: 0 12px; font-size: 13px; }
+.en-controls input { font: inherit; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; min-height: 36px; padding: 0 8px; margin-left: 6px; box-sizing: border-box; }
+.en-controls input[type="search"] { width: 240px; max-width: 70vw; }
+.en-controls input[type="number"] { width: 110px; }
+.en-controls select { max-width: 220px; }
+.en-controls select.on, .en-controls input.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+table.pv th.sort { cursor: pointer; user-select: none; }
+table.pv th.sort:hover { color: var(--fg); }
+table.pv td.desc { text-align: left; white-space: normal; min-width: 220px; max-width: 420px; }
+table.pv td.l, table.pv th.l { text-align: left; }
+.pd-text { width: 100%; box-sizing: border-box; font-family: var(--font-mono); font-size: 13px; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 6px 0 10px; resize: vertical; }
 @media (max-width: 560px) { .hide-sm { display: none; } .status .privacy { margin-left: 0; } .tile .big { font-size: 22px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 </style>
@@ -177,9 +207,12 @@ details.more summary { cursor: pointer; color: var(--muted); padding: 4px 0; }
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button type="button" class="tab" role="tab" id="t-overzicht" data-tab="overzicht" aria-selected="true">Overview</button>
     <button type="button" class="tab" role="tab" id="t-azie" data-tab="azie" aria-selected="false">Asia</button>
+    <button type="button" class="tab" role="tab" id="t-periods" data-tab="periods" aria-selected="false">Asia per period</button>
     <button type="button" class="tab" role="tab" id="t-lasten" data-tab="lasten" aria-selected="false">Fixed costs</button>
     <button type="button" class="tab" role="tab" id="t-boodschappen" data-tab="boodschappen" aria-selected="false">Groceries</button>
     <button type="button" class="tab" role="tab" id="t-rekeningen" data-tab="rekeningen" aria-selected="false">Accounts</button>
+    <button type="button" class="tab" role="tab" id="t-entries" data-tab="entries" aria-selected="false">Entries</button>
+    <button type="button" class="tab" role="tab" id="t-pivot" data-tab="pivot" aria-selected="false">Pivot</button>
     <button type="button" class="tab" role="tab" id="t-bank" data-tab="bank" aria-selected="false">Bank</button>
     <button type="button" class="tab" role="tab" id="t-sunburst" data-tab="sunburst" aria-selected="false">Sunburst</button>
     <button type="button" class="tab" role="tab" id="t-curiosa" data-tab="curiosa" aria-selected="false">Curiosities</button>
@@ -220,6 +253,29 @@ details.more summary { cursor: pointer; color: var(--muted); padding: 4px 0; }
     </div>
   </section>
 
+
+  <!-- ASIA PER PERIOD -->
+  <section class="panel" id="p-periods" role="tabpanel" aria-labelledby="t-periods" hidden>
+    <div class="grid">
+      <div class="card wide"><h2>Asia per period</h2>
+        <p class="note">One column per stay. A season runs from November to April, May or June, so every stay belongs to the season in which it started. Days count from the first to the last day of the stay, including days without receipts. Each line is a daily code (category_asia); flights, visa and insurance paid in advance are left out.</p>
+        <div class="controls">
+          <div class="seg" role="group" aria-label="Values" id="pd-mode"><button type="button" data-mode="day" aria-pressed="true">Per day</button><button type="button" data-mode="total" aria-pressed="false">Total</button></div>
+          <label for="pd-season">Season<select id="pd-season"></select></label>
+          <button type="button" class="btn" id="pd-copy">Copy for Excel</button>
+        </div>
+        <p class="note" id="pd-note"></p>
+        <div class="tablewrap pv-wrap" id="tb-periods"></div>
+      </div>
+      <div class="card wide"><h2>Edit the periods</h2>
+        <p class="note">The periods are made from your cash in a foreign currency: a new period starts when the currency changes, or after 21 days without receipts. Seasons that were entered as monthly totals are split per month, by the currency with the most spending that month. To split a stay by place, or to give it a name, edit the list: one period per line, as <span class="mono">name; first day; last day</span>. The list is saved in this browser only.</p>
+        <textarea id="pd-text" class="pd-text" rows="8" spellcheck="false" aria-label="Periods, one per line: name; first day; last day"></textarea>
+        <div class="actions"><button type="button" class="btn primary" id="pd-apply">Apply</button><button type="button" class="btn" id="pd-reset">Back to automatic</button></div>
+        <p class="note" id="pd-msg" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
   <!-- FIXED COSTS -->
   <section class="panel" id="p-lasten" role="tabpanel" aria-labelledby="t-lasten" hidden>
     <div class="tiles">
@@ -250,6 +306,66 @@ details.more summary { cursor: pointer; color: var(--muted); padding: 4px 0; }
     </div>
   </section>
 
+
+
+  <!-- ENTRIES -->
+  <section class="panel" id="p-entries" role="tabpanel" aria-labelledby="t-entries" hidden>
+    <div class="card">
+      <h2>All entries</h2>
+      <p class="note">Every row of the file. The filters work together, and each list only offers values that still occur with the other filters. Click a column heading to sort; click it again to reverse.</p>
+      <div class="controls en-controls">
+        <label for="en-q">Search<input type="search" id="en-q" placeholder="description, source or amount" autocomplete="off"></label>
+        <label for="en-year">Year<select id="en-year" data-f="year"></select></label>
+        <label for="en-month">Month<select id="en-month" data-f="month"></select></label>
+        <label for="en-source">Source<select id="en-source" data-f="source"></select></label>
+        <label for="en-type">income_expenses<select id="en-type" data-f="type"></select></label>
+        <label for="en-group">main_category<select id="en-group" data-f="group"></select></label>
+        <label for="en-cat">category<select id="en-cat" data-f="cat"></select></label>
+        <label for="en-code">category_asia<select id="en-code" data-f="code"></select></label>
+        <label for="en-min">Amount from<input type="number" id="en-min" step="0.01" inputmode="decimal"></label>
+        <label for="en-max">to<input type="number" id="en-max" step="0.01" inputmode="decimal"></label>
+      </div>
+      <div class="actions pv-actions">
+        <button type="button" class="btn" id="en-reset">Clear filters</button>
+        <button type="button" class="btn" id="en-copy">Copy for Excel</button>
+        <button type="button" class="btn" id="en-csv">Download CSV</button>
+      </div>
+      <p class="note" id="en-sum" aria-live="polite"></p>
+      <div class="tablewrap pv-wrap" id="tb-entries"></div>
+      <div class="actions" style="margin-top:10px"><button type="button" class="btn" id="en-more" hidden>Show more rows</button></div>
+    </div>
+  </section>
+
+  <!-- PIVOT -->
+  <section class="panel" id="p-pivot" role="tabpanel" aria-labelledby="t-pivot" hidden>
+    <div class="card">
+      <h2>Pivot table</h2>
+      <p class="note">Every row of the file, summed like a pivot table in Excel. Click a row heading with ▸ to open it, and a column heading with ▸ to show the categories inside it.</p>
+      <div class="controls">
+        <label for="pv-rows">Rows<select id="pv-rows">
+          <option value="year>ym">Year › month</option><option value="year">Year</option><option value="ym">Month</option><option value="month">Month of the year</option>
+          <option value="source">Source</option><option value="type">Type</option><option value="group">Group</option><option value="group>category">Group › category</option><option value="category">Category</option><option value="code">Daily code</option><option value="currency">Currency</option>
+        </select></label>
+        <label for="pv-cols">Columns<select id="pv-cols">
+          <option value="group>category">Group › category</option><option value="type>group">Type › group</option><option value="type">Type</option><option value="group">Group</option>
+          <option value="category">Category</option><option value="code">Daily code</option><option value="source">Source</option><option value="currency">Currency</option><option value="year">Year</option><option value="none">(none)</option>
+        </select></label>
+        <label for="pv-val">Values<select id="pv-val"><option value="sum">Sum of amount</option><option value="count">Number of rows</option><option value="avg">Average amount</option></select></label>
+        <label for="pv-inc">Include<select id="pv-inc">
+          <option value="all">All rows</option><option value="inout">Income and spending only</option><option value="out">Spending only</option><option value="asia">Asia only</option><option value="transfer">Transfers only</option>
+        </select></label>
+        <label for="pv-year">Year<select id="pv-year"></select></label>
+      </div>
+      <div class="actions pv-actions">
+        <button type="button" class="btn" id="pv-open-r">Open all rows</button><button type="button" class="btn" id="pv-close-r">Close all rows</button>
+        <button type="button" class="btn" id="pv-open-c">Open all columns</button><button type="button" class="btn" id="pv-close-c">Close all columns</button>
+        <button type="button" class="btn" id="pv-copy">Copy for Excel</button><button type="button" class="btn" id="pv-csv">Download CSV</button>
+      </div>
+      <p class="note" id="pv-sum"></p>
+      <div class="tablewrap pv-wrap" id="tb-pivot"></div>
+    </div>
+  </section>
+
   <!-- BANK -->
   <section class="panel" id="p-bank" role="tabpanel" aria-labelledby="t-bank" hidden>
     <div class="card">
@@ -270,7 +386,7 @@ details.more summary { cursor: pointer; color: var(--muted); padding: 4px 0; }
   <section class="panel" id="p-sunburst" role="tabpanel" aria-labelledby="t-sunburst" hidden>
     <div class="grid">
       <div class="card wide"><h2>Spending as a sunburst</h2>
-        <p class="note">Rings from inside to outside: type, group, category and daily code. Click a segment to zoom in and the centre to go back. Per month divides Europe by the months in Europe, fixed costs by the whole year and everything in Asia by the months in Asia.</p>
+        <p class="note">Rings from inside to outside: type, group, category and daily code (category_asia). Click a segment to zoom in and the centre to go back. Per month divides Europe by the months in Europe, fixed costs by the whole year and everything in Asia by the months in Asia.</p>
         <div class="controls">
           <label for="sb-jaar">Year<select id="sb-jaar"></select></label>
           <div class="seg" role="group" aria-label="View"><button type="button" data-mode="maand" aria-pressed="true">Per month</button><button type="button" data-mode="totaal" aria-pressed="false">Total</button></div>
@@ -309,7 +425,7 @@ details.more summary { cursor: pointer; color: var(--muted); padding: 4px 0; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.3/plotly-cartesian.min.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.3/plotly.min.js';document.head.appendChild(s)"></script>
 <script>
-const version = "20261027-144000";
+const version = "20261028-005500";
 /* ===================== Ledger: reading and analysis ===================== */
 var KB = (function () {
   'use strict';
@@ -785,7 +901,7 @@ var KB = (function () {
     return out;
   }
 
-  return { isLocked: isLocked, decodeText: decodeText, parseNum: parseNum, parseDate: parseDate, normalize: normalize, readFile: readFile, analyze: analyze, isoOf: isoOf, sourceLabel: sourceLabel, mapHeaders: mapHeaders };
+  return { codeLabel: codeLabel, isForeignCash: isForeignCash, countryOf: countryOf, seasonOf: seasonOf, isLocked: isLocked, decodeText: decodeText, parseNum: parseNum, parseDate: parseDate, normalize: normalize, readFile: readFile, analyze: analyze, isoOf: isoOf, sourceLabel: sourceLabel, mapHeaders: mapHeaders };
 })();
 
 /* ===================== Bank statement next to the ledger ===================== */
@@ -1642,13 +1758,13 @@ function demoRecords() {
     var sub = focus.copy().sum(function (d) { return d.children ? 0 : d.value || 0; });
     var flat = focus.descendants();
     sub.each(function (n) { var o = flat.filter(function (q) { return q.data === n.data; })[0]; n.col = o ? o.col : SANKEY30[0]; });
-    var rings = Math.min(3, sub.height), radius = size / 2 - 4;
+    var rings = Math.min(4, sub.height), radius = size / 2 - 4;
     d3.partition().size([2 * Math.PI, rings + 1])(sub);
     var rw = radius / (rings + 1);
     var arc = d3.arc().startAngle(function (d) { return d.x0; }).endAngle(function (d) { return d.x1; }).padAngle(function (d) { return Math.min((d.x1 - d.x0) / 2, 0.004); }).padRadius(radius / 2)
       .innerRadius(function (d) { return d.y0 * rw; }).outerRadius(function (d) { return Math.max(d.y0 * rw, d.y1 * rw - 1); });
     var nodes = sub.descendants().filter(function (d) { return d.depth > 0 && d.depth <= rings && d.x1 - d.x0 > 0.001; });
-    svg.append('g').selectAll('path').data(nodes).join('path').attr('d', arc).style('fill', function (d) { return d.col; }).style('fill-opacity', function (d) { return [0, 0.9, 0.68, 0.48][d.depth] || 0.4; })
+    svg.append('g').selectAll('path').data(nodes).join('path').attr('d', arc).style('fill', function (d) { return d.col; }).style('fill-opacity', function (d) { return [0, 0.9, 0.68, 0.48, 0.32][d.depth] || 0.3; })
       .style('cursor', function (d) { return d.children ? 'pointer' : 'default'; })
       .on('click', function (ev, d) { if (!d.children) return; hideTip(); state.sbPath = state.sbPath.concat(d.ancestors().reverse().slice(1).map(function (q) { return q.data.name; })); drawSunburst(a); })
       .on('mousemove', function (ev, d) { showTip(ev, d.ancestors().reverse().slice(1).map(function (q) { return q.data.name; }).join(' › '), [['', unit(d.value), d.col], ['', F.p1.format(d.value / (d.parent ? d.parent.value : sub.value)) + ' of ' + (d.parent && d.parent.depth ? d.parent.data.name : focus.data.name)]]); })
@@ -2015,8 +2131,435 @@ function demoRecords() {
     } else al.hidden = true;
   }
 
+
+  /* ================= PIVOT ================= */
+  var NUM2 = new Intl.NumberFormat('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  var PV_FIELDS = {
+    year: { label: 'Year', get: function (r) { return String(r.y); } },
+    ym: { label: 'Month', get: function (r) { return r.ym; }, fmt: function (k) { return ymLabel(k); } },
+    month: { label: 'Month of the year', get: function (r) { return pad2(r.m); }, fmt: function (k) { return MAAND[+k - 1]; } },
+    source: { label: 'Source', get: function (r) { return KB.sourceLabel(r.source || '(empty)'); } },
+    type: { label: 'Type', get: function (r) { return r.ieShow || r.ie; } },
+    group: { label: 'Group', get: function (r) { return r.mcShow || r.mc; } },
+    category: { label: 'Category', get: function (r) { return r.catShow || r.cat || '(no category)'; } },
+    code: { label: 'Daily code', get: function (r) { return r.ca && r.ca !== '_' ? r.ca : '(no code)'; } },
+    currency: { label: 'Currency', get: function (r) { return /^[A-Z]{3}$/.test(r.cur) ? r.cur : KB.isForeignCash(r.source) ? r.source.slice(5).toUpperCase() : 'EUR'; } }
+  };
+  var PV_INC = {
+    all: function () { return true; },
+    inout: function (r) { return r.ie === 'IN' || r.ie.indexOf('UIT') === 0 || r.ie === 'ONGECAT'; },
+    out: function (r) { return r.ie.indexOf('UIT') === 0 || r.ie === 'ONGECAT'; },
+    asia: function (r) { return r.ie.indexOf('UIT_AZ') === 0; },
+    transfer: function (r) { return r.ie === 'KRUIS'; }
+  };
+  state.pv = { rows: 'year>ym', cols: 'group>category', val: 'sum', inc: 'all', year: 'all', openR: null, openC: new Set(), last: null };
+  function pvSort(field, keys) {
+    var nil = function (k) { return /^\(no |^\(empty\)$/.test(k) ? 1 : 0; };
+    return keys.sort(function (a, b) { return nil(a) - nil(b) || (a < b ? -1 : a > b ? 1 : 0); });
+  }
+  function pvLabel(field, k) { var f = PV_FIELDS[field]; return f.fmt ? f.fmt(k) : k; }
+  function pvBuild() {
+    var P = state.pv, rowsF = P.rows.split('>'), colsF = P.cols === 'none' ? [] : P.cols.split('>');
+    var inc = PV_INC[P.inc];
+    var list = state.rows.filter(function (r) { return inc(r) && (P.year === 'all' || String(r.y) === P.year); });
+    var acc = new Map();
+    var add = function (rk, ck, v) { var k = rk + '\u0002' + ck, c = acc.get(k); if (!c) { c = { s: 0, n: 0 }; acc.set(k, c); } c.s += v; c.n++; };
+    var rOuter = new Set(), rInner = new Map(), cOuter = new Set(), cInner = new Map();
+    list.forEach(function (r) {
+      var ro = PV_FIELDS[rowsF[0]].get(r), ri = rowsF[1] ? PV_FIELDS[rowsF[1]].get(r) : null;
+      var co = colsF[0] ? PV_FIELDS[colsF[0]].get(r) : null, ci = colsF[1] ? PV_FIELDS[colsF[1]].get(r) : null;
+      rOuter.add(ro); if (ri !== null) { if (!rInner.has(ro)) rInner.set(ro, new Set()); rInner.get(ro).add(ri); }
+      if (co !== null) { cOuter.add(co); if (ci !== null) { if (!cInner.has(co)) cInner.set(co, new Set()); cInner.get(co).add(ci); } }
+      var rks = ['T', 'o\u0001' + ro]; if (ri !== null) rks.push('i\u0001' + ro + '\u0001' + ri);
+      var cks = ['T']; if (co !== null) cks.push('o\u0001' + co); if (ci !== null) cks.push('i\u0001' + co + '\u0001' + ci);
+      rks.forEach(function (rk) { cks.forEach(function (ck) { add(rk, ck, r.amount); }); });
+    });
+    var ro = pvSort(rowsF[0], Array.from(rOuter)), co = pvSort(colsF[0], Array.from(cOuter));
+    if (rowsF[0] === 'year' || rowsF[0] === 'ym') ro.reverse();
+    return { rowsF: rowsF, colsF: colsF, n: list.length, acc: acc, rOuter: ro, cOuter: co,
+      rInner: function (k) { return rInner.has(k) ? pvSort(rowsF[1], Array.from(rInner.get(k))) : []; },
+      cInner: function (k) { return cInner.has(k) ? pvSort(colsF[1], Array.from(cInner.get(k))) : []; } };
+  }
+  function pvValue(B, rk, ck) {
+    var c = B.acc.get(rk + '\u0002' + ck); if (!c) return null;
+    var P = state.pv; return P.val === 'count' ? c.n : P.val === 'avg' ? c.s / c.n : c.s;
+  }
+  function pvFmt(v) { if (v === null || !fin(v)) return ''; if (state.pv.val === 'count') return int(v); return Math.abs(v) < 0.005 ? '0.00' : NUM2.format(v); }
+  function drawPivot() {
+    var P = state.pv;
+    var ysel = $('pv-year'), years = Array.from(new Set(state.rows.map(function (r) { return String(r.y); }))).sort().reverse();
+    var want = ['all'].concat(years).join(',');
+    if (ysel.dataset.years !== want) {
+      ysel.textContent = ''; ysel.dataset.years = want;
+      [['all', 'All years']].concat(years.map(function (y) { return [y, y]; })).forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; ysel.appendChild(op); });
+      if (want.split(',').indexOf(P.year) < 0) P.year = 'all';
+    }
+    ysel.value = P.year; $('pv-rows').value = P.rows; $('pv-cols').value = P.cols; $('pv-val').value = P.val; $('pv-inc').value = P.inc;
+    var B = pvBuild(); state.pv.last = B;
+    if (!P.openR) P.openR = new Set(B.rOuter.slice(0, 1));
+    var el = $('tb-pivot');
+    $('pv-sum').textContent = int(B.n) + ' rows' + (P.val === 'sum' ? ' · plus is money in, minus is money out' : '');
+    if (!B.n) { empty(el, 'No rows match this selection.'); return; }
+    var hasRI = B.rowsF.length > 1, hasCI = B.colsF.length > 1, hasC = B.colsF.length > 0;
+    /* flat list of columns */
+    var cols = [];
+    if (hasC) B.cOuter.forEach(function (o) {
+      if (hasCI && P.openC.has(o)) { B.cInner(o).forEach(function (i) { cols.push({ ck: 'i\u0001' + o + '\u0001' + i, o: o, label: pvLabel(B.colsF[1], i) }); }); cols.push({ ck: 'o\u0001' + o, o: o, sub: true, label: 'Total' }); }
+      else cols.push({ ck: 'o\u0001' + o, o: o, label: pvLabel(B.colsF[0], o), single: true });
+    });
+    cols.push({ ck: 'T', grand: true, label: hasC ? 'Grand total' : ({ sum: 'Sum of amount', count: 'Number of rows', avg: 'Average amount' })[P.val] });
+    var t = document.createElement('table'); t.className = 'pv';
+    var th = function (tr, text, cls, span, rspan) { var c = document.createElement('th'); c.scope = 'col'; if (cls) c.className = cls; if (span > 1) c.colSpan = span; if (rspan > 1) c.rowSpan = rspan; if (text instanceof Node) c.appendChild(text); else c.textContent = text; tr.appendChild(c); return c; };
+    var tog = function (text, open, fn) { var b = document.createElement('button'); b.type = 'button'; b.className = 'pvt'; b.textContent = (open ? '▾ ' : '▸ ') + text; b.setAttribute('aria-expanded', String(open)); b.addEventListener('click', fn); return b; };
+    var head = t.createTHead(), h1 = head.insertRow();
+    var twoRows = hasCI && B.cOuter.some(function (o) { return P.openC.has(o); });
+    th(h1, PV_FIELDS[B.rowsF[0]].label + (hasRI ? ' › ' + PV_FIELDS[B.rowsF[1]].label.toLowerCase() : ''), 'rh', 1, twoRows ? 2 : 1);
+    var h2 = twoRows ? head.insertRow() : null; if (h2) h2.className = 'h2';
+    if (hasC) B.cOuter.forEach(function (o) {
+      var lab = pvLabel(B.colsF[0], o), open = P.openC.has(o);
+      var flip = function () { if (P.openC.has(o)) P.openC.delete(o); else P.openC.add(o); drawPivot(); };
+      if (hasCI && open) {
+        var inner = B.cInner(o);
+        th(h1, tog(lab, true, flip), 'sub', inner.length + 1, 1);
+        inner.forEach(function (i) { th(h2, pvLabel(B.colsF[1], i)); }); th(h2, 'Total', 'sub');
+      } else th(h1, hasCI ? tog(lab, false, flip) : lab, null, 1, twoRows ? 2 : 1);
+    });
+    th(h1, cols[cols.length - 1].label, 'sub', 1, twoRows ? 2 : 1);
+    var tb = t.createTBody();
+    var line = function (rk, labelNode, cls) {
+      var tr = tb.insertRow(); if (cls) tr.className = cls;
+      var c0 = tr.insertCell(); c0.className = 'rh'; if (labelNode instanceof Node) c0.appendChild(labelNode); else c0.textContent = labelNode;
+      cols.forEach(function (c) { var v = pvValue(B, rk, c.ck), td = tr.insertCell(); td.textContent = pvFmt(v); if (c.sub || c.grand) td.classList.add('sub'); if (v !== null && v < -0.004 && P.val !== 'count') td.classList.add('neg'); });
+    };
+    B.rOuter.forEach(function (o) {
+      var lab = pvLabel(B.rowsF[0], o), open = P.openR.has(o);
+      var flip = function () { if (P.openR.has(o)) P.openR.delete(o); else P.openR.add(o); drawPivot(); };
+      line('o\u0001' + o, hasRI ? tog(lab, open, flip) : lab, hasRI ? 'l1' : null);
+      if (hasRI && open) B.rInner(o).forEach(function (i) { line('i\u0001' + o + '\u0001' + i, pvLabel(B.rowsF[1], i), 'l2'); });
+    });
+    line('T', 'Grand total', 'gt');
+    el.textContent = ''; el.appendChild(t);
+  }
+  function tableToTsv(el) {
+    var t = el.querySelector('table'); if (!t) return '';
+    var grid = [], rows = Array.from(t.rows);
+    rows.forEach(function (tr, ri) {
+      grid[ri] = grid[ri] || []; var ci = 0;
+      Array.from(tr.cells).forEach(function (c) {
+        while (grid[ri][ci] !== undefined) ci++;
+        var txt = c.textContent.replace(/^[▸▾] /, '').replace(/\s+/g, ' ').trim();
+        for (var a = 0; a < (c.rowSpan || 1); a++) for (var b = 0; b < (c.colSpan || 1); b++) { grid[ri + a] = grid[ri + a] || []; grid[ri + a][ci + b] = a === 0 && b === 0 ? txt : ''; }
+        ci += c.colSpan || 1;
+      });
+    });
+    return grid.map(function (r) { return r.join('\t'); }).join('\n');
+  }
+  function copyText(text, btn) {
+    var done = function (ok) { var old = btn.dataset.label || btn.textContent; btn.dataset.label = old; btn.textContent = ok ? 'Copied' : 'Copy failed'; setTimeout(function () { btn.textContent = old; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+    else { try { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); var ok = document.execCommand('copy'); ta.remove(); done(ok); } catch (e) { done(false); } }
+  }
+  [['pv-rows', 'rows'], ['pv-cols', 'cols'], ['pv-val', 'val'], ['pv-inc', 'inc'], ['pv-year', 'year']].forEach(function (p) {
+    $(p[0]).addEventListener('change', function () {
+      state.pv[p[1]] = $(p[0]).value;
+      if (p[1] === 'rows') state.pv.openR = null;
+      if (p[1] === 'cols') state.pv.openC = new Set();
+      drawPivot();
+    });
+  });
+  $('pv-open-r').addEventListener('click', function () { var B = state.pv.last; if (B) state.pv.openR = new Set(B.rOuter); drawPivot(); });
+  $('pv-close-r').addEventListener('click', function () { state.pv.openR = new Set(); drawPivot(); });
+  $('pv-open-c').addEventListener('click', function () { var B = state.pv.last; if (B) state.pv.openC = new Set(B.cOuter); drawPivot(); });
+  $('pv-close-c').addEventListener('click', function () { state.pv.openC = new Set(); drawPivot(); });
+  $('pv-copy').addEventListener('click', function () { copyText(tableToTsv($('tb-pivot')), $('pv-copy')); });
+  $('pv-csv').addEventListener('click', function () {
+    var tsv = tableToTsv($('tb-pivot')); if (!tsv) return;
+    var csv = tsv.split('\n').map(function (l) { return l.split('\t').map(function (c) { var v = /^-?[\d,]+\.\d\d$/.test(c) ? c.replace(/,/g, '') : c; return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\r\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })); a.download = 'pivot.csv';
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  });
+
+  /* ================= ASIA PER PERIOD ================= */
+  var PD_DAY = 864e5, PD_GAP = 21, PD_KEY = 'kb-asia-periods';
+  var PD_ORDER = ['Housing', 'Breakfast', 'Lunch', 'Dinner', 'Snacks & drinks', 'Coffee', 'Alcohol', 'Christmas dinner', 'Scooter', 'Taxi', 'Transport & tickets', 'Laundry', 'Yoga', 'Sights', 'Tips', 'Visa', 'Other', 'Bank & FX', 'Cash difference'];
+  state.pd = { mode: 'day', season: 'all' };
+  function pdIso(t) { var d = new Date(t); return d.getUTCFullYear() + '-' + pad2(d.getUTCMonth() + 1) + '-' + pad2(d.getUTCDate()); }
+  function pdSeason(iso) { var y = +iso.slice(0, 4), m = +iso.slice(5, 7), s = m >= 7 ? y : y - 1; return s + '/' + String(s + 1).slice(2); }
+  function pdAuto(rows) {
+    var anchors = rows.filter(function (r) { return r.mc === 'AZIE_DAGELIJKS' && KB.isForeignCash(r.source); }).sort(function (a, b) { return a.t - b.t; });
+    var bySeason = new Map();
+    anchors.forEach(function (r) { var k = pdSeason(r.d); if (!bySeason.has(k)) bySeason.set(k, []); bySeason.get(k).push(r); });
+    var out = [], seen = {};
+    var push = function (country, season, a, b) {
+      var name = country + ' ' + season; seen[name] = (seen[name] || 0) + 1; if (seen[name] > 1) name += ' (' + seen[name] + ')';
+      out.push({ name: name, start: a, end: b });
+    };
+    Array.from(bySeason.keys()).sort().forEach(function (season) {
+      var list = bySeason.get(season), firstT = list[0].t, lastT = list[list.length - 1].t;
+      var distinct = new Set(list.map(function (r) { return r.d; })).size, span = (lastT - firstT) / PD_DAY + 1;
+      if (distinct >= 20 && distinct / span >= 0.3) {
+        /* itemised receipts: a new period when the currency changes or after a long gap */
+        var segs = [], cur = null;
+        list.forEach(function (r) {
+          var c = KB.countryOf(r.source);
+          if (!cur || c !== cur.country || r.t - cur.lastT > PD_GAP * PD_DAY) { cur = { country: c, firstT: r.t, lastT: r.t }; segs.push(cur); }
+          cur.lastT = r.t;
+        });
+        segs.forEach(function (sg, i) {
+          var nx = segs[i + 1], endT = sg.lastT;
+          if (nx && nx.firstT - sg.lastT <= PD_GAP * PD_DAY) endT = Math.max(sg.firstT, nx.firstT - PD_DAY);
+          push(sg.country, season, pdIso(sg.firstT), pdIso(endT));
+        });
+      } else {
+        /* monthly totals: each month goes to the country with the most money spent that month */
+        var byM = new Map();
+        list.forEach(function (r) { var m = byM.get(r.ym) || {}; var c = KB.countryOf(r.source); m[c] = (m[c] || 0) + Math.abs(r.amount); byM.set(r.ym, m); });
+        var months = Array.from(byM.keys()).sort(), msegs = [];
+        var nextYm = function (ym) { var y = +ym.slice(0, 4), m = +ym.slice(5, 7) + 1; if (m > 12) { m = 1; y++; } return y + '-' + pad2(m); };
+        months.forEach(function (ym) {
+          var m = byM.get(ym), c = Object.keys(m).sort(function (a, b) { return m[b] - m[a]; })[0], last = msegs[msegs.length - 1];
+          if (last && last.country === c && nextYm(last.lastYm) === ym) last.lastYm = ym; else msegs.push({ country: c, firstYm: ym, lastYm: ym });
+        });
+        var firstIso = pdIso(firstT), startsMidMonth = new Date(firstT + PD_DAY).getUTCDate() !== 1;
+        msegs.forEach(function (sg, i) {
+          var a = (i === 0 && sg.firstYm === firstIso.slice(0, 7) && startsMidMonth) ? firstIso : sg.firstYm + '-01';
+          var ly = +sg.lastYm.slice(0, 4), lm = +sg.lastYm.slice(5, 7);
+          var b = (i === msegs.length - 1) ? pdIso(lastT) : pdIso(Date.UTC(ly, lm, 0));
+          push(sg.country, season, a, b);
+        });
+      }
+    });
+    return out;
+  }
+  function pdToText(ps) { return ps.map(function (p) { return p.name + '; ' + p.start + '; ' + p.end; }).join('\n'); }
+  function pdParse(text) {
+    var out = [], errs = [];
+    text.split(/\r?\n/).forEach(function (line, i) {
+      if (!line.trim()) return;
+      var p = line.split(';').map(function (x) { return x.trim(); });
+      var ok = p.length === 3 && p[0] && /^\d{4}-\d{2}-\d{2}$/.test(p[1]) && /^\d{4}-\d{2}-\d{2}$/.test(p[2]) && !isNaN(utc(p[1])) && !isNaN(utc(p[2])) && p[1] <= p[2];
+      if (ok) out.push({ name: p[0], start: p[1], end: p[2] }); else errs.push(i + 1);
+    });
+    return { periods: out.sort(function (a, b) { return a.start < b.start ? -1 : 1; }), errs: errs };
+  }
+  function pdSaved() { try { var v = localStorage.getItem(PD_KEY); return v !== null ? v : pdOverride; } catch (e) { return pdOverride; } }
+  function pdPeriods() {
+    var saved = pdSaved();
+    if (saved) { var p = pdParse(saved); if (p.periods.length) return { list: p.periods, custom: true }; }
+    return { list: pdAuto(state.rows), custom: false };
+  }
+  function pdLine(r) { return r.mc === 'AZIE_DIV' ? null : KB.codeLabel(r); }
+  function drawPeriods() {
+    var P = pdPeriods(), all = P.list;
+    var ta = $('pd-text'); if (document.activeElement !== ta) ta.value = pdToText(all);
+    var sel = $('pd-season'), seasons = Array.from(new Set(all.map(function (p) { return pdSeason(p.start); }))).sort();
+    var want = ['all'].concat(seasons).join(',');
+    if (sel.dataset.s !== want) {
+      sel.textContent = ''; sel.dataset.s = want;
+      [['all', 'All seasons']].concat(seasons.map(function (x) { return [x, x]; })).forEach(function (o) { var op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; sel.appendChild(op); });
+      if (want.split(',').indexOf(state.pd.season) < 0) state.pd.season = 'all';
+    }
+    sel.value = state.pd.season;
+    var ps = all.filter(function (p) { return state.pd.season === 'all' || pdSeason(p.start) === state.pd.season; });
+    var el = $('tb-periods');
+    if (!ps.length) { empty(el, 'No Asia periods found: that needs rows of type OUT_ASIA in group ASIA_DAILY paid from cash in a foreign currency (for example CASH_THB).'); $('pd-note').textContent = ''; return; }
+    var living = state.rows.filter(function (r) { return r.ie.indexOf('UIT_AZ') === 0 && ['AZIE_DAGELIJKS', 'AZIE', 'AZIE_DIV'].indexOf(r.mc) >= 0; });
+    var cols = ps.map(function (p) {
+      var a = utc(p.start), b = utc(p.end);
+      return { p: p, a: a, b: b, days: Math.round((b - a) / PD_DAY) + 1, lines: {}, extras: 0, curs: {} };
+    });
+    var outside = 0, outsideN = 0;
+    living.forEach(function (r) {
+      var c = null; for (var i = 0; i < cols.length; i++) if (r.t >= cols[i].a && r.t <= cols[i].b) { c = cols[i]; break; }
+      if (!c) { var inAny = all.some(function (p) { return r.d >= p.start && r.d <= p.end; }); if (!inAny) { outside -= r.amount; outsideN++; } return; }
+      var ln = pdLine(r), v = -r.amount;
+      if (ln === null) c.extras += v; else c.lines[ln] = (c.lines[ln] || 0) + v;
+      if (KB.isForeignCash(r.source)) c.curs[r.source.slice(5).toUpperCase()] = 1; else if (/^[A-Z]{3}$/.test(r.cur) && r.cur !== 'EUR' && r.fx) c.curs[r.cur] = 1;
+    });
+    var tot = { days: 0, lines: {}, extras: 0 };
+    cols.forEach(function (c) { tot.days += c.days; tot.extras += c.extras; Object.keys(c.lines).forEach(function (k) { tot.lines[k] = (tot.lines[k] || 0) + c.lines[k]; }); });
+    var labels = Object.keys(tot.lines).filter(function (k) { return Math.abs(tot.lines[k]) >= 0.005; });
+    labels.sort(function (a, b) { var ia = PD_ORDER.indexOf(a), ib = PD_ORDER.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || (a < b ? -1 : 1); });
+    var perDay = state.pd.mode === 'day';
+    var cell = function (v, days) { if (!fin(v) || Math.abs(v) < 0.005) return perDay ? '' : ''; return eur2(perDay ? v / days : v); };
+    var sumL = function (o) { return Object.keys(o.lines).reduce(function (s, k) { return s + o.lines[k]; }, 0); };
+    var allCols = cols.concat([{ p: { name: ps.length > 1 ? 'All shown' : '' }, days: tot.days, lines: tot.lines, extras: tot.extras, curs: {}, total: true }]);
+    if (ps.length < 2) allCols.pop();
+    var t = document.createElement('table'); t.className = 'pv';
+    var h = t.createTHead().insertRow(), c0 = document.createElement('th'); c0.className = 'rh'; c0.textContent = perDay ? '€ per day' : '€ in total'; h.appendChild(c0);
+    allCols.forEach(function (c) { var x = document.createElement('th'); x.scope = 'col'; x.textContent = c.p.name; if (c.total) x.className = 'sub'; h.appendChild(x); });
+    var tb = t.createTBody();
+    var row = function (label, fn, cls, heat) {
+      var tr = tb.insertRow(); if (cls) tr.className = cls;
+      var r0 = tr.insertCell(); r0.className = 'rh'; r0.textContent = label;
+      var vals = allCols.map(function (c) { return fn(c); });
+      var mx = heat ? Math.max.apply(null, allCols.map(function (c, i) { return c.total ? 0 : (fin(vals[i].n) ? vals[i].n : 0); })) : 0;
+      allCols.forEach(function (c, i) {
+        var td = tr.insertCell(), v = vals[i]; td.textContent = v.t; if (c.total) td.classList.add('sub');
+        if (heat && !c.total && mx > 0 && fin(v.n) && v.n > 0) td.style.background = 'color-mix(in srgb, var(--asia) ' + Math.round(6 + 30 * v.n / mx) + '%, var(--panel))';
+      });
+    };
+    row('Dates', function (c) { return { t: c.total ? '' : dnl(c.p.start).replace(/ \d{4}$/, '') + ' – ' + dnl(c.p.end) }; }, 'meta');
+    row('Currency', function (c) { return { t: Object.keys(c.curs).sort().join(', ') }; }, 'meta');
+    row('Number of days', function (c) { return { t: int(c.days) }; }, 'meta');
+    labels.forEach(function (lab) { row(lab, function (c) { var v = c.lines[lab] || 0; return { t: cell(v, c.days), n: v / c.days }; }, null, true); });
+    var housing = function (c) { return c.lines.Housing || 0; };
+    row('Daily living', function (c) { return { t: cell(sumL(c), c.days) }; }, 'tot');
+    row('Extras (medical, theft, other)', function (c) { return { t: cell(c.extras, c.days) }; }, 'tot2');
+    row('Total', function (c) { return { t: cell(sumL(c) + c.extras, c.days) }; }, 'tot');
+    row('Total without housing and extras', function (c) { return { t: cell(sumL(c) - housing(c), c.days) }; }, 'tot2');
+    row('Spent in the period', function (c) { return { t: eur(sumL(c) + c.extras) }; }, 'meta');
+    el.textContent = ''; el.appendChild(t);
+    $('pd-note').textContent = (P.custom ? 'Using your own list of periods. ' : 'Periods made automatically. ') +
+      (outsideN ? int(outsideN) + (outsideN === 1 ? ' Asia row (' : ' Asia rows (') + eur(outside) + (outsideN === 1 ? ') falls' : ') fall') + ' outside every period, for example rent paid before arrival or a stopover on the way.' : 'Every Asia row falls inside a period.');
+  }
+  $('pd-mode').querySelectorAll('button').forEach(function (b) {
+    b.addEventListener('click', function () { state.pd.mode = b.dataset.mode; $('pd-mode').querySelectorAll('button').forEach(function (q) { q.setAttribute('aria-pressed', String(q === b)); }); drawPeriods(); });
+  });
+  $('pd-season').addEventListener('change', function () { state.pd.season = $('pd-season').value; drawPeriods(); });
+  $('pd-copy').addEventListener('click', function () { copyText(tableToTsv($('tb-periods')), $('pd-copy')); });
+  $('pd-apply').addEventListener('click', function () {
+    var p = pdParse($('pd-text').value), msg = $('pd-msg');
+    if (p.errs.length) { msg.textContent = 'Line ' + p.errs.join(', ') + ' is not in the form name; YYYY-MM-DD; YYYY-MM-DD (first day not after last day). Nothing was changed.'; return; }
+    if (!p.periods.length) { msg.textContent = 'The list is empty. Use "Back to automatic" to get the automatic periods.'; return; }
+    try { localStorage.setItem(PD_KEY, $('pd-text').value); msg.textContent = 'Saved ' + p.periods.length + ' periods in this browser.'; }
+    catch (e) { msg.textContent = 'This browser does not allow saving; the periods are used until you reload.'; }
+    pdOverride = $('pd-text').value; $('pd-text').blur(); drawPeriods();
+  });
+  $('pd-reset').addEventListener('click', function () {
+    try { localStorage.removeItem(PD_KEY); } catch (e) { /* not important */ }
+    pdOverride = null; $('pd-msg').textContent = 'Back to the automatic periods.'; $('pd-text').blur(); drawPeriods();
+  });
+  var pdOverride = null;
+
+
+  /* ================= ENTRIES ================= */
+  var EN_PAGE = 500;
+  var EN_F = {
+    year: { get: function (r) { return String(r.y); }, label: function (k) { return k; }, order: -1 },
+    month: { get: function (r) { return pad2(r.m); }, label: function (k) { return MAAND[+k - 1]; }, order: 1 },
+    source: { get: function (r) { return r.source || '(empty)'; }, label: function (k) { return KB.sourceLabel(k); }, order: 1 },
+    type: { get: function (r) { return r.ieShow || r.ie; }, label: function (k) { return k; }, order: 1 },
+    group: { get: function (r) { return r.mcShow || r.mc; }, label: function (k) { return k; }, order: 1 },
+    cat: { get: function (r) { return r.catShow || r.cat || '(empty)'; }, label: function (k) { return k; }, order: 1 },
+    code: { get: function (r) { return r.ca || '(empty)'; }, label: function (k) { return k; }, order: 1 }
+  };
+  var EN_COLS = [
+    { k: 'd', label: 'date', get: function (r) { return r.d; }, show: function (r) { return r.d; }, l: true },
+    { k: 'id', label: 'id', get: function (r) { var n = parseFloat(r.id); return isNaN(n) ? r.id : n; }, show: function (r) { return r.id; } },
+    { k: 'source', label: 'source', get: function (r) { return r.source; }, show: function (r) { return KB.sourceLabel(r.source || '(empty)'); }, l: true },
+    { k: 'amount', label: 'amount €', get: function (r) { return r.amount; }, show: function (r) { return NUM2.format(r.amount); }, num: true },
+    { k: 'desc', label: 'description', get: function (r) { return (r.desc || '').toLowerCase(); }, show: function (r) { return r.desc; }, desc: true },
+    { k: 'type', label: 'income_expenses', get: function (r) { return r.ieShow || r.ie; }, show: function (r) { return r.ieShow || r.ie; }, l: true },
+    { k: 'group', label: 'main_category', get: function (r) { return r.mcShow || r.mc; }, show: function (r) { return r.mcShow || r.mc; }, l: true },
+    { k: 'cat', label: 'category', get: function (r) { return r.catShow || r.cat; }, show: function (r) { return r.catShow || r.cat; }, l: true },
+    { k: 'code', label: 'category_asia', get: function (r) { return r.ca; }, show: function (r) { return r.ca; }, l: true },
+    { k: 'fx', label: 'fx_amount', get: function (r) { return fin(r.fx) ? r.fx : null; }, show: function (r) { return fin(r.fx) ? (Math.abs(r.fx) >= 1000 ? int(r.fx) : NUM2.format(r.fx)) : ''; }, num: true },
+    { k: 'cur', label: 'currency', get: function (r) { return /^[A-Z]{3}$/.test(r.cur) ? r.cur : ''; }, show: function (r) { return /^[A-Z]{3}$/.test(r.cur) ? r.cur : ''; }, l: true },
+    { k: 'rate', label: 'rate', get: function (r) { return fin(r.rate) ? r.rate : null; }, show: function (r) { return fin(r.rate) ? (Math.round(r.rate * 10000) / 10000).toString() : ''; }, num: true }
+  ];
+  state.en = { f: {}, q: '', min: '', max: '', sort: 'd', dir: -1, shown: EN_PAGE, list: [] };
+  function enMatch(r, skip) {
+    var E = state.en;
+    for (var k in E.f) { if (k !== skip && E.f[k] && EN_F[k].get(r) !== E.f[k]) return false; }
+    if (E.q) {
+      var hay = ((r.desc || '') + ' ' + (r.source || '') + ' ' + (r.catShow || r.cat || '') + ' ' + r.amount.toFixed(2) + ' ' + (r.id || '')).toLowerCase();
+      var words = E.q.toLowerCase().split(/\s+/).filter(Boolean);
+      for (var i = 0; i < words.length; i++) if (hay.indexOf(words[i]) < 0) return false;
+    }
+    if (E.min !== '' && r.amount < +E.min) return false;
+    if (E.max !== '' && r.amount > +E.max) return false;
+    return true;
+  }
+  function enOptions() {
+    var E = state.en;
+    Object.keys(EN_F).forEach(function (k) {
+      var sel = document.querySelector('#p-entries select[data-f="' + k + '"]'), F_ = EN_F[k];
+      var counts = new Map();
+      state.rows.forEach(function (r) { if (enMatch(r, k)) { var v = F_.get(r); counts.set(v, (counts.get(v) || 0) + 1); } });
+      if (E.f[k] && !counts.has(E.f[k])) counts.set(E.f[k], 0);
+      var keys = Array.from(counts.keys()).sort(function (a, b) { return (a < b ? -1 : a > b ? 1 : 0) * F_.order; });
+      sel.textContent = '';
+      var all = document.createElement('option'); all.value = ''; all.textContent = 'All'; sel.appendChild(all);
+      keys.forEach(function (v) { var o = document.createElement('option'); o.value = v; o.textContent = F_.label(v) + ' (' + int(counts.get(v)) + ')'; sel.appendChild(o); });
+      sel.value = E.f[k] || ''; sel.classList.toggle('on', !!E.f[k]);
+    });
+    $('en-q').classList.toggle('on', !!E.q); $('en-min').classList.toggle('on', E.min !== ''); $('en-max').classList.toggle('on', E.max !== '');
+  }
+  function enSorted() {
+    var E = state.en, col = EN_COLS.filter(function (c) { return c.k === E.sort; })[0] || EN_COLS[0];
+    var list = state.rows.filter(function (r) { return enMatch(r, null); });
+    list.sort(function (a, b) {
+      var x = col.get(a), y = col.get(b);
+      var xe = x === null || x === undefined || x === '', ye = y === null || y === undefined || y === '';
+      if (xe || ye) return xe && ye ? a.t - b.t : xe ? 1 : -1;
+      var c = typeof x === 'number' && typeof y === 'number' ? x - y : String(x).localeCompare(String(y), 'en', { numeric: true });
+      return (c || a.t - b.t) * E.dir;
+    });
+    return list;
+  }
+  function drawEntries() {
+    var E = state.en;
+    enOptions();
+    $('en-q').value = E.q; $('en-min').value = E.min; $('en-max').value = E.max;
+    var list = enSorted(); E.list = list;
+    var tot = list.reduce(function (s, r) { return s + r.amount; }, 0), plus = 0, minus = 0;
+    list.forEach(function (r) { if (r.amount > 0) plus += r.amount; else minus += r.amount; });
+    $('en-sum').textContent = int(list.length) + ' of ' + int(state.rows.length) + ' rows · in ' + eur2(plus) + ' · out ' + eur2(minus) + ' · net ' + eur2(tot);
+    var el = $('tb-entries');
+    if (!list.length) { empty(el, 'No rows match these filters.'); $('en-more').hidden = true; return; }
+    var t = document.createElement('table'); t.className = 'pv';
+    var h = t.createTHead().insertRow();
+    EN_COLS.forEach(function (c) {
+      var th = document.createElement('th'); th.scope = 'col'; th.className = 'sort' + (c.l || c.desc ? ' l' : '');
+      th.textContent = c.label + (E.sort === c.k ? (E.dir > 0 ? ' ▲' : ' ▼') : '');
+      th.setAttribute('aria-sort', E.sort === c.k ? (E.dir > 0 ? 'ascending' : 'descending') : 'none');
+      th.tabIndex = 0;
+      var go = function () { if (E.sort === c.k) E.dir = -E.dir; else { E.sort = c.k; E.dir = c.num || c.k === 'd' ? -1 : 1; } E.shown = EN_PAGE; drawEntries(); };
+      th.addEventListener('click', go); th.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } });
+      h.appendChild(th);
+    });
+    var tb = t.createTBody(), n = Math.min(list.length, E.shown);
+    for (var i = 0; i < n; i++) {
+      var r = list[i], tr = tb.insertRow();
+      EN_COLS.forEach(function (c) {
+        var td = tr.insertCell(); td.textContent = c.show(r) || '';
+        if (c.desc) td.className = 'desc'; else if (c.l) td.className = 'l';
+        if (c.k === 'amount' && r.amount < -0.004) td.classList.add('neg');
+      });
+    }
+    el.textContent = ''; el.appendChild(t);
+    var more = $('en-more'); more.hidden = list.length <= n;
+    more.textContent = 'Show more rows (' + int(n) + ' of ' + int(list.length) + ' shown)';
+  }
+  document.querySelectorAll('#p-entries select[data-f]').forEach(function (sel) {
+    sel.addEventListener('change', function () { state.en.f[sel.dataset.f] = sel.value; state.en.shown = EN_PAGE; drawEntries(); });
+  });
+  var enT;
+  $('en-q').addEventListener('input', function () { clearTimeout(enT); enT = setTimeout(function () { state.en.q = $('en-q').value.trim(); state.en.shown = EN_PAGE; drawEntries(); }, 200); });
+  ['en-min', 'en-max'].forEach(function (id) {
+    $(id).addEventListener('change', function () { state.en[id === 'en-min' ? 'min' : 'max'] = $(id).value; state.en.shown = EN_PAGE; drawEntries(); });
+  });
+  $('en-reset').addEventListener('click', function () { state.en.f = {}; state.en.q = ''; state.en.min = ''; state.en.max = ''; state.en.shown = EN_PAGE; drawEntries(); });
+  $('en-more').addEventListener('click', function () { state.en.shown += EN_PAGE * 2; drawEntries(); });
+  function enTsv() {
+    return [EN_COLS.map(function (c) { return c.label; }).join('\t')].concat(state.en.list.map(function (r) {
+      return EN_COLS.map(function (c) { var v = c.k === 'amount' ? r.amount.toFixed(2) : c.k === 'fx' ? (fin(r.fx) ? String(r.fx) : '') : String(c.show(r) || ''); return v.replace(/[\t\r\n]+/g, ' '); }).join('\t');
+    })).join('\n');
+  }
+  $('en-copy').addEventListener('click', function () { copyText(enTsv(), $('en-copy')); });
+  $('en-csv').addEventListener('click', function () {
+    var csv = enTsv().split('\n').map(function (l) { return l.split('\t').map(function (c) { return /[",\n]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(','); }).join('\r\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })); a.download = 'entries.csv';
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  });
+
   var DRAW = {
     overzicht: function (a) { drawVermogen(a); drawMaanden(a); },
+    periods: function () { drawPeriods(); },
+    pivot: function () { drawPivot(); },
+    entries: function () { drawEntries(); },
     azie: function (a) { drawSeizoenen(a); drawSeizoenDag(a); drawPosten(a); drawDagbedrag(a); drawMaaltijden(a); drawWeekdag(a); drawKoers(a); drawKalender(a); },
     lasten: function (a) { drawVl(a); drawAbo(a); },
     boodschappen: function (a) { drawBoodschappen(a); },
@@ -2033,7 +2576,7 @@ function demoRecords() {
   }
 
   /* ---------- tabs ---------- */
-  var TABS = ['overzicht', 'azie', 'lasten', 'boodschappen', 'rekeningen', 'bank', 'sunburst', 'curiosa'];
+  var TABS = ['overzicht', 'azie', 'periods', 'lasten', 'boodschappen', 'rekeningen', 'entries', 'pivot', 'bank', 'sunburst', 'curiosa'];
   function showTab(name, push) {
     if (TABS.indexOf(name) < 0) name = 'overzicht';
     state.tab = name;
@@ -2059,7 +2602,7 @@ function demoRecords() {
   function useRecords(records, label, kind, extra) {
     var n = KB.normalize(records);
     var a = KB.analyze(n.rows);
-    state.data = a; state.rows = n.rows; state.kind = kind; state.saldiOn = null; state.sbPath = []; state.sbYear = null;
+    state.data = a; state.rows = n.rows; state.kind = kind; state.saldiOn = null; state.sbPath = []; state.sbYear = null; if (state.pv) { state.pv.openR = null; state.pv.openC = new Set(); } if (state.en) { state.en.f = {}; state.en.q = ''; state.en.min = ''; state.en.max = ''; state.en.shown = EN_PAGE; }
     $('btn-bank-demo').hidden = kind !== 'demo';
     if (state.bankRows) runBank();
     var meta = int(n.rows.length) + ' rows · ' + dnl(a.kpi.first) + ' to ' + dnl(a.kpi.last) + (n.skipped ? ' · ' + int(n.skipped) + ' rows without a date skipped' : '') + (extra ? ' · ' + extra : '');
