@@ -167,6 +167,13 @@ table.pv th.sort { cursor: pointer; user-select: none; }
 table.pv th.sort:hover { color: var(--fg); }
 table.pv td.desc { text-align: left; white-space: normal; min-width: 220px; max-width: 420px; }
 table.pv td.l, table.pv th.l { text-align: left; }
+.drill { cursor: pointer; }
+table.t tr.click, table.pv td.click { cursor: pointer; }
+table.t tr.click:hover td, table.t tr.click:focus-visible td { background: var(--panel-2); }
+table.pv td.click:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
+.en-extra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 0; padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent-soft); font-size: 14px; }
+.en-extra b { font-weight: 600; }
+.en-extra .btn { min-height: 30px; padding: 0 10px; font-size: 13px; }
 .pd-text { width: 100%; box-sizing: border-box; font-family: var(--font-mono); font-size: 13px; color: var(--fg); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 6px 0 10px; resize: vertical; }
 @media (max-width: 560px) { .hide-sm { display: none; } .status .privacy { margin-left: 0; } .tile .big { font-size: 22px; } }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -330,6 +337,7 @@ table.pv td.l, table.pv th.l { text-align: left; }
         <button type="button" class="btn" id="en-copy">Copy for Excel</button>
         <button type="button" class="btn" id="en-csv">Download CSV</button>
       </div>
+      <div class="en-extra" id="en-extra" hidden><span>Showing <b id="en-extra-label"></b></span><button type="button" class="btn" id="en-extra-off">Remove this filter</button><button type="button" class="btn" id="en-back">Back</button></div>
       <p class="note" id="en-sum" aria-live="polite"></p>
       <div class="tablewrap pv-wrap" id="tb-entries"></div>
       <div class="actions" style="margin-top:10px"><button type="button" class="btn" id="en-more" hidden>Show more rows</button></div>
@@ -425,7 +433,7 @@ table.pv td.l, table.pv th.l { text-align: left; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.3/plotly-cartesian.min.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.3/plotly.min.js';document.head.appendChild(s)"></script>
 <script>
-const version = "20261028-005500";
+const version = "20261028-013500";
 /* ===================== Ledger: reading and analysis ===================== */
 var KB = (function () {
   'use strict';
@@ -901,7 +909,7 @@ var KB = (function () {
     return out;
   }
 
-  return { codeLabel: codeLabel, isForeignCash: isForeignCash, countryOf: countryOf, seasonOf: seasonOf, isLocked: isLocked, decodeText: decodeText, parseNum: parseNum, parseDate: parseDate, normalize: normalize, readFile: readFile, analyze: analyze, isoOf: isoOf, sourceLabel: sourceLabel, mapHeaders: mapHeaders };
+  return { isSub: function (r) { return r.cat in SUBS; }, ieLabelOf: function (ie) { return IE_LABEL[ie] || ie; }, sbCodeOf: function (r) { return r.ca in SB_CODE ? SB_CODE[r.ca] : r.ca; }, codeLabel: codeLabel, isForeignCash: isForeignCash, countryOf: countryOf, seasonOf: seasonOf, isLocked: isLocked, decodeText: decodeText, parseNum: parseNum, parseDate: parseDate, normalize: normalize, readFile: readFile, analyze: analyze, isoOf: isoOf, sourceLabel: sourceLabel, mapHeaders: mapHeaders };
 })();
 
 /* ===================== Bank statement next to the ledger ===================== */
@@ -1333,6 +1341,11 @@ function demoRecords() {
     var tb = t.createTBody();
     rows.forEach(function (r) {
       var tr = tb.insertRow();
+      if (opts.onRow) {
+        tr.className = 'click'; tr.tabIndex = 0; tr.title = 'Click to see the rows';
+        tr.addEventListener('click', function (ev) { if (ev.target.closest('button')) return; opts.onRow(r); });
+        tr.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') opts.onRow(r); });
+      }
       cols.forEach(function (c) {
         var td = tr.insertCell(); var v = c.get(r);
         if (c.html) td.appendChild(v); else td.textContent = v;
@@ -1354,8 +1367,9 @@ function demoRecords() {
     rows.forEach(function (r) {
       var bw = Math.min(36, x.bandwidth()), bx = x(r.k) + (x.bandwidth() - bw) / 2;
       svg.append('rect').attr('x', bx).attr('width', bw).attr('y', y(Math.max(0, r.v))).attr('height', Math.max(0, y(0) - y(Math.max(0, r.v)))).attr('rx', 4)
-        .style('fill', r.color || opts.color).style('opacity', r.faded ? 0.5 : 1)
-        .on('mousemove', function (ev) { showTip(ev, r.tipTitle || r.label || r.k, [['', opts.tipFmt ? opts.tipFmt(r.v) : opts.fmt(r.v)]]); }).on('mouseleave', hideTip);
+        .style('fill', r.color || opts.color).style('opacity', r.faded ? 0.5 : 1).classed('drill', !!opts.onClick)
+        .on('click', function () { if (opts.onClick) opts.onClick(r); })
+        .on('mousemove', function (ev) { showTip(ev, r.tipTitle || r.label || r.k, [['', opts.tipFmt ? opts.tipFmt(r.v) : opts.fmt(r.v)]].concat(opts.onClick ? [HINT] : [])); }).on('mouseleave', hideTip);
       svg.append('text').attr('x', x(r.k) + x.bandwidth() / 2).attr('y', h - 6).attr('text-anchor', 'middle').text(r.label || r.k);
       if (opts.valueLabels && w > 380) svg.append('text').attr('class', 'lbl mono').attr('x', x(r.k) + x.bandwidth() / 2).attr('y', y(Math.max(0, r.v)) - 5).attr('text-anchor', 'middle').text(opts.fmt(r.v));
     });
@@ -1416,8 +1430,9 @@ function demoRecords() {
       if (r.inc > 0) svg.append('rect').attr('x', bx).attr('width', bw).attr('y', y(r.inc)).attr('height', y(0) - y(r.inc)).attr('rx', rr).style('fill', 'var(--inc)');
       if (r.nl > 0) svg.append('rect').attr('x', bx).attr('width', bw).attr('y', y(0)).attr('height', y(-r.nl) - y(0)).style('fill', 'var(--eu)');
       if (r.asia > 0) svg.append('rect').attr('x', bx).attr('width', bw).attr('y', y(-Math.max(0, r.nl))).attr('height', y(-Math.max(0, r.nl) - r.asia) - y(-Math.max(0, r.nl))).style('fill', 'var(--asia)');
-      svg.append('rect').attr('x', bx - x.step() * x.paddingInner() / 2).attr('width', x.step()).attr('y', 0).attr('height', h).style('fill', 'transparent')
-        .on('mousemove', function (ev) { showTip(ev, ymLabel(r.ym), [['In', eur(r.inc), 'var(--inc)'], ['Out Europe', eur(r.nl), 'var(--eu)'], ['Out Asia', eur(r.asia), 'var(--asia)'], ['Balance', eur(r.inc - r.nl - r.asia)]]); })
+      svg.append('rect').attr('x', bx - x.step() * x.paddingInner() / 2).attr('width', x.step()).attr('y', 0).attr('height', h).style('fill', 'transparent').classed('drill', true)
+        .on('click', function () { drill('income and spending in ' + ymLabel(r.ym), function (q) { return q.ym === r.ym && (q.ie === 'IN' || isSpend(q)); }); })
+        .on('mousemove', function (ev) { showTip(ev, ymLabel(r.ym), [['In', eur(r.inc), 'var(--inc)'], ['Out Europe', eur(r.nl), 'var(--eu)'], ['Out Asia', eur(r.asia), 'var(--asia)'], ['Balance', eur(r.inc - r.nl - r.asia)], HINT]); })
         .on('mouseleave', hideTip);
     });
     var every = rows.length > 36 ? 12 : rows.length > 14 ? 6 : 3;
@@ -1427,6 +1442,7 @@ function demoRecords() {
 
   /* ================= ASIA ================= */
   function drawSeizoenen(a) {
+    var seasonRows = function (s) { drill('Asia spending in season ' + s.season, function (q) { return q.ie.indexOf('UIT_AZ') === 0 && KB.seasonOf(q) === s.season; }); };
     table($('tb-seizoenen'), [
       { label: 'Season', get: function (s) { return s.season + (s.detailed ? '' : ' *'); } },
       { label: 'Country', left: true, hide: true, get: function (s) { return s.countries.join(' + '); } },
@@ -1438,7 +1454,7 @@ function demoRecords() {
       { label: 'Total', get: function (s) { return eur(s.total); } },
       { label: 'All-in per day', get: function (s) { return eur2(s.perDayAll); } },
       { label: 'Pay that season', hide: true, get: function (s) { return eur(s.salary); } }
-    ], a.seasons, { emptyMsg: 'No Asia seasons found: that needs rows of type OUT_ASIA paid from cash in a foreign currency (for example CASH_THB).' });
+    ], a.seasons, { onRow: seasonRows, emptyMsg: 'No Asia seasons found: that needs rows of type OUT_ASIA paid from cash in a foreign currency (for example CASH_THB).' });
   }
   function drawSeizoenDag(a) {
     var el = $('c-seizoendag'), rows = a.seasons;
@@ -1470,8 +1486,12 @@ function demoRecords() {
       var yy = 4 + i * rowH;
       svg.append('text').attr('class', 'lbl').attr('x', ml - 8).attr('y', yy + rowH / 2).attr('dy', '0.32em').attr('text-anchor', 'end').text(r.lab);
       svg.append('rect').attr('x', ml).attr('y', yy + 5).attr('height', rowH - 10).attr('width', Math.max(2, x(r.perDay) - ml)).attr('rx', 4)
-        .style('fill', i === 0 ? 'var(--asia)' : 'var(--fixed)').style('opacity', i === 0 ? 1 : 0.5)
-        .on('mousemove', function (ev) { showTip(ev, r.lab, [['Per day', eur2(r.perDay)], ['Total', eur(r.eur)], ['Receipts', int(r.n)]]); }).on('mouseleave', hideTip);
+        .style('fill', i === 0 ? 'var(--asia)' : 'var(--fixed)').style('opacity', i === 0 ? 1 : 0.5).classed('drill', true)
+        .on('click', function () {
+          var ss = a.seasons.filter(function (q) { return q.detailed; });
+          drill(r.lab + ' on Asia receipts', function (q) { return q.mc === 'AZIE_DAGELIJKS' && KB.isForeignCash(q.source) && KB.codeLabel(q) === r.lab && ss.some(function (se) { return q.t >= se.firstT && q.t <= se.lastT; }); });
+        })
+        .on('mousemove', function (ev) { showTip(ev, r.lab, [['Per day', eur2(r.perDay)], ['Total', eur(r.eur)], ['Receipts', int(r.n)], HINT]); }).on('mouseleave', hideTip);
       svg.append('text').attr('class', 'mono').attr('x', x(r.perDay) + 6).attr('y', yy + rowH / 2).attr('dy', '0.32em').text(eur2(r.perDay));
     });
   }
@@ -1569,8 +1589,9 @@ function demoRecords() {
         var cx = labW + wk * (cell + 1), cy = 18 + dow * (cell + 1);
         if (day.getUTCMonth() !== lastMonth && dow === 0) { lastMonth = day.getUTCMonth(); if (cell >= 8 || lastMonth % 2 === 0) g.append('text').attr('x', cx).attr('y', 12).text(MND[lastMonth]); }
         g.append('rect').attr('x', cx).attr('y', cy).attr('width', cell).attr('height', cell).attr('rx', 2)
-          .style('fill', ramp(0.08 + 0.92 * Math.min(1, Math.max(0, v) / vmax)))
-          .on('mousemove', function (ev) { showTip(ev, DAGEN[dow] + ' ' + dnl(iso), [['Spent', eur2(v)]]); }).on('mouseleave', hideTip);
+          .style('fill', ramp(0.08 + 0.92 * Math.min(1, Math.max(0, v) / vmax))).classed('drill', true)
+          .on('click', function () { drill('Asia spending on ' + DAGEN[dow] + ' ' + dnl(iso), function (q) { return q.d === iso && q.ie.indexOf('UIT_AZ') === 0; }); })
+          .on('mousemove', function (ev) { showTip(ev, DAGEN[dow] + ' ' + dnl(iso), [['Spent', eur2(v)], HINT]); }).on('mouseleave', hideTip);
       });
     });
   }
@@ -1578,7 +1599,7 @@ function demoRecords() {
   /* ================= FIXED COSTS ================= */
   function drawVl(a) {
     var lastY = +a.kpi.last.slice(0, 4);
-    bars($('c-vl'), a.fixedByYear.map(function (r) { return { k: String(r.year), v: r.eur, faded: r.year === lastY, tipTitle: r.year + (r.year === lastY ? ' (to date)' : '') }; }), { fmt: eur, color: 'var(--fixed)', valueLabels: true });
+    bars($('c-vl'), a.fixedByYear.map(function (r) { return { k: String(r.year), v: r.eur, faded: r.year === lastY, tipTitle: r.year + (r.year === lastY ? ' (to date)' : '') }; }), { fmt: eur, color: 'var(--fixed)', valueLabels: true, onClick: function (r) { drill('fixed costs in ' + r.k, function (q) { return String(q.y) === r.k && q.mc === 'VASTELASTEN'; }); } });
   }
   function stacked(el, legendId, periods, rows, keyOf, catOf, opts) {
     if (!rows.length) { empty(el); legend(legendId, []); return; }
@@ -1595,8 +1616,9 @@ function demoRecords() {
     stack.forEach(function (d) {
       var bw = Math.min(opts.maxBar || 44, x.bandwidth()), bx = x(d.p) + (x.bandwidth() - bw) / 2;
       d.parts.filter(function (q) { return q.v > 0; }).forEach(function (q) { svg.append('rect').attr('x', bx).attr('width', bw).attr('y', y(q.y1)).attr('height', Math.max(0.5, y(q.y0) - y(q.y1) - (bw > 6 ? 1 : 0))).style('fill', colOf[q.c]); });
-      svg.append('rect').attr('x', x(d.p) - x.step() * x.paddingInner() / 2).attr('width', x.step()).attr('y', 0).attr('height', h - 24).style('fill', 'transparent')
-        .on('mousemove', function (ev) { var ps = d.parts.filter(function (q) { return q.v > 0; }).reverse(); showTip(ev, opts.title(d.p), ps.length ? ps.map(function (q) { return [q.c, eur2(q.v), colOf[q.c]]; }).concat(ps.length > 1 ? [['Total', eur2(d.tot)]] : []) : [['', 'nothing']]); })
+      svg.append('rect').attr('x', x(d.p) - x.step() * x.paddingInner() / 2).attr('width', x.step()).attr('y', 0).attr('height', h - 24).style('fill', 'transparent').classed('drill', !!opts.onClick)
+        .on('click', function () { if (opts.onClick) opts.onClick(d.p); })
+        .on('mousemove', function (ev) { var ps = d.parts.filter(function (q) { return q.v > 0; }).reverse(); showTip(ev, opts.title(d.p), (ps.length ? ps.map(function (q) { return [q.c, eur2(q.v), colOf[q.c]]; }).concat(ps.length > 1 ? [['Total', eur2(d.tot)]] : []) : [['', 'nothing']]).concat(opts.onClick ? [HINT] : [])); })
         .on('mouseleave', hideTip);
       if (opts.totals && w > 420 && d.tot > 0) svg.append('text').attr('class', 'lbl mono').attr('x', x(d.p) + x.bandwidth() / 2).attr('y', y(d.tot) - 5).attr('text-anchor', 'middle').text(eur(d.tot));
     });
@@ -1607,7 +1629,8 @@ function demoRecords() {
     var years = Array.from(new Set(a.subs.map(function (r) { return r.year; }))).sort();
     var lastY = +a.kpi.last.slice(0, 4);
     stacked($('c-abo'), 'lg-abo', years.map(String), a.subs, function (r) { return String(r.year); }, function (r) { return r.sub; },
-      { title: function (p) { return p + (+p === lastY ? ' (to date)' : ''); }, xLabel: function (p) { return p; }, centerLabels: true, totals: true });
+      { title: function (p) { return p + (+p === lastY ? ' (to date)' : ''); }, xLabel: function (p) { return p; }, centerLabels: true, totals: true,
+        onClick: function (p) { drill('subscriptions in ' + p, function (q) { return String(q.y) === p && isSpend(q) && KB.isSub(q); }); } });
   }
 
   /* ================= GROCERIES ================= */
@@ -1617,7 +1640,8 @@ function demoRecords() {
     var yms = a.groceries.map(function (r) { return r.ym; }).sort(), first = yms[0], last = yms[yms.length - 1], months = [];
     for (var y = +first.slice(0, 4), m = +first.slice(5, 7); ; m++) { if (m > 12) { m = 1; y++; } var k = y + '-' + (m < 10 ? '0' : '') + m; months.push(k); if (k >= last) break; }
     stacked(el, 'lg-bo', months, a.groceries, function (r) { return r.ym; }, function (r) { return r.plek; },
-      { title: ymLabel, pad: 0.15, maxBar: 30, xLabel: function (p, i) { return p.slice(5, 7) === '01' || i === 0 ? p.slice(0, 4) : ''; } });
+      { title: ymLabel, pad: 0.15, maxBar: 30, xLabel: function (p, i) { return p.slice(5, 7) === '01' || i === 0 ? p.slice(0, 4) : ''; },
+        onClick: function (p) { drill('groceries in ' + ymLabel(p), function (q) { return q.ym === p && q.mc === 'BOODSCH'; }); } });
     table($('tb-bo'), [
       { label: 'Year', get: function (r) { return String(r.year); } },
       { label: 'Total', get: function (r) { return eur(r.total); } },
@@ -1625,7 +1649,7 @@ function demoRecords() {
       { label: 'Per such month', get: function (r) { return eur(r.perActive); } },
       { label: 'Months in Europe', hide: true, get: function (r) { return r.europeMonths === null ? '—' : F.n1.format(r.europeMonths); } },
       { label: 'Per month in Europe', get: function (r) { return r.perEurope === null ? '—' : eur(r.perEurope); } }
-    ], a.groceriesYear);
+    ], a.groceriesYear, { onRow: function (r) { drill('groceries in ' + r.year, function (q) { return q.y === r.year && q.mc === 'BOODSCH'; }); } });
   }
 
   /* ================= ACCOUNTS ================= */
@@ -1691,7 +1715,7 @@ function demoRecords() {
       { label: 'Balance now', get: function (r) { return eur2(r.bal); } },
       { label: 'Highest ever', hide: true, get: function (r) { return eur(r.max); } },
       { label: 'Last row', get: function (r) { return dnl(r.last); } }
-    ], a.saldiNow);
+    ], a.saldiNow, { onRow: function (r) { drill('every row on ' + r.name, function (q) { return KB.sourceLabel(q.source || '(empty)') === r.name; }); } });
   }
   function drawKruis(a) {
     var el = $('tb-kruis'); el.textContent = '';
@@ -1705,7 +1729,7 @@ function demoRecords() {
     table(wrap, [
       { label: 'Month', get: function (k) { return ymLabel(k.ym); } },
       { label: 'TRANSFER sum', get: function (k) { return eur2(k.sum); } }
-    ], off, { emptyMsg: 'Every month nets to zero.' });
+    ], off, { emptyMsg: 'Every month nets to zero.', onRow: function (k) { drill('TRANSFER rows in ' + ymLabel(k.ym), function (q) { return q.ym === k.ym && q.ie === 'KRUIS'; }); } });
   }
 
   /* ================= SUNBURST ================= */
@@ -1750,6 +1774,8 @@ function demoRecords() {
       if (j < arr.length - 1) { var b = document.createElement('button'); b.type = 'button'; b.textContent = n.data.name; b.addEventListener('click', function () { state.sbPath = n.ancestors().reverse().slice(1).map(function (q) { return q.data.name; }); drawSunburst(a); }); cr.appendChild(b); }
       else { var sp = document.createElement('span'); sp.textContent = n.data.name + ': ' + unit(n.value); cr.appendChild(sp); }
     });
+    var sb = document.createElement('button'); sb.type = 'button'; sb.textContent = 'show these rows'; sb.style.marginLeft = '10px';
+    sb.addEventListener('click', function () { sbDrill(state.sbPath.slice()); }); cr.appendChild(sb);
     el.textContent = '';
     if (!focus.value) { empty(el); return; }
     var size = Math.min(680, Math.max(280, el.clientWidth || 600));
@@ -1766,8 +1792,13 @@ function demoRecords() {
     var nodes = sub.descendants().filter(function (d) { return d.depth > 0 && d.depth <= rings && d.x1 - d.x0 > 0.001; });
     svg.append('g').selectAll('path').data(nodes).join('path').attr('d', arc).style('fill', function (d) { return d.col; }).style('fill-opacity', function (d) { return [0, 0.9, 0.68, 0.48, 0.32][d.depth] || 0.3; })
       .style('cursor', function (d) { return d.children ? 'pointer' : 'default'; })
-      .on('click', function (ev, d) { if (!d.children) return; hideTip(); state.sbPath = state.sbPath.concat(d.ancestors().reverse().slice(1).map(function (q) { return q.data.name; })); drawSunburst(a); })
-      .on('mousemove', function (ev, d) { showTip(ev, d.ancestors().reverse().slice(1).map(function (q) { return q.data.name; }).join(' › '), [['', unit(d.value), d.col], ['', F.p1.format(d.value / (d.parent ? d.parent.value : sub.value)) + ' of ' + (d.parent && d.parent.depth ? d.parent.data.name : focus.data.name)]]); })
+      .style('cursor', 'pointer')
+      .on('click', function (ev, d) {
+        var rel = d.ancestors().reverse().slice(1).map(function (q) { return q.data.name; });
+        if (!d.children) { sbDrill(state.sbPath.concat(rel)); return; }
+        hideTip(); state.sbPath = state.sbPath.concat(rel); drawSunburst(a);
+      })
+      .on('mousemove', function (ev, d) { showTip(ev, d.ancestors().reverse().slice(1).map(function (q) { return q.data.name; }).join(' › '), [['', unit(d.value), d.col], ['', F.p1.format(d.value / (d.parent ? d.parent.value : sub.value)) + ' of ' + (d.parent && d.parent.depth ? d.parent.data.name : focus.data.name)], ['', d.children ? 'Click to zoom in' : 'Click to see the rows']]); })
       .on('mouseleave', hideTip);
     svg.append('g').attr('pointer-events', 'none').selectAll('text')
       .data(nodes.filter(function (d) { return (d.x1 - d.x0) * ((d.y0 + d.y1) / 2) * rw > 14; })).join('text').attr('class', 'lbl').attr('text-anchor', 'middle').attr('dy', '0.32em')
@@ -1778,6 +1809,16 @@ function demoRecords() {
     c.append('text').attr('class', 'lbl').attr('text-anchor', 'middle').attr('dy', '-0.3em').text(focus.data.name.length > 18 ? focus.data.name.slice(0, 17) + '…' : focus.data.name);
     c.append('text').attr('class', 'lbl mono').attr('text-anchor', 'middle').attr('dy', '1.2em').style('font-size', '15px').text(state.sbMode === 'totaal' ? eur(focus.value) : eur(focus.value) + '/mo');
     if (focus.parent) c.append('text').attr('text-anchor', 'middle').attr('dy', '2.8em').text('back');
+  }
+  function sbDrill(path) {
+    var yr = state.sbYear;
+    drill('sunburst: ' + (path.length ? path.join(' › ') : 'all spending') + (yr && yr !== 'alle' ? ' in ' + yr : ''), function (r) {
+      if (!isSpend(r)) return false;
+      if (yr && yr !== 'alle' && String(r.y) !== yr) return false;
+      var lvl = [KB.ieLabelOf(r.ie), r.mcShow || r.mc, r.catShow || r.cat || '(no category)', KB.sbCodeOf(r) || '(no code)'];
+      for (var i = 0; i < path.length; i++) { if (path[i] !== lvl[i]) return false; }
+      return true;
+    });
   }
   function drawMpy(a) {
     table($('tb-mpy'), [
@@ -1878,7 +1919,7 @@ function demoRecords() {
   }
   function drawRente(a) {
     var lastY = +a.kpi.last.slice(0, 4);
-    bars($('c-rente'), a.interest.map(function (r) { return { k: String(r.year), v: r.eur, faded: r.year === lastY, tipTitle: r.year + (r.year === lastY ? ' (to date)' : '') }; }), { fmt: eur, tipFmt: eur2, color: 'var(--accent)', valueLabels: true });
+    bars($('c-rente'), a.interest.map(function (r) { return { k: String(r.year), v: r.eur, faded: r.year === lastY, tipTitle: r.year + (r.year === lastY ? ' (to date)' : '') }; }), { fmt: eur, tipFmt: eur2, color: 'var(--accent)', valueLabels: true, onClick: function (r) { drill('interest in ' + r.k, function (q) { return String(q.y) === r.k && q.mc === 'RENTE'; }); } });
   }
   function drawWinkels(a) {
     var mx = d3.max(a.merchants, function (r) { return r.eur; }) || 1;
@@ -2230,7 +2271,10 @@ function demoRecords() {
     var line = function (rk, labelNode, cls) {
       var tr = tb.insertRow(); if (cls) tr.className = cls;
       var c0 = tr.insertCell(); c0.className = 'rh'; if (labelNode instanceof Node) c0.appendChild(labelNode); else c0.textContent = labelNode;
-      cols.forEach(function (c) { var v = pvValue(B, rk, c.ck), td = tr.insertCell(); td.textContent = pvFmt(v); if (c.sub || c.grand) td.classList.add('sub'); if (v !== null && v < -0.004 && P.val !== 'count') td.classList.add('neg'); });
+      cols.forEach(function (c) {
+        var v = pvValue(B, rk, c.ck), td = tr.insertCell(); td.textContent = pvFmt(v); if (c.sub || c.grand) td.classList.add('sub'); if (v !== null && v < -0.004 && P.val !== 'count') td.classList.add('neg');
+        if (v !== null) { td.classList.add('click'); td.title = 'Click to see the rows'; td.addEventListener('click', function () { pvDrill(B, rk, c.ck); }); }
+      });
     };
     B.rOuter.forEach(function (o) {
       var lab = pvLabel(B.rowsF[0], o), open = P.openR.has(o);
@@ -2240,6 +2284,22 @@ function demoRecords() {
     });
     line('T', 'Grand total', 'gt');
     el.textContent = ''; el.appendChild(t);
+  }
+  function pvDrill(B, rk, ck) {
+    var P = state.pv, inc = PV_INC[P.inc], parts = [], tests = [];
+    var take = function (key, fields) {
+      if (key === 'T') return;
+      var p = key.split('\u0001'); p.shift();
+      p.forEach(function (val, i) { var f = fields[i]; tests.push(function (r) { return PV_FIELDS[f].get(r) === val; }); parts.push(PV_FIELDS[f].label.toLowerCase() + ' ' + pvLabel(f, val)); });
+    };
+    take(rk, B.rowsF); take(ck, B.colsF);
+    if (P.year !== 'all') parts.push('year ' + P.year);
+    var incLab = { all: '', inout: 'income and spending', out: 'spending', asia: 'Asia', transfer: 'transfers' }[P.inc];
+    drill('pivot: ' + (parts.length ? parts.join(' · ') : 'all rows') + (incLab ? ' (' + incLab + ')' : ''), function (r) {
+      if (!inc(r) || (P.year !== 'all' && String(r.y) !== P.year)) return false;
+      for (var i = 0; i < tests.length; i++) if (!tests[i](r)) return false;
+      return true;
+    });
   }
   function tableToTsv(el) {
     var t = el.querySelector('table'); if (!t) return '';
@@ -2390,26 +2450,29 @@ function demoRecords() {
     var h = t.createTHead().insertRow(), c0 = document.createElement('th'); c0.className = 'rh'; c0.textContent = perDay ? '€ per day' : '€ in total'; h.appendChild(c0);
     allCols.forEach(function (c) { var x = document.createElement('th'); x.scope = 'col'; x.textContent = c.p.name; if (c.total) x.className = 'sub'; h.appendChild(x); });
     var tb = t.createTBody();
-    var row = function (label, fn, cls, heat) {
+    var inCol = function (c, q) { return c.total ? cols.some(function (k) { return q.t >= k.a && q.t <= k.b; }) : (q.t >= c.a && q.t <= c.b); };
+    var isLiving = function (q) { return q.ie.indexOf('UIT_AZ') === 0 && ['AZIE_DAGELIJKS', 'AZIE', 'AZIE_DIV'].indexOf(q.mc) >= 0; };
+    var row = function (label, fn, cls, heat, pick) {
       var tr = tb.insertRow(); if (cls) tr.className = cls;
       var r0 = tr.insertCell(); r0.className = 'rh'; r0.textContent = label;
       var vals = allCols.map(function (c) { return fn(c); });
       var mx = heat ? Math.max.apply(null, allCols.map(function (c, i) { return c.total ? 0 : (fin(vals[i].n) ? vals[i].n : 0); })) : 0;
       allCols.forEach(function (c, i) {
         var td = tr.insertCell(), v = vals[i]; td.textContent = v.t; if (c.total) td.classList.add('sub');
+        if (pick && v.t) { td.classList.add('click'); td.title = 'Click to see the rows'; td.addEventListener('click', function () { drill(label.toLowerCase() + ' · ' + (c.total ? 'all shown periods' : c.p.name), function (q) { return isLiving(q) && inCol(c, q) && pick(q); }); }); }
         if (heat && !c.total && mx > 0 && fin(v.n) && v.n > 0) td.style.background = 'color-mix(in srgb, var(--asia) ' + Math.round(6 + 30 * v.n / mx) + '%, var(--panel))';
       });
     };
     row('Dates', function (c) { return { t: c.total ? '' : dnl(c.p.start).replace(/ \d{4}$/, '') + ' – ' + dnl(c.p.end) }; }, 'meta');
     row('Currency', function (c) { return { t: Object.keys(c.curs).sort().join(', ') }; }, 'meta');
     row('Number of days', function (c) { return { t: int(c.days) }; }, 'meta');
-    labels.forEach(function (lab) { row(lab, function (c) { var v = c.lines[lab] || 0; return { t: cell(v, c.days), n: v / c.days }; }, null, true); });
+    labels.forEach(function (lab) { row(lab, function (c) { var v = c.lines[lab] || 0; return { t: cell(v, c.days), n: v / c.days }; }, null, true, function (q) { return pdLine(q) === lab; }); });
     var housing = function (c) { return c.lines.Housing || 0; };
-    row('Daily living', function (c) { return { t: cell(sumL(c), c.days) }; }, 'tot');
-    row('Extras (medical, theft, other)', function (c) { return { t: cell(c.extras, c.days) }; }, 'tot2');
-    row('Total', function (c) { return { t: cell(sumL(c) + c.extras, c.days) }; }, 'tot');
-    row('Total without housing and extras', function (c) { return { t: cell(sumL(c) - housing(c), c.days) }; }, 'tot2');
-    row('Spent in the period', function (c) { return { t: eur(sumL(c) + c.extras) }; }, 'meta');
+    row('Daily living', function (c) { return { t: cell(sumL(c), c.days) }; }, 'tot', false, function (q) { return pdLine(q) !== null; });
+    row('Extras (medical, theft, other)', function (c) { return { t: cell(c.extras, c.days) }; }, 'tot2', false, function (q) { return pdLine(q) === null; });
+    row('Total', function (c) { return { t: cell(sumL(c) + c.extras, c.days) }; }, 'tot', false, function () { return true; });
+    row('Total without housing and extras', function (c) { return { t: cell(sumL(c) - housing(c), c.days) }; }, 'tot2', false, function (q) { var l = pdLine(q); return l !== null && l !== 'Housing'; });
+    row('Spent in the period', function (c) { return { t: eur(sumL(c) + c.extras) }; }, 'meta', false, function () { return true; });
     el.textContent = ''; el.appendChild(t);
     $('pd-note').textContent = (P.custom ? 'Using your own list of periods. ' : 'Periods made automatically. ') +
       (outsideN ? int(outsideN) + (outsideN === 1 ? ' Asia row (' : ' Asia rows (') + eur(outside) + (outsideN === 1 ? ') falls' : ') fall') + ' outside every period, for example rent paid before arrival or a stopover on the way.' : 'Every Asia row falls inside a period.');
@@ -2459,9 +2522,10 @@ function demoRecords() {
     { k: 'cur', label: 'currency', get: function (r) { return /^[A-Z]{3}$/.test(r.cur) ? r.cur : ''; }, show: function (r) { return /^[A-Z]{3}$/.test(r.cur) ? r.cur : ''; }, l: true },
     { k: 'rate', label: 'rate', get: function (r) { return fin(r.rate) ? r.rate : null; }, show: function (r) { return fin(r.rate) ? (Math.round(r.rate * 10000) / 10000).toString() : ''; }, num: true }
   ];
-  state.en = { f: {}, q: '', min: '', max: '', sort: 'd', dir: -1, shown: EN_PAGE, list: [] };
+  state.en = { f: {}, q: '', min: '', max: '', sort: 'd', dir: -1, shown: EN_PAGE, list: [], extra: null, back: null };
   function enMatch(r, skip) {
     var E = state.en;
+    if (E.extra && !E.extra.fn(r)) return false;
     for (var k in E.f) { if (k !== skip && E.f[k] && EN_F[k].get(r) !== E.f[k]) return false; }
     if (E.q) {
       var hay = ((r.desc || '') + ' ' + (r.source || '') + ' ' + (r.catShow || r.cat || '') + ' ' + r.amount.toFixed(2) + ' ' + (r.id || '')).toLowerCase();
@@ -2504,6 +2568,8 @@ function demoRecords() {
     enOptions();
     $('en-q').value = E.q; $('en-min').value = E.min; $('en-max').value = E.max;
     var list = enSorted(); E.list = list;
+    $('en-extra').hidden = !E.extra; $('en-extra-label').textContent = E.extra ? E.extra.label : '';
+    $('en-back').hidden = !E.back; if (E.back) $('en-back').textContent = 'Back to ' + E.back.label;
     var tot = list.reduce(function (s, r) { return s + r.amount; }, 0), plus = 0, minus = 0;
     list.forEach(function (r) { if (r.amount > 0) plus += r.amount; else minus += r.amount; });
     $('en-sum').textContent = int(list.length) + ' of ' + int(state.rows.length) + ' rows · in ' + eur2(plus) + ' · out ' + eur2(minus) + ' · net ' + eur2(tot);
@@ -2541,7 +2607,20 @@ function demoRecords() {
   ['en-min', 'en-max'].forEach(function (id) {
     $(id).addEventListener('change', function () { state.en[id === 'en-min' ? 'min' : 'max'] = $(id).value; state.en.shown = EN_PAGE; drawEntries(); });
   });
-  $('en-reset').addEventListener('click', function () { state.en.f = {}; state.en.q = ''; state.en.min = ''; state.en.max = ''; state.en.shown = EN_PAGE; drawEntries(); });
+  $('en-reset').addEventListener('click', function () { state.en.f = {}; state.en.q = ''; state.en.min = ''; state.en.max = ''; state.en.extra = null; state.en.shown = EN_PAGE; drawEntries(); });
+  $('en-extra-off').addEventListener('click', function () { state.en.extra = null; state.en.shown = EN_PAGE; drawEntries(); });
+  $('en-back').addEventListener('click', function () { var b = state.en.back; if (b) showTab(b.tab, true); });
+  var TAB_NAMES = { overzicht: 'Overview', azie: 'Asia', periods: 'Asia per period', lasten: 'Fixed costs', boodschappen: 'Groceries', rekeningen: 'Accounts', pivot: 'Pivot', sunburst: 'Sunburst', curiosa: 'Curiosities' };
+  /* open the Entries tab with exactly the rows behind a number */
+  function drill(label, fn) {
+    var E = state.en, from = state.tab;
+    E.f = {}; E.q = ''; E.min = ''; E.max = ''; E.extra = { label: label, fn: fn }; E.shown = EN_PAGE;
+    E.back = from !== 'entries' && TAB_NAMES[from] ? { tab: from, label: TAB_NAMES[from] } : E.back;
+    hideTip(); showTab('entries', true);
+    try { $('p-entries').scrollIntoView({ block: 'start' }); } catch (e) { /* not important */ }
+  }
+  var HINT = ['', 'Click to see the rows'];
+  var isSpend = function (r) { return r.ie.indexOf('UIT') === 0 || r.ie === 'ONGECAT'; };
   $('en-more').addEventListener('click', function () { state.en.shown += EN_PAGE * 2; drawEntries(); });
   function enTsv() {
     return [EN_COLS.map(function (c) { return c.label; }).join('\t')].concat(state.en.list.map(function (r) {
@@ -2602,7 +2681,7 @@ function demoRecords() {
   function useRecords(records, label, kind, extra) {
     var n = KB.normalize(records);
     var a = KB.analyze(n.rows);
-    state.data = a; state.rows = n.rows; state.kind = kind; state.saldiOn = null; state.sbPath = []; state.sbYear = null; if (state.pv) { state.pv.openR = null; state.pv.openC = new Set(); } if (state.en) { state.en.f = {}; state.en.q = ''; state.en.min = ''; state.en.max = ''; state.en.shown = EN_PAGE; }
+    state.data = a; state.rows = n.rows; state.kind = kind; state.saldiOn = null; state.sbPath = []; state.sbYear = null; if (state.pv) { state.pv.openR = null; state.pv.openC = new Set(); } if (state.en) { state.en.f = {}; state.en.q = ''; state.en.min = ''; state.en.max = ''; state.en.shown = EN_PAGE; state.en.extra = null; state.en.back = null; }
     $('btn-bank-demo').hidden = kind !== 'demo';
     if (state.bankRows) runBank();
     var meta = int(n.rows.length) + ' rows · ' + dnl(a.kpi.first) + ' to ' + dnl(a.kpi.last) + (n.skipped ? ' · ' + int(n.skipped) + ' rows without a date skipped' : '') + (extra ? ' · ' + extra : '');
