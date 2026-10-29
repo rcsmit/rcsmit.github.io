@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- version = "20261028-123846" -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Envelope Melody</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/abcjs@6.7.2/dist/abcjs-basic-min.js"></script>
+<style>
+  :root {
+    --paper: #f7f6f1;
+    --ink: #1f2a44;
+    --pen: #2d3fb0;
+    --muted: #6b7180;
+    --line: #e2e0d6;
+    --hi: #e2553b;
+    --warn: #a35a00;
+    --warnbg: #fff4e0;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Inter, system-ui, sans-serif;
+    line-height: 1.5;
+  }
+  main { max-width: 880px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 {
+    font-family: Caveat, cursive;
+    color: var(--pen);
+    font-size: 2.6rem;
+    margin: 0 0 4px;
+    line-height: 1.1;
+  }
+  .sub { color: var(--muted); margin: 0 0 18px; font-size: .95rem; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  h2 { font-size: 1rem; margin: 0 0 10px; }
+  textarea {
+    width: 100%;
+    min-height: 190px;
+    resize: vertical;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink);
+    background: #fbfaf6;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-top: 12px; }
+  button {
+    font: inherit;
+    font-weight: 600;
+    border: 0;
+    border-radius: 999px;
+    padding: 10px 22px;
+    cursor: pointer;
+    background: var(--pen);
+    color: #fff;
+  }
+  button.secondary { background: #eceaf7; color: var(--pen); padding: 8px 16px; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 3px solid #9aa6f0; outline-offset: 2px;
+  }
+  label { display: inline-flex; align-items: center; gap: 6px; font-size: .92rem; user-select: none; }
+  input[type=range] { width: 120px; accent-color: var(--pen); }
+  input[type=checkbox] { accent-color: var(--pen); width: 16px; height: 16px; }
+  input[type=text], select {
+    font: inherit; font-size: .92rem;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fbfaf6;
+    color: var(--ink);
+  }
+  input[type=text] { width: 200px; }
+  #status { margin-top: 10px; font-size: .88rem; color: var(--muted); }
+  #status.has-warn {
+    color: var(--warn);
+    background: var(--warnbg);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+  #status ul { margin: 4px 0 0; padding-left: 18px; }
+  #score { overflow-x: auto; }
+  #score svg { max-width: 100%; height: auto; }
+  #score .playing { fill: var(--hi); stroke: var(--hi); }
+  details summary { cursor: pointer; font-weight: 600; }
+  .help { font-size: .9rem; }
+  .help table { border-collapse: collapse; width: 100%; margin-top: 8px; }
+  .help td { padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .help td:first-child { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; color: var(--pen); }
+  .note { color: var(--muted); font-size: .88rem; margin: 10px 0 0; }
+  pre {
+    background: #f2f1ec;
+    border-radius: 10px;
+    padding: 12px;
+    overflow-x: auto;
+    font-size: .85rem;
+    margin: 0 0 10px;
+  }
+  #copyMsg { color: var(--muted); font-size: .85rem; margin-left: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Envelope Melody</h1>
+  <p class="sub">Type or change the melody below. The notation and playback update as you type.</p>
+
+  <section class="card">
+    <h2>Melody input</h2>
+    <textarea id="src" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Melody input"></textarea>
+    <div class="row">
+      <label>Title <input id="title" type="text" value="Envelope Melody"></label>
+      <label>Time
+        <select id="meter">
+          <option value="4/4" selected>4/4</option>
+          <option value="3/4">3/4</option>
+          <option value="2/4">2/4</option>
+          <option value="6/8">6/8</option>
+        </select>
+      </label>
+      <label>Transpose
+        <select id="transpose"></select>
+      </label>
+      <button id="reset" class="secondary" type="button">Restore envelope version</button>
+    </div>
+    <div id="status" aria-live="polite"></div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="margin-top:0">
+      <button id="play" type="button">▶ Play</button>
+      <label>Tempo <input id="tempo" type="range" min="50" max="180" value="96"> <span id="tempoVal">96</span></label>
+      <label><input id="chords" type="checkbox" checked> Chords</label>
+      <label><input id="melody" type="checkbox" checked> Melody</label>
+      <label><input id="countin" type="checkbox" checked> Count-in</label>
+      <label><input id="loop" type="checkbox"> Loop</label>
+    </div>
+  </section>
+
+  <section class="card">
+    <div id="score"></div>
+  </section>
+
+  <section class="card help">
+    <details open>
+      <summary>How to write it</summary>
+      <table>
+        <tr><td>e d c</td><td>Note names a–g. Each note goes to the octave closest to the note before it, so <b>c a</b> drops to the A below.</td></tr>
+        <tr><td>c' &nbsp; a,</td><td><b>'</b> jumps an octave higher than that, <b>,</b> an octave lower.</td></tr>
+        <tr><td>c#  &nbsp; e_</td><td><b>#</b> is sharp, <b>_</b> is flat (because a plain <b>b</b> is the note B).</td></tr>
+        <tr><td>c c2 c4 c8</td><td>Length counted in eighth notes: none = eighth, 2 = quarter, 3 = dotted quarter, 4 = half, 8 = whole. <b>c/2</b> = sixteenth.</td></tr>
+        <tr><td>c - - -</td><td>Each <b>-</b> holds the previous note one eighth longer. It can also carry a note over a bar line.</td></tr>
+        <tr><td>z2 &nbsp; r2</td><td>Rest (z or r), with a length in the same way.</td></tr>
+        <tr><td>[C] [G7] [Am]</td><td>Chord, placed where it starts. It keeps sounding until the next chord, even across bars. Also: m, 7, maj7, m7, dim, aug, sus2, sus4, 6, 9, add9, slash chords like [C/E], and [N.C.] for no chord.</td></tr>
+        <tr><td>|</td><td>Bar line. Each line of text becomes one line of notation.</td></tr>
+        <tr><td>Chorus x2:</td><td>A line ending in <b>:</b> starts a section; <b>x2</b> plays it twice.</td></tr>
+        <tr><td>% note</td><td>A line starting with % is a comment and is ignored.</td></tr>
+      </table>
+      <p class="note">Spaces don't matter, so <b>edccc</b> and <b>ed cc c</b> are the same. Bars that are too short or too long get a warning but still play at the length you wrote, so a pickup bar works.</p>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>ABC notation</h2>
+    <pre id="abcText"></pre>
+    <button id="copy" class="secondary" type="button">Copy ABC</button><span id="copyMsg" aria-live="polite"></span>
+    <p class="note">Paste this into an ABC editor such as abcjs.net or EasyABC, or into MuseScore with ABC import, to export MIDI or PDF.</p>
+  </section>
+</main>
+
+<script>
+const version = "20261028-123846";
+
+const DEFAULT_SRC = `Verse:
+[C] ed cc c4 | [G] e2 d2 d2 c2 | [F] c2 c2 [G7] c2 ed | [C] c8
+[C] e2 cc c2 a2 | [G] c2 d4 e2 | [F] c2 c2 [G7] d2 d2 | [C] e8
+Chorus x2:
+[C] e2 e2 c4 | [G] ee d2 d2 c2 | [F] acdd [G7] dedd | [C] c8`;
+
+const STORE_KEY = "envelope-melody-v1";
+
+// ================= Parsing =================
+const PC = { c: 0, d: 2, e: 4, f: 5, g: 7, a: 9, b: 11 };
+
+const QUALITIES = {
+  "": [0, 4, 7], "maj": [0, 4, 7], "M": [0, 4, 7],
+  "m": [0, 3, 7], "min": [0, 3, 7], "-": [0, 3, 7],
+  "7": [0, 4, 7, 10], "dom7": [0, 4, 7, 10],
+  "maj7": [0, 4, 7, 11], "M7": [0, 4, 7, 11], "Δ": [0, 4, 7, 11], "Δ7": [0, 4, 7, 11],
+  "m7": [0, 3, 7, 10], "min7": [0, 3, 7, 10], "-7": [0, 3, 7, 10],
+  "mMaj7": [0, 3, 7, 11], "m(maj7)": [0, 3, 7, 11],
+  "dim": [0, 3, 6], "°": [0, 3, 6], "o": [0, 3, 6],
+  "dim7": [0, 3, 6, 9], "°7": [0, 3, 6, 9], "o7": [0, 3, 6, 9],
+  "m7b5": [0, 3, 6, 10], "ø": [0, 3, 6, 10], "ø7": [0, 3, 6, 10],
+  "aug": [0, 4, 8], "+": [0, 4, 8],
+  "sus": [0, 5, 7], "sus4": [0, 5, 7], "sus2": [0, 2, 7],
+  "7sus4": [0, 5, 7, 10], "7sus": [0, 5, 7, 10],
+  "6": [0, 4, 7, 9], "m6": [0, 3, 7, 9],
+  "9": [0, 4, 7, 10, 14], "m9": [0, 3, 7, 10, 14], "maj9": [0, 4, 7, 11, 14],
+  "add9": [0, 4, 7, 14], "madd9": [0, 3, 7, 14],
+  "5": [0, 7],
+};
+
+function rootPc(letter, acc) {
+  let pc = PC[letter.toLowerCase()];
+  if (acc === "#" || acc === "♯") pc += 1;
+  if (acc === "b" || acc === "♭") pc -= 1;
+  return (pc + 12) % 12;
+}
+
+// Returns { name, pcs: [...], bassPc } or { name, none: true } or null when unreadable.
+function parseChord(raw) {
+  const name = raw.trim();
+  if (/^(n\.?c\.?|-|x)$/i.test(name)) return { name: "N.C.", none: true };
+  const m = name.match(/^([A-Ga-g])([#♯b♭]?)(.*?)(?:\/([A-Ga-g])([#♯b♭]?))?$/);
+  if (!m) return null;
+  const root = rootPc(m[1], m[2]);
+  const qual = m[3];
+  if (!(qual in QUALITIES)) return null;
+  const pcs = QUALITIES[qual].map(i => root + i);
+  const bassPc = m[4] ? rootPc(m[4], m[5]) : root;
+  const label = m[1].toUpperCase() + (m[2] || "") + qual + (m[4] ? "/" + m[4].toUpperCase() + (m[5] || "") : "");
+  return { name: label, pcs, bassPc };
+}
+
+function meterInfo(meter) {
+  switch (meter) {
+    case "3/4": return { barLen: 6, beatLen: 2, beats: 3 };
+    case "2/4": return { barLen: 4, beatLen: 2, beats: 2 };
+    case "6/8": return { barLen: 6, beatLen: 3, beats: 2 };
+    default:    return { barLen: 8, beatLen: 2, beats: 4 };
+  }
+}
+
+const TOKEN_RE = /\[([^\]]*)\]|([a-gA-G])([#♯_♭]?)([',]*)(\d*)(?:\/(\d+))?|([zZrR])(\d*)(?:\/(\d+))?|(-)|(\s+)|(.)/g;
+
+function lengthOf(numStr, denStr) {
+  const num = numStr ? parseInt(numStr, 10) : 1;
+  const den = denStr ? parseInt(denStr, 10) : 1;
+  if (!num || !den) return null;
+  return num / den;
+}
+
+/*
+  Result:
+  {
+    sections: [{ name, repeat, bars: [barIndex...] }],
+    bars: [{ events: [{midi|null, dur, start, flat, tieIn}], chords: [{t, chord}], len, line, measure, startChord }],
+    lineCount, warnings: [string]
+  }
+*/
+function parseSource(src, meter) {
+  const { barLen } = meterInfo(meter);
+  const warnings = [];
+  const bars = [];
+  const sections = [];
+  let section = null;
+  let ref = 60;
+  let lastChord = null;
+  let lastEvent = null; // for '-' and ties across bars
+  let lineIdx = -1;
+
+  const lines = src.split(/\r?\n/);
+  lines.forEach((rawLine, li) => {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("%")) return;
+
+    const head = line.match(/^([^\[\]|:]*?)\s*(?:[x×]\s*(\d+))?\s*:$/i);
+    if (head && !/[\[\]|]/.test(line)) {
+      section = { name: head[1].trim(), repeat: Math.max(1, Math.min(16, parseInt(head[2] || "1", 10))), bars: [] };
+      sections.push(section);
+      return;
+    }
+
+    if (!section) {
+      section = { name: "", repeat: 1, bars: [] };
+      sections.push(section);
+    }
+
+    const segments = line.split("|").map(s => s.trim()).filter(s => s.length);
+    if (!segments.length) return;
+    lineIdx++;
+    let measureInLine = 0;
+
+    segments.forEach(seg => {
+      const bar = { events: [], chords: [], len: 0, line: lineIdx, measure: measureInLine, startChord: lastChord, srcLine: li + 1 };
+      let t = 0;
+      TOKEN_RE.lastIndex = 0;
+      let m;
+      while ((m = TOKEN_RE.exec(seg)) !== null) {
+        if (m[11] !== undefined) continue; // whitespace
+        if (m[1] !== undefined) {
+          const ch = parseChord(m[1]);
+          if (!ch) {
+            warnings.push(`Line ${li + 1}: chord “${m[1]}” not recognised; ignored.`);
+          } else {
+            bar.chords.push({ t, chord: ch });
+            lastChord = ch;
+          }
+        } else if (m[2] !== undefined) {
+          const dur = lengthOf(m[5], m[6]);
+          if (dur === null) { warnings.push(`Line ${li + 1}: bad length on “${m[0]}”.`); continue; }
+          let pc = PC[m[2].toLowerCase()];
+          const acc = m[3];
+          if (acc === "#" || acc === "♯") pc += 1;
+          if (acc === "_" || acc === "♭") pc -= 1;
+          // nearest octave to the previous note
+          let best = null;
+          for (let oct = 1; oct <= 8; oct++) {
+            const cand = oct * 12 + pc;
+            const dist = Math.abs(cand - ref);
+            if (best === null || dist < best.dist || (dist === best.dist && cand > best.midi)) best = { midi: cand, dist };
+          }
+          let midi = best.midi;
+          for (const ch of m[4]) midi += ch === "'" ? 12 : -12;
+          midi = Math.max(24, Math.min(108, midi));
+          ref = midi;
+          const ev = { midi, dur, start: t, flat: acc === "_" || acc === "♭" };
+          bar.events.push(ev);
+          lastEvent = ev;
+          t += dur;
+        } else if (m[7] !== undefined) {
+          const dur = lengthOf(m[8], m[9]);
+          if (dur === null) { warnings.push(`Line ${li + 1}: bad rest length “${m[0]}”.`); continue; }
+          const ev = { midi: null, dur, start: t };
+          bar.events.push(ev);
+          lastEvent = ev;
+          t += dur;
+        } else if (m[10] !== undefined) {
+          if (bar.events.length) {
+            bar.events[bar.events.length - 1].dur += 1;
+          } else if (lastEvent) {
+            // Hold carried over the bar line
+            const ev = { midi: lastEvent.midi, dur: 1, start: t, flat: lastEvent.flat, tieIn: lastEvent.midi !== null };
+            if (ev.tieIn) lastEvent.tieOut = true;
+            bar.events.push(ev);
+            lastEvent = ev;
+          } else {
+            warnings.push(`Line ${li + 1}: “-” with no note before it; ignored.`);
+            continue;
+          }
+          t += 1;
+        } else if (m[12] !== undefined) {
+          warnings.push(`Line ${li + 1}: “${m[12]}” not understood; ignored.`);
+        }
+      }
+      // '-' extends after t was computed for earlier events: recompute starts
+      let tt = 0;
+      bar.events.forEach(ev => { ev.start = tt; tt += ev.dur; });
+      bar.len = tt;
+      if (!bar.events.length) {
+        if (bar.chords.length) {
+          // chord-only bar: fill with a full-bar rest
+          bar.events.push({ midi: null, dur: barLen, start: 0 });
+          bar.len = barLen;
+        } else {
+          return;
+        }
+      }
+      if (Math.abs(bar.len - barLen) > 1e-9) {
+        const fmt = x => (Math.round(x * 100) / 100).toString();
+        warnings.push(`Bar ${bars.length + 1} (line ${li + 1}) is ${fmt(bar.len)} eighths long; ${meter} needs ${barLen}.`);
+      }
+      // Keep chords inside the bar
+      bar.chords = bar.chords.map(c => ({ t: Math.min(c.t, Math.max(0, bar.len - 1e-6)), chord: c.chord }));
+      bars.push(bar);
+      section.bars.push(bars.length - 1);
+      measureInLine++;
+    });
+  });
+
+  return { sections: sections.filter(s => s.bars.length), bars, lineCount: lineIdx + 1, warnings };
+}
+
+// ================= ABC generation =================
+const SHARP_SPELL = [["C",0],["C",1],["D",0],["D",1],["E",0],["F",0],["F",1],["G",0],["G",1],["A",0],["A",1],["B",0]];
+const FLAT_SPELL  = [["C",0],["D",-1],["D",0],["E",-1],["E",0],["F",0],["G",-1],["G",0],["A",-1],["A",0],["B",-1],["B",0]];
+
+function abcPitch(midi, flat, accState) {
+  const pc = ((midi % 12) + 12) % 12;
+  const [letter, acc] = (flat ? FLAT_SPELL : SHARP_SPELL)[pc];
+  const oct = Math.floor(midi / 12) - 1;
+  const key = letter + oct;
+  const cur = accState[key] || 0;
+  let prefix = "";
+  if (acc !== cur) {
+    prefix = acc === 1 ? "^" : acc === -1 ? "_" : "=";
+    accState[key] = acc;
+  }
+  let s;
+  if (oct >= 5) s = letter.toLowerCase() + "'".repeat(oct - 5);
+  else s = letter + ",".repeat(Math.max(0, 4 - oct));
+  return prefix + s;
+}
+
+function durStr(d) {
+  for (const den of [1, 2, 4, 8, 16]) {
+    const num = d * den;
+    if (Math.abs(num - Math.round(num)) < 1e-9) {
+      const n = Math.round(num);
+      if (den === 1) return n === 1 ? "" : String(n);
+      return (n === 1 ? "" : String(n)) + "/" + den;
+    }
+  }
+  return "";
+}
+
+const PIECES = [8, 6, 4, 3, 2, 1.5, 1, 0.75, 0.5, 0.25];
+function splitDur(d) {
+  const out = [];
+  let rest = d;
+  let guard = 0;
+  while (rest > 1e-9 && guard++ < 32) {
+    const p = PIECES.find(x => x <= rest + 1e-9);
+    if (p === undefined) { out.push(rest); break; }
+    out.push(p);
+    rest -= p;
+  }
+  return out;
+}
+
+function escapeAbcText(s) { return s.replace(/[\r\n"]/g, " ").trim(); }
+
+function buildAbc(parsed, opts) {
+  const { beatLen } = meterInfo(opts.meter);
+  const head = [
+    "X:1",
+    "T:" + (escapeAbcText(opts.title) || "Untitled"),
+    "M:" + opts.meter,
+    "L:1/8",
+    "Q:1/4=" + opts.tempo,
+    "K:C",
+  ];
+  const body = [];
+  const barToSection = {};
+  parsed.sections.forEach(s => { if (s.bars.length) barToSection[s.bars[0]] = s; });
+
+  let row = [];
+  let rowLine = -1;
+  const flushRow = () => { if (row.length) body.push(row.join(" | ") + " |"); row = []; };
+
+  parsed.bars.forEach((bar, bi) => {
+    if (bar.line !== rowLine) { flushRow(); rowLine = bar.line; }
+    const sec = barToSection[bi];
+    if (sec && sec.name) {
+      flushRow();
+      body.push("P:" + escapeAbcText(sec.name) + (sec.repeat > 1 ? " ×" + sec.repeat : ""));
+    }
+    const accState = {};
+    const chordQueue = bar.chords.slice().sort((a, b) => a.t - b.t);
+    let ci = 0;
+    let out = "";
+    let prev = null; // { dur, start }
+    bar.events.forEach((ev, ei) => {
+      const pieces = splitDur(ev.dur);
+      let t = ev.start;
+      pieces.forEach((p, pi) => {
+        let tok = "";
+        const labels = [];
+        while (ci < chordQueue.length && chordQueue[ci].t <= t + 1e-9) { labels.push(chordQueue[ci].chord.name); ci++; }
+        if (labels.length) tok += '"' + escapeAbcText(labels[labels.length - 1]) + '"';
+        if (ev.midi === null) {
+          tok += "z" + durStr(p);
+        } else {
+          tok += abcPitch(ev.midi, ev.flat, accState) + durStr(p);
+          const last = pi === pieces.length - 1;
+          if (!last || (last && ev.tieOut && ei === bar.events.length - 1)) tok += "-";
+        }
+        const beam = prev && prev.dur < 2 && p < 2 &&
+          Math.floor((prev.start + 1e-9) / beatLen) === Math.floor((t + 1e-9) / beatLen) &&
+          t + p <= (Math.floor((t + 1e-9) / beatLen) + 1) * beatLen + 1e-9 &&
+          ev.midi !== null && prev.note;
+        out += (out && !beam ? " " : "") + tok;
+        prev = { dur: p, start: t, note: ev.midi !== null };
+        t += p;
+      });
+    });
+    row.push(out);
+  });
+  flushRow();
+  if (body.length) {
+    const lastIdx = body.length - 1;
+    body[lastIdx] = body[lastIdx].replace(/\|$/, "|]");
+  }
+  return head.concat(body).join("\n");
+}
+
+// ================= Rendering =================
+const $ = id => document.getElementById(id);
+let parsed = null;
+let abc = "";
+let renderOk = false;
+
+function setStatus(p) {
+  const el = $("status");
+  if (!p.bars.length) {
+    el.className = "has-warn";
+    el.textContent = "No notes found yet. Type note names like: [C] ed cc c4 | [G] e2 d2 d2 c2";
+    return;
+  }
+  const total = p.sections.reduce((n, s) => n + s.bars.length * s.repeat, 0);
+  const summary = `${p.bars.length} bar${p.bars.length === 1 ? "" : "s"} written, ${total} played.`;
+  if (p.warnings.length) {
+    el.className = "has-warn";
+    el.innerHTML = "";
+    const s = document.createElement("div");
+    s.textContent = summary;
+    const ul = document.createElement("ul");
+    p.warnings.slice(0, 12).forEach(w => { const li = document.createElement("li"); li.textContent = w; ul.appendChild(li); });
+    if (p.warnings.length > 12) { const li = document.createElement("li"); li.textContent = `…and ${p.warnings.length - 12} more.`; ul.appendChild(li); }
+    el.append(s, ul);
+  } else {
+    el.className = "";
+    el.textContent = summary + " Everything reads fine.";
+  }
+}
+
+function update() {
+  const meter = $("meter").value;
+  parsed = parseSource($("src").value, meter);
+  abc = buildAbc(parsed, { meter, title: $("title").value, tempo: $("tempo").value });
+  $("abcText").textContent = abc;
+  setStatus(parsed);
+  renderOk = false;
+  if (!parsed.bars.length) { $("score").innerHTML = ""; return; }
+  try {
+    ABCJS.renderAbc("score", abc, {
+      responsive: "resize",
+      add_classes: true,
+      paddingtop: 10,
+      paddingbottom: 10,
+      staffwidth: 760,
+      visualTranspose: Number($("transpose").value),
+    });
+    renderOk = true;
+  } catch (e) {
+    $("score").textContent = "The notation could not be drawn; playback still works.";
+  }
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({
+      src: $("src").value, title: $("title").value, meter, tempo: $("tempo").value, transpose: $("transpose").value,
+    }));
+  } catch (e) { /* storage unavailable */ }
+}
+
+let debounce = null;
+function scheduleUpdate() {
+  clearTimeout(debounce);
+  debounce = setTimeout(update, 250);
+}
+
+function barElements(bar) {
+  if (!renderOk) return [];
+  return Array.from(document.querySelectorAll(
+    `#score .abcjs-note.abcjs-l${bar.line}.abcjs-m${bar.measure}, #score .abcjs-rest.abcjs-l${bar.line}.abcjs-m${bar.measure}, #score .abcjs-chord.abcjs-l${bar.line}.abcjs-m${bar.measure}`
+  ));
+}
+
+// ================= Audio =================
+let ctx = null, master = null;
+let playing = false, timers = [], sources = [];
+
+function ensureAudio() {
+  if (!ctx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    ctx = new AC();
+    master = ctx.createGain();
+    master.gain.value = 0.8;
+    const comp = ctx.createDynamicsCompressor();
+    master.connect(comp).connect(ctx.destination);
+  }
+  if (ctx.state === "suspended") ctx.resume();
+}
+
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+
+function voice(freq, start, dur, opts) {
+  const { type = "triangle", gain = 0.2, attack = 0.01, release = 0.12, detune = 0, filter = null } = opts;
+  const o = ctx.createOscillator();
+  o.type = type;
+  o.frequency.value = freq;
+  o.detune.value = detune;
+  const g = ctx.createGain();
+  const rel = Math.min(release, dur * 0.5);
+  g.gain.setValueAtTime(0, start);
+  g.gain.linearRampToValueAtTime(gain, start + Math.min(attack, dur * 0.3));
+  g.gain.setValueAtTime(gain, Math.max(start + attack, start + dur - rel));
+  g.gain.linearRampToValueAtTime(0, start + dur);
+  let node = o;
+  if (filter) {
+    const f = ctx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.value = filter;
+    o.connect(f);
+    node = f;
+  }
+  node.connect(g).connect(master);
+  o.start(start);
+  o.stop(start + dur + 0.05);
+  sources.push(o);
+}
+
+function melodyNote(midi, start, dur) {
+  const f = mtof(midi + 12);
+  voice(f, start, dur * 0.95, { type: "triangle", gain: 0.22, attack: 0.012, release: 0.08 });
+  voice(f, start, dur * 0.95, { type: "sine", gain: 0.12, attack: 0.012, release: 0.08, detune: 4 });
+}
+
+function chordHit(chord, start, dur, tr) {
+  if (!chord || chord.none) return;
+  const root = chord.pcs[0] % 12;
+  const base = 48 + ((root + tr) % 12 + 12) % 12;
+  chord.pcs.forEach(pc => {
+    let m = base + (pc - chord.pcs[0]);
+    if (m > 67) m -= 12;
+    voice(mtof(m), start, dur * 0.97, { type: "sawtooth", gain: 0.04, attack: 0.05, release: 0.2, filter: 1400 });
+  });
+  let bass = 36 + ((chord.bassPc + tr) % 12 + 12) % 12;
+  if (bass > 40) bass -= 12;
+  voice(mtof(bass), start, dur * 0.9, { type: "triangle", gain: 0.22, attack: 0.01, release: 0.1 });
+}
+
+function click(start, accent) {
+  const o = ctx.createOscillator();
+  o.frequency.value = accent ? 1500 : 1000;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.25, start);
+  g.gain.exponentialRampToValueAtTime(0.001, start + 0.06);
+  o.connect(g).connect(master);
+  o.start(start);
+  o.stop(start + 0.07);
+  sources.push(o);
+}
+
+function playOrder(p) {
+  const order = [];
+  p.sections.forEach(s => { for (let r = 0; r < s.repeat; r++) s.bars.forEach(b => order.push(b)); });
+  return order;
+}
+
+function clearHighlight() {
+  document.querySelectorAll("#score .playing").forEach(el => el.classList.remove("playing"));
+}
+
+function stop() {
+  playing = false;
+  timers.forEach(clearTimeout);
+  timers = [];
+  sources.forEach(s => { try { s.stop(); } catch (e) {} });
+  sources = [];
+  clearHighlight();
+  $("play").textContent = "▶ Play";
+}
+
+function play() {
+  clearTimeout(debounce);
+  update();
+  if (!parsed || !parsed.bars.length) return;
+  ensureAudio();
+  playing = true;
+  $("play").textContent = "■ Stop";
+
+  const { beatLen, beats } = meterInfo($("meter").value);
+  const bpm = Number($("tempo").value);
+  const eighth = 60 / bpm / 2;
+  const tr = Number($("transpose").value);
+  const useMelody = $("melody").checked;
+  const useChords = $("chords").checked;
+  let t = ctx.currentTime + 0.1;
+
+  if ($("countin").checked) {
+    for (let b = 0; b < beats; b++) click(t + b * beatLen * eighth, b === 0);
+    t += beats * beatLen * eighth;
+  }
+
+  const t0 = t;
+  const wall0 = performance.now() + (t0 - ctx.currentTime) * 1000;
+  const order = playOrder(parsed);
+  let barStart = t0;
+  let pendingTie = null; // { midi, start, dur }
+
+  order.forEach((bi, oi) => {
+    const bar = parsed.bars[bi];
+    const barDur = bar.len * eighth;
+
+    if (useChords) {
+      const segs = [];
+      const sorted = bar.chords.slice().sort((a, b) => a.t - b.t);
+      let current = bar.startChord;
+      let segStart = 0;
+      sorted.forEach(c => {
+        if (c.t > segStart + 1e-9) segs.push([current, segStart, c.t]);
+        current = c.chord;
+        segStart = c.t;
+      });
+      segs.push([current, segStart, bar.len]);
+      segs.forEach(([ch, a, b]) => { if (b > a) chordHit(ch, barStart + a * eighth, (b - a) * eighth, tr); });
+    }
+
+    if (useMelody) {
+      bar.events.forEach((ev, ei) => {
+        if (ev.midi === null) { if (pendingTie) { melodyNote(pendingTie.midi, pendingTie.start, pendingTie.dur); pendingTie = null; } return; }
+        const st = barStart + ev.start * eighth;
+        const d = ev.dur * eighth;
+        const midi = ev.midi + tr;
+        if (ev.tieIn && pendingTie && pendingTie.midi === midi && order[oi - 1] === bi - 1) {
+          pendingTie.dur += d;
+        } else {
+          if (pendingTie) melodyNote(pendingTie.midi, pendingTie.start, pendingTie.dur);
+          pendingTie = { midi, start: st, dur: d };
+        }
+        if (!(ev.tieOut && ei === bar.events.length - 1)) {
+          melodyNote(pendingTie.midi, pendingTie.start, pendingTie.dur);
+          pendingTie = null;
+        }
+      });
+    }
+
+    const delay = wall0 + (barStart - t0) * 1000 - performance.now();
+    timers.push(setTimeout(() => {
+      clearHighlight();
+      barElements(bar).forEach(el => el.classList.add("playing"));
+    }, Math.max(0, delay)));
+    barStart += barDur;
+  });
+  if (pendingTie) { melodyNote(pendingTie.midi, pendingTie.start, pendingTie.dur); pendingTie = null; }
+
+  const endDelay = wall0 + (barStart - t0) * 1000 - performance.now();
+  timers.push(setTimeout(() => {
+    sources = [];
+    timers = [];
+    clearHighlight();
+    if (playing && $("loop").checked) play(); else stop();
+  }, Math.max(0, endDelay)));
+}
+
+// ================= Wiring =================
+(function init() {
+  const trSel = $("transpose");
+  for (let i = -12; i <= 12; i++) {
+    const o = document.createElement("option");
+    o.value = String(i);
+    o.textContent = i === 0 ? "0 (C)" : (i > 0 ? "+" + i : String(i));
+    if (i === 0) o.selected = true;
+    trSel.appendChild(o);
+  }
+
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || "null"); } catch (e) { saved = null; }
+  $("src").value = saved && typeof saved.src === "string" ? saved.src : DEFAULT_SRC;
+  if (saved) {
+    if (typeof saved.title === "string") $("title").value = saved.title;
+    if (["4/4", "3/4", "2/4", "6/8"].includes(saved.meter)) $("meter").value = saved.meter;
+    if (saved.tempo) { $("tempo").value = saved.tempo; }
+    if (saved.transpose !== undefined && saved.transpose !== null) $("transpose").value = String(saved.transpose);
+  }
+  $("tempoVal").textContent = $("tempo").value;
+
+  $("src").addEventListener("input", scheduleUpdate);
+  $("title").addEventListener("input", scheduleUpdate);
+  $("meter").addEventListener("change", update);
+  $("transpose").addEventListener("change", update);
+  $("tempo").addEventListener("input", () => { $("tempoVal").textContent = $("tempo").value; scheduleUpdate(); });
+
+  $("reset").addEventListener("click", () => {
+    $("src").value = DEFAULT_SRC;
+    $("title").value = "Envelope Melody";
+    $("meter").value = "4/4";
+    $("transpose").value = "0";
+    $("tempo").value = "96";
+    $("tempoVal").textContent = "96";
+    update();
+  });
+
+  $("play").addEventListener("click", () => {
+    try { if (playing) stop(); else play(); } catch (e) { stop(); }
+  });
+
+  $("copy").addEventListener("click", async () => {
+    const msg = $("copyMsg");
+    try {
+      await navigator.clipboard.writeText(abc);
+      msg.textContent = "Copied.";
+    } catch (e) {
+      const range = document.createRange();
+      range.selectNodeContents($("abcText"));
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      msg.textContent = "Selected; copy it manually.";
+    }
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>
