@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <title>Fabulous Village — Every Pitch, One Route</title>
-<!-- version = "20261029-134500" -->
+<!-- version = "20261029-203000" -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
@@ -228,7 +228,7 @@ input[type=range]{width:100%;accent-color:var(--ink);}
 <script src="data.js"></script>
 <script src="map-svg.js"></script>
 <script>
-const version = "20261029-134500";
+const version = "20261029-203000";
 
 // ======================================================================
 // Constants
@@ -283,23 +283,25 @@ let exporting = false, cancelExport = false;
 // Graph
 // ======================================================================
 function dist(a,b){ const dx=a[0]-b[0], dy=a[1]-b[1]; return Math.sqrt(dx*dx+dy*dy); }
+
+// Every usable edge gets an id; adjacency lists carry that id so paths can be
+// rebuilt edge by edge (parallel edges stay distinct).
+const EDGE_LIST = [];
 const adj = {};
 for (const k in NODES) adj[k] = [];
-const edgeStreet = {};
 EDGES.forEach(([u,v,street])=>{
-  if (!NODES[u] || !NODES[v]) return;
-  const w = dist(NODES[u], NODES[v]);
-  adj[u].push({to:v, w});
-  adj[v].push({to:u, w});
+  if (!NODES[u] || !NODES[v] || u === v) return;
   const nm = String(street || '').trim();
   const clean = /^[-–—_.\s]*$/.test(nm) ? '' : nm;     // "-" placeholders count as unnamed
-  edgeStreet[u+'|'+v] = clean;
-  edgeStreet[v+'|'+u] = clean;
+  const e = {id:EDGE_LIST.length, u, v, w:dist(NODES[u], NODES[v]), street:clean};
+  EDGE_LIST.push(e);
+  adj[u].push({to:v, w:e.w, id:e.id});
+  adj[v].push({to:u, w:e.w, id:e.id});
 });
 
-// Binary-heap Dijkstra from one node; returns distance and predecessor maps.
+// Binary-heap Dijkstra from one node; returns distances and the edge used to reach each node.
 function dijkstra(start){
-  const d = {}, prev = {}, done = {};
+  const d = {}, prevEdge = {}, done = {};
   for (const k in NODES) d[k] = Infinity;
   d[start] = 0;
   const heap = [[0,start]];
@@ -333,119 +335,69 @@ function dijkstra(start){
     done[u] = true;
     for (const e of adj[u]){
       const nd = du + e.w;
-      if (nd < d[e.to]){ d[e.to] = nd; prev[e.to] = u; push([nd,e.to]); }
+      if (nd < d[e.to]){ d[e.to] = nd; prevEdge[e.to] = e.id; push([nd,e.to]); }
     }
   }
-  return {d, prev};
+  return {d, prevEdge};
 }
 
-function reconstruct(prev, from, to){
-  const seq = [to];
-  let cur = to;
-  while (cur !== from){ cur = prev[cur]; if (cur === undefined) return null; seq.push(cur); }
-  return seq.reverse();
+// all-pairs shortest paths, computed lazily and cached (the graph never changes)
+const SP_CACHE = {};
+function sp(n){ return SP_CACHE[n] || (SP_CACHE[n] = dijkstra(n)); }
+function spDist(a, b){ return sp(a).d[b]; }
+// edge ids of a shortest path a -> b
+function pathEdges(a, b){
+  const {prevEdge} = sp(a), out = [];
+  let cur = b;
+  while (cur !== a){
+    const id = prevEdge[cur];
+    if (id === undefined) return null;
+    out.push(id);
+    const e = EDGE_LIST[id];
+    cur = e.u === cur ? e.v : e.u;
+  }
+  return out.reverse();
 }
 
 // ======================================================================
-// Tour solver: seeded randomised nearest neighbour + 2-opt + Or-opt.
-// Index 0 is the fixed start. Open tours end anywhere; closed tours return to 0.
+// Pitch "doors": where each pitch touches its street.
+// A pitch only counts as visited once the walker passes that exact point,
+// so walking to a junction no longer ticks off a whole street.
 // ======================================================================
-function mulberry32(a){
-  return function(){
-    a |= 0; a = a + 0x6D2B79F5 | 0;
-    let t = Math.imul(a ^ a>>>15, 1 | a);
-    t = t + Math.imul(t ^ t>>>7, 61 | t) ^ t;
-    return ((t ^ t>>>14) >>> 0) / 4294967296;
-  };
+function projectOnEdge(x, y, e){
+  const A = NODES[e.u], B = NODES[e.v];
+  const vx = B[0]-A[0], vy = B[1]-A[1], len2 = vx*vx + vy*vy;
+  let t = len2 ? ((x-A[0])*vx + (y-A[1])*vy) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  return {t, d:Math.hypot(x - (A[0]+t*vx), y - (A[1]+t*vy))};
 }
-function hashStr(s){ let h = 2166136261; for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h,16777619); } return h>>>0; }
-
-function tourCost(t, D, closed){
-  let c = 0;
-  for (let i=0;i<t.length-1;i++) c += D[t[i]][t[i+1]];
-  if (closed && t.length>1) c += D[t[t.length-1]][t[0]];
-  return c;
-}
-
-function constructTour(D, rng, k){
-  const n = D.length, used = new Uint8Array(n), t = [0];
-  used[0] = 1;
-  while (t.length < n){
-    const last = t[t.length-1];
-    const cand = [];
-    for (let j=0;j<n;j++) if (!used[j]) cand.push(j);
-    cand.sort((a,b)=>D[last][a]-D[last][b]);
-    const pick = cand[Math.min(cand.length-1, Math.floor(rng()*k))];
-    used[pick] = 1; t.push(pick);
-  }
-  return t;
-}
-
-function improveTour(t, D, closed){
-  const n = t.length, EPS = 1e-7;
-  let improved = true, guard = 0;
-  while (improved && guard++ < 500){
-    improved = false;
-    // 2-opt: reverse t[i..j]
-    for (let i=1;i<n-1;i++){
-      for (let j=i+1;j<n;j++){
-        const a = t[i-1], b = t[i], c = t[j];
-        const nx = j+1<n ? t[j+1] : (closed ? t[0] : -1);
-        const delta = D[a][c] - D[a][b] + (nx>=0 ? D[b][nx] - D[c][nx] : 0);
-        if (delta < -EPS){
-          for (let x=i, y=j; x<y; x++, y--){ const tmp=t[x]; t[x]=t[y]; t[y]=tmp; }
-          improved = true;
-        }
-      }
-    }
-    // Or-opt: move a run of 1..3 stops elsewhere (optionally reversed)
-    outer:
-    for (let L=1; L<=3; L++){
-      for (let i=1; i+L<=n; i++){
-        const s0 = t[i], sL = t[i+L-1], pv = t[i-1];
-        const nx = i+L<n ? t[i+L] : (closed ? t[0] : -1);
-        const gain = D[pv][s0] + (nx>=0 ? D[sL][nx] - D[pv][nx] : 0);
-        const seg = t.slice(i, i+L);
-        const rest = t.slice(0,i).concat(t.slice(i+L));
-        let best = Infinity, bestK = -1, bestRev = false;
-        for (let k=0;k<rest.length;k++){
-          if (k === i-1) continue;                     // its original slot
-          const p = rest[k];
-          const q = k+1<rest.length ? rest[k+1] : (closed ? rest[0] : -1);
-          const fwd = D[p][s0] + (q>=0 ? D[sL][q] - D[p][q] : 0);
-          const rev = D[p][sL] + (q>=0 ? D[s0][q] - D[p][q] : 0);
-          if (fwd < best){ best = fwd; bestK = k; bestRev = false; }
-          if (L>1 && rev < best){ best = rev; bestK = k; bestRev = true; }
-        }
-        if (bestK >= 0 && best < gain - EPS){
-          if (bestRev) seg.reverse();
-          rest.splice(bestK+1, 0, ...seg);
-          for (let x=0;x<n;x++) t[x] = rest[x];
-          improved = true;
-          break outer;
-        }
-      }
-    }
-  }
-  return t;
-}
-
-function solveTour(D, closed, seed){
-  const n = D.length;
-  if (n <= 2) return [...Array(n).keys()];
-  const rng = mulberry32(seed);
-  const restarts = Math.max(6, Math.min(40, Math.round(4000 / n)));
-  let best = null, bestCost = Infinity;
-  for (let r=0; r<restarts; r++){
-    const t = improveTour(constructTour(D, rng, r===0 ? 1 : 3), D, closed);
-    const c = tourCost(t, D, closed);
-    if (c < bestCost - 1e-9){ bestCost = c; best = t.slice(); }
-  }
-  return best;
-}
+const DOOR = new Map();       // plot -> {edge, t}
+PLOTS.forEach(p=>{
+  let bestInc = null, bestAll = null;
+  // the node the pitch is linked to is its access point: prefer the streets at that node
+  (adj[p.node] || []).forEach(a=>{
+    const pr = projectOnEdge(p.x, p.y, EDGE_LIST[a.id]);
+    if (!bestInc || pr.d < bestInc.d) bestInc = {edge:a.id, t:pr.t, d:pr.d};
+  });
+  EDGE_LIST.forEach(e=>{
+    const pr = projectOnEdge(p.x, p.y, e);
+    if (!bestAll || pr.d < bestAll.d) bestAll = {edge:e.id, t:pr.t, d:pr.d};
+  });
+  // ...unless that link is clearly wrong and another street runs right past the pitch
+  let pick = bestInc;
+  if (!pick || (bestAll && bestInc.d > 15 && bestAll.d < bestInc.d * 0.5)) pick = bestAll;
+  if (pick) DOOR.set(p, pick);
+});
 
 // ======================================================================
-// Route building
+// Route building — a Rural Postman tour:
+//   1. every street segment with at least one pitch on it is required;
+//   2. separate clusters of required streets are joined with shortest
+//      connecting paths (minimum spanning tree between clusters);
+//   3. odd junctions are paired up by a minimum-weight matching and the
+//      connecting paths are walked twice;
+//   4. an Euler walk then covers every required street in one go.
+// Dead-end streets are walked to the end and back, as you would on foot.
 // ======================================================================
 const plotByKey = {};
 PLOTS.forEach(p=>{ plotByKey[p.key] = p; });
@@ -460,44 +412,137 @@ function plotLabel(p){
   return 'Pitch ' + p.key;
 }
 
+// Near-optimal perfect matching: greedy start, then pair swaps until stable.
+// `null` is a free "dummy" partner (cost 0) used for open routes.
+function matchNodes(list){
+  const n = list.length;
+  if (n < 2) return [];
+  const cost = (a,b)=> (a === null || b === null) ? 0 : spDist(a, b);
+  const cand = [];
+  for (let i=0;i<n;i++) for (let j=i+1;j<n;j++) cand.push([cost(list[i], list[j]), i, j]);
+  cand.sort((a,b)=>a[0]-b[0]);
+  const used = new Uint8Array(n), pairs = [];
+  for (const [,i,j] of cand){ if (!used[i] && !used[j]){ used[i] = used[j] = 1; pairs.push([list[i], list[j]]); } }
+  let improved = true, guard = 0;
+  while (improved && guard++ < 200){
+    improved = false;
+    for (let i=0;i<pairs.length;i++){
+      for (let j=i+1;j<pairs.length;j++){
+        const [a,b] = pairs[i], [c,d] = pairs[j];
+        const cur = cost(a,b) + cost(c,d);
+        const alt1 = cost(a,c) + cost(b,d), alt2 = cost(a,d) + cost(b,c);
+        if (alt1 < cur - 1e-7 && alt1 <= alt2){ pairs[i] = [a,c]; pairs[j] = [b,d]; improved = true; }
+        else if (alt2 < cur - 1e-7){ pairs[i] = [a,d]; pairs[j] = [b,c]; improved = true; }
+      }
+    }
+  }
+  return pairs;
+}
+
 function buildRoute(){
   const F = FILTERS[settings.filter];
-  const set = PLOTS.filter(p=>F.test(p) && NODES[p.node]);
+  const set = PLOTS.filter(p=>F.test(p) && DOOR.has(p));
   let start = plotByKey[settings.startKey];
   if (!start || !NODES[start.node]) start = set[0] || PLOTS.find(p=>NODES[p.node]);
+  const s = start.node;
+  const base = sp(s);
 
-  const base = dijkstra(start.node);
-  const reachable = set.filter(p=>isFinite(base.d[p.node]));
-  const unreachable = set.filter(p=>!isFinite(base.d[p.node]));
-
-  // targets: start node first, then every distinct node a reachable plot hangs off
-  const T = [start.node];
-  const seenNode = new Set([start.node]);
-  reachable.forEach(p=>{ if (!seenNode.has(p.node)){ seenNode.add(p.node); T.push(p.node); } });
-  const sp = T.map((n,i)=> i===0 ? base : dijkstra(n));
-  const D = T.map((_,i)=> T.map(b=> sp[i].d[b]));
-  const order = solveTour(D, settings.closed, hashStr(settings.filter+'|'+start.key+'|'+settings.closed));
-
-  // expand to a polyline with a street name per segment
-  const pts = [[start.x, start.y]];
-  const streets = [];
-  const pushPt = (pt, street)=>{
-    const last = pts[pts.length-1];
-    if (Math.abs(last[0]-pt[0]) < 1e-6 && Math.abs(last[1]-pt[1]) < 1e-6) return;
-    pts.push([pt[0], pt[1]]); streets.push(street);
-  };
-  pushPt(NODES[start.node], '');
-  const legs = [];
-  for (let i=0;i<order.length-1;i++) legs.push([order[i], order[i+1]]);
-  if (settings.closed && order.length>1) legs.push([order[order.length-1], order[0]]);
-  legs.forEach(([a,b])=>{
-    const seq = reconstruct(sp[a].prev, T[a], T[b]);
-    if (!seq) return;
-    for (let k=1;k<seq.length;k++) pushPt(NODES[seq[k]], edgeStreet[seq[k-1]+'|'+seq[k]] || '');
+  const reachable = [], unreachable = [];
+  set.forEach(p=>{
+    const e = EDGE_LIST[DOOR.get(p).edge];
+    (isFinite(base.d[e.u]) ? reachable : unreachable).push(p);
   });
-  if (settings.closed) pushPt([start.x, start.y], '');
 
-  // fill blank street names (plot <-> node stubs) from the neighbouring segment
+  // 1. required edges
+  const required = [...new Set(reachable.map(p=>DOOR.get(p).edge))];
+  const walk = required.slice();               // multiset of edge ids to traverse
+
+  // 2. connect clusters of required edges (and the start) with an MST
+  const parent = {};
+  const find = x=>{ while (parent[x] !== x){ parent[x] = parent[parent[x]]; x = parent[x]; } return x; };
+  const addV = x=>{ if (parent[x] === undefined) parent[x] = x; };
+  addV(s);
+  required.forEach(id=>{ const e = EDGE_LIST[id]; addV(e.u); addV(e.v); parent[find(e.u)] = find(e.v); });
+  const groups = {};
+  Object.keys(parent).forEach(v=>{ const r = find(v); (groups[r] = groups[r] || []).push(v); });
+  const comps = Object.values(groups);
+  if (comps.length > 1){
+    const inTree = new Uint8Array(comps.length); inTree[0] = 1;
+    for (let added=1; added<comps.length; added++){
+      let best = null;
+      for (let i=0;i<comps.length;i++){
+        if (!inTree[i]) continue;
+        for (let j=0;j<comps.length;j++){
+          if (inTree[j]) continue;
+          for (const a of comps[i]) for (const b of comps[j]){
+            const dd = spDist(a, b);
+            if (!best || dd < best.d) best = {d:dd, a, b, j};
+          }
+        }
+      }
+      if (!best || !isFinite(best.d)) break;
+      inTree[best.j] = 1;
+      const pe = pathEdges(best.a, best.b);
+      if (pe) walk.push(...pe);
+    }
+  }
+
+  // 3. fix odd degrees (open route: the start may stay odd, plus one free end)
+  const deg = {};
+  walk.forEach(id=>{ const e = EDGE_LIST[id]; deg[e.u] = (deg[e.u]||0) + 1; deg[e.v] = (deg[e.v]||0) + 1; });
+  let odd = Object.keys(deg).filter(v=> deg[v] % 2 === 1);
+  if (!settings.closed){
+    odd = odd.includes(s) ? odd.filter(v=>v !== s) : odd.concat([s]);
+    odd.push(null);
+  }
+  if (odd.length % 2 === 1) odd.push(null);
+  matchNodes(odd).forEach(([a,b])=>{
+    if (a === null || b === null) return;
+    const pe = pathEdges(a, b);
+    if (pe) walk.push(...pe);
+  });
+
+  // 4. Euler walk (Hierholzer) from the start node
+  const madj = {};
+  walk.forEach((id, idx)=>{
+    const e = EDGE_LIST[id];
+    (madj[e.u] = madj[e.u] || []).push({to:e.v, idx});
+    (madj[e.v] = madj[e.v] || []).push({to:e.u, idx});
+  });
+  const used = new Uint8Array(walk.length), ptr = {};
+  const stack = [{node:s, edge:-1}], euler = [];
+  while (stack.length){
+    const top = stack[stack.length-1];
+    const list = madj[top.node] || [];
+    let i = ptr[top.node] || 0;
+    while (i < list.length && used[list[i].idx]) i++;
+    ptr[top.node] = i;
+    if (i < list.length){
+      used[list[i].idx] = 1;
+      stack.push({node:list[i].to, edge:walk[list[i].idx]});
+    } else {
+      euler.push(stack.pop());
+    }
+  }
+  euler.reverse();   // [{node, edge used to arrive}], first entry is the start
+
+  // polyline + per-segment info
+  const pts = [[start.x, start.y]], streets = [], segEdge = [], segFrom = [];
+  const startStub = dist(pts[0], NODES[s]) > 1e-6;
+  if (startStub){ pts.push(NODES[s].slice()); streets.push(''); segEdge.push(-1); segFrom.push(null); }
+  for (let k=1;k<euler.length;k++){
+    const e = EDGE_LIST[euler[k].edge];
+    pts.push(NODES[euler[k].node].slice());
+    streets.push(e.street);
+    segEdge.push(e.id);
+    segFrom.push(euler[k-1].node);
+  }
+  if (settings.closed){
+    const end = pts[pts.length-1];
+    if (dist(end, [start.x, start.y]) > 1e-6){ pts.push([start.x, start.y]); streets.push(''); segEdge.push(-1); segFrom.push(null); }
+  }
+
+  // fill unnamed segments from their neighbours
   for (let i=0;i<streets.length;i++) if (!streets[i]){
     let j = i+1; while (j<streets.length && !streets[j]) j++;
     let k = i-1; while (k>=0 && !streets[k]) k--;
@@ -508,31 +553,28 @@ function buildRoute(){
   for (let i=1;i<pts.length;i++) cum.push(cum[i-1] + dist(pts[i-1], pts[i]));
   const total = cum[cum.length-1];
 
-  // when is each plot "passed"? first point on the route that is at least as
-  // close to the plot as the plot's own node (always true at that node)
+  // first traversal of each edge
+  const firstSeg = {};
+  segEdge.forEach((id, i)=>{ if (id >= 0 && firstSeg[id] === undefined) firstSeg[id] = i; });
+
+  // a pitch is passed when the walker reaches its door point on its street
   const visits = reachable.map(p=>{
-    const own = dist([p.x,p.y], NODES[p.node]) + 3;
-    let s = Infinity;
-    if (dist([p.x,p.y], pts[0]) <= own) s = 0;
-    for (let i=0; i<pts.length-1 && s===Infinity; i++){
-      const A = pts[i], B = pts[i+1];
-      const vx = B[0]-A[0], vy = B[1]-A[1], len2 = vx*vx+vy*vy;
-      let t = len2 ? ((p.x-A[0])*vx + (p.y-A[1])*vy) / len2 : 0;
-      t = Math.max(0, Math.min(1, t));
-      const cx = A[0]+t*vx, cy = A[1]+t*vy;
-      if (Math.hypot(p.x-cx, p.y-cy) <= own) s = cum[i] + t*(cum[i+1]-cum[i]);
-    }
-    if (s === Infinity) s = total;   // safety net, should not happen
-    return {p, s};
+    if (p === start) return {p, s:0};
+    const door = DOOR.get(p), e = EDGE_LIST[door.edge];
+    const i = firstSeg[door.edge];
+    if (i === undefined) return {p, s:total};        // safety net, should not happen
+    const frac = segFrom[i] === e.u ? door.t : 1 - door.t;
+    return {p, s: cum[i] + frac * (cum[i+1] - cum[i])};
   }).sort((a,b)=>a.s-b.s);
 
-  const visitedKey = new Set();
-  visits.forEach(v=>visitedKey.add(v.p.key));
+  // street length that is walked more than once
+  let requiredLen = 0; required.forEach(id=> requiredLen += EDGE_LIST[id].w);
 
   route = {
     start, set, reachable, unreachable, pts, streets, cum, total, visits,
     visitS: visits.map(v=>v.s),
     meters: total * M_PER_UNIT,
+    requiredMeters: requiredLen * M_PER_UNIT,
     last: visits.length ? visits[visits.length-1].p : start,
     path: (()=>{ const p = new Path2D(); pts.forEach((q,i)=> i ? p.lineTo(q[0],q[1]) : p.moveTo(q[0],q[1])); return p; })()
   };
@@ -567,7 +609,10 @@ function updateSummary(){
       r.unreachable.map(p=>p.key).join(', ') + '. Fix their node links in the map-config-tool.';
   } else {
     note.className = 'note';
-    note.textContent = 'Starting at ' + plotLabel(r.start).toLowerCase() + (settings.closed ? ', returning there at the end.' : ', ending at ' + plotLabel(r.last).toLowerCase() + '.');
+    const extra = Math.max(0, r.meters - r.requiredMeters);
+    note.textContent = 'Walks past every ' + F.one + ' door, starting at ' + plotLabel(r.start).toLowerCase() +
+      (settings.closed ? ' and returning there. ' : ' and ending at ' + plotLabel(r.last).toLowerCase() + '. ') +
+      fmtDist(r.requiredMeters) + ' of streets with ' + F.unit.toLowerCase() + ', plus ' + fmtDist(extra) + ' of connecting and doubling back.';
   }
 }
 
