@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<title>Fabulous Village — Every Pitch, One Route</title>
+<!-- version = "20261029-134500" -->
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
+
+:root{
+  --paper:#ffffff;
+  --panel:#f2f2f2;
+  --ink:#161616;
+  --muted:#6f6f6f;
+  --line:#e7e7e7;
+  --yellow:#f5e838;
+  --yellow-dark:#e3d520;
+  --mint:#3ecf8e;
+  --pink:#ef4d96;
+  --shadow:0 6px 18px rgba(22,22,22,0.10);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;height:100%;}
+body{
+  font-family:'Poppins',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  height:100dvh;
+  overflow:hidden;
+}
+header{
+  padding:10px 22px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+  flex-shrink:0;
+  border-bottom:1px solid var(--line);
+}
+header .logo-badge{
+  background:var(--yellow);
+  padding:6px 14px;
+  border-radius:8px;
+  display:flex;
+  flex-direction:column;
+  line-height:1.15;
+}
+header h1{font-weight:800;font-size:1.15rem;margin:0;letter-spacing:-0.01em;}
+header .tag{font-size:0.68rem;color:rgba(22,22,22,0.65);letter-spacing:0.04em;}
+header a.back{
+  margin-left:auto;font-size:0.8rem;font-weight:600;color:var(--ink);
+  text-decoration:none;border:2px solid var(--ink);border-radius:999px;padding:5px 14px;
+}
+header a.back:hover{background:var(--yellow);}
+
+.layout{flex:1;display:grid;grid-template-columns:340px 1fr;min-height:0;}
+.controls{
+  border-right:1px solid var(--line);
+  overflow-y:auto;
+  padding:16px 18px 24px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.field{display:flex;flex-direction:column;gap:6px;}
+.field > label, .field > .lbl{
+  font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);
+}
+select, input[type=text]{
+  font:inherit;font-size:0.92rem;padding:9px 12px;border:2px solid var(--line);
+  border-radius:10px;background:#fff;color:var(--ink);width:100%;
+}
+select:focus, input[type=text]:focus{outline:none;border-color:var(--ink);}
+.seg{display:flex;background:var(--panel);border-radius:10px;padding:3px;gap:3px;}
+.seg button{
+  flex:1;font:inherit;font-size:0.82rem;font-weight:600;border:0;border-radius:8px;
+  padding:7px 6px;background:transparent;color:var(--ink);cursor:pointer;
+}
+.seg button.on{background:var(--ink);color:#fff;}
+.chk{display:flex;align-items:center;gap:8px;font-size:0.88rem;cursor:pointer;}
+.chk input{accent-color:var(--ink);width:16px;height:16px;}
+input[type=range]{width:100%;accent-color:var(--ink);}
+.range-row{display:flex;align-items:center;gap:10px;}
+.range-row output{font-weight:700;font-size:0.88rem;min-width:44px;text-align:right;}
+
+.summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.summary .stat{background:var(--panel);border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;}
+.summary .v{font-weight:800;font-size:1.05rem;}
+.summary .l{font-size:0.7rem;color:var(--muted);}
+.note{font-size:0.76rem;color:var(--muted);line-height:1.45;}
+.note.warn{color:#9a3412;}
+
+.btn{
+  font:inherit;font-weight:700;font-size:0.92rem;border-radius:999px;padding:10px 16px;
+  border:2px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;
+}
+.btn.primary{background:var(--yellow);}
+.btn.primary:hover{background:var(--yellow-dark);}
+.btn:disabled{opacity:0.45;cursor:not-allowed;}
+.btn-row{display:flex;gap:8px;}
+.btn-row .btn{flex:1;}
+
+.progress{height:10px;background:var(--panel);border-radius:999px;overflow:hidden;display:none;}
+.progress.active{display:block;}
+.progress > div{height:100%;width:0;background:var(--ink);transition:width .15s;}
+#exportStatus{font-size:0.8rem;color:var(--muted);min-height:1.2em;}
+
+.stagewrap{
+  position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;background:#e9e9e9;padding:16px;gap:10px;
+}
+#stage{
+  display:block;max-width:100%;max-height:calc(100% - 44px);
+  width:auto;height:auto;border-radius:12px;box-shadow:var(--shadow);background:#0b0f1c;
+}
+.scrub{width:min(100%,720px);display:flex;align-items:center;gap:10px;}
+.scrub button{
+  font:inherit;font-weight:700;border:2px solid var(--ink);background:#fff;border-radius:999px;
+  width:38px;height:34px;cursor:pointer;flex-shrink:0;
+}
+.scrub output{font-size:0.8rem;font-variant-numeric:tabular-nums;min-width:84px;text-align:right;}
+#loading{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(233,233,233,0.9);font-weight:600;
+}
+#loading.hidden{display:none;}
+
+@media (max-width:820px){
+  body{height:auto;overflow:auto;}
+  .layout{grid-template-columns:1fr;}
+  .controls{border-right:0;border-bottom:1px solid var(--line);order:2;}
+  .stagewrap{order:1;min-height:70vh;}
+  #stage{max-height:62vh;}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-badge">
+    <h1>Fabulous Village</h1>
+    <span class="tag">EVERY PITCH · ONE ROUTE</span>
+  </div>
+  <a class="back" href="index.html">← Route finder</a>
+</header>
+
+<div class="layout">
+  <aside class="controls">
+    <div class="field">
+      <label for="filterSel">Visit</label>
+      <select id="filterSel">
+        <option value="guest">All pitches (tour operator + hu OPENAIR)</option>
+        <option value="yellow">Tour operator pitches only</option>
+        <option value="grey">hu OPENAIR pitches only</option>
+        <option value="power">Power stations / switch boxes</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="startInput">Start at</label>
+      <input type="text" id="startInput" list="plotlist" autocomplete="off" placeholder="Pitch number, e.g. 000">
+      <datalist id="plotlist"></datalist>
+    </div>
+
+    <label class="chk"><input type="checkbox" id="closedChk" checked> Return to the start (closed loop)</label>
+
+    <div class="summary" id="summary"></div>
+    <div class="note" id="routeNote"></div>
+
+    <div class="field">
+      <span class="lbl">Video format</span>
+      <div class="seg" id="formatSeg">
+        <button data-v="9x16" class="on">9:16</button>
+        <button data-v="1x1">1:1</button>
+        <button data-v="16x9">16:9</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="lbl">Style</span>
+      <div class="seg" id="themeSeg">
+        <button data-v="night" class="on">Night glow</button>
+        <button data-v="day">Day</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="lbl">Camera</span>
+      <div class="seg" id="cameraSeg">
+        <button data-v="follow" class="on">Follow walker</button>
+        <button data-v="whole">Whole map</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="durRange">Video length</label>
+      <div class="range-row">
+        <input type="range" id="durRange" min="10" max="90" step="1" value="30">
+        <output id="durOut">30 s</output>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn primary" id="exportBtn">Export video</button>
+      <button class="btn" id="cancelBtn" disabled>Cancel</button>
+    </div>
+    <div class="progress" id="exportProgress"><div></div></div>
+    <div id="exportStatus"></div>
+    <div class="note">Exports an MP4 at full resolution (1080 px wide) in browsers that support WebCodecs (Chrome, Edge, Safari 17+, Firefox 130+). Other browsers record a WebM in real time.</div>
+    <div class="note">Map schematic and not surveyed to scale; distance and walking time are estimates. Not endorsed by HU and/or Fabulous Village.</div>
+  </aside>
+
+  <section class="stagewrap">
+    <canvas id="stage" width="1080" height="1920"></canvas>
+    <div class="scrub">
+      <button id="playBtn" title="Play / pause">❚❚</button>
+      <input type="range" id="scrubRange" min="0" max="1000" step="1" value="0">
+      <output id="timeOut">0.0 / 30.0 s</output>
+    </div>
+    <div id="loading">Loading map…</div>
+  </section>
+</div>
+
+<script src="data.js"></script>
+<script src="map-svg.js"></script>
+<script>
+const version = "20261029-134500";
+
+// ======================================================================
+// Constants
+// ======================================================================
+const VBW = 1218.9, VBH = 870.236;          // must match the map SVG viewBox
+const WALK_SPEED = 1.3;                      // m/s, same as index.html
+const FPS = 30;
+const INTRO = 1.2;                           // s before the walker starts
+const OUTRO = 2.8;                           // s after the walker finishes
+const RASTER_SCALE = 2.5;                    // map pixels per map unit (crisp at follow zoom)
+const MP4MUXER_URL = 'https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js';
+const POWER_COLOR = 'power';
+
+const FORMATS = {
+  '9x16': {W:1080, H:1920, followZoom:2.6},
+  '1x1':  {W:1080, H:1080, followZoom:2.3},
+  '16x9': {W:1920, H:1080, followZoom:2.2}
+};
+
+const THEMES = {
+  night:{
+    bg:'#0b0f1c', text:'#ffffff', muted:'rgba(255,255,255,0.62)', accent:'#ffb52e',
+    streets:'rgba(225,232,255,0.30)', dot:'rgba(255,255,255,0.20)', dotOn:'#ffc04d',
+    cardBg:'rgba(11,15,28,0.80)', cardBorder:'rgba(255,255,255,0.32)',
+    barTrack:'rgba(255,255,255,0.14)', barFill:'#ffb52e', sep:'rgba(255,255,255,0.22)'
+  },
+  day:{
+    bg:'#ffffff', text:'#161616', muted:'#6f6f6f', accent:'#161616',
+    streets:null, dot:'rgba(22,22,22,0.22)', dotOn:'#f5e838',
+    cardBg:'rgba(255,255,255,0.94)', cardBorder:'#161616',
+    barTrack:'#ececec', barFill:'#f5e838', sep:'#e2e2e2'
+  }
+};
+
+const FILTERS = {
+  guest: {test:p=>p.color!==POWER_COLOR, subtitle:'EVERY PITCH • ONE ROUTE',               unit:'PITCHES',  one:'pitch'},
+  yellow:{test:p=>p.color==='yellow',    subtitle:'EVERY TOUR OPERATOR PITCH • ONE ROUTE', unit:'PITCHES',  one:'pitch'},
+  grey:  {test:p=>p.color==='grey',      subtitle:'EVERY HU OPENAIR PITCH • ONE ROUTE',    unit:'PITCHES',  one:'pitch'},
+  power: {test:p=>p.color===POWER_COLOR, subtitle:'EVERY POWER STATION • ONE ROUTE',       unit:'STATIONS', one:'station'}
+};
+
+// ======================================================================
+// Settings / state
+// ======================================================================
+const settings = {filter:'guest', startKey:'000', closed:true, format:'9x16', theme:'night', camera:'follow', duration:30};
+let route = null;          // built by buildRoute()
+let rasters = null;        // {day, night}
+let playing = true, playStart = 0, playOffset = 0;
+let exporting = false, cancelExport = false;
+
+// ======================================================================
+// Graph
+// ======================================================================
+function dist(a,b){ const dx=a[0]-b[0], dy=a[1]-b[1]; return Math.sqrt(dx*dx+dy*dy); }
+const adj = {};
+for (const k in NODES) adj[k] = [];
+const edgeStreet = {};
+EDGES.forEach(([u,v,street])=>{
+  if (!NODES[u] || !NODES[v]) return;
+  const w = dist(NODES[u], NODES[v]);
+  adj[u].push({to:v, w});
+  adj[v].push({to:u, w});
+  const nm = String(street || '').trim();
+  const clean = /^[-–—_.\s]*$/.test(nm) ? '' : nm;     // "-" placeholders count as unnamed
+  edgeStreet[u+'|'+v] = clean;
+  edgeStreet[v+'|'+u] = clean;
+});
+
+// Binary-heap Dijkstra from one node; returns distance and predecessor maps.
+function dijkstra(start){
+  const d = {}, prev = {}, done = {};
+  for (const k in NODES) d[k] = Infinity;
+  d[start] = 0;
+  const heap = [[0,start]];
+  const push = item=>{
+    heap.push(item);
+    let i = heap.length-1;
+    while (i>0){
+      const p = (i-1)>>1;
+      if (heap[p][0] <= heap[i][0]) break;
+      [heap[p],heap[i]] = [heap[i],heap[p]]; i = p;
+    }
+  };
+  const pop = ()=>{
+    const top = heap[0], last = heap.pop();
+    if (heap.length){
+      heap[0] = last;
+      let i = 0;
+      for(;;){
+        const l = 2*i+1, r = l+1; let m = i;
+        if (l<heap.length && heap[l][0]<heap[m][0]) m = l;
+        if (r<heap.length && heap[r][0]<heap[m][0]) m = r;
+        if (m===i) break;
+        [heap[m],heap[i]] = [heap[i],heap[m]]; i = m;
+      }
+    }
+    return top;
+  };
+  while (heap.length){
+    const [du,u] = pop();
+    if (done[u]) continue;
+    done[u] = true;
+    for (const e of adj[u]){
+      const nd = du + e.w;
+      if (nd < d[e.to]){ d[e.to] = nd; prev[e.to] = u; push([nd,e.to]); }
+    }
+  }
+  return {d, prev};
+}
+
+function reconstruct(prev, from, to){
+  const seq = [to];
+  let cur = to;
+  while (cur !== from){ cur = prev[cur]; if (cur === undefined) return null; seq.push(cur); }
+  return seq.reverse();
+}
+
+// ======================================================================
+// Tour solver: seeded randomised nearest neighbour + 2-opt + Or-opt.
+// Index 0 is the fixed start. Open tours end anywhere; closed tours return to 0.
+// ======================================================================
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a>>>15, 1 | a);
+    t = t + Math.imul(t ^ t>>>7, 61 | t) ^ t;
+    return ((t ^ t>>>14) >>> 0) / 4294967296;
+  };
+}
+function hashStr(s){ let h = 2166136261; for (let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h,16777619); } return h>>>0; }
+
+function tourCost(t, D, closed){
+  let c = 0;
+  for (let i=0;i<t.length-1;i++) c += D[t[i]][t[i+1]];
+  if (closed && t.length>1) c += D[t[t.length-1]][t[0]];
+  return c;
+}
+
+function constructTour(D, rng, k){
+  const n = D.length, used = new Uint8Array(n), t = [0];
+  used[0] = 1;
+  while (t.length < n){
+    const last = t[t.length-1];
+    const cand = [];
+    for (let j=0;j<n;j++) if (!used[j]) cand.push(j);
+    cand.sort((a,b)=>D[last][a]-D[last][b]);
+    const pick = cand[Math.min(cand.length-1, Math.floor(rng()*k))];
+    used[pick] = 1; t.push(pick);
+  }
+  return t;
+}
+
+function improveTour(t, D, closed){
+  const n = t.length, EPS = 1e-7;
+  let improved = true, guard = 0;
+  while (improved && guard++ < 500){
+    improved = false;
+    // 2-opt: reverse t[i..j]
+    for (let i=1;i<n-1;i++){
+      for (let j=i+1;j<n;j++){
+        const a = t[i-1], b = t[i], c = t[j];
+        const nx = j+1<n ? t[j+1] : (closed ? t[0] : -1);
+        const delta = D[a][c] - D[a][b] + (nx>=0 ? D[b][nx] - D[c][nx] : 0);
+        if (delta < -EPS){
+          for (let x=i, y=j; x<y; x++, y--){ const tmp=t[x]; t[x]=t[y]; t[y]=tmp; }
+          improved = true;
+        }
+      }
+    }
+    // Or-opt: move a run of 1..3 stops elsewhere (optionally reversed)
+    outer:
+    for (let L=1; L<=3; L++){
+      for (let i=1; i+L<=n; i++){
+        const s0 = t[i], sL = t[i+L-1], pv = t[i-1];
+        const nx = i+L<n ? t[i+L] : (closed ? t[0] : -1);
+        const gain = D[pv][s0] + (nx>=0 ? D[sL][nx] - D[pv][nx] : 0);
+        const seg = t.slice(i, i+L);
+        const rest = t.slice(0,i).concat(t.slice(i+L));
+        let best = Infinity, bestK = -1, bestRev = false;
+        for (let k=0;k<rest.length;k++){
+          if (k === i-1) continue;                     // its original slot
+          const p = rest[k];
+          const q = k+1<rest.length ? rest[k+1] : (closed ? rest[0] : -1);
+          const fwd = D[p][s0] + (q>=0 ? D[sL][q] - D[p][q] : 0);
+          const rev = D[p][sL] + (q>=0 ? D[s0][q] - D[p][q] : 0);
+          if (fwd < best){ best = fwd; bestK = k; bestRev = false; }
+          if (L>1 && rev < best){ best = rev; bestK = k; bestRev = true; }
+        }
+        if (bestK >= 0 && best < gain - EPS){
+          if (bestRev) seg.reverse();
+          rest.splice(bestK+1, 0, ...seg);
+          for (let x=0;x<n;x++) t[x] = rest[x];
+          improved = true;
+          break outer;
+        }
+      }
+    }
+  }
+  return t;
+}
+
+function solveTour(D, closed, seed){
+  const n = D.length;
+  if (n <= 2) return [...Array(n).keys()];
+  const rng = mulberry32(seed);
+  const restarts = Math.max(6, Math.min(40, Math.round(4000 / n)));
+  let best = null, bestCost = Infinity;
+  for (let r=0; r<restarts; r++){
+    const t = improveTour(constructTour(D, rng, r===0 ? 1 : 3), D, closed);
+    const c = tourCost(t, D, closed);
+    if (c < bestCost - 1e-9){ bestCost = c; best = t.slice(); }
+  }
+  return best;
+}
+
+// ======================================================================
+// Route building
+// ======================================================================
+const plotByKey = {};
+PLOTS.forEach(p=>{ plotByKey[p.key] = p; });
+
+function plotLabel(p){
+  if (!p) return '';
+  if (p.color === POWER_COLOR){
+    // keys look like "859_860", "1220_power" or "1377_power__key_in_reception"
+    const nums = String(p.key).split('_').filter(x=>/^\d+$/.test(x));
+    return 'Power box ' + (nums.length ? nums.join('/') : String(p.num || p.key).replace(/_+/g,' ').trim());
+  }
+  return 'Pitch ' + p.key;
+}
+
+function buildRoute(){
+  const F = FILTERS[settings.filter];
+  const set = PLOTS.filter(p=>F.test(p) && NODES[p.node]);
+  let start = plotByKey[settings.startKey];
+  if (!start || !NODES[start.node]) start = set[0] || PLOTS.find(p=>NODES[p.node]);
+
+  const base = dijkstra(start.node);
+  const reachable = set.filter(p=>isFinite(base.d[p.node]));
+  const unreachable = set.filter(p=>!isFinite(base.d[p.node]));
+
+  // targets: start node first, then every distinct node a reachable plot hangs off
+  const T = [start.node];
+  const seenNode = new Set([start.node]);
+  reachable.forEach(p=>{ if (!seenNode.has(p.node)){ seenNode.add(p.node); T.push(p.node); } });
+  const sp = T.map((n,i)=> i===0 ? base : dijkstra(n));
+  const D = T.map((_,i)=> T.map(b=> sp[i].d[b]));
+  const order = solveTour(D, settings.closed, hashStr(settings.filter+'|'+start.key+'|'+settings.closed));
+
+  // expand to a polyline with a street name per segment
+  const pts = [[start.x, start.y]];
+  const streets = [];
+  const pushPt = (pt, street)=>{
+    const last = pts[pts.length-1];
+    if (Math.abs(last[0]-pt[0]) < 1e-6 && Math.abs(last[1]-pt[1]) < 1e-6) return;
+    pts.push([pt[0], pt[1]]); streets.push(street);
+  };
+  pushPt(NODES[start.node], '');
+  const legs = [];
+  for (let i=0;i<order.length-1;i++) legs.push([order[i], order[i+1]]);
+  if (settings.closed && order.length>1) legs.push([order[order.length-1], order[0]]);
+  legs.forEach(([a,b])=>{
+    const seq = reconstruct(sp[a].prev, T[a], T[b]);
+    if (!seq) return;
+    for (let k=1;k<seq.length;k++) pushPt(NODES[seq[k]], edgeStreet[seq[k-1]+'|'+seq[k]] || '');
+  });
+  if (settings.closed) pushPt([start.x, start.y], '');
+
+  // fill blank street names (plot <-> node stubs) from the neighbouring segment
+  for (let i=0;i<streets.length;i++) if (!streets[i]){
+    let j = i+1; while (j<streets.length && !streets[j]) j++;
+    let k = i-1; while (k>=0 && !streets[k]) k--;
+    streets[i] = (j<streets.length ? streets[j] : (k>=0 ? streets[k] : 'Fabulous Village'));
+  }
+
+  const cum = [0];
+  for (let i=1;i<pts.length;i++) cum.push(cum[i-1] + dist(pts[i-1], pts[i]));
+  const total = cum[cum.length-1];
+
+  // when is each plot "passed"? first point on the route that is at least as
+  // close to the plot as the plot's own node (always true at that node)
+  const visits = reachable.map(p=>{
+    const own = dist([p.x,p.y], NODES[p.node]) + 3;
+    let s = Infinity;
+    if (dist([p.x,p.y], pts[0]) <= own) s = 0;
+    for (let i=0; i<pts.length-1 && s===Infinity; i++){
+      const A = pts[i], B = pts[i+1];
+      const vx = B[0]-A[0], vy = B[1]-A[1], len2 = vx*vx+vy*vy;
+      let t = len2 ? ((p.x-A[0])*vx + (p.y-A[1])*vy) / len2 : 0;
+      t = Math.max(0, Math.min(1, t));
+      const cx = A[0]+t*vx, cy = A[1]+t*vy;
+      if (Math.hypot(p.x-cx, p.y-cy) <= own) s = cum[i] + t*(cum[i+1]-cum[i]);
+    }
+    if (s === Infinity) s = total;   // safety net, should not happen
+    return {p, s};
+  }).sort((a,b)=>a.s-b.s);
+
+  const visitedKey = new Set();
+  visits.forEach(v=>visitedKey.add(v.p.key));
+
+  route = {
+    start, set, reachable, unreachable, pts, streets, cum, total, visits,
+    visitS: visits.map(v=>v.s),
+    meters: total * M_PER_UNIT,
+    last: visits.length ? visits[visits.length-1].p : start,
+    path: (()=>{ const p = new Path2D(); pts.forEach((q,i)=> i ? p.lineTo(q[0],q[1]) : p.moveTo(q[0],q[1])); return p; })()
+  };
+  updateSummary();
+}
+
+// ======================================================================
+// Formatting
+// ======================================================================
+const fmtInt = n=> Math.round(n).toLocaleString('en-US');
+function fmtDist(m){ return m < 1000 ? Math.round(m)+' m' : (m/1000).toFixed(2)+' km'; }
+function fmtTime(sec){
+  const min = Math.round(sec/60);
+  if (min < 60) return min + ' min';
+  return Math.floor(min/60) + 'h ' + String(min%60).padStart(2,'0') + 'm';
+}
+
+function updateSummary(){
+  const r = route, F = FILTERS[settings.filter];
+  document.getElementById('summary').innerHTML = `
+    <div class="stat"><span class="v">${fmtInt(r.reachable.length)}</span><span class="l">${F.unit.toLowerCase()} on the route</span></div>
+    <div class="stat"><span class="v">${fmtDist(r.meters)}</span><span class="l">total distance</span></div>
+    <div class="stat"><span class="v">${fmtTime(r.meters / WALK_SPEED)}</span><span class="l">walking time</span></div>
+    <div class="stat"><span class="v">${fmtInt(r.unreachable.length)}</span><span class="l">unreachable</span></div>`;
+  const note = document.getElementById('routeNote');
+  if (!r.set.length){
+    note.className = 'note warn';
+    note.textContent = 'No ' + F.unit.toLowerCase() + ' of this kind in data.js yet.';
+  } else if (r.unreachable.length){
+    note.className = 'note warn';
+    note.textContent = 'Not connected to the path network from ' + plotLabel(r.start).toLowerCase() + ': ' +
+      r.unreachable.map(p=>p.key).join(', ') + '. Fix their node links in the map-config-tool.';
+  } else {
+    note.className = 'note';
+    note.textContent = 'Starting at ' + plotLabel(r.start).toLowerCase() + (settings.closed ? ', returning there at the end.' : ', ending at ' + plotLabel(r.last).toLowerCase() + '.');
+  }
+}
+
+// ======================================================================
+// Map rasters (day + night) — composite ops only, no pixel reads
+// ======================================================================
+// Content bounds: everything the route can touch (nodes + plots), padded.
+// The legend/frame of the official plan falls outside and is cropped away.
+const BOUNDS = (()=>{
+  let x0=Infinity, y0=Infinity, x1=-Infinity, y1=-Infinity;
+  const add = (x,y)=>{ x0=Math.min(x0,x); y0=Math.min(y0,y); x1=Math.max(x1,x); y1=Math.max(y1,y); };
+  for (const k in NODES) add(NODES[k][0], NODES[k][1]);
+  PLOTS.forEach(p=> add(p.x, p.y));
+  if (!isFinite(x0)) return {x:0, y:0, w:VBW, h:VBH};
+  const pad = 30;
+  x0 = Math.max(0, x0-pad); y0 = Math.max(0, y0-pad);
+  x1 = Math.min(VBW, x1+pad); y1 = Math.min(VBH, y1+pad);
+  return {x:x0, y:y0, w:x1-x0, h:y1-y0};
+})();
+
+async function buildRasters(){
+  const url = URL.createObjectURL(new Blob([MAP_SVG], {type:'image/svg+xml'}));
+  const img = new Image();
+  await new Promise((res, rej)=>{ img.onload = res; img.onerror = ()=>rej(new Error('Map SVG failed to load')); img.src = url; });
+  const S = RASTER_SCALE, B = BOUNDS;
+  const w = Math.ceil(B.w*S), h = Math.ceil(B.h*S);
+  const mk = ()=>{ const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
+  const drawMap = c=>{
+    c.fillStyle = '#fff'; c.fillRect(0,0,w,h);
+    c.drawImage(img, -B.x*S, -B.y*S, VBW*S, VBH*S);
+  };
+  // soft edges so the crop melts into the background
+  const fadeEdges = (c, color)=>{
+    const f = 34*S;
+    const rgb = color === '#ffffff' ? '255,255,255' : '11,15,28';
+    const grad = (x0,y0,x1,y1)=>{ const g = c.createLinearGradient(x0,y0,x1,y1); g.addColorStop(0, `rgba(${rgb},1)`); g.addColorStop(1, `rgba(${rgb},0)`); return g; };
+    c.globalCompositeOperation = 'source-over';
+    c.fillStyle = grad(0,0,f,0);     c.fillRect(0,0,f,h);
+    c.fillStyle = grad(w,0,w-f,0);   c.fillRect(w-f,0,f,h);
+    c.fillStyle = grad(0,0,0,f);     c.fillRect(0,0,w,f);
+    c.fillStyle = grad(0,h,0,h-f);   c.fillRect(0,h-f,w,f);
+  };
+
+  const day = mk(), dx = day.getContext('2d');
+  drawMap(dx);
+  dx.fillStyle = 'rgba(255,255,255,0.22)'; dx.fillRect(0,0,w,h);
+  fadeEdges(dx, '#ffffff');
+
+  const night = mk(), nx = night.getContext('2d');
+  drawMap(nx);
+  nx.globalCompositeOperation = 'saturation'; nx.fillStyle = '#808080';         nx.fillRect(0,0,w,h);
+  nx.globalCompositeOperation = 'difference'; nx.fillStyle = '#fff';            nx.fillRect(0,0,w,h);
+  nx.globalCompositeOperation = 'multiply';   nx.fillStyle = 'rgb(120,135,170)'; nx.fillRect(0,0,w,h);
+  nx.globalCompositeOperation = 'lighten';    nx.fillStyle = THEMES.night.bg;    nx.fillRect(0,0,w,h);
+  nx.globalCompositeOperation = 'source-over';nx.fillStyle = 'rgba(11,15,28,0.38)'; nx.fillRect(0,0,w,h);
+  fadeEdges(nx, THEMES.night.bg);
+
+  URL.revokeObjectURL(url);
+  rasters = {day, night};
+}
+
+const streetPath = (()=>{
+  const p = new Path2D();
+  EDGES.forEach(([u,v])=>{ if (NODES[u] && NODES[v]){ p.moveTo(NODES[u][0],NODES[u][1]); p.lineTo(NODES[v][0],NODES[v][1]); } });
+  return p;
+})();
+
+// ======================================================================
+// Timeline helpers
+// ======================================================================
+const clamp01 = x=> Math.max(0, Math.min(1, x));
+const smooth = x=> x*x*(3-2*x);
+function walkDuration(){ return Math.max(4, settings.duration - INTRO - OUTRO); }
+function sAt(t){
+  const u = clamp01((t - INTRO) / walkDuration());
+  return (0.82*u + 0.18*smooth(u)) * route.total;
+}
+function segIndexAt(s){
+  const c = route.cum;
+  let lo = 0, hi = c.length-1;
+  while (hi - lo > 1){ const m = (lo+hi)>>1; if (c[m] <= s) lo = m; else hi = m; }
+  return Math.min(lo, Math.max(0, c.length-2));
+}
+function pointAt(s){
+  const P = route.pts;
+  if (P.length < 2) return P[0];
+  const i = segIndexAt(s), c = route.cum;
+  const len = c[i+1]-c[i], t = len ? clamp01((s-c[i])/len) : 0;
+  return [P[i][0] + (P[i+1][0]-P[i][0])*t, P[i][1] + (P[i+1][1]-P[i][1])*t];
+}
+function visitedCount(s){
+  const a = route.visitS;
+  let lo = 0, hi = a.length;
+  while (lo < hi){ const m = (lo+hi)>>1; if (a[m] <= s + 1e-6) lo = m+1; else hi = m; }
+  return lo;
+}
+function partialPath(s0, s1){
+  const P = route.pts, path = new Path2D();
+  if (P.length < 2 || s1 <= s0) return path;
+  const i0 = segIndexAt(s0), i1 = segIndexAt(s1);
+  const a = pointAt(s0); path.moveTo(a[0], a[1]);
+  for (let i=i0+1; i<=i1; i++) path.lineTo(P[i][0], P[i][1]);
+  const b = pointAt(s1); path.lineTo(b[0], b[1]);
+  return path;
+}
+
+// ======================================================================
+// Layouts
+// ======================================================================
+function layoutFor(fmt){
+  if (fmt === '9x16') return {
+    map:{x:0, y:600, w:1080, h:980},
+    head:{type:'stack', titleY:210, titleSize:96, titleMax:860, subY:288, subSize:32,
+          statLabelY:372, statValueY:452, statSubY:500, statCols:[180,540,900], colW:320, valueSize:70, labelSize:25, subSize2:25,
+          sepTop:338, sepBot:512, barX:60, barW:850, barY:548, barH:12, pctX:1020, pctSize:30},
+    card:{x:60, y:1610, w:960, h:205, labelSize:24, bigSize:70, smallSize:28, countSize:40},
+    foot:{x:540, y:1880, size:20, align:'center'}
+  };
+  if (fmt === '1x1') return {
+    map:{x:0, y:350, w:1080, h:600},
+    head:{type:'stack', titleY:98, titleSize:62, titleMax:820, subY:146, subSize:22,
+          statLabelY:198, statValueY:256, statSubY:290, statCols:[180,540,900], colW:320, valueSize:50, labelSize:19, subSize2:19,
+          sepTop:176, sepBot:298, barX:60, barW:870, barY:318, barH:10, pctX:1020, pctSize:24},
+    card:{x:40, y:958, w:1000, h:96, compact:true, bigSize:42, smallSize:22, countSize:30},
+    foot:{x:540, y:1072, size:13, align:'center'}
+  };
+  return {
+    map:{x:660, y:40, w:1220, h:1000},
+    head:{type:'side', x:70, w:540, title1Y:150, title2Y:232, titleSize:78, subY:318, subSize:23,
+          rows:[400, 520, 640], labelSize:22, valueSize:62, subSize2:21, barY:776, barH:12, pctSize:28},
+    card:{x:70, y:820, w:540, h:180, labelSize:20, bigSize:56, smallSize:24, countSize:32},
+    foot:{x:70, y:1048, size:15, align:'left'}
+  };
+}
+
+// ======================================================================
+// Text helpers (manual letter spacing works in every browser)
+// ======================================================================
+function setFont(ctx, weight, size){ ctx.font = `${weight} ${size}px Poppins, "Segoe UI", Helvetica, Arial, sans-serif`; }
+function spacedWidth(ctx, text, sp){
+  let w = 0; for (const ch of text) w += ctx.measureText(ch).width + sp;
+  return Math.max(0, w - sp);
+}
+function drawSpaced(ctx, text, x, y, sp, align){
+  const w = spacedWidth(ctx, text, sp);
+  let cx = align==='center' ? x - w/2 : align==='right' ? x - w : x;
+  const saved = ctx.textAlign; ctx.textAlign = 'left';
+  for (const ch of text){ ctx.fillText(ch, cx, y); cx += ctx.measureText(ch).width + sp; }
+  ctx.textAlign = saved;
+  return w;
+}
+// shrink font until the spaced text fits maxW; returns the size used
+function fitSpaced(ctx, text, weight, size, spRatio, maxW){
+  let s = size;
+  for (let k=0;k<40;k++){
+    setFont(ctx, weight, s);
+    if (spacedWidth(ctx, text, s*spRatio) <= maxW) break;
+    s *= 0.95;
+  }
+  return s;
+}
+function fitText(ctx, text, weight, size, maxW){
+  let s = size;
+  for (let k=0;k<40;k++){ setFont(ctx, weight, s); if (ctx.measureText(text).width <= maxW) break; s *= 0.95; }
+  return s;
+}
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y); ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+}
+function tricolor(ctx, x0, x1, yMid, th){
+  if (x1 - x0 < 8) return;
+  const cols = ['#009246', '#f4f5f0', '#ce2b37'];
+  const total = th*3 + 4;
+  cols.forEach((c,i)=>{ ctx.fillStyle = c; ctx.fillRect(x0, yMid - total/2 + i*(th+2), x1-x0, th); });
+}
+
+// small line icons, drawn at (x, yMid) with size s
+function icon(ctx, kind, x, yMid, s, color){
+  ctx.save();
+  ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = Math.max(2, s*0.11); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  if (kind === 'clock'){
+    ctx.beginPath(); ctx.arc(x, yMid, s*0.45, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, yMid - s*0.25); ctx.lineTo(x, yMid); ctx.lineTo(x + s*0.2, yMid + s*0.12); ctx.stroke();
+  } else if (kind === 'road'){
+    ctx.beginPath();
+    ctx.moveTo(x - s*0.18, yMid - s*0.45); ctx.lineTo(x - s*0.42, yMid + s*0.45);
+    ctx.moveTo(x + s*0.18, yMid - s*0.45); ctx.lineTo(x + s*0.42, yMid + s*0.45);
+    ctx.moveTo(x, yMid - s*0.4); ctx.lineTo(x, yMid - s*0.15);
+    ctx.moveTo(x, yMid + s*0.1); ctx.lineTo(x, yMid + s*0.4);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x, yMid + s*0.48);
+    ctx.bezierCurveTo(x - s*0.55, yMid - s*0.05, x - s*0.38, yMid - s*0.5, x, yMid - s*0.5);
+    ctx.bezierCurveTo(x + s*0.38, yMid - s*0.5, x + s*0.55, yMid - s*0.05, x, yMid + s*0.48);
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, yMid - s*0.14, s*0.13, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ======================================================================
+// Camera
+// ======================================================================
+function fitCamera(rect){
+  const B = BOUNDS;
+  return {cx:B.x + B.w/2, cy:B.y + B.h/2, z:Math.min(rect.w/B.w, rect.h/B.h) * 0.98};
+}
+function clampCam(cam, rect){
+  const B = BOUNDS, hw = rect.w/2/cam.z, hh = rect.h/2/cam.z;
+  cam.cx = hw*2 >= B.w ? B.x + B.w/2 : Math.max(B.x + hw, Math.min(B.x + B.w - hw, cam.cx));
+  cam.cy = hh*2 >= B.h ? B.y + B.h/2 : Math.max(B.y + hh, Math.min(B.y + B.h - hh, cam.cy));
+  return cam;
+}
+function cameraAt(t, rect, fmt){
+  const fit = fitCamera(rect);
+  if (settings.camera !== 'follow' || route.total <= 0) return fit;
+  // smoothed head position: mean over the last 0.7 s
+  let sx = 0, sy = 0; const N = 10;
+  for (let j=0;j<N;j++){ const p = pointAt(sAt(t - j*0.07)); sx += p[0]; sy += p[1]; }
+  const follow = clampCam({cx:sx/N, cy:sy/N, z:fit.z * FORMATS[fmt].followZoom}, rect);
+  const walkEnd = INTRO + walkDuration();
+  const kIn = smooth(clamp01((t - 0.25) / 1.3));
+  const kOut = smooth(clamp01((t - walkEnd - 0.15) / 1.5));
+  const f = kIn * (1 - kOut);
+  return {
+    cx: fit.cx + (follow.cx - fit.cx)*f,
+    cy: fit.cy + (follow.cy - fit.cy)*f,
+    z: fit.z * Math.pow(follow.z / fit.z, f)
+  };
+}
+
+// ======================================================================
+// Frame renderer — everything is a pure function of t (seconds)
+// ======================================================================
+const canvas = document.getElementById('stage');
+const ctx = canvas.getContext('2d');
+
+function renderFrame(t){
+  const fmt = settings.format, {W, H} = FORMATS[fmt];
+  if (canvas.width !== W || canvas.height !== H){ canvas.width = W; canvas.height = H; }
+  const th = THEMES[settings.theme], L = layoutFor(fmt), F = FILTERS[settings.filter];
+  const R = route;
+  const s = sAt(t);
+  const walkEnd = INTRO + walkDuration();
+  const done = t >= walkEnd;
+  const nVisited = t < INTRO ? visitedCount(0) : visitedCount(s);
+  const totalPlots = R.set.length;
+
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = th.bg; ctx.fillRect(0, 0, W, H);
+
+  // ---------------- map ----------------
+  const M = L.map, cam = cameraAt(t, M, fmt);
+  const ox = M.x + M.w/2 - cam.cx*cam.z, oy = M.y + M.h/2 - cam.cy*cam.z;
+  const z = cam.z;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(M.x, M.y, M.w, M.h); ctx.clip();
+  ctx.setTransform(z, 0, 0, z, ox, oy);
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  if (rasters) ctx.drawImage(settings.theme === 'night' ? rasters.night : rasters.day, BOUNDS.x, BOUNDS.y, BOUNDS.w, BOUNDS.h);
+
+  if (th.streets){
+    ctx.strokeStyle = th.streets; ctx.lineWidth = 1.6 / z; ctx.lineCap = 'round';
+    ctx.stroke(streetPath);
+  }
+
+  // pitch dots
+  const r = Math.max(2.2, 2.3*z) / z;
+  const visitedSet = R.visits;
+  const unv = new Path2D(), vis = new Path2D();
+  const sNow = t < INTRO ? 0 : s;
+  const visitedKeys = new Set();
+  for (let i=0;i<nVisited;i++) visitedKeys.add(visitedSet[i].p.key);
+  R.set.forEach(p=>{
+    if (visitedKeys.has(p.key)) return;
+    unv.moveTo(p.x + r, p.y); unv.arc(p.x, p.y, r, 0, Math.PI*2);
+  });
+  ctx.fillStyle = th.dot; ctx.fill(unv);
+
+  // route trail
+  const trail = (t >= INTRO) ? (done ? R.path : partialPath(0, s)) : null;
+  if (trail){
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (settings.theme === 'night'){
+      ctx.globalCompositeOperation = 'lighter';
+      [[16,0.06],[10,0.12],[5.5,0.30]].forEach(([w,a])=>{
+        ctx.strokeStyle = `rgba(255,160,40,${a})`; ctx.lineWidth = w / z; ctx.stroke(trail);
+      });
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 2.2 / z; ctx.stroke(trail);
+      if (!done){
+        const tail = partialPath(Math.max(0, s - 140), s);
+        ctx.strokeStyle = 'rgba(255,248,225,0.95)'; ctx.lineWidth = 2.6 / z; ctx.stroke(tail);
+      }
+    } else {
+      ctx.strokeStyle = '#161616'; ctx.lineWidth = 7.5 / z; ctx.stroke(trail);
+      ctx.strokeStyle = '#f5e838'; ctx.lineWidth = 4 / z; ctx.stroke(trail);
+    }
+  }
+
+  // visited dots (with a short pop when freshly passed)
+  const popLen = R.total / walkDuration() * 0.4;
+  const pops = [];
+  for (let i=0;i<nVisited;i++){
+    const v = visitedSet[i], p = v.p;
+    vis.moveTo(p.x + r*1.15, p.y); vis.arc(p.x, p.y, r*1.15, 0, Math.PI*2);
+    const age = sNow - v.s;
+    if (!done && t >= INTRO && age < popLen) pops.push([p, 1 - age/popLen]);
+  }
+  if (settings.theme === 'night'){
+    ctx.fillStyle = th.dotOn; ctx.fill(vis);
+  } else {
+    ctx.fillStyle = th.dotOn; ctx.fill(vis);
+    ctx.strokeStyle = '#161616'; ctx.lineWidth = 1 / z; ctx.stroke(vis);
+  }
+  pops.forEach(([p,k])=>{
+    ctx.beginPath(); ctx.arc(p.x, p.y, r*(1.2 + 2.2*(1-k)), 0, Math.PI*2);
+    ctx.strokeStyle = settings.theme === 'night' ? `rgba(255,210,120,${0.85*k})` : `rgba(22,22,22,${0.8*k})`;
+    ctx.lineWidth = 1.6 / z; ctx.stroke();
+  });
+
+  // walker head (screen-space glow)
+  if (R.pts.length){
+    const hp = (t < INTRO) ? R.pts[0] : pointAt(done ? R.total : s);
+    const hx = hp[0]*z + ox, hy = hp[1]*z + oy;
+    ctx.setTransform(1,0,0,1,0,0);
+    const pulse = 1 + 0.12*Math.sin(t*9);
+    if (settings.theme === 'night'){
+      const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, 34*pulse);
+      g.addColorStop(0, 'rgba(255,240,200,0.95)');
+      g.addColorStop(0.25, 'rgba(255,190,80,0.55)');
+      g.addColorStop(1, 'rgba(255,160,40,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, hy, 34*pulse, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#fffaf0'; ctx.beginPath(); ctx.arc(hx, hy, 6, 0, Math.PI*2); ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgba(245,232,56,0.45)'; ctx.beginPath(); ctx.arc(hx, hy, 22*pulse, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#161616'; ctx.beginPath(); ctx.arc(hx, hy, 9, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#f5e838'; ctx.beginPath(); ctx.arc(hx, hy, 5, 0, Math.PI*2); ctx.fill();
+    }
+  }
+  ctx.restore();
+  ctx.setTransform(1,0,0,1,0,0);
+  fadeMapEdges(M, th);
+
+  // scale bar (bottom-left of the map area)
+  drawScaleBar(z, M, th, fmt);
+
+  // ---------------- header & stats ----------------
+  const meters = (t < INTRO ? 0 : (done ? R.total : s)) * M_PER_UNIT;
+  const pct = totalPlots ? nVisited / totalPlots * 100 : 0;
+  const stats = [
+    {icon:'clock', label:'WALK TIME', value:fmtTime(meters / WALK_SPEED), sub:'estimated', accent:false},
+    {icon:'road',  label:'DISTANCE',  value:fmtDist(meters),              sub:'walked',    accent:false},
+    {icon:'pin',   label:F.unit,      value:fmtInt(nVisited),             sub:'of ' + fmtInt(totalPlots) + ' ' + (totalPlots===1 ? F.one : F.unit.toLowerCase()), accent:true}
+  ];
+  drawHeader(L.head, th, F, stats, pct);
+
+  // ---------------- now-passing card ----------------
+  let big, small, label;
+  const cur = nVisited ? R.visits[nVisited-1].p : null;
+  if (t < INTRO){ label = 'STARTING AT'; big = plotLabel(R.start); small = R.streets[0] || 'Fabulous Village'; }
+  else if (done){
+    label = 'ROUTE COMPLETE';
+    big = R.unreachable.length ? fmtInt(nVisited) + ' of ' + fmtInt(totalPlots) : 'All ' + fmtInt(nVisited) + ' ' + F.unit.toLowerCase();
+    small = settings.closed ? 'Back at ' + plotLabel(R.start).toLowerCase() : 'Finished at ' + plotLabel(R.last).toLowerCase();
+  } else {
+    label = 'NOW PASSING';
+    big = plotLabel(cur || R.start);
+    small = R.streets[segIndexAt(s)] || '';
+  }
+  drawCard(L.card, th, F, label, big, small, nVisited, totalPlots, done);
+
+  // ---------------- footer ----------------
+  setFont(ctx, 400, L.foot.size);
+  ctx.fillStyle = th.muted; ctx.textAlign = L.foot.align; ctx.textBaseline = 'alphabetic';
+  ctx.fillText('Based on the official Fabulous Village site plan · schematic · not endorsed by HU / Fabulous Village', L.foot.x, L.foot.y);
+}
+
+// soften the hard edges of the map viewport into the background
+function fadeMapEdges(M, th){
+  const f = 48, W = canvas.width, H = canvas.height;
+  const rgb = th.bg === '#ffffff' ? '255,255,255' : '11,15,28';
+  const edge = (x0,y0,x1,y1,rx,ry,rw,rh)=>{
+    const g = ctx.createLinearGradient(x0,y0,x1,y1);
+    g.addColorStop(0, `rgba(${rgb},1)`); g.addColorStop(1, `rgba(${rgb},0)`);
+    ctx.fillStyle = g; ctx.fillRect(rx,ry,rw,rh);
+  };
+  if (M.y > 0)       edge(0, M.y, 0, M.y+f, M.x, M.y, M.w, f);
+  if (M.y+M.h < H)   edge(0, M.y+M.h, 0, M.y+M.h-f, M.x, M.y+M.h-f, M.w, f);
+  if (M.x > 0)       edge(M.x, 0, M.x+f, 0, M.x, M.y, f, M.h);
+  if (M.x+M.w < W)   edge(M.x+M.w, 0, M.x+M.w-f, 0, M.x+M.w-f, M.y, f, M.h);
+}
+
+function drawScaleBar(z, M, th, fmt){
+  const nice = [5,10,20,25,50,100,200,250,500];
+  const target = fmt === '16x9' ? 170 : 150;
+  let best = nice[0];
+  for (const m of nice){ if (m / M_PER_UNIT * z <= target) best = m; }
+  const px = best / M_PER_UNIT * z;
+  const x = M.x + 36, y = M.y + M.h - 34;
+  ctx.save();
+  ctx.strokeStyle = th.text; ctx.lineWidth = 3; ctx.globalAlpha = 0.8; ctx.lineCap = 'butt';
+  ctx.beginPath();
+  ctx.moveTo(x, y - 8); ctx.lineTo(x, y); ctx.lineTo(x + px, y); ctx.lineTo(x + px, y - 8);
+  ctx.stroke();
+  setFont(ctx, 600, 20); ctx.fillStyle = th.text; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText(best + ' m', x + 6, y - 8);
+  ctx.restore();
+}
+
+function drawHeader(h, th, F, stats, pct){
+  ctx.textBaseline = 'alphabetic';
+  if (h.type === 'stack'){
+    const W = canvas.width;
+    const ts = fitSpaced(ctx, 'FABULOUS VILLAGE', 800, h.titleSize, 0.16, h.titleMax);
+    setFont(ctx, 800, ts); ctx.fillStyle = th.text;
+    const tw = drawSpaced(ctx, 'FABULOUS VILLAGE', W/2, h.titleY, ts*0.16, 'center');
+    tricolor(ctx, 24, W/2 - tw/2 - 26, h.titleY - ts*0.36, Math.max(4, ts*0.055));
+    tricolor(ctx, W/2 + tw/2 + 26, W - 24, h.titleY - ts*0.36, Math.max(4, ts*0.055));
+
+    const ss = fitSpaced(ctx, F.subtitle, 600, h.subSize, 0.32, W - 120);
+    setFont(ctx, 600, ss); ctx.fillStyle = th.muted;
+    drawSpaced(ctx, F.subtitle, W/2, h.subY, ss*0.32, 'center');
+
+    ctx.strokeStyle = th.sep; ctx.lineWidth = 2;
+    [ (h.statCols[0]+h.statCols[1])/2, (h.statCols[1]+h.statCols[2])/2 ].forEach(x=>{
+      ctx.beginPath(); ctx.moveTo(x, h.sepTop); ctx.lineTo(x, h.sepBot); ctx.stroke();
+    });
+    stats.forEach((st, i)=>{
+      const cx = h.statCols[i];
+      setFont(ctx, 600, h.labelSize);
+      const lw = spacedWidth(ctx, st.label, h.labelSize*0.22);
+      const iconS = h.labelSize*1.05, gap = h.labelSize*0.45;
+      const startX = cx - (lw + iconS + gap)/2;
+      icon(ctx, st.icon, startX + iconS/2, h.statLabelY - h.labelSize*0.36, iconS, th.text);
+      ctx.fillStyle = th.muted;
+      drawSpaced(ctx, st.label, startX + iconS + gap, h.statLabelY, h.labelSize*0.22, 'left');
+
+      const vs = fitText(ctx, st.value, 800, h.valueSize, h.colW - 24);
+      setFont(ctx, 800, vs); ctx.textAlign = 'center';
+      ctx.fillStyle = st.accent ? th.accent : th.text;
+      if (st.accent && settings.theme === 'night'){ ctx.shadowColor = 'rgba(255,170,50,0.55)'; ctx.shadowBlur = 18; }
+      ctx.fillText(st.value, cx, h.statValueY);
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+      setFont(ctx, 400, h.subSize2); ctx.fillStyle = th.muted;
+      ctx.fillText(st.sub, cx, h.statSubY);
+    });
+    drawBar(h.barX, h.barY, h.barW, h.barH, pct, th);
+    setFont(ctx, 700, h.pctSize); ctx.fillStyle = th.text; ctx.textAlign = 'right';
+    ctx.fillText(pct.toFixed(1) + '%', h.pctX, h.barY + h.barH/2 + h.pctSize*0.36);
+  } else {
+    const x = h.x;
+    const ts = Math.min(fitSpaced(ctx, 'FABULOUS', 800, h.titleSize, 0.14, h.w), fitSpaced(ctx, 'VILLAGE', 800, h.titleSize, 0.14, h.w));
+    setFont(ctx, 800, ts); ctx.fillStyle = th.text;
+    drawSpaced(ctx, 'FABULOUS', x, h.title1Y, ts*0.14, 'left');
+    drawSpaced(ctx, 'VILLAGE', x, h.title2Y, ts*0.14, 'left');
+    tricolor(ctx, x, x + h.w, h.title2Y + 34, 5);
+    const ss = fitSpaced(ctx, F.subtitle, 600, h.subSize, 0.28, h.w);
+    setFont(ctx, 600, ss); ctx.fillStyle = th.muted;
+    drawSpaced(ctx, F.subtitle, x, h.subY, ss*0.28, 'left');
+
+    stats.forEach((st, i)=>{
+      const y = h.rows[i];
+      const iconS = h.labelSize*1.05;
+      icon(ctx, st.icon, x + iconS/2, y - h.labelSize*0.36, iconS, th.text);
+      setFont(ctx, 600, h.labelSize); ctx.fillStyle = th.muted;
+      drawSpaced(ctx, st.label, x + iconS + h.labelSize*0.5, y, h.labelSize*0.22, 'left');
+      const vs = fitText(ctx, st.value, 800, h.valueSize, h.w*0.62);
+      setFont(ctx, 800, vs); ctx.textAlign = 'left';
+      ctx.fillStyle = st.accent ? th.accent : th.text;
+      if (st.accent && settings.theme === 'night'){ ctx.shadowColor = 'rgba(255,170,50,0.55)'; ctx.shadowBlur = 18; }
+      ctx.fillText(st.value, x, y + h.valueSize*1.02);
+      const vw = ctx.measureText(st.value).width;
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+      setFont(ctx, 400, h.subSize2); ctx.fillStyle = th.muted;
+      ctx.fillText(st.sub, x + vw + 16, y + h.valueSize*1.02);
+    });
+    const barW = h.w - 110;
+    drawBar(x, h.barY, barW, h.barH, pct, th);
+    setFont(ctx, 700, h.pctSize); ctx.fillStyle = th.text; ctx.textAlign = 'right';
+    ctx.fillText(pct.toFixed(1) + '%', x + h.w, h.barY + h.barH/2 + h.pctSize*0.36);
+  }
+  ctx.textAlign = 'left';
+}
+
+function drawBar(x, y, w, hgt, pct, th){
+  roundRect(ctx, x, y, w, hgt, hgt/2); ctx.fillStyle = th.barTrack; ctx.fill();
+  const fw = Math.max(0, Math.min(w, w * pct/100));
+  if (fw > 0){
+    roundRect(ctx, x, y, Math.max(fw, hgt), hgt, hgt/2);
+    ctx.fillStyle = th.barFill;
+    if (settings.theme === 'night'){ ctx.shadowColor = 'rgba(255,170,50,0.7)'; ctx.shadowBlur = 14; }
+    ctx.fill();
+    ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+    if (settings.theme === 'day'){ roundRect(ctx, x, y, w, hgt, hgt/2); ctx.strokeStyle = '#161616'; ctx.lineWidth = 2; ctx.stroke(); }
+  } else if (settings.theme === 'day'){
+    roundRect(ctx, x, y, w, hgt, hgt/2); ctx.strokeStyle = '#161616'; ctx.lineWidth = 2; ctx.stroke();
+  }
+}
+
+function drawCard(c, th, F, label, big, small, n, total, done){
+  roundRect(ctx, c.x, c.y, c.w, c.h, 22);
+  ctx.fillStyle = th.cardBg; ctx.fill();
+  ctx.strokeStyle = th.cardBorder; ctx.lineWidth = settings.theme === 'day' ? 3 : 2; ctx.stroke();
+  // accent stripe
+  ctx.save(); roundRect(ctx, c.x, c.y, c.w, c.h, 22); ctx.clip();
+  ctx.fillStyle = settings.theme === 'night' ? th.accent : '#f5e838';
+  ctx.fillRect(c.x, c.y, 10, c.h);
+  ctx.restore();
+
+  const pad = 40, x = c.x + pad;
+  const countTxt = fmtInt(n) + ' / ' + fmtInt(total);
+  ctx.textBaseline = 'alphabetic';
+  if (c.compact){
+    const midY = c.y + c.h/2;
+    setFont(ctx, 700, c.countSize);
+    const cw = ctx.measureText(countTxt).width;
+    const bs = fitText(ctx, big, 800, c.bigSize, c.w*0.5);
+    setFont(ctx, 800, bs); ctx.fillStyle = th.text; ctx.textAlign = 'left';
+    ctx.fillText(big, x, midY + bs*0.36);
+    const bw = ctx.measureText(big).width;
+    const ss = fitText(ctx, small, 500, c.smallSize, c.w - pad*2 - bw - cw - 60);
+    setFont(ctx, 500, ss); ctx.fillStyle = th.muted;
+    ctx.fillText(small, x + bw + 24, midY + ss*0.36);
+    setFont(ctx, 700, c.countSize); ctx.fillStyle = done ? th.accent : th.text; ctx.textAlign = 'right';
+    ctx.fillText(countTxt, c.x + c.w - pad, midY + c.countSize*0.36);
+    ctx.textAlign = 'left';
+    return;
+  }
+  setFont(ctx, 600, c.labelSize); ctx.fillStyle = th.muted;
+  drawSpaced(ctx, label, x, c.y + 30 + c.labelSize, c.labelSize*0.24, 'left');
+
+  setFont(ctx, 700, c.countSize);
+  const cw = ctx.measureText(countTxt).width;
+  const bigY = c.y + 30 + c.labelSize + 14 + c.bigSize*0.9;
+  const bs = fitText(ctx, big, 800, c.bigSize, c.w - pad*2 - cw - 30);
+  setFont(ctx, 800, bs); ctx.fillStyle = th.text;
+  ctx.fillText(big, x, bigY);
+
+  const ss = fitText(ctx, small, 500, c.smallSize, c.w*0.6);
+  setFont(ctx, 500, ss); ctx.fillStyle = th.muted;
+  ctx.fillText(small, x, c.y + c.h - 28);
+
+  setFont(ctx, 700, c.countSize); ctx.fillStyle = done ? th.accent : th.text; ctx.textAlign = 'right';
+  ctx.fillText(countTxt, c.x + c.w - pad, bigY);
+  setFont(ctx, 400, c.labelSize); ctx.fillStyle = th.muted;
+  ctx.fillText(F.unit.toLowerCase() + ' passed', c.x + c.w - pad, c.y + c.h - 28);
+  ctx.textAlign = 'left';
+}
+
+// ======================================================================
+// Preview playback
+// ======================================================================
+const playBtn = document.getElementById('playBtn');
+const scrub = document.getElementById('scrubRange');
+const timeOut = document.getElementById('timeOut');
+
+function currentTime(){
+  if (!playing) return playOffset;
+  return playOffset + (performance.now() - playStart)/1000;
+}
+function setPlaying(on){
+  if (on === playing) return;
+  if (on){ if (playOffset >= settings.duration) playOffset = 0; playStart = performance.now(); }
+  else playOffset = currentTime();
+  playing = on;
+  playBtn.textContent = on ? '❚❚' : '▶';
+}
+function seek(t){ playOffset = Math.max(0, Math.min(settings.duration, t)); playStart = performance.now(); }
+
+function tick(){
+  if (!exporting && route){
+    let t = currentTime();
+    if (t >= settings.duration){
+      if (playing){ playOffset = settings.duration; playing = false; playBtn.textContent = '▶'; }
+      t = settings.duration;
+    }
+    renderFrame(Math.min(t, settings.duration - 1/FPS));
+    scrub.value = Math.round(t / settings.duration * 1000);
+    timeOut.textContent = t.toFixed(1) + ' / ' + settings.duration.toFixed(1) + ' s';
+  }
+  requestAnimationFrame(tick);
+}
+
+playBtn.addEventListener('click', ()=> setPlaying(!playing));
+scrub.addEventListener('input', ()=>{
+  setPlaying(false);
+  seek(scrub.value/1000 * settings.duration);
+});
+
+// ======================================================================
+// Export: WebCodecs + mp4-muxer (frame-exact), MediaRecorder fallback
+// ======================================================================
+const exportBtn = document.getElementById('exportBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+const progressEl = document.getElementById('exportProgress');
+const statusEl = document.getElementById('exportStatus');
+
+function loadScript(src){
+  return new Promise((res, rej)=>{
+    if (window.Mp4Muxer) return res();
+    const s = document.createElement('script');
+    s.src = src; s.onload = ()=>res(); s.onerror = ()=>rej(new Error('Could not load ' + src));
+    document.head.appendChild(s);
+  });
+}
+function setProgress(f, text){
+  progressEl.firstElementChild.style.width = (f*100).toFixed(1) + '%';
+  statusEl.textContent = text;
+}
+function fileBase(){
+  return `fabulous-village-every-${settings.filter === 'power' ? 'power-station' : (settings.filter === 'guest' ? 'pitch' : settings.filter + '-pitch')}-${settings.format}-${settings.theme}`;
+}
+function download(blob, name){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 60000);
+}
+function setControlsDisabled(dis){
+  document.querySelectorAll('.controls select, .controls input, .seg button, #playBtn, #scrubRange').forEach(el=> el.disabled = dis);
+  exportBtn.disabled = dis; cancelBtn.disabled = !dis;
+}
+
+async function pickCodec(W, H){
+  const list = ['avc1.640028', 'avc1.4d0028', 'avc1.640033', 'avc1.42003e', 'avc1.42001f'];
+  for (const codec of list){
+    try{
+      const cfg = {codec, width:W, height:H, bitrate:12_000_000, framerate:FPS, avc:{format:'avc'}};
+      const sup = await VideoEncoder.isConfigSupported(cfg);
+      if (sup.supported) return cfg;
+    }catch(e){ /* try next */ }
+  }
+  return null;
+}
+
+async function exportMp4(){
+  const {W, H} = FORMATS[settings.format];
+  await loadScript(MP4MUXER_URL);
+  const cfg = await pickCodec(W, H);
+  if (!cfg) throw new Error('No supported H.264 encoder configuration');
+  const muxer = new Mp4Muxer.Muxer({
+    target: new Mp4Muxer.ArrayBufferTarget(),
+    video: {codec:'avc', width:W, height:H, frameRate:FPS},
+    fastStart: 'in-memory'
+  });
+  let encErr = null;
+  const encoder = new VideoEncoder({
+    output: (chunk, meta)=> muxer.addVideoChunk(chunk, meta),
+    error: e=>{ encErr = e; }
+  });
+  encoder.configure(cfg);
+  const frames = Math.round(settings.duration * FPS);
+  const t0 = performance.now();
+  for (let i=0;i<frames;i++){
+    if (cancelExport) { encoder.close(); return false; }
+    if (encErr) throw encErr;
+    renderFrame(i / FPS);
+    const vf = new VideoFrame(canvas, {timestamp: Math.round(i*1e6/FPS), duration: Math.round(1e6/FPS)});
+    encoder.encode(vf, {keyFrame: i % (FPS*2) === 0});
+    vf.close();
+    while (encoder.encodeQueueSize > 6) await new Promise(r=>setTimeout(r, 4));
+    if (i % 5 === 0){
+      const el = (performance.now() - t0)/1000, eta = el / (i+1) * (frames - i - 1);
+      setProgress((i+1)/frames, `Encoding frame ${i+1} / ${frames} · about ${Math.ceil(eta)} s left`);
+      await new Promise(r=>setTimeout(r, 0));
+    }
+  }
+  await encoder.flush();
+  if (encErr) throw encErr;
+  encoder.close();
+  muxer.finalize();
+  download(new Blob([muxer.target.buffer], {type:'video/mp4'}), fileBase() + '.mp4');
+  return true;
+}
+
+async function exportRealtime(){
+  if (!canvas.captureStream || !window.MediaRecorder) throw new Error('This browser cannot record canvas video');
+  const types = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
+  const mime = types.find(t=> MediaRecorder.isTypeSupported(t)) || '';
+  const stream = canvas.captureStream(FPS);
+  const rec = new MediaRecorder(stream, mime ? {mimeType:mime, videoBitsPerSecond:12_000_000} : {videoBitsPerSecond:12_000_000});
+  const chunks = [];
+  rec.ondataavailable = e=>{ if (e.data && e.data.size) chunks.push(e.data); };
+  const stopped = new Promise(r=> rec.onstop = r);
+  rec.start(250);
+  const t0 = performance.now();
+  await new Promise(resolve=>{
+    const step = ()=>{
+      const t = (performance.now() - t0)/1000;
+      if (cancelExport || t >= settings.duration){ resolve(); return; }
+      renderFrame(t);
+      setProgress(t / settings.duration, `Recording in real time · ${Math.ceil(settings.duration - t)} s left`);
+      requestAnimationFrame(step);
+    };
+    step();
+  });
+  rec.stop();
+  await stopped;
+  if (cancelExport) return false;
+  const type = rec.mimeType || mime || 'video/webm';
+  download(new Blob(chunks, {type}), fileBase() + (type.includes('mp4') ? '.mp4' : '.webm'));
+  return true;
+}
+
+exportBtn.addEventListener('click', async ()=>{
+  if (exporting || !route) return;
+  exporting = true; cancelExport = false;
+  setPlaying(false);
+  setControlsDisabled(true);
+  progressEl.classList.add('active');
+  setProgress(0, 'Preparing…');
+  let ok = false;
+  try{
+    if ('VideoEncoder' in window && 'VideoFrame' in window){
+      try{ ok = await exportMp4(); }
+      catch(e){
+        if (cancelExport) throw e;
+        console.warn('MP4 export failed, falling back to real-time recording:', e);
+        setProgress(0, 'MP4 encoder unavailable, recording in real time instead…');
+        ok = await exportRealtime();
+      }
+    } else {
+      ok = await exportRealtime();
+    }
+    setProgress(ok ? 1 : 0, ok ? 'Done — the video has been downloaded.' : 'Export cancelled.');
+  }catch(e){
+    console.error(e);
+    setProgress(0, 'Export failed: ' + (e && e.message ? e.message : e));
+  }finally{
+    exporting = false;
+    setControlsDisabled(false);
+    setTimeout(()=> progressEl.classList.remove('active'), 1500);
+  }
+});
+cancelBtn.addEventListener('click', ()=>{ cancelExport = true; });
+
+// ======================================================================
+// Controls
+// ======================================================================
+const filterSel = document.getElementById('filterSel');
+const startInput = document.getElementById('startInput');
+const closedChk = document.getElementById('closedChk');
+const durRange = document.getElementById('durRange');
+const durOut = document.getElementById('durOut');
+
+(function fillDatalist(){
+  const dl = document.getElementById('plotlist');
+  PLOTS.map(p=>p.key).sort((a,b)=>{
+    const na = parseInt(a,10), nb = parseInt(b,10);
+    if (na !== nb && !isNaN(na) && !isNaN(nb)) return na - nb;
+    return a.localeCompare(b);
+  }).forEach(k=>{ const o = document.createElement('option'); o.value = k; dl.appendChild(o); });
+})();
+
+function defaultStartKey(){
+  if (plotByKey['000']) return '000';
+  const p = PLOTS.find(q=>NODES[q.node]);
+  return p ? p.key : '';
+}
+settings.startKey = defaultStartKey();
+startInput.value = settings.startKey;
+
+function rebuildAndRestart(){
+  buildRoute();
+  seek(0);
+  setPlaying(true);
+}
+filterSel.addEventListener('change', ()=>{ settings.filter = filterSel.value; rebuildAndRestart(); });
+closedChk.addEventListener('change', ()=>{ settings.closed = closedChk.checked; rebuildAndRestart(); });
+startInput.addEventListener('change', ()=>{
+  const v = startInput.value.trim();
+  const p = plotByKey[v] || PLOTS.find(q=>q.num === v);
+  if (p){ settings.startKey = p.key; startInput.value = p.key; rebuildAndRestart(); }
+  else startInput.value = settings.startKey;
+});
+durRange.addEventListener('input', ()=>{
+  const t = currentTime() / settings.duration;
+  settings.duration = +durRange.value;
+  durOut.textContent = settings.duration + ' s';
+  seek(t * settings.duration);
+});
+function bindSeg(id, key, onChange){
+  const seg = document.getElementById(id);
+  seg.addEventListener('click', e=>{
+    const b = e.target.closest('button'); if (!b || b.disabled) return;
+    seg.querySelectorAll('button').forEach(x=> x.classList.toggle('on', x === b));
+    settings[key] = b.dataset.v;
+    if (onChange) onChange();
+  });
+}
+bindSeg('formatSeg', 'format');
+bindSeg('themeSeg', 'theme');
+bindSeg('cameraSeg', 'camera');
+
+// ======================================================================
+// Boot
+// ======================================================================
+(async function boot(){
+  buildRoute();
+  const fontLoad = Promise.all([400,500,600,700,800].map(w=> document.fonts ? document.fonts.load(`${w} 40px Poppins`) : null))
+    .catch(()=>null);
+  const timeout = new Promise(r=> setTimeout(r, 3500));
+  const loading = document.getElementById('loading');
+  try{
+    await Promise.all([buildRasters(), Promise.race([fontLoad, timeout])]);
+    loading.classList.add('hidden');
+  }catch(e){
+    console.error(e);
+    loading.textContent = 'The background map could not be loaded; the route is drawn without it.';
+    setTimeout(()=> loading.classList.add('hidden'), 2500);
+  }
+  playStart = performance.now(); playOffset = 0; playing = true;
+  requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
