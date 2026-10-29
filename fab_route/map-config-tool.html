@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <title>Fabulous Village — Graph Debug Tool (NODES / EDGES / PLOTS)</title>
-<!-- version = "20260824-000000" -->
+<!-- version = "20261029-204000" -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 :root{
@@ -306,8 +306,8 @@ function dist(a,b){ const dx=a[0]-b[0], dy=a[1]-b[1]; return Math.sqrt(dx*dx+dy*
 
 // ---------- plot categories ----------
 // Three categories live in PLOTS, distinguished by `color`:
-//   yellow -> tour operator pitch
-//   grey   -> hu OPENAIR pitch
+//   yellow -> hu OPENAIR pitch
+//   grey   -> tour operator pitch
 //   power  -> power station / switch box (site infrastructure)
 // Power stations are hidden from the guest route finder (index.html) and get
 // their own page (power.html), but they are edited here like any other plot.
@@ -989,8 +989,8 @@ function buildDataJs(){
     '// deleted. NODES and EDGES are only ever mutated in place.',
     '//',
     '// Plot categories live in `color`:',
-    '//   yellow -> tour operator pitch',
-    '//   grey   -> hu OPENAIR pitch',
+    '//   yellow -> hu OPENAIR pitch',
+    '//   grey   -> tour operator pitch',
     '//   power  -> power station / switch box (hidden from the guest route finder,',
     '//             shown on power.html)',
     '',

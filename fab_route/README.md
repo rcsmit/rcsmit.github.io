@@ -170,8 +170,8 @@ A plot's `color` field is what puts it in one of three categories:
 
 | `color` | Meaning here | Where it shows up |
 |---|---|---|
-| `yellow` | Tour operator pitch | Guest route finder, config tool |
-| `grey` | hu OPENAIR pitch | Guest route finder, config tool |
+| `yellow` | hu OPENAIR pitch | Guest route finder, config tool |
+| `grey` | Tour operator pitch | Guest route finder, config tool |
 | `power` | Power station / switch box | **`power.html`** and the config tool only |
 
 The first two are a naming convention you're free to redefine per campsite (see section 4). The third is different: `power` is load-bearing. `index.html` filters those plots out of the guest autocomplete, out of the typed lookup, and out of click-to-select on the map, so a guest can never be routed to a switch box. The config tool draws them in their own layer as blue squares, with their own show/hide toggles, so they stay visible even when the regular plot layer is off.

@@ -8,8 +8,8 @@
 // deleted. NODES and EDGES are only ever mutated in place.
 //
 // Plot categories live in `color`:
-//   yellow -> tour operator pitch
-//   grey   -> hu OPENAIR pitch
+//   yellow -> hu OPENAIR pitch
+//   grey   -> tour operator pitch
 //   power  -> power station / switch box (hidden from the guest route finder,
 //             shown on power.html)
 

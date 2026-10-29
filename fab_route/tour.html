@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 <title>Fabulous Village — Every Pitch, One Route</title>
-<!-- version = "20261029-203000" -->
+<!-- version = "20261029-204000" -->
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
@@ -153,9 +153,9 @@ input[type=range]{width:100%;accent-color:var(--ink);}
     <div class="field">
       <label for="filterSel">Visit</label>
       <select id="filterSel">
-        <option value="guest">All pitches (tour operator + hu OPENAIR)</option>
-        <option value="yellow">Tour operator pitches only</option>
-        <option value="grey">hu OPENAIR pitches only</option>
+        <option value="guest">All pitches (hu OPENAIR + tour operator)</option>
+        <option value="yellow">hu OPENAIR pitches only</option>
+        <option value="grey">Tour operator pitches only</option>
         <option value="power">Power stations / switch boxes</option>
       </select>
     </div>
@@ -228,7 +228,7 @@ input[type=range]{width:100%;accent-color:var(--ink);}
 <script src="data.js"></script>
 <script src="map-svg.js"></script>
 <script>
-const version = "20261029-203000";
+const version = "20261029-204000";
 
 // ======================================================================
 // Constants
@@ -265,8 +265,8 @@ const THEMES = {
 
 const FILTERS = {
   guest: {test:p=>p.color!==POWER_COLOR, subtitle:'EVERY PITCH • ONE ROUTE',               unit:'PITCHES',  one:'pitch'},
-  yellow:{test:p=>p.color==='yellow',    subtitle:'EVERY TOUR OPERATOR PITCH • ONE ROUTE', unit:'PITCHES',  one:'pitch'},
-  grey:  {test:p=>p.color==='grey',      subtitle:'EVERY HU OPENAIR PITCH • ONE ROUTE',    unit:'PITCHES',  one:'pitch'},
+  yellow:{test:p=>p.color==='yellow',    subtitle:'EVERY HU OPENAIR PITCH • ONE ROUTE',    unit:'PITCHES',  one:'pitch'},
+  grey:  {test:p=>p.color==='grey',      subtitle:'EVERY TOUR OPERATOR PITCH • ONE ROUTE', unit:'PITCHES',  one:'pitch'},
   power: {test:p=>p.color===POWER_COLOR, subtitle:'EVERY POWER STATION • ONE ROUTE',       unit:'STATIONS', one:'station'}
 };
 
@@ -1228,7 +1228,7 @@ function setProgress(f, text){
   statusEl.textContent = text;
 }
 function fileBase(){
-  return `fabulous-village-every-${settings.filter === 'power' ? 'power-station' : (settings.filter === 'guest' ? 'pitch' : settings.filter + '-pitch')}-${settings.format}-${settings.theme}`;
+  return `fabulous-village-every-${({guest:'pitch', yellow:'hu-openair-pitch', grey:'tour-operator-pitch', power:'power-station'})[settings.filter]}-${settings.format}-${settings.theme}`;
 }
 function download(blob, name){
   const a = document.createElement('a');
