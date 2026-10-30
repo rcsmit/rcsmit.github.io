@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="nl"><head>
+<!-- version = "20261030-132000" -->
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>De Blauwe Loper Stadskanaal</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+html,body,#map{height:100%;margin:0;font-family:system-ui,sans-serif}
+.legend{position:absolute;right:120px;bottom:28px;background:#fff;padding:8px 10px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.3);font-size:13px;line-height:1.6;z-index:2}
+.km{background:#1e3a8a;color:#fff;font:600 11px system-ui,sans-serif;padding:2px 5px;border-radius:9px;border:2px solid #fff;box-shadow:0 0 3px rgba(0,0,0,.5);white-space:nowrap}
+.pin{border-radius:50%;border:2px solid #fff;box-shadow:0 0 3px rgba(0,0,0,.5)}
+.cross{display:grid;grid-template-columns:repeat(3,29px);grid-template-rows:repeat(3,29px)}
+.maplibregl-ctrl-group .cross button{border:0!important;width:29px;height:29px;display:flex;align-items:center;justify-content:center;border-radius:4px}
+.cross button.on{background:#2563eb}
+.cross button.on svg{fill:#fff}
+.cross svg{width:16px;height:16px;fill:#333}
+.cross .mid{display:flex;align-items:center;justify-content:center}
+.cross .mid i{width:7px;height:7px;border-radius:50%;background:#9ca3af}
+.mode-btn{font-size:18px;font-weight:700;color:#333}
+.mode-btn svg{width:17px;height:17px;fill:#333;display:block;margin:auto}
+</style>
+</head><body><div id="map"></div>
+<div class="legend"><b id="title">De Blauwe Loper Stadskanaal</b></div>
+<script>
+const RAW={"SL": [[6.967644, 52.98755, 4.6], [6.967601, 52.987465, 4.6], [6.96766, 52.987377, 4.6], [6.967698, 52.98728, 4.6], [6.967734, 52.98719, 4.7], [6.967804, 52.9871, 4.9], [6.967885, 52.98702, 5.1], [6.967972, 52.98693, 5.3], [6.968051, 52.986855, 5.5], [6.96814, 52.98678, 5.5], [6.968226, 52.98669, 5.6], [6.968316, 52.986607, 5.7], [6.968401, 52.98652, 5.7], [6.968481, 52.98643, 5.7], [6.968558, 52.986336, 5.8], [6.968646, 52.986244, 5.8], [6.968731, 52.986156, 5.9], [6.968813, 52.98608, 6.0], [6.968907, 52.985996, 6.2], [6.968981, 52.985897, 6.4], [6.969059, 52.98581, 6.5], [6.969148, 52.98572, 6.7], [6.969219, 52.985638, 6.8], [6.969292, 52.985558, 7.0], [6.969374, 52.985485, 7.2], [6.969458, 52.985397, 7.3], [6.969519, 52.985306, 7.3], [6.969594, 52.98522, 7.2], [6.969682, 52.98513, 7.1], [6.969754, 52.985023, 6.8], [6.969815, 52.984936, 6.5], [6.969868, 52.98484, 6.3], [6.969914, 52.98475, 5.9], [6.96994, 52.984653, 5.6], [6.969962, 52.98455, 5.4], [6.969978, 52.98445, 5.1], [6.970014, 52.984352, 4.8], [6.97006, 52.984257, 4.6], [6.970097, 52.984158, 4.5], [6.970119, 52.98406, 4.3], [6.970107, 52.98396, 4.2], [6.970126, 52.983852, 4.1], [6.97016, 52.98376, 4.0], [6.970176, 52.983673, 4.0], [6.970202, 52.983566, 4.0], [6.970224, 52.983482, 4.0], [6.970258, 52.98338, 4.0], [6.970278, 52.98329, 4.0], [6.970299, 52.9832, 4.1], [6.970329, 52.983093, 4.2], [6.970346, 52.982998, 4.3], [6.970374, 52.982895, 4.4], [6.970404, 52.982796, 4.5], [6.970453, 52.982693, 4.8], [6.970485, 52.982597, 5.1], [6.970519, 52.982506, 5.4], [6.970564, 52.982414, 5.6], [6.970425, 52.98237, 5.9], [6.970256, 52.982357, 6.2], [6.970105, 52.98233, 6.4], [6.969968, 52.982277, 6.5], [6.969805, 52.982254, 6.5], [6.969652, 52.98223, 6.5], [6.969496, 52.982216, 6.4], [6.969346, 52.982212, 6.2], [6.969175, 52.982197, 6.0], [6.969016, 52.982174, 5.8], [6.968849, 52.98214, 5.6], [6.968712, 52.98212, 5.5], [6.968565, 52.982094, 5.3], [6.96843, 52.982056, 5.0], [6.968271, 52.982025, 4.7], [6.968103, 52.98198, 4.5], [6.967946, 52.98193, 4.4], [6.967809, 52.981876, 4.2], [6.967656, 52.981823, 4.0], [6.967512, 52.981762, 3.8], [6.967385, 52.98171, 3.7], [6.967242, 52.981647, 3.6], [6.967136, 52.981594, 3.5], [6.967028, 52.981537, 3.5], [6.966921, 52.98147, 3.6], [6.966794, 52.981396, 3.8], [6.966691, 52.981297, 4.0], [6.966586, 52.9812, 4.2], [6.966493, 52.981125, 4.4], [6.966382, 52.98106, 4.5], [6.966199, 52.981064, 4.5], [6.966056, 52.98109, 4.5], [6.965924, 52.981167, 4.5], [6.965819, 52.981228, 4.5], [6.965743, 52.9813, 4.5], [6.965642, 52.98137, 4.4], [6.965555, 52.981434, 4.4], [6.965451, 52.981514, 4.4], [6.965325, 52.981594, 4.4], [6.965218, 52.981674, 4.4], [6.965095, 52.98175, 4.5], [6.964969, 52.981815, 4.5], [6.964849, 52.98189, 4.5], [6.964738, 52.981964, 4.5], [6.964617, 52.982033, 4.5], [6.964502, 52.982105, 4.5], [6.964396, 52.98218, 4.5], [6.96429, 52.98226, 4.5], [6.964188, 52.982338, 4.5], [6.964075, 52.98241, 4.6], [6.963979, 52.982483, 4.7], [6.963873, 52.98255, 4.8], [6.963736, 52.982616, 4.9], [6.963599, 52.982685, 5.1], [6.96345, 52.982754, 5.3], [6.96334, 52.98283, 5.5], [6.96323, 52.982903, 5.6], [6.963107, 52.982964, 5.8], [6.962985, 52.98304, 5.9], [6.962871, 52.983116, 5.9], [6.962752, 52.983185, 5.8], [6.962643, 52.983257, 5.7], [6.962522, 52.98334, 5.6], [6.962408, 52.983406, 5.5], [6.962296, 52.983475, 5.5], [6.96219, 52.983543, 5.4], [6.962086, 52.983616, 5.3], [6.961993, 52.983696, 5.2], [6.961905, 52.983776, 5.2], [6.96179, 52.98385, 5.2], [6.961667, 52.98393, 5.4], [6.961547, 52.983997, 5.5], [6.961426, 52.98407, 5.7], [6.961292, 52.98413, 5.9], [6.961202, 52.984203, 6.1], [6.961115, 52.984264, 6.2], [6.961032, 52.98434, 6.3], [6.960914, 52.98442, 6.4], [6.960781, 52.984497, 6.5], [6.960691, 52.984566, 6.5], [6.96059, 52.98463, 6.5], [6.960464, 52.98472, 6.4], [6.960434, 52.984814, 6.3], [6.960516, 52.984882, 6.2], [6.960638, 52.984955, 6.1], [6.960713, 52.98504, 6.0], [6.960796, 52.985123, 6.0], [6.960889, 52.985195, 6.0], [6.960978, 52.98526, 5.9], [6.961099, 52.98534, 5.8], [6.961233, 52.9854, 5.7], [6.961371, 52.98545, 5.7], [6.961518, 52.985508, 5.8], [6.961656, 52.985546, 5.9], [6.961814, 52.9856, 6.0], [6.96197, 52.985657, 6.0], [6.96209, 52.9857, 6.0], [6.962223, 52.98574, 6.0], [6.962358, 52.98577, 5.9], [6.962507, 52.98581, 5.9], [6.962662, 52.98585, 5.9], [6.962814, 52.985897, 5.9], [6.962948, 52.985943, 5.8], [6.963071, 52.98601, 5.6], [6.963224, 52.986065, 5.5], [6.963367, 52.98612, 5.3], [6.963509, 52.98615, 5.2], [6.963674, 52.9862, 5.1], [6.96382, 52.986248, 5.0], [6.963958, 52.9863, 5.0], [6.964104, 52.98635, 5.0], [6.96423, 52.986393, 5.0], [6.964358, 52.98644, 5.0], [6.964497, 52.986485, 5.0], [6.96464, 52.986526, 5.0], [6.964785, 52.986576, 5.1], [6.964942, 52.986626, 5.2], [6.965091, 52.98667, 5.3], [6.965214, 52.98672, 5.4], [6.96535, 52.986767, 5.5], [6.965488, 52.9868, 5.7], [6.965625, 52.986855, 5.9], [6.965768, 52.9869, 6.1], [6.965915, 52.986954, 6.2], [6.966047, 52.987007, 6.3], [6.966192, 52.987045, 6.3], [6.966327, 52.98709, 6.2], [6.966459, 52.98713, 6.0], [6.966602, 52.98717, 5.8], [6.966745, 52.987225, 5.6], [6.966904, 52.98728, 5.4], [6.967068, 52.98733, 5.2], [6.967233, 52.98738, 5.0], [6.967376, 52.98744, 4.9], [6.967518, 52.987488, 5.0], [6.967659, 52.987534, 5.1]], "NL": [[6.967659, 52.987534, 5.1], [6.96767, 52.987625, 5.4], [6.96753, 52.987694, 5.6], [6.967412, 52.987774, 6.0], [6.96734, 52.98787, 6.4], [6.967264, 52.987946, 6.7], [6.967159, 52.988033, 7.1], [6.967095, 52.98811, 7.5], [6.967024, 52.98819, 7.8], [6.966938, 52.988274, 8.1], [6.966832, 52.988377, 8.3], [6.966736, 52.98847, 8.5], [6.966655, 52.98854, 8.5], [6.966558, 52.98863, 8.7], [6.966499, 52.988712, 8.9], [6.966397, 52.988804, 9.0], [6.966311, 52.98888, 9.1], [6.966239, 52.988956, 9.2], [6.966158, 52.98903, 9.2], [6.966068, 52.98913, 9.2], [6.965968, 52.98921, 9.2], [6.965861, 52.9893, 9.1], [6.96576, 52.989384, 8.9], [6.965681, 52.989468, 8.7], [6.965582, 52.989548, 8.4], [6.965491, 52.98961, 8.0], [6.965378, 52.989697, 7.7], [6.96528, 52.989784, 7.5], [6.965204, 52.989864, 7.2], [6.965129, 52.98995, 6.9], [6.965026, 52.99003, 6.7], [6.96494, 52.990116, 6.5], [6.964874, 52.990196, 6.5], [6.964801, 52.99028, 6.6], [6.964726, 52.990364, 6.7], [6.964638, 52.990463, 6.9], [6.964552, 52.99057, 7.2], [6.964467, 52.990673, 7.5], [6.964386, 52.990757, 7.7], [6.964292, 52.990845, 7.9], [6.964218, 52.990917, 8.1], [6.964123, 52.991, 8.2], [6.964045, 52.9911, 8.2], [6.963974, 52.991173, 8.0], [6.963873, 52.99127, 7.8], [6.963803, 52.99134, 7.7], [6.963747, 52.991417, 7.7], [6.963675, 52.991524, 7.6], [6.963637, 52.991627, 7.4], [6.963694, 52.99171, 7.1], [6.963783, 52.991734, 7.0], [6.963852, 52.991707, 6.7], [6.963966, 52.991756, 6.6], [6.964073, 52.991825, 6.5], [6.964237, 52.99188, 6.4], [6.964344, 52.991932, 6.4], [6.964418, 52.992016, 6.5], [6.964569, 52.99207, 6.5], [6.964724, 52.992115, 6.5], [6.96487, 52.99216, 6.5], [6.965036, 52.992188, 6.5], [6.965163, 52.99222, 6.6], [6.965306, 52.992252, 6.8], [6.965463, 52.992294, 7.0], [6.96559, 52.992344, 7.2], [6.96574, 52.992382, 7.4], [6.965871, 52.99243, 7.6], [6.966017, 52.992493, 7.8], [6.966139, 52.992546, 8.0], [6.966286, 52.992603, 8.2], [6.966462, 52.99264, 8.3], [6.966613, 52.992687, 8.5], [6.966745, 52.992718, 8.6], [6.966897, 52.99276, 8.7], [6.967026, 52.99281, 8.7], [6.967158, 52.99283, 8.6], [6.967211, 52.992912, 8.5], [6.967168, 52.992996, 8.3], [6.967115, 52.99309, 8.0], [6.967038, 52.993183, 7.7], [6.966949, 52.993282, 7.5], [6.966948, 52.99338, 7.2], [6.967083, 52.993458, 7.0], [6.967204, 52.99351, 6.8], [6.967332, 52.993557, 6.7], [6.967461, 52.993603, 6.7], [6.967585, 52.993637, 6.8], [6.967717, 52.993687, 6.9], [6.967849, 52.993744, 7.1], [6.967983, 52.993797, 7.3], [6.968146, 52.99382, 7.5], [6.968298, 52.993877, 7.6], [6.968449, 52.993923, 7.7], [6.968569, 52.993965, 7.7], [6.968707, 52.99403, 7.6], [6.968836, 52.994087, 7.4], [6.968961, 52.99413, 7.1], [6.969096, 52.994175, 6.7], [6.969233, 52.99422, 6.3], [6.969363, 52.994263, 5.8], [6.969508, 52.994305, 5.4], [6.969641, 52.994347, 4.9], [6.969773, 52.994392, 4.5], [6.969891, 52.994442, 4.1], [6.970032, 52.994488, 3.8], [6.970167, 52.99453, 3.6], [6.970306, 52.994576, 3.6], [6.970437, 52.994606, 3.6], [6.970603, 52.994644, 3.8], [6.970728, 52.994694, 4.2], [6.970853, 52.99474, 4.5], [6.971, 52.994797, 5.0], [6.971125, 52.994843, 5.5], [6.971282, 52.994896, 5.9], [6.971408, 52.994953, 6.4], [6.971565, 52.99495, 6.8], [6.971659, 52.994884, 7.3], [6.971779, 52.99484, 7.5], [6.971895, 52.994793, 7.8], [6.972023, 52.994736, 7.9], [6.972148, 52.994686, 7.9], [6.972256, 52.99463, 7.9], [6.972364, 52.994576, 7.8], [6.972524, 52.994526, 7.7], [6.972645, 52.994473, 7.6], [6.97277, 52.99441, 7.5], [6.972895, 52.994347, 7.4], [6.972976, 52.99428, 7.2], [6.973074, 52.99422, 7.1], [6.97317, 52.994152, 7.0], [6.973298, 52.994083, 7.0], [6.973417, 52.994022, 7.0], [6.9735, 52.993942, 7.0], [6.973552, 52.993866, 6.9], [6.973596, 52.99376, 6.8], [6.973624, 52.993652, 6.8], [6.973611, 52.993557, 6.8], [6.97358, 52.993465, 6.8], [6.973551, 52.993366, 6.8], [6.973524, 52.993282, 6.7], [6.973518, 52.99319, 6.6], [6.973521, 52.9931, 6.5], [6.97352, 52.993004, 6.2], [6.973505, 52.99291, 5.9], [6.973481, 52.99281, 5.8], [6.973478, 52.99272, 5.7], [6.973448, 52.992638, 5.5], [6.973427, 52.992542, 5.5], [6.973413, 52.992447, 5.4], [6.973425, 52.99234, 5.3], [6.973424, 52.99225, 5.3], [6.973397, 52.992157, 5.3], [6.97336, 52.992073, 5.4], [6.973347, 52.99198, 5.5], [6.973326, 52.991882, 5.7], [6.973316, 52.991795, 5.8], [6.973312, 52.991703, 5.8], [6.973286, 52.991608, 5.8], [6.973264, 52.991528, 5.7], [6.973236, 52.99142, 5.6], [6.97322, 52.99133, 5.5], [6.973192, 52.991238, 5.5], [6.973169, 52.991146, 5.5], [6.973135, 52.991062, 5.6], [6.973098, 52.990974, 5.8], [6.973048, 52.990887, 6.0], [6.973018, 52.990795, 6.2], [6.973007, 52.9907, 6.5], [6.973021, 52.990597, 6.7], [6.973036, 52.990498, 7.0], [6.973081, 52.990406, 7.3], [6.973165, 52.99032, 7.5], [6.97323, 52.990227, 7.7], [6.9733, 52.99015, 7.9], [6.973377, 52.99007, 7.9], [6.973453, 52.989994, 7.8], [6.973537, 52.989914, 7.7], [6.973605, 52.989822, 7.5], [6.973656, 52.989723, 7.4], [6.973705, 52.989635, 7.1], [6.973766, 52.989544, 6.8], [6.973833, 52.98945, 6.5], [6.9739, 52.989365, 6.2], [6.974, 52.989285, 5.8], [6.974077, 52.989185, 5.5], [6.974123, 52.98909, 5.3], [6.974201, 52.989, 5.1], [6.974285, 52.988914, 4.9], [6.974367, 52.988827, 4.7], [6.974448, 52.988747, 4.5], [6.974507, 52.98866, 4.5], [6.974584, 52.98858, 4.3], [6.974665, 52.98849, 4.2], [6.974705, 52.98839, 4.1], [6.974721, 52.98831, 4.0], [6.974744, 52.988213, 3.8], [6.974806, 52.988132, 3.6], [6.974756, 52.98805, 3.5], [6.974625, 52.98798, 3.3], [6.974478, 52.987926, 3.2], [6.974334, 52.98788, 3.0], [6.974193, 52.987835, 2.8], [6.974057, 52.987793, 2.8], [6.973906, 52.987747, 2.8], [6.973758, 52.987698, 2.8], [6.973613, 52.987675, 2.8], [6.973491, 52.98764, 2.8], [6.973325, 52.987595, 2.9], [6.973166, 52.98755, 3.0], [6.973013, 52.9875, 3.2], [6.972884, 52.987457, 3.4], [6.972742, 52.987434, 3.6], [6.972568, 52.987408, 3.9], [6.972396, 52.987385, 4.1], [6.972229, 52.98739, 4.2], [6.972064, 52.98741, 4.3], [6.971897, 52.987427, 4.4], [6.971743, 52.987457, 4.5], [6.971578, 52.987495, 4.5], [6.971427, 52.98753, 4.5], [6.971288, 52.987568, 4.4], [6.971145, 52.98761, 4.4], [6.97102, 52.98765, 4.4], [6.970878, 52.987694, 4.5], [6.970751, 52.98774, 4.5], [6.970601, 52.987793, 4.7], [6.970471, 52.987858, 4.9], [6.970339, 52.987904, 5.1], [6.970202, 52.98795, 5.3], [6.970067, 52.987988, 5.5], [6.969918, 52.98801, 5.6], [6.969765, 52.98804, 5.8], [6.969583, 52.98806, 5.9], [6.969433, 52.988068, 6.0], [6.969295, 52.988075, 6.0], [6.969142, 52.98807, 5.9], [6.968978, 52.98805, 5.8], [6.968807, 52.988018, 5.7], [6.968658, 52.987976, 5.6], [6.968518, 52.987946, 5.5], [6.968376, 52.987892, 5.4], [6.968252, 52.987843, 5.2], [6.968114, 52.987797, 5.0], [6.967997, 52.987736, 4.8], [6.96788, 52.98767, 4.7], [6.967772, 52.9876, 4.6], [6.967644, 52.98755, 4.6]], "C": [6.9676515000000006, 52.987542], "v": 3.5083, "t0": "2026-10-24T13:12:07Z"};
+const NAMES={N:'Atalantislaan Noord',S:'Atalantislaan Zuid',W:'Amerikalaan',E:'Dr. Kinglaan'};
+const OPP={N:'S',S:'N',E:'W',W:'E'};
+const R_CLEAR=14, OFF=4, START_OFF=42;
+const C=RAW.C, KY=6371000*Math.PI/180, KX=KY*Math.cos(C[1]*Math.PI/180);
+const xy=p=>[(p[0]-C[0])*KX,(p[1]-C[1])*KY];
+const unxy=(x,y)=>[C[0]+x/KX,C[1]+y/KY];
+const dist=(a,b)=>{const p=xy(a),q=xy(b);return Math.hypot(q[0]-p[0],q[1]-p[1]);};
+const dc=p=>Math.hypot(...xy(p));
+function trim(path){let a=0,b=path.length-1;while(dc(path[a])<=R_CLEAR)a++;while(dc(path[b])<=R_CLEAR)b--;return path.slice(a,b+1);}
+const SLt=trim(RAW.SL), NLt=trim(RAW.NL);
+const unit=p=>{const [x,y]=xy(p),l=Math.hypot(x,y);return [x/l,y/l];};
+const ARMPT={S:SLt[0],W:SLt[SLt.length-1],N:NLt[0],E:NLt[NLt.length-1]};
+const ARMDIR=Object.fromEntries(Object.entries(ARMPT).map(([k,p])=>[k,unit(p)]));
+const LOOP={S:()=>SLt.slice(),W:()=>SLt.slice().reverse(),N:()=>NLt.slice(),E:()=>NLt.slice().reverse()};
+const RET={S:'W',W:'S',N:'E',E:'N'};
+const SAME_LOOP={S:['S','W'],W:['S','W'],N:['N','E'],E:['N','E']};
+function nextArm(inArm,straight){const other=SAME_LOOP[inArm].includes('N')?['S','W']:['N','E'];
+  return straight?OPP[inArm]:other.find(a=>a!==OPP[inArm]);}
+function junction(inArm,outArm){
+  const ele=(ARMPT[inArm][2]+ARMPT[outArm][2])/2;
+  if(outArm===OPP[inArm]) return [C[0],C[1],ele];
+  const a=ARMDIR[inArm],b=ARMDIR[outArm],bx=a[0]+b[0],by=a[1]+b[1],l=Math.hypot(bx,by);
+  return [...unxy(OFF*bx/l,OFF*by/l),ele];
+}
+function lerp(a,b,f){return [a[0]+f*(b[0]-a[0]),a[1]+f*(b[1]-a[1]),a[2]+f*(b[2]-a[2])];}
+function buildRoute(X,straight){
+  const Y=RET[X], Z=nextArm(Y,straight), W=RET[Z];
+  const closed=[junction(W,X),...LOOP[X](),junction(Y,Z),...LOOP[Z](),junction(W,X)];
+  // start START_OFF metres out along the departure arm
+  let acc=0,k=0;
+  while(acc+dist(closed[k],closed[k+1])<START_OFF){acc+=dist(closed[k],closed[k+1]);k++;}
+  const s=lerp(closed[k],closed[k+1],(START_OFF-acc)/dist(closed[k],closed[k+1]));
+  return [s,...closed.slice(k+1),...closed.slice(1,k+1),s];
+}
+function routeLen(r){let s=0;for(let i=0;i<r.length-1;i++)s+=dist(r[i],r[i+1]);return s;}
+
+let arm='E', straight=true, route=buildRoute(arm,straight), kmMarkers=[], startM, finishM;
+const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty'});
+map.addControl(new maplibregl.NavigationControl(),'top-right');
+
+const ARROW='<svg viewBox="0 0 16 16"><path d="M8 1 14 8H10v7H6V8H2z"/></svg>';
+const bearing=a=>Math.atan2(ARMDIR[a][0],ARMDIR[a][1])*180/Math.PI;
+class CrossControl{
+  onAdd(){
+    this.c=document.createElement('div');this.c.className='maplibregl-ctrl maplibregl-ctrl-group';
+    const g=document.createElement('div');g.className='cross';this.c.appendChild(g);
+    const cells={1:'N',3:'W',5:'E',7:'S'};this.btns={};
+    for(let i=0;i<9;i++){
+      if(cells[i]){const a=cells[i],b=document.createElement('button');b.type='button';b.innerHTML=ARROW;
+        b.querySelector('svg').style.transform=`rotate(${bearing(a)}deg)`;
+        b.title=b.ariaLabel='Vertrek via '+NAMES[a];
+        b.onclick=()=>{arm=a;update();};g.appendChild(b);this.btns[a]=b;}
+      else{const d=document.createElement('div');if(i===4){d.className='mid';d.innerHTML='<i></i>';}g.appendChild(d);}
+    }
+    return this.c;}
+  sync(){for(const a in this.btns){this.btns[a].classList.toggle('on',a===arm);this.btns[a].setAttribute('aria-pressed',a===arm);}}
+  onRemove(){this.c.remove();}
+}
+const ICON_STRAIGHT='<svg viewBox="0 0 16 16"><path d="M8 1 13 6H9.5v9h-3V6H3z"/></svg>';
+const ICON_TURN='<svg viewBox="0 0 16 16"><path d="M1 6 6 1v3.5h4.5A3.5 3.5 0 0 1 14 8v7h-3V8a.5.5 0 0 0-.5-.5H6V11z"/></svg>';
+class ModeControl{
+  onAdd(){
+    this.c=document.createElement('div');this.c.className='maplibregl-ctrl maplibregl-ctrl-group';
+    this.m=document.createElement('button');this.m.type='button';this.m.className='mode-btn';
+    this.m.onclick=()=>{straight=!straight;update();};
+    const dl=document.createElement('button');dl.type='button';dl.className='mode-btn';
+    dl.innerHTML='<svg viewBox="0 0 16 16"><path d="M6.5 1h3v6H13L8 12 3 7h3.5zM2 13h12v2H2z"/></svg>';
+    dl.title=dl.ariaLabel='Download GPX van deze route';dl.onclick=downloadGPX;
+    this.c.append(this.m,dl);return this.c;}
+  sync(){this.m.innerHTML=straight?ICON_STRAIGHT:ICON_TURN;
+    this.m.title=this.m.ariaLabel=straight?'Kruising: rechtdoor (klik voor bochtje mee)':'Kruising: bochtje mee (klik voor rechtdoor)';}
+  onRemove(){this.c.remove();}
+}
+const cross=new CrossControl(), mode=new ModeControl();
+map.addControl(cross,'top-right');map.addControl(mode,'top-right');
+map.addControl(new maplibregl.ScaleControl({unit:'metric'}),'bottom-right');
+const all=[...RAW.SL,...RAW.NL];
+map.fitBounds(all.reduce((bb,p)=>bb.extend([p[0],p[1]]),new maplibregl.LngLatBounds([all[0][0],all[0][1]],[all[0][0],all[0][1]])),{padding:40,duration:0});
+
+function placeLegend(){
+  const sc=document.querySelector('.maplibregl-ctrl-scale'),lg=document.querySelector('.legend'),mp=document.getElementById('map').getBoundingClientRect();
+  if(!sc)return;const r=sc.getBoundingClientRect();
+  lg.style.right=(mp.right-r.left+8)+'px';lg.style.bottom=(mp.bottom-r.bottom)+'px';
+}
+map.on('load',placeLegend);map.on('resize',placeLegend);map.on('moveend',placeLegend);
+
+function kmPoints(pts,step=500){const out=[];let acc=0,next=step;
+  for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1],s=dist(a,b);
+    while(s>0&&acc+s>=next){const f=(next-acc)/s;out.push([a[0]+f*(b[0]-a[0]),a[1]+f*(b[1]-a[1]),next/1000]);next+=step;}
+    acc+=s;}
+  return out;}
+function pin(ll,col,label,size){const el=document.createElement('div');el.className='pin';el.style.background=col;el.style.width=el.style.height=size+'px';
+  return new maplibregl.Marker({element:el}).setLngLat(ll).setPopup(new maplibregl.Popup({offset:10}).setText(label)).addTo(map);}
+
+function update(){
+  route=buildRoute(arm,straight);
+  cross.sync();mode.sync();
+  document.getElementById('title').textContent='De Blauwe Loper Stadskanaal - '+(routeLen(route)/1000).toFixed(2)+'km';
+  const src=map.getSource&&map.getSource('route');
+  if(!src)return;
+  src.setData({type:'Feature',geometry:{type:'LineString',coordinates:route.map(p=>[p[0],p[1]])}});
+  kmMarkers.forEach(m=>m.remove());
+  kmMarkers=kmPoints(route).map(([lng,lat,km])=>{const el=document.createElement('div');el.className='km';
+    el.textContent=(km%1?km.toFixed(1):km)+' km';return new maplibregl.Marker({element:el}).setLngLat([lng,lat]).addTo(map);});
+  finishM.setLngLat([route[0][0],route[0][1]]);startM.setLngLat([route[0][0],route[0][1]]);
+  startM.getPopup().setText('Start/finish – vertrek via '+NAMES[arm]+', '+(straight?'rechtdoor':'bochtje mee'));
+}
+
+function downloadGPX(){
+  const t0=Date.parse(RAW.t0);let acc=0;
+  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const name=`De Blauwe Loper Stadskanaal - ${NAMES[arm]} - ${straight?'rechtdoor':'bochtje mee'}`;
+  const pts=route.map((p,i)=>{if(i)acc+=dist(route[i-1],p);
+    const t=new Date(t0+Math.round(acc/RAW.v)*1000).toISOString().replace('.000Z','Z');
+    return `<trkpt lat="${p[1].toFixed(7)}" lon="${p[0].toFixed(7)}"><ele>${p[2].toFixed(1)}</ele><time>${t}</time></trkpt>`;}).join('\n');
+  const gpx=`<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Blauwe Loper map" xmlns="http://www.topografix.com/GPX/1/1">
+<trk><name>${esc(name)}</name><trkseg>
+${pts}
+</trkseg></trk></gpx>`;
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([gpx],{type:'application/gpx+xml'}));
+  a.download=`Blauwe_Loper_${NAMES[arm].replace(/\W+/g,'_')}_${straight?'rechtdoor':'bochtje'}.gpx`.replace(/_+/g,'_');
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},0);
+}
+
+map.on('load',()=>{
+  map.addSource('route',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[]}}});
+  map.addLayer({id:'route-casing',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#fff','line-width':8}});
+  map.addLayer({id:'route',type:'line',source:'route',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#2563eb','line-width':4.5}});
+  map.addLayer({id:'arrows',type:'symbol',source:'route',layout:{'symbol-placement':'line','symbol-spacing':90,'text-field':'▶','text-size':12,'text-keep-upright':false,'text-allow-overlap':true,'text-font':['Noto Sans Regular']},paint:{'text-color':'#1e3a8a'}});
+  finishM=pin([route[0][0],route[0][1]],'#dc2626','Finish',12);
+  startM=pin([route[0][0],route[0][1]],'#16a34a','Start',16);
+  update();
+});
+update();
+</script></body></html>
