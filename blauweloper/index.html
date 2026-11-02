@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="nl"><head>
-<!-- version = "20261030-132000" -->
+<!-- version = "20261102-123000" -->
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>De Blauwe Loper Stadskanaal</title>
 <link rel="icon" type="image/x-icon" href="favicon.ico">
@@ -64,6 +64,16 @@ function routeLen(r){let s=0;for(let i=0;i<r.length-1;i++)s+=dist(r[i],r[i+1]);r
 let arm='E', straight=true, route=buildRoute(arm,straight), kmMarkers=[], startM, finishM;
 const map=new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty'});
 map.addControl(new maplibregl.NavigationControl(),'top-right');
+const geo=new maplibregl.GeolocateControl({
+  positionOptions:{enableHighAccuracy:true,timeout:15000,maximumAge:5000},
+  trackUserLocation:true,showAccuracyCircle:true,showUserLocation:true,
+  fitBoundsOptions:{maxZoom:17}
+});
+map.addControl(geo,'top-right');
+geo.on('error',e=>{
+  const msg={1:'Locatietoegang geweigerd. Sta locatie toe in je browserinstellingen.',2:'Locatie niet beschikbaar.',3:'Locatie opvragen duurde te lang.'}[e.code]||'Locatie kon niet worden bepaald.';
+  new maplibregl.Popup({closeOnClick:true}).setLngLat(map.getCenter()).setText(msg).addTo(map);
+});
 
 const ARROW='<svg viewBox="0 0 16 16"><path d="M8 1 14 8H10v7H6V8H2z"/></svg>';
 const bearing=a=>Math.atan2(ARMDIR[a][0],ARMDIR[a][1])*180/Math.PI;
