@@ -1,4 +1,4 @@
-<!-- version = "20261107-110000" -->
+<!-- version = "20261107-130000" -->
 # citymap — reusable curated city map
 
 Shared engine for maps like `rcsmit.github.io/rome/`. One engine, one small `index.html` per city.
@@ -20,6 +20,7 @@ paris/index.html
 Share it as **Anyone with the link → Viewer**.
 - Tab `MASTER` (name configurable): columns `Id`, `Layer`, `naam`, `address`, `LON`, `LAT`, `website`, `remarks`. Rename the columns your sheet uses via `fields`.
 - Tab `LAYERS` (optional): columns `Layer`, `Description`, `Source`. Shown as hover tooltip and above each table.
+- The `naam` cell may contain a pasted Google Maps place link (`https://www.google.com/maps/place/…`). The map shows the place name, takes LAT/LON from the link when those cells are empty, and uses the cleaned link as the "Google Maps" link. Short `maps.app.goo.gl` links cannot be decoded.
 - `Id` must be unique per row (used by the "show on map" button).
 
 ## Config keys (all optional except `center` and `sheet.id`)

@@ -28,8 +28,10 @@
    #                             from the sheet; stable layer colours; event delegation instead of inline handlers
    # version : 20261107-110000 - Optional QR code (config.qr): sidebar button with modal + SVG download, and a QR
    #                             in the printed legend; show-on-map popup fix (markercluster zoomToShowLayer)
+   # version : 20261107-130000 - A Google Maps place link in the name column is decoded: name, exact coordinates
+   #                             (if LAT/LON are empty) and a clean direct Maps link (tracking parameters removed)
    ========================================================================= */
-const version = "20261107-110000";
+const version = "20261107-130000";
 
 (function () {
   'use strict';
@@ -143,6 +145,45 @@ const version = "20261107-110000";
     } catch (e) { return ''; }
   }
   function shortUrl(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return url; } }
+
+  // A name cell may hold a pasted Google Maps place link, e.g.
+  //   https://www.google.com/maps/place/Greentable+Vegan+Restaurant+Rathaus/@53.56,9.81,12357m/data=...!3d53.5494125!4d9.9928267...
+  // /place/<NAME>/   -> the place name
+  // !3d<lat>!4d<lon> -> the exact coordinates of the place
+  // @lat,lon,<n>m|z  -> only the map view of whoever copied the link; used as a fallback when it is a close zoom (>= 14z)
+  // Short links (maps.app.goo.gl) cannot be decoded in the browser and are left as they are.
+  const GMAPS_PLACE_RE = /^https?:\/\/(?:www\.)?google\.[a-z.]+\/maps\/place\/([^/?#]+)/i;
+  function parseGoogleMapsPlace(raw) {
+    const url = String(raw || '').trim();
+    const m = GMAPS_PLACE_RE.exec(url);
+    if (!m) return null;
+    let name = m[1].replace(/\+/g, ' ');
+    try { name = decodeURIComponent(name); } catch (e) {}
+    let lat = '', lon = '';
+    const exact = /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/.exec(url);
+    if (exact) { lat = exact[1]; lon = exact[2]; }
+    else {
+      const view = /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?)z/.exec(url);
+      if (view && parseFloat(view[3]) >= 14) { lat = view[1]; lon = view[2]; }
+    }
+    let clean = url;
+    try {
+      const u = new URL(url);
+      ['entry', 'g_ep'].forEach(k => u.searchParams.delete(k));   // tracking parameters
+      clean = u.href;
+    } catch (e) {}
+    return { name, lat, lon, url: clean };
+  }
+  function normalizeRow(row) {
+    const g = parseGoogleMapsPlace(row[F.name]);
+    if (!g) return row;
+    row[F.name] = g.name;
+    row._gmapsUrl = g.url;
+    if (isNaN(toFloat(row[F.lat])) || isNaN(toFloat(row[F.lon]))) {
+      if (g.lat && g.lon) { row[F.lat] = g.lat; row[F.lon] = g.lon; }
+    }
+    return row;
+  }
 
   function darken(hex, factor) {
     const m = /^#?([0-9a-f]{6})$/i.exec(String(hex).trim());
@@ -361,14 +402,14 @@ const version = "20261107-110000";
     try {
       const res = await fetch(sheetCsvUrl(cfg.sheet.dataTab));
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      const data = csvToObjects(await res.text()).filter(r => r[F.name]);
+      const data = csvToObjects(await res.text()).filter(r => r[F.name]).map(normalizeRow);
       if (!data.length) throw new Error('Empty sheet response');
       return data;
     } catch (e) {
       console.warn('Sheet fetch failed:', e);
       if (cfg.fallbackData && cfg.fallbackData.length) {
         document.getElementById('loading-msg').textContent = S.demoData;
-        return cfg.fallbackData;
+        return cfg.fallbackData.map(r => normalizeRow(Object.assign({}, r)));
       }
       throw e;
     }
@@ -499,6 +540,7 @@ const version = "20261107-110000";
 
   // Exact coordinates give a precise pin; name + address is the fallback.
   function mapsUrlFor(row) {
+    if (row._gmapsUrl) return row._gmapsUrl;   // the place link given in the sheet opens the exact place
     const lat = toFloat(row[F.lat]), lon = toFloat(row[F.lon]);
     if (!isNaN(lat) && !isNaN(lon)) return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
     const q = [row[F.name], row[F.address]].filter(Boolean).join(' ');
