@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<title>Maps Links naar TXT</title>
+<style>
+/* Layout idea: two stacked panels (input, output) in one narrow column, controls between them. */
+:root {
+  --bg: #f4f5f2;
+  --surface: #ffffff;
+  --ink: #1d2320;
+  --muted: #5d6762;
+  --line: #d6dad5;
+  --accent: #1f6f5c;
+  --accent-ink: #ffffff;
+  --warn: #9a5b00;
+  --display: "Space Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131815;
+    --surface: #1b221e;
+    --ink: #e6ebe7;
+    --muted: #9aa59f;
+    --line: #2f3a34;
+    --accent: #5fc4a8;
+    --accent-ink: #0d1411;
+    --warn: #e0a64a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131815;
+  --surface: #1b221e;
+  --ink: #e6ebe7;
+  --muted: #9aa59f;
+  --line: #2f3a34;
+  --accent: #5fc4a8;
+  --accent-ink: #0d1411;
+  --warn: #e0a64a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.5;
+}
+main {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+h1 {
+  font-family: var(--display);
+  font-size: 1.35rem;
+  margin: 0;
+  text-wrap: balance;
+}
+.lead { margin: 4px 0 0; color: var(--muted); }
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+}
+label.title { font-weight: 600; }
+.meta { color: var(--muted); font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+textarea {
+  width: 100%;
+  min-height: 180px;
+  resize: vertical;
+  background: var(--bg);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  white-space: pre;
+  overflow: auto;
+}
+textarea:focus-visible, button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.options { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.options label { display: flex; align-items: center; gap: 8px; min-height: 32px; }
+.options input { width: 18px; height: 18px; accent-color: var(--accent); }
+.buttons { display: flex; gap: 8px; }
+button {
+  font: inherit;
+  font-weight: 600;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button:active { transform: translateY(1px); }
+.notice { color: var(--warn); font-size: 0.875rem; min-height: 1.3em; margin: 0; }
+@media (prefers-reduced-motion: reduce) { button:active { transform: none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Maps Links naar TXT</h1>
+    <p class="lead">Plak je Google Maps-links, één per regel. Je krijgt tekst met ; als scheidingsteken.</p>
+  </header>
+
+  <section class="panel" aria-labelledby="in-title">
+    <div class="row">
+      <label class="title" for="input" id="in-title">Links</label>
+      <div class="buttons">
+        <button type="button" id="clear">Wissen</button>
+      </div>
+    </div>
+    <textarea id="input" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="in-meta">naam
+https://www.google.com/maps/place/Abenteuerzentrum+Bahrenfeld/@53.5515626,9.7824116,12361m/data=!3m1!1e3!4m10!1m3!11m2!2sF8FyeR7ZmDpDbQC0g3HBDxzlOSnpLg!3e3!3m5!1s0x47b18508d2b9311d:0x31f1db3c51785e0!8m2!3d53.5695184!4d9.908449!16s%2Fg%2F11kmq6rtlj?entry=ttu
+google.com/maps/place/elbgold+Röstkaffee+GmbH/@53.5626295,9.8176242,12357m/data=!3m2!1e3!5s0x47b1860446a8cea1:0xf3bfa9e66f32aed!4m10!1m3!11m2!2sF8FyeR7ZmDpDbQC0g3HBDxzlOSnpLg!3e3!3m5!1s0x47b18f4053c12797:0x6c3b62e4b472b9c5!8m2!3d53.5632199!4d9.9670748!16s%2Fg%2F1tf27q_r?entry=ttu
+https://www.google.com/maps/place/Good+One+Caf%C3%A9+-+Eimsb%C3%BCttel/@53.5626295,9.8176242,12357m/data=!3m2!1e3!5s0x47b18f5bc0fc19f1:0x7071b6ba9e15507c!4m10!1m3!11m2!2sF8FyeR7ZmDpDbQC0g3HBDxzlOSnpLg!3e3!3m5!1s0x47b18fcd12827b59:0xaf2d00fe22a6d925!8m2!3d53.56847!4d9.95514!16s%2Fg%2F11r_g5cz01?entry=ttu</textarea>
+    <div class="row">
+      <span class="meta" id="in-meta">Regels zonder Maps-link worden overgeslagen.</span>
+    </div>
+  </section>
+
+  <section class="panel" aria-label="Opties">
+    <div class="options">
+      <label><input type="checkbox" id="opt-header" > Kopregel (naam;lat;lng)</label>
+      <label><input type="checkbox" id="opt-coords" checked> Coördinaten (lat;lng)</label>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="out-title">
+    <div class="row">
+      <label class="title" for="output" id="out-title">Resultaat</label>
+      <div class="buttons">
+        <button type="button" class="primary" id="copy">Kopieer</button>
+      </div>
+    </div>
+    <textarea id="output" readonly spellcheck="false"></textarea>
+    <div class="row">
+      <span class="meta" id="count"></span>
+      <p class="notice" id="notice" role="status"></p>
+    </div>
+  </section>
+</main>
+
+<script>
+// version = "20261107-171900"
+(function () {
+  "use strict";
+
+  var $input = document.getElementById("input");
+  var $output = document.getElementById("output");
+  var $count = document.getElementById("count");
+  var $notice = document.getElementById("notice");
+  var $header = document.getElementById("opt-header");
+  var $coords = document.getElementById("opt-coords");
+  var $copy = document.getElementById("copy");
+  var $clear = document.getElementById("clear");
+  var copyTimer = null;
+
+  function clean(value) {
+    return String(value).replace(/[;\r\n\t]+/g, ",").replace(/\s{2,}/g, " ").trim();
+  }
+
+  function isMapsLink(line) {
+    return /(^|\/\/|www\.)(google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(line);
+  }
+
+  function parseName(url) {
+    var m = url.match(/\/maps\/place\/([^\/@?]+)/i);
+    if (!m) return "";
+    var raw = m[1].replace(/\+/g, " ");
+    try { return decodeURIComponent(raw); } catch (e) { return raw; }
+  }
+
+  function parseCoords(url) {
+    var m = url.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+    if (m) return { lat: m[1], lng: m[2] };
+    m = url.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+    if (m) return { lat: m[1], lng: m[2] };
+    return { lat: "", lng: "" };
+  }
+
+  function normalizeUrl(line) {
+    var url = /^https?:\/\//i.test(line) ? line : "https://" + line.replace(/^\/+/, "");
+    return url.replace(/;/g, "%3B");
+  }
+
+  function convert() {
+    var withCoords = $coords.checked;
+    var lines = $input.value.split(/\r?\n/);
+    var rows = [];
+    var skipped = 0;
+
+    lines.forEach(function (rawLine) {
+      var line = rawLine.trim();
+      if (!line) return;
+      if (!isMapsLink(line)) { skipped += 1; return; }
+      var url = normalizeUrl(line);
+      var c = parseCoords(url);
+      var cols = [clean(parseName(url))];
+      if (withCoords) cols.push(c.lat.replace(".", ","), c.lng.replace(".", ","));
+      rows.push(cols.join(";"));
+    });
+
+    if ($header.checked && rows.length) {
+      rows.unshift(withCoords ? "naam;lat;lng" : "naam");
+    }
+
+    $output.value = rows.join("\n");
+    var n = rows.length - ($header.checked && rows.length ? 1 : 0);
+    $count.textContent = n + (n === 1 ? " link" : " links") + " omgezet";
+    $notice.textContent = skipped
+      ? skipped + (skipped === 1 ? " regel" : " regels") + " overgeslagen (geen Maps-link)"
+      : "";
+  }
+
+  function setCopyLabel(text) {
+    $copy.textContent = text;
+    clearTimeout(copyTimer);
+    copyTimer = setTimeout(function () { $copy.textContent = "Kopieer"; }, 1800);
+  }
+
+  function fallbackCopy() {
+    $output.focus();
+    $output.select();
+    $output.setSelectionRange(0, $output.value.length);
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    return ok;
+  }
+
+  $copy.addEventListener("click", function () {
+    if (!$output.value) { setCopyLabel("Niets te kopiëren"); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText($output.value).then(
+        function () { setCopyLabel("Gekopieerd"); },
+        function () { setCopyLabel(fallbackCopy() ? "Gekopieerd" : "Selecteer en kopieer zelf"); }
+      );
+    } else {
+      setCopyLabel(fallbackCopy() ? "Gekopieerd" : "Selecteer en kopieer zelf");
+    }
+  });
+
+  $clear.addEventListener("click", function () {
+    $input.value = "";
+    convert();
+    $input.focus();
+  });
+
+  $input.addEventListener("input", convert);
+  $header.addEventListener("change", convert);
+  $coords.addEventListener("change", convert);
+
+  convert();
+})();
+</script>
+</body>
+</html>
