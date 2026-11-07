@@ -1,4 +1,4 @@
-<!-- version = "20261107-130000" -->
+<!-- version = "20261107-132200" -->
 # citymap — reusable curated city map
 
 Shared engine for maps like `rcsmit.github.io/rome/`. One engine, one small `index.html` per city.
@@ -38,6 +38,7 @@ Share it as **Anyone with the link → Viewer**.
 | `storageKey` | `"citymap"` | Prefix for the saved basemap preference — use one per city |
 | `defaultBasemap` | `"positron"` | `positron, dark, bright, liberty, fiord, positron_nolabels, dark_nolabels` |
 | `clusterMaxRadius`, `clusterDisableAtZoom` | 60 / 13 | Marker clustering |
+| `locate` | `true` | "My location" button under the zoom control. The position is only requested when it is pressed, shown as a blue dot with accuracy circle, never stored or tracked. Needs https (GitHub Pages is). `false` removes the button |
 | `qr` | `{enabled:false, url:""}` | `enabled:true` adds a "QR code" button (modal, SVG download) and a QR on the printed map. It encodes `url` (or the current page address) plus the active `?layer=` selection |
 | `fallbackData`, `fallbackMeta` | none | Rows/descriptions used when the sheet is unreachable |
 | `strings` | English | Every UI text, e.g. `placesCount: "{n} plaatsen"` for a Dutch map |

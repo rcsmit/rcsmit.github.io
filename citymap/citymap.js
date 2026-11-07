@@ -30,8 +30,10 @@
    #                             in the printed legend; show-on-map popup fix (markercluster zoomToShowLayer)
    # version : 20261107-130000 - A Google Maps place link in the name column is decoded: name, exact coordinates
    #                             (if LAT/LON are empty) and a clean direct Maps link (tracking parameters removed)
+   # version : 20261107-132200 - "My location" button under the zoom control (config.locate): blue dot with accuracy
+   #                             circle, one-shot (no tracking), clear messages when denied / unavailable / timed out
    ========================================================================= */
-const version = "20261107-130000";
+const version = "20261107-132200";
 
 (function () {
   'use strict';
@@ -71,6 +73,7 @@ const version = "20261107-130000";
     clusterDisableAtZoom: 13,
     fallbackData: null,         // rows used when the sheet can't be reached
     fallbackMeta: {},           // layer descriptions used with fallbackData
+    locate: true,               // "my location" button; the position is only requested when the button is pressed
     qr: { enabled: false, url: '' },   // url = fixed base address; empty = the address of the current page
     strings: {
       searchLabel: 'Search',
@@ -100,6 +103,14 @@ const version = "20261107-130000";
       collapseSidebar: 'Collapse sidebar',
       expandSidebar: 'Expand sidebar',
       disclaimerLabel: 'Disclaimer:',
+      locateTitle: 'Show my location',
+      locating: 'Finding your location…',
+      youAreHere: 'You are here',
+      accuracy: 'Accuracy: about {n} m',
+      locateDenied: 'Location access was denied. Allow it in your browser settings to use this button.',
+      locateUnavailable: 'Your location could not be determined.',
+      locateTimeout: 'Finding your location took too long. Try again.',
+      locateInsecure: 'Location only works on a secure (https) page.',
       qrButton: '▦ QR code',
       qrTitle: 'Scan to open this map',
       qrClose: 'Close',
@@ -307,6 +318,7 @@ const version = "20261107-130000";
       <div id="main">
         <div id="map"></div>
         <div id="no-layers-msg">${escH(S.noLayers)}</div>
+        <div id="map-toast" role="status" aria-live="polite"></div>
         <div id="drag-handle"></div>
         <div id="table-panel"><div id="table-wrap"></div></div>
         <div id="print-legend"><div id="print-legend-content"></div></div>
@@ -528,6 +540,7 @@ const version = "20261107-130000";
       p.update();
     });
     initBasemap();
+    initLocate();
   }
 
   function fitMapToVisible(data) {
@@ -725,6 +738,58 @@ const version = "20261107-130000";
       const lat = toFloat(r[F.lat]), lon = toFloat(r[F.lon]);
       return !isNaN(lat) && !isNaN(lon) && bounds.contains([lat, lon]);
     });
+  }
+
+  // ── MY LOCATION ─────────────────────────────────────────────────────────────
+  const LOCATE_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';
+  let locateLayers = [], toastTimer = null;
+
+  function toast(message) {
+    const el = document.getElementById('map-toast');
+    el.textContent = message;
+    el.style.display = 'block';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  function locateMe(button) {
+    if (!window.isSecureContext) return toast(S.locateInsecure);
+    button.classList.add('busy');
+    toast(S.locating);
+    navigator.geolocation.getCurrentPosition(pos => {
+      button.classList.remove('busy');
+      document.getElementById('map-toast').style.display = 'none';
+      const ll = [pos.coords.latitude, pos.coords.longitude], acc = Math.max(pos.coords.accuracy || 0, 1);
+      locateLayers.forEach(l => map.removeLayer(l));
+      const circle = L.circle(ll, { radius: acc, color: '#1a73e8', weight: 1, fillColor: '#1a73e8', fillOpacity: 0.12, interactive: false });
+      const dot = L.circleMarker(ll, { radius: 8, color: '#fff', weight: 3, fillColor: '#1a73e8', fillOpacity: 1 })
+        .bindPopup(`<div class="popup-body"><div class="popup-name">${escH(S.youAreHere)}</div><div class="popup-addr">${escH(S.accuracy.replace('{n}', Math.round(acc)))}</div></div>`);
+      locateLayers = [circle, dot];
+      locateLayers.forEach(l => l.addTo(map));
+      button.classList.add('active');
+      map.fitBounds(circle.getBounds(), { maxZoom: 16, padding: [40, 40] });
+    }, err => {
+      button.classList.remove('busy');
+      toast(err.code === 1 ? S.locateDenied : err.code === 3 ? S.locateTimeout : S.locateUnavailable);
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+  }
+
+  function initLocate() {
+    if (!cfg.locate || !('geolocation' in navigator)) return;
+    const LocateControl = L.Control.extend({
+      options: { position: 'topleft' },
+      onAdd() {
+        const bar = L.DomUtil.create('div', 'leaflet-bar locate-control');
+        const a = L.DomUtil.create('a', '', bar);
+        a.href = '#'; a.setAttribute('role', 'button');
+        a.title = S.locateTitle; a.setAttribute('aria-label', S.locateTitle);
+        a.innerHTML = LOCATE_ICON;
+        L.DomEvent.disableClickPropagation(bar);
+        L.DomEvent.on(a, 'click', e => { L.DomEvent.preventDefault(e); locateMe(a); });
+        return bar;
+      }
+    });
+    map.addControl(new LocateControl());
   }
 
   // ── QR CODE ─────────────────────────────────────────────────────────────────

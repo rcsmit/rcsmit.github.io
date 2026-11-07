@@ -1,4 +1,4 @@
-/* version = "20261107-130000" */
+/* version = "20261107-132200" */
 /* ============================================================================
    citymap.css — generic styles for the reusable city map (see citymap.js).
    All colours and fonts are CSS variables. The defaults below are a neutral
@@ -342,6 +342,17 @@ td a:hover { text-decoration: underline; }
 }
 #print-btn:hover { background: var(--accent); color: #fff; }
 
+/* ── MY LOCATION ── */
+.locate-control a { display: flex; align-items: center; justify-content: center; color: var(--deep); }
+.locate-control a:hover { color: var(--accent); }
+.locate-control a.active { color: #1a73e8; }
+.locate-control a.busy { opacity: .45; cursor: progress; }
+#map-toast {
+  display: none; position: absolute; top: 90px; left: 50%; transform: translateX(-50%); z-index: 500;
+  background: var(--deep); color: var(--cream); font-size: 0.78rem; line-height: 1.4; text-align: center;
+  padding: 9px 16px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.25); max-width: 80%;
+}
+
 /* ── QR CODE ── */
 #qr-btn {
   width: 100%; padding: 7px 0; margin-top: 8px; font-family: var(--font-body); font-size: 0.74rem;
@@ -390,7 +401,7 @@ td a:hover { text-decoration: underline; }
   @page { margin: 12mm; }
   body { height: auto; overflow: visible; display: block; }
   #sidebar, #sidebar-toggle, #sidebar-overlay, #drag-handle, #table-panel, #no-layers-msg, #float-tip,
-  .leaflet-control-zoom, .leaflet-control-attribution, #qr-modal { display: none !important; }
+  .leaflet-control-zoom, .locate-control, #map-toast, .leaflet-control-attribution, #qr-modal { display: none !important; }
   #main { display: block; height: auto; overflow: visible; }
   #map {
     width: 100% !important; height: 480pt !important; min-height: 0;
