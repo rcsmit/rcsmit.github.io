@@ -32,8 +32,10 @@
    #                             (if LAT/LON are empty) and a clean direct Maps link (tracking parameters removed)
    # version : 20261107-132200 - "My location" button under the zoom control (config.locate): blue dot with accuracy
    #                             circle, one-shot (no tracking), clear messages when denied / unavailable / timed out
+   # version : 20261107-140600 - Zoom + location buttons moved to the top right (no longer under the sidebar strip on
+   #                             phones); own location marker is a pulsing diamond, distinct from the round place markers
    ========================================================================= */
-const version = "20261107-132200";
+const version = "20261107-140600";
 
 (function () {
   'use strict';
@@ -529,7 +531,9 @@ const version = "20261107-132200";
 
   // ── MAP ─────────────────────────────────────────────────────────────────────
   function initMap() {
-    map = L.map('map', { center: cfg.center, zoom: cfg.zoom, maxZoom: cfg.maxZoom });
+    // Controls sit at the top right: on phones the collapsed sidebar strip covers the left edge of the map.
+    map = L.map('map', { center: cfg.center, zoom: cfg.zoom, maxZoom: cfg.maxZoom, zoomControl: false });
+    L.control.zoom({ position: 'topright' }).addTo(map);
     // Keep the bottom table in sync with what is actually visible.
     map.on('moveend', () => buildTable(visibleTableData()));
     // Recompute popup width at the moment each popup opens (viewport may have been resized/rotated).
@@ -762,8 +766,11 @@ const version = "20261107-132200";
       const ll = [pos.coords.latitude, pos.coords.longitude], acc = Math.max(pos.coords.accuracy || 0, 1);
       locateLayers.forEach(l => map.removeLayer(l));
       const circle = L.circle(ll, { radius: acc, color: '#1a73e8', weight: 1, fillColor: '#1a73e8', fillOpacity: 0.12, interactive: false });
-      const dot = L.circleMarker(ll, { radius: 8, color: '#fff', weight: 3, fillColor: '#1a73e8', fillOpacity: 1 })
-        .bindPopup(`<div class="popup-body"><div class="popup-name">${escH(S.youAreHere)}</div><div class="popup-addr">${escH(S.accuracy.replace('{n}', Math.round(acc)))}</div></div>`);
+      // A diamond with a pulsing ring: clearly different from the round place markers.
+      const dot = L.marker(ll, {
+        icon: L.divIcon({ className: '', html: '<div class="me-marker"></div>', iconSize: [22, 22], iconAnchor: [11, 11], popupAnchor: [0, -12] }),
+        zIndexOffset: 1000, keyboard: false, title: S.youAreHere
+      }).bindPopup(`<div class="popup-body"><div class="popup-name">${escH(S.youAreHere)}</div><div class="popup-addr">${escH(S.accuracy.replace('{n}', Math.round(acc)))}</div></div>`);
       locateLayers = [circle, dot];
       locateLayers.forEach(l => l.addTo(map));
       button.classList.add('active');
@@ -777,7 +784,7 @@ const version = "20261107-132200";
   function initLocate() {
     if (!cfg.locate || !('geolocation' in navigator)) return;
     const LocateControl = L.Control.extend({
-      options: { position: 'topleft' },
+      options: { position: 'topright' },
       onAdd() {
         const bar = L.DomUtil.create('div', 'leaflet-bar locate-control');
         const a = L.DomUtil.create('a', '', bar);
