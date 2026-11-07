@@ -34,8 +34,10 @@
    #                             circle, one-shot (no tracking), clear messages when denied / unavailable / timed out
    # version : 20261107-140600 - Zoom + location buttons moved to the top right (no longer under the sidebar strip on
    #                             phones); own location marker is a pulsing diamond, distinct from the round place markers
+   # version : 20261107-145500 - "Show names on map" toggle (permanent labels, remembered per browser) and a Status
+   #                             dropdown (default ALL) built from the sheet's Status column; ?status= deeplink
    ========================================================================= */
-const version = "20261107-140600";
+const version = "20261107-145500";
 
 (function () {
   'use strict';
@@ -60,7 +62,7 @@ const version = "20261107-140600";
     zoom: 12,
     maxZoom: 19,
     sheet: { id: '', dataTab: 'MASTER', layersTab: 'LAYERS' },
-    fields: { id: 'Id', category: 'Layer', name: 'naam', address: 'address', lon: 'LON', lat: 'LAT', website: 'website', remarks: 'remarks' },
+    fields: { id: 'Id', category: 'Layer', name: 'naam', address: 'address', lon: 'LON', lat: 'LAT', website: 'website', remarks: 'remarks', status: 'Status' },
     metaFields: { layer: 'Layer', description: 'Description', source: 'Source' },
     theme: {},                  // CSS colour overrides, see README.md
     fonts: { heading: 'Playfair Display', body: 'Lato', url: '' },
@@ -75,6 +77,7 @@ const version = "20261107-140600";
     clusterDisableAtZoom: 13,
     fallbackData: null,         // rows used when the sheet can't be reached
     fallbackMeta: {},           // layer descriptions used with fallbackData
+    showNames: false,           // initial state of the "show names" toggle (the visitor's choice is remembered)
     locate: true,               // "my location" button; the position is only requested when the button is pressed
     qr: { enabled: false, url: '' },   // url = fixed base address; empty = the address of the current page
     strings: {
@@ -105,6 +108,9 @@ const version = "20261107-140600";
       collapseSidebar: 'Collapse sidebar',
       expandSidebar: 'Expand sidebar',
       disclaimerLabel: 'Disclaimer:',
+      showNames: 'Show names on map',
+      statusLabel: 'Status',
+      statusAll: 'ALL',
       locateTitle: 'Show my location',
       locating: 'Finding your location…',
       youAreHere: 'You are here',
@@ -302,8 +308,14 @@ const version = "20261107-140600";
           <div class="section-label">${escH(S.searchLabel)}</div>
           <input id="search-input" type="text" placeholder="${escH(S.searchPlaceholder)}" />
 
+          ${F.status ? `<div id="status-wrap" style="display:none">
+            <div class="section-label">${escH(S.statusLabel)}</div>
+            <select id="status-select" class="side-select"></select>
+          </div>` : ''}
+
           <div class="section-label">${escH(S.mapStyle)}</div>
           <select id="basemap-select"></select>
+          <label id="names-row"><input type="checkbox" id="names-toggle" /> <span>${escH(S.showNames)}</span></label>
 
           <div class="section-label with-badge">${escH(S.layers)} <span id="count-badge"></span></div>
           <div id="sel-controls">
@@ -377,6 +389,7 @@ const version = "20261107-140600";
   let clusterGroups = {};
   const markersById = {};          // rowId -> { marker, cluster, lat, lon }
   let basemapLayer = null;         // L.maplibreGL layer
+  let showNames = false;           // permanent name labels on the markers
   let basemapSeq = 0;              // guards against out-of-order async style loads
   const sidebarCtl = {};           // filled by initSidebar()
   const tip = () => document.getElementById('float-tip');
@@ -604,7 +617,7 @@ const version = "20261107-140600";
         ${site ? `<a class="popup-link" href="${escH(site)}" target="_blank" rel="noopener noreferrer">🌐 ${escH(row[F.website])}</a>` : ''}
         <a class="popup-link" href="${escH(mapsUrlFor(row))}" target="_blank" rel="noopener noreferrer">📍 ${escH(S.googleMaps)}</a>
         ${cfg.popupWarning ? `<div class="popup-warn">ℹ ${escH(cfg.popupWarning)}</div>` : ''}
-        <div class="popup-cat">${escH(row[F.category])}</div>
+        <div class="popup-cat">${escH(row[F.category])}${F.status && row[F.status] ? ' · ' + escH(row[F.status]) : ''}</div>
       </div>`;
   }
 
@@ -630,7 +643,9 @@ const version = "20261107-140600";
         if (isNaN(lat) || isNaN(lon)) return;
         const popup = L.popup({ maxWidth: popupMaxWidth() }).setContent(popupHtml(row));
         const marker = L.circleMarker([lat, lon], { radius: 7, color: '#fff', weight: 2, fillColor: color, fillOpacity: 0.9 })
-          .bindPopup(popup).bindTooltip(row[F.name], { direction: 'top', offset: [0, -6] })
+          .bindPopup(popup).bindTooltip(row[F.name], showNames
+            ? { permanent: true, direction: 'right', offset: [8, 0], className: 'cm-label' }
+            : { direction: 'top', offset: [0, -6] })
           .addTo(cluster);
         if (row[F.id]) markersById[row[F.id]] = { marker, cluster, lat, lon };
       });
@@ -808,6 +823,7 @@ const version = "20261107-140600";
     const u = new URL(base, window.location.href);
     u.search = '';
     if (activeLayers.size) u.searchParams.set('layer', [...activeLayers].join(','));
+    if (currentStatus()) u.searchParams.set('status', currentStatus());
     return u.href;
   }
 
@@ -925,8 +941,50 @@ const version = "20261107-140600";
   // ── SEARCH, DEEPLINKS, RENDER ───────────────────────────────────────────────
   function applySearch() {
     const q = document.getElementById('search-input').value.toLowerCase();
-    const keys = [F.category, F.name, F.address, F.website, F.remarks];
-    filteredData = q ? allData.filter(r => keys.some(k => (r[k] || '').toLowerCase().includes(q))) : [...allData];
+    const keys = [F.category, F.name, F.address, F.website, F.remarks, F.status].filter(Boolean);
+    const st = currentStatus();
+    const rows = st ? allData.filter(r => (r[F.status] || '') === st) : allData;
+    filteredData = q ? rows.filter(r => keys.some(k => (r[k] || '').toLowerCase().includes(q))) : [...rows];
+  }
+
+  // Selected value of the Status dropdown ('' = ALL).
+  function currentStatus() {
+    const sel = document.getElementById('status-select');
+    return sel ? sel.value : '';
+  }
+
+  // Fills the Status dropdown from the distinct values in the sheet's Status column (hidden when there are none).
+  function initStatus() {
+    const sel = document.getElementById('status-select');
+    if (!sel) return;
+    const values = [...new Set(allData.map(r => r[F.status]).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    if (!values.length) return;
+    sel.innerHTML = '';
+    [['', S.statusAll], ...values.map(v => [v, v])].forEach(([value, label]) => {
+      const o = document.createElement('option');
+      o.value = value; o.textContent = label;
+      sel.appendChild(o);
+    });
+    const wanted = new URLSearchParams(window.location.search).get('status');
+    const match = wanted && values.find(v => v.toLowerCase() === wanted.trim().toLowerCase());
+    if (match) sel.value = match;
+    document.getElementById('status-wrap').style.display = 'block';
+    sel.addEventListener('change', () => render(true));
+  }
+
+  // "Show names on map" toggle; the choice is remembered in this browser.
+  function initNamesToggle() {
+    const box = document.getElementById('names-toggle');
+    let saved = null;
+    try { saved = localStorage.getItem(cfg.storageKey + '-names'); } catch (e) {}
+    showNames = saved === null ? !!cfg.showNames : saved === '1';
+    box.checked = showNames;
+    box.addEventListener('change', () => {
+      showNames = box.checked;
+      try { localStorage.setItem(cfg.storageKey + '-names', showNames ? '1' : '0'); } catch (e) {}
+      buildLayers(filteredData);   // markers are rebuilt with / without permanent labels
+    });
   }
 
   function clearDeeplinkWarning() {
@@ -950,6 +1008,7 @@ const version = "20261107-140600";
     const params = new URLSearchParams(window.location.search);
     activeLayers.size ? params.set('layer', [...activeLayers].join(',')) : params.delete('layer');
     params.delete('layers');
+    currentStatus() ? params.set('status', currentStatus()) : params.delete('status');
     history.replaceState(null, '', window.location.pathname + (params.toString() ? '?' + params.toString() : ''));
   }
 
@@ -1012,6 +1071,7 @@ const version = "20261107-140600";
     document.getElementById('btn-deselect-all').addEventListener('click', deselectAll);
     document.getElementById('print-btn').addEventListener('click', printMap);
     initQr();
+    initNamesToggle();
     document.getElementById('table-wrap').addEventListener('click', e => {
       const btn = e.target.closest('[data-show-id]');
       if (btn) showOnMap(btn.dataset.showId);
@@ -1025,6 +1085,7 @@ const version = "20261107-140600";
       filteredData = [...allData];
       const allLayers = layerNamesOf(allData);
       assignLayerColors(allLayers);
+      initStatus();
 
       const wanted = getLayersFromURL();
       if (wanted) {

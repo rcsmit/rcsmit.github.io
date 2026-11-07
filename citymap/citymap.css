@@ -1,4 +1,4 @@
-/* version = "20261107-140600" */
+/* version = "20261107-145500" */
 /* ============================================================================
    citymap.css — generic styles for the reusable city map (see citymap.js).
    All colours and fonts are CSS variables. The defaults below are a neutral
@@ -141,12 +141,18 @@ body {
 #search-input:focus { border-color: var(--accent); }
 #search-input::placeholder { color: var(--subtle); }
 
-#basemap-select {
+#basemap-select, #status-select {
   width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
   font-family: var(--font-body); font-size: 0.8rem; background: var(--cream);
   color: var(--deep); outline: none; cursor: pointer; transition: border-color .2s;
 }
-#basemap-select:focus { border-color: var(--accent); }
+#basemap-select:focus, #status-select:focus { border-color: var(--accent); }
+#status-select { width: 100%; }
+#status-wrap .section-label { margin-top: 14px; }
+
+/* names toggle */
+#names-row { display: flex; align-items: center; gap: 8px; margin-top: 9px; font-size: 0.8rem; cursor: pointer; user-select: none; }
+#names-row input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
 
 #sel-controls { display: flex; gap: 6px; margin-bottom: 8px; }
 .sel-btn {
@@ -328,6 +334,14 @@ td a:hover { text-decoration: underline; }
 .popup-link:hover { text-decoration: none; color: var(--gold); }
 .popup-warn { font-size: 0.7rem; color: var(--popup-warn); font-weight: 700; margin-top: 8px; }
 .popup-cat  { font-size: 0.68rem; color: #999; margin-top: 4px; }
+
+/* ── NAME LABELS (permanent tooltips) ── */
+.leaflet-tooltip.cm-label {
+  background: rgba(255,255,255,.88); color: var(--deep); border: none; border-radius: 3px; padding: 1px 5px;
+  font-family: var(--font-body); font-size: 0.68rem; font-weight: 700; line-height: 1.35;
+  box-shadow: 0 1px 3px rgba(0,0,0,.3); pointer-events: none;
+}
+.leaflet-tooltip.cm-label::before { display: none; }
 
 /* ── CLUSTER BUBBLES ── */
 .cm-cluster {
