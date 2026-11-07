@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<!-- version = "20261107-174641" -->
+<!-- version = "20261107-180348" -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<meta name="color-scheme" content="light only">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fit mit Thea – Kurze &amp; effektive Workouts für Frauen 35+</title>
 <meta name="description" content="Theadora, zertifizierte Fitnesstrainerin: effektive Home-Workouts für Bauch, Beine &amp; Po. Online-Kurse, gratis Webinar und Rezepte für Frauen 35+.">
@@ -16,7 +17,12 @@
     --lilac:#c9b6ff; --mint:#9fd8c9; --ink:#1f1b2d; --muted:#6b6577; --line:#f0e4ea;
     --radius:22px; --shadow:0 18px 40px -18px rgba(224,36,114,.35);
   }
+  :root{color-scheme:light only}
   *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:#fff !important;color:var(--ink) !important}
+  .hero,.hero h1,.pillar h3,.course h3,.section-head h2,.tip h3,.faq summary,.form h4,.modal-card h3{color:var(--ink) !important}
+  .hero p.lead,.stats span,.section-head p{color:var(--muted) !important}
+  .hero h1 em{color:var(--pink) !important}
   html{scroll-behavior:smooth}
   body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:#fff;line-height:1.6}
   h1,h2,h3,h4{font-family:Poppins,sans-serif;line-height:1.15}
@@ -55,9 +61,12 @@
   .stats{display:flex;gap:2.5rem;flex-wrap:wrap}
   .stats strong{display:block;font-family:Poppins;font-size:1.8rem}
   .stats span{color:var(--muted);font-size:.92rem}
-  .hero-visual{position:relative;aspect-ratio:4/5;border-radius:32px;background:linear-gradient(160deg,#ffd1e2 0%,#ff8db8 45%,#b49cff 100%);overflow:hidden;box-shadow:0 40px 80px -30px rgba(124,58,237,.45)}
+  .hero-visual{position:relative;aspect-ratio:4/5;border-radius:32px;background:linear-gradient(160deg,#ffd1e2 0%,#ff8db8 45%,#b49cff 100%);box-shadow:0 40px 80px -30px rgba(124,58,237,.45)}
+  .hero-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:1;border-radius:inherit}
+  .hero-visual .float-card{z-index:2}
   .hero-visual .photo-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:rgba(255,255,255,.95);padding:2rem}
-  .hero-visual .photo-note svg{width:120px;height:120px;margin:0 auto 1rem;opacity:.9}
+  .hero-visual .photo-note svg{display:block;width:120px;height:120px;margin:0 auto 1rem;opacity:.9}
+  .hero-visual .photo-note strong{display:block}
   .hero-visual .photo-note small{display:block;opacity:.85;margin-top:.4rem}
   .float-card{position:absolute;background:#fff;border-radius:16px;padding:.8rem 1rem;box-shadow:0 14px 30px -12px rgba(0,0,0,.25);display:flex;gap:.7rem;align-items:center;font-size:.9rem}
   .float-card b{font-family:Poppins}
@@ -75,7 +84,8 @@
   /* ABOUT */
   .about{background:var(--ink);color:#fff}
   .about-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:64px;align-items:center}
-  .about-visual{aspect-ratio:1;border-radius:32px;background:linear-gradient(135deg,#ff3d8b,#7c5cff);display:grid;place-items:center;font-family:Poppins;font-weight:800;font-size:clamp(4rem,10vw,7rem);color:rgba(255,255,255,.9)}
+  .about-visual{aspect-ratio:1;border-radius:32px;background:linear-gradient(135deg,#ff3d8b,#7c5cff);display:grid;place-items:center;font-family:Poppins;font-weight:800;font-size:clamp(4rem,10vw,7rem);color:rgba(255,255,255,.9);position:relative;overflow:hidden}
+  .about-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
   .about .eyebrow{background:rgba(255,61,139,.18);color:#ff9cc4}
   .about h2{font-size:clamp(1.9rem,4vw,2.7rem);margin-bottom:1.2rem}
   .about p{color:#cfc9da;margin-bottom:1rem;font-size:1.05rem}
@@ -218,15 +228,14 @@
         </div>
       </div>
       <div class="hero-visual">
-        <!-- TODO: Ersetze diesen Block durch ein echtes Foto von Thea, z. B.  -->
-         <img src="thea-hero.jpg" alt="Theadora beim Training">
-        <div class="photo-note">
-          <!-- <div>
+        <img class="hero-img" src="thea-hero.jpg" alt="Theadora beim Training" onerror="this.remove()">
+        <div class="photo-note" aria-hidden="true">
+          <div>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v6m0 0l-3.5 7M12 13l3.5 7M6 10l6-2 6 2"/><path d="M3 9h3m12 0h3"/><rect x="1.5" y="7.5" width="1.5" height="3" rx=".5"/><rect x="21" y="7.5" width="1.5" height="3" rx=".5"/></svg>
             <strong>Platz für Theas Foto</strong>
-            <small>4:5 · mind. 1000 × 1250 px</small>
+            <small>thea-hero.jpg · 4:5 · mind. 1000 × 1250 px</small>
           </div>
-        </div> -->
+        </div>
         <div class="float-card fc1"><div class="dot">🔥</div><div><b>Neu</b><br>Ganzkörperprogramm</div></div>
         <div class="float-card fc2"><div class="dot">⏱️</div><div><b>Nur 15 Min</b><br>am Tag</div></div>
       </div>
@@ -266,9 +275,10 @@
   <!-- ABOUT -->
   <section class="about" id="ueber-mich">
     <div class="wrap about-grid">
-      <!-- TODO: Ersetze durch ein Porträtfoto: -->
-      <img src="thea-portrait.jpg" alt="Theadora" style="border-radius:32px"> 
-      <div class="about-visual" aria-hidden="true">Thea</div>
+      <div class="about-visual">
+        <span aria-hidden="true">Thea</span>
+        <img class="about-img" src="thea-portrait.jpg" alt="Theadora" onerror="this.remove()">
+      </div>
       <div>
         <span class="eyebrow">Über mich</span>
         <h2>Hi, ich bin Theadora – deine Trainerin für kurze &amp; effektive Workouts</h2>
@@ -400,7 +410,7 @@
 </div>
 
 <script>
-  const version = "20261107-174641";
+  const version = "20261107-180348";
 
   /*
    * KURSKATALOG – Dummy-Daten.
