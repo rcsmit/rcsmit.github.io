@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<!-- version = "20261107-110000"
+     Location file for "Renato in Rome": only settings live here.
+     All behaviour is in ../citymap/citymap.js and ../citymap/citymap.css (shared by every city).
+     version history
+     # version : 20260607-120000 - Initial version (single file)
+     # version : 20260921-113202 - OpenFreeMap vector tiles (MapLibre GL)
+     # version : 20261107-102300 - Split: this file is now configuration only; engine moved to ../citymap/
+     # version : 20261107-110000 - QR code enabled (sidebar button + printed legend)
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Renato in Rome</title>
+  <meta name="description" content="A curated map of Berlin." />
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+
+<script>
+window.CITYMAP_CONFIG = {
+  // ── Identity ────────────────────────────────────────────────────────────────
+  name: "René in Berlin",
+  accentWord: "in",                           // shown in italic gold in the title
+  tagline: "A curated map of Berlin",
+
+  // ── Map ─────────────────────────────────────────────────────────────────────
+  center: [52.5072,	13.4544],                 // [lat, lon]
+  zoom: 12,
+
+  // ── Data: the Google Sheet must be shared as "Anyone with the link can view" ─
+  sheet: {
+    id: "1W26AXb91InFg7Lw6TR1mkVh3dm-OQbhGAx0BgNrJdok",
+    dataTab: "MASTER_BERLIN",
+    layersTab: "LAYERS_BERLIN"
+  },
+
+  // ── Colours ─────────────────────────────────────────────────────────────────
+  theme: {
+    cream:          "#faf6f0",   // page + input background
+    warmWhite:      "#fffdf9",   // sidebar + table background
+    accent:         "#c0533a",   // buttons, links, checkmarks (terracotta)
+    accentDark:     "#a8432c",   // accent on hover
+    gold:           "#c9963e",   // italic word in the title, tooltip heading
+    deep:           "#1a1208",   // header background, main text
+    muted:          "#6b5c4a",   // secondary text
+    border:         "#e2d9cc",
+    disclaimerBg:   "#fdf5ec",
+    disclaimerText: "#8a6a4a",
+    warnBg:         "#fdf0e8",   // "layer not found" banner
+    warnBorder:     "#e8b89a",
+    warnText:       "#94502c",
+    popupWarn:      "#b06030"
+  },
+  fonts: { heading: "Playfair Display", body: "Lato" },
+  // layerColors: { "Gelato": "#E05A3A" },    // optional fixed colour per layer
+
+  // ── Disclaimer (sidebar footer) and popup warning ───────────────────────────
+  disclaimer: "All information dates from 2019 or earlier. The remarks are generated with AI. Details such as opening hours, addresses, and phone numbers may have changed. Use this map for inspiration only — always verify before visiting.",
+  popupWarning: "Info from 2019 or earlier — please verify",
+
+  // ── Behaviour ───────────────────────────────────────────────────────────────
+  storageKey: "renato",                       // keeps existing 'renato-basemap' preference
+  defaultLayers: 4,                           // first 4 layers on load (or a list of names, or "all")
+
+  // ── QR code: sidebar button + on the printed map. Encodes this address plus the active layers ──
+  qr: { enabled: true, url: "https://rcsmit.github.io/berlin/" },
+
+  // ── Demo data, used only when the sheet cannot be reached ───────────────────
+  fallbackData: [
+    { Id:"1",  Layer:"Gelato",    naam:"Giolitti",                  address:"Via degli Uffici del Vicario 40",  LON:"12.477356", LAT:"41.901011", website:"http://www.giolitti.it/",            remarks:"Classic Roman gelateria since 1900" },
+    { Id:"2",  Layer:"Gelato",    naam:"Fatamorgana",               address:"Via Laurina 10",                   LON:"12.477762", LAT:"41.908757", website:"",                                    remarks:"Unusual creative flavours" },
+    { Id:"3",  Layer:"Gelato",    naam:"Otaleg",                    address:"Viale dei Colli Portuensi 594",    LON:"12.443049", LAT:"41.861870", website:"http://www.otaleg.com/",              remarks:"Best in Rome per Dissapore 2015" },
+    { Id:"4",  Layer:"Pizza2",    naam:"Antico Forno Roscioli",     address:"Via dei Chiavari 34",              LON:"12.474292", LAT:"41.894567", website:"http://www.anticofornoroscioli.it/",  remarks:"Famous Roman bakery-pizzeria" },
+    { Id:"5",  Layer:"Pizza2",    naam:"Pizzarium Bonci",           address:"Via della Meloria 43",             LON:"12.446624", LAT:"41.906787", website:"http://www.bonci.it/",                remarks:"Pizza al taglio legend" },
+    { Id:"6",  Layer:"Pizza2",    naam:"Dar Poeta",                 address:"Vicolo del Bologna 45",            LON:"12.468463", LAT:"41.891411", website:"http://www.darpoeta.com/",            remarks:"Trastevere favourite" },
+    { Id:"7",  Layer:"Aperitivo", naam:"Freni e Frizioni",          address:"Via del Politeama 4",              LON:"12.470686", LAT:"41.891297", website:"http://www.freniefrizioni.com/",      remarks:"Legendary Trastevere aperitivo spot" },
+    { Id:"8",  Layer:"Aperitivo", naam:"Doppiozeroo",               address:"Via Ostiense 68",                  LON:"12.479637", LAT:"41.870754", website:"http://doppiozeroo.com/",             remarks:"Stylish aperitivo near Ostiense" },
+    { Id:"9",  Layer:"Yoga",      naam:"ZEM Yoga Studio",           address:"Corso Vittorio Emanuele II 184",   LON:"12.470681", LAT:"41.897217", website:"http://www.zemyogastudio.com/",       remarks:"Hot vinyasa €18 drop-in / €145 month" },
+    { Id:"10", Layer:"Yoga",      naam:"Yoga Aventino",             address:"Via delle Terme Deciane 10",       LON:"12.485132", LAT:"41.883367", website:"http://www.yogaaventino.com",         remarks:"" },
+    { Id:"11", Layer:"Enoteche",  naam:"Cavour 313",                address:"Via Cavour 313",                   LON:"12.489153", LAT:"41.893735", website:"http://cavour313.it/",                remarks:"Great wine bar near the Colosseum" },
+    { Id:"12", Layer:"Enoteche",  naam:"Roscioli",                  address:"Via dei Giubbonari 21",            LON:"12.474242", LAT:"41.894237", website:"http://www.roscioli.com/",            remarks:"Deli and wine bar combined" },
+    { Id:"13", Layer:"Vega",      naam:"Il Margutta",               address:"Via Margutta 118",                 LON:"12.478375", LAT:"41.909483", website:"http://www.ilmargutta.bio/",          remarks:"Oldest vegetarian restaurant in Rome" },
+    { Id:"14", Layer:"Vega",      naam:"Flower Burger",             address:"Via dei Gracchi 87",               LON:"12.462157", LAT:"41.907841", website:"http://www.flowerburger.it/",         remarks:"Vegan fast food" },
+    { Id:"15", Layer:"Parking",   naam:"Parcheggio Villa Borghese", address:"Viale del Galoppatoio 33",         LON:"12.484273", LAT:"41.909646", website:"http://www.sabait.it/",               remarks:"€18/day, €2.20/hour" }
+  ],
+  fallbackMeta: {
+    "Gelato":    { description: "Artisan ice cream shops, ranked and reviewed.", source: "Dissapore 2015" },
+    "Pizza2":    { description: "Pizza al taglio and Roman-style pizzerias.",    source: "Local knowledge" },
+    "Aperitivo": { description: "Best spots for an evening aperitivo.",          source: "Local knowledge" },
+    "Yoga":      { description: "Yoga studios in Rome.",                         source: "Various" },
+    "Enoteche":  { description: "Wine bars and enotecas.",                       source: "Local knowledge" },
+    "Vega":      { description: "Vegan and vegetarian restaurants.",             source: "Local knowledge" },
+    "Parking":   { description: "Parking garages in central Rome.",              source: "060608.it" }
+  }
+};
+</script>
+<script src="../citymap/citymap.js"></script>
+</body>
+</html>

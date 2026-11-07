@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WhatsApp Chat Analyzer</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<style>
+:root{
+  --bg:#f4f6f8; --card:#ffffff; --text:#1d2330; --muted:#5d6678; --line:#e1e5ea;
+  --accent:#128c7e; --accent-soft:rgba(18,140,126,.12); --grid:#e8ebf0; --danger:#c0392b;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#11151b; --card:#1a2029; --text:#e6e9ee; --muted:#9aa4b4; --line:#2b3340;
+         --accent:#25d366; --accent-soft:rgba(37,211,102,.14); --grid:#2b3340; --danger:#ff6b5b; }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{padding:28px 20px 8px;max-width:1200px;margin:0 auto}
+h1{margin:0 0 4px;font-size:26px}
+header p{margin:0;color:var(--muted)}
+main{max-width:1200px;margin:0 auto;padding:12px 20px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin:16px 0}
+.card{scroll-margin-top:56px}
+.card h2{margin:0 0 4px;font-size:19px}
+.sub{margin:0 0 14px;color:var(--muted);font-size:13.5px}
+.muted{color:var(--muted)}
+#drop{border:2px dashed var(--line);border-radius:12px;padding:28px;text-align:center;transition:.15s;cursor:pointer}
+#drop.over,#drop:focus-visible{border-color:var(--accent);background:var(--accent-soft);outline:none}
+button,.btn{font:inherit;background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 16px;cursor:pointer}
+button.secondary{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+button:hover{filter:brightness(1.07)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+#status{margin-top:12px;font-size:14px}
+#status.error{color:var(--danger)}
+details{margin-top:12px}
+details>summary{cursor:pointer;color:var(--accent);font-weight:600}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px 20px;margin-top:12px}
+.settings label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.settings label.chk{flex-direction:row;align-items:center;gap:8px;color:var(--text)}
+input[type=number],input[type=text],select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);width:100%}
+nav#nav{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0;display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+nav#nav a{color:var(--accent);text-decoration:none;font-size:13.5px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px}
+.stat b{display:block;font-size:22px}
+.stat span{color:var(--muted);font-size:12.5px}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}
+.chart{width:100%;min-height:300px}
+.tablewrap{overflow-x:auto;margin:10px 0}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--card)}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.msg{white-space:normal;min-width:280px;max-width:560px}
+td.barcell{width:40%}
+.bar{display:block;height:10px;background:var(--accent);border-radius:5px;opacity:.8}
+.matrix td{text-align:right;font-variant-numeric:tabular-nums}
+.matrix td:first-child,.matrix th:first-child{text-align:left;font-weight:600}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px}
+footer{max-width:1200px;margin:0 auto;padding:0 20px 40px;color:var(--muted);font-size:13px}
+footer a{color:var(--accent)}
+@media (max-width:520px){.charts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>WhatsApp Chat Analyzer</h1>
+  <p>Upload an exported WhatsApp chat (.txt or .zip). Everything is processed locally in your browser; nothing is uploaded or stored.</p>
+</header>
+
+<main>
+  <section class="card" id="upload">
+    <div id="drop" tabindex="0" role="button" aria-label="Choose or drop a chat export">
+      <strong>Drop your exported chat here</strong><br>
+      <span class="muted">.txt or .zip (WhatsApp → chat → Export chat → Without media)</span>
+      <div class="row" style="justify-content:center">
+        <button type="button" id="pick">Choose file</button>
+        <button type="button" id="demoBtn" class="secondary">Load demo chat</button>
+      </div>
+      <input type="file" id="file" accept=".txt,.zip,text/plain,application/zip" hidden>
+    </div>
+    <div id="status" role="status"></div>
+
+    <details id="settings">
+      <summary>Settings</summary>
+      <div class="settings">
+        <label>Date order
+          <select id="o-order">
+            <option value="auto" selected>Auto-detect</option>
+            <option value="dmy">Day / Month / Year</option>
+            <option value="mdy">Month / Day / Year</option>
+          </select>
+        </label>
+        <label>Extra media placeholder text (optional)
+          <input type="text" id="o-media" placeholder="e.g. &lt;Media weggelaten&gt;">
+        </label>
+        <label>New conversation after a gap of (hours)
+          <input type="number" id="o-gap" min="0.5" step="0.5" value="6">
+        </label>
+        <label>Top N members / items in charts
+          <input type="number" id="o-top" min="3" max="50" value="10">
+        </label>
+        <label>Top N words
+          <input type="number" id="o-words" min="5" max="200" value="30">
+        </label>
+        <label>Max members in "who replies to who" (rest = Others, 0 = all)
+          <input type="number" id="o-sankey" min="0" max="60" value="12">
+        </label>
+        <label>Minimum word length
+          <input type="number" id="o-minlen" min="1" max="10" value="1">
+        </label>
+        <label class="chk"><input type="checkbox" id="o-lower" checked> Lowercase words</label>
+        <label class="chk"><input type="checkbox" id="o-punct" checked> Strip punctuation and emoji from words</label>
+        <label class="chk"><input type="checkbox" id="o-urls" checked> Ignore links in word counts</label>
+        <label class="chk"><input type="checkbox" id="o-stop"> Ignore common Dutch/English stopwords</label>
+      </div>
+    </details>
+  </section>
+
+  <nav id="nav" hidden></nav>
+  <div id="results"></div>
+</main>
+
+<footer>
+  Based on the Python/Streamlit analyzer, which is itself based on
+  <a href="https://www.analyticsvidhya.com/blog/2021/04/whatsapp-group-chat-analyzer-using-python/" target="_blank" rel="noopener">this Analytics Vidhya tutorial</a>.
+</footer>
+
+<script>
+const version = "20261105-170500";
+
+// ===================================================================
+// CORE (pure logic, no DOM)
+// ===================================================================
+const pad = n => String(n).padStart(2, "0");
+const WEEKDAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// 30 fixed colours (used for the Sankey diagrams)
+const PALETTE = [
+  "#a6cee3","#1f78b4","#b2df8a","#33a02c","#fb9a99","#e31a1c","#fdbf6f","#ff7f00","#cab2d6","#6a3d9a",
+  "#ffff99","#b15928","#1b9e77","#d95f02","#7570b3","#e7298a","#66a61e","#e6ab02","#a6761d","#666666",
+  "#17becf","#bcbd22","#9467bd","#8c564b","#e377c2","#7f7f7f","#aec7e8","#ffbb78","#98df8a","#c5b0d5"
+];
+
+const STOP = new Set(("de het een en van ik te dat die in is niet op je met ze zijn er maar om voor dan ook als aan bij nog wel naar kan heb nu dit zo of hij we wat hebben moet heeft uit mijn jij weer toch al ja nee " +
+  "the a an and of to is in it that i you for on with this was be are as at have not but or so they he she my me your do if from what just").split(" "));
+
+const EMOJI_RE = /\p{Extended_Pictographic}/gu;
+const MEDIA_PLACEHOLDER = /<(?:Media (?:weggelaten|omitted)|attached: [^>]*)>|\S+ \((?:bestand bijgevoegd|file attached)\)/gi;
+const MEDIA_STATUS = /^(?:image|video|audio|sticker|gif|document|contact card|voice message|afbeelding) (?:omitted|weggelaten)$/i;
+
+function normalizeLine(l){
+  return l.replace(/^\uFEFF/, "").replace(/[\u200e\u200f\u202a-\u202e]/g, "").replace(/[\u202f\u00a0]/g, " ");
+}
+
+// Matches "[dd/mm/yy, hh:mm:ss] " (iOS) or "dd-mm-yyyy hh:mm - " (Android)
+const DT = "(\\d{1,4})[-/.](\\d{1,2})[-/.](\\d{1,4}),?\\s+(\\d{1,2})[:.](\\d{2})(?::(\\d{2}))?(?:\\s?([AaPp])\\.?\\s?[Mm]\\.?)?";
+const START_BRACKET = new RegExp("^\\[" + DT + "\\]\\s?");
+const START_DASH = new RegExp("^" + DT + "\\s?[-\u2013]\\s");
+function matchStart(line){
+  const m = START_BRACKET.exec(line) || START_DASH.exec(line);
+  if (!m) return null;
+  return { len: m[0].length, a: +m[1], b: +m[2], c: +m[3], hh: +m[4], mi: +m[5], ss: m[6] ? +m[6] : 0, ap: m[7] || "" };
+}
+
+function resolveOrder(entries, pref){
+  if (pref && pref !== "auto") return pref;
+  if (entries.some(e => e.a > 31)) return "ymd";
+  if (entries.some(e => e.a > 12)) return "dmy";
+  if (entries.some(e => e.b > 12)) return "mdy";
+  return "dmy";
+}
+
+function parseChat(text, opts){
+  const lines = text.split(/\r\n|\n|\r/);
+  const entries = [];
+  let cur = null;
+  for (const raw of lines){
+    const line = normalizeLine(raw);
+    const m = matchStart(line);
+    if (m){
+      const rest = line.slice(m.len);
+      const idx = rest.indexOf(": ");
+      let author = null, msg = rest;
+      if (idx > 0 && idx <= 80){ author = rest.slice(0, idx).trim(); msg = rest.slice(idx + 2); }
+      cur = Object.assign({}, m, { author, msg: msg.trim() });
+      entries.push(cur);
+    } else if (cur){
+      const t = line.trim();
+      if (t) cur.msg += (cur.msg ? " " : "") + t;
+    }
+  }
+  const order = resolveOrder(entries, opts.order);
+  const rows = [];
+  let systemLines = 0, invalid = 0;
+  for (const e of entries){
+    if (e.author === null){ systemLines++; continue; }
+    let d, mo, y;
+    if (order === "ymd"){ y = e.a; mo = e.b; d = e.c; }
+    else if (order === "mdy"){ mo = e.a; d = e.b; y = e.c; }
+    else { d = e.a; mo = e.b; y = e.c; }
+    if (y < 100) y += 2000;
+    let h = e.hh;
+    if (e.ap){
+      const pm = e.ap.toLowerCase() === "p";
+      if (pm && h < 12) h += 12;
+      if (!pm && h === 12) h = 0;
+    }
+    const dt = new Date(y, mo - 1, d, h, e.mi, e.ss);
+    if (isNaN(dt) || dt.getMonth() !== mo - 1 || dt.getDate() !== d){ invalid++; continue; }
+    rows.push({ dt, ts: dt.getTime(), y, mo, d, h, mi: e.mi, author: e.author, msg: e.msg });
+  }
+  return { rows, order, systemLines, invalid };
+}
+
+function mediaInfo(msg, custom){
+  let rest = msg, count = 0;
+  if (custom){ const parts = msg.split(custom); count += parts.length - 1; rest = parts.join(""); }
+  const mm = rest.match(MEDIA_PLACEHOLDER);
+  if (mm){ count += mm.length; rest = rest.replace(MEDIA_PLACEHOLDER, ""); }
+  if (MEDIA_STATUS.test(rest.trim())){ count += 1; rest = ""; }
+  return { count, only: count > 0 && rest.trim() === "" };
+}
+
+function tokenize(msg, o){
+  let s = msg;
+  if (o.noUrls) s = s.replace(/https?:\/\/\S+/gi, " ");
+  if (o.lower) s = s.toLowerCase();
+  if (o.noPunct) s = s.replace(/[^\p{L}\p{N}'\u2019\s]/gu, " ");
+  let t = s.split(/\s+/).filter(Boolean);
+  if (o.noPunct) t = t.map(w => w.replace(/^['\u2019]+|['\u2019]+$/g, "")).filter(Boolean);
+  if (o.minLen > 1) t = t.filter(w => Array.from(w).length >= o.minLen);
+  if (o.noStop) t = t.filter(w => !STOP.has(w.toLowerCase()));
+  return t;
+}
+
+const inc = (map, key, by = 1) => map.set(key, (map.get(key) || 0) + by);
+const sortedEntries = map => [...map.entries()].sort((a, b) => b[1] - a[1]);
+function median(arr){
+  if (!arr.length) return null;
+  const s = arr.slice().sort((a, b) => a - b), m = s.length >> 1;
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+function fmtDur(sec){
+  if (sec == null) return "\u2013";
+  if (sec < 60) return "<1 min";
+  if (sec < 3600) return Math.round(sec / 60) + " min";
+  return (sec / 3600).toFixed(1) + " h";
+}
+const dmyStr = r => `${pad(r.d)}-${pad(r.mo)}-${r.y}`;
+
+function analyze(rows, opts){
+  const gap = opts.gapHours * 3600;
+  const authors = new Map();
+  const wordsAll = new Map(), charsAll = new Map(), emojiAll = new Map(), wordsPerMsg = new Map();
+  const initiators = new Map();
+  const weekday = Array(7).fill(0), hour = Array(24).fill(0);
+  const heat = Array.from({ length: 7 }, () => Array(24).fill(0));
+  const minutes = new Map(), dates = new Map(), months = new Map(), years = new Map();
+  let links = 0, media = 0, words = 0, letters = 0;
+
+  for (let i = 0; i < rows.length; i++){
+    const r = rows[i], prev = i > 0 ? rows[i - 1] : null;
+    r.diff = prev ? (r.ts - prev.ts) / 1000 : null;
+    r.initiator = i === 0 ? r.author : (r.diff > gap ? r.author : null);
+    r.resp = (prev && prev.author !== r.author && r.diff >= 0) ? r.diff : null;
+    const mi = mediaInfo(r.msg, opts.mediaText);
+    r.media = mi.count; r.mediaOnly = mi.only;
+    r.letters = Array.from(r.msg).length;
+    const trimmed = r.msg.trim();
+    r.words = trimmed ? trimmed.split(/\s+/).length : 0;
+    r.urls = (r.msg.match(/https?:\/\//gi) || []).length;
+    r.wd = (r.dt.getDay() + 6) % 7;
+
+    let a = authors.get(r.author);
+    if (!a){ a = { msgs: 0, words: 0, letters: 0, media: 0, links: 0, resp: [], wordMap: new Map() }; authors.set(r.author, a); }
+    a.msgs++; a.words += r.words; a.letters += r.letters; a.media += r.media; a.links += r.urls;
+    if (r.resp !== null) a.resp.push(r.resp);
+    if (r.initiator !== null) inc(initiators, r.author);
+
+    links += r.urls; media += r.media; words += r.words; letters += r.letters;
+
+    weekday[r.wd]++; hour[r.h]++; heat[r.wd][r.h]++;
+    inc(minutes, `${pad(r.h)}:${pad(r.mi)}`);
+    inc(dates, dmyStr(r));
+    inc(months, `${r.y}-${pad(r.mo)}`);
+    inc(years, String(r.y));
+
+    if (!r.mediaOnly){
+      inc(wordsPerMsg, r.words);
+      for (const w of tokenize(r.msg, opts)){ inc(wordsAll, w); inc(a.wordMap, w); }
+      const s = opts.lower ? r.msg.toLowerCase() : r.msg;
+      for (const ch of s) inc(charsAll, ch);
+      const em = r.msg.match(EMOJI_RE);
+      if (em) for (const e of em) inc(emojiAll, e);
+    }
+  }
+  return { rows, authors, wordsAll, charsAll, emojiAll, wordsPerMsg, initiators,
+           weekday, hour, heat, minutes, dates, months, years, links, media, words, letters };
+}
+
+function buildReaction(rows, authors, maxA){
+  const order = [...authors.entries()].sort((a, b) => b[1].msgs - a[1].msgs).map(e => e[0]);
+  const keep = (maxA > 0 && order.length > maxA) ? order.slice(0, maxA) : order;
+  const hasOthers = keep.length < order.length;
+  const names = hasOthers ? [...keep, "Others"] : keep.slice();
+  const idx = new Map(keep.map((a, i) => [a, i]));
+  const oth = names.length - 1;
+  const n = names.length;
+  const matrix = Array.from({ length: n }, () => Array(n).fill(0));
+  const pos = a => idx.has(a) ? idx.get(a) : oth;
+  // matrix[x][y]: a message by y directly after a message by x
+  for (let i = 1; i < rows.length; i++) matrix[pos(rows[i - 1].author)][pos(rows[i].author)]++;
+  return { names, matrix };
+}
+
+function monthRange(keys){
+  if (!keys.length) return [];
+  const sorted = keys.slice().sort();
+  let [y, m] = sorted[0].split("-").map(Number);
+  const [ly, lm] = sorted[sorted.length - 1].split("-").map(Number);
+  const out = [];
+  while (y < ly || (y === ly && m <= lm)){
+    out.push(`${y}-${pad(m)}`);
+    if (++m > 12){ m = 1; y++; }
+  }
+  return out;
+}
+
+function toCSV(rows){
+  const head = ["Date","Day","Time","Author","Message","Month_Year","Day_Month_Year","initiator","date_time_diff_sec","responsetime_on_others","Letters","Words","Url_Count","Media_Count"];
+  const q = v => { v = v == null ? "" : String(v); return /[",\n\r;]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+  const out = [head.join(",")];
+  for (const r of rows){
+    out.push([`${r.y}-${pad(r.mo)}-${pad(r.d)}`, WEEKDAYS[r.wd], `${pad(r.h)}:${pad(r.mi)}`, r.author, r.msg,
+      `${r.y}-${pad(r.mo)}`, dmyStr(r), r.initiator, r.diff, r.resp, r.letters, r.words, r.urls, r.media].map(q).join(","));
+  }
+  return "\uFEFF" + out.join("\r\n");
+}
+
+// Minimal zip reader (stored + deflate) for iPhone exports
+async function readZipTxt(buf){
+  const dv = new DataView(buf), u8 = new Uint8Array(buf);
+  let eocd = -1;
+  for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 65557); i--){
+    if (dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error("This does not look like a valid zip file.");
+  const count = dv.getUint16(eocd + 10, true);
+  let off = dv.getUint32(eocd + 16, true);
+  const entries = [];
+  for (let k = 0; k < count; k++){
+    if (dv.getUint32(off, true) !== 0x02014b50) break;
+    const method = dv.getUint16(off + 10, true);
+    const csize = dv.getUint32(off + 20, true), usize = dv.getUint32(off + 24, true);
+    const nlen = dv.getUint16(off + 28, true), elen = dv.getUint16(off + 30, true), clen = dv.getUint16(off + 32, true);
+    const lho = dv.getUint32(off + 42, true);
+    const name = new TextDecoder().decode(u8.subarray(off + 46, off + 46 + nlen));
+    entries.push({ name, method, csize, usize, lho });
+    off += 46 + nlen + elen + clen;
+  }
+  const txts = entries.filter(e => /\.txt$/i.test(e.name));
+  if (!txts.length) throw new Error("No .txt file found inside the zip.");
+  const entry = txts.find(e => /(^|\/)_chat\.txt$/i.test(e.name)) || txts.sort((a, b) => b.usize - a.usize)[0];
+  const nl = dv.getUint16(entry.lho + 26, true), el = dv.getUint16(entry.lho + 28, true);
+  const start = entry.lho + 30 + nl + el;
+  const data = u8.subarray(start, start + entry.csize);
+  if (entry.method === 0) return new TextDecoder("utf-8").decode(data);
+  if (entry.method === 8){
+    if (typeof DecompressionStream === "undefined") throw new Error("This browser cannot unzip files. Please unzip the export and upload the .txt file.");
+    const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+    return new TextDecoder("utf-8").decode(await new Response(stream).arrayBuffer());
+  }
+  throw new Error("Unsupported zip compression method. Please unzip the export and upload the .txt file.");
+}
+
+function demoChat(){
+  let seed = 42;
+  const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+  const names = ["Anna", "Bram", "Carla", "Daan", "Eva"];
+  const weights = [0.30, 0.25, 0.20, 0.15, 0.10];
+  const phrases = ["Hoi allemaal!", "Wie komt er vanavond?", "Prima, tot straks", "Haha dat is echt grappig \uD83D\uDE02",
+    "Kijk even hier https://example.com/artikel", "Ik ben onderweg", "Wat een mooi weer vandaag \u2600\uFE0F", "Zullen we morgen afspreken?",
+    "Top!", "Ja doen we", "Ik kan niet, sorry", "Lekker bezig \uD83D\uDC4D", "Heb je de foto gezien?", "Tot morgen!", "Oké",
+    "Nee joh", "Moet ik nog iets meenemen?", "Gisteren was echt super gezellig", "<Media weggelaten>", "<Media weggelaten>"];
+  const lines = ["01-03-2026 09:00 - Berichten en gesprekken zijn end-to-end versleuteld. Alleen mensen in deze chat kunnen ze lezen."];
+  let t = new Date(2026, 2, 1, 9, 0);
+  for (let i = 0; i < 700; i++){
+    const gap = rnd() < 0.08 ? 360 + rnd() * 1200 : rnd() * 25;
+    t = new Date(t.getTime() + gap * 60000);
+    if (t.getHours() < 8) t.setHours(8, Math.floor(rnd() * 60));
+    let x = rnd(), k = 0, acc = weights[0];
+    while (x > acc && k < names.length - 1) acc += weights[++k];
+    let text = phrases[Math.floor(rnd() * phrases.length)];
+    if (rnd() < 0.05) text += "\nEn nog een tweede regel erbij";
+    lines.push(`${pad(t.getDate())}-${pad(t.getMonth() + 1)}-${t.getFullYear()} ${pad(t.getHours())}:${pad(t.getMinutes())} - ${names[k]}: ${text}`);
+    if (i === 200) lines.push(`${pad(t.getDate())}-${pad(t.getMonth() + 1)}-${t.getFullYear()} ${pad(t.getHours())}:${pad(t.getMinutes())} - Anna heeft Frank toegevoegd`);
+  }
+  return lines.join("\n");
+}
+// ===================================================================
+// END CORE
+// ===================================================================
+
+// ===================================================================
+// UI
+// ===================================================================
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fmt = n => Number(n).toLocaleString("en-US");
+
+// ---- Plotly loader with CDN fallbacks ----
+const PLOTLY_SOURCES = [
+  "https://cdn.plot.ly/plotly-2.35.2.min.js",
+  "https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js",
+  "https://unpkg.com/plotly.js-dist-min@2.35.2/plotly.min.js"
+];
+function loadScript(src){
+  return new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error("Failed: " + src));
+    document.head.appendChild(s);
+  });
+}
+let plotlyPromise = null;
+function ensurePlotly(){
+  if (window.Plotly) return Promise.resolve();
+  if (!plotlyPromise){
+    plotlyPromise = (async () => {
+      for (const src of PLOTLY_SOURCES){
+        try { await loadScript(src); if (window.Plotly) return; } catch (e) { /* try next */ }
+      }
+      plotlyPromise = null;
+      throw new Error("Plotly could not be loaded from any CDN. Check your internet connection and try again.");
+    })();
+  }
+  return plotlyPromise;
+}
+ensurePlotly().catch(() => {});
+
+// ---- theme helpers ----
+function themeVars(){
+  const cs = getComputedStyle(document.documentElement);
+  return { text: cs.getPropertyValue("--text").trim(), grid: cs.getPropertyValue("--grid").trim(), accent: cs.getPropertyValue("--accent").trim() };
+}
+function baseLayout(title){
+  const t = themeVars();
+  return {
+    title: { text: esc(title), font: { size: 15 } },
+    paper_bgcolor: "rgba(0,0,0,0)", plot_bgcolor: "rgba(0,0,0,0)",
+    font: { color: t.text, family: "system-ui,-apple-system,Segoe UI,Roboto,sans-serif" },
+    margin: { l: 60, r: 20, t: 50, b: 50 },
+    xaxis: { gridcolor: t.grid, automargin: true },
+    yaxis: { gridcolor: t.grid, automargin: true }
+  };
+}
+const PLOT_CFG = { responsive: true, displaylogo: false };
+function addDiv(parent, cls){ const d = document.createElement("div"); d.className = cls; parent.appendChild(d); return d; }
+
+function barChart(parent, o){
+  if (!o.x.length){ return; }
+  const div = addDiv(parent, "chart");
+  div.style.height = (o.height || 360) + "px";
+  const t = themeVars();
+  const labels = o.x.map(v => esc(v));
+  const h = !!o.horizontal;
+  const trace = { type: "bar", orientation: h ? "h" : "v", x: h ? o.y : labels, y: h ? labels : o.y, marker: { color: t.accent } };
+  if (o.hover) trace.hovertemplate = o.hover;
+  const layout = baseLayout(o.title);
+  layout.xaxis.title = { text: esc(h ? o.yTitle || "" : o.xTitle || "") };
+  layout.yaxis.title = { text: esc(h ? o.xTitle || "" : o.yTitle || "") };
+  if (h){ layout.yaxis.type = "category"; layout.yaxis.autorange = "reversed"; }
+  else { layout.xaxis.type = "category"; }
+  Plotly.newPlot(div, [trace], layout, PLOT_CFG);
+}
+
+function sankey(parent, title, names, matrix, excludeSelf){
+  const n = names.length, src = [], tgt = [], val = [], col = [];
+  const rgba = (hex, a) => { const v = parseInt(hex.slice(1), 16); return `rgba(${v >> 16},${(v >> 8) & 255},${v & 255},${a})`; };
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++){
+    if (excludeSelf && i === j) continue;
+    const v = matrix[i][j];
+    if (v > 0){ src.push(i); tgt.push(n + j); val.push(v); col.push(rgba(PALETTE[i % 30], 0.45)); }
+  }
+  if (!val.length){ parent.insertAdjacentHTML("beforeend", '<p class="muted">Nothing to show.</p>'); return; }
+  const labels = [...names, ...names].map(esc);
+  const nodeColors = [...names.map((_, i) => PALETTE[i % 30]), ...names.map((_, i) => PALETTE[i % 30])];
+  const div = addDiv(parent, "chart");
+  div.style.height = Math.max(420, n * 32 + 120) + "px";
+  const layout = baseLayout(title);
+  layout.font.size = 12;
+  Plotly.newPlot(div, [{
+    type: "sankey", orientation: "h",
+    node: { label: labels, color: nodeColors, pad: 14, thickness: 18, line: { width: 0 } },
+    link: { source: src, target: tgt, value: val, color: col }
+  }], layout, PLOT_CFG);
+}
+
+function table(headers, rows, cls){
+  const th = headers.map(h => `<th${h.num ? ' class="num"' : ""}>${h.t}</th>`).join("");
+  const body = rows.map(r => "<tr>" + r.map((c, i) => `<td class="${headers[i].num ? "num" : ""}${headers[i].cls ? " " + headers[i].cls : ""}">${c}</td>`).join("") + "</tr>").join("");
+  return `<div class="tablewrap"><table class="${cls || ""}"><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+function wordTable(entries){
+  const max = entries.length ? entries[0][1] : 1;
+  return table([{ t: "Word" }, { t: "Count", num: true }, { t: "" , cls: "barcell"}],
+    entries.map(([w, c]) => [esc(w), fmt(c), `<span class="bar" style="width:${(c / max * 100).toFixed(1)}%"></span>`]));
+}
+
+// ---- options ----
+function readOptions(){
+  const num = (id, d) => { const v = parseFloat($(id).value); return isFinite(v) ? v : d; };
+  return {
+    order: $("#o-order").value,
+    mediaText: $("#o-media").value.trim(),
+    gapHours: Math.max(0.5, num("#o-gap", 6)),
+    top: Math.max(3, Math.round(num("#o-top", 10))),
+    topWords: Math.max(5, Math.round(num("#o-words", 30))),
+    sankeyMax: Math.max(0, Math.round(num("#o-sankey", 12))),
+    minLen: Math.max(1, Math.round(num("#o-minlen", 1))),
+    lower: $("#o-lower").checked,
+    noPunct: $("#o-punct").checked,
+    noUrls: $("#o-urls").checked,
+    noStop: $("#o-stop").checked
+  };
+}
+
+// ---- render ----
+function render(D, P, o){
+  const root = $("#results");
+  root.innerHTML = "";
+  const nav = [];
+  const section = (id, title, sub) => {
+    const s = document.createElement("section");
+    s.className = "card"; s.id = id;
+    s.innerHTML = `<h2>${esc(title)}</h2>` + (sub ? `<p class="sub">${sub}</p>` : "");
+    root.appendChild(s); nav.push([id, title]);
+    return s;
+  };
+  const rows = D.rows;
+  const authorsSorted = [...D.authors.entries()].sort((a, b) => b[1].msgs - a[1].msgs);
+  const topAuthors = authorsSorted.slice(0, o.top);
+  const first = rows[0], last = rows[rows.length - 1];
+  const days = Math.max(1, Math.round((last.ts - first.ts) / 864e5));
+
+  // 1. Totals
+  {
+    const s = section("totals", "Totals");
+    const cards = [
+      [fmt(rows.length), "Messages"], [fmt(D.authors.size), "Members"], [fmt(D.media), "Media messages"],
+      [fmt(D.links), "Links"], [fmt(D.words), "Words"], [fmt(D.letters), "Letters"],
+      [`${dmyStr(first)}`, "First message"], [`${dmyStr(last)}`, `Last message (${fmt(days)} days)`]
+    ];
+    s.insertAdjacentHTML("beforeend", `<div class="stats">${cards.map(c => `<div class="stat"><b>${esc(c[0])}</b><span>${esc(c[1])}</span></div>`).join("")}</div>`);
+  }
+
+  // 2. Members
+  {
+    const s = section("members", "Members", "Stats per member. Reply time is the median time between the previous message (by someone else) and this member's message.");
+    s.insertAdjacentHTML("beforeend", table(
+      [{ t: "Member" }, { t: "Messages", num: true }, { t: "Words", num: true }, { t: "Avg words / message", num: true },
+       { t: "Media", num: true }, { t: "Links", num: true }, { t: "Median reply time", num: true }],
+      authorsSorted.map(([name, a]) => [esc(name), fmt(a.msgs), fmt(a.words), (a.words / a.msgs).toFixed(1), fmt(a.media), fmt(a.links), fmtDur(median(a.resp))])));
+    const g = addDiv(s, "charts");
+    barChart(g, { title: "Most active members", x: topAuthors.map(e => e[0]), y: topAuthors.map(e => e[1].msgs), xTitle: "Member", yTitle: "No. of messages" });
+    const ini = sortedEntries(D.initiators).slice(0, o.top);
+    if (ini.length) barChart(g, { title: `Who starts conversations (gap > ${o.gapHours} h)`, x: ini.map(e => e[0]), y: ini.map(e => e[1]), xTitle: "Member", yTitle: "No. of conversations started" });
+    const med = authorsSorted.filter(([, a]) => a.media > 0).sort((a, b) => b[1].media - a[1].media).slice(0, o.top);
+    if (med.length) barChart(g, { title: "Top media contributors", x: med.map(e => e[0]), y: med.map(e => e[1].media), xTitle: "Member", yTitle: "No. of media" });
+    const wd = authorsSorted.slice().sort((a, b) => b[1].words - a[1].words).slice(0, o.top);
+    barChart(g, { title: "Members using the most words", x: wd.map(e => e[0]), y: wd.map(e => e[1].words), xTitle: "Member", yTitle: "No. of words" });
+    const lk = authorsSorted.filter(([, a]) => a.links > 0).sort((a, b) => b[1].links - a[1].links).slice(0, o.top);
+    if (lk.length) barChart(g, { title: "Members sharing the most links", x: lk.map(e => e[0]), y: lk.map(e => e[1].links), xTitle: "Member", yTitle: "No. of links" });
+  }
+
+  // 3. Words
+  {
+    const s = section("words", "Words, letters and emoji", "Media-only messages are excluded. Use the settings to change case handling, punctuation, stopwords and minimum word length.");
+    const top = sortedEntries(D.wordsAll).slice(0, o.topWords);
+    const g = addDiv(s, "charts");
+    const hist = [];
+    for (let i = 1; i <= 40; i++) hist.push([String(i), D.wordsPerMsg.get(i) || 0]);
+    barChart(g, { title: "Number of words in a message", x: hist.map(e => e[0]), y: hist.map(e => e[1]), xTitle: "Word count", yTitle: "Frequency" });
+    const chars = sortedEntries(D.charsAll).slice(0, 40).map(([c, n]) => [/\s/.test(c) ? "\u2423" : c, n]);
+    barChart(g, { title: "Most used characters (\u2423 = space)", x: chars.map(e => e[0]), y: chars.map(e => e[1]), xTitle: "Character", yTitle: "Count" });
+    const emo = sortedEntries(D.emojiAll).slice(0, 20);
+    if (emo.length) barChart(g, { title: "Most used emoji", x: emo.map(e => e[0]), y: emo.map(e => e[1]), xTitle: "Emoji", yTitle: "Count" });
+    barChart(g, { title: `Top ${o.topWords} words (all members)`, x: top.map(e => e[0]), y: top.map(e => e[1]), xTitle: "Word", yTitle: "Count", horizontal: true, height: Math.max(360, top.length * 22 + 100) });
+    s.insertAdjacentHTML("beforeend", `<h3>All members</h3>` + wordTable(top));
+    s.insertAdjacentHTML("beforeend", `<h3>Per member${authorsSorted.length > o.top ? ` (top ${o.top} members)` : ""}</h3>`);
+    for (const [name, a] of topAuthors){
+      const entries = sortedEntries(a.wordMap).slice(0, o.topWords);
+      s.insertAdjacentHTML("beforeend", `<details><summary>${esc(name)} \u2013 ${fmt(a.words)} words</summary>${wordTable(entries)}</details>`);
+    }
+  }
+
+  // 4. Who replies to who
+  {
+    const s = section("reactions", "Who replies to who",
+      "A message counts as a reply to whoever wrote the message directly before it. Left = who wrote first, right = who wrote next.");
+    const R = buildReaction(rows, D.authors, o.sankeyMax);
+    const n = R.names.length;
+    let max = 1;
+    R.matrix.forEach(r => r.forEach(v => { if (v > max) max = v; }));
+    const head = [{ t: "Wrote first \u2193 / replied \u2192" }, ...R.names.map(nm => ({ t: esc(nm), num: true }))];
+    const body = R.matrix.map((r, i) => [esc(R.names[i]), ...r.map(v => `<span style="display:block;margin:-6px -10px;padding:6px 10px;background:rgba(18,140,126,${(0.55 * v / max).toFixed(3)})">${fmt(v)}</span>`)]);
+    s.insertAdjacentHTML("beforeend", `<div class="tablewrap"><table class="matrix"><thead><tr>${head.map(h => `<th${h.num ? ' class="num"' : ""}>${h.t}</th>`).join("")}</tr></thead><tbody>${body.map(r => "<tr>" + r.map(c => `<td>${c}</td>`).join("") + "</tr>").join("")}</tbody></table></div>`);
+    sankey(s, "Who writes who?", R.names, R.matrix, false);
+    if (n > 1) sankey(s, "Who writes who? (excl. messages to themselves)", R.names, R.matrix, true);
+  }
+
+  // 5. Activity
+  {
+    const s = section("activity", "Activity over time");
+    const g = addDiv(s, "charts");
+    barChart(g, { title: "Most active day of the week", x: WEEKDAYS, y: D.weekday, xTitle: "Day", yTitle: "No. of messages" });
+    barChart(g, { title: "Most active hour of the day", x: D.hour.map((_, h) => pad(h)), y: D.hour, xTitle: "Hour (24-hour)", yTitle: "No. of messages" });
+    const mins = sortedEntries(D.minutes).slice(0, 20);
+    barChart(g, { title: "Busiest times (top 20 minutes)", x: mins.map(e => e[0]), y: mins.map(e => e[1]), xTitle: "Time", yTitle: "No. of messages" });
+    const dts = sortedEntries(D.dates).slice(0, 15);
+    barChart(g, { title: "Busiest dates (top 15)", x: dts.map(e => e[0]), y: dts.map(e => e[1]), xTitle: "Date", yTitle: "No. of messages" });
+    const mk = monthRange([...D.months.keys()]);
+    barChart(g, { title: "Messages per month", x: mk.map(k => { const [y, m] = k.split("-"); return `${MONTHS[+m - 1]} ${y}`; }), y: mk.map(k => D.months.get(k) || 0), xTitle: "Month", yTitle: "No. of messages" });
+    const yk = [...D.years.keys()].sort();
+    barChart(g, { title: "Messages per year", x: yk, y: yk.map(k => D.years.get(k)), xTitle: "Year", yTitle: "No. of messages" });
+    const hm = addDiv(s, "chart");
+    hm.style.height = "380px";
+    const layout = baseLayout("Weekday \u00d7 hour heatmap");
+    layout.xaxis.title = { text: "Hour (24-hour)" };
+    layout.yaxis.autorange = "reversed";
+    layout.xaxis.type = "category"; layout.yaxis.type = "category";
+    Plotly.newPlot(hm, [{ type: "heatmap", x: D.hour.map((_, h) => pad(h)), y: WEEKDAYS, z: D.heat, colorscale: "YlGnBu", reversescale: false, hoverongaps: false,
+      hovertemplate: "%{y} %{x}:00<br>%{z} messages<extra></extra>" }], layout, PLOT_CFG);
+  }
+
+  // 6. Data
+  {
+    const s = section("data", "Data", `Showing the first ${Math.min(200, rows.length)} of ${fmt(rows.length)} parsed messages.`);
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "secondary"; btn.textContent = "Download all as CSV";
+    btn.addEventListener("click", () => {
+      const url = URL.createObjectURL(new Blob([toCSV(rows)], { type: "text/csv;charset=utf-8" }));
+      const a = document.createElement("a");
+      a.href = url; a.download = "whatsapp_analysis.csv";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+    s.appendChild(btn);
+    const clip = t => t.length > 240 ? t.slice(0, 240) + "\u2026" : t;
+    s.insertAdjacentHTML("beforeend", table(
+      [{ t: "Date" }, { t: "Day" }, { t: "Time" }, { t: "Author" }, { t: "Message", cls: "msg" }, { t: "Words", num: true }, { t: "Letters", num: true }, { t: "Links", num: true }, { t: "Media", num: true }],
+      rows.slice(0, 200).map(r => [dmyStr(r), WEEKDAYS[r.wd], `${pad(r.h)}:${pad(r.mi)}`, esc(r.author), esc(clip(r.msg)), r.words, r.letters, r.urls, r.media])));
+  }
+
+  const navEl = $("#nav");
+  navEl.innerHTML = nav.map(([id, t]) => `<a href="#${id}">${esc(t)}</a>`).join("");
+  navEl.hidden = false;
+}
+
+// ---- pipeline ----
+let rawText = null, lastRun = null, runToken = 0;
+function setStatus(msg, isError){
+  const el = $("#status");
+  el.textContent = msg;
+  el.className = isError ? "error" : "";
+}
+
+async function run(){
+  if (rawText == null) return;
+  const token = ++runToken;
+  setStatus("Analyzing\u2026");
+  await new Promise(r => setTimeout(r, 20));
+  try {
+    const o = readOptions();
+    const P = parseChat(rawText, o);
+    if (!P.rows.length){
+      $("#results").innerHTML = ""; $("#nav").hidden = true; lastRun = null;
+      setStatus("No messages could be parsed. Make sure this is a WhatsApp text export (lines like \u201c12-03-2026 14:05 - Name: message\u201d) and try changing the date order in Settings.", true);
+      return;
+    }
+    const D = analyze(P.rows, o);
+    await ensurePlotly();
+    if (token !== runToken) return;
+    render(D, P, o);
+    lastRun = { D, P, o };
+    const orderLabel = { dmy: "day-month-year", mdy: "month-day-year", ymd: "year-month-day" }[P.order];
+    let msg = `Parsed ${fmt(P.rows.length)} messages from ${fmt(D.authors.size)} members \u00b7 date order: ${orderLabel}`;
+    if (P.systemLines) msg += ` \u00b7 ${fmt(P.systemLines)} system messages skipped`;
+    if (P.invalid) msg += ` \u00b7 ${fmt(P.invalid)} lines with an invalid date skipped (try another date order)`;
+    setStatus(msg);
+  } catch (e){
+    setStatus("Something went wrong: " + (e && e.message ? e.message : e), true);
+  }
+}
+
+async function handleFile(file){
+  if (!file) return;
+  try {
+    setStatus("Reading file\u2026");
+    const isZip = /\.zip$/i.test(file.name) || /zip/.test(file.type);
+    rawText = isZip ? await readZipTxt(await file.arrayBuffer()) : await file.text();
+    await run();
+  } catch (e){
+    setStatus(e.message || String(e), true);
+  }
+}
+
+// ---- events ----
+const drop = $("#drop"), fileInput = $("#file");
+$("#pick").addEventListener("click", e => { e.stopPropagation(); fileInput.click(); });
+drop.addEventListener("click", () => fileInput.click());
+drop.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); fileInput.click(); } });
+fileInput.addEventListener("change", () => { handleFile(fileInput.files[0]); fileInput.value = ""; });
+["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => handleFile(e.dataTransfer.files[0]));
+$("#demoBtn").addEventListener("click", e => { e.stopPropagation(); rawText = demoChat(); run(); });
+
+let debounce = null;
+$("#settings").addEventListener("input", () => { clearTimeout(debounce); debounce = setTimeout(run, 350); });
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (lastRun) run(); });
+</script>
+</body>
+</html>

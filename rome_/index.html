@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<!-- version history
+# version : 20260607-120000 - Initial version
+# version : 20260607-130000 - Auto-fit, select all, disclaimer, compact website
+# version : 20260607-131000 - fitBounds on every layer change
+# version : 20260607-140000 - LAYERS tab fetch, layer meta
+# version : 20260607-260000 - Use 100dvh (dynamic viewport height) so Android nav buttons don't clip the layout; 100vh as fallback
+# version : 20260607-270000 - Deeplink support: ?layer=Gelato or ?layer=Gelato,Pizza2 activates specific layers on load; URL syncs with current selection for sharing
+# version : 20260607-280000 - Show warning banner in sidebar when a deeplinked layer name isn't found
+# version : 20260607-290000 - Deeplink warning clears on manual layer change; show "no layers selected" overlay on map when zero layers active
+# version : 20260607-300000 - Table rows get two action icons: search on Google Maps, and show-on-map (centers + opens popup, zooms out of cluster if needed, collapses sidebar on mobile)
+# version : 20260622-090000 - Removed popup link underline; Google Maps links now use precise lat/lon (?api=1&query=) instead of malformed name@lat,lon search; added print version (Print map button, numbered pins, active-layers legend with per-layer breakdown rendered below the map, print-only CSS)
+# version : 20260622-100000 - Added basemap style dropdown (Light/Dark/Voyager/Light no labels/Dark no labels via CartoDB), preference saved in localStorage
+# version : 20260622-101000 - Fixed Voyager basemap showing as blank grey tiles: it needs the "rastertiles/voyager/" subpath on CartoDB, unlike the other styles
+# version : 20260804-120000 - Narrower popups on mobile (recalculated at popup-open time, plus CSS max-width safety net); bottom table panel now only lists rows visible within the current map viewport, refreshing on pan/zoom
+# version : 20260804-121500 - Mobile popup width now fixed at 75% of screen width (was capped at 220px, which could look too narrow relative to content on some screens)
+# version : 20260921-113202 - Replaced CARTO raster tiles with OpenFreeMap vector tiles (MapLibre GL via maplibre-gl-leaflet): styles Positron/Dark/Bright/Liberty/Fiord + no-label variants (symbol layers stripped client-side); old saved basemap preferences are migrated; print waits for the vector map to redraw
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Renato in Rome</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <style>
+    :root {
+      --cream: #faf6f0;
+      --warm-white: #fffdf9;
+      --terracotta: #c0533a;
+      --gold: #c9963e;
+      --deep: #1a1208;
+      --muted: #6b5c4a;
+      --border: #e2d9cc;
+      --sidebar-w: 300px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lato', sans-serif;
+      background: var(--cream);
+      color: var(--deep);
+      display: flex;
+      height: 100vh;       /* fallback for browsers without dvh support */
+      height: 100dvh;      /* dvh = dynamic viewport height, accounts for Android nav bar and browser chrome */
+      overflow: hidden;
+    }
+
+    /* ── SIDEBAR TOGGLE ── */
+    #sidebar-toggle {
+      position: absolute;
+      top: 50%;
+      right: -16px;              /* half-outside the sidebar edge */
+      transform: translateY(-50%);
+      width: 16px;
+      height: 64px;              /* ~3 line heights */
+      border: 1px solid var(--border);
+      border-left: none;
+      border-radius: 0 6px 6px 0;
+      background: var(--terracotta);
+      color: #fff;
+      font-size: .75rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s, width .15s;
+      z-index: 1003;
+      flex-shrink: 0;
+      box-shadow: 2px 0 6px rgba(0,0,0,0.15);
+    }
+    #sidebar-toggle:hover { background: #a8432c; width: 20px; }
+
+    /* ── OVERLAY ── */
+    #sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.35);
+      z-index: 1001;
+    }
+    #sidebar-overlay.hidden { display: none !important; }
+
+    /* ── SIDEBAR ── */
+    /* Desktop: in-flow flex child, shrinks to 28px strip when collapsed */
+    #sidebar {
+      width: var(--sidebar-w);
+      min-width: var(--sidebar-w);
+      background: var(--warm-white);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: visible;         /* lets toggle button poke outside the edge */
+      position: relative;
+      z-index: 1002;
+      box-shadow: 2px 0 12px rgba(0,0,0,0.06);
+      transition: width .25s ease, min-width .25s ease;
+      flex-shrink: 0;
+    }
+    #sidebar.collapsed {
+      width: 28px;
+      min-width: 28px;
+    }
+    #sidebar.collapsed > *:not(#sidebar-toggle) { display: none; }
+    /* Clip scrollable inner content so it doesn't spill during transition */
+    #sidebar-body, #sidebar-header, #disclaimer {
+      overflow: hidden;
+    }
+    #sidebar.collapsed #sidebar-toggle { right: 3px; }
+
+    /* Mobile: sidebar floats over the map as an overlay.
+       The map (#main) always fills full width; sidebar sits on top. */
+    @media (max-width: 640px) {
+      #sidebar {
+        position: fixed;
+        top: 0; left: 0; bottom: 0;
+        z-index: 1002;
+        box-shadow: 2px 0 20px rgba(0,0,0,.2);
+      }
+      #sidebar-overlay { display: block; z-index: 1001; }
+      /* Push table panel right so it isn't under the collapsed strip */
+      #table-panel { margin-left: 28px; }
+      /* When sidebar is expanded on mobile, table panel goes back to full width */
+      body.sidebar-open #table-panel { margin-left: 0; }
+    }
+
+    #sidebar-header {
+      padding: 20px 20px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--deep);
+      flex-shrink: 0;
+    }
+    #sidebar-header h1 { font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--cream); letter-spacing: 0.02em; line-height: 1.2; }
+    #sidebar-header h1 em { color: var(--gold); font-style: italic; }
+    #sidebar-header p { font-size: 0.68rem; color: #a89880; margin-top: 4px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    #sidebar-body { flex: 1; overflow-y: auto; padding: 14px; }
+    #sidebar-body::-webkit-scrollbar { width: 4px; }
+    #sidebar-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .section-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 7px; margin-top: 14px; }
+    .section-label:first-child { margin-top: 0; }
+
+    #search-input {
+      width: 100%; padding: 8px 11px; border: 1px solid var(--border); border-radius: 6px;
+      font-family: 'Lato', sans-serif; font-size: 0.83rem; background: var(--cream);
+      color: var(--deep); outline: none; transition: border-color .2s;
+    }
+    #search-input:focus { border-color: var(--terracotta); }
+    #search-input::placeholder { color: #b0a090; }
+
+    #basemap-select {
+      width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
+      font-family: 'Lato', sans-serif; font-size: 0.8rem; background: var(--cream);
+      color: var(--deep); outline: none; cursor: pointer; transition: border-color .2s;
+    }
+    #basemap-select:focus { border-color: var(--terracotta); }
+
+    #sel-controls { display: flex; gap: 6px; margin-bottom: 8px; }
+    .sel-btn {
+      flex: 1; padding: 5px 0; font-family: 'Lato', sans-serif; font-size: 0.72rem;
+      letter-spacing: 0.06em; text-transform: uppercase; border-radius: 5px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--cream); color: var(--muted);
+      transition: background .15s, color .15s;
+    }
+    .sel-btn:hover { background: var(--terracotta); color: white; border-color: var(--terracotta); }
+
+    #layer-list { list-style: none; display: flex; flex-direction: column; gap: 3px; }
+    #layer-list li {
+      display: flex; align-items: center; gap: 8px; padding: 6px 9px;
+      border-radius: 6px; cursor: pointer; transition: background .15s;
+      user-select: none; font-size: 0.82rem;
+    }
+    #layer-list li:hover { background: var(--cream); }
+    #layer-list li.active { background: var(--cream); }
+
+    .layer-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(0,0,0,0.15); }
+
+    .layer-check {
+      margin-left: auto; width: 15px; height: 15px; border: 1.5px solid var(--border);
+      border-radius: 3px; display: flex; align-items: center; justify-content: center;
+      font-size: 9px; color: white; flex-shrink: 0;
+    }
+    #layer-list li.active .layer-check { background: var(--terracotta); border-color: var(--terracotta); }
+
+    #count-badge { font-size: 0.7rem; color: var(--muted); background: var(--cream); border: 1px solid var(--border); border-radius: 10px; padding: 1px 7px; }
+    #loading-msg { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 16px; }
+
+    #deeplink-warning {
+      display: none;
+      background: #fdf0e8;
+      border: 1px solid #e8b89a;
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.72rem;
+      color: #94502c;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+    #deeplink-warning strong { color: var(--terracotta); }
+
+    /* ── FLOATING TOOLTIP ── */
+    #float-tip {
+      position: fixed;
+      display: none;
+      background: var(--deep);
+      color: var(--cream);
+      font-family: 'Lato', sans-serif;
+      font-size: 0.73rem;
+      line-height: 1.55;
+      padding: 9px 13px;
+      border-radius: 8px;
+      max-width: 240px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+      pointer-events: none;
+      z-index: 99999;
+      white-space: normal;
+    }
+    #float-tip .tip-name  { color: var(--gold); font-weight: 700; font-size: 0.78rem; margin-bottom: 4px; }
+    #float-tip .tip-desc  { color: var(--cream); }
+    #float-tip .tip-src   { color: #b0a090; font-size: 0.66rem; margin-top: 4px; }
+
+    /* ── DISCLAIMER ── */
+    #disclaimer {
+      flex-shrink: 0; padding: 10px 14px; border-top: 1px solid var(--border);
+      background: #fdf5ec; font-size: 0.69rem; color: #8a6a4a; line-height: 1.5;
+    }
+    #disclaimer strong { color: var(--terracotta); }
+
+    /* ── MAIN ── */
+    #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+    #no-layers-msg {
+      display: none;
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--deep);
+      color: var(--cream);
+      font-size: 0.78rem;
+      padding: 9px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      max-width: 80%;
+    }
+    #map { flex: 1; min-height: 80px; }
+
+    /* ── DRAG HANDLE ── */
+    #drag-handle {
+      height: 6px;
+      background: var(--border);
+      cursor: ns-resize;
+      flex-shrink: 0;
+      position: relative;
+      transition: background .15s;
+      user-select: none;
+    }
+    #drag-handle:hover { background: var(--terracotta); }
+    #drag-handle::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 2px;
+      border-radius: 2px;
+      background: rgba(0,0,0,0.2);
+      box-shadow: 0 -3px 0 rgba(0,0,0,0.12), 0 3px 0 rgba(0,0,0,0.12);
+    }
+
+    /* ── TABLE PANEL ── */
+    #table-panel { height: 210px; min-height: 40px; max-height: 80vh; overflow-y: auto; background: var(--warm-white); flex-shrink: 0; }
+    #table-panel::-webkit-scrollbar { width: 5px; height: 5px; }
+    #table-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    #table-wrap { padding: 0 14px 14px; }
+
+    .table-section-title {
+      padding: 9px 0 3px; position: sticky; top: 0; background: var(--warm-white);
+      z-index: 1; border-bottom: 1px solid var(--border); margin-bottom: 3px;
+    }
+    .table-section-title .ts-name {
+      font-family: 'Playfair Display', serif; font-size: 0.95rem;
+    }
+    .table-section-title .ts-meta {
+      font-size: 0.68rem; color: var(--muted); margin-top: 1px; line-height: 1.4;
+    }
+    .table-section-title .ts-source {
+      font-size: 0.63rem; color: #b0a090;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.76rem; table-layout: fixed; }
+    col.col-name    { width: 20%; }
+    col.col-address { width: 25%; }
+    col.col-website { width: 14%; }
+    col.col-remarks { width: 29%; }
+    col.col-actions { width: 12%; }
+
+    th { text-align: left; padding: 4px 7px; color: var(--muted); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.65rem; border-bottom: 1px solid var(--border); }
+    td { padding: 4px 7px; border-bottom: 1px solid #f0ebe3; vertical-align: top; overflow: hidden; }
+    td.td-website { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
+    td.td-actions { white-space: nowrap; text-align: right; }
+
+    .row-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      background: var(--cream);
+      border: 1px solid var(--border);
+      font-size: 0.78rem;
+      cursor: pointer;
+      margin-left: 3px;
+      text-decoration: none;
+      transition: background .15s, transform .1s;
+      line-height: 1;
+    }
+    .row-icon:hover { background: var(--terracotta); transform: scale(1.08); }
+    .row-icon:active { transform: scale(0.95); }
+    tr:last-child td { border-bottom: none; }
+    td a { color: var(--terracotta); text-decoration: none; }
+    td a:hover { text-decoration: underline; }
+
+    /* ── POPUP ── */
+    .leaflet-popup-content-wrapper { border-radius: 8px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important; font-family: 'Lato', sans-serif !important; }
+    @media (max-width: 640px) {
+      .leaflet-popup-content-wrapper { width: 75vw !important; max-width: 75vw !important; box-sizing: border-box; }
+      .leaflet-popup-content { width: auto !important; margin: 10px 12px !important; }
+    }
+    .popup-name { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .popup-addr { font-size: 0.78rem; color: var(--muted); margin-bottom: 7px; }
+    .popup-remark { font-size: 0.76rem; font-style: italic; margin-bottom: 6px; color: #555; }
+    .popup-link { display: block; font-size: 0.76rem; color: var(--terracotta); margin-bottom: 3px; text-decoration: none; }
+    .popup-link:hover { text-decoration: none; color: var(--gold); }
+    .popup-warn { font-size: 0.7rem; color: #b06030; font-weight: 700; margin-top: 8px; }
+    .popup-cat  { font-size: 0.68rem; color: #999; margin-top: 4px; }
+
+    /* ── PRINT BUTTON ── */
+    #print-btn {
+      width: 100%; padding: 7px 0; margin-top: 8px; font-family: 'Lato', sans-serif; font-size: 0.74rem;
+      letter-spacing: 0.05em; text-transform: uppercase; border-radius: 5px; cursor: pointer;
+      border: 1px solid var(--terracotta); background: var(--warm-white); color: var(--terracotta);
+      transition: background .15s, color .15s; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    #print-btn:hover { background: var(--terracotta); color: #fff; }
+
+    /* ── PRINT LEGEND (only visible when printing) ── */
+    #print-legend { display: none; }
+    .pl-active-layers { font-size: 0.85rem; margin-bottom: 10px; }
+    .pl-active-layers strong { color: var(--terracotta); }
+    .pl-section { margin-bottom: 10px; page-break-inside: avoid; }
+    .pl-section-title { font-family: 'Playfair Display', serif; font-size: 1rem; margin-bottom: 4px; border-bottom: 1px solid #ccc; padding-bottom: 2px; }
+    .pl-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    .pl-table td { padding: 2px 6px; vertical-align: top; border-bottom: 1px solid #eee; }
+    .pl-num {
+      display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px;
+      border-radius: 50%; color: #fff; font-size: 0.68rem; font-weight: 700; flex-shrink: 0;
+    }
+    .print-num-icon-inner {
+      width: 22px; height: 22px; border-radius: 50%; color: #fff; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; border: 2px solid #fff;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+
+    @media print {
+      @page { margin: 12mm; }
+      body { height: auto; overflow: visible; display: block; }
+      #sidebar, #sidebar-toggle, #sidebar-overlay, #drag-handle, #table-panel, #no-layers-msg, #float-tip,
+      .leaflet-control-zoom, .leaflet-control-attribution { display: none !important; }
+      #main { display: block; height: auto; overflow: visible; }
+      #map {
+        width: 100% !important; height: 480pt !important; min-height: 0;
+        page-break-after: always; border: 1px solid #ccc;
+      }
+      #print-legend { display: block; padding: 8pt 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="float-tip"></div>
+<div id="sidebar-overlay"></div>
+
+<aside id="sidebar">
+  <button id="sidebar-toggle" title="Collapse sidebar">&#x25C4;</button>
+  <div id="sidebar-header">
+    <h1>Renato <em>in</em> Rome</h1>
+    <p>A curated map of the Eternal City</p>
+  </div>
+  <div id="sidebar-body">
+    <div id="deeplink-warning"></div>
+    <div class="section-label">Search</div>
+    <input id="search-input" type="text" placeholder="Filter by name, address, remarks…" />
+
+    <div class="section-label">Map style</div>
+    <select id="basemap-select">
+      <option value="positron">Light</option>
+      <option value="dark">Dark</option>
+      <option value="bright">Bright</option>
+      <option value="liberty">Liberty</option>
+      <option value="fiord">Fiord</option>
+      <option value="positron_nolabels">Light (no labels)</option>
+      <option value="dark_nolabels">Dark (no labels)</option>
+    </select>
+
+    <div class="section-label" style="margin-top:14px; display:flex; align-items:center; gap:8px;">
+      Layers <span id="count-badge">0 places</span>
+    </div>
+    <div id="sel-controls">
+      <button class="sel-btn" onclick="selectAll()">Select all</button>
+      <button class="sel-btn" onclick="deselectAll()">Deselect all</button>
+    </div>
+    <ul id="layer-list"></ul>
+    <div id="loading-msg">Loading data…</div>
+    <button id="print-btn" onclick="printMap()" title="Print the map with a numbered legend">🖨 Print map</button>
+  </div>
+
+  <div id="disclaimer">
+    <strong>⚠ Disclaimer:</strong> All information dates from 2019 or earlier. The remarks are generated with AI. Details such as opening hours, addresses, and phone numbers may have changed. Use this map for inspiration only — always verify before visiting.
+  </div>
+</aside>
+
+<div id="main">
+  <div id="map"></div>
+  <div id="no-layers-msg">No layers selected — choose one or more from the sidebar.</div>
+  <div id="drag-handle"></div>
+  <div id="table-panel">
+    <div id="table-wrap"></div>
+  </div>
+  <div id="print-legend">
+    <div id="print-legend-content"></div>
+  </div>
+</div>
+
+<script>const current_version = "20260921-113202";</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/maplibre-gl@5.24.0/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/leaflet-maplibre-gl.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+const SHEET_ID   = "1W26AXb91InFg7Lw6TR1mkVh3dm-OQbhGAx0BgNrJdok";
+const SHEET_NAME = "MASTER";
+const F = { id:"Id", category:"Layer", name:"naam", address:"address", lon:"LON", lat:"LAT", website:"website", remarks:"remarks" };
+
+const COLORS = [
+  "#E05A3A","#3ABF57","#3357AB","#D4845A","#2BB89A","#7B5EA7","#E8A838","#2E86C1","#C0392B","#27AE60",
+  "#8E44AD","#D35400","#1A8CA0","#B7950B","#C0553A","#4A235A","#6E2F1A","#145A32","#1A5276","#784212",
+  "#1B2631","#6C3483","#0E6655","#7D6608","#512E5F","#4D4512","#0B5345","#1F618D"
+];
+
+let allData = [], filteredData = [], activeLayers = new Set(), layerColors = {}, clusterGroups = {}, layerMeta = {};
+const markersById = {}; // rowId -> { marker, cluster }
+
+// ── SIDEBAR TOGGLE ────────────────────────────────────────────────────────────
+(function() {
+  const sidebar = document.getElementById('sidebar');
+  const toggle  = document.getElementById('sidebar-toggle');
+  const overlay = document.getElementById('sidebar-overlay');
+  const main    = document.getElementById('main');
+
+  function collapse() {
+    sidebar.classList.add('collapsed');
+    document.body.classList.remove('sidebar-open');
+    toggle.innerHTML = '&#x25BA;';
+    toggle.title = 'Expand sidebar';
+    overlay.classList.add('hidden');
+  }
+
+  function expand() {
+    sidebar.classList.remove('collapsed');
+    document.body.classList.add('sidebar-open');
+    toggle.innerHTML = '&#x25C4;';
+    toggle.title = 'Collapse sidebar';
+    if (window.innerWidth <= 640) overlay.classList.remove('hidden');
+  }
+
+  toggle.addEventListener('click', e => {
+    e.stopPropagation();
+    sidebar.classList.contains('collapsed') ? expand() : collapse();
+  });
+
+  overlay.addEventListener('click', collapse);
+
+  main.addEventListener('click', () => {
+    if (window.innerWidth <= 640 && !sidebar.classList.contains('collapsed')) collapse();
+  });
+
+  // Mobile: start collapsed. Desktop: start expanded.
+  if (window.innerWidth <= 640) collapse(); else expand();
+})();
+
+// ── MAP ──────────────────────────────────────────────────────────────────────
+const map = L.map('map', { center: [41.9028, 12.4964], zoom: 12, maxZoom: 19 });
+window._leafletMap = map;
+// Keep the bottom table panel in sync with what's actually visible on the map.
+map.on('moveend', () => refreshTableForViewport());
+// Recompute popup max-width at the moment each popup opens (not at page load),
+// so it reflects the current viewport even if the window was resized/rotated
+// after the page loaded.
+map.on('popupopen', (e) => {
+  const p = e.popup;
+  if (!p || !p.options) return;
+  p.options.maxWidth = window.innerWidth <= 640 ? Math.round(window.innerWidth * 0.75) : 340;
+  p.update();
+});
+// ── BASEMAP STYLE SWITCHER (OpenFreeMap, vector tiles via MapLibre GL) ────────
+// https://openfreemap.org/quick_start/ — free, no API key. Styles are served
+// from tiles.openfreemap.org/styles/<name>. Attribution is taken from the style's
+// sources by maplibre-gl-leaflet and shown in Leaflet's attribution control.
+// "No labels" variants don't exist upstream, so the style JSON is fetched and
+// all symbol layers (labels, POI icons, shields) are stripped client-side.
+const OFM_STYLE_BASE = 'https://tiles.openfreemap.org/styles/';
+const DEFAULT_BASEMAP = 'positron';
+const BASEMAPS = {
+  positron:          { style: 'positron' },
+  dark:              { style: 'dark' },
+  bright:            { style: 'bright' },
+  liberty:           { style: 'liberty' },
+  fiord:             { style: 'fiord' },
+  positron_nolabels: { style: 'positron', noLabels: true },
+  dark_nolabels:     { style: 'dark',     noLabels: true },
+};
+// Migrate preferences saved by the previous (CARTO) version of this page.
+const LEGACY_BASEMAP_KEYS = {
+  light_all: 'positron', dark_all: 'dark', voyager: 'bright',
+  light_nolabels: 'positron_nolabels', dark_nolabels: 'dark_nolabels',
+};
+
+let basemapLayer = null;   // L.maplibreGL layer
+let basemapSeq = 0;        // guards against out-of-order async style loads
+
+async function resolveBasemapStyle(key) {
+  const cfg = BASEMAPS[key];
+  const url = OFM_STYLE_BASE + cfg.style;
+  if (!cfg.noLabels) return url;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Style fetch failed: HTTP ' + res.status);
+  const style = await res.json();
+  style.layers = (style.layers || []).filter(l => l.type !== 'symbol');
+  return style;
+}
+
+async function setBasemap(key) {
+  if (!BASEMAPS[key]) key = DEFAULT_BASEMAP;
+  const seq = ++basemapSeq;
+  let style;
+  try {
+    style = await resolveBasemapStyle(key);
+  } catch (e) {
+    console.warn('Basemap style could not be prepared, falling back to labelled style:', e);
+    style = OFM_STYLE_BASE + BASEMAPS[key].style;
+  }
+  if (seq !== basemapSeq) return;   // a newer selection superseded this one
+
+  const glMap = basemapLayer && basemapLayer.getMaplibreMap();
+  if (glMap) {
+    glMap.setStyle(style);          // reuse the WebGL context instead of recreating the layer
+  } else {
+    basemapLayer = L.maplibreGL({
+      style,
+      preserveDrawingBuffer: true   // keeps the canvas printable
+    }).addTo(map);
+  }
+  try { localStorage.setItem('renato-basemap', key); } catch(e) {}
+}
+
+(function() {
+  const select = document.getElementById('basemap-select');
+  let saved = DEFAULT_BASEMAP;
+  try { saved = localStorage.getItem('renato-basemap') || DEFAULT_BASEMAP; } catch(e) {}
+  if (LEGACY_BASEMAP_KEYS[saved]) saved = LEGACY_BASEMAP_KEYS[saved];
+  if (!BASEMAPS[saved]) saved = DEFAULT_BASEMAP;
+  select.value = saved;
+  setBasemap(saved);
+  select.addEventListener('change', () => setBasemap(select.value));
+})();
+
+// ── FIT BOUNDS ───────────────────────────────────────────────────────────────
+function fitMapToVisible(data) {
+  const pts = data.filter(r => activeLayers.has(r[F.category]))
+    .map(r => [toFloat(r[F.lat]), toFloat(r[F.lon])]).filter(([a,o]) => !isNaN(a) && !isNaN(o));
+  if (!pts.length) return;
+  if (pts.length === 1) { map.setView(pts[0], 15); return; }
+  map.fitBounds(L.latLngBounds(pts), { padding: [40,40], maxZoom: 16 });
+}
+
+// ── FALLBACK DATA (used when Google Sheet is unreachable) ─────────────────────
+const FALLBACK_DATA = [
+  { Id:"1",  Layer:"Gelato",    naam:"Giolitti",              address:"Via degli Uffici del Vicario 40",  LON:"12.477356", LAT:"41.901011", website:"http://www.giolitti.it/",          remarks:"Classic Roman gelateria since 1900" },
+  { Id:"2",  Layer:"Gelato",    naam:"Fatamorgana",           address:"Via Laurina 10",                   LON:"12.477762", LAT:"41.908757", website:"",                                  remarks:"Unusual creative flavours" },
+  { Id:"3",  Layer:"Gelato",    naam:"Otaleg",                address:"Viale dei Colli Portuensi 594",    LON:"12.443049", LAT:"41.861870", website:"http://www.otaleg.com/",             remarks:"Best in Rome per Dissapore 2015" },
+  { Id:"4",  Layer:"Pizza2",    naam:"Antico Forno Roscioli", address:"Via dei Chiavari 34",              LON:"12.474292", LAT:"41.894567", website:"http://www.anticofornoroscioli.it/", remarks:"Famous Roman bakery-pizzeria" },
+  { Id:"5",  Layer:"Pizza2",    naam:"Pizzarium Bonci",       address:"Via della Meloria 43",             LON:"12.446624", LAT:"41.906787", website:"http://www.bonci.it/",               remarks:"Pizza al taglio legend" },
+  { Id:"6",  Layer:"Pizza2",    naam:"Dar Poeta",             address:"Vicolo del Bologna 45",            LON:"12.468463", LAT:"41.891411", website:"http://www.darpoeta.com/",           remarks:"Trastevere favourite" },
+  { Id:"7",  Layer:"Aperitivo", naam:"Freni e Frizioni",      address:"Via del Politeama 4",              LON:"12.470686", LAT:"41.891297", website:"http://www.freniefrizioni.com/",     remarks:"Legendary Trastevere aperitivo spot" },
+  { Id:"8",  Layer:"Aperitivo", naam:"Doppiozeroo",           address:"Via Ostiense 68",                  LON:"12.479637", LAT:"41.870754", website:"http://doppiozeroo.com/",             remarks:"Stylish aperitivo near Ostiense" },
+  { Id:"9",  Layer:"Yoga",      naam:"ZEM Yoga Studio",       address:"Corso Vittorio Emanuele II 184",   LON:"12.470681", LAT:"41.897217", website:"http://www.zemyogastudio.com/",      remarks:"Hot vinyasa €18 drop-in / €145 month" },
+  { Id:"10", Layer:"Yoga",      naam:"Yoga Aventino",         address:"Via delle Terme Deciane 10",       LON:"12.485132", LAT:"41.883367", website:"http://www.yogaaventino.com",        remarks:"" },
+  { Id:"11", Layer:"Enoteche",  naam:"Cavour 313",            address:"Via Cavour 313",                   LON:"12.489153", LAT:"41.893735", website:"http://cavour313.it/",               remarks:"Great wine bar near the Colosseum" },
+  { Id:"12", Layer:"Enoteche",  naam:"Roscioli",              address:"Via dei Giubbonari 21",            LON:"12.474242", LAT:"41.894237", website:"http://www.roscioli.com/",            remarks:"Deli and wine bar combined" },
+  { Id:"13", Layer:"Vega",      naam:"Il Margutta",           address:"Via Margutta 118",                 LON:"12.478375", LAT:"41.909483", website:"http://www.ilmargutta.bio/",          remarks:"Oldest vegetarian restaurant in Rome" },
+  { Id:"14", Layer:"Vega",      naam:"Flower Burger",         address:"Via dei Gracchi 87",               LON:"12.462157", LAT:"41.907841", website:"http://www.flowerburger.it/",         remarks:"Vegan fast food" },
+  { Id:"15", Layer:"Parking",   naam:"Parcheggio Villa Borghese", address:"Viale del Galoppatoio 33",    LON:"12.484273", LAT:"41.909646", website:"http://www.sabait.it/",              remarks:"€18/day, €2.20/hour" },
+];
+
+const FALLBACK_META = {
+  "Gelato":    { description: "Artisan ice cream shops, ranked and reviewed.", source: "Dissapore 2015" },
+  "Pizza2":    { description: "Pizza al taglio and Roman-style pizzerias.",    source: "Local knowledge" },
+  "Aperitivo": { description: "Best spots for an evening aperitivo.",          source: "Local knowledge" },
+  "Yoga":      { description: "Yoga studios in Rome.",                         source: "Various" },
+  "Enoteche":  { description: "Wine bars and enotecas.",                       source: "Local knowledge" },
+  "Vega":      { description: "Vegan and vegetarian restaurants.",             source: "Local knowledge" },
+  "Parking":   { description: "Parking garages in central Rome.",              source: "060608.it" },
+};
+
+// ── CSV FETCH & PARSE ─────────────────────────────────────────────────────────
+async function fetchSheet() {
+  try {
+    const res = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = parseCSV(await res.text());
+    if (!data.length) throw new Error('Empty sheet response');
+    return data;
+  } catch(e) {
+    console.warn('Sheet fetch failed, using fallback data:', e);
+    document.getElementById('loading-msg').textContent = '⚠ Using demo data — sheet unreachable';
+    return FALLBACK_DATA;
+  }
+}
+
+async function fetchLayerMeta() {
+  try {
+    const res  = await fetch(`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=LAYERS`);
+    const text = await res.text();
+    const lines = text.trim().split('\n');
+    const headers = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,'').trim());
+    console.log('LAYERS headers:', headers);
+    const meta = {};
+    lines.slice(1).forEach(line => {
+      const vals = parseCSVLine(line).map(v => v.replace(/^"|"$/g,'').trim());
+      const row  = {};
+      headers.forEach((h,i) => row[h] = vals[i] || '');
+      const name = row['Layer'] || '';
+      if (!name) return;
+      meta[name] = {
+        description: row['Description'] || '',
+        source:      row['Source'] || row['Sourcce'] || '',
+      };
+    });
+    console.log('layerMeta built:', meta);
+    return meta;
+  } catch(e) { console.warn('LAYERS tab failed:', e); return FALLBACK_META; }
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = parseCSVLine(lines[0]);
+  return lines.slice(1).map(line => {
+    const vals = parseCSVLine(line), obj = {};
+    headers.forEach((h,i) => obj[h.trim().replace(/^"|"$/g,'')] = (vals[i]||'').replace(/^"|"$/g,'').trim());
+    return obj;
+  }).filter(r => r[F.name]);
+}
+
+function parseCSVLine(line) {
+  const result = []; let cur = '', inQ = false;
+  for (const c of line) {
+    if (c === '"') { inQ = !inQ; continue; }
+    if (c === ',' && !inQ) { result.push(cur); cur = ''; continue; }
+    cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function toFloat(v) { return v ? parseFloat(String(v).replace(',','.')) : NaN; }
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function shortUrl(url) { try { return new URL(url).hostname.replace(/^www\./,''); } catch { return url; } }
+
+// Build a Google Maps URL for a row. Prefers exact coordinates (a precise pin)
+// over a name+address text search, which can mismatch or fail for small places.
+function mapsUrlFor(row) {
+  const lat = toFloat(row[F.lat]), lon = toFloat(row[F.lon]);
+  if (!isNaN(lat) && !isNaN(lon)) {
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
+  }
+  const q = [row[F.name], row[F.address]].filter(Boolean).join(' ');
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+
+// ── FLOATING TOOLTIP ─────────────────────────────────────────────────────────
+const tip = document.getElementById('float-tip');
+
+function showTip(e, layer) {
+  // Never show on touch devices — info is visible in the table header
+  if (window.matchMedia('(hover: none)').matches) return;
+  const m = layerMeta[layer];
+  if (!m || (!m.description && !m.source)) return;
+  tip.innerHTML =
+    `<div class="tip-name">${escH(layer)}</div>` +
+    (m.description ? `<div class="tip-desc">${escH(m.description)}</div>` : '') +
+    (m.source      ? `<div class="tip-src">Source: ${escH(m.source)}</div>` : '');
+  tip.style.display = 'block';
+  moveTip(e);
+}
+
+function moveTip(e) {
+  const x = e.clientX + 16, y = e.clientY + 12;
+  tip.style.left = (x + 250 > window.innerWidth  ? e.clientX - 260 : x) + 'px';
+  tip.style.top  = (y + 120 > window.innerHeight ? e.clientY - 130 : y) + 'px';
+}
+
+function hideTip() { tip.style.display = 'none'; }
+// Hide tooltip on any touch (touch devices fire no mouseleave)
+document.addEventListener('touchstart', hideTip, { passive: true });
+
+// ── SELECT ALL / DESELECT ALL ────────────────────────────────────────────────
+function selectAll()   { clearDeeplinkWarning(); [...new Set(filteredData.map(r=>r[F.category]).filter(Boolean))].forEach(l=>activeLayers.add(l)); render(true); }
+function deselectAll() { clearDeeplinkWarning(); activeLayers.clear(); render(true); }
+
+// ── BUILD MARKERS ─────────────────────────────────────────────────────────────
+function buildLayers(data) {
+  Object.values(clusterGroups).forEach(g => map.removeLayer(g));
+  clusterGroups = {};
+  Object.keys(markersById).forEach(k => delete markersById[k]);
+  const layerNames = [...new Set(data.map(r=>r[F.category]).filter(Boolean))];
+
+  layerNames.forEach((layer, i) => {
+    const color = layerColors[layer] || COLORS[i % COLORS.length];
+    layerColors[layer] = color;
+    if (!activeLayers.has(layer)) return;
+
+    const cluster = L.markerClusterGroup({
+      maxClusterRadius: 60, disableClusteringAtZoom: 13,
+      iconCreateFunction: c => L.divIcon({
+        html: `<div style="background:${color};color:#fff;border-radius:50%;width:32px;height:32px;line-height:32px;text-align:center;font-size:12px;font-weight:700;border:2px solid rgba(255,255,255,0.7);box-shadow:0 2px 6px rgba(0,0,0,0.3)">${c.getChildCount()}</div>`,
+        className:'', iconSize:[32,32]
+      })
+    });
+
+    data.filter(r=>r[F.category]===layer).forEach(row => {
+      const lat = toFloat(row[F.lat]), lon = toFloat(row[F.lon]);
+      if (isNaN(lat)||isNaN(lon)) return;
+      const mapsUrl = mapsUrlFor(row);
+      const webLink = row[F.website] ? `<a class="popup-link" href="${escH(row[F.website])}" target="_blank">🌐 ${escH(row[F.website])}</a>` : '';
+      const popup = L.popup({maxWidth: window.innerWidth <= 640 ? Math.round(window.innerWidth * 0.75) : 340}).setContent(`
+        <div style="font-family:'Lato',sans-serif;padding:4px 2px">
+          <div class="popup-name">${escH(row[F.name])}</div>
+          <div class="popup-addr">${escH(row[F.address])}</div>
+          ${row[F.remarks] ? `<div class="popup-remark">${escH(row[F.remarks])}</div>` : ''}
+          ${webLink}
+          <a class="popup-link" href="${mapsUrl}" target="_blank">📍 Google Maps</a>
+          <div class="popup-warn">ℹ Info from 2019 or earlier — please verify</div>
+          <div class="popup-cat">${escH(row[F.category])}</div>
+        </div>`);
+      const marker = L.circleMarker([lat,lon],{radius:7,color:'#fff',weight:2,fillColor:color,fillOpacity:0.9})
+        .bindPopup(popup).bindTooltip(row[F.name],{direction:'top',offset:[0,-6]})
+        .addTo(cluster);
+
+      if (row[F.id]) markersById[row[F.id]] = { marker, cluster, lat, lon };
+    });
+
+    cluster.addTo(map);
+    clusterGroups[layer] = cluster;
+  });
+}
+
+// ── SHOW ON MAP (called from table row icon) ──────────────────────────────────
+function showOnMap(id) {
+  const entry = markersById[id];
+  if (!entry) return;
+  const { marker, cluster, lat, lon } = entry;
+
+  // Close the sidebar on mobile so the map is visible
+  if (window.innerWidth <= 640) {
+    const sidebar  = document.getElementById('sidebar');
+    const toggle   = document.getElementById('sidebar-toggle');
+    const overlay  = document.getElementById('sidebar-overlay');
+    if (sidebar && !sidebar.classList.contains('collapsed')) {
+      sidebar.classList.add('collapsed');
+      document.body.classList.remove('sidebar-open');
+      if (toggle) { toggle.innerHTML = '&#x25BA;'; toggle.title = 'Expand sidebar'; }
+      if (overlay) overlay.classList.add('hidden');
+    }
+  }
+
+  map.setView([lat, lon], 17, { animate: true });
+
+  // If the marker is currently grouped inside a cluster, zoom in to separate
+  // it out first, then open its popup once it's actually rendered on the map.
+  if (cluster && cluster.hasLayer && cluster.hasLayer(marker)) {
+    cluster.zoomToShowLayer(marker, () => marker.openPopup());
+  } else {
+    setTimeout(() => marker.openPopup(), 300);
+  }
+}
+window.showOnMap = showOnMap;
+function buildSidebar(data) {
+  const layerNames = [...new Set(data.map(r=>r[F.category]).filter(Boolean))];
+  const ul = document.getElementById('layer-list');
+  ul.innerHTML = '';
+
+  layerNames.forEach((layer, i) => {
+    const color = layerColors[layer] || COLORS[i % COLORS.length];
+    layerColors[layer] = color;
+    const li = document.createElement('li');
+    if (activeLayers.has(layer)) li.classList.add('active');
+    li.innerHTML = `
+      <span class="layer-dot" style="background:${color}"></span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escH(layer)}</span>
+      <span class="layer-check">${activeLayers.has(layer)?'✓':''}</span>`;
+
+    li.addEventListener('click',  ()  => { clearDeeplinkWarning(); activeLayers.has(layer) ? activeLayers.delete(layer) : activeLayers.add(layer); render(true); });
+    li.addEventListener('mouseenter', e => showTip(e, layer));
+    li.addEventListener('mousemove',  e => moveTip(e));
+    li.addEventListener('mouseleave', ()  => hideTip());
+    ul.appendChild(li);
+  });
+
+  document.getElementById('count-badge').textContent = `${data.filter(r=>activeLayers.has(r[F.category])).length} places`;
+}
+
+// ── BUILD TABLE ───────────────────────────────────────────────────────────────
+function buildTable(data) {
+  const wrap = document.getElementById('table-wrap');
+  wrap.innerHTML = '';
+  const layerNames = [...new Set(data.map(r=>r[F.category]).filter(Boolean))];
+
+  layerNames.forEach(layer => {
+    if (!activeLayers.has(layer)) return;
+    const rows = data.filter(r=>r[F.category]===layer);
+    if (!rows.length) return;
+
+    const color = layerColors[layer] || '#333';
+    const meta  = layerMeta[layer]  || {};
+
+    const title = document.createElement('div');
+    title.className = 'table-section-title';
+    title.innerHTML =
+      `<div class="ts-name" style="color:${color}">${escH(layer)}</div>` +
+      (meta.description ? `<div class="ts-meta">${escH(meta.description)}</div>` : '') +
+      (meta.source      ? `<div class="ts-source">Source: ${escH(meta.source)}</div>` : '');
+    wrap.appendChild(title);
+
+    const tbl = document.createElement('table');
+    tbl.innerHTML = `<colgroup><col class="col-name"><col class="col-address"><col class="col-website"><col class="col-remarks"><col class="col-actions"></colgroup>
+      <thead><tr><th>Name</th><th>Address</th><th>Website</th><th>Remarks</th><th></th></tr></thead>`;
+    const tbody = document.createElement('tbody');
+    rows.forEach(r => {
+      const tr = document.createElement('tr');
+      const lat = toFloat(r[F.lat]), lon = toFloat(r[F.lon]);
+      const hasCoords = !isNaN(lat) && !isNaN(lon);
+      const gmapsUrl = mapsUrlFor(r);
+
+      const actions = `
+        <a class="row-icon" href="${gmapsUrl}" target="_blank" title="Search on Google Maps">🔍</a>
+        ${hasCoords ? `<button class="row-icon" onclick="showOnMap('${escH(r[F.id])}')" title="Show on map">📍</button>` : ''}
+      `;
+
+      tr.innerHTML = `
+        <td>${escH(r[F.name])}</td>
+        <td>${escH(r[F.address])}</td>
+        <td class="td-website" title="${escH(r[F.website])}">${r[F.website]?`<a href="${escH(r[F.website])}" target="_blank">${escH(shortUrl(r[F.website]))}</a>`:''}</td>
+        <td>${escH(r[F.remarks])}</td>
+        <td class="td-actions">${actions}</td>`;
+      tbody.appendChild(tr);
+    });
+    tbl.appendChild(tbody);
+    wrap.appendChild(tbl);
+  });
+}
+
+// ── PRINT VERSION ──────────────────────────────────────────────────────────────
+// Assigns sequential numbers (in legend order: layer by layer, row by row) to
+// every visible row that has valid coordinates. Returns { idToNumber, list }.
+function assignPrintNumbers(data) {
+  const layerNames = [...new Set(data.map(r=>r[F.category]).filter(Boolean))].filter(l=>activeLayers.has(l));
+  const idToNumber = {};
+  const list = [];
+  let n = 1;
+  layerNames.forEach(layer => {
+    data.filter(r=>r[F.category]===layer).forEach(row => {
+      const lat = toFloat(row[F.lat]), lon = toFloat(row[F.lon]);
+      if (isNaN(lat)||isNaN(lon)) return;
+      idToNumber[row[F.id]] = n;
+      list.push({ number: n, layer, row, lat, lon });
+      n++;
+    });
+  });
+  return { idToNumber, list };
+}
+
+// Renders the "Active layers" line + a numbered, per-layer legend table into #print-legend-content
+function buildPrintLegend(list) {
+  const layerNames = [...new Set(list.map(e=>e.layer))];
+  const container = document.getElementById('print-legend-content');
+  let html = `<div class="pl-active-layers"><strong>Active layers:</strong> ${layerNames.map(escH).join(', ') || '—'}</div>`;
+
+  layerNames.forEach(layer => {
+    const color = layerColors[layer] || '#333';
+    const rows  = list.filter(e=>e.layer===layer);
+    html += `<div class="pl-section"><div class="pl-section-title" style="color:${color}">${escH(layer)}</div><table class="pl-table"><tbody>`;
+    rows.forEach(({number, row}) => {
+      html += `<tr>
+        <td style="width:24px"><span class="pl-num" style="background:${color}">${number}</span></td>
+        <td style="width:22%">${escH(row[F.name])}</td>
+        <td style="width:30%">${escH(row[F.address])}</td>
+        <td>${escH(row[F.remarks])}</td>
+      </tr>`;
+    });
+    html += `</tbody></table></div>`;
+  });
+  container.innerHTML = html;
+}
+
+let printNumberLayer = null;   // layer group holding the temporary numbered markers
+let printSavedClusters = [];   // cluster groups removed from the map for printing
+let printSavedView = null;     // { center, zoom } to restore after printing
+
+let printPrepared = false;     // true between preparePrint() and cleanupPrint()
+
+function preparePrint() {
+  if (printPrepared) return;   // printMap() may already have prepared the page
+  printPrepared = true;
+  const { idToNumber, list } = assignPrintNumbers(filteredData);
+
+  // Swap the clustered circle markers for plain numbered pins so every point
+  // is visible (and legible) on the printed page, without cluster bubbles
+  // hiding points underneath them.
+  printSavedClusters = Object.values(clusterGroups).filter(g => map.hasLayer(g));
+  printSavedClusters.forEach(g => map.removeLayer(g));
+
+  printNumberLayer = L.layerGroup();
+  list.forEach(({number, layer, lat, lon}) => {
+    const color = layerColors[layer] || '#333';
+    L.marker([lat, lon], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div class="print-num-icon-inner" style="background:${color}">${number}</div>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11]
+      })
+    }).addTo(printNumberLayer);
+  });
+  printNumberLayer.addTo(map);
+
+  printSavedView = { center: map.getCenter(), zoom: map.getZoom() };
+  if (list.length) {
+    map.fitBounds(L.latLngBounds(list.map(e=>[e.lat,e.lon])), { padding: [30,30], maxZoom: 16, animate: false });
+  }
+  map.invalidateSize();
+
+  buildPrintLegend(list);
+}
+
+function cleanupPrint() {
+  printPrepared = false;
+  if (printNumberLayer) { map.removeLayer(printNumberLayer); printNumberLayer = null; }
+  printSavedClusters.forEach(g => g.addTo(map));
+  printSavedClusters = [];
+  if (printSavedView) {
+    map.setView(printSavedView.center, printSavedView.zoom, { animate: false });
+    printSavedView = null;
+  }
+  map.invalidateSize();
+}
+
+function printMap() {
+  // Vector tiles need a moment to redraw at the print extent, so prepare the
+  // page first, give MapLibre time to render, then open the print dialog.
+  // (Ctrl+P still works via the beforeprint handler, without the delay.)
+  preparePrint();
+  setTimeout(() => window.print(), 1200);
+}
+window.printMap = printMap;
+window.addEventListener('beforeprint', preparePrint);
+window.addEventListener('afterprint', cleanupPrint);
+
+
+function applySearch() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  filteredData = q ? allData.filter(r=>[F.category,F.name,F.address,F.website,F.remarks].some(k=>(r[k]||'').toLowerCase().includes(q))) : [...allData];
+}
+
+// Hide the deeplink warning — called whenever the user manually changes
+// the layer selection, since the warning only applies to the initial URL state.
+function clearDeeplinkWarning() {
+  const warn = document.getElementById('deeplink-warning');
+  warn.style.display = 'none';
+  warn.innerHTML = '';
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+// Only rows whose marker currently falls within the visible map viewport are
+// shown in the bottom table panel — panning/zooming the map updates the list.
+function visibleTableData() {
+  let bounds;
+  try { bounds = map.getBounds(); } catch(e) { return filteredData; }
+  return filteredData.filter(r => {
+    const lat = toFloat(r[F.lat]), lon = toFloat(r[F.lon]);
+    if (isNaN(lat) || isNaN(lon)) return false;
+    return bounds.contains([lat, lon]);
+  });
+}
+
+function refreshTableForViewport() { buildTable(visibleTableData()); }
+
+function render(fitBounds=true) {
+  applySearch();
+  buildSidebar(filteredData);
+  buildLayers(filteredData);
+  buildTable(visibleTableData());
+  if (fitBounds) fitMapToVisible(filteredData);
+  syncURL();
+  updateNoLayersMessage();
+}
+
+// Show a message in the map area when zero layers are active
+function updateNoLayersMessage() {
+  const msg = document.getElementById('no-layers-msg');
+  msg.style.display = activeLayers.size === 0 ? 'flex' : 'none';
+}
+
+// Keep the URL's ?layer= param in sync with the current selection,
+// so the address bar always reflects a shareable deeplink.
+function syncURL() {
+  const params = new URLSearchParams(window.location.search);
+  if (activeLayers.size) {
+    params.set('layer', [...activeLayers].join(','));
+  } else {
+    params.delete('layer');
+  }
+  const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+  history.replaceState(null, '', newUrl);
+}
+
+// Reads ?layer=Gelato or ?layer=Gelato,Pizza2 from the URL.
+// If present, only those layers are activated on load instead of the default first 4.
+function getLayersFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get('layer') || params.get('layers');
+  if (!raw) return null;
+  return raw.split(',').map(s => s.trim()).filter(Boolean);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async () => {
+  try {
+    [allData, layerMeta] = await Promise.all([fetchSheet(), fetchLayerMeta()]);
+    filteredData = [...allData];
+    const allLayers      = [...new Set(allData.map(r=>r[F.category]).filter(Boolean))];
+    const deeplinkLayers = getLayersFromURL();
+
+    if (deeplinkLayers) {
+      // Only activate layers that actually exist (case-insensitive match)
+      const notFound = [];
+      deeplinkLayers.forEach(d => {
+        const match = allLayers.find(l => l.toLowerCase() === d.toLowerCase());
+        if (match) activeLayers.add(match);
+        else notFound.push(d);
+      });
+
+      if (notFound.length) {
+        const warn = document.getElementById('deeplink-warning');
+        warn.innerHTML = `<strong>⚠ Layer${notFound.length > 1 ? 's' : ''} not found:</strong> ${notFound.map(escH).join(', ')}`;
+        warn.style.display = 'block';
+      }
+
+      // If none of the requested layers matched anything real, fall back to default
+      if (!activeLayers.size) allLayers.slice(0,4).forEach(l => activeLayers.add(l));
+    } else {
+      allLayers.slice(0,4).forEach(l => activeLayers.add(l));
+    }
+
+    document.getElementById('loading-msg').textContent = '';
+    render(true);
+    document.getElementById('search-input').addEventListener('input', () => render(true));
+  } catch(e) {
+    document.getElementById('loading-msg').textContent = 'Error loading data. Check console.';
+    console.error(e);
+  }
+})();
+
+// ── DRAG TO RESIZE TABLE PANEL ────────────────────────────────────────────────
+(function() {
+  const handle = document.getElementById('drag-handle');
+  const panel  = document.getElementById('table-panel');
+  const main   = document.getElementById('main');
+  let dragging = false, startY = 0, startH = 0;
+
+  handle.addEventListener('mousedown', e => {
+    dragging = true;
+    startY = e.clientY;
+    startH = panel.offsetHeight;
+    document.body.style.cursor = 'ns-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  handle.addEventListener('touchstart', e => {
+    dragging = true;
+    startY = e.touches[0].clientY;
+    startH = panel.offsetHeight;
+    e.preventDefault();
+  }, { passive: false });
+
+  function onMove(clientY) {
+    if (!dragging) return;
+    const delta  = startY - clientY;           // drag up → bigger panel
+    const mainH  = main.offsetHeight;
+    const minH   = 40;
+    const maxH   = mainH - 80;                 // leave at least 80px for map
+    const newH   = Math.min(maxH, Math.max(minH, startH + delta));
+    panel.style.height = newH + 'px';
+    // invalidate Leaflet map size so it redraws to fill remaining space
+    if (window._leafletMap) window._leafletMap.invalidateSize();
+  }
+
+  document.addEventListener('mousemove', e => onMove(e.clientY));
+  document.addEventListener('touchmove', e => onMove(e.touches[0].clientY), { passive: false });
+
+  document.addEventListener('mouseup',  () => { dragging = false; document.body.style.cursor = ''; document.body.style.userSelect = ''; });
+  document.addEventListener('touchend', () => { dragging = false; });
+})();
+</script>
+</body>
+</html>
