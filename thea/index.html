@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<!-- version = "20261107-174641" -->
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fit mit Thea – Kurze &amp; effektive Workouts für Frauen 35+</title>
+<meta name="description" content="Theadora, zertifizierte Fitnesstrainerin: effektive Home-Workouts für Bauch, Beine &amp; Po. Online-Kurse, gratis Webinar und Rezepte für Frauen 35+.">
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#ff3d8b; --pink-dark:#e02472; --pink-soft:#ffe3ee; --blush:#fff5f8;
+    --lilac:#c9b6ff; --mint:#9fd8c9; --ink:#1f1b2d; --muted:#6b6577; --line:#f0e4ea;
+    --radius:22px; --shadow:0 18px 40px -18px rgba(224,36,114,.35);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:#fff;line-height:1.6}
+  h1,h2,h3,h4{font-family:Poppins,sans-serif;line-height:1.15}
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%;display:block}
+  .wrap{width:min(1160px,92%);margin-inline:auto}
+  .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.9rem 1.6rem;border-radius:999px;font-weight:600;border:0;cursor:pointer;font-size:1rem;transition:transform .15s,box-shadow .15s,background .15s}
+  .btn-primary{background:var(--pink);color:#fff;box-shadow:var(--shadow)}
+  .btn-primary:hover{background:var(--pink-dark);transform:translateY(-2px)}
+  .btn-ghost{background:#fff;color:var(--ink);border:2px solid var(--ink)}
+  .btn-ghost:hover{background:var(--ink);color:#fff}
+  .eyebrow{display:inline-block;font-size:.8rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--pink-dark);background:var(--pink-soft);padding:.35rem .9rem;border-radius:999px;margin-bottom:1rem}
+  section{padding:96px 0}
+  .section-head{text-align:center;max-width:680px;margin:0 auto 56px}
+  .section-head h2{font-size:clamp(1.9rem,4vw,2.8rem);margin-bottom:.8rem}
+  .section-head p{color:var(--muted);font-size:1.08rem}
+
+  /* NAV */
+  header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.88);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:72px}
+  .logo{font-family:Poppins;font-weight:800;font-size:1.35rem}
+  .logo span{color:var(--pink)}
+  .nav ul{display:flex;gap:2rem;list-style:none;font-weight:500}
+  .nav ul a:hover{color:var(--pink)}
+  .nav .btn{padding:.6rem 1.2rem;font-size:.92rem}
+  .burger{display:none;background:none;border:0;cursor:pointer;width:40px;height:40px}
+  .burger span{display:block;height:2px;background:var(--ink);margin:6px 8px;border-radius:2px}
+
+  /* HERO */
+  .hero{padding:72px 0 96px;background:radial-gradient(1200px 500px at 85% 0%,var(--pink-soft),transparent 60%),radial-gradient(800px 400px at 0% 100%,#efe9ff,transparent 60%)}
+  .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:56px;align-items:center}
+  .hero h1{font-size:clamp(2.3rem,5.4vw,4rem);margin-bottom:1.2rem}
+  .hero h1 em{font-style:normal;color:var(--pink);position:relative}
+  .hero p.lead{font-size:1.18rem;color:var(--muted);max-width:540px;margin-bottom:2rem}
+  .hero-cta{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:2.5rem}
+  .stats{display:flex;gap:2.5rem;flex-wrap:wrap}
+  .stats strong{display:block;font-family:Poppins;font-size:1.8rem}
+  .stats span{color:var(--muted);font-size:.92rem}
+  .hero-visual{position:relative;aspect-ratio:4/5;border-radius:32px;background:linear-gradient(160deg,#ffd1e2 0%,#ff8db8 45%,#b49cff 100%);overflow:hidden;box-shadow:0 40px 80px -30px rgba(124,58,237,.45)}
+  .hero-visual .photo-note{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:rgba(255,255,255,.95);padding:2rem}
+  .hero-visual .photo-note svg{width:120px;height:120px;margin:0 auto 1rem;opacity:.9}
+  .hero-visual .photo-note small{display:block;opacity:.85;margin-top:.4rem}
+  .float-card{position:absolute;background:#fff;border-radius:16px;padding:.8rem 1rem;box-shadow:0 14px 30px -12px rgba(0,0,0,.25);display:flex;gap:.7rem;align-items:center;font-size:.9rem}
+  .float-card b{font-family:Poppins}
+  .float-card .dot{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--pink-soft);font-size:1.2rem}
+  .fc1{left:-28px;bottom:70px}.fc2{right:-20px;top:40px}
+
+  /* PILLARS */
+  .pillars{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+  .pillar{padding:28px;border-radius:var(--radius);background:var(--blush);border:1px solid var(--line);transition:transform .2s}
+  .pillar:hover{transform:translateY(-4px)}
+  .pillar .ico{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:#fff;font-size:1.6rem;margin-bottom:1rem;box-shadow:0 6px 14px -8px rgba(0,0,0,.2)}
+  .pillar h3{font-size:1.12rem;margin-bottom:.4rem}
+  .pillar p{color:var(--muted);font-size:.95rem}
+
+  /* ABOUT */
+  .about{background:var(--ink);color:#fff}
+  .about-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:64px;align-items:center}
+  .about-visual{aspect-ratio:1;border-radius:32px;background:linear-gradient(135deg,#ff3d8b,#7c5cff);display:grid;place-items:center;font-family:Poppins;font-weight:800;font-size:clamp(4rem,10vw,7rem);color:rgba(255,255,255,.9)}
+  .about .eyebrow{background:rgba(255,61,139,.18);color:#ff9cc4}
+  .about h2{font-size:clamp(1.9rem,4vw,2.7rem);margin-bottom:1.2rem}
+  .about p{color:#cfc9da;margin-bottom:1rem;font-size:1.05rem}
+  .checks{list-style:none;margin:1.5rem 0 2rem;display:grid;gap:.7rem}
+  .checks li{display:flex;gap:.7rem;align-items:flex-start}
+  .checks li::before{content:"";flex:0 0 22px;height:22px;border-radius:50%;background:var(--pink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E") center/14px no-repeat;margin-top:2px}
+
+  /* COURSES */
+  .courses{background:linear-gradient(180deg,#fff,var(--blush))}
+  .filter{display:flex;justify-content:center;gap:.6rem;flex-wrap:wrap;margin:-24px 0 40px}
+  .filter button{border:1.5px solid var(--line);background:#fff;padding:.5rem 1.1rem;border-radius:999px;font:inherit;font-weight:500;cursor:pointer;color:var(--muted)}
+  .filter button.active,.filter button:hover{border-color:var(--pink);color:var(--pink-dark);background:var(--pink-soft)}
+  .course-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+  .course{background:#fff;border-radius:var(--radius);overflow:hidden;border:1px solid var(--line);display:flex;flex-direction:column;transition:transform .2s,box-shadow .2s}
+  .course:hover{transform:translateY(-6px);box-shadow:0 30px 50px -28px rgba(31,27,45,.35)}
+  .course .cover{aspect-ratio:16/10;position:relative;display:flex;align-items:flex-end;padding:20px;color:#fff}
+  .course .cover h4{font-size:1.5rem;text-shadow:0 2px 12px rgba(0,0,0,.18)}
+  .course .badge{position:absolute;top:16px;left:16px;background:#fff;color:var(--ink);font-size:.75rem;font-weight:600;padding:.3rem .7rem;border-radius:999px}
+  .course .badge.hot{background:var(--ink);color:#fff}
+  .course .body{padding:22px;display:flex;flex-direction:column;flex:1}
+  .course .meta{display:flex;gap:1rem;flex-wrap:wrap;color:var(--muted);font-size:.85rem;margin-bottom:.8rem}
+  .course .meta span{display:inline-flex;gap:.3rem;align-items:center}
+  .course h3{font-size:1.2rem;margin-bottom:.5rem}
+  .course p{color:var(--muted);font-size:.95rem;margin-bottom:1rem}
+  .course ul{list-style:none;font-size:.92rem;display:grid;gap:.35rem;margin-bottom:1.4rem}
+  .course ul li::before{content:"✓ ";color:var(--pink);font-weight:700}
+  .course .foot{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding-top:1rem;border-top:1px dashed var(--line)}
+  .price{font-family:Poppins;font-weight:700;font-size:1.5rem}
+  .price s{font-size:.95rem;color:var(--muted);font-weight:500;margin-left:.3rem}
+  .course .btn{padding:.7rem 1.2rem;font-size:.92rem}
+  .rating{color:#f5a623;font-size:.85rem}
+  .rating em{color:var(--muted);font-style:normal}
+
+  /* WEBINAR */
+  .webinar-box{display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:center;background:linear-gradient(120deg,var(--pink),#9b5cff);color:#fff;border-radius:32px;padding:56px;box-shadow:0 40px 80px -40px rgba(155,92,255,.7)}
+  .webinar-box h2{font-size:clamp(1.8rem,3.6vw,2.5rem);margin-bottom:1rem}
+  .webinar-box p{opacity:.92;margin-bottom:1.2rem}
+  .webinar-box .eyebrow{background:rgba(255,255,255,.2);color:#fff}
+  .form{display:grid;gap:.8rem;background:#fff;border-radius:22px;padding:26px;color:var(--ink)}
+  .form h4{font-size:1.1rem}
+  .form input{width:100%;padding:.85rem 1rem;border-radius:12px;border:1.5px solid var(--line);font:inherit}
+  .form input:focus{outline:none;border-color:var(--pink)}
+  .form small{color:var(--muted);font-size:.78rem}
+  .form .ok{display:none;color:#178a5b;font-weight:600}
+
+  /* WORKOUT TIPS */
+  .tips{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .tip{border-radius:var(--radius);padding:26px;min-height:220px;display:flex;flex-direction:column;justify-content:space-between;color:var(--ink)}
+  .tip:nth-child(1){background:#ffe3ee}.tip:nth-child(2){background:#e9e3ff}.tip:nth-child(3){background:#dcf3ec}
+  .tip:nth-child(4){background:#fff1d6}.tip:nth-child(5){background:#e3efff}.tip:nth-child(6){background:#ffe8df}
+  .tip .tag{font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.1em;opacity:.7}
+  .tip h3{font-size:1.25rem;margin:.6rem 0}
+  .tip p{font-size:.93rem;color:#4a4458}
+
+  /* TESTIMONIALS (placeholder structure) */
+  .quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+  .quote{background:#fff;border:1px dashed #e6c5d4;border-radius:var(--radius);padding:26px;color:var(--muted)}
+  .quote b{display:block;color:var(--ink);margin-top:1rem}
+
+  /* FAQ */
+  .faq{max-width:780px;margin:0 auto}
+  details{border-bottom:1px solid var(--line);padding:1.2rem 0}
+  summary{cursor:pointer;font-family:Poppins;font-weight:600;font-size:1.08rem;list-style:none;display:flex;justify-content:space-between;gap:1rem}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--pink);font-size:1.5rem;line-height:1}
+  details[open] summary::after{content:"–"}
+  details p{color:var(--muted);margin-top:.7rem}
+
+  /* FOOTER */
+  footer{background:var(--ink);color:#bfb8cc;padding:64px 0 28px}
+  .foot-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px}
+  footer h5{font-family:Poppins;color:#fff;font-size:1rem;margin-bottom:1rem}
+  footer ul{list-style:none;display:grid;gap:.5rem}
+  footer a:hover{color:#fff}
+  .socials{display:flex;gap:.7rem;margin-top:1.2rem}
+  .socials a{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.08);display:grid;place-items:center}
+  .socials a:hover{background:var(--pink)}
+  .copy{border-top:1px solid rgba(255,255,255,.1);padding-top:24px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:1rem;font-size:.85rem}
+
+  /* MODAL */
+  .modal{position:fixed;inset:0;background:rgba(31,27,45,.55);display:none;place-items:center;z-index:100;padding:20px}
+  .modal.open{display:grid}
+  .modal-card{background:#fff;border-radius:26px;max-width:460px;width:100%;padding:34px;position:relative}
+  .modal-card h3{font-size:1.4rem;margin-bottom:.4rem}
+  .modal-card p{color:var(--muted);margin-bottom:1.2rem}
+  .modal-close{position:absolute;top:14px;right:16px;background:none;border:0;font-size:1.6rem;cursor:pointer;color:var(--muted)}
+  .modal-card .summary{display:flex;justify-content:space-between;background:var(--blush);border-radius:14px;padding:.9rem 1rem;margin-bottom:1rem;font-weight:600}
+
+  @media (max-width:980px){
+    .hero-grid,.about-grid,.webinar-box{grid-template-columns:1fr}
+    .hero-visual{max-width:440px;margin:0 auto;width:100%}
+    .pillars{grid-template-columns:repeat(2,1fr)}
+    .course-grid,.tips,.quotes{grid-template-columns:1fr 1fr}
+    .foot-grid{grid-template-columns:1fr 1fr}
+    .webinar-box{padding:36px}
+  }
+  @media (max-width:720px){
+    section{padding:72px 0}
+    .nav ul,.nav .btn{display:none}
+    .burger{display:block}
+    .nav.open ul{display:flex;flex-direction:column;position:absolute;top:72px;left:0;right:0;background:#fff;padding:1.5rem 4%;gap:1.1rem;border-bottom:1px solid var(--line)}
+    .pillars,.course-grid,.tips,.quotes,.foot-grid{grid-template-columns:1fr}
+    .fc1{left:8px}.fc2{right:8px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="nav wrap" id="nav">
+    <a href="#top" class="logo">fit mit <span>thea</span></a>
+    <ul>
+      <li><a href="#kurse">Kurse</a></li>
+      <li><a href="#ueber-mich">Über mich</a></li>
+      <li><a href="#webinar">Gratis Webinar</a></li>
+      <li><a href="#tipps">Workouts</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a href="#kurse" class="btn btn-primary">Kurs finden</a>
+    <button class="burger" aria-label="Menü öffnen" onclick="document.getElementById('nav').classList.toggle('open')"><span></span><span></span><span></span></button>
+  </nav>
+</header>
+
+<main id="top">
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <span class="eyebrow">Zertifizierte Fitnesstrainerin · Frauen 35+</span>
+        <h1>Kurze Workouts.<br><em>Straffer Körper.</em><br>Ganz einfach zu Hause.</h1>
+        <p class="lead">Hi, ich bin Thea! Mit effektiven Übungen für Bauch, Beine &amp; Po zeige ich dir, wie du in wenigen Minuten am Tag stärker, straffer und energiegeladener wirst – ohne Fitnessstudio, ohne Springen.</p>
+        <div class="hero-cta">
+          <a href="#kurse" class="btn btn-primary">Zu den Kursen →</a>
+          <a href="#webinar" class="btn btn-ghost">Gratis Webinar</a>
+        </div>
+        <div class="stats">
+          <div><strong>200K+</strong><span>Frauen auf Instagram</span></div>
+          <div><strong>500+</strong><span>Workout-Videos</span></div>
+          <div><strong>15–20 Min</strong><span>pro Training</span></div>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <!-- TODO: Ersetze diesen Block durch ein echtes Foto von Thea, z. B.  -->
+         <img src="thea-hero.jpg" alt="Theadora beim Training">
+        <div class="photo-note">
+          <!-- <div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v6m0 0l-3.5 7M12 13l3.5 7M6 10l6-2 6 2"/><path d="M3 9h3m12 0h3"/><rect x="1.5" y="7.5" width="1.5" height="3" rx=".5"/><rect x="21" y="7.5" width="1.5" height="3" rx=".5"/></svg>
+            <strong>Platz für Theas Foto</strong>
+            <small>4:5 · mind. 1000 × 1250 px</small>
+          </div>
+        </div> -->
+        <div class="float-card fc1"><div class="dot">🔥</div><div><b>Neu</b><br>Ganzkörperprogramm</div></div>
+        <div class="float-card fc2"><div class="dot">⏱️</div><div><b>Nur 15 Min</b><br>am Tag</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PILLARS -->
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Was dich erwartet</span>
+        <h2>Fit werden, das in deinen Alltag passt</h2>
+        <p>Alles, was du auf meinem Kanal liebst – strukturiert, Schritt für Schritt und mit klarem Plan.</p>
+      </div>
+      <div class="pillars">
+        <div class="pillar"><div class="ico">💪</div><h3>Effektive Workouts</h3><p>Kurze, gezielte Einheiten mit maximalem Effekt – perfekt für volle Tage.</p></div>
+        <div class="pillar"><div class="ico">🍑</div><h3>Bauch, Beine &amp; Po</h3><p>Gezielte Übungen für einen flacheren Bauch, schlanke Beine und einen straffen Po.</p></div>
+        <div class="pillar"><div class="ico">🥗</div><h3>Einfache Rezepte</h3><p>Leckere, alltagstaugliche Gerichte, die dein Training optimal unterstützen.</p></div>
+        <div class="pillar"><div class="ico">🧘‍♀️</div><h3>Stretching</h3><p>Mobilität und Dehnroutinen für mehr Beweglichkeit und weniger Verspannungen.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COURSES -->
+  <section class="courses" id="kurse">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Online-Kurse</span>
+        <h2>Finde deinen Kurs</h2>
+        <p>Trainiere wann und wo du willst – mit Video-Anleitungen, Trainingsplan und lebenslangem Zugang.</p>
+      </div>
+      <div class="filter" id="filter"></div>
+      <div class="course-grid" id="courseGrid"></div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section class="about" id="ueber-mich">
+    <div class="wrap about-grid">
+      <!-- TODO: Ersetze durch ein Porträtfoto: -->
+      <img src="thea-portrait.jpg" alt="Theadora" style="border-radius:32px"> 
+      <div class="about-visual" aria-hidden="true">Thea</div>
+      <div>
+        <span class="eyebrow">Über mich</span>
+        <h2>Hi, ich bin Theadora – deine Trainerin für kurze &amp; effektive Workouts</h2>
+        <p>Als zertifizierte Fitnesstrainerin weiß ich: Du brauchst keine Stunden im Fitnessstudio, um dich in deinem Körper wohlzufühlen. Was du brauchst, sind die richtigen Übungen – und jemanden, der dich motiviert dranzubleiben.</p>
+        <p>Auf Instagram trainieren schon über 200.000 Frauen mit mir. In meinen Kursen bekommst du jetzt den kompletten Plan dazu.</p>
+        <ul class="checks">
+          <li>Zertifizierte Fitnesstrainerin</li>
+          <li>Spezialisiert auf Frauen 35+ und Home-Workouts</li>
+          <li>Gelenkschonende Übungen – ohne Springen oder Laufen</li>
+          <li>Für jedes Fitnesslevel geeignet</li>
+        </ul>
+        <a href="https://www.instagram.com/fit_mit_thea/" target="_blank" rel="noopener" class="btn btn-primary">Folge mir auf Instagram</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- WEBINAR -->
+  <section id="webinar">
+    <div class="wrap">
+      <div class="webinar-box">
+        <div>
+          <span class="eyebrow">Kostenlos</span>
+          <h2>Gratis Webinar: Straffer Körper ab 35 – so geht's wirklich</h2>
+          <p>In 45 Minuten zeige ich dir, warum klassisches Cardio ab 35 oft nicht reicht, welche 3 Übungen den größten Unterschied machen und wie du Training in einen vollen Alltag einbaust.</p>
+          <ul class="checks">
+            <li>Die häufigsten Fehler beim Bauchtraining</li>
+            <li>Mini-Workout zum Mitmachen</li>
+            <li>Live-Fragerunde mit Thea</li>
+          </ul>
+        </div>
+        <form class="form" id="webinarForm" novalidate>
+          <h4>Jetzt kostenlos anmelden</h4>
+          <input type="text" name="name" placeholder="Dein Vorname" required autocomplete="given-name">
+          <input type="email" name="email" placeholder="Deine E-Mail-Adresse" required autocomplete="email">
+          <button class="btn btn-primary" type="submit">Platz sichern</button>
+          <small>Du kannst dich jederzeit wieder abmelden. Infos in der <a href="#" style="text-decoration:underline">Datenschutzerklärung</a>.</small>
+          <span class="ok" id="webinarOk">Danke! Du bist dabei – schau in dein Postfach. 💌</span>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- TIPS -->
+  <section id="tipps" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Gratis Workouts</span>
+        <h2>Beliebt auf meinem Kanal</h2>
+        <p>Ein kleiner Vorgeschmack – speichern &amp; ausprobieren!</p>
+      </div>
+      <div class="tips">
+        <a class="tip" href="https://www.instagram.com/fit_mit_thea/" target="_blank" rel="noopener"><div><span class="tag">Beine</span><h3>4 Wandübungen für schlanke &amp; definierte Beine</h3><p>Bequem zu Hause, ohne Springen oder Laufen – für jedes Level.</p></div><span>Auf Instagram ansehen →</span></a>
+        <a class="tip" href="https://www.instagram.com/fit_mit_thea/" target="_blank" rel="noopener"><div><span class="tag">Bauch</span><h3>1 Bewegung für einen flachen Bauch</h3><p>Trainiert Unterbauch und Körpermitte – ideal ab 35.</p></div><span>Auf Instagram ansehen →</span></a>
+        <a class="tip" href="https://www.instagram.com/fit_mit_thea/" target="_blank" rel="noopener"><div><span class="tag">Bauch</span><h3>Gewölbter Bauch? Probiere diese 3 Übungen</h3><p>Gezielt die tiefe Bauchmuskulatur aktivieren.</p></div><span>Auf Instagram ansehen →</span></a>
+        <a class="tip" href="https://www.instagram.com/fit_mit_thea/" target="_blank" rel="noopener"><div><span class="tag">Po</span><h3>Straffer Po ohne Geräte</h3><p>Einfache Moves, die du direkt im Wohnzimmer machen kannst.</p></div><span>Auf Instagram ansehen →</span></a>
+        <a class="tip" href="https://www.instagram.com/fit_mit_thea/" target="_blank" rel="noopener"><div><span class="tag">Stretching</span><h3>5-Minuten-Dehnroutine für den Abend</h3><p>Lockert Hüfte, Rücken und Nacken nach einem langen Tag.</p></div><span>Auf Instagram ansehen →</span></a>
+        <a class="tip" href="https://www.instagram.com/fit_mit_thea/" target="_blank" rel="noopener"><div><span class="tag">Rezepte</span><h3>Schnelle Fitness-Rezepte</h3><p>Proteinreich, lecker und in 15 Minuten auf dem Tisch.</p></div><span>Auf Instagram ansehen →</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section style="background:var(--blush)">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Erfahrungen</span>
+        <h2>Das sagen Teilnehmerinnen</h2>
+        <p>Hier erscheinen echte Bewertungen, sobald die ersten Kurse gestartet sind.</p>
+      </div>
+      <!-- TODO: Nur echte, freigegebene Erfahrungsberichte von Kursteilnehmerinnen einfügen. -->
+      <div class="quotes">
+        <div class="quote">Platzhalter für einen echten Erfahrungsbericht (Zitat, Ergebnis, Kursname).<b>Name, Alter · Kurs</b></div>
+        <div class="quote">Platzhalter für einen echten Erfahrungsbericht (Zitat, Ergebnis, Kursname).<b>Name, Alter · Kurs</b></div>
+        <div class="quote">Platzhalter für einen echten Erfahrungsbericht (Zitat, Ergebnis, Kursname).<b>Name, Alter · Kurs</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">FAQ</span>
+        <h2>Häufige Fragen</h2>
+      </div>
+      <div class="faq">
+        <details open><summary>Brauche ich Geräte für die Kurse?</summary><p>Nein. Alle Kurse funktionieren mit dem eigenen Körpergewicht. Optional kannst du leichte Kurzhanteln oder ein Widerstandsband nutzen.</p></details>
+        <details><summary>Ich bin Anfängerin – ist das etwas für mich?</summary><p>Ja! Jede Übung gibt es in einer leichteren und einer intensiveren Variante. Du startest dort, wo du gerade stehst.</p></details>
+        <details><summary>Wie lange habe ich Zugang zu einem Kurs?</summary><p>Nach dem Kauf hast du lebenslangen Zugang zu allen Videos und Plänen – inklusive zukünftiger Updates.</p></details>
+        <details><summary>Wie viel Zeit muss ich pro Tag einplanen?</summary><p>Die meisten Einheiten dauern 15 bis 20 Minuten. Perfekt für einen vollen Alltag.</p></details>
+        <details><summary>Kann ich mein Geld zurückbekommen?</summary><p>Ja, du hast eine 14-tägige Geld-zurück-Garantie, wenn der Kurs nicht zu dir passt.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <a href="#top" class="logo" style="color:#fff">fit mit <span>thea</span></a>
+        <p style="margin-top:1rem;max-width:300px">Kurze &amp; effektive Workouts für Frauen 35+. Von Theadora, zertifizierte Fitnesstrainerin.</p>
+        <div class="socials">
+          <a href="https://www.instagram.com/fit_mit_thea/" target="_blank" rel="noopener" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="#fff"/></svg></a>
+          <a href="mailto:kontakt@fit-mit-thea.de" aria-label="E-Mail"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></a>
+        </div>
+      </div>
+      <div><h5>Kurse</h5><ul id="footCourses"></ul></div>
+      <div><h5>Entdecken</h5><ul><li><a href="#webinar">Gratis Webinar</a></li><li><a href="#tipps">Workouts</a></li><li><a href="#ueber-mich">Über mich</a></li><li><a href="#faq">FAQ</a></li></ul></div>
+      <div><h5>Kontakt</h5><ul><li><a href="mailto:kontakt@fit-mit-thea.de">kontakt@fit-mit-thea.de</a></li><li><a href="#">Impressum</a></li><li><a href="#">Datenschutz</a></li><li><a href="#">AGB</a></li></ul></div>
+    </div>
+    <div class="copy"><span>© <span id="year"></span> Fit mit Thea · Theadora</span><span>Kein Ersatz für ärztlichen Rat. Bei Beschwerden bitte vorher ärztlich abklären.</span></div>
+  </div>
+</footer>
+
+<!-- CHECKOUT / WAITLIST MODAL -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-card">
+    <button class="modal-close" aria-label="Schließen" onclick="closeModal()">×</button>
+    <h3 id="modalTitle">Kurs</h3>
+    <p>Der Kurs startet bald! Trag dich auf die Warteliste ein und sichere dir den Frühbucher-Preis.</p>
+    <div class="summary"><span id="modalCourse"></span><span id="modalPrice"></span></div>
+    <form class="form" id="waitForm" style="padding:0" novalidate>
+      <input type="email" name="email" placeholder="Deine E-Mail-Adresse" required autocomplete="email">
+      <button class="btn btn-primary" type="submit">Auf die Warteliste</button>
+      <span class="ok" id="waitOk">Super, du bist auf der Liste! 🎉</span>
+    </form>
+  </div>
+</div>
+
+<script>
+  const version = "20261107-174641";
+
+  /*
+   * KURSKATALOG – Dummy-Daten.
+   * Später: checkoutUrl auf den echten Zahlungslink setzen (z. B. Stripe Payment Link,
+   * Digistore24, CopeCart, Elopage oder Kajabi). Ist checkoutUrl gesetzt, leitet der
+   * Button direkt dorthin weiter; sonst öffnet sich die Warteliste.
+   */
+  const COURSES = [
+    {
+      id: "flacher-bauch-21",
+      title: "21 Tage Flacher Bauch",
+      cover: "linear-gradient(135deg,#ff6aa2,#ff3d8b)",
+      category: "Bauch",
+      badge: "Bestseller",
+      hot: true,
+      level: "Alle Level",
+      duration: "21 Tage",
+      minutes: "15 Min/Tag",
+      description: "Stärke deine Körpermitte, aktiviere die tiefe Bauchmuskulatur und verabschiede dich vom gewölbten Bauch.",
+      features: ["21 geführte Video-Workouts", "Unterbauch-Spezial & Haltungstraining", "Tracker zum Ausdrucken"],
+      price: 39, oldPrice: 59,
+      rating: 4.9, reviews: 0,
+      checkoutUrl: ""
+    },
+    {
+      id: "beine-po-6w",
+      title: "Schlanke Beine & Straffer Po",
+      cover: "linear-gradient(135deg,#9b7bff,#c9b6ff)",
+      category: "Beine & Po",
+      badge: "Ohne Springen",
+      hot: false,
+      level: "Einsteigerin",
+      duration: "6 Wochen",
+      minutes: "20 Min · 3×/Woche",
+      description: "Gelenkschonendes Programm mit Wand- und Bodenübungen für definierte Beine und einen festen Po.",
+      features: ["18 Workouts in 3 Phasen", "Innenschenkel- & Po-Fokus", "Varianten für jedes Level"],
+      price: 49, oldPrice: 69,
+      rating: 4.8, reviews: 0,
+      checkoutUrl: ""
+    },
+    {
+      id: "ganzkoerper-35plus",
+      title: "Ganzkörper-Programm 35+",
+      cover: "linear-gradient(135deg,#ff9a6a,#ff5f9e 55%,#9b5cff)",
+      category: "Ganzkörper",
+      badge: "Neu",
+      hot: true,
+      level: "Alle Level",
+      duration: "8 Wochen",
+      minutes: "20 Min · 4×/Woche",
+      description: "Das komplette Paket: Kraft, Straffung, Stretching und Ernährung – speziell für Frauen ab 35.",
+      features: ["32 Workouts + Stretching-Routinen", "Rezeptbuch mit 40 Fitness-Rezepten", "Wöchentliche Motivations-Mails"],
+      price: 89, oldPrice: 129,
+      rating: 5.0, reviews: 0,
+      checkoutUrl: ""
+    }
+  ];
+
+  const euro = n => n.toLocaleString("de-DE", { style: "currency", currency: "EUR", minimumFractionDigits: 0 });
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  function renderCourses(filter = "Alle") {
+    const grid = document.getElementById("courseGrid");
+    const list = filter === "Alle" ? COURSES : COURSES.filter(c => c.category === filter);
+    grid.innerHTML = list.map(c => `
+      <article class="course" id="kurs-${esc(c.id)}">
+        <div class="cover" style="background:${c.cover}">
+          <span class="badge ${c.hot ? "hot" : ""}">${esc(c.badge)}</span>
+          <h4>${esc(c.title)}</h4>
+        </div>
+        <div class="body">
+          <div class="meta">
+            <span>📅 ${esc(c.duration)}</span><span>⏱️ ${esc(c.minutes)}</span><span>🎯 ${esc(c.level)}</span>
+          </div>
+          <h3>${esc(c.title)}</h3>
+          <p>${esc(c.description)}</p>
+          <ul>${c.features.map(f => `<li>${esc(f)}</li>`).join("")}</ul>
+          <div class="foot">
+            <div>
+              <div class="price">${euro(c.price)}<s>${euro(c.oldPrice)}</s></div>
+              <div class="rating">${c.reviews > 0 ? `★ ${c.rating.toFixed(1)} <em>(${c.reviews})</em>` : `<em>Frühbucher-Preis</em>`}</div>
+            </div>
+            <button class="btn btn-primary" data-id="${esc(c.id)}">Jetzt starten</button>
+          </div>
+        </div>
+      </article>`).join("");
+    grid.querySelectorAll("button[data-id]").forEach(b => b.addEventListener("click", () => buy(b.dataset.id)));
+  }
+
+  function renderFilter() {
+    const cats = ["Alle", ...new Set(COURSES.map(c => c.category))];
+    const el = document.getElementById("filter");
+    el.innerHTML = cats.map((c, i) => `<button class="${i === 0 ? "active" : ""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");
+    el.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+      el.querySelectorAll("button").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+      renderCourses(b.dataset.cat);
+    }));
+  }
+
+  function buy(id) {
+    const c = COURSES.find(x => x.id === id);
+    if (!c) return;
+    if (c.checkoutUrl) { window.location.href = c.checkoutUrl; return; }
+    document.getElementById("modalTitle").textContent = c.title;
+    document.getElementById("modalCourse").textContent = c.duration + " · " + c.level;
+    document.getElementById("modalPrice").textContent = euro(c.price);
+    document.getElementById("waitOk").style.display = "none";
+    document.getElementById("waitForm").reset();
+    document.getElementById("modal").classList.add("open");
+  }
+  function closeModal() { document.getElementById("modal").classList.remove("open"); }
+  document.getElementById("modal").addEventListener("click", e => { if (e.target.id === "modal") closeModal(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+  /*
+   * Formulare: aktuell nur Frontend-Validierung.
+   * Später an Newsletter-Tool anbinden (z. B. Brevo, MailerLite, Kit) –
+   * das Formular-Ziel einfach in handleForm() per fetch() an den Endpoint senden.
+   */
+  function handleForm(formId, okId) {
+    const form = document.getElementById(formId);
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      let valid = true;
+      form.querySelectorAll("input[required]").forEach(i => {
+        const okField = i.type === "email" ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(i.value.trim()) : i.value.trim().length > 0;
+        i.style.borderColor = okField ? "" : "#e02472";
+        if (!okField) valid = false;
+      });
+      if (!valid) return;
+      document.getElementById(okId).style.display = "block";
+      form.querySelectorAll("input").forEach(i => i.value = "");
+    });
+  }
+
+  document.getElementById("footCourses").innerHTML =
+    COURSES.map(c => `<li><a href="#kurs-${esc(c.id)}">${esc(c.title)}</a></li>`).join("");
+  document.getElementById("year").textContent = new Date().getFullYear();
+  document.querySelectorAll(".nav ul a").forEach(a => a.addEventListener("click", () => document.getElementById("nav").classList.remove("open")));
+
+  renderFilter();
+  renderCourses();
+  handleForm("webinarForm", "webinarOk");
+  handleForm("waitForm", "waitOk");
+</script>
+</body>
+</html>
