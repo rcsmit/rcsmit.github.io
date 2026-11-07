@@ -1,18 +1,19 @@
 <!DOCTYPE html>
-<!-- version = "20261107-110000"
-     Location file for "Renato in Rome": only settings live here.
+<!-- version = "20261107-123100"
+     Location file for "René in Berlin": only settings live here.
      All behaviour is in ../citymap/citymap.js and ../citymap/citymap.css (shared by every city).
      version history
      # version : 20260607-120000 - Initial version (single file)
      # version : 20260921-113202 - OpenFreeMap vector tiles (MapLibre GL)
      # version : 20261107-102300 - Split: this file is now configuration only; engine moved to ../citymap/
      # version : 20261107-110000 - QR code enabled (sidebar button + printed legend)
+     # version : 20261107-123100 - Berlin copy: Berlin colour theme + 30-colour layer palette, Berlin demo data, own storageKey
 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Renato in Rome</title>
+  <title>René in Berlin</title>
   <meta name="description" content="A curated map of Berlin." />
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
@@ -26,7 +27,7 @@ window.CITYMAP_CONFIG = {
   tagline: "A curated map of Berlin",
 
   // ── Map ─────────────────────────────────────────────────────────────────────
-  center: [52.518898,	13.401797],                 // [lat, lon]
+  center: [52.518898, 13.401797],             // [lat, lon]
   zoom: 12,
 
   // ── Data: the Google Sheet must be shared as "Anyone with the link can view" ─
@@ -37,22 +38,33 @@ window.CITYMAP_CONFIG = {
   },
 
   // ── Colours ─────────────────────────────────────────────────────────────────
+  // Berlin: concrete-black header, light "Plattenbau" greys, Ampelmann/Berlin-bear red as accent, BVG-yellow highlight
   theme: {
-    cream:          "#faf6f0",   // page + input background
-    warmWhite:      "#fffdf9",   // sidebar + table background
-    accent:         "#c0533a",   // buttons, links, checkmarks (terracotta)
-    accentDark:     "#a8432c",   // accent on hover
-    gold:           "#c9963e",   // italic word in the title, tooltip heading
-    deep:           "#1a1208",   // header background, main text
-    muted:          "#6b5c4a",   // secondary text
-    border:         "#e2d9cc",
-    disclaimerBg:   "#fdf5ec",
-    disclaimerText: "#8a6a4a",
-    warnBg:         "#fdf0e8",   // "layer not found" banner
-    warnBorder:     "#e8b89a",
-    warnText:       "#94502c",
-    popupWarn:      "#b06030"
+    cream:          "#f3f2ee",   // page + input background (light concrete)
+    warmWhite:      "#fbfbf9",   // sidebar + table background
+    accent:         "#c8102e",   // buttons, links, checkmarks (Berlin red)
+    accentDark:     "#9d0c24",   // accent on hover
+    gold:           "#f2c200",   // italic word in the title, tooltip heading (BVG yellow)
+    deep:           "#14171c",   // header background, main text (concrete black)
+    muted:          "#5b6168",   // secondary text
+    border:         "#d8d8d2",
+    borderSoft:     "#e9e9e4",
+    subtle:         "#9a9fa5",   // placeholders, small print
+    headerSub:      "#9aa1a9",   // tagline in the header
+    disclaimerBg:   "#f4f1e8",
+    disclaimerText: "#5f5a4a",
+    warnBg:         "#fdf3d6",   // "layer not found" banner
+    warnBorder:     "#ecd28a",
+    warnText:       "#7a5a00",
+    popupWarn:      "#9a5b00"
   },
+  // 30 fixed layer colours, all readable (3:1+) on the sidebar background: signal red, Spree blue,
+  // Tiergarten green, DDR orange, Kreuzberg purple, brick, concrete slate ...
+  palette: [
+    "#C8102E","#1F6FB2","#2E8B57","#D96F00","#7A3E9D","#00868B","#B8860B","#D6457B","#4A5568","#8B4513",
+    "#0B3C7A","#6AA121","#A61E4D","#0E7CA8","#6B7F1F","#C2562B","#5B4FB0","#B0307A","#1F6B4F","#8A8A00",
+    "#5E7FA8","#7D2733","#7C8A99","#E0524D","#5F6F52","#8E6C8A","#996515","#00A07A","#4F7942","#2B2B2B"
+  ],
   fonts: { heading: "Playfair Display", body: "Lato" },
   // layerColors: { "Gelato": "#E05A3A" },    // optional fixed colour per layer
 
@@ -61,7 +73,7 @@ window.CITYMAP_CONFIG = {
   popupWarning: "Please verify info",
 
   // ── Behaviour ───────────────────────────────────────────────────────────────
-  storageKey: "renato",                       // keeps existing 'renato-basemap' preference
+  storageKey: "berlin",                       // own basemap preference (separate from the Rome map)
   defaultLayers: 4,                           // first 4 layers on load (or a list of names, or "all")
 
   // ── QR code: sidebar button + on the printed map. Encodes this address plus the active layers ──
@@ -69,30 +81,17 @@ window.CITYMAP_CONFIG = {
 
   // ── Demo data, used only when the sheet cannot be reached ───────────────────
   fallbackData: [
-    { Id:"1",  Layer:"Gelato",    naam:"Giolitti",                  address:"Via degli Uffici del Vicario 40",  LON:"12.477356", LAT:"41.901011", website:"http://www.giolitti.it/",            remarks:"Classic Roman gelateria since 1900" },
-    { Id:"2",  Layer:"Gelato",    naam:"Fatamorgana",               address:"Via Laurina 10",                   LON:"12.477762", LAT:"41.908757", website:"",                                    remarks:"Unusual creative flavours" },
-    { Id:"3",  Layer:"Gelato",    naam:"Otaleg",                    address:"Viale dei Colli Portuensi 594",    LON:"12.443049", LAT:"41.861870", website:"http://www.otaleg.com/",              remarks:"Best in Rome per Dissapore 2015" },
-    { Id:"4",  Layer:"Pizza2",    naam:"Antico Forno Roscioli",     address:"Via dei Chiavari 34",              LON:"12.474292", LAT:"41.894567", website:"http://www.anticofornoroscioli.it/",  remarks:"Famous Roman bakery-pizzeria" },
-    { Id:"5",  Layer:"Pizza2",    naam:"Pizzarium Bonci",           address:"Via della Meloria 43",             LON:"12.446624", LAT:"41.906787", website:"http://www.bonci.it/",                remarks:"Pizza al taglio legend" },
-    { Id:"6",  Layer:"Pizza2",    naam:"Dar Poeta",                 address:"Vicolo del Bologna 45",            LON:"12.468463", LAT:"41.891411", website:"http://www.darpoeta.com/",            remarks:"Trastevere favourite" },
-    { Id:"7",  Layer:"Aperitivo", naam:"Freni e Frizioni",          address:"Via del Politeama 4",              LON:"12.470686", LAT:"41.891297", website:"http://www.freniefrizioni.com/",      remarks:"Legendary Trastevere aperitivo spot" },
-    { Id:"8",  Layer:"Aperitivo", naam:"Doppiozeroo",               address:"Via Ostiense 68",                  LON:"12.479637", LAT:"41.870754", website:"http://doppiozeroo.com/",             remarks:"Stylish aperitivo near Ostiense" },
-    { Id:"9",  Layer:"Yoga",      naam:"ZEM Yoga Studio",           address:"Corso Vittorio Emanuele II 184",   LON:"12.470681", LAT:"41.897217", website:"http://www.zemyogastudio.com/",       remarks:"Hot vinyasa €18 drop-in / €145 month" },
-    { Id:"10", Layer:"Yoga",      naam:"Yoga Aventino",             address:"Via delle Terme Deciane 10",       LON:"12.485132", LAT:"41.883367", website:"http://www.yogaaventino.com",         remarks:"" },
-    { Id:"11", Layer:"Enoteche",  naam:"Cavour 313",                address:"Via Cavour 313",                   LON:"12.489153", LAT:"41.893735", website:"http://cavour313.it/",                remarks:"Great wine bar near the Colosseum" },
-    { Id:"12", Layer:"Enoteche",  naam:"Roscioli",                  address:"Via dei Giubbonari 21",            LON:"12.474242", LAT:"41.894237", website:"http://www.roscioli.com/",            remarks:"Deli and wine bar combined" },
-    { Id:"13", Layer:"Vega",      naam:"Il Margutta",               address:"Via Margutta 118",                 LON:"12.478375", LAT:"41.909483", website:"http://www.ilmargutta.bio/",          remarks:"Oldest vegetarian restaurant in Rome" },
-    { Id:"14", Layer:"Vega",      naam:"Flower Burger",             address:"Via dei Gracchi 87",               LON:"12.462157", LAT:"41.907841", website:"http://www.flowerburger.it/",         remarks:"Vegan fast food" },
-    { Id:"15", Layer:"Parking",   naam:"Parcheggio Villa Borghese", address:"Viale del Galoppatoio 33",         LON:"12.484273", LAT:"41.909646", website:"http://www.sabait.it/",               remarks:"€18/day, €2.20/hour" }
+    { Id:"1", Layer:"Sights",  naam:"Brandenburger Tor",  address:"Pariser Platz, 10117 Berlin",        LON:"13.377704", LAT:"52.516275", website:"", remarks:"Neoclassical gate, symbol of Berlin" },
+    { Id:"2", Layer:"Sights",  naam:"East Side Gallery",  address:"Mühlenstraße, 10243 Berlin",         LON:"13.439700", LAT:"52.505000", website:"", remarks:"Longest remaining stretch of the Wall, covered in murals" },
+    { Id:"3", Layer:"Sights",  naam:"Berliner Dom",       address:"Am Lustgarten, 10178 Berlin",        LON:"13.401000", LAT:"52.519100", website:"", remarks:"Cathedral on Museum Island" },
+    { Id:"4", Layer:"Markets", naam:"Markthalle Neun",    address:"Eisenbahnstraße 42, 10997 Berlin",   LON:"13.431000", LAT:"52.502000", website:"", remarks:"Historic market hall in Kreuzberg" },
+    { Id:"5", Layer:"Parks",   naam:"Tempelhofer Feld",   address:"Tempelhofer Damm, 12101 Berlin",     LON:"13.404000", LAT:"52.473300", website:"", remarks:"Former airport turned giant public park" },
+    { Id:"6", Layer:"Parks",   naam:"Mauerpark",          address:"Bernauer Straße 63, 13355 Berlin",   LON:"13.402000", LAT:"52.543500", website:"", remarks:"Sunday flea market and karaoke" }
   ],
   fallbackMeta: {
-    "Gelato":    { description: "Artisan ice cream shops, ranked and reviewed.", source: "Dissapore 2015" },
-    "Pizza2":    { description: "Pizza al taglio and Roman-style pizzerias.",    source: "Local knowledge" },
-    "Aperitivo": { description: "Best spots for an evening aperitivo.",          source: "Local knowledge" },
-    "Yoga":      { description: "Yoga studios in Rome.",                         source: "Various" },
-    "Enoteche":  { description: "Wine bars and enotecas.",                       source: "Local knowledge" },
-    "Vega":      { description: "Vegan and vegetarian restaurants.",             source: "Local knowledge" },
-    "Parking":   { description: "Parking garages in central Rome.",              source: "060608.it" }
+    "Sights":  { description: "Landmarks and historic places.", source: "Demo data" },
+    "Markets": { description: "Markets and market halls.",      source: "Demo data" },
+    "Parks":   { description: "Parks and open spaces.",         source: "Demo data" }
   }
 };
 </script>

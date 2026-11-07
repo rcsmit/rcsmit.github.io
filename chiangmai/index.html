@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<!-- version = "20261107-123500"
+     Location file for "René in Chiang Mai": only settings live here.
+     All behaviour is in ../citymap/citymap.js and ../citymap/citymap.css (shared by every city).
+     version history
+     # version : 20261107-123500 - Initial version, created from the Berlin file
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>René in Chiang Mai</title>
+  <meta name="description" content="A curated map of Chiang Mai." />
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+
+<script>
+window.CITYMAP_CONFIG = {
+  // ── Identity ────────────────────────────────────────────────────────────────
+  name: "René in Chiang Mai",
+  accentWord: "in",                           // shown in italic gold in the title
+  tagline: "A curated map of Chiang Mai",
+
+  // ── Map ─────────────────────────────────────────────────────────────────────
+  center: [18.7883, 98.9853],                 // [lat, lon]
+  zoom: 13,
+
+  // ── Data: the Google Sheet must be shared as "Anyone with the link can view" ─
+  sheet: {
+    id: "1W26AXb91InFg7Lw6TR1mkVh3dm-OQbhGAx0BgNrJdok",
+    dataTab: "MASTER_CHIANGMAI",
+    layersTab: "LAYERS_CHIANGMAI"
+  },
+
+  // ── Colours ─────────────────────────────────────────────────────────────────
+  // Chiang Mai: teak-green header, rice-paper cream, saffron accent (monk robes), temple-gold highlight
+  theme: {
+    cream: "#f7f3e8",
+    warmWhite: "#fffdf6",
+    accent: "#b8470a",
+    accentDark: "#933a08",
+    gold: "#f0b429",
+    deep: "#12301f",
+    muted: "#5d5a45",
+    border: "#ddd6bf",
+    borderSoft: "#ece7d6",
+    subtle: "#a39e86",
+    headerSub: "#a5b8aa",
+    disclaimerBg: "#f4efdd",
+    disclaimerText: "#665f3d",
+    warnBg: "#fdf0d5",
+    warnBorder: "#ecce8a",
+    warnText: "#7a5200",
+    popupWarn: "#9a5b00"
+  },
+  // 30 fixed layer colours, all readable (3:1+) on the sidebar background: saffron, rice-field green, lotus pink, temple gold, jade ...
+  palette: [
+    "#B8470A","#2E7D4F","#C2185B","#B8860B","#00796B","#7A3E9D","#8B4513","#1F6FB2","#C8102E","#D96F00",
+    "#4A5568","#0B3C7A","#6AA121","#0E7CA8","#6B7F1F","#B0307A","#8A8A00","#7D2733","#7C8A99","#E0524D",
+    "#5F6F52","#8E6C8A","#996515","#00A07A","#2B2B2B","#9C6644","#B5838D","#4361EE","#5B4FB0","#5E7FA8"
+  ],
+  fonts: { heading: "Playfair Display", body: "Lato" },
+  // layerColors: { "Gelato": "#E05A3A" },    // optional fixed colour per layer
+
+  // ── Disclaimer (sidebar footer) and popup warning ───────────────────────────
+  disclaimer: "Details such as opening hours, addresses, and phone numbers may have changed. Use this map for inspiration only — always verify before visiting.",
+  popupWarning: "Please verify info",
+
+  // ── Behaviour ───────────────────────────────────────────────────────────────
+  storageKey: "chiangmai",                    // own basemap preference (separate per city)
+  defaultLayers: 4,                           // first 4 layers on load (or a list of names, or "all")
+
+  // ── QR code: sidebar button + on the printed map. Encodes this address plus the active layers ──
+  qr: { enabled: true, url: "https://rcsmit.github.io/chiangmai/" },
+
+  // ── Demo data, used only when the sheet cannot be reached ───────────────────
+  fallbackData: [
+    { Id:"1", Layer:"Temples", naam:"Wat Phra That Doi Suthep", address:"Mueang Chiang Mai, Chiang Mai 50200", LON:"98.921700", LAT:"18.804800", website:"", remarks:"Hilltop temple with views over the city" },
+    { Id:"2", Layer:"Temples", naam:"Wat Phra Singh", address:"Singharat Rd, Phra Sing, Chiang Mai 50200", LON:"98.981800", LAT:"18.788200", website:"", remarks:"Major temple in the old city" },
+    { Id:"3", Layer:"Temples", naam:"Wat Chedi Luang", address:"Phra Pok Klao Rd, Phra Sing, Chiang Mai 50200", LON:"98.986700", LAT:"18.787000", website:"", remarks:"Ruined 14th-century chedi" },
+    { Id:"4", Layer:"Markets", naam:"Warorot Market", address:"Chang Moi, Mueang Chiang Mai 50300", LON:"99.000000", LAT:"18.790500", website:"", remarks:"Big local market by the Ping river" },
+    { Id:"5", Layer:"Old city", naam:"Tha Phae Gate", address:"Tha Phae Rd, Phra Sing, Chiang Mai 50200", LON:"98.993100", LAT:"18.787700", website:"", remarks:"Eastern gate of the old city wall" },
+    { Id:"6", Layer:"Neighbourhoods", naam:"Nimmanhaemin Road", address:"Suthep, Mueang Chiang Mai 50200", LON:"98.968000", LAT:"18.799600", website:"", remarks:"Cafés and boutiques" }
+  ],
+  fallbackMeta: {
+    "Temples": { description: "Temples (demo data).", source: "Demo data" },
+    "Markets": { description: "Markets (demo data).", source: "Demo data" },
+    "Old city": { description: "Old city (demo data).", source: "Demo data" },
+    "Neighbourhoods": { description: "Neighbourhoods (demo data).", source: "Demo data" }
+  }
+};
+</script>
+<script src="../citymap/citymap.js"></script>
+</body>
+</html>
