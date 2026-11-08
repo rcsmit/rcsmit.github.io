@@ -1,0 +1,9 @@
+<!-- version = "20261108-121000" -->
+<!-- Base without letter. Colours come from the CSS custom properties accent, gold and cream (fallback values: Rome). To add a letter, put a text element (Lato, weight 700) inside the pin head, see the city files. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" style="fill:var(--accent,#c0533a)"/>
+  <ellipse cx="256" cy="453" rx="84" ry="17" style="fill:var(--gold,#c9963e)"/>
+  <polygon points="147.94,290.57 256,432 364.06,290.57" style="fill:var(--cream,#faf6f0)"/>
+  <circle cx="256" cy="208" r="136" style="fill:var(--cream,#faf6f0)"/>
+  <circle cx="256" cy="208" r="50" style="fill:var(--accent,#c0533a)"/>
+</svg>

@@ -1,0 +1,9 @@
+<!-- version = "20261108-121000" -->
+<!-- Letters are live text in Lato Bold (SIL OFL). Without Lato installed a bold sans-serif is used; see the -outlined file for a font-independent version. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#c8102e"/>
+  <ellipse cx="256" cy="453" rx="84" ry="17" fill="#f2c200"/>
+  <polygon points="147.94,290.57 256,432 364.06,290.57" fill="#f3f2ee"/>
+  <circle cx="256" cy="208" r="136" fill="#f3f2ee"/>
+  <text x="189.29" y="278.72" font-family="Lato, 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="195.63" fill="#c8102e">B</text>
+</svg>

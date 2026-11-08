@@ -119,6 +119,40 @@ table.t .bar { display: inline-block; height: 8px; border-radius: 4px; backgroun
 .crumbs button { font: inherit; color: var(--fg); background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; }
 .story { margin: 0; font-size: 15px; max-width: 70ch; }
 .story b { font-weight: 600; }
+.info .story + .story { margin-top: 10px; }
+.info h2 { margin-bottom: 8px; }
+.info-split { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 28px; align-items: center; }
+.link-tiles { display: grid; gap: 12px; }
+.link-tile { position: relative; display: grid; gap: 3px; padding: 14px 44px 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--fg); text-decoration: none; transition: border-color .15s, background .15s; }
+.link-tile:hover { border-color: var(--accent); background: var(--accent-soft); }
+.link-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lt-kicker { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.lt-title { font-weight: 600; color: var(--accent); font-size: 15.5px; line-height: 1.35; }
+.lt-sub { font-size: 13.5px; color: var(--muted); }
+.lt-go { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--accent); }
+.info-list { margin: 0; padding-left: 18px; max-width: 70ch; }
+.info-list li { margin: 0 0 8px; }
+.cta { border: 2px solid var(--accent); background: var(--accent-soft); padding: 26px 28px; }
+.cta-split { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.cta-kicker { display: inline-block; font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 6px; }
+.cta h2 { font-size: 24px; line-height: 1.2; margin: 0 0 12px; }
+.cta .story { max-width: none; }
+.cta-gets { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 8px; }
+.cta-gets li { position: relative; padding-left: 28px; font-size: 15px; }
+.cta-gets li::before { content: "✓"; position: absolute; left: 0; top: 0; width: 20px; height: 20px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); font-size: 12px; font-weight: 700; display: grid; place-items: center; }
+.cta-side { display: grid; gap: 12px; }
+.cta-offer { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.cta-offer h3 { margin: 0 0 6px; font-size: 16px; color: var(--accent); }
+.cta-offer p { margin: 0; font-size: 14.5px; }
+.cta-btn { display: flex; justify-content: center; text-align: center; text-decoration: none; white-space: normal; padding: 12px 16px; font-size: 15px; margin-top: 4px; }
+.cta-small { margin: 0; text-align: center; }
+@media (max-width: 760px) {
+  .info-split, .cta-split { grid-template-columns: 1fr; gap: 18px; }
+  .cta { padding: 20px 18px; }
+  .cta h2 { font-size: 21px; }
+}
+.foot-cta { margin: 28px 0 8px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); text-align: center; }
+.foot-cta a { color: var(--accent); font-weight: 600; text-underline-offset: 3px; }
 .words { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; line-height: 1.15; }
 .words span { color: var(--fg); }
 .acct { font: inherit; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
@@ -225,6 +259,7 @@ table.pv td.click:hover { outline: 2px solid var(--accent); outline-offset: -2px
     <button type="button" class="tab" role="tab" id="t-bank" data-tab="bank" aria-selected="false">Bank</button>
     <button type="button" class="tab" role="tab" id="t-sunburst" data-tab="sunburst" aria-selected="false">Sunburst</button>
     <button type="button" class="tab" role="tab" id="t-curiosa" data-tab="curiosa" aria-selected="false">Curiosities</button>
+    <button type="button" class="tab" role="tab" id="t-info" data-tab="info" aria-selected="false">Info</button>
   </nav>
 
   <!-- OVERVIEW -->
@@ -239,6 +274,13 @@ table.pv td.click:hover { outline: 2px solid var(--accent); outline-offset: -2px
     <div class="grid">
       <div class="card wide"><h2>Work, save, travel</h2><p class="note">Net worth per week across all accounts and cash. The shaded bands are the time in Asia. Peak: <span data-v="maxBal">—</span> on <span data-v="maxBalDate">—</span>.<span data-v="pensionNote"></span></p><div class="chart" id="c-vermogen"></div><div class="legend" id="lg-vermogen"></div></div>
       <div class="card wide"><h2>In and out per month</h2><p class="note">Above the line what came in, below it what went out. Transfers between your own sources (TRANSFER) do not count.</p><div class="chart" id="c-maanden"></div><div class="legend" id="lg-maanden"></div></div>
+      <div class="card wide"><h2>Where every euro went</h2><p class="note">Income in the chosen period, split over the spending groups and what was left. When more went out than came in, the difference comes from savings. A group where more came back than went out (a refund, a deposit returned) shows up on the left as a refund. Click a band to see its rows.</p>
+        <div class="controls">
+          <label for="fl-period">Period<select id="fl-period"></select></label>
+          <span id="fl-custom" hidden><label for="fl-from">From<input type="date" id="fl-from"></label> <label for="fl-to">to<input type="date" id="fl-to"></label></span>
+        </div>
+        <p class="note" id="fl-sum"></p>
+        <div class="chart" id="c-stroom"></div></div>
     </div>
   </section>
 
@@ -326,10 +368,10 @@ table.pv td.click:hover { outline: 2px solid var(--accent); outline-offset: -2px
     </div>
     <div class="grid">
       <div class="card wide"><h2>Net worth, work and travel</h2><p class="note">Net worth per week. Green bands are the stays with Work = TRUE, orange bands the time in Asia.</p><div class="chart" id="c-wk-net"></div><div class="legend" id="lg-wk-net"></div></div>
-      <div class="card wide"><h2>How each year was spent</h2><p class="note">Months per year (30 days each): working, at home in Europe without work, and in Asia. The current year runs to the last day in the file. Click a bar to see the income of that year.</p><div class="chart" id="c-wk-months"></div><div class="legend" id="lg-wk-months"></div></div>
-      <div class="card wide"><h2>Per working month, year by year</h2><p class="note">Pay per working month (salary divided by the working months of that year), how much net worth grew per working month, and spending per calendar month. A year without work has no bar for the first two.</p><div class="chart" id="c-wk-per"></div><div class="legend" id="lg-wk-per"></div></div>
-      <div class="card wide"><h2>Per year</h2><p class="note">A month is 30 days. <i>Work months to cover the year</i> is the spending of that year divided by the pay per working month. <i>One working month pays for</i> is the pay per working month divided by the spending per month. Click a year to see its rows.</p><div class="tablewrap" id="tb-wk-years"></div></div>
-      <div class="card wide"><h2>Jobs and time off</h2><p class="note" id="wk-phase-note">Every job (stays in a row with Work = TRUE) and every stretch without work, with how much net worth went up or down. Salary paid while not working counts for the last job of that year.</p><div class="chart" id="c-wk-phases"></div><div class="legend" id="lg-wk-phases"></div><div class="tablewrap" id="tb-wk-phases"></div></div>
+      <div class="card wide"><h2>How each year was spent</h2><p class="note">Months per year (a month is 30.4 days, so a year is 12): working, at home in Europe without work, and in Asia. The current year runs to the last day in the file. Click a bar to see the income of that year.</p><div class="chart" id="c-wk-months"></div><div class="legend" id="lg-wk-months"></div></div>
+      <div class="card wide"><h2>Per working month, year by year</h2><p class="note">Pay per working month (salary and tax refunds divided by the working months of that year), how much net worth grew per working month, and spending per calendar month. A year without work has no bar for the first two.</p><div class="chart" id="c-wk-per"></div><div class="legend" id="lg-wk-per"></div></div>
+      <div class="card wide"><h2>Per year</h2><p class="note">A month is 30.4 days (365.25 / 12). Pay is salary plus tax refunds. <i>Work months to cover the year</i> is the spending of that year divided by the pay per working month. <i>One working month pays for</i> is the pay per working month divided by the spending per month. Click a year to see its rows.</p><div class="tablewrap" id="tb-wk-years"></div></div>
+      <div class="card wide"><h2>Jobs and time off</h2><p class="note" id="wk-phase-note">Every job (stays in a row with Work = TRUE) and every stretch without work, with how much net worth went up or down. Pay (salary and tax refunds) received while not working counts for the last job of that year.</p><div class="chart" id="c-wk-phases"></div><div class="legend" id="lg-wk-phases"></div><div class="tablewrap" id="tb-wk-phases"></div></div>
     </div>
     </div>
   </section>
@@ -337,9 +379,10 @@ table.pv td.click:hover { outline: 2px solid var(--accent); outline-offset: -2px
   <!-- ACCOUNTS -->
   <section class="panel" id="p-rekeningen" role="tabpanel" aria-labelledby="t-rekeningen" hidden>
     <div class="grid">
-      <div class="card wide"><h2>Running balance per source</h2><p class="note">Balance at the end of every day, including opening balances and transfers. "Total without pension" leaves out the pension savings, money that stays put until retirement. Drag in the chart to zoom in, double-click to zoom out. Click a name below the chart to switch its line on or off; double-click to show only that line. Account numbers are shortened to the last four digits. Year over year puts every calendar year of one line on top of each other, January to December. "vs a year earlier" shows for every day how much more (green) or less (red) there is than on the same date a year before.</p>
+      <div class="card wide"><h2>Running balance per source</h2><p class="note">Balance at the end of every day, including opening balances and transfers. "Total without pension" leaves out the pension savings, money that stays put until retirement. Drag in the chart to zoom in, double-click to zoom out. Click a name below the chart to switch its line on or off; double-click to show only that line. Smoothing replaces each day by the average of the days around it (3, 5 or 7 days, centred), which takes out the spikes of money that goes out and comes back within a few days. Account numbers are shortened to the last four digits. Year over year puts every calendar year of one line on top of each other, January to December. "vs a year earlier" shows for every day how much more (green) or less (red) there is than on the same date a year before.</p>
         <div class="controls">
           <div class="seg" id="saldi-seg" role="group" aria-label="View"><button type="button" data-mode="time" aria-pressed="true">Timeline</button><button type="button" data-mode="yoy" aria-pressed="false">Year over year</button><button type="button" data-mode="diff" aria-pressed="false">vs a year earlier</button></div>
+          <div class="seg" id="saldi-ma" role="group" aria-label="Smoothing"><button type="button" data-ma="1" aria-pressed="true">No smoothing</button><button type="button" data-ma="3" aria-pressed="false">3 days</button><button type="button" data-ma="5" aria-pressed="false">5 days</button><button type="button" data-ma="7" aria-pressed="false">7 days</button></div>
           <label for="saldi-line" id="saldi-line-wrap" hidden>Line<select id="saldi-line"></select></label>
         </div>
         <div class="chart" id="c-saldi"></div><div class="legend" id="lg-saldi"></div></div>
@@ -443,6 +486,69 @@ table.pv td.click:hover { outline: 2px solid var(--accent); outline-offset: -2px
     </div>
   </section>
 
+  <!-- INFO -->
+  <section class="panel" id="p-info" role="tabpanel" aria-labelledby="t-info" hidden>
+    <div class="grid">
+      <div class="card wide info">
+        <div class="info-split">
+          <div>
+            <h2>What this is</h2>
+            <p class="story">A dashboard for a home-made ledger: one sheet with every euro, baht, dong and dirham that went in or out, across bank accounts, cash in several currencies, PayPal, Revolut and Wise.</p>
+            <p class="story">Open the workbook and every tab is worked out in your browser. <b>Nothing is uploaded</b>: the file stays on your device.</p>
+          </div>
+          <div class="link-tiles">
+            <a class="link-tile" href="https://rene-smit.com/how-i-track-my-money-across-multiple-accounts-currencies-and-countries/" target="_blank" rel="noopener"><span class="lt-kicker">The full story · blog</span><span class="lt-title">How I track my money across multiple accounts, currencies and countries</span><span class="lt-sub">How I keep these books, with every kind of transfer explained.</span><span class="lt-go" aria-hidden="true">↗</span></a>
+            <a class="link-tile" href="https://github.com/rcsmit/rcsmit.github.io/blob/master/kasboek/ledger_transfer_examples.xlsx" target="_blank" rel="noopener"><span class="lt-kicker">Example workbook · GitHub</span><span class="lt-title">ledger_transfer_examples.xlsx</span><span class="lt-sub">All the edge cases, and the sample data of this dashboard.</span><span class="lt-go" aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>The workbook</h2>
+        <ul class="info-list">
+          <li><b>ENTRIES</b> (or INVOER): one row per movement, with id, source, date, amount in euros, description, type (income_expenses), main_category, category and category_asia. Foreign cash also has the original amount, currency and rate.</li>
+          <li><b>TRANSFER</b> rows move money between your own sources: the legs net to zero, so they never count as income or spending. Helper sources such as RECEIVABLES, PAYABLES and DEPOSITS park money that is on its way.</li>
+          <li><b>STARTING_BALANCE</b> rows give each source its opening balance.</li>
+          <li><b>WHEREABOUTS</b> (optional): Location, Country (two letters), Work (TRUE/FALSE) and Arrival. A stay lasts until the day before the next arrival. Every country outside Europe counts as Asia.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>The tabs</h2>
+        <ul class="info-list">
+          <li><b>Overview</b>: net saved, net worth over time, in and out per month, and where every euro went in any period.</li>
+          <li><b>Asia</b> and <b>Asia per period</b>: cost per day per season and per stay.</li>
+          <li><b>Fixed costs</b> and <b>Groceries</b>: what keeps running and what food costs at home and away.</li>
+          <li><b>Work</b>: what a working month brings in and how many months of living it pays for.</li>
+          <li><b>Accounts</b>: running balance per source, year over year, and the TRANSFER check.</li>
+          <li><b>Entries</b> and <b>Pivot</b>: every row with filters, and your own cross-tables.</li>
+          <li><b>Bank</b>: match a bank statement (CSV) against the ledger.</li>
+          <li><b>Sunburst</b> and <b>Curiosities</b>: the spending in rings, and the odd facts hidden in the data.</li>
+        </ul>
+        <p class="note">Most numbers and bars can be clicked to see the rows behind them.</p>
+      </div>
+      <div class="card wide cta">
+        <div class="cta-split">
+          <div class="cta-pitch">
+            <span class="cta-kicker">Financial coaching · Personalized dashboards</span>
+            <h2>Want this for your own money?</h2>
+            <p class="story">Most people have no idea where their money actually goes. Not because they are careless, but because it is spread over a bank account, a credit card, PayPal, some cash and maybe a second currency. This tool is how I fixed that for myself, after years of living and working between Europe and Asia. <b>I can help you do the same.</b></p>
+            <ul class="cta-gets">
+              <li>What you really spend per month</li>
+              <li>What a month of travel or a season away costs you</li>
+              <li>How long your savings last</li>
+              <li>What you need to earn to live the way you want</li>
+            </ul>
+          </div>
+          <div class="cta-side">
+            <div class="cta-offer"><h3>Financial coaching</h3><p>One-on-one sessions in English or Dutch. We look at your income, spending and savings together, find what costs you more than it should, and set up a way of keeping track that fits your life, whether you live in one place or move around.</p></div>
+            <div class="cta-offer"><h3>Personalized dashboards</h3><p>Your accounts, your currencies, your categories. I set up the workbook and the dashboard around how you live, show you how to keep it up in a few minutes a week, and stay available while you get the hang of it.</p></div>
+            <a class="btn primary cta-btn" href="https://rene-smit.com/financial-coaching/" target="_blank" rel="noopener">Book coaching or ask about a personalized dashboard ↗</a>
+            <p class="note cta-small">The first conversation is about what you need, so you know what you would get before you decide anything.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- CURIOSITIES -->
   <section class="panel" id="p-curiosa" role="tabpanel" aria-labelledby="t-curiosa" hidden>
     <div class="tiles">
@@ -454,13 +560,6 @@ table.pv td.click:hover { outline: 2px solid var(--accent); outline-offset: -2px
     <div class="grid">
       <div class="card" id="card-cabana"><h2>Prepaid, never used</h2><p class="story" id="cabana-story"></p></div>
       <div class="card"><h2>Still to categorise</h2><p class="story" id="uncat-story"></p><div class="tablewrap" id="tb-uncat"></div></div>
-      <div class="card wide"><h2>Where every euro went</h2><p class="note">Income in the chosen period, split over the spending groups and what was left. When more went out than came in, the difference comes from savings. A group where more came back than went out (a refund, a deposit returned) shows up on the left as a refund. Click a band to see its rows.</p>
-        <div class="controls">
-          <label for="fl-period">Period<select id="fl-period"></select></label>
-          <span id="fl-custom" hidden><label for="fl-from">From<input type="date" id="fl-from"></label> <label for="fl-to">to<input type="date" id="fl-to"></label></span>
-        </div>
-        <p class="note" id="fl-sum"></p>
-        <div class="chart" id="c-stroom"></div></div>
       <div class="card wide"><h2>Many small receipts, little money</h2><p class="note">Per amount band: which share of the spending rows falls in it, and which share of the money spent.</p><div class="chart" id="c-klassen"></div><div class="legend" id="lg-klassen"></div></div>
       <div class="card"><h2>Benford's law</h2><p class="note">First digit of <span data-v="benfordN">—</span> expenses from €1, next to what the law predicts (dots). Deviation (MAD): <span data-v="benfordMad">—</span>.</p><div class="chart" id="c-benford"></div></div>
       <div class="card"><h2>Interest received per year</h2><p class="note">Group INTEREST. The current year is lighter.</p><div class="chart" id="c-rente"></div></div>
@@ -468,6 +567,7 @@ table.pv td.click:hover { outline: 2px solid var(--accent); outline-offset: -2px
       <div class="card wide"><h2>What the Asia receipts say</h2><p class="note">The thirty most used words in your descriptions. Bigger is more often.</p><div class="words" id="c-woorden"></div></div>
     </div>
   </section>
+  <p class="foot-cta">Want a dashboard like this for your own money, or help getting your finances clear? <a href="https://rene-smit.com/financial-coaching/" target="_blank" rel="noopener">Financial coaching and personalized dashboards by René Smit ↗</a></p>
 </div>
 <div id="tip" hidden></div>
 <div class="drop" id="drop" hidden><div>Release to open<span>.xlsx with an ENTRIES (or INVOER) sheet, or a .csv export of it</span></div></div>
@@ -477,7 +577,7 @@ table.pv td.click:hover { outline: 2px solid var(--accent); outline-offset: -2px
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.3/plotly-cartesian.min.js" onerror="var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.3/plotly.min.js';document.head.appendChild(s)"></script>
 <script>
-const version = "20261029-015500";
+const version = "20261108-160000";
 /* ===================== Ledger: reading and analysis ===================== */
 var KB = (function () {
   'use strict';
@@ -727,6 +827,8 @@ var KB = (function () {
   /* ---------- the analysis ---------- */
   /* where the money went: income per group on the left, spending per group and what was left on the right */
   function incGroupOf(r) { return INC_GROUP[r.mc] || 'Other income'; }
+  /* a tax refund: main category for tax refunds, or a category such as fiscus_terug / fiscus retour / income_tax_refund */
+  function isTaxRefund(r) { return INC_GROUP[r.mc] === 'Tax refunds' || /fiscus|belasting|tax.?refund/i.test(String(r.cat || '')); }
   function expGroupOf(r) { return EXP_GROUP[r.mc] || 'Miscellaneous'; }
   function isFlowIn(r) { return r.ie === 'IN'; }
   function isFlowOut(r) { return r.ie.indexOf('UIT') === 0 || r.ie === 'FICTIEVE_W_V' || r.ie === 'ONGECAT'; }
@@ -1023,10 +1125,10 @@ var KB = (function () {
       var k = [r.y, r.ie, r.mcShow || r.mc, r.catShow || r.cat || '(no category)', lvl4].join('\u0001');
       sbg[k] = (sbg[k] || 0) + r.amount;
     });
-    /* work: stays with Work = TRUE in WHEREABOUTS. A month counts as 30 days. */
+    /* work: stays with Work = TRUE in WHEREABOUTS. Pay is salary plus tax refunds. */
     out.work = null;
     if (stays.some(function (st) { return st.work !== null; })) {
-      var isPay = function (r) { return r.ie === 'IN' && incGroupOf(r) === 'Salary'; };
+      var isPay = function (r) { return r.ie === 'IN' && (incGroupOf(r) === 'Salary' || isTaxRefund(r)); };
       var dayKind = {};
       stays.forEach(function (st) { for (var t = Math.max(st.startT, firstReal.t); t <= Math.min(st.endT, lastT); t += DAY) dayKind[isoOf(t)] = st.work ? 'work' : 'off'; });
       /* phases: stays in a row with the same Work value form one job or one stretch of time off */
@@ -1060,8 +1162,12 @@ var KB = (function () {
         else if (isFlowOut(r)) p.spent -= r.amount;
         p.net += r.amount;
       });
+      /* the Work tab starts at the first WHEREABOUTS arrival: rows before it (such as a tax refund over the year before,
+         booked on 31 December) belong to work from before the file and are left out */
+      var wkStart = Math.max(firstReal.t, Math.min.apply(null, stays.map(function (st) { return st.startT; })));
+      var before = { income: 0, pay: 0, n: 0 };
       var yrs = {}, unknown = 0;
-      for (var t = firstReal.t; t <= lastT; t += DAY) {
+      for (var t = wkStart; t <= lastT; t += DAY) {
         var iso = isoOf(t), yy = +iso.slice(0, 4);
         var Y = yrs[yy] || (yrs[yy] = { year: yy, days: 0, work: 0, away: 0, home: 0, income: 0, pay: 0, spent: 0, net: 0 });
         Y.days++;
@@ -1069,6 +1175,7 @@ var KB = (function () {
         if (!dayKind[iso]) unknown++;
       }
       real.forEach(function (r) {
+        if (r.t < wkStart) { if (r.ie === 'IN') { before.income += r.amount; before.n++; if (isPay(r)) before.pay += r.amount; } return; }
         var Y = yrs[+r.y]; if (!Y) return;
         if (r.ie === 'IN') { Y.income += r.amount; if (isPay(r)) Y.pay += r.amount; }
         else if (isFlowOut(r)) Y.spent -= r.amount;
@@ -1077,7 +1184,7 @@ var KB = (function () {
       out.work = {
         years: Object.keys(yrs).sort().map(function (k) { var Y = yrs[k]; Y.full = Y.days >= 365; return Y; }),
         phases: phases.map(function (p) { return { kind: p.kind, start: p.start, end: p.end, startT: p.startT, endT: p.endT, days: p.days, away: p.away, places: p.places, income: p.income, pay: p.pay, spent: p.spent, net: p.net, payLate: p.payLate, payMovedOut: p.payMovedOut }; }),
-        unknownDays: unknown
+        unknownDays: unknown, start: isoOf(wkStart), before: before
       };
     }
 
@@ -1766,6 +1873,15 @@ function demoRecords() {
 
   /* ================= ACCOUNTS ================= */
   function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  /* centred moving average over k days; at the first and last days the window shrinks to the days there are */
+  function movAvg(v, k) {
+    var n = v.length, half = (k - 1) / 2, cum = [0];
+    for (var i = 0; i < n; i++) cum.push(cum[i] + v[i]);
+    return v.map(function (x, i) { var lo = Math.max(0, i - half), hi = Math.min(n - 1, i + half); return Math.round((cum[hi + 1] - cum[lo]) / (hi - lo + 1) * 100) / 100; });
+  }
+  /* steps for the real daily balance, a smooth line for the average */
+  function saldiShape() { return (state.saldiMa || 1) > 1 ? 'linear' : 'hv'; }
+  function maNote() { var k = state.saldiMa || 1; return k > 1 ? ' (' + k + '-day average)' : ''; }
   function drawSaldi(a) {
     var el = $('c-saldi'), S = a.saldi;
     if (!S.sources.length) { legend('lg-saldi', []); if (window.Plotly) Plotly.purge(el); empty(el); return; }
@@ -1784,13 +1900,15 @@ function demoRecords() {
     var free = S.days.map(function (m, i) { return Math.round(d3.sum(S.sources.filter(function (src) { return !src.locked; }), function (src) { return src.series[i]; }) * 100) / 100; });
     var anyLocked = S.sources.some(function (src) { return src.locked; });
     var series = [{ name: 'Total', series: totals }].concat(anyLocked ? [{ name: 'Total without pension', series: free }] : [], S.sources);
+    var MA = state.saldiMa || 1;
+    if (MA > 1) series = series.map(function (sr) { var o = {}; Object.keys(sr).forEach(function (k) { o[k] = sr[k]; }); o.series = movAvg(sr.series, MA); return o; });
     var narrow = el.clientWidth < 620;
     $('saldi-line-wrap').hidden = state.saldiMode === 'time';
     if (state.saldiMode === 'diff') { drawSaldiDiff(a, el, series, { fg: fg, muted: muted, grid: grid, line: line, panel: panel, narrow: narrow }); return; }
     if (state.saldiMode === 'yoy') { drawSaldiYoy(a, el, series, { fg: fg, muted: muted, grid: grid, line: line, panel: panel, narrow: narrow }); return; }
     var traces = series.map(function (sr) {
-      return { type: 'scatter', mode: 'lines', name: sr.name, x: S.days, y: sr.series, line: { shape: 'hv', width: /^Total/.test(sr.name) ? 2.5 : 1.5, color: colOf[sr.name], dash: sr.name === 'Total without pension' ? 'dash' : 'solid' },
-        visible: state.saldiOn.has(sr.name) ? true : 'legendonly', hovertemplate: '%{fullData.name}: €%{y:,.2f}<extra></extra>' };
+      return { type: 'scatter', mode: 'lines', name: sr.name, x: S.days, y: sr.series, line: { shape: saldiShape(), width: /^Total/.test(sr.name) ? 2.5 : 1.5, color: colOf[sr.name], dash: sr.name === 'Total without pension' ? 'dash' : 'solid' },
+        visible: state.saldiOn.has(sr.name) ? true : 'legendonly', hovertemplate: '%{fullData.name}: €%{y:,.2f}' + maNote() + '<extra></extra>' };
     });
     var layout = {
       height: narrow ? 380 : 460, margin: { l: 58, r: 12, t: 36, b: 36 },
@@ -1850,10 +1968,10 @@ function demoRecords() {
     if (!xs.length) { Plotly.purge(el); empty(el, 'Less than a year of data, so there is nothing to compare yet.'); return; }
     if (el.textContent && !el.querySelector('.js-plotly-plot, .plot-container')) el.textContent = '';
     var good = cssVar('--good'), bad = cssVar('--bad');
-    var hov = 'Now €%{customdata[0]:,.2f}<br>On %{customdata[3]|%-d %b %Y} €%{customdata[1]:,.2f}<br><b>Change €%{customdata[2]:+,.2f}</b><extra></extra>';
+    var hov = 'Now €%{customdata[0]:,.2f}<br>On %{customdata[3]|%-d %b %Y} €%{customdata[1]:,.2f}<br><b>Change €%{customdata[2]:+,.2f}</b>' + maNote() + '<extra></extra>';
     var traces = [
-      { type: 'scatter', mode: 'lines', name: 'More than a year earlier', x: xs, y: up, customdata: cd, fill: 'tozeroy', line: { shape: 'hv', width: 1.2, color: good }, fillcolor: good + '55', hovertemplate: hov },
-      { type: 'scatter', mode: 'lines', name: 'Less than a year earlier', x: xs, y: dn, customdata: cd, fill: 'tozeroy', line: { shape: 'hv', width: 1.2, color: bad }, fillcolor: bad + '55', hoverinfo: 'skip' }
+      { type: 'scatter', mode: 'lines', name: 'More than a year earlier', x: xs, y: up, customdata: cd, fill: 'tozeroy', line: { shape: saldiShape(), width: 1.2, color: good }, fillcolor: good + '55', hovertemplate: hov },
+      { type: 'scatter', mode: 'lines', name: 'Less than a year earlier', x: xs, y: dn, customdata: cd, fill: 'tozeroy', line: { shape: saldiShape(), width: 1.2, color: bad }, fillcolor: bad + '55', hoverinfo: 'skip' }
     ];
     var layout = {
       height: c.narrow ? 380 : 460, margin: { l: 64, r: 12, t: 36, b: 36 },
@@ -1889,8 +2007,8 @@ function demoRecords() {
     var traces = years.map(function (y, i) {
       var last = i === years.length - 1;
       return { type: 'scatter', mode: 'lines', name: y, x: byYear[y].x, y: byYear[y].y, customdata: byYear[y].d,
-        line: { shape: 'hv', width: last ? 3 : 1.6, color: colOf[y] }, visible: state.yoyOff.has(y) ? 'legendonly' : true,
-        hovertemplate: y + ': €%{y:,.2f}<extra></extra>' };
+        line: { shape: saldiShape(), width: last ? 3 : 1.6, color: colOf[y] }, visible: state.yoyOff.has(y) ? 'legendonly' : true,
+        hovertemplate: y + ': €%{y:,.2f}' + maNote() + '<extra></extra>' };
     });
     var layout = {
       height: c.narrow ? 380 : 460, margin: { l: 58, r: 12, t: 16, b: 36 },
@@ -1931,6 +2049,13 @@ function demoRecords() {
       state.saldiMode = b.dataset.mode; state.saldiRev = (state.saldiRev || 0) + 1;
       document.querySelectorAll('#saldi-seg button').forEach(function (q) { q.setAttribute('aria-pressed', String(q === b)); });
       drawSaldi(state.data);
+    });
+  });
+  document.querySelectorAll('#saldi-ma button').forEach(function (b) {
+    b.addEventListener('click', function () {
+      state.saldiMa = +b.dataset.ma;
+      document.querySelectorAll('#saldi-ma button').forEach(function (q) { q.setAttribute('aria-pressed', String(q === b)); });
+      if (state.data) drawSaldi(state.data);
     });
   });
   $('saldi-line').addEventListener('change', function () { state.saldiLine = $('saldi-line').value; drawSaldi(state.data); });
@@ -2443,7 +2568,8 @@ function demoRecords() {
 
   /* ================= fill and draw ================= */
   /* ================= WORK ================= */
-  var M30 = function (days) { return days / 30; };
+  /* months as average calendar months: 365.25 / 12 = 30.4375 days, so a year is 12 months */
+  var M30 = function (days) { return days / 30.4375; };
   function mo(v) { return fin(v) ? F.n1.format(v) + (Math.abs(v - 1) < 0.05 ? ' month' : ' months') : '—'; }
   function wkYearCalc(Y) {
     var wm = M30(Y.work), dm = M30(Y.days), ppm = wm > 0.05 ? Y.pay / wm : NaN, spm = dm > 0 ? Y.spent / dm : NaN;
@@ -2460,7 +2586,7 @@ function demoRecords() {
     $('wk-t-months').textContent = F.n1.format(c.wm);
     $('wk-s-months').textContent = 'of ' + F.n1.format(c.dm) + ' months in the file (' + pct(c.wm / c.dm) + ')';
     $('wk-t-pay').textContent = eur(c.payPerWm);
-    $('wk-s-pay').textContent = 'salary ' + eur(T.pay) + '; all income ' + eur(T.income);
+    $('wk-s-pay').textContent = 'salary and tax refunds ' + eur(T.pay) + '; all income ' + eur(T.income);
     $('wk-t-net').textContent = eur(c.netPerWm);
     $('wk-s-net').textContent = 'net worth ' + (T.net >= 0 ? 'up ' : 'down ') + eur(Math.abs(T.net)) + ' over the whole file';
     $('wk-t-cover').textContent = mo(c.cover);
@@ -2469,7 +2595,8 @@ function demoRecords() {
     $('wk-s-need').textContent = fin(c.cover) ? 'to pay for 12 months at that spending; you worked ' + F.n1.format(c.wm / c.dm * 12) + ' a year' : 'no salary found';
     var jobs = W.phases.filter(function (p) { return p.kind === 'work'; });
     $('wk-lede').textContent = 'You worked ' + int(T.work) + ' days in ' + int(jobs.length) + (jobs.length === 1 ? ' job' : ' jobs') + ', ' + pct(T.work / T.days) + ' of the time in this file.' +
-      (W.unknownDays ? ' ' + int(W.unknownDays) + ' days fall before the first WHEREABOUTS row and count as not working.' : '');
+      (W.unknownDays ? ' ' + int(W.unknownDays) + ' days have no WHEREABOUTS row and count as not working.' : '') +
+      (W.before.n ? ' Income dated before the first WHEREABOUTS arrival (' + dnl(W.start) + ') is left out: ' + eur(W.before.income) + (W.before.pay ? ', of which ' + eur(W.before.pay) + ' pay' : '') + ', earned before this file.' : '');
     drawWkNet(a); drawWkMonths(a); drawWkPer(a); drawWkYears(a, T); drawWkPhases(a);
   }
   function drawWkNet(a) {
@@ -2503,7 +2630,7 @@ function demoRecords() {
     var el = $('c-wk-months'), Ys = a.work.years;
     var keys = [['work', 'Working', 'var(--good)'], ['home', 'Europe, not working', 'var(--eu)'], ['away', 'Asia', 'var(--asia)']];
     var s = mk(el, 260), svg = s.svg, w = s.w, h = s.h;
-    var y = d3.scaleLinear().domain([0, Math.max(12, d3.max(Ys, function (Y) { return M30(Y.days); })) * 1.04]).range([h - 24, 10]);
+    var y = d3.scaleLinear().domain([0, 12.4]).range([h - 24, 10]);
     var ml = leftMargin(svg, y, 4, function (v) { return v + ' mo'; });
     var x = d3.scaleBand().domain(Ys.map(function (Y) { return String(Y.year); })).range([ml, w - 6]).padding(0.3);
     yGrid(svg, y, ml, w - 6, 4, function (v) { return v + ' mo'; });
@@ -2554,7 +2681,7 @@ function demoRecords() {
       { label: 'Year', get: function (Y) { return Y.year === 'All' ? 'Whole file' : Y.year + (Y.full ? '' : ' (part)'); } },
       { label: 'Working months', get: function (Y) { return F.n1.format(M30(Y.work)); } },
       { label: 'Months in Asia', hide: true, get: function (Y) { return F.n1.format(M30(Y.away)); } },
-      { label: 'Salary', get: function (Y) { return eur(Y.pay); } },
+      { label: 'Pay', get: function (Y) { return eur(Y.pay); } },
       { label: 'Pay per working month', get: function (Y) { return eur(wkYearCalc(Y).payPerWm); } },
       { label: 'All income', hide: true, get: function (Y) { return eur(Y.income); } },
       { label: 'Spending per month', get: function (Y) { return eur(wkYearCalc(Y).spendPerM); } },
@@ -2590,7 +2717,7 @@ function demoRecords() {
       svg.append('rect').attr('x', x0 + 0.5).attr('width', Math.max(1, x1 - x0 - 1)).attr('y', y(Math.max(0, p.net))).attr('height', Math.max(1, Math.abs(y(p.net) - y(0)))).style('fill', phaseCol(p)).classed('drill', true)
         .on('click', function () { phDrill(p); })
         .on('mousemove', function (ev) {
-          showTip(ev, phaseName(p), [['', dnl(p.start) + ' – ' + dnl(p.end) + ' · ' + int(p.days) + ' days'], ['Net worth', (p.net >= 0 ? '+' : '−') + eur(Math.abs(p.net)) + ' (' + eur(p.net / M30(p.days)) + ' a month)', phaseCol(p)], ['Salary', eur(p.pay)], ['Spent', eur(p.spent)], HINT]);
+          showTip(ev, phaseName(p), [['', dnl(p.start) + ' – ' + dnl(p.end) + ' · ' + int(p.days) + ' days'], ['Net worth', (p.net >= 0 ? '+' : '−') + eur(Math.abs(p.net)) + ' (' + eur(p.net / M30(p.days)) + ' a month)', phaseCol(p)], ['Pay', eur(p.pay)], ['Spent', eur(p.spent)], HINT]);
         }).on('mouseleave', hideTip);
     });
     var ax = svg.append('g').attr('transform', 'translate(0,' + (h - 30) + ')').call(d3.axisBottom(x).ticks(d3.utcYear.every(1)).tickFormat(function (d) { return String(d.getUTCFullYear()); }).tickSizeOuter(0));
@@ -2604,14 +2731,14 @@ function demoRecords() {
       { label: 'From', get: function (p) { return dnl(p.start); } },
       { label: 'To', hide: true, get: function (p) { return dnl(p.end); } },
       { label: 'Months', get: function (p) { return F.n1.format(M30(p.days)); } },
-      { label: 'Salary', get: function (p) { return eur(p.pay) + (p.payLate > 0.5 ? ' *' : ''); } },
+      { label: 'Pay', get: function (p) { return eur(p.pay) + (p.payLate > 0.5 ? ' *' : ''); } },
       { label: 'Spent', hide: true, get: function (p) { return eur(p.spent); } },
       { label: 'Net worth', get: function (p) { return sg(p.net); } },
       { label: 'Per month', get: function (p) { return sg(p.net / M30(p.days)); } }
     ], P.slice().reverse(), { onRow: phDrill });
     var late = P.filter(function (p) { return p.payLate > 0.5; });
     $('wk-phase-note').textContent = 'Every job (stays in a row with Work = TRUE) and every stretch without work, with how much net worth went up or down. Bar width is the length of the stay. Click a bar or row to see its rows.' +
-      (late.length ? ' * includes salary paid while not working (' + eur(d3.sum(late, function (p) { return p.payLate; })) + ' in total), counted for the last job of that year instead of the time off.' : '');
+      (late.length ? ' * includes pay received while not working (' + eur(d3.sum(late, function (p) { return p.payLate; })) + ' in total), counted for the last job of that year instead of the time off.' : '');
   }
 
   function fillValues(a) {
@@ -3113,7 +3240,7 @@ function demoRecords() {
   $('en-reset').addEventListener('click', function () { state.en.f = {}; state.en.q = ''; state.en.min = ''; state.en.max = ''; state.en.extra = null; state.en.shown = EN_PAGE; drawEntries(); });
   $('en-extra-off').addEventListener('click', function () { state.en.extra = null; state.en.shown = EN_PAGE; drawEntries(); });
   $('en-back').addEventListener('click', function () { var b = state.en.back; if (b) showTab(b.tab, true); });
-  var TAB_NAMES = { overzicht: 'Overview', azie: 'Asia', periods: 'Asia per period', lasten: 'Fixed costs', boodschappen: 'Groceries', work: 'Work', rekeningen: 'Accounts', pivot: 'Pivot', sunburst: 'Sunburst', curiosa: 'Curiosities' };
+  var TAB_NAMES = { overzicht: 'Overview', azie: 'Asia', periods: 'Asia per period', lasten: 'Fixed costs', boodschappen: 'Groceries', work: 'Work', rekeningen: 'Accounts', pivot: 'Pivot', sunburst: 'Sunburst', curiosa: 'Curiosities', info: 'Info' };
   /* open the Entries tab with exactly the rows behind a number */
   function drill(label, fn) {
     var E = state.en, from = state.tab;
@@ -3138,7 +3265,7 @@ function demoRecords() {
   });
 
   var DRAW = {
-    overzicht: function (a) { drawVermogen(a); drawMaanden(a); },
+    overzicht: function (a) { drawVermogen(a); drawMaanden(a); drawStroom(a); },
     periods: function () { drawPeriods(); },
     pivot: function () { drawPivot(); },
     entries: function () { drawEntries(); },
@@ -3149,7 +3276,8 @@ function demoRecords() {
     rekeningen: function (a) { drawSaldi(a); drawSaldiNu(a); drawKruis(a); },
     bank: function () { drawBank(); },
     sunburst: function (a) { drawSunburst(a); drawMpy(a); },
-    curiosa: function (a) { drawCurTexts(a); drawStroom(a); drawKlassen(a); drawBenford(a); drawRente(a); drawWinkels(a); drawWoorden(a); }
+    info: function () { /* plain text, nothing to draw */ },
+    curiosa: function (a) { drawCurTexts(a); drawKlassen(a); drawBenford(a); drawRente(a); drawWinkels(a); drawWoorden(a); }
   };
   function drawActive() {
     if (!state.data) return;
@@ -3159,7 +3287,7 @@ function demoRecords() {
   }
 
   /* ---------- tabs ---------- */
-  var TABS = ['overzicht', 'azie', 'periods', 'lasten', 'boodschappen', 'work', 'rekeningen', 'entries', 'pivot', 'bank', 'sunburst', 'curiosa'];
+  var TABS = ['overzicht', 'azie', 'periods', 'lasten', 'boodschappen', 'work', 'rekeningen', 'entries', 'pivot', 'bank', 'sunburst', 'curiosa', 'info'];
   function showTab(name, push) {
     if (TABS.indexOf(name) < 0) name = 'overzicht';
     state.tab = name;

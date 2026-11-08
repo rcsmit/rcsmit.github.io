@@ -1,0 +1,9 @@
+<!-- version = "20261108-121000" -->
+<!-- Letters are outlines of Lato Bold (SIL OFL): no font needed. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#0a6c9b"/>
+  <ellipse cx="256" cy="453" rx="84" ry="17" fill="#e3b04b"/>
+  <polygon points="147.94,290.57 256,432 364.06,290.57" fill="#eef2f5"/>
+  <circle cx="256" cy="208" r="136" fill="#eef2f5"/>
+  <path fill="#0a6c9b" d="M315.67 278.72H289.16V216.9H222.84V278.72H196.33V137.28H222.84V198.12H289.16V137.28H315.67Z"/>
+</svg>

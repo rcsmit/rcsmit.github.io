@@ -89,13 +89,23 @@ header p { margin: 8px 0 0; color: var(--muted); }
 .card:hover { transform: translateY(-3px); border-color: var(--accent); }
 .card:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .thumb {
+  position: relative;
   aspect-ratio: 4 / 3;
+  overflow: hidden;
   background: var(--placeholder);
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
 .thumb .fallback {
   font-family: var(--display);
   font-size: 1.5rem;
@@ -128,7 +138,7 @@ header p { margin: 8px 0 0; color: var(--muted); }
 </main>
 
 <script>
-// version = "20261107-173300"
+// version = "20261107-174400"
 (function () {
   "use strict";
 
