@@ -34,18 +34,20 @@ Geo & Maps,rome,Touristic info about Rome
 Geo & Maps,chiangmai,Touristic info about Chiang Mai
 Geo & Maps,berlin,Touristic info about Berlin
 Geo & Maps,hamburg,Touristic info about Hamburg
-Geo & Maps,citymaps,Citymaps portal
+Geo & Maps,citymap,Citymaps portal
 Geo & Maps,fab_route,Navigation tool for a camping
 Geo & Maps,gpxnav,Follow a GPX track on a map
 Geo & Maps,radiusmap,Radius map tool
 Geo & Maps,geoquest,Geography quiz game
 Geo & Maps,conscious_communities,Conscious communities map
+Geo & Maps,blauwe_loper,Walking/running route in Stadskanaal
 Music & Visuals,vampbox,Vampbox — a tool to create a simple music box
 Music & Visuals,xox606,Music sequencer inspired by the 606 drum machine
 Music & Visuals,djviz,DJ/VJ visual loop tool
 Music & Visuals,suno_generator,Suno AI prompt generator
 Music & Visuals,handpong,Hand-controlled Pong game
 Music & Visuals,ridermania,Rider generator for DJs
+Music & Visuals,melody_maker,Turn notes into sheetmusic
 Coaching & Community,coachen,Peper en zout model van het coachen
 Tools & Apps,colorguess,Color guessing game
 Tools & Apps,hostelrater,Hostel review tool
@@ -56,6 +58,8 @@ Tools & Apps,simspiri,Simulation of a spiritual island, like Simcity
 Tools & Apps,cardgenerator,Generates cards for linnen bags
 Tools & Apps,cv-editor,Tool to generate a CV page
 Tools & Apps,hk,Tool for housekeeping in a hotel or camping-
+Tools & Apps,forum_romanum,Walk through old and current Forum Romanum
+Tools & Apps,chat_analyzer,Analyze whatsapp chats
 People & Profiles,reneco,My first ever website
 People & Profiles,weblog,All my weblogs in one place
 Statistics,seir_model, SEIR-model for Hanta virus
@@ -65,3 +69,4 @@ Statistics,hittekracht,Tool to calculate the heat force (in Dutch)
 Statistics,cpi_loon,Tool to compare inflation with salaries (in the Netherlands)
 Statistics,doodsoorzaken,Visualization of causes of death in the Netherlands
 Statistics,foodsim,"Nutrient similarity explorer: cosine similarity of NEVO foods (Cardinaals et al. 2026, NZO talk ICNAB-03014)"
+Statistics,israel,"Graphs about the inhabitants of Israel in the history"
