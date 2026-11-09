@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Europe – weather of the last days</title>
+<link rel="icon" type="image/x-icon" href="favicon.ico">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root {
+    --fg: #1b2330;
+    --muted: #5d6879;
+    --line: #d6dbe3;
+    --accent: #35456c;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); }
+  #map { position: absolute; inset: 0; background: #e4e8ee; }
+
+  /* ----- control panel (collapsible) ----- */
+  .panel {
+    position: absolute; top: 10px; left: 10px; z-index: 1000;
+    width: min(330px, calc(100% - 20px));
+    background: rgba(255,255,255,.97); border: 1px solid var(--line);
+    border-radius: 12px; box-shadow: 0 2px 14px rgba(0,0,0,.18);
+    font-size: 13px;
+  }
+  .panel-head {
+    all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+  }
+  .panel-head:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 12px; }
+  .panel-head .txt { flex: 1; min-width: 0; }
+  .panel-head h1 { font-size: 15px; margin: 0; line-height: 1.2; }
+  .panel-head .range { color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chev { width: 20px; height: 20px; flex: none; transition: transform .2s; color: var(--muted); }
+  .panel.collapsed .chev { transform: rotate(-90deg); }
+  .panel-body { padding: 0 14px 12px; border-top: 1px solid var(--line); }
+  .panel.collapsed .panel-body { display: none; }
+
+  .row { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; }
+  .row .t { width: 66px; color: var(--muted); flex: none; }
+  select, button.btn {
+    font: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--fg);
+  }
+  select { flex: 1; min-width: 0; }
+  button.btn { cursor: pointer; }
+  button.btn:hover:not(:disabled) { border-color: var(--accent); }
+  button.btn:disabled { opacity: .5; cursor: default; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; overflow: hidden; flex: 1; }
+  .seg label { flex: 1; text-align: center; padding: 6px 4px; cursor: pointer; position: relative; }
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .seg label:has(input:checked) { background: var(--accent); color: #fff; font-weight: 600; }
+  .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; text-align: center; }
+  .stats div { border: 1px solid var(--line); border-radius: 7px; padding: 4px 2px; }
+  .stats b { display: block; font-size: 15px; }
+  .stats small { color: var(--muted); }
+  .note { margin-top: 6px; color: var(--muted); font-size: 11px; }
+  #status { margin-top: 8px; color: var(--muted); min-height: 1.3em; }
+  #status.err { color: #b3261e; }
+  .bar { height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; margin-top: 6px; display: none; }
+  .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+
+  /* ----- legend ----- */
+  .legend {
+    position: absolute; left: 10px; bottom: 22px; z-index: 1000;
+    background: rgba(255,255,255,.95); border: 1px solid var(--line); border-radius: 10px;
+    padding: 7px 11px 5px; box-shadow: 0 2px 10px rgba(0,0,0,.15); font-size: 12px;
+    width: min(230px, calc(100% - 84px));
+  }
+  .legend .title { margin-bottom: 4px; color: var(--muted); }
+  .legend .grad { height: 11px; border-radius: 3px; border: 1px solid var(--line); }
+  .legend .ticks { display: flex; justify-content: space-between; margin-top: 2px; }
+
+  /* ----- map extras ----- */
+  .city { white-space: nowrap; font-size: 11px; font-weight: 600; color: #101828; line-height: 1;
+    text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 4px #fff; pointer-events: none; }
+  .city::before { content: ""; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #101828;
+    border: 1px solid #fff; margin-right: 3px; vertical-align: 1px; }
+  .city span { font-weight: 500; color: #3a4558; }
+  .pin { position: relative; cursor: pointer; }
+  .pin .pdot { position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%;
+    background: #fff; border: 3px solid #101828; box-shadow: 0 0 0 2px #fff; }
+  .pin .plab { position: absolute; top: -12px; white-space: nowrap; font-size: 12px; font-weight: 700; color: #101828;
+    background: rgba(255,255,255,.96); border: 1.5px solid #101828; border-radius: 12px; padding: 2px 8px;
+    box-shadow: 0 1px 6px rgba(0,0,0,.3); line-height: 1.25; }
+  .pin.r .plab { left: 10px; }
+  .pin.l .plab { right: 10px; }
+  .pin .plab span { font-weight: 500; color: #3a4558; }
+  .ptable { border-collapse: collapse; margin-top: 8px; width: 100%; font-size: 12px; }
+  .ptable td { padding: 2px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  .ptable td:first-child { color: var(--muted); padding-right: 10px; white-space: nowrap; }
+  .ptable tr.sel td { font-weight: 700; color: var(--fg); }
+  .ptable small { color: var(--muted); font-weight: 400; }
+  #hover { position: absolute; z-index: 900; pointer-events: none; display: none; background: rgba(16,24,40,.88); color: #fff;
+    font-size: 12px; padding: 4px 8px; border-radius: 6px; white-space: nowrap; transform: translate(12px, -34px); }
+  .leaflet-popup-content { margin: 10px 12px; font-size: 13px; }
+  .pop-title { font-weight: 600; margin-bottom: 2px; }
+  .pop-sub { color: var(--muted); margin-bottom: 6px; }
+  .pop svg { display: block; }
+  .leaflet-control-attribution { font-size: 10px; }
+</style>
+</head>
+<body>
+<div id="map" aria-label="Map of Europe with weather of the last days"></div>
+<div id="hover"></div>
+
+<section class="panel" id="panel" aria-label="Controls">
+  <button class="panel-head" id="toggle" type="button" aria-expanded="true" aria-controls="panelBody">
+    <span class="txt">
+      <h1>Weather – Europe</h1>
+      <div class="range" id="range">Loading…</div>
+    </span>
+    <svg class="chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>
+  </button>
+
+  <div class="panel-body" id="panelBody">
+    <div class="row">
+      <label class="t" for="param">Parameter</label>
+      <select id="param"></select>
+    </div>
+
+    <div class="row">
+      <label class="t" for="days">Period</label>
+      <select id="days">
+        <option value="1">Yesterday</option>
+        <option value="3">Last 3 days</option>
+        <option value="7" selected>Last 7 days</option>
+        <option value="14">Last 14 days</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <span class="t">Show</span>
+      <div class="seg" role="radiogroup" aria-label="Metric">
+        <label id="lbl1"><input type="radio" name="metric" value="m1" checked><span id="lbl1t">Total</span></label>
+        <label id="lbl2"><input type="radio" name="metric" value="m2"><span id="lbl2t">Per day</span></label>
+      </div>
+    </div>
+
+    <div class="row">
+      <label class="t" for="res">Detail</label>
+      <select id="res">
+        <option value="coarse">Coarse (fewer requests)</option>
+        <option value="medium" selected>Medium</option>
+      </select>
+      <button class="btn" id="reload" type="button" title="Fetch fresh data">Refresh</button>
+    </div>
+
+    <div class="stats" aria-live="polite">
+      <div><b id="stMax">–</b><small>Max</small></div>
+      <div><b id="stMean">–</b><small>Mean</small></div>
+      <div><b id="stMin">–</b><small>Min</small></div>
+    </div>
+    <div class="note">Tap or hover the map for local values; tap Amsterdam, Rome or Hamburg for all parameters. Completed days only (today is excluded).</div>
+
+    <div class="bar" id="bar"><i id="barFill"></i></div>
+    <div id="status" role="status"></div>
+  </div>
+</section>
+
+<div class="legend" aria-label="Legend">
+  <div class="title" id="legendTitle">Sunshine</div>
+  <div class="grad" id="legendGrad"></div>
+  <div class="ticks"><span id="lg0"></span><span id="lg1"></span><span id="lg2"></span></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script>
+// version = "20261109-144500"
+const version = "20261109-144500";
+
+(function () {
+  "use strict";
+
+  // ---------- configuration ----------
+  const API = "https://api.open-meteo.com/v1/forecast";
+  const SHAPES = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
+  const D = 14;                         // days of history fetched once; the period selector slices this
+  const BATCH = 60;                     // locations per request
+  const CACHE_TTL_MS = 3 * 3600 * 1000;
+  const LAT_MIN = 34, LAT_MAX = 72, LON_MIN = -26, LON_MAX = 42;
+  const GRIDS = { coarse: { dlat: 3, dlon: 4 }, medium: { dlat: 2, dlon: 3 } };
+  const IMG_W = 1500;                   // raster width (px) of the smooth field
+  const FIELD_ALPHA = 238;
+
+  // Parameters. type "sum": can be shown as total or per day. type "level": average, or the highest/lowest day (ext).
+  const PARAMS = [
+    { id: "sun",   label: "Sunshine",             api: "sunshine_duration",       conv: (x) => x / 3600, unit: "h",     type: "sum",   scale: "sun" },
+    { id: "tmean", label: "Temperature (mean)",   api: "temperature_2m_mean",     unit: "°C",    type: "level", ext: null,  scale: "temp" },
+    { id: "tmax",  label: "Max temperature",      api: "temperature_2m_max",      unit: "°C",    type: "level", ext: "max", scale: "temp" },
+    { id: "tmin",  label: "Min temperature",      api: "temperature_2m_min",      unit: "°C",    type: "level", ext: "min", scale: "temp" },
+    { id: "rain",  label: "Precipitation (rain)", api: "precipitation_sum",       unit: "mm",    type: "sum",   scale: "rain" },
+    { id: "snow",  label: "Snowfall",             api: "snowfall_sum",            unit: "cm",    type: "sum",   scale: "snow" },
+    { id: "wind",  label: "Wind (daily max)",     api: "wind_speed_10m_max",      unit: "km/h",  type: "level", ext: "max", scale: "wind" },
+    { id: "rad",   label: "Solar radiation",      api: "shortwave_radiation_sum", unit: "MJ/m²", type: "sum",   scale: "sun" }
+  ];
+  const NP = PARAMS.length;
+  // Colour scales. "sun" is Cividis-like (colour-blind safe, lightness rises monotonically); "temp" is RdYlBu reversed.
+  const SCALES = {
+    sun:  ["#00224e", "#35456c", "#666970", "#948e77", "#c8b866", "#fee838"],
+    temp: ["#313695", "#4575b4", "#74add1", "#abd9e9", "#e0f3f8", "#ffffbf", "#fee090", "#fdae61", "#f46d43", "#d73027", "#a50026"],
+    rain: ["#f7fbff", "#c6dbef", "#6baed6", "#2171b5", "#08306b"],
+    snow: ["#f7fcfd", "#bfd3e6", "#8c96c6", "#88419d", "#4d004b"],
+    wind: ["#ffffd4", "#fed98e", "#fe9929", "#d95f0e", "#993404"]
+  };
+
+  // Pinned places: always labelled, fetched at their exact coordinates. side = label side of the dot.
+  const PINS = [
+    { name: "Amsterdam", lat: 52.37, lon: 4.90, side: "l" },
+    { name: "Hamburg",   lat: 53.55, lon: 9.99, side: "r" },
+    { name: "Rome",      lat: 41.90, lon: 12.50, side: "r" }
+  ];
+
+  // [name, lat, lon, rank] – rank 1 labels show at every zoom, rank 2 from zoom 5
+  const CITIES = [
+    ["London", 51.51, -0.13, 1], ["Paris", 48.86, 2.35, 1], ["Madrid", 40.42, -3.70, 1], ["Lisbon", 38.72, -9.14, 2],
+    ["Berlin", 52.52, 13.40, 1], ["Vienna", 48.21, 16.37, 2],
+    ["Warsaw", 52.23, 21.01, 1], ["Athens", 37.98, 23.73, 1], ["Istanbul", 41.01, 28.98, 2], ["Bucharest", 44.43, 26.10, 2],
+    ["Kyiv", 50.45, 30.52, 1], ["Moscow", 55.76, 37.62, 1], ["Stockholm", 59.33, 18.07, 1], ["Oslo", 59.91, 10.75, 2],
+    ["Helsinki", 60.17, 24.94, 2], ["Dublin", 53.35, -6.26, 2], ["Reykjavik", 64.15, -21.94, 1], ["Zurich", 47.38, 8.54, 2],
+    ["Barcelona", 41.39, 2.17, 2], ["Seville", 37.39, -5.99, 2], ["Marseille", 43.30, 5.37, 2], ["Munich", 48.14, 11.58, 2],
+    ["Sofia", 42.70, 23.32, 2], ["Palermo", 38.12, 13.36, 2], ["Tromsø", 69.65, 18.96, 2], ["Ankara", 39.93, 32.86, 2],
+    ["Edinburgh", 55.95, -3.19, 2], ["Copenhagen", 55.68, 12.57, 2], ["Budapest", 47.50, 19.04, 2], ["Riga", 56.95, 24.11, 2],
+    ["Belgrade", 44.79, 20.45, 2], ["Milan", 45.46, 9.19, 2]
+  ];
+
+  // ---------- helpers ----------
+  const $ = (id) => document.getElementById(id);
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const fmt = (v, d = 1) => (v == null || !isFinite(v) ? "–" : v.toFixed(d));
+  const smooth = (t) => t * t * (3 - 2 * t);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  const hex2rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  function colorAt(stops, t) {
+    t = clamp(t, 0, 1);
+    const x = t * (stops.length - 1), i = Math.min(Math.floor(x), stops.length - 2), f = x - i;
+    const a = hex2rgb(stops[i]), b = hex2rgb(stops[i + 1]);
+    return a.map((v, k) => Math.round(v + (b[k] - v) * f));
+  }
+  const LUTS = {};
+  Object.keys(SCALES).forEach((k) => { LUTS[k] = Array.from({ length: 256 }, (_, i) => colorAt(SCALES[k], i / 255)); });
+
+  function niceCeil(v) {
+    if (v <= 0) return 1;
+    const steps = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 60, 80, 100, 120, 150, 200];
+    return steps.find((s) => s >= v) || Math.ceil(v / 50) * 50;
+  }
+  function fmtDate(iso, opts) {
+    return new Date(iso + "T00:00:00Z").toLocaleDateString("en-GB", Object.assign({ timeZone: "UTC" }, opts));
+  }
+  function latLabel(lat, lon) {
+    return Math.abs(lat).toFixed(1) + "°" + (lat >= 0 ? "N" : "S") + ", " + Math.abs(lon).toFixed(1) + "°" + (lon >= 0 ? "E" : "W");
+  }
+
+  // Web-Mercator helpers so the raster lines up exactly with the tiles
+  const merc = (lat) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+  const unmerc = (y) => ((2 * Math.atan(Math.exp(y)) - Math.PI / 2) * 180) / Math.PI;
+  const MY_MIN = merc(LAT_MIN), MY_MAX = merc(LAT_MAX);
+  const IMG_H = Math.round(IMG_W * ((MY_MAX - MY_MIN) / (((LON_MAX - LON_MIN) * Math.PI) / 180)));
+
+  // ---------- map ----------
+  const map = L.map("map", {
+    zoomControl: false, attributionControl: false, preferCanvas: true,
+    zoomSnap: 0.25, minZoom: 3, maxZoom: 8,
+    maxBounds: [[20, -50], [82, 70]], maxBoundsViscosity: 0.8
+  });
+  L.control.zoom({ position: "bottomright" }).addTo(map);
+  L.control.attribution({ prefix: false, position: "bottomright" })
+    .addAttribution('Esri · OSM · <a href="https://open-meteo.com/">Open-Meteo</a> (CC BY 4.0)').addTo(map);
+  map.fitBounds([[36, -14], [67, 40]], { padding: [6, 6] });
+
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", {
+    maxZoom: 8, attribution: ""
+  }).addTo(map);
+
+  map.createPane("borders");
+  map.getPane("borders").style.zIndex = 450;
+  map.getPane("borders").style.pointerEvents = "none";
+
+  const bounds = [[LAT_MIN, LON_MIN], [LAT_MAX, LON_MAX]];
+  let fieldOverlay = null;
+  const cityLayer = L.layerGroup().addTo(map);
+
+  // ---------- land shapes (mask + borders) ----------
+  let maskCanvas = null, maskCtx = null;
+
+  async function loadShapes() {
+    if (typeof topojson === "undefined") throw new Error("topojson not loaded");
+    const res = await fetch(SHAPES);
+    if (!res.ok) throw new Error("shapes " + res.status);
+    const topo = await res.json();
+    const countries = topo.objects.countries;
+
+    // land mask (all countries merged), drawn in the same Mercator raster space as the field
+    const land = topojson.merge(topo, countries.geometries);
+    maskCanvas = document.createElement("canvas");
+    maskCanvas.width = IMG_W; maskCanvas.height = IMG_H;
+    maskCtx = maskCanvas.getContext("2d", { willReadFrequently: true });
+    // drop polygons that cannot matter here (Antarctica's outline wraps the antimeridian and corrupts the mask)
+    const polys = (land.type === "Polygon" ? [land.coordinates] : land.coordinates).filter((poly) => {
+      const outer = poly[0];
+      let minLat = 90, hit = false;
+      for (const pt of outer) {
+        if (pt[1] < minLat) minLat = pt[1];
+        if (pt[0] > LON_MIN - 5 && pt[0] < LON_MAX + 5 && pt[1] > LAT_MIN - 5 && pt[1] < LAT_MAX + 5) hit = true;
+      }
+      return hit && minLat > -60;
+    });
+    const px = (lon) => ((lon - LON_MIN) / (LON_MAX - LON_MIN)) * IMG_W;
+    const py = (lat) => ((MY_MAX - merc(clamp(lat, -85, 85))) / (MY_MAX - MY_MIN)) * IMG_H;
+    maskCtx.fillStyle = "#000";
+    maskCtx.beginPath();
+    for (const poly of polys) {
+      for (const ring of poly) {
+        let shift = 0, prev = ring[0][0];
+        for (let i = 0; i < ring.length; i++) {
+          // unwrap antimeridian jumps (Russia/Chukotka) so the ring stays continuous
+          const raw = ring[i][0];
+          if (raw - prev > 180) shift -= 360; else if (raw - prev < -180) shift += 360;
+          prev = raw;
+          const x = px(raw + shift), y = py(ring[i][1]);
+          if (i === 0) maskCtx.moveTo(x, y); else maskCtx.lineTo(x, y);
+        }
+        maskCtx.closePath();
+      }
+    }
+    maskCtx.fill();
+
+    // country borders (shared edges only), vector lines restricted to the visible area
+    const mesh = topojson.mesh(topo, countries, (a, b) => a !== b);
+    const inBox = (p) => p[0] > LON_MIN - 2 && p[0] < LON_MAX + 2 && p[1] > LAT_MIN - 2 && p[1] < LAT_MAX + 2;
+    const lines = mesh.coordinates.filter((ln) => ln.some(inBox));
+    L.geoJSON({ type: "MultiLineString", coordinates: lines }, {
+      pane: "borders", interactive: false,
+      style: { color: "#ffffff", weight: 0.9, opacity: 0.6 }
+    }).addTo(map);
+  }
+
+  function isLand(lat, lon) {
+    if (lat < LAT_MIN || lat > LAT_MAX || lon < LON_MIN || lon > LON_MAX) return false;
+    if (!maskCtx) return true;
+    const x = Math.floor(((lon - LON_MIN) / (LON_MAX - LON_MIN)) * IMG_W);
+    const y = Math.floor(((MY_MAX - merc(lat)) / (MY_MAX - MY_MIN)) * IMG_H);
+    return maskCtx.getImageData(clamp(x, 0, IMG_W - 1), clamp(y, 0, IMG_H - 1), 1, 1).data[3] > 127;
+  }
+
+  // ---------- data ----------
+  // grid.v layout: ((p * cells + cell) * D + day); pins.v layout: ((p * PINS.length + k) * D + day)
+  let grid = null;      // { res, nx, ny, dlat, dlon, cells, dates, v: Float32Array, pv: Float32Array }
+  let agg = null;       // aggregated field for the current selection: Float32Array(cells)
+
+  function gridShape(res) {
+    const g = GRIDS[res];
+    const ny = Math.ceil((LAT_MAX - LAT_MIN) / g.dlat) + 1;
+    const nx = Math.ceil((LON_MAX - LON_MIN) / g.dlon) + 1;
+    return { ny, nx, cells: ny * nx, dlat: (LAT_MAX - LAT_MIN) / (ny - 1), dlon: (LON_MAX - LON_MIN) / (nx - 1) };
+  }
+  function makeGrid(res, dates, v, pv) {
+    return Object.assign({ res, dates, v, pv }, gridShape(res));
+  }
+
+  async function fetchBatch(pts, attempt = 0) {
+    const url = API +
+      "?latitude=" + pts.map((p) => p.lat).join(",") +
+      "&longitude=" + pts.map((p) => p.lon).join(",") +
+      "&daily=" + PARAMS.map((p) => p.api).join(",") +
+      "&past_days=" + D + "&forecast_days=1&timezone=auto";
+    let res;
+    try {
+      res = await fetch(url);
+    } catch (e) {
+      if (attempt < 3) { await sleep(1500 * (attempt + 1)); return fetchBatch(pts, attempt + 1); }
+      throw new Error("Network error – could not reach Open-Meteo.");
+    }
+    if (!res.ok) {
+      if ((res.status === 429 || res.status >= 500) && attempt < 4) {
+        await sleep(3000 * (attempt + 1));
+        return fetchBatch(pts, attempt + 1);
+      }
+      let reason = "";
+      try { reason = (await res.json()).reason || ""; } catch (_) { /* ignore */ }
+      throw new Error("Open-Meteo error " + res.status + (reason ? ": " + reason : ""));
+    }
+    const json = await res.json();
+    const arr = Array.isArray(json) ? json : [json];
+    if (arr.length !== pts.length) throw new Error("Unexpected response from Open-Meteo.");
+    return arr.map((o) => {
+      // the last entry is today (still a forecast) – keep completed days only
+      const dates = o.daily.time.slice(0, -1);
+      const series = PARAMS.map((P) => {
+        const raw = (o.daily[P.api] || []).slice(0, -1);
+        const out = new Array(D).fill(NaN);
+        raw.slice(-D).forEach((x, i, a) => {
+          out[D - a.length + i] = x == null ? NaN : Math.round((P.conv ? P.conv(x) : x) * 10) / 10;
+        });
+        return out;
+      });
+      return { dates, series };
+    });
+  }
+
+  function readCache(res) {
+    try {
+      const raw = localStorage.getItem("eu_wx_" + res);
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      if (Date.now() - obj.t > CACHE_TTL_MS) return null;
+      const f = (a) => Float32Array.from(a, (x) => (x == null ? NaN : x));
+      return makeGrid(res, obj.dates, f(obj.v), f(obj.pv));
+    } catch (_) { return null; }
+  }
+  function writeCache(g) {
+    try {
+      const f = (a) => Array.from(a, (x) => (isNaN(x) ? null : x));
+      localStorage.setItem("eu_wx_" + g.res, JSON.stringify({ t: Date.now(), dates: g.dates, v: f(g.v), pv: f(g.pv) }));
+    } catch (_) { /* storage unavailable or full */ }
+  }
+
+  function setStatus(msg, isErr) {
+    const el = $("status");
+    el.textContent = msg || "";
+    el.className = isErr ? "err" : "";
+  }
+  function setProgress(frac) {
+    $("bar").style.display = frac == null ? "none" : "block";
+    if (frac != null) $("barFill").style.width = Math.round(frac * 100) + "%";
+  }
+
+  let loadToken = 0;
+  async function load(forceFresh) {
+    const token = ++loadToken;
+    const res = $("res").value;
+    if (!forceFresh) {
+      const cached = readCache(res);
+      if (cached) { grid = cached; setStatus(""); render(); return; }
+    }
+    const s = gridShape(res);
+    const pts = PINS.map((p) => ({ lat: p.lat, lon: p.lon }));          // pins first, at their exact position
+    for (let iy = 0; iy < s.ny; iy++) {
+      for (let ix = 0; ix < s.nx; ix++) {
+        pts.push({ lat: Math.round((LAT_MIN + iy * s.dlat) * 100) / 100, lon: Math.round((LON_MIN + ix * s.dlon) * 100) / 100 });
+      }
+    }
+    const v = new Float32Array(NP * s.cells * D).fill(NaN);
+    const pv = new Float32Array(NP * PINS.length * D).fill(NaN);
+    let dates = null;
+    $("reload").disabled = true;
+    try {
+      for (let i = 0; i < pts.length; i += BATCH) {
+        setStatus("Loading weather data… " + Math.min(i + BATCH, pts.length) + " / " + pts.length);
+        setProgress(i / pts.length);
+        const out = await fetchBatch(pts.slice(i, i + BATCH));
+        if (token !== loadToken) return;            // superseded by a newer request
+        out.forEach((o, k) => {
+          if (!dates) dates = o.dates.slice(-D);
+          const idx = i + k;
+          for (let p = 0; p < NP; p++) {
+            for (let d = 0; d < D; d++) {
+              if (idx < PINS.length) pv[(p * PINS.length + idx) * D + d] = o.series[p][d];
+              else v[(p * s.cells + (idx - PINS.length)) * D + d] = o.series[p][d];
+            }
+          }
+        });
+        if (i + BATCH < pts.length) await sleep(300);
+      }
+      grid = makeGrid(res, dates, v, pv);
+      writeCache(grid);
+      setStatus("");
+      render();
+    } catch (e) {
+      if (token === loadToken) setStatus(e.message + " Try again in a moment.", true);
+    } finally {
+      if (token === loadToken) { setProgress(null); $("reload").disabled = false; }
+    }
+  }
+
+  // ---------- interpolation ----------
+  // Smoothstep-weighted bilinear sampling over the grid; NaN corners are skipped and weights renormalised.
+  function interp(get, lat, lon) {
+    const g = grid;
+    const fy = clamp((lat - LAT_MIN) / g.dlat, 0, g.ny - 1);
+    const fx = clamp((lon - LON_MIN) / g.dlon, 0, g.nx - 1);
+    const y0 = Math.min(Math.floor(fy), g.ny - 2), x0 = Math.min(Math.floor(fx), g.nx - 2);
+    const ty = smooth(fy - y0), tx = smooth(fx - x0);
+    const i00 = y0 * g.nx + x0, i01 = i00 + 1, i10 = i00 + g.nx, i11 = i10 + 1;
+    const a = get(i00), b = get(i01), c = get(i10), d = get(i11);
+    const w00 = (1 - ty) * (1 - tx), w01 = (1 - ty) * tx, w10 = ty * (1 - tx), w11 = ty * tx;
+    let s = 0, w = 0;
+    if (a === a) { s += a * w00; w += w00; }
+    if (b === b) { s += b * w01; w += w01; }
+    if (c === c) { s += c * w10; w += w10; }
+    if (d === d) { s += d * w11; w += w11; }
+    return w > 0 ? s / w : NaN;
+  }
+
+  // Reduce the last n values of a series: mode is "sum" | "avg" | "max" | "min". Missing days are skipped.
+  function reduceSeries(series, n, mode) {
+    let sum = 0, cnt = 0, mx = -Infinity, mn = Infinity;
+    for (let d = D - n; d < D; d++) {
+      const x = series[d];
+      if (x === x) { sum += x; cnt++; if (x > mx) mx = x; if (x < mn) mn = x; }
+    }
+    if (!cnt) return NaN;
+    return mode === "sum" ? sum : mode === "max" ? mx : mode === "min" ? mn : sum / cnt;
+  }
+
+  function aggregate(p, n, mode) {
+    const g = grid, out = new Float32Array(g.cells), base = p * g.cells * D, ser = new Array(D);
+    for (let i = 0; i < g.cells; i++) {
+      for (let d = 0; d < D; d++) ser[d] = g.v[base + i * D + d];
+      out[i] = reduceSeries(ser, n, mode);
+    }
+    return out;
+  }
+
+  // ---------- raster field ----------
+  const fieldCanvas = document.createElement("canvas");
+  fieldCanvas.width = IMG_W; fieldCanvas.height = IMG_H;
+  const fctx = fieldCanvas.getContext("2d");
+
+  function paintField(lo, hi, lut) {
+    const g = grid, W = IMG_W, H = IMG_H, span = hi - lo || 1;
+    const img = fctx.createImageData(W, H), px = img.data;
+    const x0 = new Int32Array(W), tx = new Float32Array(W);
+    for (let x = 0; x < W; x++) {
+      const lon = LON_MIN + ((x + 0.5) / W) * (LON_MAX - LON_MIN);
+      const fx = clamp((lon - LON_MIN) / g.dlon, 0, g.nx - 1), i0 = Math.min(Math.floor(fx), g.nx - 2);
+      x0[x] = i0; tx[x] = smooth(fx - i0);
+    }
+    const get = (i) => agg[i];
+    for (let y = 0; y < H; y++) {
+      const lat = unmerc(MY_MAX - ((y + 0.5) / H) * (MY_MAX - MY_MIN));
+      const fy = clamp((lat - LAT_MIN) / g.dlat, 0, g.ny - 1), y0 = Math.min(Math.floor(fy), g.ny - 2), ty = smooth(fy - y0);
+      const r0 = y0 * g.nx, r1 = r0 + g.nx;
+      for (let x = 0; x < W; x++) {
+        const i = r0 + x0[x];
+        const a = agg[i], b = agg[i + 1], c = agg[r1 + x0[x]], d = agg[r1 + x0[x] + 1];
+        let v;
+        if (a === a && b === b && c === c && d === d) {
+          const t = tx[x];
+          v = (a + (b - a) * t) * (1 - ty) + (c + (d - c) * t) * ty;
+        } else {
+          v = interp(get, lat, LON_MIN + ((x + 0.5) / W) * (LON_MAX - LON_MIN));
+        }
+        const o = (y * W + x) * 4;
+        if (v !== v) { px[o + 3] = 0; continue; }
+        const col = lut[Math.round(clamp((v - lo) / span, 0, 1) * 255)];
+        px[o] = col[0]; px[o + 1] = col[1]; px[o + 2] = col[2]; px[o + 3] = FIELD_ALPHA;
+      }
+    }
+    fctx.globalCompositeOperation = "source-over";
+    fctx.clearRect(0, 0, W, H);
+    fctx.putImageData(img, 0, 0);
+    if (maskCanvas) {
+      fctx.globalCompositeOperation = "destination-in";
+      fctx.drawImage(maskCanvas, 0, 0);
+      fctx.globalCompositeOperation = "source-over";
+    }
+    const url = fieldCanvas.toDataURL("image/png");
+    if (!fieldOverlay) {
+      fieldOverlay = L.imageOverlay(url, bounds, { interactive: false, opacity: 1 }).addTo(map);
+    } else {
+      fieldOverlay.setUrl(url);
+    }
+  }
+
+  // ---------- selection state ----------
+  function resolveMode(P, m) {
+    if (P.type === "sum") return m === "m1" ? "sum" : "avg";
+    return m === "m1" ? "avg" : (P.ext || "avg");
+  }
+  const unitFor = (P, mode) => (P.type === "sum" && mode === "avg" ? P.unit + "/day" : P.unit);
+
+  function state() {
+    const pi = parseInt($("param").value, 10), P = PARAMS[pi];
+    const m = document.querySelector('input[name="metric"]:checked').value;
+    const mode = resolveMode(P, m);
+    return { pi, P, n: parseInt($("days").value, 10), mode, unit: unitFor(P, mode) };
+  }
+
+  function updateModeLabels() {
+    const P = PARAMS[parseInt($("param").value, 10)];
+    if (P.type === "sum") {
+      $("lbl1t").textContent = "Total"; $("lbl2t").textContent = "Per day";
+      $("lbl2").style.display = "";
+    } else {
+      $("lbl1t").textContent = "Average";
+      $("lbl2t").textContent = P.ext === "max" ? "Highest day" : "Lowest day";
+      $("lbl2").style.display = P.ext ? "" : "none";
+      if (!P.ext) document.querySelector('input[name="metric"][value="m1"]').checked = true;
+    }
+  }
+
+  // ---------- popups ----------
+  function barsSVG(series, dates, n, unit) {
+    const W = 250, H = 84, top = 6, bottom = 16, bw = W / series.length;
+    const vals = series.map((v) => (v === v ? v : 0));
+    const lo = Math.min(0, ...vals), hi = Math.max(lo + 1, ...vals), zero = top + ((H - top - bottom) * hi) / (hi - lo);
+    let s = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Daily values">';
+    vals.forEach((v, i) => {
+      const bh = ((H - top - bottom) * Math.abs(v)) / (hi - lo);
+      const active = i >= vals.length - n;
+      s += '<rect x="' + (i * bw + 1).toFixed(1) + '" y="' + (v >= 0 ? zero - bh : zero).toFixed(1) + '" width="' + (bw - 2).toFixed(1) +
+        '" height="' + Math.max(bh, 0.5).toFixed(1) + '" rx="1.5" fill="' + (active ? "#3d6fb4" : "#c5ccd8") + '">' +
+        "<title>" + fmtDate(dates[i], { day: "numeric", month: "short" }) + ": " + fmt(series[i]) + " " + unit + "</title></rect>";
+    });
+    s += '<text x="0" y="' + (H - 3) + '" font-size="10" fill="#5d6879">' + fmtDate(dates[0], { day: "numeric", month: "short" }) + "</text>";
+    s += '<text x="' + W + '" y="' + (H - 3) + '" font-size="10" fill="#5d6879" text-anchor="end">' +
+      fmtDate(dates[dates.length - 1], { day: "numeric", month: "short" }) + "</text></svg>";
+    return s;
+  }
+
+  // getSeries(p) -> array of D daily values for parameter index p at the chosen place
+  function popupHTML(title, sub, getSeries) {
+    const { pi, P, n, unit } = state();
+    let rows = "";
+    PARAMS.forEach((Q, p) => {
+      const ser = getSeries(p);
+      let txt;
+      if (Q.type === "sum") {
+        txt = fmt(reduceSeries(ser, n, "sum")) + " " + Q.unit + (n > 1 ? " <small>(" + fmt(reduceSeries(ser, n, "avg")) + "/day)</small>" : "");
+      } else {
+        txt = fmt(reduceSeries(ser, n, "avg")) + " " + Q.unit + (Q.ext && n > 1
+          ? " <small>(" + (Q.ext === "max" ? "high " : "low ") + fmt(reduceSeries(ser, n, Q.ext)) + ")</small>" : "");
+      }
+      rows += '<tr' + (p === pi ? ' class="sel"' : "") + "><td>" + Q.label + "</td><td>" + txt + "</td></tr>";
+    });
+    return '<div class="pop"><div class="pop-title">' + title + "</div>" +
+      '<div class="pop-sub">' + sub + "</div>" +
+      barsSVG(getSeries(pi), grid.dates, n, P.unit) +
+      '<table class="ptable">' + rows + "</table></div>";
+  }
+  const periodText = (n) => (n === 1 ? "yesterday" : "last " + n + " days");
+
+  function pinSeries(k) {
+    return (p) => Array.from({ length: D }, (_, d) => grid.pv[(p * PINS.length + k) * D + d]);
+  }
+  function pointSeries(lat, lon) {
+    return (p) => Array.from({ length: D }, (_, d) => interp((i) => grid.v[(p * grid.cells + i) * D + d], lat, lon));
+  }
+
+  // ---------- labels ----------
+  function renderLabels(P, n, mode, unit) {
+    cityLayer.clearLayers();
+    const z = map.getZoom();
+    CITIES.forEach(([name, lat, lon, rank]) => {
+      if (rank === 2 && z < 5) return;
+      const v = interp((i) => agg[i], lat, lon);
+      const html = '<div class="city">' + name + (v === v ? " <span>" + fmt(v) + "</span>" : "") + "</div>";
+      L.marker([lat, lon], {
+        interactive: false, keyboard: false,
+        icon: L.divIcon({ className: "", html, iconSize: [0, 0], iconAnchor: [4, 6] })
+      }).addTo(cityLayer);
+    });
+    PINS.forEach((pin, k) => {
+      const v = reduceSeries(pinSeries(k)(PARAMS.indexOf(P)), n, mode);
+      const html = '<div class="pin ' + pin.side + '"><i class="pdot"></i><div class="plab">' + pin.name +
+        " <span>" + fmt(v) + " " + unit + "</span></div></div>";
+      const m = L.marker([pin.lat, pin.lon], {
+        keyboard: false, zIndexOffset: 1000, title: pin.name,
+        icon: L.divIcon({ className: "", html, iconSize: [0, 0], iconAnchor: [0, 0] })
+      }).addTo(cityLayer);
+      m.on("click", () => {
+        const st = state();
+        L.popup({ maxWidth: 300, offset: [0, -4] }).setLatLng([pin.lat, pin.lon]).setContent(
+          popupHTML(pin.name, latLabel(pin.lat, pin.lon) + " · daily " + st.P.label.toLowerCase() + ", " + periodText(st.n) + " highlighted", pinSeries(k))
+        ).openOn(map);
+      });
+    });
+  }
+
+  // ---------- render ----------
+  let cur = null;       // { P, n, mode, unit, lo, hi } of the field currently on screen
+  function render() {
+    if (!grid) return;
+    const { pi, P, n, mode, unit } = state();
+    const dates = grid.dates, sel = dates.slice(-n);
+    agg = aggregate(pi, n, mode);
+
+    const periodLabel = n === 1 ? "Yesterday" : "Last " + n + " days";
+    $("range").textContent = P.label + " · " + periodLabel + " · " + (n === 1
+      ? fmtDate(sel[0], { weekday: "short", day: "numeric", month: "short" })
+      : fmtDate(sel[0], { day: "numeric", month: "short" }) + " – " + fmtDate(sel[sel.length - 1], { day: "numeric", month: "short" }));
+
+    // stats over land grid points (all points if the land mask is unavailable)
+    const vals = [];
+    for (let iy = 0; iy < grid.ny; iy++) {
+      for (let ix = 0; ix < grid.nx; ix++) {
+        const v = agg[iy * grid.nx + ix];
+        if (v === v && isLand(LAT_MIN + iy * grid.dlat, LON_MIN + ix * grid.dlon)) vals.push(v);
+      }
+    }
+    const vmin = vals.length ? Math.min(...vals) : 0, vmax = vals.length ? Math.max(...vals) : 1;
+    let lo = 0, hi;
+    if (P.scale === "temp") {
+      lo = Math.floor(vmin / 5) * 5; hi = Math.ceil(vmax / 5) * 5;
+      if (hi - lo < 10) { const mid = (hi + lo) / 2; lo = mid - 5; hi = mid + 5; }
+    } else {
+      hi = niceCeil(vmax);
+    }
+    cur = { P, n, mode, unit, lo, hi };
+
+    paintField(lo, hi, LUTS[P.scale]);
+    renderLabels(P, n, mode, unit);
+
+    const mean = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+    $("stMax").textContent = vals.length ? fmt(vmax) : "–";
+    $("stMean").textContent = fmt(mean);
+    $("stMin").textContent = vals.length ? fmt(vmin) : "–";
+
+    $("legendTitle").textContent = P.label + " (" + unit + ")";
+    $("legendGrad").style.background = "linear-gradient(to right," + SCALES[P.scale].join(",") + ")";
+    const tick = (x) => (Math.abs(x) >= 10 || x % 1 === 0 ? String(Math.round(x)) : x.toFixed(1));
+    $("lg0").textContent = tick(lo);
+    $("lg1").textContent = tick((lo + hi) / 2);
+    $("lg2").textContent = tick(hi);
+  }
+
+  // ---------- hover + click ----------
+  const hoverEl = $("hover");
+  let hoverRaf = 0;
+  if (window.matchMedia && window.matchMedia("(hover: hover)").matches) {
+    map.on("mousemove", (e) => {
+      if (hoverRaf) return;
+      hoverRaf = requestAnimationFrame(() => {
+        hoverRaf = 0;
+        if (!grid || !agg || !cur || !isLand(e.latlng.lat, e.latlng.lng)) { hoverEl.style.display = "none"; return; }
+        const v = interp((i) => agg[i], e.latlng.lat, e.latlng.lng);
+        if (v !== v) { hoverEl.style.display = "none"; return; }
+        hoverEl.textContent = fmt(v) + " " + cur.unit + " · " + latLabel(e.latlng.lat, e.latlng.lng);
+        hoverEl.style.left = e.containerPoint.x + "px";
+        hoverEl.style.top = e.containerPoint.y + "px";
+        hoverEl.style.display = "block";
+      });
+    });
+    map.on("mouseout", () => { hoverEl.style.display = "none"; });
+  }
+
+  map.on("click", (e) => {
+    if (!grid || !agg || !cur || !isLand(e.latlng.lat, e.latlng.lng)) return;
+    const v = interp((i) => agg[i], e.latlng.lat, e.latlng.lng);
+    if (v !== v) return;
+    const st = state();
+    L.popup({ maxWidth: 300 }).setLatLng(e.latlng).setContent(
+      popupHTML(fmt(v) + " " + st.unit, latLabel(e.latlng.lat, e.latlng.lng) + " · daily " + st.P.label.toLowerCase() + ", " + periodText(st.n) + " highlighted",
+        pointSeries(e.latlng.lat, e.latlng.lng))
+    ).openOn(map);
+  });
+
+  map.on("zoomend", () => { if (agg && cur) renderLabels(cur.P, cur.n, cur.mode, cur.unit); });
+
+  // ---------- panel ----------
+  const panel = $("panel"), toggle = $("toggle");
+  function setCollapsed(c, persist) {
+    panel.classList.toggle("collapsed", c);
+    toggle.setAttribute("aria-expanded", String(!c));
+    if (persist) { try { localStorage.setItem("eu_sun_collapsed", c ? "1" : "0"); } catch (_) { /* ignore */ } }
+  }
+  let stored = null;
+  try { stored = localStorage.getItem("eu_sun_collapsed"); } catch (_) { /* ignore */ }
+  setCollapsed(stored == null ? window.innerWidth < 640 : stored === "1", false);
+  toggle.addEventListener("click", () => setCollapsed(!panel.classList.contains("collapsed"), true));
+
+  // ---------- events + start ----------
+  PARAMS.forEach((P, i) => {
+    const o = document.createElement("option");
+    o.value = String(i); o.textContent = P.label;
+    $("param").appendChild(o);
+  });
+  updateModeLabels();
+  $("param").addEventListener("change", () => { updateModeLabels(); render(); });
+  $("days").addEventListener("change", render);
+  document.querySelectorAll('input[name="metric"]').forEach((r) => r.addEventListener("change", render));
+  $("res").addEventListener("change", () => load(false));
+  $("reload").addEventListener("click", () => load(true));
+
+  (async function start() {
+    setStatus("Loading map shapes…");
+    try { await loadShapes(); } catch (e) { setStatus("Land outline unavailable – showing the full field.", false); }
+    load(false);
+  })();
+})();
+</script>
+</body>
+</html>
