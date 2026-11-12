@@ -146,6 +146,62 @@ p:last-child {
   margin-bottom: 0;
 }
 
+/* Document toggle (Voorwaarden / Privacy) */
+.doc-toggle {
+  display: flex;
+  gap: 0.5rem;
+  width: fit-content;
+  background: var(--accent-soft);
+  padding: 0.35rem;
+  border-radius: 3px;
+  border: 1px solid var(--rule);
+  margin-bottom: 1.75rem;
+}
+
+.doc-btn {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 0.4rem 0.9rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ink-mid);
+  letter-spacing: 0.03em;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
+}
+
+.doc-btn.active {
+  background: var(--paper);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.doc-btn:hover:not(.active) { color: var(--ink); }
+
+.lang-btn:focus-visible, .doc-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+ul.plain {
+  margin: 0 0 1rem 1.2rem;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+ul.plain li { margin-bottom: 0.3rem; }
+
+.updated {
+  font-size: 13px;
+  color: var(--ink-light);
+  margin-bottom: 1.5rem;
+}
+
+a { color: var(--sidebar-accent); }
+
 /* Hidden content */
 .content { display: none; }
 .content.visible { display: block; }
@@ -161,7 +217,7 @@ p:last-child {
     box-shadow: none;
     border-radius: 0;
   }
-  .lang-toggle { display: none; }
+  .lang-toggle, .doc-toggle { display: none; }
   h1 {
     page-break-after: avoid;
   }
@@ -205,8 +261,13 @@ p:last-child {
     <button class="lang-btn" data-lang="en">EN</button>
   </div>
 
-  <!-- NEDERLANDS -->
-  <div id="content-nl" class="content visible">
+  <div class="doc-toggle" role="group" aria-label="Document">
+    <button class="doc-btn active" data-doc="terms" id="doc-terms-btn">Voorwaarden</button>
+    <button class="doc-btn" data-doc="privacy" id="doc-privacy-btn">Privacy</button>
+  </div>
+
+  <!-- VOORWAARDEN NEDERLANDS -->
+  <div id="terms-nl" class="content visible">
     <h1>Voorwaarden</h1>
 
     <div class="intro">
@@ -265,8 +326,8 @@ p:last-child {
     
   </div>
 
-  <!-- ENGLISH -->
-  <div id="content-en" class="content">
+  <!-- TERMS ENGLISH -->
+  <div id="terms-en" class="content">
     <h1>Terms</h1>
 
     <div class="intro">
@@ -324,46 +385,202 @@ p:last-child {
       <p>Unless we agree otherwise, Dutch law applies to this agreement.</p>
     </section>
   </div>
-  
+
+  <!-- PRIVACY NEDERLANDS -->
+  <div id="privacy-nl" class="content">
+    <h1>Privacyverklaring</h1>
+    <p class="updated">Laatst bijgewerkt: 12 november 2026</p>
+
+    <div class="intro">
+      <p><strong>Zo min mogelijk gegevens, zo zorgvuldig mogelijk.</strong> Hieronder leg ik uit welke persoonsgegevens ik verwerk als je mijn website bezoekt of met mij samenwerkt aan een website, en wat je rechten zijn.</p>
+    </div>
+
+    <section>
+      <h2>1. Wie is verantwoordelijk?</h2>
+      <p>René Smit, freelancer (website development). Voor vragen, inzage, bezwaar of andere verzoeken mail je naar <a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a>.</p>
+    </section>
+
+    <section>
+      <h2>2. Welke gegevens verwerk ik?</h2>
+      <p>Als je contact met me opneemt of opdrachtgever wordt, verwerk ik:</p>
+      <ul class="plain">
+        <li>contact- en bedrijfsgegevens (naam, e-mailadres, telefoonnummer, bedrijfsnaam);</li>
+        <li>factuur- en betaalgegevens (zoals adres en btw-nummer);</li>
+        <li>je berichten en afspraken over de opdracht;</li>
+        <li>materiaal dat je aanlevert, zoals teksten, foto's en logo's;</li>
+        <li>toegangsgegevens tot bijvoorbeeld je hosting of domein, alleen als dat voor de opdracht nodig is.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>3. Waarom en op welke grondslag?</h2>
+      <p>Ik gebruik deze gegevens om offertes te maken, de opdracht uit te voeren en te factureren (uitvoering van de overeenkomst, art. 6 lid 1 onder b AVG), om aan wettelijke administratieplichten te voldoen (art. 6 lid 1 onder c AVG) en om vragen te beantwoorden (gerechtvaardigd belang, art. 6 lid 1 onder f AVG).</p>
+    </section>
+
+    <section>
+      <h2>4. Deze website</h2>
+      <p>Op deze pagina plaats ik geen cookies en gebruik ik geen bezoekstatistieken of advertenties. Je browser bewaart wel lokaal je keuze voor taal en document (Voorwaarden of Privacy), zodat die bij een volgend bezoek wordt onthouden. Die keuze blijft op je eigen apparaat en je kunt haar wissen via de websitegegevens in je browser.</p>
+      <p>De pagina wordt gehost op GitHub Pages. GitHub verwerkt daarbij technische gegevens zoals je IP-adres. Ook worden lettertypen geladen van Google Fonts, waardoor je IP-adres naar Google wordt gestuurd. Voor deze partijen geldt hun eigen privacybeleid. Ik zie zelf niet wie de pagina bezoekt.</p>
+    </section>
+
+    <section>
+      <h2>5. Delen met anderen</h2>
+      <p>Ik verkoop geen gegevens. Ik deel gegevens alleen als dat nodig is voor de opdracht of de administratie, bijvoorbeeld met een hostingpartij, domeinregistrar, boekhoudprogramma of e-mailprovider. Bij AI-ondersteunde ontwikkeling zet ik zo min mogelijk persoonsgegevens in. Materiaal dat je aanlevert kan wel als projectinvoer door de aanbieder van de AI-tool worden verwerkt.</p>
+    </section>
+
+    <section>
+      <h2>6. Hoe lang bewaar ik gegevens?</h2>
+      <p>Facturen en administratie bewaar ik zeven jaar, zoals de fiscale bewaarplicht vereist. Projectmateriaal en correspondentie bewaar ik zolang de opdracht loopt en daarna zolang redelijkerwijs nodig is, bijvoorbeeld voor nazorg. Op verzoek verwijder ik materiaal eerder, voor zover de wet dat toestaat.</p>
+    </section>
+
+    <section>
+      <h2>7. Websites die ik voor je bouw</h2>
+      <p>Jij bent verantwoordelijk voor de gegevens van de bezoekers van je eigen website, zoals de privacyverklaring en cookiekeuzes. Ik denk graag mee over een privacyvriendelijke opzet. Krijg ik in het kader van de opdracht toegang tot persoonsgegevens van jouw bezoekers of klanten, dan maken we daarover aparte afspraken, zo nodig in een verwerkersovereenkomst.</p>
+    </section>
+
+    <section>
+      <h2>8. Jouw rechten</h2>
+      <p>Je kunt vragen om inzage, correctie of verwijdering van je persoonsgegevens, om beperking van de verwerking en om overdracht van je gegevens. Je kunt ook bezwaar maken tegen verwerking op basis van gerechtvaardigd belang. Ik reageer in principe binnen één maand. Je kunt ook een klacht indienen bij de <a href="https://autoriteitpersoonsgegevens.nl" rel="noopener">Autoriteit Persoonsgegevens</a>.</p>
+    </section>
+
+    <section>
+      <h2>9. Wijzigingen</h2>
+      <p>Ik pas deze verklaring aan als mijn werkwijze of de verwerking verandert. De datum bovenaan laat zien wanneer de tekst voor het laatst is bijgewerkt.</p>
+    </section>
+  </div>
+
+  <!-- PRIVACY ENGLISH -->
+  <div id="privacy-en" class="content">
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: 12 November 2026</p>
+
+    <div class="intro">
+      <p><strong>As little data as possible, handled as carefully as possible.</strong> Below I explain which personal data I process when you visit my website or work with me on a website, and what your rights are.</p>
+    </div>
+
+    <section>
+      <h2>1. Who is responsible?</h2>
+      <p>René Smit, freelancer (website development). For questions, access requests, objections or other requests, email <a href="mailto:rcx.smit@gmail.com">rcx.smit@gmail.com</a>.</p>
+    </section>
+
+    <section>
+      <h2>2. What data do I process?</h2>
+      <p>If you contact me or become a client, I process:</p>
+      <ul class="plain">
+        <li>contact and business details (name, email address, phone number, company name);</li>
+        <li>invoicing and payment details (such as address and VAT number);</li>
+        <li>your messages and agreements about the project;</li>
+        <li>material you provide, such as text, photos and logos;</li>
+        <li>access details for, for example, your hosting or domain, only when the project requires it.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>3. Why, and on what legal basis?</h2>
+      <p>I use this data to prepare quotes, carry out the project and send invoices (performance of a contract, Art. 6(1)(b) GDPR), to meet legal record-keeping obligations (Art. 6(1)(c) GDPR) and to answer questions (legitimate interest, Art. 6(1)(f) GDPR).</p>
+    </section>
+
+    <section>
+      <h2>4. This website</h2>
+      <p>I don't set cookies on this page, and I don't use visitor statistics or advertising. Your browser does store your choice of language and document (Terms or Privacy) locally, so it is remembered on your next visit. That choice stays on your own device and you can clear it through your browser's site data.</p>
+      <p>This page is hosted on GitHub Pages. GitHub processes technical data such as your IP address. Fonts are also loaded from Google Fonts, which sends your IP address to Google. Those parties' own privacy policies apply. I can't see who visits this page.</p>
+    </section>
+
+    <section>
+      <h2>5. Sharing with others</h2>
+      <p>I don't sell data. I only share data when it is needed for the project or my administration, for example with a hosting provider, domain registrar, accounting software or email provider. In AI-assisted development I use as little personal data as possible. Material you provide may, however, be processed by the AI tool's provider as project input.</p>
+    </section>
+
+    <section>
+      <h2>6. How long do I keep data?</h2>
+      <p>I keep invoices and accounting records for seven years, as the Dutch tax retention obligation requires. Project material and correspondence are kept while the project runs and afterwards for as long as reasonably necessary, for example for follow-up support. On request I delete material sooner, as far as the law allows.</p>
+    </section>
+
+    <section>
+      <h2>7. Websites I build for you</h2>
+      <p>You are responsible for the data of your own website's visitors, including its privacy policy and cookie choices. I'm happy to help you set things up in a privacy-friendly way. If, as part of a project, I get access to personal data of your visitors or customers, we'll make separate arrangements, if needed in a data processing agreement.</p>
+    </section>
+
+    <section>
+      <h2>8. Your rights</h2>
+      <p>You can ask for access to, correction or deletion of your personal data, restriction of processing, and portability of your data. You can also object to processing based on legitimate interest. I normally respond within one month. You can also file a complaint with the Dutch Data Protection Authority (<a href="https://autoriteitpersoonsgegevens.nl" rel="noopener">Autoriteit Persoonsgegevens</a>).</p>
+    </section>
+
+    <section>
+      <h2>9. Changes</h2>
+      <p>I update this policy when my way of working or the processing changes. The date at the top shows when the text was last updated.</p>
+    </section>
+  </div>
 
 </div>
 
 <script>
+const version = "20261112-104500";
+
 const langBtns = document.querySelectorAll('.lang-btn');
-const contents = {
-  nl: document.getElementById('content-nl'),
-  en: document.getElementById('content-en')
+const docBtns = document.querySelectorAll('.doc-btn');
+const docLabels = {
+  nl: { terms: 'Voorwaarden', privacy: 'Privacy' },
+  en: { terms: 'Terms', privacy: 'Privacy' }
+};
+const titles = {
+  nl: { terms: 'Voorwaarden — Website Development', privacy: 'Privacyverklaring — Website Development' },
+  en: { terms: 'Terms — Website Development', privacy: 'Privacy Policy — Website Development' }
 };
 
-// Get saved language or default to Dutch
-const savedLang = localStorage.getItem('site-language') || 'nl';
-setLanguage(savedLang);
+function readStore(key, allowed, fallback) {
+  try {
+    const v = localStorage.getItem(key);
+    return allowed.includes(v) ? v : fallback;
+  } catch (e) { return fallback; }
+}
+function writeStore(key, value) {
+  try { localStorage.setItem(key, value); } catch (e) { /* storage unavailable */ }
+}
+
+// Start state: URL hash (#privacy / #terms) wins, then saved choice, then defaults
+const hashDoc = location.hash.replace('#', '');
+let currentLang = readStore('site-language', ['nl', 'en'], 'nl');
+let currentDoc = ['terms', 'privacy'].includes(hashDoc)
+  ? hashDoc
+  : readStore('site-document', ['terms', 'privacy'], 'terms');
+
+function render() {
+  document.querySelectorAll('.content').forEach(el => {
+    el.classList.toggle('visible', el.id === currentDoc + '-' + currentLang);
+  });
+  langBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.lang === currentLang));
+  docBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.doc === currentDoc);
+    btn.textContent = docLabels[currentLang][btn.dataset.doc];
+  });
+  document.documentElement.lang = currentLang;
+  document.title = titles[currentLang][currentDoc];
+}
 
 langBtns.forEach(btn => {
   btn.addEventListener('click', () => {
-    const lang = btn.dataset.lang;
-    setLanguage(lang);
-    localStorage.setItem('site-language', lang);
+    currentLang = btn.dataset.lang;
+    writeStore('site-language', currentLang);
+    render();
   });
 });
 
-function setLanguage(lang) {
-  // Hide all content
-  Object.values(contents).forEach(content => content.classList.remove('visible'));
-  
-  // Show selected language
-  if (contents[lang]) {
-    contents[lang].classList.add('visible');
-  }
-  
-  // Update button states
-  langBtns.forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.lang === lang);
+docBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentDoc = btn.dataset.doc;
+    writeStore('site-document', currentDoc);
+    history.replaceState(null, '', '#' + currentDoc);
+    render();
   });
-  
-  // Update document language
-  document.documentElement.lang = lang;
-}
+});
+
+window.addEventListener('hashchange', () => {
+  const h = location.hash.replace('#', '');
+  if (['terms', 'privacy'].includes(h)) { currentDoc = h; render(); }
+});
+
+render();
 </script>
 
 </body>
