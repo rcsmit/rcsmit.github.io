@@ -1,3 +1,4 @@
+const version = "20261121-141200";
 // https://chatgpt.com/c/6859c419-a1a4-8004-b078-2789d909243d
 const data = {
   nodes: [
@@ -508,7 +509,7 @@ const data = {
     {
       "id": "acroyoga_pose_61" ,
       "info":"loremp ipsum",
-      "video":"NZR0OfbYKA",
+      "video":"-NZR0OfbYKA",
       "photo":"C:\\Users\\rcxsm\\Downloads\\unnamed.jpg",
       "label": "trapdoor",
       "category":"transition",
@@ -1115,8 +1116,54 @@ edges : [
 
 const svg = document.getElementById("chart");
 const viewGroup = document.getElementById("viewGroup");
-const tooltip = document.getElementById("tooltip");
-const popup = document.getElementById("popup");
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// Get an element by id, or create it when the HTML page doesn't contain it.
+// (Missing #tooltip / #popup caused the "Cannot set properties of null" errors.)
+function ensureEl(id, className, styles) {
+  let el = document.getElementById(id);
+  if (!el) {
+    el = document.createElement("div");
+    el.id = id;
+    if (className) el.className = className;
+    document.body.appendChild(el);
+  }
+  if (styles) {
+    for (const [k, v] of Object.entries(styles)) {
+      if (!el.style[k]) el.style[k] = v;
+    }
+  }
+  return el;
+}
+
+const tooltip = ensureEl("tooltip", "tooltip", {
+  position: "fixed", background: "#333", color: "#fff", padding: "5px 10px",
+  borderRadius: "4px", fontSize: "12px", fontFamily: "Arial, sans-serif",
+  pointerEvents: "none", visibility: "hidden", zIndex: "1001"
+});
+const popup = ensureEl("popup", "popup", {
+  position: "fixed", background: "#fff", border: "1px solid #aaa", padding: "10px",
+  borderRadius: "6px", boxShadow: "0 4px 16px rgba(0,0,0,.15)", display: "none", zIndex: "1000"
+});
+
+// Label without the "#" line-break marker and the "_" (to-do) marker
+function cleanLabel(label) {
+  return label.replace(/#/g, " ").replace(/_/g, "").replace(/\s+/g, " ").trim();
+}
+
+function closePopup() {
+  popup.style.display = "none";
+  popup.innerHTML = "";          // also stops a playing YouTube video
+}
+
+function positionNear(el, clientX, clientY, margin = 15) {
+  const w = el.offsetWidth, h = el.offsetHeight;
+  let left = clientX + margin, top = clientY + margin;
+  if (left + w > window.innerWidth) left = Math.max(margin, clientX - w - margin);
+  if (top + h > window.innerHeight) top = Math.max(margin, clientY - h - margin);
+  el.style.left = left + "px";
+  el.style.top = top + "px";
+}
 
 const categoryColors = {
   static: "#e0f7fa",
@@ -1164,13 +1211,16 @@ function zoom(factor) {
 updateViewBox();
 
 let isDragging = false;
+let dragMoved = false;
 let start = null;
 svg.addEventListener("mousedown", (e) => {
   isDragging = true;
+  dragMoved = false;
   start = { x: e.clientX, y: e.clientY };
 });
 svg.addEventListener("mousemove", (e) => {
   if (!isDragging) return;
+  if (Math.abs(e.clientX - start.x) + Math.abs(e.clientY - start.y) > 3) dragMoved = true;
   const dx = (e.clientX - start.x) * viewBox.w / svg.clientWidth;
   const dy = (e.clientY - start.y) * viewBox.h / svg.clientHeight;
   viewBox.x -= dx;
@@ -1178,7 +1228,7 @@ svg.addEventListener("mousemove", (e) => {
   updateViewBox();
   start = { x: e.clientX, y: e.clientY };
 });
-svg.addEventListener("mouseup", () => isDragging = false);
+window.addEventListener("mouseup", () => isDragging = false);
 
 
 // =======================
@@ -1187,6 +1237,34 @@ svg.addEventListener("mouseup", () => isDragging = false);
 
  
 drawFlowchart(data.nodes, data.edges);
+
+function fillPopup(node) {
+  let video = "";
+  if (node.video) {
+    const id = encodeURIComponent(node.video);
+    const watchLink = `<a href="https://www.youtube.com/watch?v=${id}" target="_blank" rel="noopener" style="font-size:13px;">Open on YouTube &#8599;</a>`;
+    if (location.protocol === "file:") {
+      // YouTube refuses embeds without a referrer (error 153); a local file sends none.
+      video = `<p style="margin:0 0 6px;font-size:12px;color:#666;max-width:280px;">The embedded player doesn't work when this page is opened as a local file. Serve it over http(s) to see the video here.</p>${watchLink}`;
+    } else {
+      video = `<iframe width="280" height="157" src="https://www.youtube.com/embed/${id}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe><div style="margin-top:4px;">${watchLink}</div>`;
+    }
+  }
+  popup.innerHTML = `
+    <button type="button" class="popup-close" aria-label="Close"
+      style="position:absolute;top:4px;right:6px;border:none;background:none;font-size:20px;line-height:1;cursor:pointer;">&times;</button>
+    <h3 style="margin:0 24px 8px 0;">${cleanLabel(node.label)}</h3>
+    ${video}
+  `;
+  popup.style.fontFamily = "Arial, sans-serif";
+}
+
+popup.addEventListener("click", (e) => {
+  if (e.target.closest(".popup-close")) closePopup();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closePopup();
+});
 
 function drawFlowchart(nodes, links) {
   const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
@@ -1216,12 +1294,12 @@ function drawFlowchart(nodes, links) {
     const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     g.setAttribute("transform", `translate(${node.x}, ${node.y})`);
     g.classList.add("node");
+    g.dataset.id = node.id;
+    g.style.cursor = "pointer";
 
    
     const shapeType = categoryShapes[node.category] || categoryShapes.default;
     const fillColor = categoryColors[node.category] || categoryColors.default;
-
-    SVG_NS = "http://www.w3.org/2000/svg";
 
     let shape;
     if (shapeType === "ellipse") {
@@ -1255,10 +1333,8 @@ function drawFlowchart(nodes, links) {
     } else if (shapeType === "diamond") {
       shape = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
       shape.setAttribute("points", "0,-20 20,0 0,20 -20,0");
-     } else if (shapeType === "no_box") {
-      // shape = document.createElementNS("http://www.w3.org/2000/svg", "none");
-      // shape.setAttribute("points", "0,-20 20,0 0,20 -20,0");
-      shape.setAttribute("stroke", "#fff");
+    } else if (shapeType === "none") {
+      shape = null;                 // label only, no box
     } else {
       shape = document.createElementNS("http://www.w3.org/2000/svg", "rect");
       shape.setAttribute("x", -50);
@@ -1268,9 +1344,10 @@ function drawFlowchart(nodes, links) {
       //shape.setAttribute("stroke", "#333");
     }
 
-    shape.setAttribute("fill", fillColor);
-  
-    g.appendChild(shape);
+    if (shape) {
+      shape.setAttribute("fill", fillColor);
+      g.appendChild(shape);
+    }
 
     // const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     // text.setAttribute("text-anchor", "middle");
@@ -1293,16 +1370,15 @@ function drawFlowchart(nodes, links) {
 
     g.appendChild(text);
 
-    g.addEventListener("mouseover", (e) => {
-      tooltip.textContent = node.label;
+    g.addEventListener("mouseenter", (e) => {
+      tooltip.textContent = cleanLabel(node.label);
       tooltip.style.visibility = "visible";
-      tooltip.style.left = e.pageX + 10 + "px";
-      tooltip.style.top = e.pageY + 10 + "px";
+      positionNear(tooltip, e.clientX, e.clientY, 10);
     });
 
     g.addEventListener("mousemove", (e) => {
-      tooltip.style.left = e.pageX + 10 + "px";
-      tooltip.style.top = e.pageY + 10 + "px";
+      if (isDragging) { tooltip.style.visibility = "hidden"; return; }
+      positionNear(tooltip, e.clientX, e.clientY, 10);
     });
 
     g.addEventListener("mouseleave", () => {
@@ -1310,40 +1386,16 @@ function drawFlowchart(nodes, links) {
     });
 
     g.addEventListener("click", (e) => {
-        popup.innerHTML = `
-        <h3>${node.label.replace(/#/g, ' ')}</h3>
-       
-        <iframe width="280" height="157" src="https://www.youtube.com/embed/${node.video}?si=EJNPiLa76TiQBHXK" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-      `;
-        
-
-        
-        // Temporarily show popup to measure it
-        popup.style.display = "block";
-        popup.style.visibility = "hidden";
-
-        const popupWidth = popup.offsetWidth;
-        const popupHeight = popup.offsetHeight;
-        const margin = 15;
-
-        // Calculate position
-        let left = e.pageX + margin;
-        let top = e.pageY + margin;
-
-        if (left + popupWidth > window.innerWidth) {
-          left = e.pageX - popupWidth - margin;
-        }
-        if (top + popupHeight > window.innerHeight) {
-          top = e.pageY - popupHeight - margin;
-        }
-        popup.style.fontFamily = "Arial, sans-serif";
-        // Set position
-        popup.style.left = `${left}px`;
-        popup.style.top = `${top}px`;
-        popup.style.visibility = "visible";
-      });
-            
-
+      if (dragMoved) return;        // the mouseup at the end of a pan is not a click
+      e.stopPropagation();
+      tooltip.style.visibility = "hidden";
+      fillPopup(node);
+      popup.style.transform = "";
+      popup.style.display = "block";
+      popup.style.visibility = "hidden";   // measure first, then place
+      positionNear(popup, e.clientX, e.clientY);
+      popup.style.visibility = "visible";
+    });
 
     // g.addEventListener("click", () => {
     //   popup.innerHTML = `
@@ -1360,11 +1412,6 @@ function drawFlowchart(nodes, links) {
   });
 }
 
-svg.addEventListener("click", (e) => {
-  if (!e.target.closest("g")) {
-    popup.style.display = "none";
-  }
-});
 
 // SEARCH
 
@@ -1377,14 +1424,11 @@ const searchStyles = `
     z-index: 1000;
     background: white;
     padding: 10px;
-    // border-radius: 5px;
-    // box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     font-family:Arial, sans-serif;
 
       border: 1px solid rgba(26,39,68,0.18);
     border-radius: 10px;
     background: rgba(255,255,255,0.96);
-    // color: var(--navy);
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
@@ -1474,7 +1518,7 @@ function displaySearchResults(results) {
   } else {
     searchResults.innerHTML = results.map(node => 
       `<div class="search-result-item" data-node-id="${node.id}">
-        ${node.label} <small>(${node.category})</small>
+        ${cleanLabel(node.label)} <small>(${node.category})</small>
       </div>`
     ).join('');
   }
@@ -1488,27 +1532,17 @@ function highlightNode(nodeId) {
     currentHighlightedNode.classList.remove('highlighted-node');
   }
   
-  // Find and highlight the new node
-  const nodeElements = document.querySelectorAll('.node');
-  nodeElements.forEach(nodeElement => {
-    const nodeData = data.nodes.find(n => 
-      nodeElement.getAttribute('transform').includes(`translate(${n.x}, ${n.y})`)
-    );
-    
-    if (nodeData && nodeData.id === nodeId) {
-      const shape = nodeElement.querySelector('rect, circle, ellipse, polygon');
-      if (shape) {
-        shape.classList.add('highlighted-node');
-        currentHighlightedNode = shape;
-        
-        // Pan to the node
-        panToNode(nodeData);
-        
-        // Show popup after a short delay
-        setTimeout(() => showNodePopup(nodeData), 500);
-      }
-    }
-  });
+  const nodeElement = document.querySelector(`.node[data-id="${CSS.escape(nodeId)}"]`);
+  const nodeData = data.nodes.find(n => n.id === nodeId);
+  if (!nodeElement || !nodeData) return;
+
+  const shape = nodeElement.querySelector('rect, circle, ellipse, polygon');
+  if (shape) {
+    shape.classList.add('highlighted-node');
+    currentHighlightedNode = shape;
+  }
+  panToNode(nodeData);
+  setTimeout(() => showNodePopup(nodeData), 500);
 }
 
 function panToNode(node) {
@@ -1519,25 +1553,12 @@ function panToNode(node) {
 }
 
 function showNodePopup(node) {
-  // Create popup content
-  popup.innerHTML = `
-   
-    <h3>${node.label.replace(/#/g, ' ')}</h3>
-   
-    <iframe width="280" height="157" src="https://www.youtube.com/embed/${node.video}?si=EJNPiLa76TiQBHXK" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-  `;
-  
-  // Position popup in center of screen
+  fillPopup(node);
   popup.style.display = "block";
-  // popup.style.left = "50%";
-  // popup.style.top = "50%";
-  // popup.style.transform = "translate(-50%, -50%)";
   popup.style.left = "20%";
   popup.style.top = "50%";
   popup.style.transform = "translate(-50%, -50%)";
-  popup.style.position = "fixed";
   popup.style.visibility = "visible";
-  popup.style.fontFamily = "Arial, sans-serif";
 }
 
 // Event listeners
@@ -1580,8 +1601,9 @@ document.addEventListener('click', (e) => {
 
 // Clear highlight when clicking on SVG background
 svg.addEventListener("click", (e) => {
-  if (!e.target.closest("g")) {
-    popup.style.display = "none";
+  if (dragMoved) return;
+  if (!e.target.closest(".node")) {
+    closePopup();
     if (currentHighlightedNode) {
       currentHighlightedNode.classList.remove('highlighted-node');
       currentHighlightedNode = null;
