@@ -36,8 +36,12 @@
    #                             phones); own location marker is a pulsing diamond, distinct from the round place markers
    # version : 20261107-145500 - "Show names on map" toggle (permanent labels, remembered per browser) and a Status
    #                             dropdown (default ALL) built from the sheet's Status column; ?status= deeplink
+   # version : 20261123-132500 - Clicking a place name in the bottom table zooms to its marker and opens the popup;
+   #                             every row gets an internal key, so this also works for rows without an Id
+   # version : 20261123-133500 - "Show all" button under the location button (config.resetView): zooms back out to
+   #                             the opening view (all places of the active layers)
    ========================================================================= */
-const version = "20261107-145500";
+const version = "20261123-133500";
 
 (function () {
   'use strict';
@@ -79,6 +83,7 @@ const version = "20261107-145500";
     fallbackMeta: {},           // layer descriptions used with fallbackData
     showNames: false,           // initial state of the "show names" toggle (the visitor's choice is remembered)
     locate: true,               // "my location" button; the position is only requested when the button is pressed
+    resetView: true,            // "show all" button under the location button: back to the opening view
     qr: { enabled: false, url: '' },   // url = fixed base address; empty = the address of the current page
     strings: {
       searchLabel: 'Search',
@@ -112,6 +117,7 @@ const version = "20261107-145500";
       statusLabel: 'Status',
       statusAll: 'ALL',
       locateTitle: 'Show my location',
+      resetViewTitle: 'Show all places',
       locating: 'Finding your location…',
       youAreHere: 'You are here',
       accuracy: 'Accuracy: about {n} m',
@@ -387,7 +393,7 @@ const version = "20261107-145500";
   const activeLayers = new Set();
   const layerColors = {};
   let clusterGroups = {};
-  const markersById = {};          // rowId -> { marker, cluster, lat, lon }
+  const markersById = {};          // row._key -> { marker, cluster, lat, lon }
   let basemapLayer = null;         // L.maplibreGL layer
   let showNames = false;           // permanent name labels on the markers
   let basemapSeq = 0;              // guards against out-of-order async style loads
@@ -558,6 +564,7 @@ const version = "20261107-145500";
     });
     initBasemap();
     initLocate();
+    initResetView();
   }
 
   function fitMapToVisible(data) {
@@ -647,7 +654,7 @@ const version = "20261107-145500";
             ? { permanent: true, direction: 'right', offset: [8, 0], className: 'cm-label' }
             : { direction: 'top', offset: [0, -6] })
           .addTo(cluster);
-        if (row[F.id]) markersById[row[F.id]] = { marker, cluster, lat, lon };
+        markersById[row._key] = { marker, cluster, lat, lon };
       });
 
       cluster.addTo(map);
@@ -655,7 +662,7 @@ const version = "20261107-145500";
     });
   }
 
-  // Called from the table row icon: zoom to the place and open its popup.
+  // Called from the table (place name or 📍 icon): zoom to the place and open its popup.
   // markercluster's zoomToShowLayer() waits for a marker icon element, which circle markers don't
   // have, so its callback may never fire. Instead zoom first (past the clustering zoom) and open
   // the popup directly on the map once the move has finished.
@@ -734,13 +741,15 @@ const version = "20261107-145500";
         const site = safeUrl(r[F.website]);
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${escH(r[F.name])}</td>
+          <td>${hasCoords
+            ? `<button type="button" class="name-link" data-show-id="${escH(r._key)}" title="${escH(S.showOnMap)}">${escH(r[F.name])}</button>`
+            : escH(r[F.name])}</td>
           <td>${escH(r[F.address])}</td>
           <td class="td-website" title="${escH(r[F.website])}">${site ? `<a href="${escH(site)}" target="_blank" rel="noopener noreferrer">${escH(shortUrl(site))}</a>` : ''}</td>
           <td>${escH(r[F.remarks])}</td>
           <td class="td-actions">
             <a class="row-icon" href="${escH(mapsUrlFor(r))}" target="_blank" rel="noopener noreferrer" title="${escH(S.searchOnGoogleMaps)}">🔍</a>
-            ${hasCoords && r[F.id] ? `<button type="button" class="row-icon" data-show-id="${escH(r[F.id])}" title="${escH(S.showOnMap)}">📍</button>` : ''}
+            ${hasCoords ? `<button type="button" class="row-icon" data-show-id="${escH(r._key)}" title="${escH(S.showOnMap)}">📍</button>` : ''}
           </td>`;
         tbody.appendChild(tr);
       });
@@ -812,6 +821,36 @@ const version = "20261107-145500";
       }
     });
     map.addControl(new LocateControl());
+  }
+
+  // ── SHOW ALL (back to the opening view) ─────────────────────────────────────
+  // Same view as when the page opens: all places of the active layers in view, or the configured center/zoom.
+  const RESET_ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+
+  function resetView() {
+    map.closePopup();
+    const hasPoints = filteredData.some(r => activeLayers.has(r[F.category]) &&
+      !isNaN(toFloat(r[F.lat])) && !isNaN(toFloat(r[F.lon])));
+    if (hasPoints) fitMapToVisible(filteredData);
+    else map.setView(cfg.center, cfg.zoom);
+  }
+
+  function initResetView() {
+    if (!cfg.resetView) return;
+    const ResetControl = L.Control.extend({
+      options: { position: 'topright' },
+      onAdd() {
+        const bar = L.DomUtil.create('div', 'leaflet-bar locate-control reset-control');
+        const a = L.DomUtil.create('a', '', bar);
+        a.href = '#'; a.setAttribute('role', 'button');
+        a.title = S.resetViewTitle; a.setAttribute('aria-label', S.resetViewTitle);
+        a.innerHTML = RESET_ICON;
+        L.DomEvent.disableClickPropagation(bar);
+        L.DomEvent.on(a, 'click', e => { L.DomEvent.preventDefault(e); resetView(); });
+        return bar;
+      }
+    });
+    map.addControl(new ResetControl());
   }
 
   // ── QR CODE ─────────────────────────────────────────────────────────────────
@@ -1082,6 +1121,7 @@ const version = "20261107-145500";
 
     try {
       [allData, layerMeta] = await Promise.all([fetchSheet(), fetchLayerMeta()]);
+      allData.forEach((r, i) => { r._key = 'r' + i; });   // internal key for table -> marker (works without an Id column)
       filteredData = [...allData];
       const allLayers = layerNamesOf(allData);
       assignLayerColors(allLayers);

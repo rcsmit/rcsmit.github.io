@@ -1,4 +1,4 @@
-<!-- version = "20261107-145500" -->
+<!-- version = "20261123-133500" -->
 # citymap — reusable curated city map
 
 Shared engine for maps like `rcsmit.github.io/rome/`. One engine, one small `index.html` per city.
@@ -22,7 +22,7 @@ Share it as **Anyone with the link → Viewer**.
 - Column `Status` (optional, name configurable via `fields.status`): when filled, a **Status** dropdown (default `ALL`) appears in the sidebar and filters places and layers. `?status=Open` preselects a value.
 - Tab `LAYERS` (optional): columns `Layer`, `Description`, `Source`. Shown as hover tooltip and above each table.
 - The `naam` cell may contain a pasted Google Maps place link (`https://www.google.com/maps/place/…`). The map shows the place name, takes LAT/LON from the link when those cells are empty, and uses the cleaned link as the "Google Maps" link. Short `maps.app.goo.gl` links cannot be decoded.
-- `Id` must be unique per row (used by the "show on map" button).
+- `Id` is optional. Clicking a place name (or 📍) in the bottom table zooms to that marker and opens its popup; this works for every row with coordinates, with or without an `Id`.
 
 ## Config keys (all optional except `center` and `sheet.id`)
 | Key | Default | Meaning |
@@ -41,6 +41,7 @@ Share it as **Anyone with the link → Viewer**.
 | `clusterMaxRadius`, `clusterDisableAtZoom` | 60 / 13 | Marker clustering |
 | `showNames` | `false` | Initial state of the "Show names on map" toggle; the visitor's own choice is remembered in the browser |
 | `locate` | `true` | "My location" button under the zoom control. The position is only requested when it is pressed, shown as a pulsing blue diamond with accuracy circle (top-right, next to the zoom buttons), never stored or tracked. Needs https (GitHub Pages is). `false` removes the button |
+| `resetView` | `true` | "Show all" button under the location button: zooms back to the opening view (all places of the active layers). `false` removes it |
 | `qr` | `{enabled:false, url:""}` | `enabled:true` adds a "QR code" button (modal, SVG download) and a QR on the printed map. It encodes `url` (or the current page address) plus the active `?layer=` selection |
 | `fallbackData`, `fallbackMeta` | none | Rows/descriptions used when the sheet is unreachable |
 | `strings` | English | Every UI text, e.g. `placesCount: "{n} plaatsen"` for a Dutch map |

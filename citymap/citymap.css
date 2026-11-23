@@ -1,4 +1,4 @@
-/* version = "20261107-145500" */
+/* version = "20261123-133500" */
 /* ============================================================================
    citymap.css — generic styles for the reusable city map (see citymap.js).
    All colours and fonts are CSS variables. The defaults below are a neutral
@@ -318,6 +318,14 @@ td.td-actions { white-space: nowrap; text-align: right; }
 .row-icon:active { transform: scale(0.95); }
 tr:last-child td { border-bottom: none; }
 td a { color: var(--accent); text-decoration: none; }
+/* place name in the table: opens the marker on the map */
+.name-link {
+  font: inherit; color: inherit; background: none; border: none; padding: 0; margin: 0;
+  text-align: left; cursor: pointer; overflow-wrap: anywhere;
+  text-decoration: underline dotted var(--subtle); text-underline-offset: 2px;
+}
+.name-link:hover { color: var(--accent); text-decoration: underline solid var(--accent); }
+.name-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 2px; }
 td a:hover { text-decoration: underline; }
 
 /* ── POPUP ── */
@@ -363,6 +371,7 @@ td a:hover { text-decoration: underline; }
 .locate-control a:hover { color: var(--accent); }
 .locate-control a.active { color: #1a73e8; }
 .locate-control a.busy { opacity: .45; cursor: progress; }
+.reset-control a.active { color: var(--deep); }   /* "show all" has no on-state */
 #map-toast {
   display: none; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); z-index: 500;
   background: var(--deep); color: var(--cream); font-size: 0.78rem; line-height: 1.4; text-align: center;
@@ -428,7 +437,7 @@ td a:hover { text-decoration: underline; }
   @page { margin: 12mm; }
   body { height: auto; overflow: visible; display: block; }
   #sidebar, #sidebar-toggle, #sidebar-overlay, #drag-handle, #table-panel, #no-layers-msg, #float-tip,
-  .leaflet-control-zoom, .locate-control, #map-toast, .leaflet-control-attribution, #qr-modal { display: none !important; }
+  .leaflet-control-zoom, .locate-control, .reset-control, #map-toast, .leaflet-control-attribution, #qr-modal { display: none !important; }
   #main { display: block; height: auto; overflow: visible; }
   #map {
     width: 100% !important; height: 480pt !important; min-height: 0;
