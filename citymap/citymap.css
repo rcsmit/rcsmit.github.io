@@ -1,4 +1,4 @@
-/* version = "20261123-133500" */
+/* version = "20261123-134500" */
 /* ============================================================================
    citymap.css — generic styles for the reusable city map (see citymap.js).
    All colours and fonts are CSS variables. The defaults below are a neutral
@@ -367,7 +367,8 @@ td a:hover { text-decoration: underline; }
 #print-btn:hover { background: var(--accent); color: #fff; }
 
 /* ── MY LOCATION ── */
-.locate-control a { display: flex; align-items: center; justify-content: center; color: var(--deep); }
+.leaflet-bar.locate-control a { display: flex; align-items: center; justify-content: center; padding: 0; color: var(--deep); }
+.leaflet-bar.locate-control a svg { display: block; flex-shrink: 0; }
 .locate-control a:hover { color: var(--accent); }
 .locate-control a.active { color: #1a73e8; }
 .locate-control a.busy { opacity: .45; cursor: progress; }

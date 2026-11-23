@@ -40,8 +40,9 @@
    #                             every row gets an internal key, so this also works for rows without an Id
    # version : 20261123-133500 - "Show all" button under the location button (config.resetView): zooms back out to
    #                             the opening view (all places of the active layers)
+   # version : 20261123-134500 - citymap.css is loaded after the library CSS so its rules win; map button icons centred
    ========================================================================= */
-const version = "20261123-133500";
+const version = "20261123-134500";
 
 (function () {
   'use strict';
@@ -286,7 +287,8 @@ const version = "20261123-133500";
     });
   }
   async function loadDependencies() {
-    const css = [loadCss(BASE_URL + 'citymap.css'), ...LIB_CSS.map(loadCss)];
+    // citymap.css is appended last so it overrides Leaflet/MapLibre styles (equal specificity: last one wins).
+    const css = [...LIB_CSS.map(loadCss), loadCss(BASE_URL + 'citymap.css')];
     const fonts = fontsUrl();
     if (fonts) css.push(loadCss(fonts));
     await Promise.all(css);
