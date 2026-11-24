@@ -1,4 +1,4 @@
-<!-- version = "20261123-200000" -->
+<!-- version = "20261124-145300" -->
 # citymap — reusable curated city map
 
 Shared engine for maps like `rcsmit.github.io/rome/`. One engine, one small `index.html` per city.
@@ -13,7 +13,7 @@ paris/index.html
 
 ## New city in 3 steps
 1. Copy `rome/index.html` to `<city>/index.html`.
-2. Change `name`, `tagline`, `center`, `sheet.id`, `theme`, `disclaimer`, `popupWarning`, `storageKey`. Delete `fallbackData`/`fallbackMeta` (or replace with demo rows for that city).
+2. Change `name`, `city`, `tagline`, `center`, `sheet.id`, `theme`, `disclaimer`, `popupWarning`, `storageKey`. Delete `fallbackData`/`fallbackMeta` (or replace with demo rows for that city).
 3. Publish. The script tag `../citymap/citymap.js` works when `citymap/` and the city folders are siblings on the same GitHub Pages domain (`rcsmit.github.io`). Use the absolute URL `https://rcsmit.github.io/citymap/citymap.js` when the folders live elsewhere.
 
 ## Google Sheet
@@ -21,7 +21,7 @@ Share it as **Anyone with the link → Viewer**.
 - Tab `MASTER` (name configurable): columns `Id`, `Layer`, `naam`, `address`, `LON`, `LAT`, `website`, `remarks`. Rename the columns your sheet uses via `fields`.
 - Column `Status` (optional, name configurable via `fields.status`): when filled, a **Status** dropdown (default `ALL`) appears in the sidebar and filters places and layers. `?status=Open` preselects a value.
 - Tab `LAYERS` (optional): columns `Layer`, `Description`, `Source`. Shown as hover tooltip and above each table.
-- The `naam` cell may contain a pasted Google Maps place link (`https://www.google.com/maps/place/…`). The map shows the place name, takes LAT/LON from the link when those cells are empty, and uses the cleaned link as the "Google Maps" link. Short `maps.app.goo.gl` links cannot be decoded.
+- The `naam` cell may contain a pasted Google Maps place link (`https://www.google.com/maps/place/…`). The map shows the place name, takes LAT/LON from the link when those cells are empty, and builds the "Google Maps" link from the coordinates and the name (`…/maps/search/?api=1&query=<lat>,<lon>+<name>`). Short `maps.app.goo.gl` links cannot be decoded.
 - `address` and `website` are optional: when no row has a value, that column is left out of the table (and the address out of the printed legend).
 - `Id` is optional. Clicking a place name (or 📍) in the bottom table zooms to that marker and opens its popup; this works for every row with coordinates, with or without an `Id`.
 
@@ -29,6 +29,7 @@ Share it as **Anyone with the link → Viewer**.
 | Key | Default | Meaning |
 |---|---|---|
 | `name`, `accentWord`, `tagline`, `documentTitle` | `"City map"` | Sidebar title; `accentWord` is the word in the title shown italic gold |
+| `city` | `name` | City name used in the table's 🔍 Google Maps search (`<place> <city>`), e.g. `"Chiang Mai"` |
 | `center`, `zoom`, `maxZoom` | – / 12 / 19 | Initial map view; `center` is `[lat, lon]` |
 | `sheet` | `{id, dataTab:"MASTER", layersTab:"LAYERS"}` | Google Sheet |
 | `fields`, `metaFields` | see engine | Column names in the two tabs |

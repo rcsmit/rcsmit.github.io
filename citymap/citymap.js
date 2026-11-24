@@ -43,8 +43,10 @@
    # version : 20261123-134500 - citymap.css is loaded after the library CSS so its rules win; map button icons centred
    # version : 20261123-200000 - Address / Website columns are left out of the table (and the address out of the
    #                             printed legend) when no place in the sheet has one; empty address line hidden in popups
+   # version : 20261124-145300 - Google Maps links: popup link = search/?api=1&query=<lat>,<lon>+<name>; table 🔍 = text
+   #                             search "<name> <city>" (new config key `city`, falls back to `name`)
    ========================================================================= */
-const version = "20261123-200000";
+const version = "20261124-145300";
 
 (function () {
   'use strict';
@@ -65,6 +67,7 @@ const version = "20261123-200000";
     name: 'City map',           // sidebar title
     accentWord: '',             // word inside `name` shown in italic gold, e.g. "in"
     tagline: '',                // small line under the title
+    city: '',                   // city name added to the Google Maps text search; empty = `name`
     center: null,               // [lat, lon] — required
     zoom: 12,
     maxZoom: 19,
@@ -180,6 +183,7 @@ const version = "20261123-200000";
   // !3d<lat>!4d<lon> -> the exact coordinates of the place
   // @lat,lon,<n>m|z  -> only the map view of whoever copied the link; used as a fallback when it is a close zoom (>= 14z)
   // Short links (maps.app.goo.gl) cannot be decoded in the browser and are left as they are.
+  // The Google Maps links on the map are always rebuilt from name + coordinates (see mapsUrlFor).
   const GMAPS_PLACE_RE = /^https?:\/\/(?:www\.)?google\.[a-z.]+\/maps\/place\/([^/?#]+)/i;
   function parseGoogleMapsPlace(raw) {
     const url = String(raw || '').trim();
@@ -194,19 +198,12 @@ const version = "20261123-200000";
       const view = /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?),(\d+(?:\.\d+)?)z/.exec(url);
       if (view && parseFloat(view[3]) >= 14) { lat = view[1]; lon = view[2]; }
     }
-    let clean = url;
-    try {
-      const u = new URL(url);
-      ['entry', 'g_ep'].forEach(k => u.searchParams.delete(k));   // tracking parameters
-      clean = u.href;
-    } catch (e) {}
-    return { name, lat, lon, url: clean };
+    return { name, lat, lon };
   }
   function normalizeRow(row) {
     const g = parseGoogleMapsPlace(row[F.name]);
     if (!g) return row;
     row[F.name] = g.name;
-    row._gmapsUrl = g.url;
     if (isNaN(toFloat(row[F.lat])) || isNaN(toFloat(row[F.lon]))) {
       if (g.lat && g.lon) { row[F.lat] = g.lat; row[F.lon] = g.lon; }
     }
@@ -579,13 +576,23 @@ const version = "20261123-200000";
     map.fitBounds(L.latLngBounds(pts), { padding: [40, 40], maxZoom: 16 });
   }
 
-  // Exact coordinates give a precise pin; name + address is the fallback.
+  const GMAPS_SEARCH = 'https://www.google.com/maps/search/?api=1&query=';
+  function cityName() { return String(cfg.city || cfg.name || '').trim(); }
+
+  // Popup link: exact coordinates plus the place name, e.g.
+  //   https://www.google.com/maps/search/?api=1&query=18.7932115,98.9821212+goodsouls%20kitchen
+  // Without coordinates it falls back to the text search below.
   function mapsUrlFor(row) {
-    if (row._gmapsUrl) return row._gmapsUrl;   // the place link given in the sheet opens the exact place
     const lat = toFloat(row[F.lat]), lon = toFloat(row[F.lon]);
-    if (!isNaN(lat) && !isNaN(lon)) return `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
-    const q = [row[F.name], row[F.address]].filter(Boolean).join(' ');
-    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+    if (isNaN(lat) || isNaN(lon)) return mapsSearchUrlFor(row);
+    const name = String(row[F.name] || '').trim();
+    return GMAPS_SEARCH + lat + ',' + lon + (name ? '+' + encodeURIComponent(name) : '');
+  }
+
+  // Table 🔍: text search for the place name together with the city name.
+  function mapsSearchUrlFor(row) {
+    const q = [row[F.name], cityName()].map(v => String(v || '').trim()).filter(Boolean).join(' ');
+    return GMAPS_SEARCH + encodeURIComponent(q);
   }
 
   // ── FLOATING TOOLTIP (layer descriptions on hover) ──────────────────────────
@@ -772,7 +779,7 @@ const version = "20261123-200000";
           ${show.website ? `<td class="td-website" title="${escH(r[F.website])}">${site ? `<a href="${escH(site)}" target="_blank" rel="noopener noreferrer">${escH(shortUrl(site))}</a>` : ''}</td>` : ''}
           <td>${escH(r[F.remarks])}</td>
           <td class="td-actions">
-            <a class="row-icon" href="${escH(mapsUrlFor(r))}" target="_blank" rel="noopener noreferrer" title="${escH(S.searchOnGoogleMaps)}">🔍</a>
+            <a class="row-icon" href="${escH(mapsSearchUrlFor(r))}" target="_blank" rel="noopener noreferrer" title="${escH(S.searchOnGoogleMaps)}">🔍</a>
             ${hasCoords ? `<button type="button" class="row-icon" data-show-id="${escH(r._key)}" title="${escH(S.showOnMap)}">📍</button>` : ''}
           </td>`;
         tbody.appendChild(tr);

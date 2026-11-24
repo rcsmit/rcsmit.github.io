@@ -24,6 +24,7 @@ window.CITYMAP_CONFIG = {
   name: "Renato in Rome",
   accentWord: "in",                           // shown in italic gold in the title
   tagline: "A curated map of the Eternal City",
+  city:"Rome",
 
   // ── Map ─────────────────────────────────────────────────────────────────────
   center: [41.9028, 12.4964],                 // [lat, lon]
@@ -62,7 +63,7 @@ window.CITYMAP_CONFIG = {
 
   // ── Behaviour ───────────────────────────────────────────────────────────────
   storageKey: "renato",                       // keeps existing 'renato-basemap' preference
-  defaultLayers: 4,                           // first 4 layers on load (or a list of names, or "all")
+  defaultLayers: "all",                           // first 4 layers on load (or a list of names, or "all")
 
   // ── QR code: sidebar button + on the printed map. Encodes this address plus the active layers ──
   qr: { enabled: true, url: "https://rcsmit.github.io/rome/" },

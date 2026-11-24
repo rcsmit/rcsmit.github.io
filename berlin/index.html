@@ -25,6 +25,7 @@ window.CITYMAP_CONFIG = {
   name: "René in Berlin",
   accentWord: "in",                           // shown in italic gold in the title
   tagline: "A curated map of Berlin",
+  city:"Berlin",
 
   // ── Map ─────────────────────────────────────────────────────────────────────
   center: [52.518898, 13.401797],             // [lat, lon]
@@ -74,7 +75,7 @@ window.CITYMAP_CONFIG = {
 
   // ── Behaviour ───────────────────────────────────────────────────────────────
   storageKey: "berlin",                       // own basemap preference (separate from the Rome map)
-  defaultLayers: 4,                           // first 4 layers on load (or a list of names, or "all")
+  defaultLayers: "all",                           // first 4 layers on load (or a list of names, or "all")
 
   // ── QR code: sidebar button + on the printed map. Encodes this address plus the active layers ──
   qr: { enabled: true, url: "https://rcsmit.github.io/berlin/" },
