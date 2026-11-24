@@ -41,8 +41,10 @@
    # version : 20261123-133500 - "Show all" button under the location button (config.resetView): zooms back out to
    #                             the opening view (all places of the active layers)
    # version : 20261123-134500 - citymap.css is loaded after the library CSS so its rules win; map button icons centred
+   # version : 20261123-200000 - Address / Website columns are left out of the table (and the address out of the
+   #                             printed legend) when no place in the sheet has one; empty address line hidden in popups
    ========================================================================= */
-const version = "20261123-134500";
+const version = "20261123-200000";
 
 (function () {
   'use strict';
@@ -621,7 +623,7 @@ const version = "20261123-134500";
     const site = safeUrl(row[F.website]);
     return `<div class="popup-body">
         <div class="popup-name">${escH(row[F.name])}</div>
-        <div class="popup-addr">${escH(row[F.address])}</div>
+        ${row[F.address] ? `<div class="popup-addr">${escH(row[F.address])}</div>` : ''}
         ${row[F.remarks] ? `<div class="popup-remark">${escH(row[F.remarks])}</div>` : ''}
         ${site ? `<a class="popup-link" href="${escH(site)}" target="_blank" rel="noopener noreferrer">🌐 ${escH(row[F.website])}</a>` : ''}
         <a class="popup-link" href="${escH(mapsUrlFor(row))}" target="_blank" rel="noopener noreferrer">📍 ${escH(S.googleMaps)}</a>
@@ -715,7 +717,27 @@ const version = "20261123-134500";
   }
 
   // ── TABLE ───────────────────────────────────────────────────────────────────
+  // Optional columns are shown only when at least one place in the whole sheet has a value,
+  // so the layout stays the same while searching, filtering or panning.
+  function optionalColumns() {
+    return {
+      address: allData.some(r => (r[F.address] || '').trim() !== ''),
+      website: allData.some(r => safeUrl(r[F.website]) !== '')
+    };
+  }
+
+  // Column widths (%) for the visible columns; the space of a hidden column goes to name and remarks.
+  function tableColgroup(show) {
+    const w = { name: 20, address: show.address ? 25 : 0, website: show.website ? 14 : 0, remarks: 29, actions: 12 };
+    const spare = (show.address ? 0 : 25) + (show.website ? 0 : 14);
+    w.name += spare * 0.4;
+    w.remarks += spare * 0.6;
+    return '<colgroup>' + ['name', 'address', 'website', 'remarks', 'actions']
+      .filter(k => w[k] > 0).map(k => `<col class="col-${k}" style="width:${w[k]}%">`).join('') + '</colgroup>';
+  }
+
   function buildTable(data) {
+    const show = optionalColumns();
     const wrap = document.getElementById('table-wrap');
     wrap.innerHTML = '';
     layerNamesOf(data).forEach(layer => {
@@ -734,8 +756,8 @@ const version = "20261123-134500";
       wrap.appendChild(title);
 
       const tbl = document.createElement('table');
-      tbl.innerHTML = `<colgroup><col class="col-name"><col class="col-address"><col class="col-website"><col class="col-remarks"><col class="col-actions"></colgroup>
-        <thead><tr><th>${escH(S.colName)}</th><th>${escH(S.colAddress)}</th><th>${escH(S.colWebsite)}</th><th>${escH(S.colRemarks)}</th><th></th></tr></thead>`;
+      tbl.innerHTML = `${tableColgroup(show)}
+        <thead><tr><th>${escH(S.colName)}</th>${show.address ? `<th>${escH(S.colAddress)}</th>` : ''}${show.website ? `<th>${escH(S.colWebsite)}</th>` : ''}<th>${escH(S.colRemarks)}</th><th></th></tr></thead>`;
       const tbody = document.createElement('tbody');
       rows.forEach(r => {
         const lat = toFloat(r[F.lat]), lon = toFloat(r[F.lon]);
@@ -746,8 +768,8 @@ const version = "20261123-134500";
           <td>${hasCoords
             ? `<button type="button" class="name-link" data-show-id="${escH(r._key)}" title="${escH(S.showOnMap)}">${escH(r[F.name])}</button>`
             : escH(r[F.name])}</td>
-          <td>${escH(r[F.address])}</td>
-          <td class="td-website" title="${escH(r[F.website])}">${site ? `<a href="${escH(site)}" target="_blank" rel="noopener noreferrer">${escH(shortUrl(site))}</a>` : ''}</td>
+          ${show.address ? `<td>${escH(r[F.address])}</td>` : ''}
+          ${show.website ? `<td class="td-website" title="${escH(r[F.website])}">${site ? `<a href="${escH(site)}" target="_blank" rel="noopener noreferrer">${escH(shortUrl(site))}</a>` : ''}</td>` : ''}
           <td>${escH(r[F.remarks])}</td>
           <td class="td-actions">
             <a class="row-icon" href="${escH(mapsUrlFor(r))}" target="_blank" rel="noopener noreferrer" title="${escH(S.searchOnGoogleMaps)}">🔍</a>
@@ -923,14 +945,15 @@ const version = "20261123-134500";
       try { html += `<div class="pl-qr">${qrSvg(qrTargetUrl()).svg}<div>${escH(S.qrPrintCaption)}</div></div>`; } catch (e) { console.warn(e); }
     }
     html += `<div class="pl-active-layers"><strong>${escH(S.activeLayers)}</strong> ${layerNames.map(escH).join(', ') || '—'}</div>`;
+    const showAddress = optionalColumns().address;
     layerNames.forEach(layer => {
       const color = layerColors[layer] || '#333';
       html += `<div class="pl-section"><div class="pl-section-title" style="color:${color}">${escH(layer)}</div><table class="pl-table"><tbody>`;
       list.filter(e => e.layer === layer).forEach(({ number, row }) => {
         html += `<tr>
           <td style="width:24px"><span class="pl-num" style="background:${color}">${number}</span></td>
-          <td style="width:22%">${escH(row[F.name])}</td>
-          <td style="width:30%">${escH(row[F.address])}</td>
+          <td style="width:${showAddress ? 22 : 35}%">${escH(row[F.name])}</td>
+          ${showAddress ? `<td style="width:30%">${escH(row[F.address])}</td>` : ''}
           <td>${escH(row[F.remarks])}</td>
         </tr>`;
       });

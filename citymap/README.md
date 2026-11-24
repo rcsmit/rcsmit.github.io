@@ -1,4 +1,4 @@
-<!-- version = "20261123-133500" -->
+<!-- version = "20261123-200000" -->
 # citymap — reusable curated city map
 
 Shared engine for maps like `rcsmit.github.io/rome/`. One engine, one small `index.html` per city.
@@ -22,6 +22,7 @@ Share it as **Anyone with the link → Viewer**.
 - Column `Status` (optional, name configurable via `fields.status`): when filled, a **Status** dropdown (default `ALL`) appears in the sidebar and filters places and layers. `?status=Open` preselects a value.
 - Tab `LAYERS` (optional): columns `Layer`, `Description`, `Source`. Shown as hover tooltip and above each table.
 - The `naam` cell may contain a pasted Google Maps place link (`https://www.google.com/maps/place/…`). The map shows the place name, takes LAT/LON from the link when those cells are empty, and uses the cleaned link as the "Google Maps" link. Short `maps.app.goo.gl` links cannot be decoded.
+- `address` and `website` are optional: when no row has a value, that column is left out of the table (and the address out of the printed legend).
 - `Id` is optional. Clicking a place name (or 📍) in the bottom table zooms to that marker and opens its popup; this works for every row with coordinates, with or without an `Id`.
 
 ## Config keys (all optional except `center` and `sheet.id`)

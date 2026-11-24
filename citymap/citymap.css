@@ -1,4 +1,4 @@
-/* version = "20261123-134500" */
+/* version = "20261123-200000" */
 /* ============================================================================
    citymap.css — generic styles for the reusable city map (see citymap.js).
    All colours and fonts are CSS variables. The defaults below are a neutral
@@ -287,11 +287,7 @@ body {
 .table-section-title .ts-source { font-size: 0.63rem; color: var(--subtle); }
 
 table { width: 100%; border-collapse: collapse; font-size: 0.76rem; table-layout: fixed; }
-col.col-name    { width: 20%; }
-col.col-address { width: 25%; }
-col.col-website { width: 14%; }
-col.col-remarks { width: 29%; }
-col.col-actions { width: 12%; }
+/* column widths are set inline by citymap.js (Address/Website are dropped when the sheet has none) */
 
 th { text-align: left; padding: 4px 7px; color: var(--muted); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.65rem; border-bottom: 1px solid var(--border); }
 td { padding: 4px 7px; border-bottom: 1px solid var(--border-soft); vertical-align: top; overflow: hidden; }
