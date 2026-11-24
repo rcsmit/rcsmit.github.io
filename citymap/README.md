@@ -1,4 +1,4 @@
-<!-- version = "20261124-145300" -->
+<!-- version = "20261124-155600" -->
 # citymap — reusable curated city map
 
 Shared engine for maps like `rcsmit.github.io/rome/`. One engine, one small `index.html` per city.
@@ -20,9 +20,10 @@ paris/index.html
 Share it as **Anyone with the link → Viewer**.
 - Tab `MASTER` (name configurable): columns `Id`, `Layer`, `naam`, `address`, `LON`, `LAT`, `website`, `remarks`. Rename the columns your sheet uses via `fields`.
 - Column `Status` (optional, name configurable via `fields.status`): when filled, a **Status** dropdown (default `ALL`) appears in the sidebar and filters places and layers. `?status=Open` preselects a value.
+- Column `Region` (optional, name configurable via `fields.region`, header case does not matter): when filled, a **Region** dropdown (default `ALL`) appears next to Status (stacked on phones). `?region=North` preselects a value.
 - Tab `LAYERS` (optional): columns `Layer`, `Description`, `Source`. Shown as hover tooltip and above each table.
 - The `naam` cell may contain a pasted Google Maps place link (`https://www.google.com/maps/place/…`). The map shows the place name, takes LAT/LON from the link when those cells are empty, and builds the "Google Maps" link from the coordinates and the name (`…/maps/search/?api=1&query=<lat>,<lon>+<name>`). Short `maps.app.goo.gl` links cannot be decoded.
-- `address` and `website` are optional: when no row has a value, that column is left out of the table (and the address out of the printed legend).
+- `address` and `website` are optional and are shown in the marker popup. The bottom table lists only name, remarks and the action icons. The printed legend leaves out the address column when no row has one.
 - `Id` is optional. Clicking a place name (or 📍) in the bottom table zooms to that marker and opens its popup; this works for every row with coordinates, with or without an `Id`.
 
 ## Config keys (all optional except `center` and `sheet.id`)
@@ -45,7 +46,9 @@ Share it as **Anyone with the link → Viewer**.
 | `locate` | `true` | "My location" button under the zoom control. The position is only requested when it is pressed, shown as a pulsing blue diamond with accuracy circle (top-right, next to the zoom buttons), never stored or tracked. Needs https (GitHub Pages is). `false` removes the button |
 | `resetView` | `true` | "Show all" button under the location button: zooms back to the opening view (all places of the active layers). `false` removes it |
 | `qr` | `{enabled:false, url:""}` | `enabled:true` adds a "QR code" button (modal, SVG download) and a QR on the printed map. It encodes `url` (or the current page address) plus the active `?layer=` selection |
+| `listPosition` | `"bottom"` | Place list under the map, or `"right"`: a third column with each place's name, 🔍/📍 icons and description on its own line. Phones always use the bottom list |
+| `allMapsLink` | `{url:"https://rcsmit.github.io/citymap/", text:"ALL CITYMAPS"}` | Banner link under the QR / print buttons. `url:""` hides it |
 | `fallbackData`, `fallbackMeta` | none | Rows/descriptions used when the sheet is unreachable |
 | `strings` | English | Every UI text, e.g. `placesCount: "{n} plaatsen"` for a Dutch map |
 
-Deeplinks: `?layer=Gelato,Pizza2` activates those layers on load; `?status=Open` selects a status.
+Deeplinks: `?layer=Gelato,Pizza2` activates those layers on load; `?status=Open` selects a status; `?region=North` selects a region. Layer names in the sidebar and the place list show the number of places in brackets.

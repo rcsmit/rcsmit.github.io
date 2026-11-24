@@ -45,8 +45,13 @@
    #                             printed legend) when no place in the sheet has one; empty address line hidden in popups
    # version : 20261124-145300 - Google Maps links: popup link = search/?api=1&query=<lat>,<lon>+<name>; table 🔍 = text
    #                             search "<name> <city>" (new config key `city`, falls back to `name`)
+   # version : 20261124-152100 - Bottom table shows only name, remarks and actions; address and website are in the popup
+   # version : 20261124-155600 - Place counts "(n)" after layer names (sidebar + list); Region dropdown from an optional
+   #                             Region column (next to Status on desktop, ?region= deeplink); "ALL CITYMAPS" banner
+   #                             under the QR button (config.allMapsLink); config.listPosition "right" puts the place
+   #                             list in a third column on the right (name + icons, description below, separators)
    ========================================================================= */
-const version = "20261124-145300";
+const version = "20261124-155600";
 
 (function () {
   'use strict';
@@ -72,7 +77,7 @@ const version = "20261124-145300";
     zoom: 12,
     maxZoom: 19,
     sheet: { id: '', dataTab: 'MASTER', layersTab: 'LAYERS' },
-    fields: { id: 'Id', category: 'Layer', name: 'naam', address: 'address', lon: 'LON', lat: 'LAT', website: 'website', remarks: 'remarks', status: 'Status' },
+    fields: { id: 'Id', category: 'Layer', name: 'naam', address: 'address', lon: 'LON', lat: 'LAT', website: 'website', remarks: 'remarks', status: 'Status', region: 'Region' },
     metaFields: { layer: 'Layer', description: 'Description', source: 'Source' },
     theme: {},                  // CSS colour overrides, see README.md
     fonts: { heading: 'Playfair Display', body: 'Lato', url: '' },
@@ -91,6 +96,8 @@ const version = "20261124-145300";
     locate: true,               // "my location" button; the position is only requested when the button is pressed
     resetView: true,            // "show all" button under the location button: back to the opening view
     qr: { enabled: false, url: '' },   // url = fixed base address; empty = the address of the current page
+    allMapsLink: { url: 'https://rcsmit.github.io/citymap/', text: 'ALL CITYMAPS' },   // banner in the sidebar; url '' hides it
+    listPosition: 'bottom',     // place list under the map ('bottom') or as a third column on the right ('right'); phones always use 'bottom'
     strings: {
       searchLabel: 'Search',
       searchPlaceholder: 'Filter by name, address, remarks…',
@@ -108,8 +115,6 @@ const version = "20261124-145300";
       layerNotFound: 'Layer not found:',
       layersNotFound: 'Layers not found:',
       colName: 'Name',
-      colAddress: 'Address',
-      colWebsite: 'Website',
       colRemarks: 'Remarks',
       activeLayers: 'Active layers:',
       source: 'Source:',
@@ -122,6 +127,8 @@ const version = "20261124-145300";
       showNames: 'Show names on map',
       statusLabel: 'Status',
       statusAll: 'ALL',
+      regionLabel: 'Region',
+      regionAll: 'ALL',
       locateTitle: 'Show my location',
       resetViewTitle: 'Show all places',
       locating: 'Finding your location…',
@@ -175,7 +182,6 @@ const version = "20261124-145300";
       return (parsed.protocol === 'http:' || parsed.protocol === 'https:') ? parsed.href : '';
     } catch (e) { return ''; }
   }
-  function shortUrl(url) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return url; } }
 
   // A name cell may hold a pasted Google Maps place link, e.g.
   //   https://www.google.com/maps/place/Greentable+Vegan+Restaurant+Rathaus/@53.56,9.81,12357m/data=...!3d53.5494125!4d9.9928267...
@@ -298,6 +304,11 @@ const version = "20261124-145300";
     }
   }
 
+  function allMapsUrl() { return cfg.allMapsLink && cfg.allMapsLink.url ? safeUrl(cfg.allMapsLink.url) : ''; }
+
+  // Place list on the right (third column) only when configured and the screen is wide enough.
+  function listRight() { return cfg.listPosition === 'right' && !isMobile(); }
+
   // ── PAGE SHELL ──────────────────────────────────────────────────────────────
   function buildShell() {
     document.title = cfg.documentTitle || cfg.name;
@@ -315,10 +326,16 @@ const version = "20261124-145300";
           <div class="section-label">${escH(S.searchLabel)}</div>
           <input id="search-input" type="text" placeholder="${escH(S.searchPlaceholder)}" />
 
-          ${F.status ? `<div id="status-wrap" style="display:none">
-            <div class="section-label">${escH(S.statusLabel)}</div>
-            <select id="status-select" class="side-select"></select>
-          </div>` : ''}
+          <div id="filter-row" style="display:none">
+            ${F.status ? `<div id="status-wrap" style="display:none">
+              <div class="section-label">${escH(S.statusLabel)}</div>
+              <select id="status-select" class="side-select"></select>
+            </div>` : ''}
+            ${F.region ? `<div id="region-wrap" style="display:none">
+              <div class="section-label">${escH(S.regionLabel)}</div>
+              <select id="region-select" class="side-select"></select>
+            </div>` : ''}
+          </div>
 
           <div class="section-label">${escH(S.mapStyle)}</div>
           <select id="basemap-select"></select>
@@ -333,13 +350,16 @@ const version = "20261124-145300";
           <div id="loading-msg">${escH(S.loading)}</div>
           <button id="print-btn" type="button" title="${escH(S.printTitle)}">${escH(S.printButton)}</button>
           ${cfg.qr.enabled ? `<button id="qr-btn" class="side-btn" type="button">${escH(S.qrButton)}</button>` : ''}
+          ${allMapsUrl() ? `<a id="all-maps-link" href="${escH(allMapsUrl())}">${escH(cfg.allMapsLink.text || 'ALL CITYMAPS')}</a>` : ''}
         </div>
         ${cfg.disclaimer ? `<div id="disclaimer"><strong>⚠ ${escH(S.disclaimerLabel)}</strong> ${escH(cfg.disclaimer)}</div>` : ''}
       </aside>
       <div id="main">
-        <div id="map"></div>
-        <div id="no-layers-msg">${escH(S.noLayers)}</div>
-        <div id="map-toast" role="status" aria-live="polite"></div>
+        <div id="map-area">
+          <div id="map"></div>
+          <div id="no-layers-msg">${escH(S.noLayers)}</div>
+          <div id="map-toast" role="status" aria-live="polite"></div>
+        </div>
         <div id="drag-handle"></div>
         <div id="table-panel"><div id="table-wrap"></div></div>
         <div id="print-legend"><div id="print-legend-content"></div></div>
@@ -635,7 +655,7 @@ const version = "20261124-145300";
         ${site ? `<a class="popup-link" href="${escH(site)}" target="_blank" rel="noopener noreferrer">🌐 ${escH(row[F.website])}</a>` : ''}
         <a class="popup-link" href="${escH(mapsUrlFor(row))}" target="_blank" rel="noopener noreferrer">📍 ${escH(S.googleMaps)}</a>
         ${cfg.popupWarning ? `<div class="popup-warn">ℹ ${escH(cfg.popupWarning)}</div>` : ''}
-        <div class="popup-cat">${escH(row[F.category])}${F.status && row[F.status] ? ' · ' + escH(row[F.status]) : ''}</div>
+        <div class="popup-cat">${[row[F.category], F.region && row[F.region], F.status && row[F.status]].filter(Boolean).map(escH).join(' · ')}</div>
       </div>`;
   }
 
@@ -708,6 +728,7 @@ const version = "20261124-145300";
       li.innerHTML = `
         <span class="layer-dot" style="background:${layerColors[layer]}"></span>
         <span class="layer-name">${escH(layer)}</span>
+        <span class="layer-count">(${data.filter(r => r[F.category] === layer).length})</span>
         <span class="layer-check">${on ? '✓' : ''}</span>`;
       li.addEventListener('click', () => {
         clearDeeplinkWarning();
@@ -724,8 +745,7 @@ const version = "20261124-145300";
   }
 
   // ── TABLE ───────────────────────────────────────────────────────────────────
-  // Optional columns are shown only when at least one place in the whole sheet has a value,
-  // so the layout stays the same while searching, filtering or panning.
+  // Used by the printed legend: the address column is left out when no place in the sheet has one.
   function optionalColumns() {
     return {
       address: allData.some(r => (r[F.address] || '').trim() !== ''),
@@ -733,19 +753,39 @@ const version = "20261124-145300";
     };
   }
 
-  // Column widths (%) for the visible columns; the space of a hidden column goes to name and remarks.
-  function tableColgroup(show) {
-    const w = { name: 20, address: show.address ? 25 : 0, website: show.website ? 14 : 0, remarks: 29, actions: 12 };
-    const spare = (show.address ? 0 : 25) + (show.website ? 0 : 14);
-    w.name += spare * 0.4;
-    w.remarks += spare * 0.6;
-    return '<colgroup>' + ['name', 'address', 'website', 'remarks', 'actions']
-      .filter(k => w[k] > 0).map(k => `<col class="col-${k}" style="width:${w[k]}%">`).join('') + '</colgroup>';
+  // The bottom table lists name, remarks and the action icons; address and website are shown in the popup.
+  const TABLE_COLGROUP = '<colgroup><col class="col-name" style="width:38%"><col class="col-remarks"><col class="col-actions" style="width:60px"></colgroup>';
+
+  // Icons shared by the table and the list: Google Maps text search and "show on map".
+  function rowIcons(r, hasCoords) {
+    return `<a class="row-icon" href="${escH(mapsSearchUrlFor(r))}" target="_blank" rel="noopener noreferrer" title="${escH(S.searchOnGoogleMaps)}">🔍</a>` +
+      (hasCoords ? `<button type="button" class="row-icon" data-show-id="${escH(r._key)}" title="${escH(S.showOnMap)}">📍</button>` : '');
+  }
+  function nameHtml(r, hasCoords) {
+    return hasCoords
+      ? `<button type="button" class="name-link" data-show-id="${escH(r._key)}" title="${escH(S.showOnMap)}">${escH(r[F.name])}</button>`
+      : escH(r[F.name]);
+  }
+
+  // Right-hand list: name with the icons directly behind it, the description on the next line.
+  function buildPoiList(rows) {
+    const ul = document.createElement('ul');
+    ul.className = 'poi-list';
+    rows.forEach(r => {
+      const hasCoords = !isNaN(toFloat(r[F.lat])) && !isNaN(toFloat(r[F.lon]));
+      const li = document.createElement('li');
+      li.className = 'poi';
+      li.innerHTML =
+        `<div class="poi-head"><span class="poi-name">${nameHtml(r, hasCoords)}</span> <span class="poi-icons">${rowIcons(r, hasCoords)}</span></div>` +
+        (r[F.remarks] ? `<div class="poi-desc">${escH(r[F.remarks])}</div>` : '');
+      ul.appendChild(li);
+    });
+    return ul;
   }
 
   function buildTable(data) {
-    const show = optionalColumns();
     const wrap = document.getElementById('table-wrap');
+    const right = listRight();
     wrap.innerHTML = '';
     layerNamesOf(data).forEach(layer => {
       if (!activeLayers.has(layer)) return;
@@ -757,31 +797,25 @@ const version = "20261124-145300";
       const title = document.createElement('div');
       title.className = 'table-section-title';
       title.innerHTML =
-        `<div class="ts-name" style="color:${color}">${escH(layer)}</div>` +
+        `<div class="ts-name" style="color:${color}">${escH(layer)} <span class="ts-count">(${rows.length})</span></div>` +
         (meta.description ? `<div class="ts-meta">${escH(meta.description)}</div>` : '') +
         (meta.source      ? `<div class="ts-source">${escH(S.source)} ${escH(meta.source)}</div>` : '');
       wrap.appendChild(title);
 
+      if (right) { wrap.appendChild(buildPoiList(rows)); return; }
+
       const tbl = document.createElement('table');
-      tbl.innerHTML = `${tableColgroup(show)}
-        <thead><tr><th>${escH(S.colName)}</th>${show.address ? `<th>${escH(S.colAddress)}</th>` : ''}${show.website ? `<th>${escH(S.colWebsite)}</th>` : ''}<th>${escH(S.colRemarks)}</th><th></th></tr></thead>`;
+      tbl.innerHTML = `${TABLE_COLGROUP}
+        <thead><tr><th>${escH(S.colName)}</th><th>${escH(S.colRemarks)}</th><th></th></tr></thead>`;
       const tbody = document.createElement('tbody');
       rows.forEach(r => {
         const lat = toFloat(r[F.lat]), lon = toFloat(r[F.lon]);
         const hasCoords = !isNaN(lat) && !isNaN(lon);
-        const site = safeUrl(r[F.website]);
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td>${hasCoords
-            ? `<button type="button" class="name-link" data-show-id="${escH(r._key)}" title="${escH(S.showOnMap)}">${escH(r[F.name])}</button>`
-            : escH(r[F.name])}</td>
-          ${show.address ? `<td>${escH(r[F.address])}</td>` : ''}
-          ${show.website ? `<td class="td-website" title="${escH(r[F.website])}">${site ? `<a href="${escH(site)}" target="_blank" rel="noopener noreferrer">${escH(shortUrl(site))}</a>` : ''}</td>` : ''}
+          <td>${nameHtml(r, hasCoords)}</td>
           <td>${escH(r[F.remarks])}</td>
-          <td class="td-actions">
-            <a class="row-icon" href="${escH(mapsSearchUrlFor(r))}" target="_blank" rel="noopener noreferrer" title="${escH(S.searchOnGoogleMaps)}">🔍</a>
-            ${hasCoords ? `<button type="button" class="row-icon" data-show-id="${escH(r._key)}" title="${escH(S.showOnMap)}">📍</button>` : ''}
-          </td>`;
+          <td class="td-actions">${rowIcons(r, hasCoords)}</td>`;
         tbody.appendChild(tr);
       });
       tbl.appendChild(tbody);
@@ -789,7 +823,7 @@ const version = "20261124-145300";
     });
   }
 
-  // Only rows inside the current map viewport are listed in the bottom panel.
+  // Only rows inside the current map viewport are listed in the place list.
   function visibleTableData() {
     let bounds;
     try { bounds = map.getBounds(); } catch (e) { return filteredData; }
@@ -894,6 +928,7 @@ const version = "20261124-145300";
     u.search = '';
     if (activeLayers.size) u.searchParams.set('layer', [...activeLayers].join(','));
     if (currentStatus()) u.searchParams.set('status', currentStatus());
+    if (currentRegion()) u.searchParams.set('region', currentRegion());
     return u.href;
   }
 
@@ -1012,36 +1047,54 @@ const version = "20261124-145300";
   // ── SEARCH, DEEPLINKS, RENDER ───────────────────────────────────────────────
   function applySearch() {
     const q = document.getElementById('search-input').value.toLowerCase();
-    const keys = [F.category, F.name, F.address, F.website, F.remarks, F.status].filter(Boolean);
-    const st = currentStatus();
-    const rows = st ? allData.filter(r => (r[F.status] || '') === st) : allData;
+    const keys = [F.category, F.name, F.address, F.website, F.remarks, F.status, F.region].filter(Boolean);
+    const st = currentStatus(), rg = currentRegion();
+    const rows = allData.filter(r => (!st || (r[F.status] || '') === st) && (!rg || (r[F.region] || '') === rg));
     filteredData = q ? rows.filter(r => keys.some(k => (r[k] || '').toLowerCase().includes(q))) : [...rows];
   }
 
-  // Selected value of the Status dropdown ('' = ALL).
-  function currentStatus() {
-    const sel = document.getElementById('status-select');
-    return sel ? sel.value : '';
+  // Selected value of the Status / Region dropdowns ('' = ALL).
+  function selectValue(id) { const sel = document.getElementById(id); return sel ? sel.value : ''; }
+  function currentStatus() { return selectValue('status-select'); }
+  function currentRegion() { return selectValue('region-select'); }
+
+  // The sheet's column header may differ in case ("region" vs "Region"): use the header as it is in the sheet.
+  function resolveFieldName(key) {
+    if (!F[key] || !allData.length) return;
+    const want = String(F[key]).toLowerCase();
+    const actual = Object.keys(allData[0]).find(h => h.toLowerCase() === want);
+    if (actual) F[key] = actual;
   }
 
-  // Fills the Status dropdown from the distinct values in the sheet's Status column (hidden when there are none).
-  function initStatus() {
-    const sel = document.getElementById('status-select');
-    if (!sel) return;
-    const values = [...new Set(allData.map(r => r[F.status]).filter(Boolean))]
+  // Fills a filter dropdown from the distinct values in a sheet column (hidden when the column is empty or absent).
+  // Returns true when the dropdown is shown.
+  function initFilterSelect(field, selectId, wrapId, allLabel, param) {
+    const sel = document.getElementById(selectId);
+    if (!sel || !field) return false;
+    const values = [...new Set(allData.map(r => r[field]).filter(Boolean))]
       .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-    if (!values.length) return;
+    if (!values.length) return false;
     sel.innerHTML = '';
-    [['', S.statusAll], ...values.map(v => [v, v])].forEach(([value, label]) => {
+    [['', allLabel], ...values.map(v => [v, v])].forEach(([value, label]) => {
       const o = document.createElement('option');
       o.value = value; o.textContent = label;
       sel.appendChild(o);
     });
-    const wanted = new URLSearchParams(window.location.search).get('status');
+    const wanted = new URLSearchParams(window.location.search).get(param);
     const match = wanted && values.find(v => v.toLowerCase() === wanted.trim().toLowerCase());
     if (match) sel.value = match;
-    document.getElementById('status-wrap').style.display = 'block';
+    document.getElementById(wrapId).style.display = 'block';
     sel.addEventListener('change', () => render(true));
+    return true;
+  }
+
+  // Status and Region dropdowns, side by side on desktop.
+  function initFilters() {
+    resolveFieldName('status');
+    resolveFieldName('region');
+    const a = initFilterSelect(F.status, 'status-select', 'status-wrap', S.statusAll, 'status');
+    const b = initFilterSelect(F.region, 'region-select', 'region-wrap', S.regionAll, 'region');
+    if (a || b) document.getElementById('filter-row').style.display = 'flex';
   }
 
   // "Show names on map" toggle; the choice is remembered in this browser.
@@ -1080,6 +1133,7 @@ const version = "20261124-145300";
     activeLayers.size ? params.set('layer', [...activeLayers].join(',')) : params.delete('layer');
     params.delete('layers');
     currentStatus() ? params.set('status', currentStatus()) : params.delete('status');
+    currentRegion() ? params.set('region', currentRegion()) : params.delete('region');
     history.replaceState(null, '', window.location.pathname + (params.toString() ? '?' + params.toString() : ''));
   }
 
@@ -1103,31 +1157,56 @@ const version = "20261124-145300";
     allLayers.forEach((l, i) => { layerColors[l] = overrides[l] || palette[i % palette.length]; });
   }
 
-  // ── DRAG TO RESIZE THE TABLE PANEL ──────────────────────────────────────────
+  // ── PLACE LIST POSITION (bottom / right) ────────────────────────────────────
+  let listRightActive = null;
+  function applyListPosition() {
+    const right = listRight();
+    if (right === listRightActive) return;
+    listRightActive = right;
+    document.body.classList.toggle('list-right', right);
+    const panel = document.getElementById('table-panel');
+    panel.style.height = ''; panel.style.width = '';   // sizes dragged in the other layout don't apply
+    if (map) {
+      map.invalidateSize();
+      if (allData.length) buildTable(visibleTableData());
+    }
+  }
+
+  // ── DRAG TO RESIZE THE PLACE LIST ───────────────────────────────────────────
+  // Bottom layout: drag up/down changes the height. Right layout: drag left/right changes the width.
   function initDragHandle() {
     const handle = document.getElementById('drag-handle');
     const panel  = document.getElementById('table-panel');
     const main   = document.getElementById('main');
-    let dragging = false, startY = 0, startH = 0;
+    let dragging = false, startPos = 0, startSize = 0;
 
-    function start(y) { dragging = true; startY = y; startH = panel.offsetHeight; }
-    function move(y) {
+    function start(x, y) {
+      dragging = true;
+      startPos = listRight() ? x : y;
+      startSize = listRight() ? panel.offsetWidth : panel.offsetHeight;
+    }
+    function move(x, y) {
       if (!dragging) return;
-      const maxH = main.offsetHeight - 80;           // leave at least 80px for the map
-      panel.style.height = Math.min(maxH, Math.max(40, startH + (startY - y))) + 'px';
+      if (listRight()) {
+        const maxW = main.offsetWidth - 200;          // leave at least 200px for the map
+        panel.style.width = Math.min(maxW, Math.max(200, startSize + (startPos - x))) + 'px';
+      } else {
+        const maxH = main.offsetHeight - 80;          // leave at least 80px for the map
+        panel.style.height = Math.min(maxH, Math.max(40, startSize + (startPos - y))) + 'px';
+      }
       map.invalidateSize();
     }
     function stop() { dragging = false; document.body.style.cursor = ''; document.body.style.userSelect = ''; }
 
     handle.addEventListener('mousedown', e => {
-      start(e.clientY);
-      document.body.style.cursor = 'ns-resize';
+      start(e.clientX, e.clientY);
+      document.body.style.cursor = listRight() ? 'ew-resize' : 'ns-resize';
       document.body.style.userSelect = 'none';
       e.preventDefault();
     });
-    handle.addEventListener('touchstart', e => { start(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
-    document.addEventListener('mousemove', e => move(e.clientY));
-    document.addEventListener('touchmove', e => { if (dragging) move(e.touches[0].clientY); }, { passive: true });
+    handle.addEventListener('touchstart', e => { start(e.touches[0].clientX, e.touches[0].clientY); e.preventDefault(); }, { passive: false });
+    document.addEventListener('mousemove', e => move(e.clientX, e.clientY));
+    document.addEventListener('touchmove', e => { if (dragging) move(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
     document.addEventListener('mouseup', stop);
     document.addEventListener('touchend', stop);
   }
@@ -1135,7 +1214,9 @@ const version = "20261124-145300";
   // ── START ───────────────────────────────────────────────────────────────────
   async function init() {
     initSidebar();
+    applyListPosition();
     initMap();
+    window.addEventListener('resize', applyListPosition);
     initDragHandle();
 
     document.getElementById('btn-select-all').addEventListener('click', selectAll);
@@ -1157,7 +1238,7 @@ const version = "20261124-145300";
       filteredData = [...allData];
       const allLayers = layerNamesOf(allData);
       assignLayerColors(allLayers);
-      initStatus();
+      initFilters();
 
       const wanted = getLayersFromURL();
       if (wanted) {

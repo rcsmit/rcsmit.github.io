@@ -1,4 +1,4 @@
-/* version = "20261123-200000" */
+/* version = "20261124-155600" */
 /* ============================================================================
    citymap.css — generic styles for the reusable city map (see citymap.js).
    All colours and fonts are CSS variables. The defaults below are a neutral
@@ -141,14 +141,18 @@ body {
 #search-input:focus { border-color: var(--accent); }
 #search-input::placeholder { color: var(--subtle); }
 
-#basemap-select, #status-select {
+#basemap-select, #status-select, #region-select {
   width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px;
   font-family: var(--font-body); font-size: 0.8rem; background: var(--cream);
   color: var(--deep); outline: none; cursor: pointer; transition: border-color .2s;
 }
-#basemap-select:focus, #status-select:focus { border-color: var(--accent); }
-#status-select { width: 100%; }
-#status-wrap .section-label { margin-top: 14px; }
+#basemap-select:focus, #status-select:focus, #region-select:focus { border-color: var(--accent); }
+
+/* Status + Region: two columns on desktop, stacked on phones */
+#filter-row { gap: 8px; margin-top: 14px; }
+#filter-row > div { flex: 1; min-width: 0; }
+#filter-row .section-label { margin-top: 0; }
+@media (max-width: 640px) { #filter-row { flex-direction: column; gap: 14px; } }
 
 /* names toggle */
 #names-row { display: flex; align-items: center; gap: 8px; margin-top: 9px; font-size: 0.8rem; cursor: pointer; user-select: none; }
@@ -170,7 +174,8 @@ body {
   user-select: none; font-size: 0.82rem;
 }
 #layer-list li:hover, #layer-list li.active { background: var(--cream); }
-#layer-list .layer-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#layer-list .layer-name { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#layer-list .layer-count, .ts-count { color: var(--muted); font-size: 0.72rem; font-weight: 400; font-family: var(--font-body); flex-shrink: 0; }
 
 .layer-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(0,0,0,0.15); }
 
@@ -246,6 +251,7 @@ body {
   text-align: center;
   max-width: calc(100% - 140px);
 }
+#map-area { flex: 1; position: relative; display: flex; flex-direction: column; min-height: 80px; min-width: 0; }
 #map { flex: 1; min-height: 80px; }
 
 /* ── DRAG HANDLE ── */
@@ -277,6 +283,22 @@ body {
 #table-panel::-webkit-scrollbar { width: 5px; height: 5px; }
 #table-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 #table-wrap { padding: 0 14px 14px; }
+
+/* ── PLACE LIST ON THE RIGHT (config.listPosition: "right", desktop only) ── */
+body.list-right #main { flex-direction: row; }
+body.list-right #drag-handle { width: 6px; height: auto; cursor: ew-resize; }
+body.list-right #drag-handle::after {
+  width: 2px; height: 32px;
+  box-shadow: -3px 0 0 rgba(0,0,0,0.12), 3px 0 0 rgba(0,0,0,0.12);
+}
+body.list-right #table-panel { width: 340px; min-width: 200px; height: auto; min-height: 0; max-height: none; }
+.poi-list { list-style: none; }
+.poi { padding: 8px 0; border-bottom: 1px solid var(--border); }
+.poi:last-child { border-bottom: none; }
+.poi-head { font-size: 0.82rem; font-weight: 700; line-height: 1.4; }
+.poi-icons { white-space: nowrap; }
+.poi-icons .row-icon { width: 20px; height: 20px; font-size: 0.72rem; vertical-align: -3px; }
+.poi-desc { font-size: 0.76rem; color: var(--muted); line-height: 1.45; margin-top: 3px; overflow-wrap: anywhere; }
 
 .table-section-title {
   padding: 9px 0 3px; position: sticky; top: 0; background: var(--warm-white);
@@ -362,6 +384,15 @@ td a:hover { text-decoration: underline; }
 }
 #print-btn:hover { background: var(--accent); color: #fff; }
 
+/* ── ALL CITYMAPS BANNER ── */
+#all-maps-link {
+  display: block; margin-top: 10px; padding: 9px 0; border-radius: 5px; text-align: center; text-decoration: none;
+  background: var(--deep); color: var(--gold); font-family: var(--font-body); font-size: 0.74rem; font-weight: 700;
+  letter-spacing: 0.14em; transition: background .15s, color .15s;
+}
+#all-maps-link:hover { background: var(--accent); color: #fff; }
+#all-maps-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
 /* ── MY LOCATION ── */
 .leaflet-bar.locate-control a { display: flex; align-items: center; justify-content: center; padding: 0; color: var(--deep); }
 .leaflet-bar.locate-control a svg { display: block; flex-shrink: 0; }
@@ -435,7 +466,7 @@ td a:hover { text-decoration: underline; }
   body { height: auto; overflow: visible; display: block; }
   #sidebar, #sidebar-toggle, #sidebar-overlay, #drag-handle, #table-panel, #no-layers-msg, #float-tip,
   .leaflet-control-zoom, .locate-control, .reset-control, #map-toast, .leaflet-control-attribution, #qr-modal { display: none !important; }
-  #main { display: block; height: auto; overflow: visible; }
+  #main, #map-area { display: block; height: auto; overflow: visible; }
   #map {
     width: 100% !important; height: 480pt !important; min-height: 0;
     page-break-after: always; border: 1px solid #ccc;
