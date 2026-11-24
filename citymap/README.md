@@ -1,4 +1,4 @@
-<!-- version = "20261124-155600" -->
+<!-- version = "20261124-160900" -->
 # citymap — reusable curated city map
 
 Shared engine for maps like `rcsmit.github.io/rome/`. One engine, one small `index.html` per city.
@@ -20,7 +20,7 @@ paris/index.html
 Share it as **Anyone with the link → Viewer**.
 - Tab `MASTER` (name configurable): columns `Id`, `Layer`, `naam`, `address`, `LON`, `LAT`, `website`, `remarks`. Rename the columns your sheet uses via `fields`.
 - Column `Status` (optional, name configurable via `fields.status`): when filled, a **Status** dropdown (default `ALL`) appears in the sidebar and filters places and layers. `?status=Open` preselects a value.
-- Column `Region` (optional, name configurable via `fields.region`, header case does not matter): when filled, a **Region** dropdown (default `ALL`) appears next to Status (stacked on phones). `?region=North` preselects a value.
+- Column `Region` (optional, name configurable via `fields.region`, header case does not matter): a **Region** dropdown appears under the layer list. Its options (with counts) are the regions of the places in the active layers; it is hidden when those places have no region, and goes back to `ALL` when the chosen region is no longer among them. Places without a region are hidden while a region is selected. `?region=North` preselects a value.
 - Tab `LAYERS` (optional): columns `Layer`, `Description`, `Source`. Shown as hover tooltip and above each table.
 - The `naam` cell may contain a pasted Google Maps place link (`https://www.google.com/maps/place/…`). The map shows the place name, takes LAT/LON from the link when those cells are empty, and builds the "Google Maps" link from the coordinates and the name (`…/maps/search/?api=1&query=<lat>,<lon>+<name>`). Short `maps.app.goo.gl` links cannot be decoded.
 - `address` and `website` are optional and are shown in the marker popup. The bottom table lists only name, remarks and the action icons. The printed legend leaves out the address column when no row has one.

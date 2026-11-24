@@ -1,4 +1,4 @@
-/* version = "20261124-155600" */
+/* version = "20261124-160900" */
 /* ============================================================================
    citymap.css — generic styles for the reusable city map (see citymap.js).
    All colours and fonts are CSS variables. The defaults below are a neutral
@@ -148,11 +148,8 @@ body {
 }
 #basemap-select:focus, #status-select:focus, #region-select:focus { border-color: var(--accent); }
 
-/* Status + Region: two columns on desktop, stacked on phones */
-#filter-row { gap: 8px; margin-top: 14px; }
-#filter-row > div { flex: 1; min-width: 0; }
-#filter-row .section-label { margin-top: 0; }
-@media (max-width: 640px) { #filter-row { flex-direction: column; gap: 14px; } }
+/* Region sits under the layer list; its options follow the active layers */
+#region-wrap .section-label { margin-top: 16px; }
 
 /* names toggle */
 #names-row { display: flex; align-items: center; gap: 8px; margin-top: 9px; font-size: 0.8rem; cursor: pointer; user-select: none; }
@@ -282,7 +279,7 @@ body {
 #table-panel { height: 210px; min-height: 40px; max-height: 80vh; overflow-y: auto; background: var(--warm-white); flex-shrink: 0; }
 #table-panel::-webkit-scrollbar { width: 5px; height: 5px; }
 #table-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-#table-wrap { padding: 0 14px 14px; }
+#table-wrap { padding: 0 12px 14px; }
 
 /* ── PLACE LIST ON THE RIGHT (config.listPosition: "right", desktop only) ── */
 body.list-right #main { flex-direction: row; }
@@ -292,27 +289,44 @@ body.list-right #drag-handle::after {
   box-shadow: -3px 0 0 rgba(0,0,0,0.12), 3px 0 0 rgba(0,0,0,0.12);
 }
 body.list-right #table-panel { width: 340px; min-width: 200px; height: auto; min-height: 0; max-height: none; }
-.poi-list { list-style: none; }
-.poi { padding: 8px 0; border-bottom: 1px solid var(--border); }
-.poi:last-child { border-bottom: none; }
-.poi-head { font-size: 0.82rem; font-weight: 700; line-height: 1.4; }
-.poi-icons { white-space: nowrap; }
-.poi-icons .row-icon { width: 20px; height: 20px; font-size: 0.72rem; vertical-align: -3px; }
-.poi-desc { font-size: 0.76rem; color: var(--muted); line-height: 1.45; margin-top: 3px; overflow-wrap: anywhere; }
-
-.table-section-title {
-  padding: 9px 0 3px; position: sticky; top: 0; background: var(--warm-white);
-  z-index: 1; border-bottom: 1px solid var(--border); margin-bottom: 3px;
+.poi-list { list-style: none; padding: 0 10px 0 12px; }
+.poi {
+  display: grid; grid-template-columns: 1fr auto; column-gap: 8px; align-items: start;
+  padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.08);
 }
-.table-section-title .ts-name { font-family: var(--font-heading); font-size: 0.95rem; }
-.table-section-title .ts-meta { font-size: 0.68rem; color: var(--muted); margin-top: 1px; line-height: 1.4; }
+.poi:last-child { border-bottom: none; }
+.poi-name { font-size: 0.84rem; font-weight: 700; line-height: 1.35; min-width: 0; }
+.poi-icons { display: flex; gap: 2px; }
+.poi-icons .row-icon {
+  margin: 0; width: 24px; height: 22px; font-size: 0.75rem; background: transparent; border-color: transparent;
+  opacity: 0.6; transition: opacity .15s, background .15s;
+}
+.poi-icons .row-icon:hover { opacity: 1; background: var(--warm-white); border-color: var(--border); transform: none; }
+.poi-desc { grid-column: 1 / -1; font-size: 0.76rem; color: var(--muted); line-height: 1.45; margin-top: 3px; overflow-wrap: anywhere; }
+
+/* one tinted block per layer (colours set inline by citymap.js: --lc, --lc-bg, --lc-head) */
+.layer-group {
+  --lc: #333; --lc-bg: var(--cream); --lc-head: var(--border-soft);
+  background: var(--lc-bg); border-radius: 8px; margin-top: 10px;
+  border: 1px solid rgba(0,0,0,0.06); border-left: 4px solid var(--lc);
+}
+.table-section-title {
+  padding: 7px 12px 6px; position: sticky; top: 0; z-index: 1;
+  background: var(--lc-head); border-radius: 0 7px 0 0;
+}
+.table-section-title .ts-name { font-family: var(--font-heading); font-size: 0.95rem; font-weight: 700; color: var(--deep); display: flex; align-items: center; gap: 7px; }
+.table-section-title .ts-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--lc); flex-shrink: 0; }
+.table-section-title .ts-meta { font-size: 0.68rem; color: var(--muted); margin-top: 2px; line-height: 1.4; }
 .table-section-title .ts-source { font-size: 0.63rem; color: var(--subtle); }
 
 table { width: 100%; border-collapse: collapse; font-size: 0.76rem; table-layout: fixed; }
+.layer-group table { margin: 2px 0 4px; }
+.layer-group th:first-child, .layer-group td:first-child { padding-left: 12px; }
+.layer-group th:last-child, .layer-group td:last-child { padding-right: 8px; }
 /* column widths are set inline by citymap.js (Address/Website are dropped when the sheet has none) */
 
 th { text-align: left; padding: 4px 7px; color: var(--muted); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; font-size: 0.65rem; border-bottom: 1px solid var(--border); }
-td { padding: 4px 7px; border-bottom: 1px solid var(--border-soft); vertical-align: top; overflow: hidden; }
+td { padding: 5px 7px; border-bottom: 1px solid rgba(0,0,0,0.07); vertical-align: top; overflow: hidden; }
 td.td-website { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
 td.td-actions { white-space: nowrap; text-align: right; }
 
@@ -339,8 +353,7 @@ td a { color: var(--accent); text-decoration: none; }
 /* place name in the table: opens the marker on the map */
 .name-link {
   font: inherit; color: inherit; background: none; border: none; padding: 0; margin: 0;
-  text-align: left; cursor: pointer; overflow-wrap: anywhere;
-  text-decoration: underline dotted var(--subtle); text-underline-offset: 2px;
+  text-align: left; cursor: pointer; overflow-wrap: anywhere; text-decoration: none;
 }
 .name-link:hover { color: var(--accent); text-decoration: underline solid var(--accent); }
 .name-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 2px; }

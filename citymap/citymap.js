@@ -50,8 +50,12 @@
    #                             Region column (next to Status on desktop, ?region= deeplink); "ALL CITYMAPS" banner
    #                             under the QR button (config.allMapsLink); config.listPosition "right" puts the place
    #                             list in a third column on the right (name + icons, description below, separators)
+   # version : 20261124-160900 - Place list: each layer is a tinted block with a coloured, sticky header; tidier rows
+   #                             (icons in a column on the right). Region dropdown moved under the layers: its options
+   #                             (with counts) come from the active layers only, it hides when they have no regions,
+   #                             and the selection falls back to ALL when it no longer applies
    ========================================================================= */
-const version = "20261124-155600";
+const version = "20261124-160900";
 
 (function () {
   'use strict';
@@ -326,16 +330,10 @@ const version = "20261124-155600";
           <div class="section-label">${escH(S.searchLabel)}</div>
           <input id="search-input" type="text" placeholder="${escH(S.searchPlaceholder)}" />
 
-          <div id="filter-row" style="display:none">
-            ${F.status ? `<div id="status-wrap" style="display:none">
-              <div class="section-label">${escH(S.statusLabel)}</div>
-              <select id="status-select" class="side-select"></select>
-            </div>` : ''}
-            ${F.region ? `<div id="region-wrap" style="display:none">
-              <div class="section-label">${escH(S.regionLabel)}</div>
-              <select id="region-select" class="side-select"></select>
-            </div>` : ''}
-          </div>
+          ${F.status ? `<div id="status-wrap" style="display:none">
+            <div class="section-label">${escH(S.statusLabel)}</div>
+            <select id="status-select" class="side-select"></select>
+          </div>` : ''}
 
           <div class="section-label">${escH(S.mapStyle)}</div>
           <select id="basemap-select"></select>
@@ -347,6 +345,10 @@ const version = "20261124-155600";
             <button class="sel-btn" id="btn-deselect-all" type="button">${escH(S.deselectAll)}</button>
           </div>
           <ul id="layer-list"></ul>
+          ${F.region ? `<div id="region-wrap" style="display:none">
+            <div class="section-label">${escH(S.regionLabel)}</div>
+            <select id="region-select" class="side-select"></select>
+          </div>` : ''}
           <div id="loading-msg">${escH(S.loading)}</div>
           <button id="print-btn" type="button" title="${escH(S.printTitle)}">${escH(S.printButton)}</button>
           ${cfg.qr.enabled ? `<button id="qr-btn" class="side-btn" type="button">${escH(S.qrButton)}</button>` : ''}
@@ -411,6 +413,7 @@ const version = "20261124-155600";
   // ── STATE ───────────────────────────────────────────────────────────────────
   let map = null;
   let allData = [], filteredData = [], layerMeta = {};
+  let baseData = [];               // allData after search + status (before the region filter); drives the layer list
   const activeLayers = new Set();
   const layerColors = {};
   let clusterGroups = {};
@@ -638,7 +641,7 @@ const version = "20261124-155600";
   // ── LAYER SELECTION ─────────────────────────────────────────────────────────
   function selectAll() {
     clearDeeplinkWarning();
-    filteredData.forEach(r => { if (r[F.category]) activeLayers.add(r[F.category]); });
+    baseData.forEach(r => { if (r[F.category]) activeLayers.add(r[F.category]); });
     render(true);
   }
   function deselectAll() { clearDeeplinkWarning(); activeLayers.clear(); render(true); }
@@ -718,10 +721,12 @@ const version = "20261124-155600";
   }
 
   // ── SIDEBAR LIST ────────────────────────────────────────────────────────────
+  // Layer names come from baseData (so a region can never hide a layer you might want to switch on);
+  // the counts and the badge follow every filter, region included.
   function buildSidebar(data) {
     const ul = document.getElementById('layer-list');
     ul.innerHTML = '';
-    layerNamesOf(data).forEach(layer => {
+    layerNamesOf(baseData).forEach(layer => {
       const li = document.createElement('li');
       const on = activeLayers.has(layer);
       if (on) li.classList.add('active');
@@ -767,7 +772,7 @@ const version = "20261124-155600";
       : escH(r[F.name]);
   }
 
-  // Right-hand list: name with the icons directly behind it, the description on the next line.
+  // Right-hand list: name with the icons next to it (aligned on the right), the description on the next line.
   function buildPoiList(rows) {
     const ul = document.createElement('ul');
     ul.className = 'poi-list';
@@ -776,11 +781,25 @@ const version = "20261124-155600";
       const li = document.createElement('li');
       li.className = 'poi';
       li.innerHTML =
-        `<div class="poi-head"><span class="poi-name">${nameHtml(r, hasCoords)}</span> <span class="poi-icons">${rowIcons(r, hasCoords)}</span></div>` +
+        `<div class="poi-name">${nameHtml(r, hasCoords)}</div><div class="poi-icons">${rowIcons(r, hasCoords)}</div>` +
         (r[F.remarks] ? `<div class="poi-desc">${escH(r[F.remarks])}</div>` : '');
       ul.appendChild(li);
     });
     return ul;
+  }
+
+  // Solid mix of a layer colour with the panel background (opaque, so sticky headers hide what scrolls under them).
+  function tint(color, amount) {
+    const parse = c => {
+      let m = /^#?([0-9a-f]{3})$/i.exec(String(c).trim());
+      if (m) return m[1].split('').map(x => parseInt(x + x, 16));
+      m = /^#?([0-9a-f]{6})$/i.exec(String(c).trim());
+      return m ? [0, 2, 4].map(i => parseInt(m[1].substr(i, 2), 16)) : null;
+    };
+    const fg = parse(color);
+    const bg = parse(getComputedStyle(document.documentElement).getPropertyValue('--warm-white')) || [255, 253, 249];
+    if (!fg) return '';
+    return '#' + fg.map((v, i) => Math.round(bg[i] + (v - bg[i]) * amount).toString(16).padStart(2, '0')).join('');
   }
 
   function buildTable(data) {
@@ -794,15 +813,24 @@ const version = "20261124-155600";
       const color = layerColors[layer] || '#333';
       const meta = layerMeta[layer] || {};
 
+      // One tinted block per layer, with a coloured header that sticks while its block is in view.
+      const group = document.createElement('section');
+      group.className = 'layer-group';
+      group.style.setProperty('--lc', color);
+      const bgTint = tint(color, 0.07), headTint = tint(color, 0.18);
+      if (bgTint) group.style.setProperty('--lc-bg', bgTint);
+      if (headTint) group.style.setProperty('--lc-head', headTint);
+      wrap.appendChild(group);
+
       const title = document.createElement('div');
       title.className = 'table-section-title';
       title.innerHTML =
-        `<div class="ts-name" style="color:${color}">${escH(layer)} <span class="ts-count">(${rows.length})</span></div>` +
+        `<div class="ts-name"><span class="ts-dot"></span>${escH(layer)} <span class="ts-count">(${rows.length})</span></div>` +
         (meta.description ? `<div class="ts-meta">${escH(meta.description)}</div>` : '') +
         (meta.source      ? `<div class="ts-source">${escH(S.source)} ${escH(meta.source)}</div>` : '');
-      wrap.appendChild(title);
+      group.appendChild(title);
 
-      if (right) { wrap.appendChild(buildPoiList(rows)); return; }
+      if (right) { group.appendChild(buildPoiList(rows)); return; }
 
       const tbl = document.createElement('table');
       tbl.innerHTML = `${TABLE_COLGROUP}
@@ -819,7 +847,7 @@ const version = "20261124-155600";
         tbody.appendChild(tr);
       });
       tbl.appendChild(tbody);
-      wrap.appendChild(tbl);
+      group.appendChild(tbl);
     });
   }
 
@@ -1045,12 +1073,46 @@ const version = "20261124-155600";
   function printMap() { preparePrint(); setTimeout(() => window.print(), 1200); }
 
   // ── SEARCH, DEEPLINKS, RENDER ───────────────────────────────────────────────
+  // Filtering happens in two steps:
+  //   1. search + status            -> baseData  (decides which layers are listed)
+  //   2. region (on the active layers) -> filteredData (markers, list, counts, print)
   function applySearch() {
     const q = document.getElementById('search-input').value.toLowerCase();
     const keys = [F.category, F.name, F.address, F.website, F.remarks, F.status, F.region].filter(Boolean);
-    const st = currentStatus(), rg = currentRegion();
-    const rows = allData.filter(r => (!st || (r[F.status] || '') === st) && (!rg || (r[F.region] || '') === rg));
-    filteredData = q ? rows.filter(r => keys.some(k => (r[k] || '').toLowerCase().includes(q))) : [...rows];
+    const st = currentStatus();
+    const rows = st ? allData.filter(r => (r[F.status] || '') === st) : allData;
+    baseData = q ? rows.filter(r => keys.some(k => (r[k] || '').toLowerCase().includes(q))) : [...rows];
+    updateRegionOptions();
+    const rg = currentRegion();
+    filteredData = rg ? baseData.filter(r => (r[F.region] || '') === rg) : [...baseData];
+  }
+
+  // Region options are the regions of the places in the active layers (after search + status), with counts.
+  // The dropdown is hidden when those places have no region; a selection that no longer exists falls back to ALL.
+  let pendingRegion = null;   // ?region= from the URL, applied once the options exist
+  function updateRegionOptions() {
+    const sel = document.getElementById('region-select');
+    if (!sel || !F.region) return;
+    const rows = baseData.filter(r => activeLayers.has(r[F.category]));
+    const counts = new Map();
+    rows.forEach(r => { const v = r[F.region]; if (v) counts.set(v, (counts.get(v) || 0) + 1); });
+    const values = [...counts.keys()].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+
+    let current = sel.value;
+    if (pendingRegion !== null) {
+      current = values.find(v => v.toLowerCase() === pendingRegion.trim().toLowerCase()) || '';
+      pendingRegion = null;
+    }
+    if (!counts.has(current)) current = '';
+
+    sel.innerHTML = '';
+    [['', `${S.regionAll} (${rows.length})`], ...values.map(v => [v, `${v} (${counts.get(v)})`])].forEach(([value, label]) => {
+      const o = document.createElement('option');
+      o.value = value; o.textContent = label;
+      sel.appendChild(o);
+    });
+    sel.value = current;
+    document.getElementById('region-wrap').style.display = values.length ? 'block' : 'none';
   }
 
   // Selected value of the Status / Region dropdowns ('' = ALL).
@@ -1066,8 +1128,7 @@ const version = "20261124-155600";
     if (actual) F[key] = actual;
   }
 
-  // Fills a filter dropdown from the distinct values in a sheet column (hidden when the column is empty or absent).
-  // Returns true when the dropdown is shown.
+  // Fills the Status dropdown from the distinct values in the sheet column (hidden when the column is empty or absent).
   function initFilterSelect(field, selectId, wrapId, allLabel, param) {
     const sel = document.getElementById(selectId);
     if (!sel || !field) return false;
@@ -1088,13 +1149,16 @@ const version = "20261124-155600";
     return true;
   }
 
-  // Status and Region dropdowns, side by side on desktop.
+  // Status (fixed options, top of the sidebar) and Region (options follow the active layers, under the layers).
   function initFilters() {
     resolveFieldName('status');
     resolveFieldName('region');
-    const a = initFilterSelect(F.status, 'status-select', 'status-wrap', S.statusAll, 'status');
-    const b = initFilterSelect(F.region, 'region-select', 'region-wrap', S.regionAll, 'region');
-    if (a || b) document.getElementById('filter-row').style.display = 'flex';
+    initFilterSelect(F.status, 'status-select', 'status-wrap', S.statusAll, 'status');
+    const regionSel = document.getElementById('region-select');
+    if (regionSel) {
+      pendingRegion = new URLSearchParams(window.location.search).get('region');
+      regionSel.addEventListener('change', () => render(true));
+    }
   }
 
   // "Show names on map" toggle; the choice is remembered in this browser.
