@@ -66,8 +66,10 @@
    #                             "1. Name" per line, placed in a column to the right of the map)
    # version : 20261125-121600 - SVG export: points in three sizes (small r5, medium r7, large r9; small and large start
    #                             hidden); numbers sized to fit the medium dot with padding; names clear the large dot
+   # version : 20261125-122200 - SVG export is plain SVG 1.1 (no Inkscape namespace, CSS, <title>/<desc> or hidden
+   #                             layers) so stricter importers such as Gravit Designer / Corel Vector can open it
    ========================================================================= */
-const version = "20261125-121600";
+const version = "20261125-122200";
 
 (function () {
   'use strict';
@@ -1095,15 +1097,15 @@ const version = "20261125-121600";
   // zoom level, so 1 SVG unit = 1 screen pixel and the file lines up with a screenshot / tiles of that zoom.
   // Layer structure (bottom to top): every "<layer> – points", "– numbers", "– names", "– list", then the reference layer.
   // Numbers follow the printed map: 1, 2, 3… in layer order, then sheet order.
-  // The groups carry inkscape:groupmode="layer" (Inkscape, Affinity) and an id (Illustrator).
+  // Every layer is a top-level <g> whose id is the layer name (Illustrator, Affinity, Gravit and Figma show it).
   function exportSvg() {
     const zoom = map.getZoom();
     const PAD = 40, FONT_SIZE = 11, LIST_GAP = 60, LIST_LINE = 1.4;
-    // Three dot sizes, each its own layer; medium is visible, small and large start hidden.
+    // Three dot sizes, each its own layer (all visible: hide the two you don't need in the design program).
     const SIZES = [
-      { key: S.svgSmall,  r: 5, visible: false },
-      { key: S.svgMedium, r: 7, visible: true },
-      { key: S.svgLarge,  r: 9, visible: false }
+      { key: S.svgSmall,  r: 5 },
+      { key: S.svgMedium, r: 7 },
+      { key: S.svgLarge,  r: 9 }
     ];
     const R = 9;                       // largest dot: names and the obstacle boxes keep clear of it
     const R_NUM = 7;                   // numbers are sized to fit the medium dot
@@ -1189,8 +1191,12 @@ const version = "20261125-121600";
       usedIds.add(unique);
       return unique;
     };
-    const group = (label, body, hidden) =>
-      `  <g id="${esc(layerId(label))}" inkscape:groupmode="layer" inkscape:label="${esc(label)}"${hidden ? ' style="display:none"' : ''}>\n${body}  </g>\n`;
+    // Plain SVG 1.1 for the widest compatibility (Gravit/Corel Vector, Illustrator, Affinity, Inkscape, Figma):
+    // only <g>, <circle>, <path>, <text>/<tspan>; every style as a presentation attribute; no CSS, no foreign
+    // namespaces, no <title>/<desc>, no hidden layers. The layer name is the group id.
+    const group = (label, body) => `  <g id="${esc(layerId(label))}">\n${body}  </g>\n`;
+    const FONT = esc(`${fontFamily}, Arial, Helvetica, sans-serif`.replace(/["']/g, ''));
+    const TEXT = `font-family="${FONT}" font-weight="bold" fill="#1a1208"`;
 
     let pointLayers = '', numberLayers = '', nameLayers = '', listLayers = '';
     layers.forEach(layer => {
@@ -1198,36 +1204,31 @@ const version = "20261125-121600";
       const items = places.filter(p => p.layer === layer);
       if (!items.length) return;
       SIZES.slice().reverse().forEach(sz => {   // large at the bottom, small on top
-        pointLayers += group(`${layer} – ${S.svgPoints} ${sz.key} (r${sz.r})`, items.map(p =>
-          `    <circle cx="${n(p.pt.x - ox)}" cy="${n(p.pt.y - oy)}" r="${sz.r}" fill="${esc(color)}" stroke="#ffffff" stroke-width="1.5"><title>${p.number}. ${esc(p.name)}</title></circle>\n`).join(''), !sz.visible);
+        pointLayers += group(`${layer} ${S.svgPoints} ${sz.key} r${sz.r}`, items.map(p =>
+          `    <circle cx="${n(p.pt.x - ox)}" cy="${n(p.pt.y - oy)}" r="${sz.r}" fill="${esc(color)}" stroke="#ffffff" stroke-width="1.5"/>\n`).join(''));
       });
-      numberLayers += group(`${layer} – ${S.svgNumbers}`, items.map(p => {
+      numberLayers += group(`${layer} ${S.svgNumbers}`, items.map(p => {
         const size = numberFontSize(p.number);
-        return `    <text class="num" x="${n(p.pt.x - ox)}" y="${n(p.pt.y - oy + size * 0.36)}" font-size="${n(size)}">${p.number}</text>\n`;
+        return `    <text x="${n(p.pt.x - ox)}" y="${n(p.pt.y - oy + size * 0.36)}" font-family="${FONT}" font-weight="bold" font-size="${n(size)}" fill="#ffffff" text-anchor="middle">${p.number}</text>\n`;
       }).join(''));
-      nameLayers += group(`${layer} – ${S.svgNames}`, items.map(p =>
-        `    <text x="${n(p.label.tx - ox)}" y="${n(p.label.ty - oy)}" text-anchor="${p.label.anchor}">${esc(p.name)}</text>\n`).join(''));
+      nameLayers += group(`${layer} ${S.svgNames}`, items.map(p =>
+        `    <text x="${n(p.label.tx - ox)}" y="${n(p.label.ty - oy)}" ${TEXT} font-size="${FONT_SIZE}" text-anchor="${p.label.anchor}">${esc(p.name)}</text>\n`).join(''));
     });
     // One text element per list, one "number. name" per line (tspans), so it edits as a single block.
     lists.forEach(b => {
       const x = n(b.x - ox);
       const tspans = b.lines.map((l, i) => `<tspan x="${x}"${i ? ` dy="${n(lineH)}"` : ''}>${esc(l)}</tspan>`).join('');
-      listLayers += group(`${b.layer} – ${S.svgList}`, `    <text class="list" x="${x}" y="${n(b.y - oy)}">${tspans}</text>\n`);
+      listLayers += group(`${b.layer} ${S.svgList}`,
+        `    <text x="${x}" y="${n(b.y - oy)}" font-family="${FONT}" font-size="${FONT_SIZE}" fill="#1a1208">${tspans}</text>\n`);
     });
     const refLayer = refPoints.length ? group(ref.name || 'Reference points', refPoints.map(p => {
       const x = p.pt.x - ox, y = p.pt.y - oy, a = 6;
-      return `    <path d="M${n(x - a)} ${n(y)}H${n(x + a)}M${n(x)} ${n(y - a)}V${n(y + a)}" stroke="#000000" stroke-width="1" fill="none"><title>${esc(p.name)} (${p.lat}, ${p.lon})</title></path>\n`;
+      return `    <path d="M${n(x - a)} ${n(y)}H${n(x + a)}M${n(x)} ${n(y - a)}V${n(y + a)}" stroke="#000000" stroke-width="1" fill="none"/>\n`;
     }).join('')) : '';
 
     const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-  <title>${esc(cfg.documentTitle || cfg.name)}</title>
-  <desc>Web Mercator, zoom ${zoom}, 1 unit = 1 screen pixel. Top-left corner = world pixel (${n(ox)}, ${n(oy)}) at this zoom. Layers: ${esc(layers.join(', '))}.</desc>
-  <style>
-    text { font-family: '${esc(fontFamily)}', sans-serif; font-size: ${FONT_SIZE}px; font-weight: 700; fill: #1a1208; }
-    text.num { fill: #ffffff; text-anchor: middle; }
-    text.list { font-weight: 400; }
-  </style>
+<!-- ${esc(cfg.documentTitle || cfg.name).replace(/-{2,}/g, '-')}. Web Mercator, zoom ${zoom}, 1 unit = 1 screen pixel; top-left = world pixel ${n(ox)}, ${n(oy)} at this zoom. -->
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
 ${pointLayers}${numberLayers}${nameLayers}${listLayers}${refLayer}</svg>
 `;
     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });

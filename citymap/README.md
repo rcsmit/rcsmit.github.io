@@ -1,4 +1,4 @@
-<!-- version = "20261125-121600" -->
+<!-- version = "20261125-122200" -->
 # citymap — reusable curated city map
 
 Shared engine for maps like `rcsmit.github.io/rome/`. One engine, one small `index.html` per city.
@@ -48,7 +48,7 @@ Share it as **Anyone with the link → Viewer**.
 | `qr` | `{enabled:false, url:""}` | `enabled:true` adds a "QR code" button (modal, SVG download) and a QR on the printed map. It encodes `url` (or the current page address) plus the active `?layer=` selection |
 | `listPosition` | `"bottom"` | Place list under the map, or `"right"`: a third column with each place's name, 🔍/📍 icons and description on its own line. Phones always use the bottom list |
 | `allMapsLink` | `{url:"https://rcsmit.github.io/citymap/", text:"ALL CITYMAPS"}` | Banner link under the QR / print buttons. `url:""` hides it |
-| `svgExport` | `true` | "⬇ SVG export" button: downloads the places of the active layers (current filters) at the current zoom. Each layer becomes these SVG layers: `<layer> – points small (r5)` / `medium (r7)` / `large (r9)` (only medium visible at first), `– numbers` (in the dots, same numbering as the printed map), `– names` and `– list` (one text block, `1. Name` per line, to the right of the map), which open as separate layers in Illustrator, Inkscape and Affinity |
+| `svgExport` | `true` | "⬇ SVG export" button: downloads the places of the active layers (current filters) at the current zoom. Each layer becomes these SVG layers: `<layer> points small r5` / `medium r7` / `large r9`, `numbers` (in the dots, same numbering as the printed map), `names` and `list` (one text block, `1. Name` per line, to the right of the map). Plain SVG 1.1: every layer is a top-level group named by its id, so it opens in Gravit/Corel Vector, Illustrator, Affinity, Figma and Inkscape |
 | `referencePoints` | `{name:"Reference points", points:[]}` | Extra SVG layer with crosses for aligning the export on a base map, e.g. `{name:"Moat corners", points:[{name:"NE – Si Phum", lat:18.7952, lon:98.99362}, …]}`. Not shown on the map |
 | `fallbackData`, `fallbackMeta` | none | Rows/descriptions used when the sheet is unreachable |
 | `strings` | English | Every UI text, e.g. `placesCount: "{n} plaatsen"` for a Dutch map |
