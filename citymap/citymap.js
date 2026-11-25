@@ -58,8 +58,11 @@
    #                             left, above and below its dot and takes the first free spot (avoiding other labels,
    #                             dots and cluster bubbles); labels with no free spot are hidden until you zoom in or
    #                             hover the dot. Tooltip text is now HTML-escaped
+   # version : 20261125-120000 - SVG export button: every active layer becomes two SVG layers ("<layer> – points" and
+   #                             "<layer> – names", Illustrator/Inkscape/Affinity layers), plus an optional reference
+   #                             layer (config.referencePoints, e.g. the four moat corners) for aligning on a base map
    ========================================================================= */
-const version = "20261125-115100";
+const version = "20261125-120000";
 
 (function () {
   'use strict';
@@ -105,6 +108,8 @@ const version = "20261125-115100";
     resetView: true,            // "show all" button under the location button: back to the opening view
     qr: { enabled: false, url: '' },   // url = fixed base address; empty = the address of the current page
     allMapsLink: { url: 'https://rcsmit.github.io/citymap/', text: 'ALL CITYMAPS' },   // banner in the sidebar; url '' hides it
+    svgExport: true,            // "SVG export" button (points and names per layer, for Illustrator/Inkscape)
+    referencePoints: { name: 'Reference points', points: [] },   // extra SVG layer, e.g. moat corners: [{ name, lat, lon }]
     listPosition: 'bottom',     // place list under the map ('bottom') or as a third column on the right ('right'); phones always use 'bottom'
     strings: {
       searchLabel: 'Search',
@@ -116,6 +121,10 @@ const version = "20261125-115100";
       deselectAll: 'Deselect all',
       printButton: '🖨 Print map',
       printTitle: 'Print the map with a numbered legend',
+      svgButton: '⬇ SVG export',
+      svgTitle: 'Download the places of the active layers as an SVG file with separate layers for points and names',
+      svgPoints: 'points',
+      svgNames: 'names',
       loading: 'Loading data…',
       demoData: '⚠ Using demo data — sheet unreachable',
       loadError: 'Error loading data. Check console.',
@@ -355,6 +364,7 @@ const version = "20261125-115100";
           </div>` : ''}
           <div id="loading-msg">${escH(S.loading)}</div>
           <button id="print-btn" type="button" title="${escH(S.printTitle)}">${escH(S.printButton)}</button>
+          ${cfg.svgExport ? `<button id="svg-btn" class="side-btn" type="button" title="${escH(S.svgTitle)}">${escH(S.svgButton)}</button>` : ''}
           ${cfg.qr.enabled ? `<button id="qr-btn" class="side-btn" type="button">${escH(S.qrButton)}</button>` : ''}
           ${allMapsUrl() ? `<a id="all-maps-link" href="${escH(allMapsUrl())}">${escH(cfg.allMapsLink.text || 'ALL CITYMAPS')}</a>` : ''}
         </div>
@@ -1070,6 +1080,103 @@ const version = "20261125-115100";
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeQr(); });
   }
 
+  // ── SVG EXPORT ──────────────────────────────────────────────────────────────
+  // All places of the active layers (with the current filters), projected in Web Mercator at the current
+  // zoom level, so 1 SVG unit = 1 screen pixel and the file lines up with a screenshot / tiles of that zoom.
+  // Layer structure (bottom to top): every "<layer> – points", every "<layer> – names", the reference layer.
+  // The groups carry inkscape:groupmode="layer" (Inkscape, Affinity) and an id (Illustrator).
+  function exportSvg() {
+    const zoom = map.getZoom();
+    const PAD = 40, R = 5, FONT_SIZE = 11, GAP = 8;
+    const fontFamily = (cfg.fonts && cfg.fonts.body) || 'sans-serif';
+
+    const layers = layerNamesOf(filteredData).filter(l => activeLayers.has(l));
+    const places = [];
+    layers.forEach(layer => filteredData.filter(r => r[F.category] === layer).forEach(row => {
+      const lat = toFloat(row[F.lat]), lon = toFloat(row[F.lon]);
+      if (!isNaN(lat) && !isNaN(lon)) places.push({ layer, name: String(row[F.name] || ''), pt: map.project([lat, lon], zoom) });
+    }));
+    const ref = cfg.referencePoints || {};
+    const refPoints = (ref.points || []).map(p => ({ name: String(p.name || ''), lat: toFloat(p.lat), lon: toFloat(p.lon) }))
+      .filter(p => !isNaN(p.lat) && !isNaN(p.lon))
+      .map(p => Object.assign(p, { pt: map.project([p.lat, p.lon], zoom) }));
+    if (!places.length && !refPoints.length) { toast(S.noLayers); return; }
+
+    // Text widths, measured with the map's own font, for placing the names.
+    const ctx = document.createElement('canvas').getContext('2d');
+    ctx.font = `${FONT_SIZE}px '${fontFamily}', sans-serif`;
+
+    const all = places.map(p => p.pt).concat(refPoints.map(p => p.pt));
+    let minX = Math.min(...all.map(p => p.x)), minY = Math.min(...all.map(p => p.y));
+    let maxX = Math.max(...all.map(p => p.x)), maxY = Math.max(...all.map(p => p.y));
+
+    // Names: same idea as on screen (right, left, above, below; first free spot), but nothing is hidden:
+    // a name without a free spot goes to the right of its dot.
+    const dots = places.map(({ pt }) => ({ x1: pt.x - R - 1, y1: pt.y - R - 1, x2: pt.x + R + 1, y2: pt.y + R + 1 }));
+    const placed = [];
+    const hits = (b, list) => list.some(o => b.x1 < o.x2 && b.x2 > o.x1 && b.y1 < o.y2 && b.y2 > o.y1);
+    places.forEach(p => {
+      const w = ctx.measureText(p.name).width, h = FONT_SIZE * 1.2, { x, y } = p.pt;
+      const spots = [
+        { anchor: 'start',  tx: x + GAP,     ty: y + FONT_SIZE * 0.35,  x1: x + GAP,         y1: y - h / 2 },
+        { anchor: 'end',    tx: x - GAP,     ty: y + FONT_SIZE * 0.35,  x1: x - GAP - w,     y1: y - h / 2 },
+        { anchor: 'middle', tx: x,           ty: y - GAP - h * 0.25,    x1: x - w / 2,       y1: y - GAP - h },
+        { anchor: 'middle', tx: x,           ty: y + GAP + FONT_SIZE,   x1: x - w / 2,       y1: y + GAP }
+      ].map(s => Object.assign(s, { x2: s.x1 + w, y2: s.y1 + h }));
+      p.label = spots.find(s => !hits(s, placed) && !hits(s, dots)) || spots[0];
+      placed.push(p.label);
+      minX = Math.min(minX, p.label.x1); maxX = Math.max(maxX, p.label.x2);
+      minY = Math.min(minY, p.label.y1); maxY = Math.max(maxY, p.label.y2);
+    });
+
+    const ox = minX - PAD, oy = minY - PAD;
+    const W = Math.ceil(maxX - minX + 2 * PAD), H = Math.ceil(maxY - minY + 2 * PAD);
+    const n = v => (Math.round(v * 100) / 100).toString();
+    const esc = v => escH(v);   // XML-safe text and attribute values
+
+    const usedIds = new Set();
+    const layerId = label => {
+      let id = String(label).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w-]+/g, '_').replace(/^_+|_+$/g, '') || 'layer';
+      if (/^[^A-Za-z_]/.test(id)) id = 'L_' + id;
+      let unique = id, i = 2;
+      while (usedIds.has(unique)) unique = id + '_' + i++;
+      usedIds.add(unique);
+      return unique;
+    };
+    const group = (label, body) =>
+      `  <g id="${esc(layerId(label))}" inkscape:groupmode="layer" inkscape:label="${esc(label)}">\n${body}  </g>\n`;
+
+    let pointLayers = '', nameLayers = '';
+    layers.forEach(layer => {
+      const color = layerColors[layer] || '#333333';
+      const items = places.filter(p => p.layer === layer);
+      pointLayers += group(`${layer} – ${S.svgPoints}`, items.map(p =>
+        `    <circle cx="${n(p.pt.x - ox)}" cy="${n(p.pt.y - oy)}" r="${R}" fill="${esc(color)}" stroke="#ffffff" stroke-width="1.5"><title>${esc(p.name)}</title></circle>\n`).join(''));
+      nameLayers += group(`${layer} – ${S.svgNames}`, items.map(p =>
+        `    <text x="${n(p.label.tx - ox)}" y="${n(p.label.ty - oy)}" text-anchor="${p.label.anchor}">${esc(p.name)}</text>\n`).join(''));
+    });
+    const refLayer = refPoints.length ? group(ref.name || 'Reference points', refPoints.map(p => {
+      const x = p.pt.x - ox, y = p.pt.y - oy, a = 6;
+      return `    <path d="M${n(x - a)} ${n(y)}H${n(x + a)}M${n(x)} ${n(y - a)}V${n(y + a)}" stroke="#000000" stroke-width="1" fill="none"><title>${esc(p.name)} (${p.lat}, ${p.lon})</title></path>\n`;
+    }).join('')) : '';
+
+    const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <title>${esc(cfg.documentTitle || cfg.name)}</title>
+  <desc>Web Mercator, zoom ${zoom}, 1 unit = 1 screen pixel. Top-left corner = world pixel (${n(ox)}, ${n(oy)}) at this zoom. Layers: ${esc(layers.join(', '))}.</desc>
+  <style>text { font-family: '${esc(fontFamily)}', sans-serif; font-size: ${FONT_SIZE}px; font-weight: 700; fill: #1a1208; }</style>
+${pointLayers}${nameLayers}${refLayer}</svg>
+`;
+    const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (cfg.storageKey || 'citymap') + '-map.svg';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
   // ── PRINT ───────────────────────────────────────────────────────────────────
   let printNumberLayer = null;   // layer group holding the temporary numbered markers
   let printSavedClusters = [];   // cluster groups removed from the map while printing
@@ -1368,6 +1475,7 @@ const version = "20261125-115100";
     document.getElementById('btn-select-all').addEventListener('click', selectAll);
     document.getElementById('btn-deselect-all').addEventListener('click', deselectAll);
     document.getElementById('print-btn').addEventListener('click', printMap);
+    if (cfg.svgExport) document.getElementById('svg-btn').addEventListener('click', exportSvg);
     initQr();
     initNamesToggle();
     document.getElementById('table-wrap').addEventListener('click', e => {

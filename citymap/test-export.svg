@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="853" height="785" viewBox="0 0 853 785">
+  <title>Dense</title>
+  <desc>Web Mercator, zoom 16, 1 unit = 1 screen pixel. Top-left corner = world pixel (13001263.61, 7496469.55) at this zoom. Layers: Vegan, Temples, Cafés.</desc>
+  <style>text { font-family: 'Lato', sans-serif; font-size: 11px; font-weight: 700; fill: #1a1208; }</style>
+  <g id="Vegan_points" inkscape:groupmode="layer" inkscape:label="Vegan – points">
+    <circle cx="219.66" cy="274.13" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Goodsouls Kitchen 0</title></circle>
+    <circle cx="277.77" cy="471" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Akha Ama 3</title></circle>
+    <circle cx="632.17" cy="249.18" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Goodsouls Kitchen 6</title></circle>
+    <circle cx="582.97" cy="598.93" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Blue Diamond 9</title></circle>
+    <circle cx="367.6" cy="80.09" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Taste from Heart 12</title></circle>
+    <circle cx="291" cy="331.87" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>J-DEE VEGAN 15</title></circle>
+    <circle cx="473.92" cy="416.92" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Blue Diamond 18</title></circle>
+    <circle cx="237.93" cy="227.67" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Blue Diamond 21</title></circle>
+    <circle cx="699.29" cy="250.3" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Goodsouls Kitchen 24</title></circle>
+    <circle cx="376.27" cy="151.28" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Payod Shan food 27</title></circle>
+    <circle cx="358.01" cy="174.3" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Blue Diamond 30</title></circle>
+    <circle cx="207.19" cy="619.93" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Ming Zhen 33</title></circle>
+    <circle cx="632.02" cy="599.14" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Pun Pun 36</title></circle>
+    <circle cx="631.49" cy="396.08" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Nimman Haus 39</title></circle>
+    <circle cx="670.41" cy="201.48" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Pun Pun 42</title></circle>
+    <circle cx="357.29" cy="438.21" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Blue Diamond 45</title></circle>
+    <circle cx="542.08" cy="415.94" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Wat Lok Molee 48</title></circle>
+    <circle cx="478.17" cy="354.66" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Free Bird Cafe 51</title></circle>
+    <circle cx="205.37" cy="159.13" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Ming Zhen 54</title></circle>
+    <circle cx="280.21" cy="149.38" r="5" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>Free Bird Cafe 57</title></circle>
+  </g>
+  <g id="Temples_points" inkscape:groupmode="layer" inkscape:label="Temples – points">
+    <circle cx="496.65" cy="267.46" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Wat Lok Molee 1</title></circle>
+    <circle cx="614.5" cy="346.42" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Pun Pun 4</title></circle>
+    <circle cx="155.19" cy="393.87" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Nimman Haus 7</title></circle>
+    <circle cx="411.1" cy="112.92" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Reform Kafe 10</title></circle>
+    <circle cx="685.88" cy="283.42" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Taste from Heart 13</title></circle>
+    <circle cx="497.17" cy="366.56" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Free Bird Cafe 16</title></circle>
+    <circle cx="335.05" cy="486.93" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Blue Diamond 19</title></circle>
+    <circle cx="449.7" cy="431.41" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Reform Kafe 22</title></circle>
+    <circle cx="182.21" cy="455.88" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Ming Zhen 25</title></circle>
+    <circle cx="385.6" cy="612.32" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>J-DEE VEGAN 28</title></circle>
+    <circle cx="639.36" cy="428.71" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Blue Diamond 31</title></circle>
+    <circle cx="257.11" cy="605.67" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Nimman Haus 34</title></circle>
+    <circle cx="224.08" cy="411.44" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Payod Shan food 37</title></circle>
+    <circle cx="493.52" cy="293.84" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Free Bird Cafe 40</title></circle>
+    <circle cx="438.16" cy="46.6" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Wat Chedi Luang 43</title></circle>
+    <circle cx="180.32" cy="250.77" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Blue Diamond 46</title></circle>
+    <circle cx="476.33" cy="335.05" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Pun Pun 49</title></circle>
+    <circle cx="250.32" cy="519.4" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Payod Shan food 52</title></circle>
+    <circle cx="465.07" cy="608.3" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>Reform Kafe 55</title></circle>
+    <circle cx="509.97" cy="223.66" r="5" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>J-DEE VEGAN 58</title></circle>
+  </g>
+  <g id="Cafes_points" inkscape:groupmode="layer" inkscape:label="Cafés – points">
+    <circle cx="654.97" cy="266.47" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Ristr8to 2</title></circle>
+    <circle cx="628.24" cy="389.62" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Akha Ama 5</title></circle>
+    <circle cx="570.75" cy="586.38" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Taste from Heart 8</title></circle>
+    <circle cx="363.49" cy="80.65" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Pun Pun 11</title></circle>
+    <circle cx="201.22" cy="105.04" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>J-DEE VEGAN 14</title></circle>
+    <circle cx="612.84" cy="375.43" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Ming Zhen 17</title></circle>
+    <circle cx="625.66" cy="75.46" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Wat Lok Molee 20</title></circle>
+    <circle cx="545.92" cy="288.03" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Blue Diamond 23</title></circle>
+    <circle cx="417.12" cy="246.88" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Reform Kafe 26</title></circle>
+    <circle cx="171.43" cy="108.65" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Wat Chedi Luang 29</title></circle>
+    <circle cx="705.13" cy="325.65" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Ming Zhen 32</title></circle>
+    <circle cx="294.01" cy="451.95" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Wat Chedi Luang 35</title></circle>
+    <circle cx="404.2" cy="401.04" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Reform Kafe 38</title></circle>
+    <circle cx="387.86" cy="324.7" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Taste from Heart 41</title></circle>
+    <circle cx="587.62" cy="424.01" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Nimman Haus 44</title></circle>
+    <circle cx="344.09" cy="427.83" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Free Bird Cafe 47</title></circle>
+    <circle cx="353.17" cy="611.65" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Free Bird Cafe 50</title></circle>
+    <circle cx="479.82" cy="406.14" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Taste from Heart 53</title></circle>
+    <circle cx="426.35" cy="546.58" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Pun Pun 56</title></circle>
+    <circle cx="326.78" cy="564.05" r="5" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>Ristr8to 59</title></circle>
+  </g>
+  <g id="Vegan_names" inkscape:groupmode="layer" inkscape:label="Vegan – names">
+    <text x="227.66" y="277.98" text-anchor="start">Goodsouls Kitchen 0</text>
+    <text x="285.77" y="474.85" text-anchor="start">Akha Ama 3</text>
+    <text x="624.17" y="253.03" text-anchor="end">Goodsouls Kitchen 6</text>
+    <text x="582.97" y="617.93" text-anchor="middle">Blue Diamond 9</text>
+    <text x="375.6" y="83.94" text-anchor="start">Taste from Heart 12</text>
+    <text x="283" y="335.72" text-anchor="end">J-DEE VEGAN 15</text>
+    <text x="465.92" y="420.77" text-anchor="end">Blue Diamond 18</text>
+    <text x="245.93" y="231.52" text-anchor="start">Blue Diamond 21</text>
+    <text x="707.29" y="254.15" text-anchor="start">Goodsouls Kitchen 24</text>
+    <text x="384.27" y="155.13" text-anchor="start">Payod Shan food 27</text>
+    <text x="366.01" y="178.15" text-anchor="start">Blue Diamond 30</text>
+    <text x="215.19" y="623.78" text-anchor="start">Ming Zhen 33</text>
+    <text x="640.02" y="602.99" text-anchor="start">Pun Pun 36</text>
+    <text x="639.49" y="399.93" text-anchor="start">Nimman Haus 39</text>
+    <text x="678.41" y="205.33" text-anchor="start">Pun Pun 42</text>
+    <text x="357.29" y="457.21" text-anchor="middle">Blue Diamond 45</text>
+    <text x="542.08" y="404.64" text-anchor="middle">Wat Lok Molee 48</text>
+    <text x="470.17" y="358.51" text-anchor="end">Free Bird Cafe 51</text>
+    <text x="197.37" y="162.98" text-anchor="end">Ming Zhen 54</text>
+    <text x="280.21" y="138.08" text-anchor="middle">Free Bird Cafe 57</text>
+  </g>
+  <g id="Temples_names" inkscape:groupmode="layer" inkscape:label="Temples – names">
+    <text x="504.65" y="271.31" text-anchor="start">Wat Lok Molee 1</text>
+    <text x="622.5" y="350.27" text-anchor="start">Pun Pun 4</text>
+    <text x="163.19" y="397.72" text-anchor="start">Nimman Haus 7</text>
+    <text x="419.1" y="116.77" text-anchor="start">Reform Kafe 10</text>
+    <text x="693.88" y="287.27" text-anchor="start">Taste from Heart 13</text>
+    <text x="505.17" y="370.41" text-anchor="start">Free Bird Cafe 16</text>
+    <text x="343.05" y="490.78" text-anchor="start">Blue Diamond 19</text>
+    <text x="457.7" y="435.26" text-anchor="start">Reform Kafe 22</text>
+    <text x="190.21" y="459.73" text-anchor="start">Ming Zhen 25</text>
+    <text x="385.6" y="601.02" text-anchor="middle">J-DEE VEGAN 28</text>
+    <text x="647.36" y="432.56" text-anchor="start">Blue Diamond 31</text>
+    <text x="249.11" y="609.52" text-anchor="end">Nimman Haus 34</text>
+    <text x="232.08" y="415.29" text-anchor="start">Payod Shan food 37</text>
+    <text x="485.52" y="297.69" text-anchor="end">Free Bird Cafe 40</text>
+    <text x="446.16" y="50.45" text-anchor="start">Wat Chedi Luang 43</text>
+    <text x="188.32" y="254.62" text-anchor="start">Blue Diamond 46</text>
+    <text x="484.33" y="338.9" text-anchor="start">Pun Pun 49</text>
+    <text x="258.32" y="523.25" text-anchor="start">Payod Shan food 52</text>
+    <text x="465.07" y="627.3" text-anchor="middle">Reform Kafe 55</text>
+    <text x="517.97" y="227.51" text-anchor="start">J-DEE VEGAN 58</text>
+  </g>
+  <g id="Cafes_names" inkscape:groupmode="layer" inkscape:label="Cafés – names">
+    <text x="662.97" y="270.32" text-anchor="start">Ristr8to 2</text>
+    <text x="636.24" y="393.47" text-anchor="start">Akha Ama 5</text>
+    <text x="562.75" y="590.23" text-anchor="end">Taste from Heart 8</text>
+    <text x="355.49" y="84.5" text-anchor="end">Pun Pun 11</text>
+    <text x="209.22" y="108.89" text-anchor="start">J-DEE VEGAN 14</text>
+    <text x="620.84" y="379.28" text-anchor="start">Ming Zhen 17</text>
+    <text x="633.66" y="79.31" text-anchor="start">Wat Lok Molee 20</text>
+    <text x="553.92" y="291.88" text-anchor="start">Blue Diamond 23</text>
+    <text x="425.12" y="250.73" text-anchor="start">Reform Kafe 26</text>
+    <text x="163.43" y="112.5" text-anchor="end">Wat Chedi Luang 29</text>
+    <text x="713.13" y="329.5" text-anchor="start">Ming Zhen 32</text>
+    <text x="302.01" y="455.8" text-anchor="start">Wat Chedi Luang 35</text>
+    <text x="404.2" y="389.74" text-anchor="middle">Reform Kafe 38</text>
+    <text x="387.86" y="313.4" text-anchor="middle">Taste from Heart 41</text>
+    <text x="587.62" y="443.01" text-anchor="middle">Nimman Haus 44</text>
+    <text x="336.09" y="431.68" text-anchor="end">Free Bird Cafe 47</text>
+    <text x="353.17" y="630.65" text-anchor="middle">Free Bird Cafe 50</text>
+    <text x="487.82" y="409.99" text-anchor="start">Taste from Heart 53</text>
+    <text x="434.35" y="550.43" text-anchor="start">Pun Pun 56</text>
+    <text x="334.78" y="567.9" text-anchor="start">Ristr8to 59</text>
+  </g>
+  <g id="Moat_corners" inkscape:groupmode="layer" inkscape:label="Moat corners">
+    <path d="M75.2 49.63H87.2M81.2 43.63V55.63" stroke="#000000" stroke-width="1" fill="none"><title>NW - Hua Lin (18.795672, 98.978594)</title></path>
+    <path d="M775.46 72.87H787.46M781.46 66.87V78.87" stroke="#000000" stroke-width="1" fill="none"><title>NE - Si Phum (18.7952, 98.99362)</title></path>
+    <path d="M734.42 744.41H746.42M740.42 738.41V750.41" stroke="#000000" stroke-width="1" fill="none"><title>SE - Katam (18.781558, 98.9927394)</title></path>
+    <path d="M34 721.18H46M40 715.18V727.18" stroke="#000000" stroke-width="1" fill="none"><title>SW - Ku Hueang (18.78203, 98.97771)</title></path>
+  </g>
+</svg>

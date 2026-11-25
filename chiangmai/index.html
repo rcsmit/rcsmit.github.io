@@ -75,6 +75,18 @@ window.CITYMAP_CONFIG = {
   // ── QR code: sidebar button + on the printed map. Encodes this address plus the active layers ──
   qr: { enabled: true, url: "https://rcsmit.github.io/chiangmai/" },
 
+
+// ── Reference points for svg export ---
+  
+  referencePoints: {
+  name: "Moat corners",
+  points: [
+    { name: "NW – Hua Lin",   lat: 18.795672, lon: 98.978594 },
+    { name: "NE – Si Phum",   lat: 18.7952,   lon: 98.99362 },
+    { name: "SE – Katam",     lat: 18.781558, lon: 98.9927394 },
+    { name: "SW – Ku Hueang", lat: 18.781629077882428,  lon:  98.97797096943061 },
+  ]
+},
   // ── Demo data, used only when the sheet cannot be reached ───────────────────
   fallbackData: [
     { Id:"1", Layer:"Temples", naam:"Wat Phra That Doi Suthep", address:"Mueang Chiang Mai, Chiang Mai 50200", LON:"98.921700", LAT:"18.804800", website:"", remarks:"Hilltop temple with views over the city" },

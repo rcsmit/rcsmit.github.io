@@ -1,4 +1,4 @@
-/* version = "20261125-115100" */
+/* version = "20261125-120000" */
 /* ============================================================================
    citymap.css — generic styles for the reusable city map (see citymap.js).
    All colours and fonts are CSS variables. The defaults below are a neutral
@@ -436,13 +436,13 @@ td a:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) { .me-marker::after { animation: none; display: none; } }
 
 /* ── QR CODE ── */
-#qr-btn {
+#qr-btn, #svg-btn {
   width: 100%; padding: 7px 0; margin-top: 8px; font-family: var(--font-body); font-size: 0.74rem;
   letter-spacing: 0.05em; text-transform: uppercase; border-radius: 5px; cursor: pointer;
   border: 1px solid var(--border); background: var(--cream); color: var(--muted);
   transition: background .15s, color .15s;
 }
-#qr-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+#qr-btn:hover, #svg-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
 #qr-modal {
   display: none; position: fixed; inset: 0; z-index: 100000; align-items: center; justify-content: center;
   background: rgba(0,0,0,.5); padding: 16px;
