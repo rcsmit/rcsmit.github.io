@@ -1,4 +1,4 @@
-<!-- version = "20261125-122200" -->
+<!-- version = "20261125-124900" -->
 # citymap — reusable curated city map
 
 Shared engine for maps like `rcsmit.github.io/rome/`. One engine, one small `index.html` per city.
@@ -51,6 +51,8 @@ Share it as **Anyone with the link → Viewer**.
 | `svgExport` | `true` | "⬇ SVG export" button: downloads the places of the active layers (current filters) at the current zoom. Each layer becomes these SVG layers: `<layer> points small r5` / `medium r7` / `large r9`, `numbers` (in the dots, same numbering as the printed map), `names` and `list` (one text block, `1. Name` per line, to the right of the map). Plain SVG 1.1: every layer is a top-level group named by its id, so it opens in Gravit/Corel Vector, Illustrator, Affinity, Figma and Inkscape |
 | `referencePoints` | `{name:"Reference points", points:[]}` | Extra SVG layer with crosses for aligning the export on a base map, e.g. `{name:"Moat corners", points:[{name:"NE – Si Phum", lat:18.7952, lon:98.99362}, …]}`. Not shown on the map |
 | `fallbackData`, `fallbackMeta` | none | Rows/descriptions used when the sheet is unreachable |
-| `strings` | English | Every UI text, e.g. `placesCount: "{n} plaatsen"` for a Dutch map |
+| `strings` | English | Every UI text, e.g. `placesCount: "{n} plaatsen"` or `loadingMap: "Kaart laden…"` for a Dutch map |
+
+Loading: the page first shows a loading screen (spinner + map name), loads all stylesheets and fonts (fonts wait at most 1.5 s), and only then builds the page, so there is no flash of unstyled text. Optional: put `<style>html{background:#faf6f0}</style>` (your `cream` colour) in the `<head>` of the city's index.html so even the first moment before citymap.js arrives is not white.
 
 Deeplinks: `?layer=Gelato,Pizza2` activates those layers on load; `?status=Open` selects a status; `?region=North` selects a region. Layer names in the sidebar and the place list show the number of places in brackets.

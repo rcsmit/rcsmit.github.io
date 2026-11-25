@@ -68,8 +68,10 @@
    #                             hidden); numbers sized to fit the medium dot with padding; names clear the large dot
    # version : 20261125-122200 - SVG export is plain SVG 1.1 (no Inkscape namespace, CSS, <title>/<desc> or hidden
    #                             layers) so stricter importers such as Gravit Designer / Corel Vector can open it
+   # version : 20261125-124900 - No flash of unstyled text: a loading screen (spinner + map name) is shown at once, the
+   #                             stylesheets and fonts are loaded before the page is built, then the libraries
    ========================================================================= */
-const version = "20261125-122200";
+const version = "20261125-124900";
 
 (function () {
   'use strict';
@@ -138,6 +140,7 @@ const version = "20261125-122200";
       svgNumbers: 'numbers',
       svgList: 'list',
       loading: 'Loading data…',
+      loadingMap: 'Loading map…',
       demoData: '⚠ Using demo data — sheet unreachable',
       loadError: 'Error loading data. Check console.',
       noLayers: 'No layers selected — choose one or more from the sidebar.',
@@ -320,12 +323,24 @@ const version = "20261125-122200";
       document.head.appendChild(s);
     });
   }
-  async function loadDependencies() {
+  // Step 1 (before the page is built): all stylesheets, then the web fonts, so nothing is ever shown unstyled.
+  // Fonts get at most FONT_WAIT ms; after that the page shows with the fallback font and swaps when they arrive.
+  const FONT_WAIT = 1500;
+  async function loadStyles() {
     // citymap.css is appended last so it overrides Leaflet/MapLibre styles (equal specificity: last one wins).
     const css = [...LIB_CSS.map(loadCss), loadCss(BASE_URL + 'citymap.css')];
     const fonts = fontsUrl();
     if (fonts) css.push(loadCss(fonts));
     await Promise.all(css);
+    if (document.fonts && document.fonts.load) {
+      const wanted = [cfg.fonts.heading, cfg.fonts.body].filter(Boolean)
+        .flatMap(f => [`400 16px '${f}'`, `700 16px '${f}'`].map(spec => document.fonts.load(spec).catch(() => {})));
+      await Promise.race([Promise.all(wanted), new Promise(r => setTimeout(r, FONT_WAIT))]);
+    }
+  }
+
+  // Step 2 (page already visible): the map libraries, in order.
+  async function loadDependencies() {
     for (const src of LIB_JS) await loadScript(src);
     // The QR library is optional: if it cannot be loaded the map still works, just without QR codes.
     if (cfg.qr.enabled) {
@@ -409,6 +424,24 @@ const version = "20261125-122200";
       o.value = key; o.textContent = BASEMAPS[key].label;
       sel.appendChild(o);
     });
+  }
+
+  // Loading screen, shown immediately: only inline styles, so it needs no stylesheet. buildShell() replaces it.
+  function showLoader() {
+    const css = document.createElement('style');
+    css.textContent =
+      'html,body{margin:0;height:100%;background:var(--cream,#faf6f0)}' +
+      '#cm-loader{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;' +
+      'font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--muted,#6b5c4a);font-size:14px;z-index:99999}' +
+      '#cm-loader .cm-spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--border,#e2d9cc);' +
+      'border-top-color:var(--accent,#c0533a);animation:cm-spin .8s linear infinite}' +
+      '#cm-loader .cm-title{font-size:18px;font-weight:700;color:var(--deep,#1a1208)}' +
+      '@keyframes cm-spin{to{transform:rotate(360deg)}}' +
+      '@media (prefers-reduced-motion:reduce){#cm-loader .cm-spin{animation:none;border-color:var(--accent,#c0533a)}}';
+    document.head.appendChild(css);
+    document.body.innerHTML =
+      `<div id="cm-loader" role="status" aria-live="polite"><div class="cm-spin"></div>` +
+      `<div class="cm-title">${escH(cfg.documentTitle || cfg.name)}</div><div>${escH(S.loadingMap)}</div></div>`;
   }
 
   function showFatal(message) {
@@ -1590,6 +1623,8 @@ ${pointLayers}${numberLayers}${nameLayers}${listLayers}${refLayer}</svg>
       return showFatal('"sheet.id" (Google Sheet id) is missing.');
     }
     applyTheme();
+    showLoader();
+    await loadStyles();     // never throws: a missing stylesheet or font must not block the map
     buildShell();
     try {
       await loadDependencies();
