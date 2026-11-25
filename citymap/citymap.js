@@ -64,8 +64,10 @@
    # version : 20261125-121000 - SVG export: two more layers per map layer: "<layer> – numbers" (number centred in each
    #                             dot, same numbering as the printed map) and "<layer> – list" (one text element,
    #                             "1. Name" per line, placed in a column to the right of the map)
+   # version : 20261125-121600 - SVG export: points in three sizes (small r5, medium r7, large r9; small and large start
+   #                             hidden); numbers sized to fit the medium dot with padding; names clear the large dot
    ========================================================================= */
-const version = "20261125-121000";
+const version = "20261125-121600";
 
 (function () {
   'use strict';
@@ -127,6 +129,9 @@ const version = "20261125-121000";
       svgButton: '⬇ SVG export',
       svgTitle: 'Download the places of the active layers as an SVG file with separate layers for points and names',
       svgPoints: 'points',
+      svgSmall: 'small',
+      svgMedium: 'medium',
+      svgLarge: 'large',
       svgNames: 'names',
       svgNumbers: 'numbers',
       svgList: 'list',
@@ -1093,7 +1098,16 @@ const version = "20261125-121000";
   // The groups carry inkscape:groupmode="layer" (Inkscape, Affinity) and an id (Illustrator).
   function exportSvg() {
     const zoom = map.getZoom();
-    const PAD = 40, R = 7, FONT_SIZE = 11, GAP = R + 3, LIST_GAP = 60, LIST_LINE = 1.4;
+    const PAD = 40, FONT_SIZE = 11, LIST_GAP = 60, LIST_LINE = 1.4;
+    // Three dot sizes, each its own layer; medium is visible, small and large start hidden.
+    const SIZES = [
+      { key: S.svgSmall,  r: 5, visible: false },
+      { key: S.svgMedium, r: 7, visible: true },
+      { key: S.svgLarge,  r: 9, visible: false }
+    ];
+    const R = 9;                       // largest dot: names and the obstacle boxes keep clear of it
+    const R_NUM = 7;                   // numbers are sized to fit the medium dot
+    const GAP = R + 3;
     const fontFamily = (cfg.fonts && cfg.fonts.body) || 'sans-serif';
 
     const layers = layerNamesOf(filteredData).filter(l => activeLayers.has(l));
@@ -1112,6 +1126,19 @@ const version = "20261125-121000";
     // Text widths, measured with the map's own font, for placing the names.
     const ctx = document.createElement('canvas').getContext('2d');
     ctx.font = `${FONT_SIZE}px '${fontFamily}', sans-serif`;
+
+    // Largest bold size (max 7.5px) at which a number keeps 2px free on each side inside the medium dot
+    // (inner width = diameter minus the 1.5px white border on both sides).
+    function numberFontSize(num) {
+      const room = 2 * R_NUM - 2 * 1.5 - 2 * 2;
+      // Measured in the map font and in Arial: a design program without that font falls back to a wider one.
+      const w10 = Math.max(...[`'${fontFamily}', sans-serif`, 'Arial, Helvetica, sans-serif'].map(f => {
+        ctx.font = `700 10px ${f}`;
+        return ctx.measureText(String(num)).width;
+      }));
+      ctx.font = `${FONT_SIZE}px '${fontFamily}', sans-serif`;
+      return Math.max(4, Math.min(7, Math.floor((room / w10) * 10 * 4) / 4));
+    }
 
     const all = places.map(p => p.pt).concat(refPoints.map(p => p.pt));
     let minX = Math.min(...all.map(p => p.x)), minY = Math.min(...all.map(p => p.y));
@@ -1162,20 +1189,21 @@ const version = "20261125-121000";
       usedIds.add(unique);
       return unique;
     };
-    const group = (label, body) =>
-      `  <g id="${esc(layerId(label))}" inkscape:groupmode="layer" inkscape:label="${esc(label)}">\n${body}  </g>\n`;
+    const group = (label, body, hidden) =>
+      `  <g id="${esc(layerId(label))}" inkscape:groupmode="layer" inkscape:label="${esc(label)}"${hidden ? ' style="display:none"' : ''}>\n${body}  </g>\n`;
 
     let pointLayers = '', numberLayers = '', nameLayers = '', listLayers = '';
     layers.forEach(layer => {
       const color = layerColors[layer] || '#333333';
       const items = places.filter(p => p.layer === layer);
       if (!items.length) return;
-      pointLayers += group(`${layer} – ${S.svgPoints}`, items.map(p =>
-        `    <circle cx="${n(p.pt.x - ox)}" cy="${n(p.pt.y - oy)}" r="${R}" fill="${esc(color)}" stroke="#ffffff" stroke-width="1.5"><title>${p.number}. ${esc(p.name)}</title></circle>\n`).join(''));
-      // Numbers sit in the dots: smaller type for 3+ digits so they still fit.
+      SIZES.slice().reverse().forEach(sz => {   // large at the bottom, small on top
+        pointLayers += group(`${layer} – ${S.svgPoints} ${sz.key} (r${sz.r})`, items.map(p =>
+          `    <circle cx="${n(p.pt.x - ox)}" cy="${n(p.pt.y - oy)}" r="${sz.r}" fill="${esc(color)}" stroke="#ffffff" stroke-width="1.5"><title>${p.number}. ${esc(p.name)}</title></circle>\n`).join(''), !sz.visible);
+      });
       numberLayers += group(`${layer} – ${S.svgNumbers}`, items.map(p => {
-        const size = String(p.number).length >= 3 ? 5.5 : 7.5;
-        return `    <text class="num" x="${n(p.pt.x - ox)}" y="${n(p.pt.y - oy + size * 0.36)}" font-size="${size}">${p.number}</text>\n`;
+        const size = numberFontSize(p.number);
+        return `    <text class="num" x="${n(p.pt.x - ox)}" y="${n(p.pt.y - oy + size * 0.36)}" font-size="${n(size)}">${p.number}</text>\n`;
       }).join(''));
       nameLayers += group(`${layer} – ${S.svgNames}`, items.map(p =>
         `    <text x="${n(p.label.tx - ox)}" y="${n(p.label.ty - oy)}" text-anchor="${p.label.anchor}">${esc(p.name)}</text>\n`).join(''));
