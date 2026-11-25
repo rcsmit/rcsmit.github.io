@@ -1,4 +1,4 @@
-/* version = "20261124-160900" */
+/* version = "20261125-115100" */
 /* ============================================================================
    citymap.css — generic styles for the reusable city map (see citymap.js).
    All colours and fonts are CSS variables. The defaults below are a neutral
@@ -381,6 +381,11 @@ td a:hover { text-decoration: underline; }
   box-shadow: 0 1px 3px rgba(0,0,0,.3); pointer-events: none;
 }
 .leaflet-tooltip.cm-label::before { display: none; }
+/* Label placement is computed in citymap.js (declutterLabels): no Leaflet direction margins, and hidden labels use
+   visibility (not display:none) so they keep their size and Leaflet keeps positioning them correctly. */
+.leaflet-tooltip.cm-label { margin: 0 !important; }
+.leaflet-tooltip.cm-label.cm-label-hidden { visibility: hidden; }
+.leaflet-tooltip.cm-label.cm-label-hidden.cm-label-hover { visibility: visible; z-index: 1000; }
 
 /* ── CLUSTER BUBBLES ── */
 .cm-cluster {

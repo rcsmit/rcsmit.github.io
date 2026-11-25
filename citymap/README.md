@@ -1,4 +1,4 @@
-<!-- version = "20261124-160900" -->
+<!-- version = "20261125-115100" -->
 # citymap — reusable curated city map
 
 Shared engine for maps like `rcsmit.github.io/rome/`. One engine, one small `index.html` per city.
@@ -42,7 +42,7 @@ Share it as **Anyone with the link → Viewer**.
 | `storageKey` | `"citymap"` | Prefix for the saved basemap preference — use one per city |
 | `defaultBasemap` | `"positron"` | `positron, dark, bright, liberty, fiord, positron_nolabels, dark_nolabels` |
 | `clusterMaxRadius`, `clusterDisableAtZoom` | 60 / 13 | Marker clustering |
-| `showNames` | `false` | Initial state of the "Show names on map" toggle; the visitor's own choice is remembered in the browser |
+| `showNames` | `false` | Initial state of the "Show names on map" toggle; the visitor's own choice is remembered in the browser. Labels never overlap: each takes the first free spot right/left/above/below its dot, labels without room are hidden until you zoom in (hovering the dot shows it). Earlier layers and earlier sheet rows win when space is short |
 | `locate` | `true` | "My location" button under the zoom control. The position is only requested when it is pressed, shown as a pulsing blue diamond with accuracy circle (top-right, next to the zoom buttons), never stored or tracked. Needs https (GitHub Pages is). `false` removes the button |
 | `resetView` | `true` | "Show all" button under the location button: zooms back to the opening view (all places of the active layers). `false` removes it |
 | `qr` | `{enabled:false, url:""}` | `enabled:true` adds a "QR code" button (modal, SVG download) and a QR on the printed map. It encodes `url` (or the current page address) plus the active `?layer=` selection |

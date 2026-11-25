@@ -54,8 +54,12 @@
    #                             (icons in a column on the right). Region dropdown moved under the layers: its options
    #                             (with counts) come from the active layers only, it hides when they have no regions,
    #                             and the selection falls back to ALL when it no longer applies
+   # version : 20261125-115100 - "Show names": labels no longer overlap. After every zoom/pan each label tries right,
+   #                             left, above and below its dot and takes the first free spot (avoiding other labels,
+   #                             dots and cluster bubbles); labels with no free spot are hidden until you zoom in or
+   #                             hover the dot. Tooltip text is now HTML-escaped
    ========================================================================= */
-const version = "20261124-160900";
+const version = "20261125-115100";
 
 (function () {
   'use strict';
@@ -420,6 +424,7 @@ const version = "20261124-160900";
   const markersById = {};          // row._key -> { marker, cluster, lat, lon }
   let basemapLayer = null;         // L.maplibreGL layer
   let showNames = false;           // permanent name labels on the markers
+  let labelMarkers = [];           // markers with a permanent label, in priority order (layer order, then sheet order)
   let basemapSeq = 0;              // guards against out-of-order async style loads
   const sidebarCtl = {};           // filled by initSidebar()
   const tip = () => document.getElementById('float-tip');
@@ -579,6 +584,7 @@ const version = "20261124-160900";
     L.control.zoom({ position: 'topright' }).addTo(map);
     // Keep the bottom table in sync with what is actually visible.
     map.on('moveend', () => buildTable(visibleTableData()));
+    map.on('zoomend moveend resize', scheduleDeclutter);
     // Recompute popup width at the moment each popup opens (viewport may have been resized/rotated).
     map.on('popupopen', e => {
       const p = e.popup;
@@ -666,6 +672,7 @@ const version = "20261124-160900";
     Object.values(clusterGroups).forEach(g => map.removeLayer(g));
     clusterGroups = {};
     Object.keys(markersById).forEach(k => delete markersById[k]);
+    labelMarkers = [];
 
     layerNamesOf(data).forEach(layer => {
       if (!activeLayers.has(layer)) return;
@@ -684,15 +691,90 @@ const version = "20261124-160900";
         if (isNaN(lat) || isNaN(lon)) return;
         const popup = L.popup({ maxWidth: popupMaxWidth() }).setContent(popupHtml(row));
         const marker = L.circleMarker([lat, lon], { radius: 7, color: '#fff', weight: 2, fillColor: color, fillOpacity: 0.9 })
-          .bindPopup(popup).bindTooltip(row[F.name], showNames
-            ? { permanent: true, direction: 'right', offset: [8, 0], className: 'cm-label' }
+          .bindPopup(popup).bindTooltip(escH(row[F.name]), showNames
+            ? { permanent: true, direction: 'right', offset: [LABEL_GAP, 0], className: 'cm-label' }
             : { direction: 'top', offset: [0, -6] })
           .addTo(cluster);
         markersById[row._key] = { marker, cluster, lat, lon };
+        if (showNames) {
+          labelMarkers.push(marker);
+          // A label hidden for lack of space still shows while the dot is hovered.
+          marker.on('mouseover', () => { const el = marker.getTooltip() && marker.getTooltip().getElement(); if (el) el.classList.add('cm-label-hover'); });
+          marker.on('mouseout',  () => { const el = marker.getTooltip() && marker.getTooltip().getElement(); if (el) el.classList.remove('cm-label-hover'); });
+        }
       });
 
+      cluster.on('animationend', scheduleDeclutter);   // markers (un)cluster after a zoom
       cluster.addTo(map);
       clusterGroups[layer] = cluster;
+    });
+    scheduleDeclutter();
+  }
+
+  // ── NAME LABELS WITHOUT OVERLAP ─────────────────────────────────────────────
+  // Greedy placement: in priority order every label tries four spots around its dot and takes the first
+  // one that touches no placed label, no dot and no cluster bubble (spots inside the map view first).
+  // A label without a free spot is hidden; zooming in gives it room, hovering its dot shows it anyway.
+  const LABEL_GAP = 10;            // px between the dot centre and the label (radius 7 + white border 2 + 1)
+  const LABEL_PAD = 2;             // extra px kept free around every label
+  let declutterQueued = false;
+
+  function scheduleDeclutter() {
+    if (declutterQueued) return;
+    declutterQueued = true;
+    requestAnimationFrame(() => { declutterQueued = false; declutterLabels(); });
+  }
+
+  function declutterLabels() {
+    if (!map || !showNames || !labelMarkers.length) return;
+    const size = map.getSize();
+
+    // 1. Every label on the map (also just off-screen: its text can still reach into view); make it measurable.
+    const items = [];
+    labelMarkers.forEach(marker => {
+      if (!map.hasLayer(marker)) return;           // inside a cluster: no label on the map
+      const tt = marker.getTooltip(), el = tt && tt.getElement();
+      if (!el) return;
+      const p = map.latLngToContainerPoint(marker.getLatLng());
+      el.classList.remove('cm-label-hidden');
+      items.push({ tt, el, p });
+    });
+    items.forEach(it => { it.w = it.el.offsetWidth; it.h = it.el.offsetHeight; });   // one layout pass
+
+    // 2. Obstacles: every visible dot and every cluster bubble.
+    const obstacles = items.map(({ p }) => ({ x1: p.x - 9, y1: p.y - 9, x2: p.x + 9, y2: p.y + 9 }));
+    const mapRect = map.getContainer().getBoundingClientRect();
+    map.getContainer().querySelectorAll('.cm-cluster').forEach(c => {
+      const r = c.getBoundingClientRect();
+      obstacles.push({ x1: r.left - mapRect.left, y1: r.top - mapRect.top, x2: r.right - mapRect.left, y2: r.bottom - mapRect.top });
+    });
+
+    const hits = (b, list) => list.some(o => b.x1 < o.x2 && b.x2 > o.x1 && b.y1 < o.y2 && b.y2 > o.y1);
+    const inView = b => b.x1 >= 0 && b.y1 >= 0 && b.x2 <= size.x && b.y2 <= size.y;
+    const placed = [];
+
+    // 3. Place in priority order.
+    items.forEach(it => {
+      const { p, w, h } = it;
+      const spots = [
+        { dir: 'right',  offset: [LABEL_GAP, 0],  x1: p.x + LABEL_GAP,         y1: p.y - h / 2 },
+        { dir: 'left',   offset: [-LABEL_GAP, 0], x1: p.x - LABEL_GAP - w,     y1: p.y - h / 2 },
+        { dir: 'top',    offset: [0, -LABEL_GAP], x1: p.x - w / 2,             y1: p.y - LABEL_GAP - h },
+        { dir: 'bottom', offset: [0, LABEL_GAP],  x1: p.x - w / 2,             y1: p.y + LABEL_GAP }
+      ].map(s => Object.assign(s, { x2: s.x1 + w, y2: s.y1 + h }));
+      spots.sort((a, b) => inView(b) - inView(a));  // stable: keeps right/left/top/bottom order within each group
+
+      const spot = spots.find(s => {
+        const padded = { x1: s.x1 - LABEL_PAD, y1: s.y1 - LABEL_PAD, x2: s.x2 + LABEL_PAD, y2: s.y2 + LABEL_PAD };
+        return !hits(padded, placed) && !hits(s, obstacles);
+      });
+      if (!spot) { it.el.classList.add('cm-label-hidden'); return; }
+      placed.push(spot);
+      if (it.tt.options.direction !== spot.dir) {
+        it.tt.options.direction = spot.dir;
+        it.tt.options.offset = L.point(spot.offset);
+        it.tt.update();
+      }
     });
   }
 
