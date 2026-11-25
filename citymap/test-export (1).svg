@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="1055" height="1064" viewBox="0 0 1055 1064">
+  <title>Dense</title>
+  <desc>Web Mercator, zoom 16, 1 unit = 1 screen pixel. Top-left corner = world pixel (13001248.93, 7496459.01) at this zoom. Layers: Vegan, Temples, Cafés.</desc>
+  <style>
+    text { font-family: 'Lato', sans-serif; font-size: 11px; font-weight: 700; fill: #1a1208; }
+    text.num { fill: #ffffff; text-anchor: middle; }
+    text.list { font-weight: 400; }
+  </style>
+  <g id="Vegan_points" inkscape:groupmode="layer" inkscape:label="Vegan – points">
+    <circle cx="465.76" cy="494.18" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>1. Wat Phra Singh</title></circle>
+    <circle cx="629.75" cy="626.97" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>2. Goodsouls Kitchen</title></circle>
+    <circle cx="427.8" cy="140.64" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>3. Wat Chedi Luang</title></circle>
+    <circle cx="575.95" cy="325.7" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>4. Blue Diamond</title></circle>
+    <circle cx="178.75" cy="456.79" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>5. Taste from Heart</title></circle>
+    <circle cx="676.52" cy="212.9" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>6. Wat Chiang Man</title></circle>
+    <circle cx="215.91" cy="115.59" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>7. Graph Café</title></circle>
+    <circle cx="329.75" cy="264.58" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>8. Ristr8to II</title></circle>
+    <circle cx="667.07" cy="289.62" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>9. Ming Zhen II</title></circle>
+    <circle cx="252.62" cy="238.22" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>10. Akha Ama II</title></circle>
+    <circle cx="279.48" cy="213.09" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>11. Free Bird Cafe II</title></circle>
+    <circle cx="714.95" cy="130.31" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>12. Reform Kafe II</title></circle>
+    <circle cx="591.35" cy="461.15" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>13. Wat Pan Tao II</title></circle>
+    <circle cx="346.49" cy="210.36" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>14. Khagee II</title></circle>
+    <circle cx="204.45" cy="451.83" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>15. J-DEE VEGAN Garden</title></circle>
+    <circle cx="248.76" cy="274.14" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>16. Payod Shan food Garden</title></circle>
+    <circle cx="372.68" cy="105.07" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>17. Nimman Haus Garden</title></circle>
+    <circle cx="508.21" cy="304.39" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>18. Pun Pun Garden</title></circle>
+    <circle cx="329.79" cy="494.38" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>19. Wat Lok Molee Garden</title></circle>
+    <circle cx="485.75" cy="389.48" r="7" fill="#E05A3A" stroke="#ffffff" stroke-width="1.5"><title>20. Wat Duang Di Garden</title></circle>
+  </g>
+  <g id="Temples_points" inkscape:groupmode="layer" inkscape:label="Temples – points">
+    <circle cx="499.14" cy="416.21" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>21. Ristr8to</title></circle>
+    <circle cx="292.45" cy="481.55" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>22. Ming Zhen</title></circle>
+    <circle cx="245.64" cy="257.24" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>23. Akha Ama</title></circle>
+    <circle cx="197.22" cy="238.14" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>24. Free Bird Cafe</title></circle>
+    <circle cx="425.79" cy="123.47" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>25. Reform Kafe</title></circle>
+    <circle cx="609.31" cy="401.44" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>26. Wat Pan Tao</title></circle>
+    <circle cx="282.76" cy="554.43" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>27. Khagee</title></circle>
+    <circle cx="377.2" cy="335.12" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>28. J-DEE VEGAN II</title></circle>
+    <circle cx="680.91" cy="231.89" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>29. Payod Shan food II</title></circle>
+    <circle cx="700.87" cy="126.35" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>30. Nimman Haus II</title></circle>
+    <circle cx="482.15" cy="143.5" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>31. Pun Pun II</title></circle>
+    <circle cx="609.13" cy="582.46" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>32. Wat Lok Molee II</title></circle>
+    <circle cx="186.12" cy="119.19" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>33. Wat Duang Di II</title></circle>
+    <circle cx="709.82" cy="114.38" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>34. Wat Phra Singh Garden</title></circle>
+    <circle cx="178.95" cy="280.46" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>35. Goodsouls Kitchen Garden</title></circle>
+    <circle cx="646.7" cy="609.68" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>36. Wat Chedi Luang Garden</title></circle>
+    <circle cx="452.25" cy="362.78" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>37. Blue Diamond Garden</title></circle>
+    <circle cx="444.96" cy="79.1" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>38. Taste from Heart Garden</title></circle>
+    <circle cx="452.84" cy="57.14" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>39. Wat Chiang Man Garden</title></circle>
+    <circle cx="505.79" cy="622.9" r="7" fill="#3ABF57" stroke="#ffffff" stroke-width="1.5"><title>40. Graph Café Garden</title></circle>
+  </g>
+  <g id="Cafes_points" inkscape:groupmode="layer" inkscape:label="Cafés – points">
+    <circle cx="198.05" cy="265.13" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>41. J-DEE VEGAN</title></circle>
+    <circle cx="424.4" cy="46.6" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>42. Payod Shan food</title></circle>
+    <circle cx="646.85" cy="259.73" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>43. Nimman Haus</title></circle>
+    <circle cx="491.97" cy="186.85" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>44. Pun Pun</title></circle>
+    <circle cx="652.87" cy="210.13" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>45. Wat Lok Molee</title></circle>
+    <circle cx="684.63" cy="372.11" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>46. Wat Duang Di</title></circle>
+    <circle cx="405.33" cy="64.42" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>47. Wat Phra Singh II</title></circle>
+    <circle cx="488.6" cy="427.46" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>48. Goodsouls Kitchen II</title></circle>
+    <circle cx="715.61" cy="128.86" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>49. Wat Chedi Luang II</title></circle>
+    <circle cx="479.68" cy="100.33" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>50. Blue Diamond II</title></circle>
+    <circle cx="196.9" cy="466.42" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>51. Taste from Heart II</title></circle>
+    <circle cx="245.72" cy="392.29" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>52. Wat Chiang Man II</title></circle>
+    <circle cx="186.54" cy="271.74" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>53. Graph Café II</title></circle>
+    <circle cx="719.81" cy="336.19" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>54. Ristr8to Garden</title></circle>
+    <circle cx="389.54" cy="518.15" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>55. Ming Zhen Garden</title></circle>
+    <circle cx="697.53" cy="449.37" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>56. Akha Ama Garden</title></circle>
+    <circle cx="494.52" cy="254.4" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>57. Free Bird Cafe Garden</title></circle>
+    <circle cx="564.23" cy="380.04" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>58. Reform Kafe Garden</title></circle>
+    <circle cx="167.81" cy="310.78" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>59. Wat Pan Tao Garden</title></circle>
+    <circle cx="195.01" cy="261.31" r="7" fill="#3357AB" stroke="#ffffff" stroke-width="1.5"><title>60. Khagee Garden</title></circle>
+  </g>
+  <g id="Vegan_numbers" inkscape:groupmode="layer" inkscape:label="Vegan – numbers">
+    <text class="num" x="465.76" y="496.88" font-size="7.5">1</text>
+    <text class="num" x="629.75" y="629.67" font-size="7.5">2</text>
+    <text class="num" x="427.8" y="143.34" font-size="7.5">3</text>
+    <text class="num" x="575.95" y="328.4" font-size="7.5">4</text>
+    <text class="num" x="178.75" y="459.49" font-size="7.5">5</text>
+    <text class="num" x="676.52" y="215.6" font-size="7.5">6</text>
+    <text class="num" x="215.91" y="118.29" font-size="7.5">7</text>
+    <text class="num" x="329.75" y="267.28" font-size="7.5">8</text>
+    <text class="num" x="667.07" y="292.32" font-size="7.5">9</text>
+    <text class="num" x="252.62" y="240.92" font-size="7.5">10</text>
+    <text class="num" x="279.48" y="215.79" font-size="7.5">11</text>
+    <text class="num" x="714.95" y="133.01" font-size="7.5">12</text>
+    <text class="num" x="591.35" y="463.85" font-size="7.5">13</text>
+    <text class="num" x="346.49" y="213.06" font-size="7.5">14</text>
+    <text class="num" x="204.45" y="454.53" font-size="7.5">15</text>
+    <text class="num" x="248.76" y="276.84" font-size="7.5">16</text>
+    <text class="num" x="372.68" y="107.77" font-size="7.5">17</text>
+    <text class="num" x="508.21" y="307.09" font-size="7.5">18</text>
+    <text class="num" x="329.79" y="497.08" font-size="7.5">19</text>
+    <text class="num" x="485.75" y="392.18" font-size="7.5">20</text>
+  </g>
+  <g id="Temples_numbers" inkscape:groupmode="layer" inkscape:label="Temples – numbers">
+    <text class="num" x="499.14" y="418.91" font-size="7.5">21</text>
+    <text class="num" x="292.45" y="484.25" font-size="7.5">22</text>
+    <text class="num" x="245.64" y="259.94" font-size="7.5">23</text>
+    <text class="num" x="197.22" y="240.84" font-size="7.5">24</text>
+    <text class="num" x="425.79" y="126.17" font-size="7.5">25</text>
+    <text class="num" x="609.31" y="404.14" font-size="7.5">26</text>
+    <text class="num" x="282.76" y="557.13" font-size="7.5">27</text>
+    <text class="num" x="377.2" y="337.82" font-size="7.5">28</text>
+    <text class="num" x="680.91" y="234.59" font-size="7.5">29</text>
+    <text class="num" x="700.87" y="129.05" font-size="7.5">30</text>
+    <text class="num" x="482.15" y="146.2" font-size="7.5">31</text>
+    <text class="num" x="609.13" y="585.16" font-size="7.5">32</text>
+    <text class="num" x="186.12" y="121.89" font-size="7.5">33</text>
+    <text class="num" x="709.82" y="117.08" font-size="7.5">34</text>
+    <text class="num" x="178.95" y="283.16" font-size="7.5">35</text>
+    <text class="num" x="646.7" y="612.38" font-size="7.5">36</text>
+    <text class="num" x="452.25" y="365.48" font-size="7.5">37</text>
+    <text class="num" x="444.96" y="81.8" font-size="7.5">38</text>
+    <text class="num" x="452.84" y="59.84" font-size="7.5">39</text>
+    <text class="num" x="505.79" y="625.6" font-size="7.5">40</text>
+  </g>
+  <g id="Cafes_numbers" inkscape:groupmode="layer" inkscape:label="Cafés – numbers">
+    <text class="num" x="198.05" y="267.83" font-size="7.5">41</text>
+    <text class="num" x="424.4" y="49.3" font-size="7.5">42</text>
+    <text class="num" x="646.85" y="262.43" font-size="7.5">43</text>
+    <text class="num" x="491.97" y="189.55" font-size="7.5">44</text>
+    <text class="num" x="652.87" y="212.83" font-size="7.5">45</text>
+    <text class="num" x="684.63" y="374.81" font-size="7.5">46</text>
+    <text class="num" x="405.33" y="67.12" font-size="7.5">47</text>
+    <text class="num" x="488.6" y="430.16" font-size="7.5">48</text>
+    <text class="num" x="715.61" y="131.56" font-size="7.5">49</text>
+    <text class="num" x="479.68" y="103.03" font-size="7.5">50</text>
+    <text class="num" x="196.9" y="469.12" font-size="7.5">51</text>
+    <text class="num" x="245.72" y="394.99" font-size="7.5">52</text>
+    <text class="num" x="186.54" y="274.44" font-size="7.5">53</text>
+    <text class="num" x="719.81" y="338.89" font-size="7.5">54</text>
+    <text class="num" x="389.54" y="520.85" font-size="7.5">55</text>
+    <text class="num" x="697.53" y="452.07" font-size="7.5">56</text>
+    <text class="num" x="494.52" y="257.1" font-size="7.5">57</text>
+    <text class="num" x="564.23" y="382.74" font-size="7.5">58</text>
+    <text class="num" x="167.81" y="313.48" font-size="7.5">59</text>
+    <text class="num" x="195.01" y="264.01" font-size="7.5">60</text>
+  </g>
+  <g id="Vegan_names" inkscape:groupmode="layer" inkscape:label="Vegan – names">
+    <text x="475.76" y="498.03" text-anchor="start">Wat Phra Singh</text>
+    <text x="639.75" y="630.82" text-anchor="start">Goodsouls Kitchen</text>
+    <text x="417.8" y="144.49" text-anchor="end">Wat Chedi Luang</text>
+    <text x="585.95" y="329.55" text-anchor="start">Blue Diamond</text>
+    <text x="168.75" y="460.64" text-anchor="end">Taste from Heart</text>
+    <text x="686.52" y="216.75" text-anchor="start">Wat Chiang Man</text>
+    <text x="225.91" y="119.44" text-anchor="start">Graph Café</text>
+    <text x="339.75" y="268.43" text-anchor="start">Ristr8to II</text>
+    <text x="677.07" y="293.47" text-anchor="start">Ming Zhen II</text>
+    <text x="262.62" y="242.07" text-anchor="start">Akha Ama II</text>
+    <text x="269.48" y="216.94" text-anchor="end">Free Bird Cafe II</text>
+    <text x="724.95" y="134.16" text-anchor="start">Reform Kafe II</text>
+    <text x="601.35" y="465" text-anchor="start">Wat Pan Tao II</text>
+    <text x="356.49" y="214.21" text-anchor="start">Khagee II</text>
+    <text x="214.45" y="455.68" text-anchor="start">J-DEE VEGAN Garden</text>
+    <text x="248.76" y="295.14" text-anchor="middle">Payod Shan food Garden</text>
+    <text x="372.68" y="91.77" text-anchor="middle">Nimman Haus Garden</text>
+    <text x="518.21" y="308.24" text-anchor="start">Pun Pun Garden</text>
+    <text x="339.79" y="498.23" text-anchor="start">Wat Lok Molee Garden</text>
+    <text x="475.75" y="393.33" text-anchor="end">Wat Duang Di Garden</text>
+  </g>
+  <g id="Temples_names" inkscape:groupmode="layer" inkscape:label="Temples – names">
+    <text x="509.14" y="420.06" text-anchor="start">Ristr8to</text>
+    <text x="282.45" y="485.4" text-anchor="end">Ming Zhen</text>
+    <text x="255.64" y="261.09" text-anchor="start">Akha Ama</text>
+    <text x="187.22" y="241.99" text-anchor="end">Free Bird Cafe</text>
+    <text x="435.79" y="127.32" text-anchor="start">Reform Kafe</text>
+    <text x="619.31" y="405.29" text-anchor="start">Wat Pan Tao</text>
+    <text x="292.76" y="558.28" text-anchor="start">Khagee</text>
+    <text x="387.2" y="338.97" text-anchor="start">J-DEE VEGAN II</text>
+    <text x="690.91" y="235.74" text-anchor="start">Payod Shan food II</text>
+    <text x="690.87" y="130.2" text-anchor="end">Nimman Haus II</text>
+    <text x="492.15" y="147.35" text-anchor="start">Pun Pun II</text>
+    <text x="619.13" y="586.31" text-anchor="start">Wat Lok Molee II</text>
+    <text x="176.12" y="123.04" text-anchor="end">Wat Duang Di II</text>
+    <text x="709.82" y="101.08" text-anchor="middle">Wat Phra Singh Garden</text>
+    <text x="168.95" y="284.31" text-anchor="end">Goodsouls Kitchen Garden</text>
+    <text x="656.7" y="613.53" text-anchor="start">Wat Chedi Luang Garden</text>
+    <text x="462.25" y="366.63" text-anchor="start">Blue Diamond Garden</text>
+    <text x="454.96" y="82.95" text-anchor="start">Taste from Heart Garden</text>
+    <text x="462.84" y="60.99" text-anchor="start">Wat Chiang Man Garden</text>
+    <text x="515.79" y="626.75" text-anchor="start">Graph Café Garden</text>
+  </g>
+  <g id="Cafes_names" inkscape:groupmode="layer" inkscape:label="Cafés – names">
+    <text x="208.05" y="268.98" text-anchor="start">J-DEE VEGAN</text>
+    <text x="414.4" y="50.45" text-anchor="end">Payod Shan food</text>
+    <text x="656.85" y="263.58" text-anchor="start">Nimman Haus</text>
+    <text x="501.97" y="190.7" text-anchor="start">Pun Pun</text>
+    <text x="642.87" y="213.98" text-anchor="end">Wat Lok Molee</text>
+    <text x="694.63" y="375.96" text-anchor="start">Wat Duang Di</text>
+    <text x="395.33" y="68.27" text-anchor="end">Wat Phra Singh II</text>
+    <text x="478.6" y="431.31" text-anchor="end">Goodsouls Kitchen II</text>
+    <text x="715.61" y="149.86" text-anchor="middle">Wat Chedi Luang II</text>
+    <text x="489.68" y="104.18" text-anchor="start">Blue Diamond II</text>
+    <text x="206.9" y="470.27" text-anchor="start">Taste from Heart II</text>
+    <text x="255.72" y="396.14" text-anchor="start">Wat Chiang Man II</text>
+    <text x="196.54" y="275.59" text-anchor="start">Graph Café II</text>
+    <text x="729.81" y="340.04" text-anchor="start">Ristr8to Garden</text>
+    <text x="399.54" y="522" text-anchor="start">Ming Zhen Garden</text>
+    <text x="707.53" y="453.22" text-anchor="start">Akha Ama Garden</text>
+    <text x="504.52" y="258.25" text-anchor="start">Free Bird Cafe Garden</text>
+    <text x="574.23" y="383.89" text-anchor="start">Reform Kafe Garden</text>
+    <text x="177.81" y="314.63" text-anchor="start">Wat Pan Tao Garden</text>
+    <text x="205.01" y="265.16" text-anchor="start">Khagee Garden</text>
+  </g>
+  <g id="Vegan_list" inkscape:groupmode="layer" inkscape:label="Vegan – list">
+    <text class="list" x="867.86" y="51"><tspan x="867.86">1. Wat Phra Singh</tspan><tspan x="867.86" dy="15.4">2. Goodsouls Kitchen</tspan><tspan x="867.86" dy="15.4">3. Wat Chedi Luang</tspan><tspan x="867.86" dy="15.4">4. Blue Diamond</tspan><tspan x="867.86" dy="15.4">5. Taste from Heart</tspan><tspan x="867.86" dy="15.4">6. Wat Chiang Man</tspan><tspan x="867.86" dy="15.4">7. Graph Café</tspan><tspan x="867.86" dy="15.4">8. Ristr8to II</tspan><tspan x="867.86" dy="15.4">9. Ming Zhen II</tspan><tspan x="867.86" dy="15.4">10. Akha Ama II</tspan><tspan x="867.86" dy="15.4">11. Free Bird Cafe II</tspan><tspan x="867.86" dy="15.4">12. Reform Kafe II</tspan><tspan x="867.86" dy="15.4">13. Wat Pan Tao II</tspan><tspan x="867.86" dy="15.4">14. Khagee II</tspan><tspan x="867.86" dy="15.4">15. J-DEE VEGAN Garden</tspan><tspan x="867.86" dy="15.4">16. Payod Shan food Garden</tspan><tspan x="867.86" dy="15.4">17. Nimman Haus Garden</tspan><tspan x="867.86" dy="15.4">18. Pun Pun Garden</tspan><tspan x="867.86" dy="15.4">19. Wat Lok Molee Garden</tspan><tspan x="867.86" dy="15.4">20. Wat Duang Di Garden</tspan></text>
+  </g>
+  <g id="Temples_list" inkscape:groupmode="layer" inkscape:label="Temples – list">
+    <text class="list" x="867.86" y="389"><tspan x="867.86">21. Ristr8to</tspan><tspan x="867.86" dy="15.4">22. Ming Zhen</tspan><tspan x="867.86" dy="15.4">23. Akha Ama</tspan><tspan x="867.86" dy="15.4">24. Free Bird Cafe</tspan><tspan x="867.86" dy="15.4">25. Reform Kafe</tspan><tspan x="867.86" dy="15.4">26. Wat Pan Tao</tspan><tspan x="867.86" dy="15.4">27. Khagee</tspan><tspan x="867.86" dy="15.4">28. J-DEE VEGAN II</tspan><tspan x="867.86" dy="15.4">29. Payod Shan food II</tspan><tspan x="867.86" dy="15.4">30. Nimman Haus II</tspan><tspan x="867.86" dy="15.4">31. Pun Pun II</tspan><tspan x="867.86" dy="15.4">32. Wat Lok Molee II</tspan><tspan x="867.86" dy="15.4">33. Wat Duang Di II</tspan><tspan x="867.86" dy="15.4">34. Wat Phra Singh Garden</tspan><tspan x="867.86" dy="15.4">35. Goodsouls Kitchen Garden</tspan><tspan x="867.86" dy="15.4">36. Wat Chedi Luang Garden</tspan><tspan x="867.86" dy="15.4">37. Blue Diamond Garden</tspan><tspan x="867.86" dy="15.4">38. Taste from Heart Garden</tspan><tspan x="867.86" dy="15.4">39. Wat Chiang Man Garden</tspan><tspan x="867.86" dy="15.4">40. Graph Café Garden</tspan></text>
+  </g>
+  <g id="Cafes_list" inkscape:groupmode="layer" inkscape:label="Cafés – list">
+    <text class="list" x="867.86" y="727"><tspan x="867.86">41. J-DEE VEGAN</tspan><tspan x="867.86" dy="15.4">42. Payod Shan food</tspan><tspan x="867.86" dy="15.4">43. Nimman Haus</tspan><tspan x="867.86" dy="15.4">44. Pun Pun</tspan><tspan x="867.86" dy="15.4">45. Wat Lok Molee</tspan><tspan x="867.86" dy="15.4">46. Wat Duang Di</tspan><tspan x="867.86" dy="15.4">47. Wat Phra Singh II</tspan><tspan x="867.86" dy="15.4">48. Goodsouls Kitchen II</tspan><tspan x="867.86" dy="15.4">49. Wat Chedi Luang II</tspan><tspan x="867.86" dy="15.4">50. Blue Diamond II</tspan><tspan x="867.86" dy="15.4">51. Taste from Heart II</tspan><tspan x="867.86" dy="15.4">52. Wat Chiang Man II</tspan><tspan x="867.86" dy="15.4">53. Graph Café II</tspan><tspan x="867.86" dy="15.4">54. Ristr8to Garden</tspan><tspan x="867.86" dy="15.4">55. Ming Zhen Garden</tspan><tspan x="867.86" dy="15.4">56. Akha Ama Garden</tspan><tspan x="867.86" dy="15.4">57. Free Bird Cafe Garden</tspan><tspan x="867.86" dy="15.4">58. Reform Kafe Garden</tspan><tspan x="867.86" dy="15.4">59. Wat Pan Tao Garden</tspan><tspan x="867.86" dy="15.4">60. Khagee Garden</tspan></text>
+  </g>
+  <g id="Moat_corners" inkscape:groupmode="layer" inkscape:label="Moat corners">
+    <path d="M89.88 60.17H101.88M95.88 54.17V66.17" stroke="#000000" stroke-width="1" fill="none"><title>NW - Hua Lin (18.795672, 98.978594)</title></path>
+    <path d="M790.15 83.41H802.15M796.15 77.41V89.41" stroke="#000000" stroke-width="1" fill="none"><title>NE - Si Phum (18.7952, 98.99362)</title></path>
+    <path d="M749.11 754.96H761.11M755.11 748.96V760.96" stroke="#000000" stroke-width="1" fill="none"><title>SE - Katam (18.781558, 98.9927394)</title></path>
+    <path d="M48.69 731.72H60.69M54.69 725.72V737.72" stroke="#000000" stroke-width="1" fill="none"><title>SW - Ku Hueang (18.78203, 98.97771)</title></path>
+  </g>
+</svg>

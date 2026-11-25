@@ -61,8 +61,11 @@
    # version : 20261125-120000 - SVG export button: every active layer becomes two SVG layers ("<layer> – points" and
    #                             "<layer> – names", Illustrator/Inkscape/Affinity layers), plus an optional reference
    #                             layer (config.referencePoints, e.g. the four moat corners) for aligning on a base map
+   # version : 20261125-121000 - SVG export: two more layers per map layer: "<layer> – numbers" (number centred in each
+   #                             dot, same numbering as the printed map) and "<layer> – list" (one text element,
+   #                             "1. Name" per line, placed in a column to the right of the map)
    ========================================================================= */
-const version = "20261125-120000";
+const version = "20261125-121000";
 
 (function () {
   'use strict';
@@ -125,6 +128,8 @@ const version = "20261125-120000";
       svgTitle: 'Download the places of the active layers as an SVG file with separate layers for points and names',
       svgPoints: 'points',
       svgNames: 'names',
+      svgNumbers: 'numbers',
+      svgList: 'list',
       loading: 'Loading data…',
       demoData: '⚠ Using demo data — sheet unreachable',
       loadError: 'Error loading data. Check console.',
@@ -1083,18 +1088,20 @@ const version = "20261125-120000";
   // ── SVG EXPORT ──────────────────────────────────────────────────────────────
   // All places of the active layers (with the current filters), projected in Web Mercator at the current
   // zoom level, so 1 SVG unit = 1 screen pixel and the file lines up with a screenshot / tiles of that zoom.
-  // Layer structure (bottom to top): every "<layer> – points", every "<layer> – names", the reference layer.
+  // Layer structure (bottom to top): every "<layer> – points", "– numbers", "– names", "– list", then the reference layer.
+  // Numbers follow the printed map: 1, 2, 3… in layer order, then sheet order.
   // The groups carry inkscape:groupmode="layer" (Inkscape, Affinity) and an id (Illustrator).
   function exportSvg() {
     const zoom = map.getZoom();
-    const PAD = 40, R = 5, FONT_SIZE = 11, GAP = 8;
+    const PAD = 40, R = 7, FONT_SIZE = 11, GAP = R + 3, LIST_GAP = 60, LIST_LINE = 1.4;
     const fontFamily = (cfg.fonts && cfg.fonts.body) || 'sans-serif';
 
     const layers = layerNamesOf(filteredData).filter(l => activeLayers.has(l));
     const places = [];
+    let number = 1;
     layers.forEach(layer => filteredData.filter(r => r[F.category] === layer).forEach(row => {
       const lat = toFloat(row[F.lat]), lon = toFloat(row[F.lon]);
-      if (!isNaN(lat) && !isNaN(lon)) places.push({ layer, name: String(row[F.name] || ''), pt: map.project([lat, lon], zoom) });
+      if (!isNaN(lat) && !isNaN(lon)) places.push({ layer, number: number++, name: String(row[F.name] || ''), pt: map.project([lat, lon], zoom) });
     }));
     const ref = cfg.referencePoints || {};
     const refPoints = (ref.points || []).map(p => ({ name: String(p.name || ''), lat: toFloat(p.lat), lon: toFloat(p.lon) }))
@@ -1129,6 +1136,18 @@ const version = "20261125-120000";
       minY = Math.min(minY, p.label.y1); maxY = Math.max(maxY, p.label.y2);
     });
 
+    // Lists: one block per layer, stacked in a column to the right of the map area.
+    const listX = maxX + LIST_GAP, lineH = FONT_SIZE * LIST_LINE;
+    let listY = minY, listW = 0;
+    const lists = layers.map(layer => {
+      const lines = places.filter(p => p.layer === layer).map(p => `${p.number}. ${p.name}`);
+      const block = { layer, lines, x: listX, y: listY + FONT_SIZE };
+      lines.forEach(l => { listW = Math.max(listW, ctx.measureText(l).width); });
+      listY += lines.length * lineH + LIST_GAP / 2;
+      return block;
+    }).filter(b => b.lines.length);
+    if (lists.length) { maxX = listX + listW; maxY = Math.max(maxY, listY - LIST_GAP / 2); }
+
     const ox = minX - PAD, oy = minY - PAD;
     const W = Math.ceil(maxX - minX + 2 * PAD), H = Math.ceil(maxY - minY + 2 * PAD);
     const n = v => (Math.round(v * 100) / 100).toString();
@@ -1146,14 +1165,26 @@ const version = "20261125-120000";
     const group = (label, body) =>
       `  <g id="${esc(layerId(label))}" inkscape:groupmode="layer" inkscape:label="${esc(label)}">\n${body}  </g>\n`;
 
-    let pointLayers = '', nameLayers = '';
+    let pointLayers = '', numberLayers = '', nameLayers = '', listLayers = '';
     layers.forEach(layer => {
       const color = layerColors[layer] || '#333333';
       const items = places.filter(p => p.layer === layer);
+      if (!items.length) return;
       pointLayers += group(`${layer} – ${S.svgPoints}`, items.map(p =>
-        `    <circle cx="${n(p.pt.x - ox)}" cy="${n(p.pt.y - oy)}" r="${R}" fill="${esc(color)}" stroke="#ffffff" stroke-width="1.5"><title>${esc(p.name)}</title></circle>\n`).join(''));
+        `    <circle cx="${n(p.pt.x - ox)}" cy="${n(p.pt.y - oy)}" r="${R}" fill="${esc(color)}" stroke="#ffffff" stroke-width="1.5"><title>${p.number}. ${esc(p.name)}</title></circle>\n`).join(''));
+      // Numbers sit in the dots: smaller type for 3+ digits so they still fit.
+      numberLayers += group(`${layer} – ${S.svgNumbers}`, items.map(p => {
+        const size = String(p.number).length >= 3 ? 5.5 : 7.5;
+        return `    <text class="num" x="${n(p.pt.x - ox)}" y="${n(p.pt.y - oy + size * 0.36)}" font-size="${size}">${p.number}</text>\n`;
+      }).join(''));
       nameLayers += group(`${layer} – ${S.svgNames}`, items.map(p =>
         `    <text x="${n(p.label.tx - ox)}" y="${n(p.label.ty - oy)}" text-anchor="${p.label.anchor}">${esc(p.name)}</text>\n`).join(''));
+    });
+    // One text element per list, one "number. name" per line (tspans), so it edits as a single block.
+    lists.forEach(b => {
+      const x = n(b.x - ox);
+      const tspans = b.lines.map((l, i) => `<tspan x="${x}"${i ? ` dy="${n(lineH)}"` : ''}>${esc(l)}</tspan>`).join('');
+      listLayers += group(`${b.layer} – ${S.svgList}`, `    <text class="list" x="${x}" y="${n(b.y - oy)}">${tspans}</text>\n`);
     });
     const refLayer = refPoints.length ? group(ref.name || 'Reference points', refPoints.map(p => {
       const x = p.pt.x - ox, y = p.pt.y - oy, a = 6;
@@ -1164,8 +1195,12 @@ const version = "20261125-120000";
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
   <title>${esc(cfg.documentTitle || cfg.name)}</title>
   <desc>Web Mercator, zoom ${zoom}, 1 unit = 1 screen pixel. Top-left corner = world pixel (${n(ox)}, ${n(oy)}) at this zoom. Layers: ${esc(layers.join(', '))}.</desc>
-  <style>text { font-family: '${esc(fontFamily)}', sans-serif; font-size: ${FONT_SIZE}px; font-weight: 700; fill: #1a1208; }</style>
-${pointLayers}${nameLayers}${refLayer}</svg>
+  <style>
+    text { font-family: '${esc(fontFamily)}', sans-serif; font-size: ${FONT_SIZE}px; font-weight: 700; fill: #1a1208; }
+    text.num { fill: #ffffff; text-anchor: middle; }
+    text.list { font-weight: 400; }
+  </style>
+${pointLayers}${numberLayers}${nameLayers}${listLayers}${refLayer}</svg>
 `;
     const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
     const a = document.createElement('a');
