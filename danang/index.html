@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<!-- version = "20261126-124500"
+     Location file for "René in Da Nang": only settings live here.
+     All behaviour is in ../citymap/citymap.js and ../citymap/citymap.css (shared by every city).
+     version history
+     # version : 20261126-124500 - Initial version, created from the Chiang Mai file
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>René in Da Nang</title>
+  <meta name="description" content="A curated map of Da Nang." />
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+
+<script>
+window.CITYMAP_CONFIG = {
+  // ── Identity ────────────────────────────────────────────────────────────────
+  name: "René in Da Nang",
+  accentWord: "in",                           // shown in italic gold in the title
+  tagline: "A curated map of Da Nang",
+  city:"Da Nang",
+
+  // ── Map ─────────────────────────────────────────────────────────────────────
+  center: [16.0600, 108.2280],                // [lat, lon] – Han River, between the centre and My Khe beach
+  zoom: 13,
+  listPosition: "right",
+  // ── Data: the Google Sheet must be shared as "Anyone with the link can view" ─
+  sheet: {
+    id: "1W26AXb91InFg7Lw6TR1mkVh3dm-OQbhGAx0BgNrJdok",
+    dataTab: "MASTER_DANANG",
+    layersTab: "LAYERS_DANANG"
+  },
+
+  // ── Colours ─────────────────────────────────────────────────────────────────
+  // Da Nang: night-sea navy header, beach-sand cream, ocean-blue accent (Han River / My Khe), Dragon Bridge gold highlight
+  theme: {
+    cream: "#f5f0e6",
+    warmWhite: "#fbf8f2",
+    accent: "#0f6e94",
+    accentDark: "#0a5675",
+    gold: "#e8b23a",
+    deep: "#0b2540",
+    muted: "#5a5f6b",
+    border: "#ddd5c4",
+    borderSoft: "#ece6da",
+    subtle: "#9a978c",
+    headerSub: "#a9bccd",
+    disclaimerBg: "#f2ece0",
+    disclaimerText: "#5e5a4a",
+    warnBg: "#fdf0d5",
+    warnBorder: "#ecce8a",
+    warnText: "#7a5200",
+    popupWarn: "#9a5b00"
+  },
+  // 30 fixed layer colours, all readable (3:1+) on the sidebar background: ocean blue, dragon fire, bridge gold, lotus pink, lantern red ...
+  palette: [
+    "#0F6E94","#C2410C","#A87A0A","#C2185B","#5B3FA8","#0B3C7A","#8B4513","#1F6FB2","#C8102E","#C86400",
+    "#4A5568","#0E7CA8","#7A3E9D","#B0307A","#7D2733","#996515","#2B2B2B","#9C6644","#4361EE","#E0524D",
+    "#5E7FA8","#8E6C8A","#A0522D","#3D405B","#6B4E9B","#A06A76","#7C8A99","#A23B72","#3A5A80","#CC5500"
+  ],
+  fonts: { heading: "Playfair Display", body: "Lato" },
+  // layerColors: { "Beaches": "#0F6E94" },   // optional fixed colour per layer
+
+  // ── Disclaimer (sidebar footer) and popup warning ───────────────────────────
+  disclaimer: "Details such as opening hours, addresses, and phone numbers may have changed. Use this map for inspiration only — always verify before visiting.",
+  popupWarning: "Please verify info",
+
+  // ── Behaviour ───────────────────────────────────────────────────────────────
+  storageKey: "danang",                       // own basemap preference (separate per city)
+  defaultLayers: "all",                       // first 4 layers on load (or a list of names, or "all")
+
+  // ── QR code: sidebar button + on the printed map. Encodes this address plus the active layers ──
+  qr: { enabled: true, url: "https://rcsmit.github.io/danang/" },
+
+
+  // ── Reference points for svg export ---
+  referencePoints: {
+    name: "Landmarks",
+    points: [
+      { name: "NW – Thuận Phước Bridge",  lat: 16.092,    lon: 108.222 },
+      { name: "NE – Linh Ứng Pagoda (Sơn Trà)", lat: 16.099, lon: 108.277 },
+      { name: "SE – Marble Mountains (Thủy Sơn)", lat: 16.003358, lon: 108.264020 },
+      { name: "SW – Dragon Bridge",       lat: 16.061111, lon: 108.226667 },
+    ]
+  },
+  // ── Demo data, used only when the sheet cannot be reached ───────────────────
+  fallbackData: [
+    { Id:"1", Layer:"Sights", naam:"Dragon Bridge", address:"Nguyễn Văn Linh, Hải Châu, Đà Nẵng", LON:"108.226667", LAT:"16.061111", website:"", remarks:"Breathes fire and water on weekend nights at 21:00" },
+    { Id:"2", Layer:"Sights", naam:"Han River Bridge", address:"Bạch Đằng, Hải Châu, Đà Nẵng", LON:"108.226722", LAT:"16.072278", website:"", remarks:"Swing bridge, opens late on weekend nights" },
+    { Id:"3", Layer:"Sights", naam:"Da Nang Cathedral", address:"156 Trần Phú, Hải Châu, Đà Nẵng", LON:"108.223300", LAT:"16.066800", website:"", remarks:"The pink church" },
+    { Id:"4", Layer:"Markets", naam:"Han Market", address:"119 Trần Phú, Hải Châu, Đà Nẵng", LON:"108.224300", LAT:"16.068200", website:"", remarks:"Central market near the river" },
+    { Id:"5", Layer:"Beaches", naam:"My Khe Beach", address:"Võ Nguyên Giáp, Sơn Trà, Đà Nẵng", LON:"108.247500", LAT:"16.061000", website:"", remarks:"Long city beach, best early morning" },
+    { Id:"6", Layer:"Temples", naam:"Linh Ung Pagoda (Son Tra)", address:"Bãi Bụt, Thọ Quang, Sơn Trà, Đà Nẵng", LON:"108.277000", LAT:"16.099000", website:"", remarks:"Lady Buddha statue facing the sea" },
+    { Id:"7", Layer:"Temples", naam:"Marble Mountains", address:"81 Huyền Trân Công Chúa, Ngũ Hành Sơn, Đà Nẵng", LON:"108.264020", LAT:"16.003358", website:"", remarks:"Caves and pagodas inside marble hills" }
+  ],
+  fallbackMeta: {
+    "Sights": { description: "Sights (demo data).", source: "Demo data" },
+    "Markets": { description: "Markets (demo data).", source: "Demo data" },
+    "Beaches": { description: "Beaches (demo data).", source: "Demo data" },
+    "Temples": { description: "Temples (demo data).", source: "Demo data" }
+  }
+};
+</script>
+<script src="../citymap/citymap.js"></script>
+</body>
+</html>

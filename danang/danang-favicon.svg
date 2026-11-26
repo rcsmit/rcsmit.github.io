@@ -1,0 +1,9 @@
+<!-- version = "20261126-124500" -->
+<!-- Letters are live text in Lato Bold (SIL OFL). Without Lato installed a bold sans-serif is used; see the -outlined file for a font-independent version. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#0f6e94"/>
+  <ellipse cx="256" cy="453" rx="84" ry="17" fill="#e8b23a"/>
+  <polygon points="147.94,290.57 256,432 364.06,290.57" fill="#f5f0e6"/>
+  <circle cx="256" cy="208" r="136" fill="#f5f0e6"/>
+  <text x="154.89" y="256.62" font-family="Lato, 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="134.5" fill="#0f6e94">DN</text>
+</svg>
