@@ -77,8 +77,10 @@
    #                             shows distance / rating / reviews under the name and gets a sort dropdown
    # version : 20261127-151000 - Review-count column also recognises "rating_count" (and similar headers); an optional
    #                             "rating_date" column is shown as a hover on the rating and review-count values
+   # version : 20261127-210657 - Bottom table: remarks are shown under the name (own "Remarks" column removed, name column takes
+   #                             the free width); review-count column header is "#" instead of "Rev."
    ========================================================================= */
-const version = "20261127-151000";
+const version = "20261127-210657";
 
 (function () {
   'use strict';
@@ -163,7 +165,7 @@ const version = "20261127-151000";
       distFromCenter: 'Distance from the city centre (km)',
       colRating: '★',
       colRatingTitle: 'Google rating',
-      colReviews: 'Rev.',
+      colReviews: '#',
       colReviewsTitle: 'Number of Google reviews',
       reviewsUnit: 'reviews',
       ratingDateLabel: 'as of',
@@ -1021,12 +1023,12 @@ const version = "20261127-151000";
     buildTable(visibleTableData());
   }
 
-  // The bottom table lists (Id), name, remarks, km, (rating), (reviews) and the action icons;
-  // address and website are shown in the popup. Number columns are as narrow as their content allows.
+  // The bottom table lists (Id), name (remarks on a new line under it), km, (rating), (reviews) and the action
+  // icons; address and website are shown in the popup. Number columns are as narrow as their content allows.
   function tableColgroup() {
     return '<colgroup>' +
       (tableCols.id ? '<col style="width:40px">' : '') +
-      '<col style="width:34%"><col>' +
+      '<col>' +
       '<col style="width:40px">' +
       (tableCols.rating ? '<col style="width:32px">' : '') +
       (tableCols.reviews ? '<col style="width:40px">' : '') +
@@ -1043,7 +1045,6 @@ const version = "20261127-151000";
     return '<tr>' +
       (tableCols.id ? sortTh('id', S.colId, S.colIdTitle, true) : '') +
       sortTh('name', S.colName, S.colName, false) +
-      `<th>${escH(S.colRemarks)}</th>` +
       sortTh('dist', S.colDistance, myPos ? S.distFromMe : S.distFromCenter, true) +
       (tableCols.rating ? sortTh('rating', S.colRating, S.colRatingTitle, true) : '') +
       (tableCols.reviews ? sortTh('reviews', S.colReviews, S.colReviewsTitle, true) : '') +
@@ -1154,8 +1155,7 @@ const version = "20261127-151000";
         const rating = ratingOf(r), reviews = reviewsOf(r);
         tr.innerHTML =
           (tableCols.id ? `<td class="td-num td-id" title="${escH(r[F.id])}">${escH(r[F.id])}</td>` : '') +
-          `<td>${nameHtml(r, hasCoords)}</td>` +
-          `<td>${escH(r[F.remarks])}</td>` +
+          `<td>${nameHtml(r, hasCoords)}${r[F.remarks] ? `<div class="td-remark">${escH(r[F.remarks])}</div>` : ''}</td>` +
           `<td class="td-num">${fmtKm(distanceKm(r))}</td>` +
           (tableCols.rating ? `<td class="td-num"${isNaN(rating) ? '' : ` title="${escH(withDate(S.colRatingTitle + ' ' + fmtRating(rating), r))}"`}>${fmtRating(rating)}</td>` : '') +
           (tableCols.reviews ? `<td class="td-num"${isNaN(reviews) ? '' : ` title="${escH(withDate(reviews + ' ' + S.reviewsUnit, r))}"`}>${fmtReviews(reviews)}</td>` : '') +

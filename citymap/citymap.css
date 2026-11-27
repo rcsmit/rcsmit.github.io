@@ -358,6 +358,8 @@ td a { color: var(--accent); text-decoration: none; }
 .name-link:hover { color: var(--accent); text-decoration: underline solid var(--accent); }
 .name-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 2px; }
 td a:hover { text-decoration: underline; }
+/* remarks on a new line under the place name in the bottom table */
+.td-remark { font-size: 0.76rem; color: var(--muted); line-height: 1.4; margin-top: 2px; overflow-wrap: anywhere; }
 
 /* thin number columns in the place list (Id, km, rating, reviews) */
 th.th-num, td.td-num { text-align: right; padding-left: 3px; padding-right: 3px; white-space: nowrap; }
