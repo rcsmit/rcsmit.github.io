@@ -1,4 +1,4 @@
-/* version = "20261125-120000" */
+/* version = "20261127-150000" */
 /* ============================================================================
    citymap.css — generic styles for the reusable city map (see citymap.js).
    All colours and fonts are CSS variables. The defaults below are a neutral
@@ -358,6 +358,32 @@ td a { color: var(--accent); text-decoration: none; }
 .name-link:hover { color: var(--accent); text-decoration: underline solid var(--accent); }
 .name-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 2px; }
 td a:hover { text-decoration: underline; }
+
+/* thin number columns in the place list (Id, km, rating, reviews) */
+th.th-num, td.td-num { text-align: right; padding-left: 3px; padding-right: 3px; white-space: nowrap; }
+td.td-num { font-size: 0.7rem; color: var(--muted); font-variant-numeric: tabular-nums; text-overflow: ellipsis; }
+td.td-id { text-align: left; }
+/* sortable column headers */
+.sort-btn {
+  font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; background: none; border: none;
+  padding: 0; margin: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 1px; max-width: 100%;
+}
+th.th-num .sort-btn { width: 100%; justify-content: flex-end; }
+.sort-btn:hover { color: var(--accent); }
+.sort-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 2px; }
+.sort-ind { font-size: 0.55rem; color: var(--accent); }
+th[aria-sort="ascending"], th[aria-sort="descending"] { color: var(--deep); }
+/* right-hand list: distance / rating / reviews line and the sort dropdown */
+.poi-meta { grid-column: 1 / -1; font-size: 0.72rem; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.sort-bar {
+  display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 0.63rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--muted);
+}
+.sort-bar select {
+  flex: 1; min-width: 0; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; font-family: var(--font-body);
+  font-size: 0.78rem; background: var(--cream); color: var(--deep); text-transform: none; letter-spacing: 0; cursor: pointer;
+}
+.sort-bar select:focus { border-color: var(--accent); outline: none; }
 
 /* ── POPUP ── */
 .leaflet-popup-content-wrapper { border-radius: 8px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.15) !important; font-family: var(--font-body) !important; }

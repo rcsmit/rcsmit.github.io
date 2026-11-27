@@ -152,6 +152,7 @@ https://www.google.com/maps/place/Good+One+Caf%C3%A9+-+Eimsb%C3%BCttel/@53.56262
   <section class="panel" aria-label="Opties">
     <div class="options">
       <label><input type="checkbox" id="opt-header" > Kopregel (naam;lat;lng)</label>
+      <label><input type="checkbox" id="opt-empty" checked> Lege kolom na naam (naam;;lat;lng)</label>
       <label><input type="checkbox" id="opt-coords" checked> Coördinaten (lat;lng)</label>
     </div>
   </section>
@@ -172,7 +173,7 @@ https://www.google.com/maps/place/Good+One+Caf%C3%A9+-+Eimsb%C3%BCttel/@53.56262
 </main>
 
 <script>
-// version = "20261107-171900"
+// version = "20261127-121500"
 (function () {
   "use strict";
 
@@ -182,6 +183,7 @@ https://www.google.com/maps/place/Good+One+Caf%C3%A9+-+Eimsb%C3%BCttel/@53.56262
   var $notice = document.getElementById("notice");
   var $header = document.getElementById("opt-header");
   var $coords = document.getElementById("opt-coords");
+  var $empty = document.getElementById("opt-empty");
   var $copy = document.getElementById("copy");
   var $clear = document.getElementById("clear");
   var copyTimer = null;
@@ -216,6 +218,7 @@ https://www.google.com/maps/place/Good+One+Caf%C3%A9+-+Eimsb%C3%BCttel/@53.56262
 
   function convert() {
     var withCoords = $coords.checked;
+    var withEmpty = $empty.checked;
     var lines = $input.value.split(/\r?\n/);
     var rows = [];
     var skipped = 0;
@@ -227,12 +230,16 @@ https://www.google.com/maps/place/Good+One+Caf%C3%A9+-+Eimsb%C3%BCttel/@53.56262
       var url = normalizeUrl(line);
       var c = parseCoords(url);
       var cols = [clean(parseName(url))];
+      if (withEmpty) cols.push("");
       if (withCoords) cols.push(c.lat.replace(".", ","), c.lng.replace(".", ","));
       rows.push(cols.join(";"));
     });
 
     if ($header.checked && rows.length) {
-      rows.unshift(withCoords ? "naam;lat;lng" : "naam");
+      var head = ["naam"];
+      if (withEmpty) head.push("");
+      if (withCoords) head.push("lat", "lng");
+      rows.unshift(head.join(";"));
     }
 
     $output.value = rows.join("\n");
@@ -279,6 +286,7 @@ https://www.google.com/maps/place/Good+One+Caf%C3%A9+-+Eimsb%C3%BCttel/@53.56262
   $input.addEventListener("input", convert);
   $header.addEventListener("change", convert);
   $coords.addEventListener("change", convert);
+  $empty.addEventListener("change", convert);
 
   convert();
 })();

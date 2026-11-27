@@ -70,8 +70,13 @@
    #                             layers) so stricter importers such as Gravit Designer / Corel Vector can open it
    # version : 20261125-124900 - No flash of unstyled text: a loading screen (spinner + map name) is shown at once, the
    #                             stylesheets and fonts are loaded before the page is built, then the libraries
+   # version : 20261127-150000 - Place list: thin "km" column (distance from "My location" once it is found, otherwise
+   #                             from the city centre / config.distanceCenter), optional Google rating and review-count
+   #                             columns and an optional Id column (only when the sheet has them). Click a column header
+   #                             to sort within each layer (Id, name, distance, rating, reviews); the right-hand list
+   #                             shows distance / rating / reviews under the name and gets a sort dropdown
    ========================================================================= */
-const version = "20261125-124900";
+const version = "20261127-150000";
 
 (function () {
   'use strict';
@@ -97,7 +102,7 @@ const version = "20261125-124900";
     zoom: 12,
     maxZoom: 19,
     sheet: { id: '', dataTab: 'MASTER', layersTab: 'LAYERS' },
-    fields: { id: 'Id', category: 'Layer', name: 'naam', address: 'address', lon: 'LON', lat: 'LAT', website: 'website', remarks: 'remarks', status: 'Status', region: 'Region' },
+    fields: { id: 'Id', category: 'Layer', name: 'naam', address: 'address', lon: 'LON', lat: 'LAT', website: 'website', remarks: 'remarks', status: 'Status', region: 'Region', rating: 'rating', reviews: 'reviews' },
     metaFields: { layer: 'Layer', description: 'Description', source: 'Source' },
     theme: {},                  // CSS colour overrides, see README.md
     fonts: { heading: 'Playfair Display', body: 'Lato', url: '' },
@@ -120,6 +125,7 @@ const version = "20261125-124900";
     svgExport: true,            // "SVG export" button (points and names per layer, for Illustrator/Inkscape)
     referencePoints: { name: 'Reference points', points: [] },   // extra SVG layer, e.g. moat corners: [{ name, lat, lon }]
     listPosition: 'bottom',     // place list under the map ('bottom') or as a third column on the right ('right'); phones always use 'bottom'
+    distanceCenter: null,       // [lat, lon] the km column measures from while "My location" is not used; null = `center`
     strings: {
       searchLabel: 'Search',
       searchPlaceholder: 'Filter by name, address, remarks…',
@@ -148,6 +154,24 @@ const version = "20261125-124900";
       layersNotFound: 'Layers not found:',
       colName: 'Name',
       colRemarks: 'Remarks',
+      colId: '#',
+      colIdTitle: 'Id',
+      colDistance: 'km',
+      distFromMe: 'Distance from your location (km)',
+      distFromCenter: 'Distance from the city centre (km)',
+      colRating: '★',
+      colRatingTitle: 'Google rating',
+      colReviews: 'Rev.',
+      colReviewsTitle: 'Number of Google reviews',
+      reviewsUnit: 'reviews',
+      sortHint: 'click to sort',
+      sortBy: 'Sort',
+      sortSheet: 'Sheet order',
+      sortId: 'Id',
+      sortName: 'Name A–Z',
+      sortDistance: 'Distance (nearest first)',
+      sortRating: 'Rating (highest first)',
+      sortReviews: 'Reviews (most first)',
       activeLayers: 'Active layers:',
       source: 'Source:',
       googleMaps: 'Google Maps',
@@ -482,6 +506,9 @@ const version = "20261125-124900";
   let labelMarkers = [];           // markers with a permanent label, in priority order (layer order, then sheet order)
   let basemapSeq = 0;              // guards against out-of-order async style loads
   const sidebarCtl = {};           // filled by initSidebar()
+  let myPos = null;                // { lat, lon } from the "My location" button; the km column measures from here
+  let tableCols = { id: false, rating: false, reviews: false };   // optional place-list columns, set once the sheet is loaded
+  const sortState = { key: '', dir: 1 };                           // place-list sort; key '' = sheet order
   const tip = () => document.getElementById('float-tip');
 
   // ── CSV ─────────────────────────────────────────────────────────────────────
@@ -895,8 +922,146 @@ const version = "20261125-124900";
     };
   }
 
-  // The bottom table lists name, remarks and the action icons; address and website are shown in the popup.
-  const TABLE_COLGROUP = '<colgroup><col class="col-name" style="width:38%"><col class="col-remarks"><col class="col-actions" style="width:60px"></colgroup>';
+  // ── DISTANCE, RATING, REVIEWS, SORTING ──────────────────────────────────────
+  // Distances are measured from the visitor's position once "My location" has found it, otherwise from the
+  // city centre (config.distanceCenter, falling back to config.center).
+  function distanceOrigin() {
+    if (myPos) return myPos;
+    const c = Array.isArray(cfg.distanceCenter) && cfg.distanceCenter.length === 2 ? cfg.distanceCenter : cfg.center;
+    return { lat: Number(c[0]), lon: Number(c[1]) };
+  }
+  // Great-circle distance (haversine, earth radius 6371 km) — the same formula as the sheet version.
+  function haversineKm(lat1, lon1, lat2, lon2) {
+    const rad = d => d * Math.PI / 180;
+    const h = Math.sin(rad(lat2 - lat1) / 2) ** 2 +
+      Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2;
+    return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
+  }
+  function distanceKm(r) {
+    const lat = toFloat(r[F.lat]), lon = toFloat(r[F.lon]), o = distanceOrigin();
+    if (isNaN(lat) || isNaN(lon) || isNaN(o.lat) || isNaN(o.lon)) return NaN;
+    return haversineKm(o.lat, o.lon, lat, lon);
+  }
+  function fmtKm(d) { return isNaN(d) ? '' : d < 10 ? d.toFixed(1) : String(Math.round(d)); }
+
+  // Rating: "4.6", "4,6", "4.6 ★" or "★ 4.6"; only 0–5 counts.
+  function ratingOf(r) {
+    if (!F.rating) return NaN;
+    const v = toFloat(String(r[F.rating] || '').trim().replace(/^[^\d]+/, ''));
+    return v >= 0 && v <= 5 ? v : NaN;
+  }
+  function fmtRating(v) { return isNaN(v) ? '' : v.toFixed(1); }
+
+  // Review count: "1234", "1.234", "1,234", "(1234)" or "1.2k".
+  function reviewsOf(r) {
+    if (!F.reviews) return NaN;
+    const s = String(r[F.reviews] || '').trim();
+    if (!s) return NaN;
+    const k = /^\(?\s*(\d+(?:[.,]\d+)?)\s*k\s*\)?$/i.exec(s);
+    if (k) return Math.round(parseFloat(k[1].replace(',', '.')) * 1000);
+    const digits = s.replace(/\D/g, '');
+    return digits ? parseInt(digits, 10) : NaN;
+  }
+  function fmtReviews(n) {
+    if (isNaN(n)) return '';
+    if (n < 1000) return String(n);
+    if (n < 10000) return String(Math.round(n / 100) / 10) + 'k';
+    return Math.round(n / 1000) + 'k';
+  }
+
+  // Which optional columns the sheet fills (checked once, on all rows).
+  function detectTableCols() {
+    tableCols = {
+      id: !!F.id && allData.some(r => String(r[F.id] || '').trim() !== ''),
+      rating: allData.some(r => !isNaN(ratingOf(r))),
+      reviews: allData.some(r => !isNaN(reviewsOf(r)))
+    };
+  }
+
+  const SORT_FIRST_DIR = { id: 1, name: 1, dist: 1, rating: -1, reviews: -1 };   // 1 = ascending
+  function sortValue(r, key) {
+    if (key === 'id') return String(r[F.id] || '').trim();
+    if (key === 'name') return String(r[F.name] || '').trim();
+    if (key === 'dist') return distanceKm(r);
+    if (key === 'rating') return ratingOf(r);
+    if (key === 'reviews') return reviewsOf(r);
+    return '';
+  }
+  // Sorts the rows of one layer. Empty values always go last; ties keep the sheet order.
+  function sortRows(rows) {
+    const { key, dir } = sortState;
+    if (!key) return rows;
+    const text = key === 'id' || key === 'name';
+    const empty = v => text ? v === '' : isNaN(v);
+    return rows.map((r, i) => ({ r, i, v: sortValue(r, key) }))
+      .sort((a, b) => {
+        const ea = empty(a.v), eb = empty(b.v);
+        if (ea !== eb) return ea ? 1 : -1;
+        if (ea) return a.i - b.i;
+        const c = text ? a.v.localeCompare(b.v, undefined, { numeric: true, sensitivity: 'base' }) : a.v - b.v;
+        return c ? c * dir : a.i - b.i;
+      })
+      .map(x => x.r);
+  }
+  // A header click cycles: first direction -> reversed -> sheet order.
+  function toggleSort(key) {
+    const first = SORT_FIRST_DIR[key] || 1;
+    if (sortState.key !== key) { sortState.key = key; sortState.dir = first; }
+    else if (sortState.dir === first) sortState.dir = -first;
+    else { sortState.key = ''; sortState.dir = 1; }
+    buildTable(visibleTableData());
+  }
+
+  // The bottom table lists (Id), name, remarks, km, (rating), (reviews) and the action icons;
+  // address and website are shown in the popup. Number columns are as narrow as their content allows.
+  function tableColgroup() {
+    return '<colgroup>' +
+      (tableCols.id ? '<col style="width:40px">' : '') +
+      '<col style="width:34%"><col>' +
+      '<col style="width:40px">' +
+      (tableCols.rating ? '<col style="width:32px">' : '') +
+      (tableCols.reviews ? '<col style="width:40px">' : '') +
+      '<col style="width:56px"></colgroup>';
+  }
+  function sortTh(key, label, title, numeric) {
+    const on = sortState.key === key;
+    const ind = on ? (sortState.dir > 0 ? '▲' : '▼') : '';
+    return `<th${numeric ? ' class="th-num"' : ''} aria-sort="${on ? (sortState.dir > 0 ? 'ascending' : 'descending') : 'none'}">` +
+      `<button type="button" class="sort-btn" data-sort="${key}" title="${escH(title + ' — ' + S.sortHint)}">` +
+      `${escH(label)}<span class="sort-ind">${ind}</span></button></th>`;
+  }
+  function tableHead() {
+    return '<tr>' +
+      (tableCols.id ? sortTh('id', S.colId, S.colIdTitle, true) : '') +
+      sortTh('name', S.colName, S.colName, false) +
+      `<th>${escH(S.colRemarks)}</th>` +
+      sortTh('dist', S.colDistance, myPos ? S.distFromMe : S.distFromCenter, true) +
+      (tableCols.rating ? sortTh('rating', S.colRating, S.colRatingTitle, true) : '') +
+      (tableCols.reviews ? sortTh('reviews', S.colReviews, S.colReviewsTitle, true) : '') +
+      '<th></th></tr>';
+  }
+  // Right-hand list: a sort dropdown above the layer blocks.
+  function sortBarHtml() {
+    const opts = [['', S.sortSheet]];
+    if (tableCols.id) opts.push(['id', S.sortId]);
+    opts.push(['name', S.sortName], ['dist', S.sortDistance]);
+    if (tableCols.rating) opts.push(['rating', S.sortRating]);
+    if (tableCols.reviews) opts.push(['reviews', S.sortReviews]);
+    return `<label class="sort-bar">${escH(S.sortBy)} <select id="sort-select">` +
+      opts.map(([v, l]) => `<option value="${v}"${sortState.key === v ? ' selected' : ''}>${escH(l)}</option>`).join('') +
+      '</select></label>';
+  }
+  // Right-hand list: "1.2 km · ★ 4.6 · (1.2k)" under the name.
+  function poiMetaHtml(r) {
+    const parts = [];
+    const d = fmtKm(distanceKm(r));
+    if (d) parts.push(`<span title="${escH(myPos ? S.distFromMe : S.distFromCenter)}">${d} km</span>`);
+    const v = ratingOf(r);
+    if (tableCols.rating && !isNaN(v)) parts.push(`<span title="${escH(S.colRatingTitle)}">★ ${fmtRating(v)}</span>`);
+    const n = reviewsOf(r);
+    if (tableCols.reviews && !isNaN(n)) parts.push(`<span title="${escH(n + ' ' + S.reviewsUnit)}">(${fmtReviews(n)})</span>`);
+    return parts.length ? `<div class="poi-meta">${parts.join(' · ')}</div>` : '';
+  }
 
   // Icons shared by the table and the list: Google Maps text search and "show on map".
   function rowIcons(r, hasCoords) {
@@ -919,6 +1084,7 @@ const version = "20261125-124900";
       li.className = 'poi';
       li.innerHTML =
         `<div class="poi-name">${nameHtml(r, hasCoords)}</div><div class="poi-icons">${rowIcons(r, hasCoords)}</div>` +
+        poiMetaHtml(r) +
         (r[F.remarks] ? `<div class="poi-desc">${escH(r[F.remarks])}</div>` : '');
       ul.appendChild(li);
     });
@@ -945,7 +1111,7 @@ const version = "20261125-124900";
     wrap.innerHTML = '';
     layerNamesOf(data).forEach(layer => {
       if (!activeLayers.has(layer)) return;
-      const rows = data.filter(r => r[F.category] === layer);
+      const rows = sortRows(data.filter(r => r[F.category] === layer));
       if (!rows.length) return;
       const color = layerColors[layer] || '#333';
       const meta = layerMeta[layer] || {};
@@ -970,22 +1136,27 @@ const version = "20261125-124900";
       if (right) { group.appendChild(buildPoiList(rows)); return; }
 
       const tbl = document.createElement('table');
-      tbl.innerHTML = `${TABLE_COLGROUP}
-        <thead><tr><th>${escH(S.colName)}</th><th>${escH(S.colRemarks)}</th><th></th></tr></thead>`;
+      tbl.innerHTML = `${tableColgroup()}<thead>${tableHead()}</thead>`;
       const tbody = document.createElement('tbody');
       rows.forEach(r => {
         const lat = toFloat(r[F.lat]), lon = toFloat(r[F.lon]);
         const hasCoords = !isNaN(lat) && !isNaN(lon);
         const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${nameHtml(r, hasCoords)}</td>
-          <td>${escH(r[F.remarks])}</td>
-          <td class="td-actions">${rowIcons(r, hasCoords)}</td>`;
+        const reviews = reviewsOf(r);
+        tr.innerHTML =
+          (tableCols.id ? `<td class="td-num td-id" title="${escH(r[F.id])}">${escH(r[F.id])}</td>` : '') +
+          `<td>${nameHtml(r, hasCoords)}</td>` +
+          `<td>${escH(r[F.remarks])}</td>` +
+          `<td class="td-num">${fmtKm(distanceKm(r))}</td>` +
+          (tableCols.rating ? `<td class="td-num">${fmtRating(ratingOf(r))}</td>` : '') +
+          (tableCols.reviews ? `<td class="td-num"${isNaN(reviews) ? '' : ` title="${reviews} ${escH(S.reviewsUnit)}"`}>${fmtReviews(reviews)}</td>` : '') +
+          `<td class="td-actions">${rowIcons(r, hasCoords)}</td>`;
         tbody.appendChild(tr);
       });
       tbl.appendChild(tbody);
       group.appendChild(tbl);
     });
+    if (right && wrap.firstChild) wrap.insertAdjacentHTML('afterbegin', sortBarHtml());
   }
 
   // Only rows inside the current map viewport are listed in the place list.
@@ -1028,7 +1199,9 @@ const version = "20261125-124900";
       locateLayers = [circle, dot];
       locateLayers.forEach(l => l.addTo(map));
       button.classList.add('active');
+      myPos = { lat: ll[0], lon: ll[1] };   // the km column now measures from here
       map.fitBounds(circle.getBounds(), { maxZoom: 16, padding: [40, 40] });
+      buildTable(visibleTableData());
     }, err => {
       button.classList.remove('busy');
       toast(err.code === 1 ? S.locateDenied : err.code === 3 ? S.locateTimeout : S.locateUnavailable);
@@ -1413,6 +1586,21 @@ ${pointLayers}${numberLayers}${nameLayers}${listLayers}${refLayer}</svg>
     const actual = Object.keys(allData[0]).find(h => h.toLowerCase() === want);
     if (actual) F[key] = actual;
   }
+  // Same, but also accepts common alternative headers ("Google rating", "Number of reviews", …).
+  const FIELD_ALIASES = {
+    rating: ['rating', 'google rating', 'googlerating', 'stars'],
+    reviews: ['reviews', 'number reviews', 'number of reviews', 'nr reviews', 'num reviews', 'review count',
+              'reviews count', 'google reviews', 'user ratings total']
+  };
+  function resolveFieldAny(key) {
+    if (!F[key] || !allData.length) return;
+    const norm = s => String(s).toLowerCase().replace(/[\s_\-]+/g, ' ').trim();
+    const headers = Object.keys(allData[0]);
+    for (const want of [F[key], ...(FIELD_ALIASES[key] || [])].map(norm)) {
+      const actual = headers.find(h => norm(h) === want);
+      if (actual) { F[key] = actual; return; }
+    }
+  }
 
   // Fills the Status dropdown from the distinct values in the sheet column (hidden when the column is empty or absent).
   function initFilterSelect(field, selectId, wrapId, allLabel, param) {
@@ -1577,7 +1765,15 @@ ${pointLayers}${numberLayers}${nameLayers}${listLayers}${refLayer}</svg>
     initNamesToggle();
     document.getElementById('table-wrap').addEventListener('click', e => {
       const btn = e.target.closest('[data-show-id]');
-      if (btn) showOnMap(btn.dataset.showId);
+      if (btn) return showOnMap(btn.dataset.showId);
+      const sortBtn = e.target.closest('[data-sort]');
+      if (sortBtn) toggleSort(sortBtn.dataset.sort);
+    });
+    document.getElementById('table-wrap').addEventListener('change', e => {
+      if (e.target.id !== 'sort-select') return;
+      sortState.key = e.target.value;
+      sortState.dir = SORT_FIRST_DIR[sortState.key] || 1;
+      buildTable(visibleTableData());
     });
     document.addEventListener('touchstart', hideTip, { passive: true });   // touch devices fire no mouseleave
     window.addEventListener('beforeprint', preparePrint);
@@ -1590,6 +1786,10 @@ ${pointLayers}${numberLayers}${nameLayers}${listLayers}${refLayer}</svg>
       const allLayers = layerNamesOf(allData);
       assignLayerColors(allLayers);
       initFilters();
+      resolveFieldName('id');
+      resolveFieldAny('rating');
+      resolveFieldAny('reviews');
+      detectTableCols();
 
       const wanted = getLayersFromURL();
       if (wanted) {
