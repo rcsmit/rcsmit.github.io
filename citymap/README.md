@@ -1,4 +1,4 @@
-<!-- version = "20261127-150000" -->
+<!-- version = "20261127-151000" -->
 # citymap — reusable curated city map
 
 Shared engine for maps like `rcsmit.github.io/rome/`. One engine, one small `index.html` per city.
@@ -26,7 +26,7 @@ Share it as **Anyone with the link → Viewer**.
 - `address` and `website` are optional and are shown in the marker popup. The bottom table lists name, remarks, distance and the action icons. The printed legend leaves out the address column when no row has one.
 - `Id` is optional. Clicking a place name (or 📍) in the bottom table zooms to that marker and opens its popup; this works for every row with coordinates, with or without an `Id`. When any row has an `Id`, a thin `#` column appears in the table.
 - Distance: the table has a thin **km** column, computed in the browser (haversine). It measures from the visitor's position once the "My location" button has found it, otherwise from the city centre (`distanceCenter`, or `center`). No sheet column needed.
-- `rating` and `reviews` (optional; names configurable via `fields.rating` / `fields.reviews`; headers such as `Google rating`, `Number of reviews`, `Reviews count` are recognised too, case does not matter): a thin **★** and **Rev.** column appear only when the sheet fills them. Ratings may use a comma (`4,6`); review counts may be `1234`, `1.234`, `1,234` or `1.2k`.
+- `rating` and `reviews` (optional; names configurable via `fields.rating` / `fields.reviews`; headers such as `Google rating`, `rating_count`, `Number of reviews`, `Reviews count` are recognised too; case, spaces and underscores do not matter): a thin **★** and **Rev.** column appear only when the sheet fills them. Ratings may use a comma (`4,6`); review counts may be `1234`, `1.234`, `1,234` or `1.2k`. An optional `rating_date` column (`fields.ratingDate`) is shown when hovering the rating and review values ("… — as of 2026-11-20").
 - Sorting: click a column header (`#`, Name, km, ★, Rev.) to sort the places within each layer; click again to reverse, a third time for sheet order. Empty values always go last. In the right-hand list (`listPosition: "right"`) a **Sort** dropdown does the same, and distance / rating / reviews are shown under each name.
 
 ## Config keys (all optional except `center` and `sheet.id`)

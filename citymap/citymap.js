@@ -75,8 +75,10 @@
    #                             columns and an optional Id column (only when the sheet has them). Click a column header
    #                             to sort within each layer (Id, name, distance, rating, reviews); the right-hand list
    #                             shows distance / rating / reviews under the name and gets a sort dropdown
+   # version : 20261127-151000 - Review-count column also recognises "rating_count" (and similar headers); an optional
+   #                             "rating_date" column is shown as a hover on the rating and review-count values
    ========================================================================= */
-const version = "20261127-150000";
+const version = "20261127-151000";
 
 (function () {
   'use strict';
@@ -102,7 +104,7 @@ const version = "20261127-150000";
     zoom: 12,
     maxZoom: 19,
     sheet: { id: '', dataTab: 'MASTER', layersTab: 'LAYERS' },
-    fields: { id: 'Id', category: 'Layer', name: 'naam', address: 'address', lon: 'LON', lat: 'LAT', website: 'website', remarks: 'remarks', status: 'Status', region: 'Region', rating: 'rating', reviews: 'reviews' },
+    fields: { id: 'Id', category: 'Layer', name: 'naam', address: 'address', lon: 'LON', lat: 'LAT', website: 'website', remarks: 'remarks', status: 'Status', region: 'Region', rating: 'rating', reviews: 'reviews', ratingDate: 'rating_date' },
     metaFields: { layer: 'Layer', description: 'Description', source: 'Source' },
     theme: {},                  // CSS colour overrides, see README.md
     fonts: { heading: 'Playfair Display', body: 'Lato', url: '' },
@@ -164,6 +166,7 @@ const version = "20261127-150000";
       colReviews: 'Rev.',
       colReviewsTitle: 'Number of Google reviews',
       reviewsUnit: 'reviews',
+      ratingDateLabel: 'as of',
       sortHint: 'click to sort',
       sortBy: 'Sort',
       sortSheet: 'Sheet order',
@@ -951,6 +954,12 @@ const version = "20261127-150000";
     return v >= 0 && v <= 5 ? v : NaN;
   }
   function fmtRating(v) { return isNaN(v) ? '' : v.toFixed(1); }
+  // Hover text for the rating / review values: "Google rating 4.6 — as of 2026-11-20".
+  function ratingDateOf(r) { return F.ratingDate ? String(r[F.ratingDate] || '').trim() : ''; }
+  function withDate(text, r) {
+    const d = ratingDateOf(r);
+    return d ? `${text} — ${S.ratingDateLabel} ${d}` : text;
+  }
 
   // Review count: "1234", "1.234", "1,234", "(1234)" or "1.2k".
   function reviewsOf(r) {
@@ -1057,9 +1066,9 @@ const version = "20261127-150000";
     const d = fmtKm(distanceKm(r));
     if (d) parts.push(`<span title="${escH(myPos ? S.distFromMe : S.distFromCenter)}">${d} km</span>`);
     const v = ratingOf(r);
-    if (tableCols.rating && !isNaN(v)) parts.push(`<span title="${escH(S.colRatingTitle)}">★ ${fmtRating(v)}</span>`);
+    if (tableCols.rating && !isNaN(v)) parts.push(`<span title="${escH(withDate(S.colRatingTitle + ' ' + fmtRating(v), r))}">★ ${fmtRating(v)}</span>`);
     const n = reviewsOf(r);
-    if (tableCols.reviews && !isNaN(n)) parts.push(`<span title="${escH(n + ' ' + S.reviewsUnit)}">(${fmtReviews(n)})</span>`);
+    if (tableCols.reviews && !isNaN(n)) parts.push(`<span title="${escH(withDate(n + ' ' + S.reviewsUnit, r))}">(${fmtReviews(n)})</span>`);
     return parts.length ? `<div class="poi-meta">${parts.join(' · ')}</div>` : '';
   }
 
@@ -1142,14 +1151,14 @@ const version = "20261127-150000";
         const lat = toFloat(r[F.lat]), lon = toFloat(r[F.lon]);
         const hasCoords = !isNaN(lat) && !isNaN(lon);
         const tr = document.createElement('tr');
-        const reviews = reviewsOf(r);
+        const rating = ratingOf(r), reviews = reviewsOf(r);
         tr.innerHTML =
           (tableCols.id ? `<td class="td-num td-id" title="${escH(r[F.id])}">${escH(r[F.id])}</td>` : '') +
           `<td>${nameHtml(r, hasCoords)}</td>` +
           `<td>${escH(r[F.remarks])}</td>` +
           `<td class="td-num">${fmtKm(distanceKm(r))}</td>` +
-          (tableCols.rating ? `<td class="td-num">${fmtRating(ratingOf(r))}</td>` : '') +
-          (tableCols.reviews ? `<td class="td-num"${isNaN(reviews) ? '' : ` title="${reviews} ${escH(S.reviewsUnit)}"`}>${fmtReviews(reviews)}</td>` : '') +
+          (tableCols.rating ? `<td class="td-num"${isNaN(rating) ? '' : ` title="${escH(withDate(S.colRatingTitle + ' ' + fmtRating(rating), r))}"`}>${fmtRating(rating)}</td>` : '') +
+          (tableCols.reviews ? `<td class="td-num"${isNaN(reviews) ? '' : ` title="${escH(withDate(reviews + ' ' + S.reviewsUnit, r))}"`}>${fmtReviews(reviews)}</td>` : '') +
           `<td class="td-actions">${rowIcons(r, hasCoords)}</td>`;
         tbody.appendChild(tr);
       });
@@ -1589,8 +1598,10 @@ ${pointLayers}${numberLayers}${nameLayers}${listLayers}${refLayer}</svg>
   // Same, but also accepts common alternative headers ("Google rating", "Number of reviews", …).
   const FIELD_ALIASES = {
     rating: ['rating', 'google rating', 'googlerating', 'stars'],
-    reviews: ['reviews', 'number reviews', 'number of reviews', 'nr reviews', 'num reviews', 'review count',
-              'reviews count', 'google reviews', 'user ratings total']
+    reviews: ['reviews', 'rating count', 'ratings count', 'ratingcount', 'number of ratings', 'number reviews',
+              'number of reviews', 'nr reviews', 'num reviews', 'review count', 'reviews count', 'google reviews',
+              'user ratings total'],
+    ratingDate: ['rating date', 'ratingdate', 'ratings date', 'review date', 'rating updated']
   };
   function resolveFieldAny(key) {
     if (!F[key] || !allData.length) return;
@@ -1789,6 +1800,7 @@ ${pointLayers}${numberLayers}${nameLayers}${listLayers}${refLayer}</svg>
       resolveFieldName('id');
       resolveFieldAny('rating');
       resolveFieldAny('reviews');
+      resolveFieldAny('ratingDate');
       detectTableCols();
 
       const wanted = getLayersFromURL();
