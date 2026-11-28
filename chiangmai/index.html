@@ -4,6 +4,7 @@
      All behaviour is in ../citymap/citymap.js and ../citymap/citymap.css (shared by every city).
      version history
      # version : 20261107-123500 - Initial version, created from the Berlin file
+     # version : 20261128-115900 - scores.weight can be set per layer or 'auto'
      # version : 20261128-001600 - Q (quality) and P (popularity) columns switched on via `scores`
 -->
 <html lang="en">
@@ -71,8 +72,12 @@ window.CITYMAP_CONFIG = {
 
   // ── Behaviour ───────────────────────────────────────────────────────────────
   storageKey: "chiangmai",                    // own basemap preference (separate per city)
-  scores: { quality: true, popularity: true, weight: 50 },   // Q and P columns per layer; remove this line (or set both to false) to hide them
-  defaultLayers:4 ,                           // first 4 layers on load (or a list of names, or "all")
+  scores: {                                       // Q and P columns per layer; remove this block (or set both to false) to hide them
+    quality: true,
+    popularity: true,
+    weight: 50                                    // 50, 'auto' (median reviews per layer) or per layer: { default: 50, Coffee: 20, Temples: 'auto' }
+  },
+  defaultLayers: "all",                           // first 4 layers on load (or a list of names, or "all")
 
   // ── QR code: sidebar button + on the printed map. Encodes this address plus the active layers ──
   qr: { enabled: true, url: "https://rcsmit.github.io/chiangmai/" },

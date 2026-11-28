@@ -79,11 +79,12 @@
    #                             "rating_date" column is shown as a hover on the rating and review-count values
    # version : 20261127-210657 - Bottom table: remarks are shown under the name (own "Remarks" column removed, name column takes
    #                             the free width); review-count column header is "#" instead of "Rev."
+   # version : 20261128-115900 - scores.weight per layer ('auto' or { layer: n, default: n })
    # version : 20261128-001600 - Optional Quality (Q) and Popularity (P) columns per layer, computed in the browser from
    #                             rating + review count; switched on with config.scores = { quality:true, popularity:true }
    #                             (both off by default, so a city without that key shows neither)
    ========================================================================= */
-const version = "20261128-001900";
+const version = "20261128-115900";
 
 (function () {
   'use strict';
@@ -112,6 +113,8 @@ const version = "20261128-001900";
     fields: { id: 'Id', category: 'Layer', name: 'naam', address: 'address', lon: 'LON', lat: 'LAT', website: 'website', remarks: 'remarks', status: 'Status', region: 'Region', rating: 'rating', reviews: 'reviews', ratingDate: 'rating_date' },
     // Optional computed columns, per layer. Off unless a city's index.html switches them on.
     //   quality    = Bayesian rating: (n*rating + weight*layerAverage) / (n + weight)       (n = number of reviews)
+    //   weight     = a number (50), 'auto' (median review count of each layer), or per layer:
+    //                { default: 50, Coffee: 20, Temples: 'auto' }   (layers not listed use `default`, 50 if absent)
     //   popularity = quality * log10(n + 1), scaled so the best place of each layer is 100
     scores: { quality: false, popularity: false, weight: 50 },
     metaFields: { layer: 'Layer', description: 'Description', source: 'Source' },
@@ -1013,7 +1016,14 @@ const version = "20261128-001900";
     Object.keys(scoreMap).forEach(k => delete scoreMap[k]);
     const sc = cfg.scores || {};
     if (!sc.quality && !sc.popularity) return;
-    const m = Number(sc.weight) >= 0 ? Number(sc.weight) : 50;
+    // Weight m per layer: number, 'auto' (median number of reviews in the layer) or { layerName: …, default: … }.
+    const median = a => { const b = a.slice().sort((x, y) => x - y), h = b.length >> 1; return b.length % 2 ? b[h] : (b[h - 1] + b[h]) / 2; };
+    const weightFor = items => {
+      let w = sc.weight;
+      if (w && typeof w === 'object') w = (items.layer in w) ? w[items.layer] : w.default;
+      if (w === 'auto') return median(items.list.map(x => x.n));
+      return Number(w) >= 0 ? Number(w) : 50;
+    };
     const byLayer = {};
     allData.forEach(r => {
       const v = ratingOf(r), n = reviewsOf(r);
@@ -1022,8 +1032,9 @@ const version = "20261128-001900";
     });
     Object.keys(byLayer).forEach(layer => {
       const items = byLayer[layer];
+      const m = weightFor({ layer, list: items });
       const C = items.reduce((a, x) => a + x.v, 0) / items.length;
-      items.forEach(x => { x.q = (x.n * x.v + m * C) / (x.n + m); x.raw = x.q * Math.log10(x.n + 1); });
+      items.forEach(x => { x.q = (x.n + m) > 0 ? (x.n * x.v + m * C) / (x.n + m) : x.v; x.raw = x.q * Math.log10(x.n + 1); });
       const max = Math.max(...items.map(x => x.raw));
       items.forEach(x => { scoreMap[x.r._key] = { q: x.q, p: max > 0 ? x.raw / max * 100 : NaN }; });
     });
