@@ -79,8 +79,11 @@
    #                             "rating_date" column is shown as a hover on the rating and review-count values
    # version : 20261127-210657 - Bottom table: remarks are shown under the name (own "Remarks" column removed, name column takes
    #                             the free width); review-count column header is "#" instead of "Rev."
+   # version : 20261128-001600 - Optional Quality (Q) and Popularity (P) columns per layer, computed in the browser from
+   #                             rating + review count; switched on with config.scores = { quality:true, popularity:true }
+   #                             (both off by default, so a city without that key shows neither)
    ========================================================================= */
-const version = "20261127-210657";
+const version = "20261128-001900";
 
 (function () {
   'use strict';
@@ -107,6 +110,10 @@ const version = "20261127-210657";
     maxZoom: 19,
     sheet: { id: '', dataTab: 'MASTER', layersTab: 'LAYERS' },
     fields: { id: 'Id', category: 'Layer', name: 'naam', address: 'address', lon: 'LON', lat: 'LAT', website: 'website', remarks: 'remarks', status: 'Status', region: 'Region', rating: 'rating', reviews: 'reviews', ratingDate: 'rating_date' },
+    // Optional computed columns, per layer. Off unless a city's index.html switches them on.
+    //   quality    = Bayesian rating: (n*rating + weight*layerAverage) / (n + weight)       (n = number of reviews)
+    //   popularity = quality * log10(n + 1), scaled so the best place of each layer is 100
+    scores: { quality: false, popularity: false, weight: 50 },
     metaFields: { layer: 'Layer', description: 'Description', source: 'Source' },
     theme: {},                  // CSS colour overrides, see README.md
     fonts: { heading: 'Playfair Display', body: 'Lato', url: '' },
@@ -167,6 +174,10 @@ const version = "20261127-210657";
       colRatingTitle: 'Google rating',
       colReviews: '#',
       colReviewsTitle: 'Number of Google reviews',
+      colQuality: 'Q',
+      colQualityTitle: 'Quality: rating corrected for the number of reviews, relative to the layer average',
+      colPopularity: 'P',
+      colPopularityTitle: 'Popularity within the layer (0–100): quality × log of the number of reviews',
       reviewsUnit: 'reviews',
       ratingDateLabel: 'as of',
       sortHint: 'click to sort',
@@ -177,6 +188,8 @@ const version = "20261127-210657";
       sortDistance: 'Distance (nearest first)',
       sortRating: 'Rating (highest first)',
       sortReviews: 'Reviews (most first)',
+      sortQuality: 'Quality (best first)',
+      sortPopularity: 'Popularity (highest first)',
       activeLayers: 'Active layers:',
       source: 'Source:',
       googleMaps: 'Google Maps',
@@ -512,7 +525,7 @@ const version = "20261127-210657";
   let basemapSeq = 0;              // guards against out-of-order async style loads
   const sidebarCtl = {};           // filled by initSidebar()
   let myPos = null;                // { lat, lon } from the "My location" button; the km column measures from here
-  let tableCols = { id: false, rating: false, reviews: false };   // optional place-list columns, set once the sheet is loaded
+  let tableCols = { id: false, rating: false, reviews: false, quality: false, popularity: false };   // optional place-list columns, set once the sheet is loaded
   const sortState = { key: '', dir: 1 };                           // place-list sort; key '' = sheet order
   const tip = () => document.getElementById('float-tip');
 
@@ -985,17 +998,53 @@ const version = "20261127-210657";
     tableCols = {
       id: !!F.id && allData.some(r => String(r[F.id] || '').trim() !== ''),
       rating: allData.some(r => !isNaN(ratingOf(r))),
-      reviews: allData.some(r => !isNaN(reviewsOf(r)))
+      reviews: allData.some(r => !isNaN(reviewsOf(r))),
+      quality: false,
+      popularity: false
     };
+    computeScores();
   }
 
-  const SORT_FIRST_DIR = { id: 1, name: 1, dist: 1, rating: -1, reviews: -1 };   // 1 = ascending
+  // Quality and popularity per layer (only when switched on in config.scores).
+  //   q = (n*rating + m*C) / (n + m)      C = average rating of the layer, m = config.scores.weight
+  //   p = q * log10(n + 1), divided by the highest p of the layer * 100
+  const scoreMap = {};   // row._key -> { q, p }
+  function computeScores() {
+    Object.keys(scoreMap).forEach(k => delete scoreMap[k]);
+    const sc = cfg.scores || {};
+    if (!sc.quality && !sc.popularity) return;
+    const m = Number(sc.weight) >= 0 ? Number(sc.weight) : 50;
+    const byLayer = {};
+    allData.forEach(r => {
+      const v = ratingOf(r), n = reviewsOf(r);
+      if (isNaN(v) || isNaN(n)) return;
+      (byLayer[r[F.category]] = byLayer[r[F.category]] || []).push({ r, v, n });
+    });
+    Object.keys(byLayer).forEach(layer => {
+      const items = byLayer[layer];
+      const C = items.reduce((a, x) => a + x.v, 0) / items.length;
+      items.forEach(x => { x.q = (x.n * x.v + m * C) / (x.n + m); x.raw = x.q * Math.log10(x.n + 1); });
+      const max = Math.max(...items.map(x => x.raw));
+      items.forEach(x => { scoreMap[x.r._key] = { q: x.q, p: max > 0 ? x.raw / max * 100 : NaN }; });
+    });
+    const any = Object.keys(scoreMap).length > 0;
+    tableCols.quality = !!sc.quality && any;
+    tableCols.popularity = !!sc.popularity && any;
+  }
+  function qualityOf(r) { const x = scoreMap[r._key]; return x ? x.q : NaN; }
+  function popularityOf(r) { const x = scoreMap[r._key]; return x ? x.p : NaN; }
+  function fmtQuality(v) { return isNaN(v) ? '' : v.toFixed(1); }
+  function fmtPopularity(v) { return isNaN(v) ? '' : String(Math.round(v)); }
+
+  const SORT_FIRST_DIR = { id: 1, name: 1, dist: 1, rating: -1, reviews: -1, quality: -1, popularity: -1 };   // 1 = ascending
   function sortValue(r, key) {
     if (key === 'id') return String(r[F.id] || '').trim();
     if (key === 'name') return String(r[F.name] || '').trim();
     if (key === 'dist') return distanceKm(r);
     if (key === 'rating') return ratingOf(r);
     if (key === 'reviews') return reviewsOf(r);
+    if (key === 'quality') return qualityOf(r);
+    if (key === 'popularity') return popularityOf(r);
     return '';
   }
   // Sorts the rows of one layer. Empty values always go last; ties keep the sheet order.
@@ -1032,6 +1081,8 @@ const version = "20261127-210657";
       '<col style="width:40px">' +
       (tableCols.rating ? '<col style="width:32px">' : '') +
       (tableCols.reviews ? '<col style="width:40px">' : '') +
+      (tableCols.quality ? '<col style="width:32px">' : '') +
+      (tableCols.popularity ? '<col style="width:32px">' : '') +
       '<col style="width:56px"></colgroup>';
   }
   function sortTh(key, label, title, numeric) {
@@ -1048,6 +1099,8 @@ const version = "20261127-210657";
       sortTh('dist', S.colDistance, myPos ? S.distFromMe : S.distFromCenter, true) +
       (tableCols.rating ? sortTh('rating', S.colRating, S.colRatingTitle, true) : '') +
       (tableCols.reviews ? sortTh('reviews', S.colReviews, S.colReviewsTitle, true) : '') +
+      (tableCols.quality ? sortTh('quality', S.colQuality, S.colQualityTitle, true) : '') +
+      (tableCols.popularity ? sortTh('popularity', S.colPopularity, S.colPopularityTitle, true) : '') +
       '<th></th></tr>';
   }
   // Right-hand list: a sort dropdown above the layer blocks.
@@ -1057,6 +1110,8 @@ const version = "20261127-210657";
     opts.push(['name', S.sortName], ['dist', S.sortDistance]);
     if (tableCols.rating) opts.push(['rating', S.sortRating]);
     if (tableCols.reviews) opts.push(['reviews', S.sortReviews]);
+    if (tableCols.quality) opts.push(['quality', S.sortQuality]);
+    if (tableCols.popularity) opts.push(['popularity', S.sortPopularity]);
     return `<label class="sort-bar">${escH(S.sortBy)} <select id="sort-select">` +
       opts.map(([v, l]) => `<option value="${v}"${sortState.key === v ? ' selected' : ''}>${escH(l)}</option>`).join('') +
       '</select></label>';
@@ -1070,6 +1125,10 @@ const version = "20261127-210657";
     if (tableCols.rating && !isNaN(v)) parts.push(`<span title="${escH(withDate(S.colRatingTitle + ' ' + fmtRating(v), r))}">★ ${fmtRating(v)}</span>`);
     const n = reviewsOf(r);
     if (tableCols.reviews && !isNaN(n)) parts.push(`<span title="${escH(withDate(n + ' ' + S.reviewsUnit, r))}">(${fmtReviews(n)})</span>`);
+    const q = qualityOf(r);
+    if (tableCols.quality && !isNaN(q)) parts.push(`<span title="${escH(S.colQualityTitle)}">${S.colQuality} ${fmtQuality(q)}</span>`);
+    const pp = popularityOf(r);
+    if (tableCols.popularity && !isNaN(pp)) parts.push(`<span title="${escH(S.colPopularityTitle)}">${S.colPopularity} ${fmtPopularity(pp)}</span>`);
     return parts.length ? `<div class="poi-meta">${parts.join(' · ')}</div>` : '';
   }
 
@@ -1116,6 +1175,7 @@ const version = "20261127-210657";
   }
 
   function buildTable(data) {
+    computeScores();   // Q and P are recalculated in the browser on every (re)build of the lists, never stored
     const wrap = document.getElementById('table-wrap');
     const right = listRight();
     wrap.innerHTML = '';
@@ -1152,13 +1212,15 @@ const version = "20261127-210657";
         const lat = toFloat(r[F.lat]), lon = toFloat(r[F.lon]);
         const hasCoords = !isNaN(lat) && !isNaN(lon);
         const tr = document.createElement('tr');
-        const rating = ratingOf(r), reviews = reviewsOf(r);
+        const rating = ratingOf(r), reviews = reviewsOf(r), quality = qualityOf(r), popularity = popularityOf(r);
         tr.innerHTML =
           (tableCols.id ? `<td class="td-num td-id" title="${escH(r[F.id])}">${escH(r[F.id])}</td>` : '') +
           `<td>${nameHtml(r, hasCoords)}${r[F.remarks] ? `<div class="td-remark">${escH(r[F.remarks])}</div>` : ''}</td>` +
           `<td class="td-num">${fmtKm(distanceKm(r))}</td>` +
           (tableCols.rating ? `<td class="td-num"${isNaN(rating) ? '' : ` title="${escH(withDate(S.colRatingTitle + ' ' + fmtRating(rating), r))}"`}>${fmtRating(rating)}</td>` : '') +
           (tableCols.reviews ? `<td class="td-num"${isNaN(reviews) ? '' : ` title="${escH(withDate(reviews + ' ' + S.reviewsUnit, r))}"`}>${fmtReviews(reviews)}</td>` : '') +
+          (tableCols.quality ? `<td class="td-num"${isNaN(quality) ? '' : ` title="${escH(S.colQualityTitle)}"`}>${fmtQuality(quality)}</td>` : '') +
+          (tableCols.popularity ? `<td class="td-num"${isNaN(popularity) ? '' : ` title="${escH(S.colPopularityTitle)}"`}>${fmtPopularity(popularity)}</td>` : '') +
           `<td class="td-actions">${rowIcons(r, hasCoords)}</td>`;
         tbody.appendChild(tr);
       });
